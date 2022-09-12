@@ -1,0 +1,10 @@
+{
+  "scripts": [
+    {
+      "output": "/wwwroot/lib/jquery/dist/jquery.min.js",
+      "input": [
+        "node_modules/jquery/dist/jquery.min.js"
+      ]
+    }
+  ]
+}

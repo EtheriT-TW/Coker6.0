@@ -1,0 +1,26 @@
+{
+  "name": "etherit.coker.web.mvc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.2.0",
+    "bootstrap": "^5.2.1",
+    "globby": "^13.1.2",
+    "gulp": "^4.0.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-less": "^5.0.0",
+    "gulp-uglify": "^3.0.2",
+    "gulp-uglifycss": "^1.1.0",
+    "jquery": "^3.6.1",
+    "merge-stream": "^2.0.0",
+    "path": "^0.12.7",
+    "sweetalert2": "^11.4.32",
+    "swiper": "^8.3.2"
+  }
+}

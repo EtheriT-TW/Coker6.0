@@ -1,0 +1,218 @@
+﻿
+/* Header Top*/
+#Header_Top {
+    background-color: #1E1E1E;
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    justify-content: space-between;
+    cursor: default;
+}
+
+    #Header_Top > div > p, #Header_Top > div > i {
+        display: flex;
+        align-items: center;
+        margin: auto;
+        padding: 0 5px;
+        cursor: pointer;
+    }
+
+    #Header_Top > div > i {
+        display: flex;
+        align-items: center;
+        margin: auto;
+        padding: 0 5px;
+        cursor: pointer;
+    }
+
+#News_box {
+    display: flex;
+    flex: auto;
+    position: relative;
+    overflow: hidden;
+    height: 20px;
+}
+
+    #News_box > ul > li a {
+        color: white;
+    }
+
+#Search_Input {
+    background-color: white;
+    padding-left: 15px;
+    padding-right: 5px;
+    border-radius: 50px;
+    cursor: default;
+}
+
+    #Search_Input > input {
+        border: none;
+        outline: none;
+        background: none;
+        width: 125px;
+    }
+
+    #Search_Input > i {
+        color: #1E1E1E;
+        display: flex;
+        align-items: center;
+        margin: auto;
+        padding-left: 5px;
+        padding-right: 5px;
+        cursor: pointer;
+    }
+
+/* Mega Menu */
+#Mega_Menu {
+    position: relative;
+    background-color: #B73925;
+    color: white;
+    padding: 0 5%;
+}
+
+.mega_menu_logo {
+    width: 35%;
+    margin: 20px 0;
+}
+
+    .mega_menu_logo > img {
+        cursor: pointer;
+    }
+
+.mega_menu_title {
+    width: 65%;
+    margin-top: 20px;
+}
+
+    .mega_menu_title > ul {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+    }
+
+        .mega_menu_title > ul > li {
+            height: 100%;
+            width: calc(100%/5);
+        }
+
+.mega_menu_subtitle {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-wrap: wrap;
+    padding-bottom: 20px;
+}
+
+/* Mega Menu Content */
+.mega_menu_content {
+    cursor: default;
+    visibility: hidden;
+    z-index: 2;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 100%;
+    background-color: white;
+    color: black;
+    padding: 2% 10% 5% 10%;
+}
+
+    .mega_menu_content > .text {
+        width: 59%;
+        margin-right: 1%;
+        z-index: 2;
+    }
+
+        .mega_menu_content > .text > .item {
+            width: 100%;
+        }
+
+            .mega_menu_content > .text > .item > ul {
+                display: flex;
+                justify-content: center;
+            }
+
+                .mega_menu_content > .text > .item > ul > li {
+                    margin: 0 5%;
+                }
+
+    .mega_menu_content > .image {
+        width: 39%;
+        margin-left: 1%;
+        display: flex;
+        justify-content: center;
+        display: block;
+    }
+
+        .mega_menu_content > .image > img {
+            cursor: pointer;
+            display: block;
+            margin: auto;
+            height: 150px;
+            box-shadow: 0px 0px 20px gray;
+            padding: 5px;
+        }
+
+        .mega_menu_content > .image > div {
+            margin-top: 20px;
+        }
+
+        .mega_menu_content > .image p {
+            display: initial;
+            cursor: pointer;
+        }
+
+/* Mega Menu Hover*/
+.mega_menu_title > ul > li:hover {
+    background-color: white;
+}
+
+    .mega_menu_title > ul > li:hover > div > p {
+        color: #B73925;
+        font-weight: bold;
+    }
+
+    .mega_menu_title > ul > li:hover .mega_menu_content {
+        visibility: visible;
+    }
+
+/*RWD*/
+@media (max-width: 1366px) {
+}
+
+@media only screen and (max-width: 1072px) {
+    .mega_menu_content > .text {
+        width: 69%;
+        margin-right: 1%;
+    }
+
+    .mega_menu_content > .image {
+        width: 29%;
+    }
+}
+
+@media only screen and (max-width: 992px) {
+}
+
+@media only screen and (max-width: 768px) {
+}
+
+@media only screen and (max-width: 576px) {
+    #Header_Top {
+        justify-content: center;
+    }
+
+    #News_box {
+        display: flex;
+        flex: auto;
+        position: relative;
+        overflow: hidden;
+        height: 20px;
+        justify-content: center;
+    }
+}
+
+@media only screen and (max-width: 368px) {
+}

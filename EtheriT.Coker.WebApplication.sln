@@ -5,7 +5,9 @@ VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D830B09F-8058-4728-9DB3-AFDD200E419A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Web.MVC", "src\EtheriT.Coker.Web.MVC\EtheriT.Coker.Web.MVC.csproj", "{D5483E43-7BC7-4663-ABCE-B6E892707983}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Web.MVC", "src\EtheriT.Coker.Web.MVC\EtheriT.Coker.Web.MVC.csproj", "{D5483E43-7BC7-4663-ABCE-B6E892707983}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Web.Public", "src\EtheriT.Coker.Web.Public\EtheriT.Coker.Web.Public.csproj", "{51AE817B-759A-435E-B359-853018E23F04}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,12 +19,17 @@ Global
 		{D5483E43-7BC7-4663-ABCE-B6E892707983}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5483E43-7BC7-4663-ABCE-B6E892707983}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5483E43-7BC7-4663-ABCE-B6E892707983}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51AE817B-759A-435E-B359-853018E23F04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51AE817B-759A-435E-B359-853018E23F04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51AE817B-759A-435E-B359-853018E23F04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51AE817B-759A-435E-B359-853018E23F04}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D5483E43-7BC7-4663-ABCE-B6E892707983} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
+		{51AE817B-759A-435E-B359-853018E23F04} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8029B80B-F0C2-4A1D-B6CF-B53520B1D55B}

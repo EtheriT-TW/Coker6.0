@@ -43,7 +43,7 @@
     {
       "outputFolder": "lib/swiper/",
       "input": [
-        "node_modules/swiper/*.mi.map"
+        "node_modules/swiper/swiper-bundle.min.js.map"
       ]
     }
   ]

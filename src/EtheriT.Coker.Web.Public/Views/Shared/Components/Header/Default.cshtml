@@ -1,0 +1,77 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@model HeaderViewModel
+@{
+}
+<div id="Header_Top" class="abreast">
+    <div class="abreast">
+        <p style="color: #B73925">New</p>
+        <p>隆昌Derek正式上線蝦皮啦</p>
+    </div>
+    <div class="abreast">
+        <div id="Search_Input" class="abreast">
+            <input type="text">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <p style="font-size: 10px;">智慧搜尋</p>
+        <i class="fa-solid fa-cart-shopping"></i>
+        <i class="fa-regular fa-user"></i>
+    </div>
+</div>
+<div id="Mega_Menu" class="abreast">
+    <div class="mega_menu_logo center">
+        <a href="/">
+            @if (string.IsNullOrEmpty(Model.Title))
+            {
+                <h1>@Model.Title</h1>
+            }
+            else
+            {
+                <img src="@Model.LogoImageUrl" width="150" alt="Derek" class="center" />
+                <h1 class="d-none">@Model.Title</h1>
+            }
+        </a>
+    </div>
+    <div class="mega_menu_title">
+        <ul class="abreast">
+            @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+            {
+                <li>
+                    <div class="mega_menu_subtitle">
+                        <p class="center">@menu.Title</p>
+                        <div class="mega_menu_content abreast">
+                            <div class="text">
+                                <div class="item">
+                                    <ul class="abreast">
+                                        @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+                                        {
+                                            <li>
+                                                <h5 style="font-weight:bold;">@subMenu.Title</h5>
+                                                <ul>
+                                                    @foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
+                                                    {
+                                                        <li>@thirdMenu.Title</li>
+                                                    }
+                                                </ul>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="image">
+                                @if (!string.IsNullOrEmpty(menu.imageUrl))
+                                {
+                                    <img src="@menu.imageUrl" alt="Photo" class="center" />
+                                }
+                                @if (!string.IsNullOrEmpty(menu.Description))
+                                {
+                                    <div class="center"><p>@menu.Description</p></div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

@@ -3,6 +3,6 @@
 
 // Write your JavaScript code.
 (function () {
-    var str = "hello word";
+    var str = "hello word 123";
     console.log(str);
 })()

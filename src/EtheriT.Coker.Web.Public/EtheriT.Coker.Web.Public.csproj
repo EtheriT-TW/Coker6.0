@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\lib\fortawesome\css\" />
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

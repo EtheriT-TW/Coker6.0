@@ -1,0 +1,36 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EtheriT.Coker.Web.Public</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
+	<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/EtheriT.Coker.Web.Public.styles.css" asp-append-version="true" />
+</head>
+<body onload="ready()">
+	<header>
+		@await Component.InvokeAsync(nameof(Header))
+	</header>
+    @RenderBody()
+    <footer>
+		@await Component.InvokeAsync(nameof(Footer))
+		<div id="Cookie" class="cookie">
+			<p class="cookie_text">本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見&ensp;<span style="cursor:pointer">隱私權政策</span>。</p>
+			<div id="Cookie_button">
+				<div class="btn_cookie_accept">接受</div>
+				<div class="btn_cookie_reject">拒絕</div>
+			</div>
+		</div>
+    </footer>
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="~/lib/swiper/swiper-bundle.min.js"></script>
+	<script src="~/js/site.min.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

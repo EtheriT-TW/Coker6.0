@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# uglify file
+*.min.js
+*.min.css
+*/*/wwwroot/dist/
+*.lock

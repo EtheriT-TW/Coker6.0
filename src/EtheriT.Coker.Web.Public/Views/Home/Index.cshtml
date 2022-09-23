@@ -1,6 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+
+<link rel="stylesheet" href="~/css/Home/Index.css" asp-append-version="true" />
+
 <div id="banner" class="container-fluid">
     <div class="swiper mySwiper">
         <div class="swiper-wrapper">
@@ -16,6 +19,37 @@
         <div class="swiper-button-next"></div>
         <div class="swiper-button-prev"></div>
         <div class="swiper-pagination"></div>
+    </div>
+</div>
+
+<div id="Most_Popular">
+    <div class="title">今日最熱門</div>
+    <div class="content">
+        <div class="frame">
+            <div class="image"><img src="~/images/hotad1.jpg" alt="" /></div>
+            <p class="describe">
+                母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」,給天下媽媽們一份療癒身心之禮
+            </p>
+            <div class="keywords">
+                <ul>
+                    <li>#淨未來</li>
+                    <li>#全自動</li>
+                    <li>#冷熱SPA按摩</li>
+                </ul>
+            </div>
+        </div>
+        <div class="frame">
+            <div class="image"><img src="~/images/hotad2.jpg" alt="" /></div>
+            <p class="describe">
+                Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。
+            </p>
+            <div class="keywords">
+                <ul>
+                    <li>#浴缸</li>
+                    <li>#新品</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 <div class="text-center">

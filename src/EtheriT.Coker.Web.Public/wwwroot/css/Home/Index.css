@@ -66,6 +66,7 @@
 
             #Featured > .content > .frame > .image {
                 display: flex;
+                margin-bottom: 10px;
             }
 
                 #Featured > .content > .frame > .image img {
@@ -145,6 +146,7 @@
             #Most_Popular > .content > .frame > .image > img {
                 width: 100%;
                 height: fit-content;
+                margin-bottom: 10px;
             }
 
             #Most_Popular > .content > .frame > .describe {

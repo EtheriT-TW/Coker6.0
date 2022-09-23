@@ -1,7 +1,7 @@
 ﻿body {
 }
 
-/* banne */
+/* Banne */
 #banner {
     padding: 0;
 }
@@ -167,11 +167,8 @@
 
 /* Reserve */
 #Reserve {
-    background-image: url("../../images/reserve_bg.jpg");
-    background-size: auto 300px;
-    background-position: center;
     width: 100%;
-    padding: 10px 50px;
+    padding: 10px 10vw;
     margin: 40px 0;
     height: 300px;
     display: flex;
@@ -179,38 +176,49 @@
     justify-content: center;
 }
 
-    #Reserve .content {
-        background-image: url("../../images/reserve_bg_round.png");
-        background-size: contain;
+    #Reserve > .frame {
+        background-image: url("../../images/reserve_bg.jpg");
+        background-size: auto 300px;
         background-position: center;
-        background-repeat: no-repeat;
-        height: 175px;
-        width: 175px;
-        border-radius: 50%;
+        height: 100%;
+        width: 100%;
         display: flex;
-        flex-direction: column;
+        align-items: center;
         justify-content: center;
     }
 
-        #Reserve .content > div {
+        #Reserve > .frame > .content {
+            background-image: url("../../images/reserve_bg_round.png");
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 175px;
+            width: 175px;
+            border-radius: 50%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
-            align-content: space-around;
-            font-size: 1.25rem;
-            font-weight: bold;
         }
 
-            #Reserve .content > div:first-child {
-                color: #B38A56;
+            #Reserve > .frame > .content > div {
+                display: flex;
+                justify-content: center;
+                align-content: space-around;
+                font-size: 1.25rem;
+                font-weight: bold;
             }
 
-            #Reserve .content > div:nth-child(2) {
-                color: #7D6131;
-            }
+                #Reserve > .frame > .content > div:first-child {
+                    color: #B38A56;
+                }
 
-            #Reserve .content > div:last-child {
-                color: black;
-            }
+                #Reserve > .frame > .content > div:nth-child(2) {
+                    color: #7D6131;
+                }
+
+                #Reserve > .frame > .content > div:last-child {
+                    color: black;
+                }
 
 /*RWD*/
 @media (max-width: 1366px) {

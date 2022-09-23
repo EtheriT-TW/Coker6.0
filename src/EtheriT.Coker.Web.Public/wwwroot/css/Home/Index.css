@@ -33,6 +33,50 @@
         #banner .swiper-pagination-bullet.swiper-pagination-bullet-active {
             background: #B73925;
         }
+
+/* Featured */
+#Featured {
+    padding: 10px 10vw;
+    margin: 40px 0;
+}
+
+    #Featured > .title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        padding: 10px 10px;
+    }
+
+    #Featured > .content {
+        display: flex;
+        justify-content: space-between;
+    }
+
+        #Featured > .content > div:first-child {
+            width: 39%;
+        }
+
+        #Featured > .content > div:last-child {
+            width: 59%;
+        }
+
+        #Featured > .content > .frame {
+            display: flex;
+            flex-direction: column;
+        }
+
+            #Featured > .content > .frame > .image {
+                display: flex;
+            }
+
+                #Featured > .content > .frame > .image img {
+                    width: 100%;
+                }
+
+            #Featured > .content > .frame > .describe {
+                color: black;
+                width: fit-content;
+            }
+
 /* Tiles */
 #Tiles {
     background-image: url("../../images/tiles_bg.jpg");
@@ -54,11 +98,6 @@
             flex-direction: column;
         }
 
-            #Tiles > .content > .frame > div {
-                display: flex;
-                justify-content: space-between;
-            }
-
             #Tiles > .content > .frame a > img {
                 width: 100%;
             }
@@ -67,9 +106,14 @@
                 margin-bottom: 2%;
             }
 
-            #Tiles > .content > .frame > .small > a {
-                width: 49%;
+            #Tiles > .content > .frame > .small {
+                display: flex;
+                justify-content: space-between;
             }
+
+                #Tiles > .content > .frame > .small > a {
+                    width: 49%;
+                }
 
 /* Most Popular */
 #Most_Popular {
@@ -98,15 +142,19 @@
             justify-content: space-between;
         }
 
-            #Most_Popular > .content > .frame .image > img {
+            #Most_Popular > .content > .frame > .image > img {
                 width: 100%;
                 height: fit-content;
             }
 
-            #Most_Popular > .content > .frame .describe {
+            #Most_Popular > .content > .frame > .describe {
                 flex-grow: 1;
-                color: black;
             }
+
+                #Most_Popular > .content > .frame > .describe > a {
+                    height: fit-content;
+                    color: black;
+                }
 
             #Most_Popular > .content > .frame > .keywords > ul {
                 display: flex;
@@ -131,23 +179,17 @@
     justify-content: center;
 }
 
-    #Reserve a {
-        height: 175px;
-        width: 175px;
-        border-radius: 50%;
-    }
-
     #Reserve .content {
         background-image: url("../../images/reserve_bg_round.png");
         background-size: contain;
         background-position: center;
         background-repeat: no-repeat;
-        height: 100%;
-        width: 100%;
+        height: 175px;
+        width: 175px;
+        border-radius: 50%;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        border-radius: 50%;
     }
 
         #Reserve .content > div {
@@ -188,6 +230,20 @@
 }
 
 @media only screen and (max-width: 576px) {
+    #Featured > .content {
+        flex-direction: column;
+        align-items: center;
+    }
+
+        #Featured > .content > div:first-child {
+            width: 100%;
+            margin-bottom: 4%;
+        }
+
+        #Featured > .content > div:last-child {
+            width: 100%;
+        }
+
 
     #Tiles {
         padding: 25px 25px;

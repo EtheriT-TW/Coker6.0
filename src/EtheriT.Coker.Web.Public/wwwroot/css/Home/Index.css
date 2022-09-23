@@ -33,11 +33,48 @@
         #banner .swiper-pagination-bullet.swiper-pagination-bullet-active {
             background: #B73925;
         }
+/* Tiles */
+#Tiles {
+    background-image: url("../../images/tiles_bg.jpg");
+    padding: 50px 10vw;
+    margin: 40px 0;
+    display: flex;
+    flex-direction: row;
+}
+
+    #Tiles > .content {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+        #Tiles > .content > .frame {
+            width: 49%;
+            display: flex;
+            flex-direction: column;
+        }
+
+            #Tiles > .content > .frame > div {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            #Tiles > .content > .frame a > img {
+                width: 100%;
+            }
+
+            #Tiles > .content > .frame > .big {
+                margin-bottom: 2%;
+            }
+
+            #Tiles > .content > .frame > .small > a {
+                width: 49%;
+            }
 
 /* Most Popular */
 #Most_Popular {
     background-color: #F2F2F2;
-    padding: 10px 50px;
+    padding: 10px 10vw;
     margin: 40px 0;
 }
 
@@ -55,19 +92,20 @@
     }
 
         #Most_Popular > .content > .frame {
-            width: 48%;
+            width: 49%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
-            #Most_Popular > .content > .frame > .image > img {
+            #Most_Popular > .content > .frame .image > img {
                 width: 100%;
                 height: fit-content;
             }
 
-            #Most_Popular > .content > .frame > .describe {
+            #Most_Popular > .content > .frame .describe {
                 flex-grow: 1;
+                color: black;
             }
 
             #Most_Popular > .content > .frame > .keywords > ul {
@@ -81,7 +119,7 @@
 
 /* Reserve */
 #Reserve {
-    background-image: url("../../images/reserve.jpg");
+    background-image: url("../../images/reserve_bg.jpg");
     background-size: auto 300px;
     background-position: center;
     width: 100%;
@@ -94,20 +132,22 @@
 }
 
     #Reserve a {
-        height: 100%;
+        height: 175px;
         width: 175px;
+        border-radius: 50%;
     }
 
     #Reserve .content {
-        background-image: url("../../images/rebgg.png");
+        background-image: url("../../images/reserve_bg_round.png");
         background-size: contain;
         background-position: center;
         background-repeat: no-repeat;
         height: 100%;
-        width: 175px;
+        width: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        border-radius: 50%;
     }
 
         #Reserve .content > div {
@@ -124,6 +164,10 @@
 
             #Reserve .content > div:nth-child(2) {
                 color: #7D6131;
+            }
+
+            #Reserve .content > div:last-child {
+                color: black;
             }
 
 /*RWD*/
@@ -145,8 +189,24 @@
 
 @media only screen and (max-width: 576px) {
 
+    #Tiles {
+        padding: 25px 25px;
+    }
+
+        #Tiles > .content {
+            flex-direction: column;
+        }
+
+            #Tiles > .content > .frame {
+                width: 100%;
+            }
+
+                #Tiles > .content > .frame:first-child {
+                    margin-bottom: 4%;
+                }
+
     #Most_Popular {
-        padding: 10px 10vw;
+        padding: 10px 25px;
     }
 
         #Most_Popular > .content {

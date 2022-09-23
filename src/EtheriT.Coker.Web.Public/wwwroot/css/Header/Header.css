@@ -1,4 +1,10 @@
 ﻿
+
+li {
+    cursor: pointer;
+    list-style: none;
+}
+
 /* Header Top*/
 #Header_Top {
     background-color: #1E1E1E;
@@ -25,17 +31,17 @@
         cursor: pointer;
     }
 
-#News_box {
-    display: flex;
-    flex: auto;
-    position: relative;
-    overflow: hidden;
+.news_box {
+    list-style: none;
     height: 20px;
+    overflow: hidden;
+    margin-bottom: 0px;
 }
 
-    #News_box > ul > li a {
+    .news_box > li a {
         color: white;
     }
+
 
 #Search_Input {
     background-color: white;

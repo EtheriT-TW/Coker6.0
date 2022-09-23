@@ -1,4 +1,10 @@
-﻿/* Footer */
+﻿
+li {
+    cursor: pointer;
+    list-style: none;
+}
+
+/* Footer */
 footer {
     background-color: #4A5859;
     color: white;

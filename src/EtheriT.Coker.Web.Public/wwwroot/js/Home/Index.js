@@ -1,5 +1,6 @@
 ﻿
 function PageReady() {
+    HeaderInit();
     $(document).ready(function () {
         $("#btn_gonews").on("click", gonews);
     })

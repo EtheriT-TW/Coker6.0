@@ -19,14 +19,14 @@ var styleEntries = {};
 var scriptEntries = {};
 
 var viewScripts = globby.sync([
-	'./wwwroot/js/*.js',
+	'./wwwroot/js/**/*.js',
 	'./wwwroot/view-resources/**/*.js',
 	'!./wwwroot/view-resources/**/*.min.js',
 	'!./wwwroot/js/*.min.js',
 ]);
 
 var viewStyles = globby.sync([
-	'./wwwroot/css/*.css',
+	'./wwwroot/css/**/*.css',
 	'./wwwroot/view-resources/**/*.css',
 	'./wwwroot/view-resources/**/*.less',
 	'!./wwwroot/view-resources/**/*.min.css',

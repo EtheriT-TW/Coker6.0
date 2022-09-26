@@ -3,8 +3,7 @@
     {
       "output": "lib/jquery/dist/jquery.min.js",
       "input": [
-        "node_modules/jquery/dist/jquery.min.js",
-        "node_modules/jquery/dist/jquery.scrollTo.js"
+        "node_modules/jquery/dist/jquery.min.js"
       ]
     },
     {

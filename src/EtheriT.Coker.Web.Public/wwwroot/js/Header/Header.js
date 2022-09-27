@@ -1,5 +1,4 @@
 ﻿function HeaderInit() {
-    console.log("in");
     setInterval(function () {
         $('.news_box li:first-child').slideUp(function () {
             $(this).appendTo($('.news_box')).slideDown()

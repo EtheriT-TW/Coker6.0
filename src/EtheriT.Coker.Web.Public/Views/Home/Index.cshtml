@@ -23,13 +23,25 @@
 	</div>
 </div>
 
+<div id="Mask" class=""></div>
+
+<div id="toastPlacement" class="toast-container p-3 position-fixed top-50 start-50 translate-middle">
+	<div id="liveToast" class="toast ">
+		<div class="toast-body cent"></div>
+	</div>
+</div>
+
+
 <div id="btn_gonews"><i class="fa-solid fa-chevron-down"></i></div>
 
 <div id="Guess_Like">
 	<div class="title">猜您會喜歡</div>
 	<div class="content">
 		<div class="frame">
-			<div class="name">DE-R1073&ensp;德瑞克直熱式微電腦馬桶座／遙控型</div>
+			<div class="top">
+				<div class="name">DE-R1073&ensp;德瑞克直熱式微電腦馬桶座／遙控型</div>
+				<i class="btn_favorites fa-regular fa-heart"></i>
+			</div>
 			<div class="tag">
 				<ul>
 					<li>熱銷款</li>
@@ -44,28 +56,35 @@
 			</div>
 		</div>
 		<div class="frame">
-			<div class="name">L602&ensp;檯上三角盆</div>
+			<div class="top">
+				<div class="name">C659NA德瑞克Smart III淨未來智慧馬桶</div>
+				<i class="btn_favorites fa-regular fa-heart"></i>
+			</div>
 			<div class="tag">
 				<ul>
-					<li>歐洲省水二段</li>
-					<li>三角盆</li>
+					<li>奈米</li>
+					<li>智慧馬桶</li>
+					<li>一觸即掀</li>
 				</ul>
 			</div>
 			<div class="image"><img src="~/images/pro2.png" alt="" /></div>
 			<div class="buy">
-				<div class="price">$28,300</div>
+				<div class="price">$135,000</div>
 				<div class="btn_buy">立即購買</div>
 			</div>
 		</div>
 		<div class="frame">
-			<div class="name">L602&ensp;檯上三角盆</div>
+			<div class="top">
+				<div class="name">L602&ensp;檯上三角盆</div>
+				<i class="btn_favorites fa-regular fa-heart"></i>
+			</div>
 			<div class="tag">
 				<ul>
 					<li>歐洲省水二段</li>
 					<li>三角盆</li>
 				</ul>
 			</div>
-			<div class="image"><img src="~/images/pro2.png" alt="" /></div>
+			<div class="image"><img src="~/images/pro3.png" alt="" /></div>
 			<div class="buy">
 				<div class="price">$28,300</div>
 				<div class="btn_buy">立即購買</div>
@@ -80,7 +99,7 @@
 		<div class="frame">
 			<div class="content">
 				<div class="icon_button">
-					<i class="btn_favorites fa-regular fa-heart"></i>
+					<i class="btn_favorites fa-solid fa-regular fa-heart"></i>
 					<i class="fa-solid fa-cart-shopping"></i>
 				</div>
 				<div class="image"><img src="~/images/pro1.png" alt="" /></div>
@@ -93,7 +112,7 @@
 		<div class="frame">
 			<div class="content">
 				<div class="icon_button">
-					<i class="btn_favorites fa-regular fa-heart"></i>
+					<i class="btn_favorites fa-solid fa-regular fa-heart"></i>
 					<i class="fa-solid fa-cart-shopping"></i>
 				</div>
 				<div class="image"><img src="~/images/pro1.png" alt="" /></div>
@@ -106,7 +125,7 @@
 		<div class="frame">
 			<div class="content">
 				<div class="icon_button">
-					<i class="btn_favorites fa-regular fa-heart"></i>
+					<i class="btn_favorites fa-solid fa-regular fa-heart"></i>
 					<i class="fa-solid fa-cart-shopping"></i>
 				</div>
 				<div class="image"><img src="~/images/pro1.png" alt="" /></div>
@@ -119,7 +138,7 @@
 		<div class="frame">
 			<div class="content">
 				<div class="icon_button">
-					<i class="btn_favorites fa-regular fa-heart"></i>
+					<i class="btn_favorites fa-solid fa-regular fa-heart"></i>
 					<i class="fa-solid fa-cart-shopping"></i>
 				</div>
 				<div class="image"><img src="~/images/pro1.png" alt="" /></div>
@@ -132,7 +151,7 @@
 		<div class="frame">
 			<div class="content">
 				<div class="icon_button">
-					<i class="btn_favorites fa-regular fa-heart"></i>
+					<i class="btn_favorites fa-solid fa-regular fa-heart"></i>
 					<i class="fa-solid fa-cart-shopping"></i>
 				</div>
 				<div class="image"><img src="~/images/pro1.png" alt="" /></div>
@@ -194,31 +213,61 @@
 	</div>
 </div>
 
-<div id="News">
+<div id="News" class="container-fluid">
 	<div class="title">最新消息</div>
-	<div class="content">
-		<div class="frame">
-			<div class="image"><img src="~/images/news_pic1.jpg" alt="" /></div>
-			<div class="text">
-				<div class="time">
-					<div class="date">08/15</div>
-					<div class="year">2022</div>
+	<div class="swiper NewsSwiper">
+		<div class="swiper-wrapper content">
+			<div class="frame swiper-slide">
+				<div class="image"><img src="~/images/news_pic1.jpg" alt="" /></div>
+				<div class="text">
+					<div class="time">
+						<div class="date">08/15</div>
+						<div class="year">2022</div>
+					</div>
+					<div class="content">新品上市，全省門市販售中</div>
+					<div class="more">More&ensp;></div>
 				</div>
-				<div class="content">新品上市，全省門市販售中</div>
-				<div class="more">More&ensp;></div>
+			</div>
+
+			<div class="frame swiper-slide">
+				<div class="image"><img src="~/images/news_pic2.jpg" alt="" /></div>
+				<div class="text">
+					<div class="time">
+						<div class="date">07/28</div>
+						<div class="year">2022</div>
+					</div>
+					<div class="content">台灣最卓越的衛浴品牌需要您一票支援！！！</div>
+					<div class="more">More&ensp;></div>
+				</div>
+			</div>
+
+			<div class="frame swiper-slide">
+				<div class="image"><img src="~/images/news_pic1.jpg" alt="" /></div>
+				<div class="text">
+					<div class="time">
+						<div class="date">08/15</div>
+						<div class="year">2022</div>
+					</div>
+					<div class="content">新品上市，全省門市販售中</div>
+					<div class="more">More&ensp;></div>
+				</div>
+			</div>
+
+			<div class="frame swiper-slide">
+				<div class="image"><img src="~/images/news_pic2.jpg" alt="" /></div>
+				<div class="text">
+					<div class="time">
+						<div class="date">07/28</div>
+						<div class="year">2022</div>
+					</div>
+					<div class="content">台灣最卓越的衛浴品牌需要您一票支援！！！</div>
+					<div class="more">More&ensp;></div>
+				</div>
 			</div>
 		</div>
-		<div class="frame">
-			<div class="image"><img src="~/images/news_pic2.jpg" alt="" /></div>
-			<div class="text">
-				<div class="time">
-					<div class="date">07/28</div>
-					<div class="year">2022</div>
-				</div>
-				<div class="content">台灣最卓越的衛浴品牌需要您一票支援！！！</div>
-				<div class="more">More&ensp;></div>
-			</div>
-		</div>
+		<div class="swiper-button-next"></div>
+		<div class="swiper-button-prev"></div>
+		<div class="swiper-pagination"></div>
 	</div>
 </div>
 

@@ -71,7 +71,7 @@
                                             <ul>
                                                 @foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
                                                 {
-                                                    <li><a>@thirdMenu.Title</a></li>
+                                                    <li><a = href="@thirdMenu.Link">@thirdMenu.Title</a></li>
                                                 }
                                             </ul>
                                         </li>

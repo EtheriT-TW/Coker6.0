@@ -48,7 +48,7 @@ a {
 }
 
 .fa-solid.fa-heart {
-    color: #AB0125;
+    color: #AB0125!important;
 }
 
 .toast-body {
@@ -65,7 +65,7 @@ a {
 
 /* Cookie */
 .cookie {
-    z-index: 3;
+    z-index: 1000;
     position: fixed;
     background-color: #000000aa;
     color: white;

@@ -14,15 +14,8 @@
     .swiper_four_grid > .swiper > .swiper-wrapper > .card {
         position: relative;
         border-radius: 25px;
+        overflow: hidden;
     }
-
-        .swiper_four_grid > .swiper > .swiper-wrapper > .card > i {
-            font-size: xx-large;
-            color: #BFBFBF;
-            position: absolute;
-            margin: 10px;
-            cursor: pointer;
-        }
 
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > img {
             width: 100%;
@@ -40,9 +33,11 @@
                 font-weight: bold;
             }
 
-            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title > i {
-                font-size: x-large;
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title > .icon > i {
+                font-size: larger;
+                color: #BFBFBF;
                 cursor: pointer;
+                margin-left: 0.5rem;
             }
 
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .name {
@@ -56,21 +51,37 @@
         }
 
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer {
-            display: block;
-            height: 3rem;
-            margin: 0;
+            border-color: transparent;
         }
 
-            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer > li {
-                padding: 0.25rem 0.8rem;
-                margin: 0 0.5rem 0.5rem 0;
-                background-color: #F4F4F4;
-                border-radius: 50px;
-                color: #707070;
-                white-space: nowrap;
-                float: left;
-                list-style: none;
-                display: block;
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer > ul {
+                width: calc(100% - 30px);
+                height: 2rem;
+                margin: 0;
+                overflow: hidden;
+            }
+
+                .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer > ul > li {
+                    padding: 0.25rem 0.8rem;
+                    margin-right: 0.5rem;
+                    background-color: #F4F4F4;
+                    border-radius: 50px;
+                    color: #707070;
+                    float: left;
+                    list-style: none;
+                    white-space: nowrap;
+                }
+
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer > i {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                color: white;
+                background-color: #E2E2E2;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
             }
 
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .tag {
@@ -82,12 +93,11 @@
                 padding: 0.25rem 0.8rem;
                 background-color: #F4F4F4;
                 color: #707070;
-                cursor: pointer;
             }
 
 [class*=btn_swiper_] {
     position: absolute;
-    top: 50%;
+    top: calc(50% - 25px);
     z-index: 10;
     display: flex;
     align-items: center;
@@ -100,12 +110,12 @@
     border-radius: 50%;
 }
 
-.btn_swiper_next {
+[class*=btn_swiper_next_] {
     right: calc(10vw - 25px);
     left: auto;
 }
 
-.btn_swiper_prev {
+[class*=btn_swiper_prev] {
     right: auto;
     left: calc(10vw - 25px);
 }

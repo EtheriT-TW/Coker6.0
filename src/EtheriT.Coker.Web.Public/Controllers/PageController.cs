@@ -16,7 +16,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         public IActionResult Index(string key, int id, string search)
         {
             string view = string.Empty;
-            if (string.IsNullOrEmpty(key))
+            if (!string.IsNullOrEmpty(key))
             {
                 view = "Product";
                 if (id != 0) view = "ProductContent";

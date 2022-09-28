@@ -364,6 +364,11 @@ FodyWeavers.xsd
 
 # uglify file
 *.min.js
+*.min.js.map
 *.min.css
+!bootstrap.min.js
+!bootstrap.min.css
+!**/wwwroot/lib/bootstrap/**/*.min.js.map
+!**/wwwroot/lib/jquery/**/*.min.js.map
 */*/wwwroot/dist/
 *.lock

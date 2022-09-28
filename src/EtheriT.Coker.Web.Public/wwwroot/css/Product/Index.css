@@ -119,3 +119,8 @@
     right: auto;
     left: calc(10vw - 25px);
 }
+
+.swiper_ads {
+    padding: 40px 10vw;
+    position: relative;
+}

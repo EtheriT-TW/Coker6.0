@@ -30,7 +30,7 @@
 
             .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title > .price {
                 font-size: 1.5rem;
-                font-weight: bold;
+                font-weight: 900;
             }
 
             .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title > .icon > i {
@@ -64,6 +64,7 @@
                 .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer > ul > li {
                     padding: 0.25rem 0.8rem;
                     margin-right: 0.5rem;
+                    font-size: 0.5rem;
                     background-color: #F4F4F4;
                     border-radius: 50px;
                     color: #707070;
@@ -123,7 +124,7 @@
 /* Most Popular */
 #Ads {
     background-color: #F2F2F2;
-    padding: 10px 10vw;
+    padding: 10px 10vw 0px 10vw;
     margin: 40px 0;
 }
 
@@ -169,6 +170,7 @@
 
                 #Ads > .content > .frame > .keywords > ul > li {
                     margin-right: 10px;
+                    padding-top: 15px;
                     font-size: 0.8rem;
                 }
 

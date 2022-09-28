@@ -20,6 +20,7 @@
     "gulp-postcss": "^8.0.0",
     "gulp-uglify-es": "^3.0.0",
     "jquery": "^3.6.1",
+    "jquery-plugin-c-share": "^1.2.0",
     "merge-stream": "^2.0.0",
     "path": "^0.12.7",
     "postcss-url": "^9.0.0",

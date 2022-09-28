@@ -17,6 +17,12 @@
       "input": [
         "node_modules/swiper/swiper-bundle.min.js"
       ]
+    },
+    {
+      "output": "lib/jquery-plugin-c-share/dist/jquery.c-share.min.js",
+      "input": [
+        "node_modules/jquery-plugin-c-share/dist/jquery.c-share.js"
+      ]
     }
   ],
   "styles": [

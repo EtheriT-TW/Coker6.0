@@ -120,7 +120,124 @@
     left: calc(10vw - 25px);
 }
 
+/* Most Popular */
+#Ads {
+    background-color: #F2F2F2;
+    padding: 10px 10vw;
+    margin: 40px 0;
+}
+
+    #Ads > .title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        padding: 10px 10px;
+    }
+
+
+    #Ads > .content {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+        #Ads > .content > .frame {
+            width: 49%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+            #Ads > .content > .frame > .image > img {
+                width: 100%;
+                height: fit-content;
+                margin-bottom: 10px;
+            }
+
+            #Ads > .content > .frame > .describe {
+                flex-grow: 1;
+            }
+
+                #Ads > .content > .frame > .describe > a {
+                    height: fit-content;
+                    color: black;
+                }
+
+            #Ads > .content > .frame > .keywords > ul {
+                display: flex;
+                margin: 10px 0;
+            }
+
+                #Ads > .content > .frame > .keywords > ul > li {
+                    margin-right: 10px;
+                    font-size: 0.8rem;
+                }
+
+#Badge {
+    padding: 40px 10vw;
+    display: flex;
+}
+
+    #Badge > .card {
+        border-color: transparent;
+    }
+
+        #Badge > .card > img {
+            width: 100%;
+        }
+
+    #Badge > .vr {
+        height: 15vw;
+        align-self: center;
+    }
+
 .swiper_ads {
     padding: 40px 10vw;
     position: relative;
+}
+
+
+/*RWD*/
+@media only screen and (max-width: 1072px) {
+}
+
+@media only screen and (max-width: 992px) {
+}
+
+@media only screen and (max-width: 768px) {
+    #Badge {
+        flex-wrap: wrap;
+    }
+
+        #Badge > .card {
+            width: 39vw;
+        }
+
+        #Badge > .vr {
+            height: 35vw;
+        }
+
+
+            #Badge > .vr:nth-child(3), #Badge > .vr:nth-child(4) {
+                display: none;
+            }
+}
+
+@media only screen and (max-width: 576px) {
+}
+
+@media only screen and (max-width: 390px) {
+    #Badge {
+        flex-wrap: wrap;
+    }
+
+        #Badge > .card {
+            width: 100%;
+        }
+
+        #Badge > .vr {
+            display: none;
+        }
+}
+
+@media only screen and (max-width: 368px) {
 }

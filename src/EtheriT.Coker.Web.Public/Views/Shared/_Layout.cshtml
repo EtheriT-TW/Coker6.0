@@ -16,7 +16,17 @@
 	<header>
 		@await Component.InvokeAsync(nameof(Header))
 	</header>
+
+	<div id="Mask" class=""></div>
+
+	<div id="toastPlacement" class="toast-container p-3 position-fixed top-50 start-50 translate-middle">
+		<div id="liveToast" class="toast ">
+			<div class="toast-body cent"></div>
+		</div>
+	</div>
+
     @RenderBody()
+
     <footer>
 		@await Component.InvokeAsync(nameof(Footer))
 		<div id="Cookie" class="cookie">

@@ -1,23 +1,4 @@
-﻿/* Toast */
-#toastPlacement {
-    z-index: 100;
-}
-
-.fa-solid.fa-heart {
-    color: #AB0125;
-}
-
-.toast-body {
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#Mask {
-    z-index: 99;
-}
-
+﻿
 /* Banner */
 #banner {
     padding: 0;

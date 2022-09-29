@@ -123,28 +123,22 @@
 
     #Classification > .frame {
         border: 1px solid #B8B8B8;
+        height: fit-content;
     }
 
         #Classification > .frame > div {
             color: #4B4B4B;
             background-color: #F4F4F4;
-            padding: 0.5rem 2rem;
-            margin-right: 1rem;
             white-space: nowrap;
         }
 
         #Classification > .frame > ul {
-            margin: 0;
-            height: 2.5rem;
-            overflow: hidden;
         }
 
             #Classification > .frame > ul > li {
-                margin-right: 1rem;
-                line-height: 2.5;
+                margin: 0.5rem 1rem 0.5rem 0;
                 float: left;
                 list-style: none;
-                white-space: nowrap;
             }
 
 /* Ads */
@@ -202,7 +196,22 @@
 /* Catalog */
 #Catalog {
     padding: 40px 10vw;
+    font-family: sans-serif;
 }
+
+    #Catalog > .frame {
+        background-image: url("/images/other_page_3.jpg");
+        background-size: cover;
+        background-position: center;
+    }
+
+        #Catalog > .frame > .content > .frame > .fs-3, #Catalog > .frame > .content > .frame .fs-2 {
+            color: #A2784E;
+        }
+
+        #Catalog > .frame > .content > .frame span > i:first-child {
+            color: #C3A88D;
+        }
 
 /* Hot_Product_Title */
 #Hot_Product_Title {
@@ -244,6 +253,17 @@
 }
 
 @media only screen and (max-width: 768px) {
+
+    #Catalog > .frame > .content {
+        color: #C3A88D;
+        margin: 20px 0 10px 0;
+    }
+
+    #Catalog > .frame > .image {
+        width: 50%;
+        margin: 10px 0 20px 0;
+    }
+
     #Badge {
         flex-wrap: wrap;
         justify-content: center;

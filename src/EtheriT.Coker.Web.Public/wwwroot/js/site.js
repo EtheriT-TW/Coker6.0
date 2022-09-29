@@ -1,7 +1,7 @@
 ﻿function ready() {
     typeof (PageReady) === "function" && PageReady();
-    typeof (ProductInit) === "function" && ProductInit();
-    typeof (ProductContentInit) === "function" && ProductContentInit();
+    HeaderInit();
+
     $("#Collapse_Button > i").on("click", collapse);
     $(".btn_cookie_accept").on("click", cookie_accept);
     $(".btn_cookie_reject").on("click", cookie_reject);

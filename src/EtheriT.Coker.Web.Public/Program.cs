@@ -37,12 +37,4 @@ app.MapControllerRoute(
     name: "api",
     pattern: "api/{controller=Home}/{action=Index}/{id?}");
 
-//var options = new RewriteOptions()
-//        .AddRewrite(@"^(\w+)", "Page/Index/$1", skipRemainingRules: true)
-//        .AddRewrite(@"^(\w+)/(\d+)", "Page/Index/$1/$2", skipRemainingRules: true)
-//        .AddRewrite(@"^(\w+)/(\d+)/(\d+)", "Page/Index/$1/$2/$3", skipRemainingRules: true)
-//        .AddRewrite(@"^(\w+)/(\d+)/(\d+)/(\w+)", "Page/Index/$1/$2/$3/$4", skipRemainingRules: true);
-
-//app.UseRewriter(options);
-
 app.Run();

@@ -26,13 +26,17 @@ function cookie_reject() {
 }
 
 function AddFavorites() {
+    var $self = $(this)
+    var $p = $self.parents(".frame").first();
     var toastLiveExample = document.getElementById('liveToast')
-    $(this).toggleClass('fa-solid');
-    $("#liveToast>.toast-body").empty();
-    if ((this).classList.contains('fa-solid')) {
-        $("#liveToast>.toast-body").append('<div>加入收藏成功</div>');
+    var $toastBody = $("#liveToast>.toast-body");
+    $self.toggleClass('fa-solid');
+    $toastBody.empty();
+    $p.remove();
+    if ($self.hasClass("fa-solid")) {
+        $toastBody.append('<div>加入收藏成功</div>');
     } else {
-        $("#liveToast>.toast-body").append('<div>移除收藏成功</div>');
+        $toastBody.append('<div>移除收藏成功</div>');
     }
     var toast = new bootstrap.Toast(toastLiveExample)
     $('#Mask').toggleClass('show modal-backdrop');

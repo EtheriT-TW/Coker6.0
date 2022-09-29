@@ -85,17 +85,6 @@
                 cursor: pointer;
             }
 
-        .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .tag {
-            display: flex;
-            margin: 0;
-        }
-
-            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .tag > li {
-                padding: 0.25rem 0.8rem;
-                background-color: #F4F4F4;
-                color: #707070;
-            }
-
 [class*=btn_swiper_] {
     position: absolute;
     top: calc(50% - 25px);
@@ -121,11 +110,47 @@
     left: calc(10vw - 25px);
 }
 
-/* Most Popular */
+/* Title */
+#Title {
+    background-color: #E0E3E8;
+    padding: 20px 10vw;
+}
+
+/* Classification */
+#Classification {
+    padding: 20px 10vw;
+}
+
+    #Classification > .frame {
+        border: 1px solid #B8B8B8;
+    }
+
+        #Classification > .frame > div {
+            color: #4B4B4B;
+            background-color: #F4F4F4;
+            padding: 0.5rem 2rem;
+            margin-right: 1rem;
+            white-space: nowrap;
+        }
+
+        #Classification > .frame > ul {
+            margin: 0;
+            height: 2.5rem;
+            overflow: hidden;
+        }
+
+            #Classification > .frame > ul > li {
+                margin-right: 1rem;
+                line-height: 2.5;
+                float: left;
+                list-style: none;
+                white-space: nowrap;
+            }
+
+/* Ads */
 #Ads {
-    background-color: #F2F2F2;
+    background-color: #E2E2E2;
     padding: 10px 10vw 0px 10vw;
-    margin: 40px 0;
 }
 
     #Ads > .title {
@@ -174,13 +199,26 @@
                     font-size: 0.8rem;
                 }
 
+/* Catalog */
+#Catalog {
+    padding: 40px 10vw;
+}
+
+/* Hot_Product_Title */
+#Hot_Product_Title {
+    margin-top: 0;
+}
+
+/* Badge */
 #Badge {
     padding: 40px 10vw;
     display: flex;
+    justify-content: space-between;
 }
 
     #Badge > .card {
         border-color: transparent;
+        width: 19vw;
     }
 
         #Badge > .card > img {
@@ -208,10 +246,11 @@
 @media only screen and (max-width: 768px) {
     #Badge {
         flex-wrap: wrap;
+        justify-content: center;
     }
 
         #Badge > .card {
-            width: 39vw;
+            width: 29vw;
         }
 
         #Badge > .vr {
@@ -233,7 +272,7 @@
     }
 
         #Badge > .card {
-            width: 100%;
+            width: 69vw;
         }
 
         #Badge > .vr {

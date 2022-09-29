@@ -1,0 +1,84 @@
+﻿
+/* Product */
+#Product {
+    margin: 20px 10vw;
+}
+
+    #Product > .image {
+        background-color: green;
+    }
+
+        #Product > .image > .tag {
+            width: calc(100% - 30px);
+            height: 1.625rem;
+            margin: 0;
+            overflow: hidden;
+        }
+
+            #Product > .image > .tag > li {
+                padding: 0.25rem 0.8rem;
+                margin-right: 0.5rem;
+                font-size: 0.5rem;
+                background-color: #F4F4F4;
+                color: #727272;
+                border-radius: 50px;
+                float: left;
+                list-style: none;
+                white-space: nowrap;
+            }
+
+    #Product > .content > div:nth-child(2) {
+        color: #767676;
+    }
+
+        #Product > .content > div:nth-child(2) > .track > i {
+            font-size: xxx-large;
+            cursor: pointer;
+        }
+
+    #Product > .content > .specification {
+        color: #767676;
+        padding: 0 1rem;
+    }
+
+
+
+/* CenterLine */
+#CenterLine {
+    margin: 0 10vw;
+    background-color: #E8E8E8;
+}
+
+    #CenterLine > div:not(:last-child) {
+        color: #707070;
+        padding: 0.5rem 2rem;
+        cursor: pointer;
+        width: fit-content;
+    }
+
+        #CenterLine > div:not(:last-child):hover {
+            font-weight: bold;
+            color: #9C250D;
+            background-color: #F3BDBD;
+        }
+
+#shareBlock {
+    flex-grow: 1;
+}
+
+/* ProductDescription */
+#ProductDescription {
+    margin: 0 10vw;
+    padding: 1rem;
+    color: #717171;
+}
+
+    #ProductDescription > img {
+        width: 100%;
+    }
+
+    #ProductDescription > iframe {
+        width: 100%;
+        height: 40vw;
+        margin: 1rem 0;
+    }

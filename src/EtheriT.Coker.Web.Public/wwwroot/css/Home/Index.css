@@ -410,6 +410,11 @@
                     color: #4991C3;
                 }
 
+    #News > .NewsSwiper > .swiper-pagination {
+        width: fit-content;
+        left: calc(50% - 24px);
+    }
+
 /* Most Popular */
 #Most_Popular {
     background-color: #F2F2F2;

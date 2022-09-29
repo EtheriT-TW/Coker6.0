@@ -19,18 +19,19 @@ var styleEntries = {};
 var scriptEntries = {};
 
 var viewScripts = globby.sync([
-	'./wwwroot/js/*.js',
+	'./wwwroot/js/**/*.js',
 	'./wwwroot/view-resources/**/*.js',
 	'!./wwwroot/view-resources/**/*.min.js',
-	'!./wwwroot/js/*.min.js',
+	'!./wwwroot/js/**/*.min.js',
 ]);
 
 var viewStyles = globby.sync([
-	'./wwwroot/css/*.css',
+	'./wwwroot/css/**/*.css',
+	'./wwwroot/css/**/*.less',
 	'./wwwroot/view-resources/**/*.css',
 	'./wwwroot/view-resources/**/*.less',
 	'!./wwwroot/view-resources/**/*.min.css',
-	'!./wwwroot/css/*.min.css',
+	'!./wwwroot/css/**/*.min.css',
 ]);
 
 function processInputDefinition(input) {
@@ -77,7 +78,6 @@ function fillStyleBundles() {
 		if (viewStyleName.indexOf('.css') >= 0) {
 			styleEntries[viewStyleName.replace('.css', '.min.css')] = [path.resolve(__dirname, 'wwwroot/' + viewStyleName)];
 		}
-
 		if (viewStyleName.indexOf('.less') >= 0) {
 			styleEntries[viewStyleName.replace('.less', '.min.css')] = [path.resolve(__dirname, 'wwwroot/' + viewStyleName)];
 		}

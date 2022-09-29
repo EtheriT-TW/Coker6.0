@@ -4,20 +4,25 @@ using System.Diagnostics;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
-    public class HomeController : Controller
+    public class AccountController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly ILogger<AccountController> _logger;
+        public AccountController(ILogger<AccountController> logger)
         {
             _logger = logger;
         }
-
         public IActionResult Index()
         {
             return View();
         }
-
+        public IActionResult Register()
+        {
+            return View();
+        }
+        public IActionResult Forget()
+        {
+            return View();
+        }
         public IActionResult Privacy()
         {
             return View();

@@ -17,7 +17,7 @@ function PageReady() {
     });
 
     var new_swiper = new Swiper(".NewsSwiper", {
-        slidesPerView: jQuery(window).width() > 768 ? 2: 1,
+        slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
         pagination: {
@@ -28,6 +28,11 @@ function PageReady() {
             nextEl: ".swiper-button-next",
             prevEl: ".swiper-button-prev",
         },
+        breakpoints: {
+            769: {
+                slidesPerView: 2,
+            }
+        }
     });
 }
 

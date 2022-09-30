@@ -110,16 +110,16 @@
     left: calc(10vw - 25px);
 }
 
-/* Title */
-#Title {
 /* Breadcrumb */
 #Breadcrumb {
     --bs-breadcrumb-divider: '-';
     --breadcrumb-divider-color: #787878;
     --breadcrumb-active-color: #787878;
 }
+
+/* Filter */
+#Filter {
     background-color: #E0E3E8;
-    padding: 20px 10vw;
 }
 
 /* Classification */

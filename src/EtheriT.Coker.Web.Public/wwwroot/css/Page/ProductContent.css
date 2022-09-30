@@ -6,6 +6,59 @@
     --breadcrumb-active-color: #787878;
 }
 
+/* Swiper */
+.swiper_product {
+    position: relative;
+}
+
+.ProductSwiper > .swiper-wrapper > .swiper-slide {
+    height: 600px;
+}
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > img {
+        width: 100%;
+    }
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > iframe {
+        width: 100%;
+        height: 100%;
+    }
+
+.PreviewSwiper > .swiper-wrapper > .swiper-slide {
+    cursor: pointer;
+}
+
+
+    .PreviewSwiper > .swiper-wrapper > .swiper-slide > img {
+        width: 100%;
+    }
+
+
+[class*=btn_swiper_] {
+    position: absolute;
+    top: calc(50% - 25px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    width: 50px;
+    font-size: x-large;
+    color: white;
+    background-color: #808080aa;
+    border-radius: 50%;
+}
+
+[class*=btn_swiper_next_] {
+    right: 25px;
+    left: auto;
+}
+
+[class*=btn_swiper_prev] {
+    right: auto;
+    left: 25px;
+}
+
 /* Product */
 #Product {
     margin: 20px 0;
@@ -89,33 +142,74 @@
     background-color: #E8E8E8;
 }
 
-    #CenterLine > div:not(:last-child) {
-        color: #707070;
-        padding: 0.5rem 2rem;
-        cursor: pointer;
-        width: fit-content;
+    #CenterLine > div > div {
+        white-space: nowrap;
     }
-
-        #CenterLine > div:not(:last-child):hover {
-            font-weight: bold;
-            color: #9C250D;
-            background-color: #F3BDBD;
-        }
 
 #shareBlock {
     flex-grow: 1;
 }
+/* nav */
+.nav-link {
+    color: #707070;
+    padding: 0.5rem 2rem;
+}
 
-/* ProductDescription */
-#ProductDescription {
+    .nav-link:focus, .nav-link:hover {
+        color: #9C250D;
+    }
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    font-weight: bold;
+    color: #9C250D;
+    background-color: #F3BDBD;
+}
+
+.nav-pills .nav-link {
+    border-radius: 0;
+}
+
+/* TabContent */
+#TabContent {
     color: #717171;
 }
 
-    #ProductDescription > img {
+    #TabContent > div > img {
         width: 100%;
     }
 
-    #ProductDescription > iframe {
+    #TabContent > div > iframe {
         width: 100%;
         height: 80vmin;
     }
+
+
+@media only screen and (max-width: 1400px) {
+    .ProductSwiper > .swiper-wrapper > .swiper-slide {
+        height: 510px;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+    .ProductSwiper > .swiper-wrapper > .swiper-slide {
+        height: 420px;
+    }
+}
+
+@media only screen and (max-width: 992px) {
+    .ProductSwiper > .swiper-wrapper > .swiper-slide {
+        height: 300px;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .ProductSwiper > .swiper-wrapper > .swiper-slide {
+        height: 300px;
+    }
+}
+
+@media only screen and (max-width: 576px) {
+    .ProductSwiper > .swiper-wrapper > .swiper-slide {
+        height: 85vw;
+    }
+}

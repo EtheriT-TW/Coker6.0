@@ -46,8 +46,15 @@ label {
 
     .container {
         > .row {
-            height: 100vh;
+            height: calc(100vh - 60px);
             min-height: 700px;
+            overflow: auto;
+
+            @media (max-width: 767.98px) {
+                & {
+                    overflow:visible;
+                }
+            }
         }
     }
 }

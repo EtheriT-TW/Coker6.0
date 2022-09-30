@@ -1,0 +1,22 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+<nav class="navbar navbar-dark bg-primary">
+    <a class="navbar-brand m-0 py-2 brand-title" href="#">Cosmo Admin</a>
+    <span></span>
+    <a class="navbar-brand py-2 material-icons toggle-sidebar" href="#">menu</a>
+</nav>
+<nav class="navigation">
+    <ul>
+        <li class="active">
+            <a title="Dashboard" asp-controller="Dashboard" asp-action="Index">
+                <span class="nav-icon material-icons">public</span>儀表板
+            </a>
+        </li>
+        <li class="active">
+            <a asp-controller="Theme" asp-action="Index">
+                <span class="nav-icon material-icons ">color_lens</span>後台配色設定
+            </a>
+        </li>
+    </ul>
+</nav>

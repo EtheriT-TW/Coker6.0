@@ -1,6 +1,7 @@
 ﻿function ready() {
     typeof (PageReady) === "function" && PageReady();
     HeaderInit();
+    FooterInit();
 
     $("#Collapse_Button > i").on("click", collapse);
     $(".btn_cookie_accept").on("click", cookie_accept);

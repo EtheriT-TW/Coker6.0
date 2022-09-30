@@ -43,6 +43,10 @@ p {
     margin: 0 0 0 0;
 }
 
+.price::before{
+    content: '$';
+}
+
 /* Toast */
 #toastPlacement {
     z-index: 100;

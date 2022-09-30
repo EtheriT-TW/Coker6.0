@@ -1,4 +1,11 @@
 ﻿
+/* Breadcrumb */
+#Breadcrumb {
+    --bs-breadcrumb-divider: '/';
+    --breadcrumb-divider-color: #787878;
+    --breadcrumb-active-color: #787878;
+}
+
 /* Product */
 #Product {
     margin: 20px 0;
@@ -91,4 +98,9 @@
 
     #ProductDescription > img {
         width: 100%;
+    }
+
+    #ProductDescription > iframe {
+        width: 100%;
+        height: 80vmin;
     }

@@ -112,34 +112,24 @@
 
 /* Title */
 #Title {
+/* Breadcrumb */
+#Breadcrumb {
+    --bs-breadcrumb-divider: '-';
+    --breadcrumb-divider-color: #787878;
+    --breadcrumb-active-color: #787878;
+}
     background-color: #E0E3E8;
     padding: 20px 10vw;
 }
 
 /* Classification */
-#Classification {
-    padding: 20px 10vw;
+#Classification > .title {
+    background-color: #F4F4F4;
 }
 
-    #Classification > .frame {
-        border: 1px solid #B8B8B8;
-        height: fit-content;
-    }
-
-        #Classification > .frame > div {
-            color: #4B4B4B;
-            background-color: #F4F4F4;
-            white-space: nowrap;
-        }
-
-        #Classification > .frame > ul {
-        }
-
-            #Classification > .frame > ul > li {
-                margin: 0.5rem 1rem 0.5rem 0;
-                float: left;
-                list-style: none;
-            }
+#Classification > ul > li {
+    margin-right: 0.25rem;
+}
 
 /* Ads */
 #Ads {
@@ -195,23 +185,19 @@
 
 /* Catalog */
 #Catalog {
-    padding: 40px 10vw;
     font-family: sans-serif;
+    background-image: url("/images/other_page_3.jpg");
+    background-size: cover;
+    background-position: center;
 }
 
-    #Catalog > .frame {
-        background-image: url("/images/other_page_3.jpg");
-        background-size: cover;
-        background-position: center;
+    #Catalog > .text > .fs-3, #Catalog > .text > .fs-2 {
+        color: #A2784E;
     }
 
-        #Catalog > .frame > .content > .frame > .fs-3, #Catalog > .frame > .content > .frame .fs-2 {
-            color: #A2784E;
-        }
-
-        #Catalog > .frame > .content > .frame span > i:first-child {
-            color: #C3A88D;
-        }
+    #Catalog > .text span > i:first-child {
+        color: #C3A88D;
+    }
 
 /* Hot_Product_Title */
 #Hot_Product_Title {

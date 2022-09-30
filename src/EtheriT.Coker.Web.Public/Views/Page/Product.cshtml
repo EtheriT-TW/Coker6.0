@@ -10,20 +10,35 @@
 <div id="Title">
 	馬桶
 </div>
+<nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item"><a href="/">首頁</a></li>
+		<li class="breadcrumb-item"><a href="/">Derek商品</a></li>
+		<li class="breadcrumb-item active" aria-current="page">馬桶</li>
+	</ol>
+</nav>
 
-<div id="Classification">
-	<div class="frame d-flex align-items-center">
-		<div class="hstack px-4">分類</div>
-		<ul class="d-block m-0 px-3 py-1">
-			<li>智慧馬桶(10)</li>
-			<li>智慧馬桶(10)</li>
-			<li>智慧馬桶(10)</li>
-			<li>智慧馬桶(10)</li>
-			<li>智慧馬桶(10)</li>
-			<li>智慧馬桶(10)</li>
-			<li>智慧馬桶(10)</li>
-		</ul>
 	</div>
+</div>
+
+<div id="Classification" class="container row border m-auto my-4 p-0 pe-2 align-items-center">
+	<div class="title col-auto px-4 hstack">分類</div>
+	<ul class="col row my-2">
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(10)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">智慧馬桶(20)</li>
+	</ul>
 </div>
 
 <div class="text-center container_title">猜您會喜歡</div>
@@ -31,7 +46,7 @@
 	<div class="swiper GuessYouLikeSwiper">
 		<div class="swiper-wrapper">
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_01.jpg" alt="" />
+				<a href="toilet/01"><img src="~/images/product/pro_pic_01.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$9,100</div>
@@ -52,7 +67,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_02.jpg" alt="" />
+				<a href="toilet/02"><img src="~/images/product/pro_pic_02.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$11,900</div>
@@ -72,7 +87,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_03.jpg" alt="" />
+				<a href="toilet/03"><img src="~/images/product/pro_pic_03.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$26,200</div>
@@ -93,7 +108,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_04.jpg" alt="" />
+				<a href="toilet/04"><img src="~/images/product/pro_pic_04.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$25,400</div>
@@ -153,25 +168,24 @@
 	</div>
 </div>
 
-<div id="Catalog">
-	<div class="frame row h-100 d-flex justify-content-center">
-		<div class="content d-flex justify-content-center align-items-center col-md-5 col-sm-12 ">
-			<div class="frame">
-				<div class="fs-3 fw-bold">2022</div>
-				<div class="d-flex align-items-center">
-					<div class="fs-2 fw-bold">最新型錄</div>
-					<span class="fa-stack" style="vertical-align: top;">
-						<i class="fa-solid fa-circle fa-stack-2x"></i>
-						<i class="fa-solid fa-chevron-right fa-stack-1x fa-inverse" type="button"></i>
-					</span>
-
-				</div>
-				<div class="fw-bold">淨．善．靚．美</div>
-				<div>用最好的智慧馬桶，守護家的健康生活</div>
-			</div>
+<div id="Catalog" class="container bg-warning row m-auto my-5 justify-content-center">
+	<div class="text col-md-4 my-5 align-self-center">
+		<div class="fs-3 fw-bold">2022</div>
+		<div class="align-items-center d-flex fs-2 fw-bold">
+			最新型錄
+			<span class="fa-stack fa-stack fs-6">
+				<i class="fa-solid fa-circle fa-stack-2x"></i>
+				<a href="">
+					<i class="fa-solid fa-chevron-right fa-stack-1x fa-inverse"></i>
+				</a>
+			</span>
 		</div>
+		<div class="fs-5 fw-bold">淨．善．靚．美</div>
+		<div>用最好的智慧馬桶，守護家的健康生活</div>
+	</div>
 
-		<div class="image h-100 d-flex align-items-center col-md-5 col-sm-12"><img class="img-fluid mx-auto h-75" src="~/images/mu_0.jpg" alt="" /></div>
+	<div class="col-md-4 col-sm-12 align-self-center text-center">
+		<img class="m-5 w-75" src="~/images/mu_0.jpg" alt="" />
 	</div>
 </div>
 
@@ -180,7 +194,7 @@
 	<div class="swiper HotProductsSwiper">
 		<div class="swiper-wrapper">
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_05.jpg" alt="" />
+				<a href="toilet/05"><img src="~/images/product/pro_pic_05.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$105,000</div>
@@ -201,7 +215,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_06.jpg" alt="" />
+				<a href="toilet/06"><img src="~/images/product/pro_pic_06.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$11,900</div>
@@ -222,7 +236,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_07.jpg" alt="" />
+				<a href="toilet/07"><img src="~/images/product/pro_pic_07.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$26,200</div>
@@ -243,7 +257,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_08.jpg" alt="" />
+				<a href="toilet/08"><img src="~/images/product/pro_pic_08.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$25,400</div>
@@ -328,7 +342,7 @@
 	<div class="swiper RelatedProductsSwiper">
 		<div class="swiper-wrapper">
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_09.jpg" alt="" />
+				<a href="toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$ 2,800</div>
@@ -349,7 +363,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_10.jpg" alt="" />
+				<a href="toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$ 1,500</div>
@@ -370,7 +384,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_09.jpg" alt="" />
+				<a href="toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$ 2,800</div>
@@ -391,7 +405,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<img src="~/images/Product/pro_pic_10.jpg" alt="" />
+				<a href="toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">$ 1,500</div>

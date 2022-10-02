@@ -16,10 +16,11 @@
             position: absolute;
             left: 0%;
             bottom: 10%;
-            padding: 1.5rem 1rem;
+            padding: 1.5rem 3.5rem;
             background-color: rgba(0, 0, 0, 0.3);
             color: #fff;
-            font-size: 3rem;
+            font-size: 2.5rem;
+            text-shadow: 4px 4px 6px rgba(0,0,0,0.3);
         }
 
     #banner .swiper-pagination-bullet {

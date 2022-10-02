@@ -9,8 +9,8 @@ li {
 #Header_Top {
     background-color: #1E1E1E;
     color: white;
-    font-size: 16px;
-    padding: 10px 20px;
+    font-size: 14px;
+    padding: 5px 20px;
     justify-content: space-between;
     cursor: default;
 }
@@ -126,12 +126,12 @@ li {
 }
 
 .mega_menu_logo {
-    width: 35%;
-    margin: 15px 0;
+    width: 30%;
+    margin: 10px 0;
 }
 
     .mega_menu_logo img {
-        width: 150px;
+        width: 110px;
         max-width: 100%;
     }
 
@@ -165,7 +165,7 @@ li {
     justify-content: center;
     align-content: center;
     flex-wrap: wrap;
-    padding-bottom: 20px;
+    padding-bottom: 10px;
 }
 
 /* Mega Menu Content */

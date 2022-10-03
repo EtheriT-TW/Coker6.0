@@ -29,6 +29,7 @@
 /* Product - Content */
 #Product > .content > .describe {
     color: var(--gray-middle);
+    font-size:0.8rem;
 }
 
     #Product > .content > .describe > .introduce > div::before {
@@ -60,6 +61,7 @@
 
 #Product > .content > .specification {
     color: var(--gray-middle);
+    font-size:0.8rem;
 }
 
     #Product > .content > .specification > .btn_detailed {

@@ -7,6 +7,87 @@
 <link rel="stylesheet" href="~/css/Page/Product.css" asp-append-version="true" />
 <script src="~/js/Page/Product.js" asp-append-version="true"></script>
 
+<div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-body">
+				<button class="btn_close mx-2 p-0 border-0 bg-transparent" data-bs-dismiss="modal">
+					<i class="fa-regular fa-circle-xmark"></i>
+				</button>
+				<div class="frame">
+					<div class="card border-0 mb-3" style="max-width: 540px;">
+						<div class="row g-0">
+							<div class="col-md-4"><img class="w-100" src="~/images/product/pro_01.png" alt="" /></div>
+
+							<div class="col-md-8">
+								<div class="card-body">
+									<div class="card-title">C659NA德瑞克Smart III淨未來智慧馬桶</div>
+
+									<div class="describe align-items-center justify-content-between">
+										<div>描述</div>
+										<div>描述</div>
+										<div>描述</div>
+									</div>
+
+									<ul class="tag d-flex my-2">
+										<li class="rounded-pill">奈米</li>
+										<li class="rounded-pill">奈米</li>
+										<li class="rounded-pill">奈米</li>
+										<li class="rounded-pill">奈米</li>
+									</ul>
+
+									<div class="priceframe row flex-wrap">
+										<div class="col d-flex ps-3 align-items-center">
+											<div class="price text-decoration-line-through me-2">150,000</div>
+											<div class="discount d-flex align-items-center">
+												折扣&ensp;<span class="fs-4 fw-bold text-danger price">135,000</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="options px-3">
+						<div class="radio d-flex align-items-center my-2">
+							<div class="title">顏色</div>
+							<div class="control d-flex flex-wrap">
+								<input id="color_01" type="radio" class="btn-check" name="choose_color" autocomplete="off">
+								<label class="btn-radio me-2 my-1 px-3 py-1 align-self-center" for="color_01">白色</label>
+
+								<input id="color_02" type="radio" class="btn-check" name="choose_color" autocomplete="off">
+								<label class="btn-radio me-2 my-1 px-3 py-1 align-self-center" for="color_02">灰色</label>
+							</div>
+						</div>
+						<div class="d-flex">
+							<div class="counter d-flex align-items-center my-2">
+								<div class="title">數量</div>
+								<div class="counter_input d-flex">
+									<button class="btn_count_minus bg-white my-1">
+										<i class="fa-solid fa-minus"></i>
+									</button>
+
+									<input class="input_count text-center my-1" name="counter" value="1">
+
+									<button class="btn_count_plus bg-white my-1">
+										<i class="fa-solid fa-plus"></i>
+									</button>
+								</div>
+							</div>
+
+							<div class="btn_buy d-flex align-items-center justify-content-center text-white" type="button">
+								<div class="icon_plus">我要購買</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">
 		<li class="breadcrumb-item"><a href="/">首頁</a></li>
@@ -16,20 +97,25 @@
 </nav>
 
 <div id="Filter">
-	<div class="container row m-auto  px-0 py-3 justify-content-between align-items-center">
+	<div class="container row m-auto  px-0 py-3 justify-content-sm-between justify-content-center align-items-center">
 		<div class="col-auto row align-items-center">
 			<div class="title col-auto fs-3 fw-bold">馬桶</div>
 			<div class="total col-auto">共<span>50</span>個品項</div>
 		</div>
-		<div class="col-auto row">
-			<div class="col-auto">熱門搜尋</div>
-			<div class="col-auto">價格</div>
-			<div class="col-auto bg-white">最低價</div>
-			<div class="col-auto">~</div>
-			<div class="col-auto bg-white">最高價</div>
-			<div class="col-auto">確認</div>
-			<div class="col-auto">篩選</div>
-			<i class="col-auto fa-solid fa-border-all align-self-center"></i>
+		<div class="options col-auto row row-cols-sm-auto align-items-center justify-content-center">
+			<button class="btn_sort_hot col-3 mx-2 p-0 border-0 bg-transparent">熱門搜尋</button>
+			<button class="btn_sort_price col-2 mx-2 p-0 border-0 bg-transparent">
+				價格
+				<i class="fa-solid fa-arrows-up-down"></i>
+			</button>
+			<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
+			<button class="btn_typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
+				<i class="fa-solid fa-border-all"></i>
+			</button>
+			<input class="price_low col-3 mt-sm-0 mt-2 p-0" placeholder="最低價">
+			<div class="col-1 p-0 mt-sm-0 mt-2 text-center">~</div>
+			<input class="price_high col-3 p-0 mt-sm-0 mt-2 " placeholder="最高價">
+			<button class="btn_confirm col-2 mx-2 mt-sm-0 mt-2 border-0 text-white" type="button">確認</button>
 		</div>
 	</div>
 </div>
@@ -38,19 +124,13 @@
 	<div class="title col-auto px-4 hstack">分類</div>
 	<ul class="col row my-2">
 		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
-		<li class="col-auto">智慧馬桶(20)</li>
+		<li class="col-auto">單體馬桶(30)</li>
+		<li class="col-auto">二件式馬桶(17)</li>
+		<li class="col-auto">幼兒馬桶(5)</li>
+		<li class="col-auto">奈米馬桶(10)</li>
+		<li class="col-auto">蹲式馬桶(10)</li>
+		<li class="col-auto">高背馬桶(20)</li>
+		<li class="col-auto">馬桶蓋(20)</li>
 	</ul>
 </div>
 
@@ -75,7 +155,9 @@
 						<li class="rounded-pill">一段省水</li>
 						<li class="rounded-pill">幼兒</li>
 					</ul>
-					<i class="fa-solid fa-cart-shopping"></i>
+					<button class="btn_cart col-2 mx-2 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<i class="fa-solid fa-cart-shopping"></i>
+					</button>
 				</div>
 			</div>
 
@@ -198,7 +280,7 @@
 	</div>
 
 	<div class="col-md-4 col-sm-12 align-self-center text-center">
-		<img class="m-5 w-75" src="~/images/mu_0.jpg" alt="" />
+		<img class="m-5 w-75" src="~/images/mu_0.png" alt="" />
 	</div>
 </div>
 

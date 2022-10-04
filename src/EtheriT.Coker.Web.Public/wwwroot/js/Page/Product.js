@@ -1,4 +1,7 @@
 ﻿function PageReady() {
+    $(".btn_sort_price").on("click", SortByPrice);
+    $(".btn_typography").on("click", Typography);
+
     var guess_you_like_swiper = new Swiper(".GuessYouLikeSwiper", {
         slidesPerView: 1,
         spaceBetween: 15,
@@ -71,4 +74,24 @@
             prevEl: ".btn_swiper_prev_ads",
         },
     });
+}
+
+function SortByPrice() {
+    var $sort_icon = $(".btn_sort_price > i");
+    if ($sort_icon.hasClass('fa-arrows-up-down')) {
+        $sort_icon.toggleClass('fa-arrows-up-down');
+        $sort_icon.toggleClass('fa-caret-down');
+
+    } else if ($sort_icon.hasClass('fa-caret-down')) {
+        $sort_icon.toggleClass('fa-caret-down');
+        $sort_icon.toggleClass('fa-caret-up');
+
+    } else {
+        $sort_icon.toggleClass('fa-caret-up');
+        $sort_icon.toggleClass('fa-arrows-up-down');
+    }
+}
+
+function Typography() {
+    $(".btn_typography > i").toggleClass('fa-table-list');
 }

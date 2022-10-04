@@ -4,6 +4,39 @@
     font-size: 2rem;
 }
 
+/* Modal */
+.modal-dialog{
+    max-width: fit-content;
+    position: relative;
+}
+
+.modal-body > .btn_close {
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    right: 10px;
+    font-size: x-large;
+    color: var(--gray-light);
+}
+
+.modal-body > .frame > .card > div > div > .card-body > .tag {
+    width: calc(100% - 30px);
+    height: 1.625rem;
+    margin: 0;
+    overflow: hidden;
+}
+
+    .modal-body > .frame > .card > div > div > .card-body > .tag > li {
+        padding: 0.25rem 0.8rem;
+        margin-right: 0.5rem;
+        font-size: 0.5rem;
+        background-color: var(--gray-light);
+        color: var(--gray-middle);
+        float: left;
+        list-style: none;
+        white-space: nowrap;
+    }
+
 /* swiper_four_grid */
 .swiper_four_grid {
     padding: 40px 10vw;
@@ -17,8 +50,17 @@
         overflow: hidden;
     }
 
+        .swiper_four_grid > .swiper > .swiper-wrapper > .card > a {
+            text-align: center;
+        }
+
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > a > img {
-            width: 100%;
+            width: 70%;
+            padding-top: 10px;
+        }
+
+        .swiper_four_grid > .swiper > .swiper-wrapper > .card > a > img {
+            width: 70%;
             padding-top: 10px;
         }
 
@@ -41,7 +83,7 @@
             }
 
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .name {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             height: calc((1.25rem * 1.5) * 2);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -73,7 +115,7 @@
                     white-space: nowrap;
                 }
 
-            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer > i {
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-footer i {
                 width: 30px;
                 height: 30px;
                 border-radius: 50%;
@@ -113,14 +155,27 @@
 /* Breadcrumb */
 #Breadcrumb {
     --bs-breadcrumb-divider: '-';
-    --breadcrumb-divider-color: #787878;
-    --breadcrumb-active-color: #787878;
+}
+
+.breadcrumb-item, .breadcrumb-item > a {
+    color: var(--gray-middle);
 }
 
 /* Filter */
 #Filter {
     background-color: #E0E3E8;
 }
+
+    #Filter > div > .options > [class*=price_] {
+        width: 6rem;
+        text-align: end;
+    }
+
+    .btn_confirm {
+        white-space: nowrap;
+        background-color: var(--gray-dark);
+        cursor: pointer;
+    }
 
 /* Classification */
 #Classification > .title {
@@ -186,7 +241,7 @@
 /* Catalog */
 #Catalog {
     font-family: sans-serif;
-    background-image: url("/images/other_page_3.jpg");
+    background-image: url("/images/probook_bg.jpg");
     background-size: cover;
     background-position: center;
 }
@@ -217,7 +272,8 @@
     }
 
         #Badge > .card > img {
-            width: 100%;
+            width: 40%;
+            margin: auto;
         }
 
     #Badge > .vr {
@@ -270,6 +326,17 @@
 }
 
 @media only screen and (max-width: 576px) {
+    #Ads {
+        padding: 10px 25px;
+    }
+
+        #Ads > .content {
+            flex-direction: column;
+        }
+
+            #Ads > .content > .frame {
+                width: 100%;
+            }
 }
 
 @media only screen and (max-width: 390px) {

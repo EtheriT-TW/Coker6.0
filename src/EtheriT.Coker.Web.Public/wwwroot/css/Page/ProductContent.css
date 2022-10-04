@@ -29,40 +29,50 @@
 /* Product - Content */
 #Product > .content > .describe {
     color: var(--gray-middle);
-    font-size:0.8rem;
+    font-size: 0.8rem;
 }
 
-    #Product > .content > .describe > .introduce > div::before {
+    #Product > .content > .describe > .introduce > li::before {
         content: '．';
     }
 
     #Product > .content > .describe > .track > i {
-        font-size: xxx-large;
+        font-size: 3rem;
         cursor: pointer;
     }
 
-        #Product > .image > .tag {
-            width: calc(100% - 30px);
-            height: 1.625rem;
-            margin: 0;
-            overflow: hidden;
-        }
+#Product > .image > .tag {
+    width: calc(100% - 30px);
+    height: 1.625rem;
+    margin: 0;
+    overflow: hidden;
+}
 
-            #Product > .image > .tag > li {
-                padding: 0.25rem 0.8rem;
-                margin-right: 0.5rem;
-                font-size: 0.5rem;
-                background-color: var(--gray-light);
-                color: var(--gray-middle);
-                float: left;
-                list-style: none;
-                white-space: nowrap;
-            }
+    #Product > .image > .tag > li {
+        padding: 0.25rem 0.8rem;
+        margin-right: 0.5rem;
+        font-size: 0.5rem;
+        background-color: var(--gray-light);
+        color: var(--gray-middle);
+        float: left;
+        list-style: none;
+        white-space: nowrap;
+    }
 
 #Product > .content > .specification {
     color: var(--gray-middle);
-    font-size:0.8rem;
+    font-size: 0.8rem;
 }
+
+    #Product > .content > .specification > .collapse:not(.show) {
+        display: block;
+        height: 2.5rem;
+        overflow: hidden;
+    }
+
+    #Product > .content > .specification > .collapsing {
+        height: 2.5rem;
+    }
 
     #Product > .content > .specification > .btn_detailed {
         background-color: var(--gray-light);

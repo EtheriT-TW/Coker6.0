@@ -33,7 +33,9 @@ function AddFavorites() {
     var $toastBody = $("#liveToast>.toast-body");
     $self.toggleClass('fa-solid');
     $toastBody.empty();
-    $p.remove();
+    if ($self.hasClass('fav_item')) {
+        $p.remove();
+    }
     if ($self.hasClass("fa-solid")) {
         $toastBody.append('<div>加入收藏成功</div>');
     } else {

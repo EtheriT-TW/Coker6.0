@@ -5,7 +5,7 @@
 }
 
 /* Modal */
-.modal-dialog{
+.modal-dialog {
     max-width: fit-content;
     position: relative;
 }
@@ -15,18 +15,27 @@
     z-index: 1;
     top: 10px;
     right: 10px;
-    font-size: x-large;
-    color: var(--gray-light);
+    font-size: xx-large;
+    color: var(--gray-middle);
 }
 
-.modal-body > .frame > .card > div > div > .card-body > .tag {
+.modal-body > .frame > .card > div > .card-body > .describe {
+    color: var(--gray-middle);
+    font-size: 0.8rem;
+}
+
+    .modal-body > .frame > .card > div > .card-body > .describe > li::before {
+        content: '．';
+    }
+
+.modal-body > .frame > .card > div > .card-body > .tag {
     width: calc(100% - 30px);
     height: 1.625rem;
     margin: 0;
     overflow: hidden;
 }
 
-    .modal-body > .frame > .card > div > div > .card-body > .tag > li {
+    .modal-body > .frame > .card > div > .card-body > .tag > li {
         padding: 0.25rem 0.8rem;
         margin-right: 0.5rem;
         font-size: 0.5rem;
@@ -36,6 +45,71 @@
         list-style: none;
         white-space: nowrap;
     }
+
+.modal-body > .frame > .card > div > .card-body > .priceframe > .price {
+    color: var(--gray-middle);
+}
+
+.modal-body > .frame > .card > div > .card-body > .priceframe > .discount {
+    white-space: nowrap;
+}
+
+.modal-body > .frame > .options > .radio > .title {
+    white-space: nowrap;
+    padding-right: 0.5rem;
+    color: var(--gray-middle);
+}
+
+.btn-radio {
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid var(--gray-middle);
+}
+
+input:checked + .btn-radio {
+    font-weight: bold;
+    border-color: var(--red-middle);
+    border-width: medium;
+    cursor: default;
+}
+
+input:disabled + .btn-radio {
+    border: var(--gray-light);
+    background-color: var(--gray-light);
+    color: var(--gray-middle);
+    cursor: default;
+}
+
+.modal-body > .frame > .options > .buy_line > .counter > .title {
+    white-space: nowrap;
+    padding-right: 0.5rem;
+    color: var(--gray-middle);
+}
+
+[class*=btn_count_] {
+    cursor: pointer;
+    color: var(--gray-middle);
+    border: 1px solid var(--gray-middle);
+    width: 2rem;
+    height: 2rem;
+}
+
+.input_count {
+    border: 1px solid var(--gray-middle);
+    width: 8rem;
+    height: 2rem;
+}
+
+.modal-body > .frame > .options > div > .btn_buy {
+    background-color: var(--red-middle);
+    height: 2rem;
+}
+
+.icon_plus::before {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 400;
+    content: "\f0fe  ";
+}
 
 /* swiper_four_grid */
 .swiper_four_grid {
@@ -54,15 +128,15 @@
             text-align: center;
         }
 
-        .swiper_four_grid > .swiper > .swiper-wrapper > .card > a > img {
-            width: 70%;
-            padding-top: 10px;
-        }
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > a > img {
+                width: 70%;
+                padding-top: 10px;
+            }
 
-        .swiper_four_grid > .swiper > .swiper-wrapper > .card > a > img {
-            width: 70%;
-            padding-top: 10px;
-        }
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > a > img {
+                width: 70%;
+                padding-top: 10px;
+            }
 
         .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title {
             display: flex;
@@ -171,11 +245,11 @@
         text-align: end;
     }
 
-    .btn_confirm {
-        white-space: nowrap;
-        background-color: var(--gray-dark);
-        cursor: pointer;
-    }
+.btn_confirm {
+    white-space: nowrap;
+    background-color: var(--gray-dark);
+    cursor: pointer;
+}
 
 /* Classification */
 #Classification > .title {
@@ -326,6 +400,10 @@
 }
 
 @media only screen and (max-width: 576px) {
+    .modal-body > .frame > .options > div > .btn_buy {
+        height: 2.5rem;
+    }
+
     #Ads {
         padding: 10px 25px;
     }
@@ -333,6 +411,7 @@
         #Ads > .content {
             flex-direction: column;
         }
+
 
             #Ads > .content > .frame {
                 width: 100%;

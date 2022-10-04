@@ -3,7 +3,8 @@
     {
       "output": "lib/jquery/dist/jquery.min.js",
       "input": [
-        "node_modules/jquery/dist/jquery.min.js"
+        "node_modules/jquery/dist/jquery.min.js",
+        "node_modules/chosen-js/chosen.jquery.min.js"
       ]
     },
     {

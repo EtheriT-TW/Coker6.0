@@ -1,22 +1,22 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
+@model Site;
+
 <nav class="navbar navbar-dark bg-primary">
-    <a class="navbar-brand m-0 py-2 brand-title" href="#">Cosmo Admin</a>
+    <a class="navbar-brand m-0 py-2 brand-title" href="#">@Model.Title</a>
     <span></span>
     <a class="navbar-brand py-2 material-icons toggle-sidebar" href="#">menu</a>
 </nav>
 <nav class="navigation">
     <ul>
-        <li class="active">
-            <a title="Dashboard" asp-controller="Dashboard" asp-action="Index">
-                <span class="nav-icon material-icons">public</span>儀表板
-            </a>
-        </li>
-        <li class="active">
-            <a asp-controller="Theme" asp-action="Index">
-                <span class="nav-icon material-icons ">color_lens</span>後台配色設定
-            </a>
-        </li>
+        @{
+            foreach (var item in Model.Jobs) {
+                string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
+                <li class="@myClass">
+                    <a title="@item.PageName" asp-controller="@item.Controller" asp-action="@item.Action">
+                        <span class="nav-icon material-icons">@item.Icon</span>@item.Title
+                    </a>
+                </li>
+            }
+        }
     </ul>
 </nav>

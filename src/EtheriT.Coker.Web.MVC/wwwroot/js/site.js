@@ -9,11 +9,11 @@ $(window).on("load",
         $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })
     });
 (function (a) {
-    var tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-toggle="tooltip"]'))
+    var tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
     });
-    var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-toggle="popover"]'))
+    var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl)
     });
@@ -83,10 +83,10 @@ $(window).on("load",
             a("body").append('<div class="toast ' + c + "-" + e + '"> <div class="alert alert-dismissible fade show alert-' + f + ' "> ' + d + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true" class="material-icons md-18">clear</span></button></div> </div>')
         }
     });
-    /*a(".form-control-chosen").chosen({ allow_single_deselect: true, width: "100%" });
+    a(".form-control-chosen").chosen({ allow_single_deselect: true, width: "100%" });
     a(".form-control-chosen-required").chosen({ allow_single_deselect: false, width: "100%" });
     a(".form-control-chosen-search-threshold-100").chosen({ allow_single_deselect: true, disable_search_threshold: 100, width: "100%" });
-    a(".form-control-chosen-optgroup").chosen({ width: "100%" });*/
+    a(".form-control-chosen-optgroup").chosen({ width: "100%" });
     a(function () {
         a('[title="clickable_optgroup"]').addClass("chosen-container-optgroup-clickable")
     });
@@ -118,7 +118,6 @@ $(window).on("load",
         a.fn.setThemeTone(e)
     });
     a.fn.setThemeTone = function (d) {
-        console.log(localStorage.getItem("primaryColor"));
         if (localStorage.getItem("primaryColor") === null) {
         } else {
             if (localStorage.getItem("sidebarBg") === "light") {

@@ -43,7 +43,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         menuItemModels = new List<MenuItem.MenuItemModel>{
                             new MenuItem.MenuItemModel {Title="商品分類", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="微電腦馬桶座", Link=""},
-                                    new MenuItem.MenuItemModel {Title="馬桶", Link="toilet"},
+                                    new MenuItem.MenuItemModel {Title="馬桶", Link="Toilet"},
                                     new MenuItem.MenuItemModel {Title="面盆", Link=""},
                                     new MenuItem.MenuItemModel {Title="便斗", Link=""},
                                     new MenuItem.MenuItemModel {Title="龍頭", Link=""},

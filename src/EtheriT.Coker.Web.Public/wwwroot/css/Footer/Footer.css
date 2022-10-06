@@ -169,7 +169,7 @@ footer {
     }
 
 /* Go Top Button */
-.btn_gotop {
+.btn-gotop {
     background: black;
     width: 50px;
     height: 50px;
@@ -177,7 +177,7 @@ footer {
     display: none;
 }
 
-    .btn_gotop > i {
+    .btn-gotop > i {
         margin: 0
     }
 

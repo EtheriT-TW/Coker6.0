@@ -4,9 +4,13 @@
     --bs-breadcrumb-divider: '/';
 }
 
-.breadcrumb-item, .breadcrumb-item > a {
-    color: var(--gray-middle);
-}
+    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
+        color: var(--gray-middle);
+    }
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
+        color: var(--gray-middle);
+    }
 
 /* ProductSwiper */
 .ProductSwiper > .swiper-wrapper > .swiper-slide {
@@ -18,7 +22,7 @@
     cursor: pointer;
 }
 
-[class*=btn_swiper_] {
+[class*=btn-swiper_] {
     z-index: 10;
     top: calc(50% - 25px);
     height: 50px;
@@ -36,7 +40,8 @@
         content: '．';
     }
 
-    #Product > .content > .describe > .track > i {
+    #Product > .content > .describe > .track > .btn-favorites > i {
+        color: var(--gray-middle);
         font-size: 3rem;
         cursor: pointer;
     }
@@ -74,7 +79,7 @@
         height: 2.5rem;
     }
 
-    #Product > .content > .specification > .btn_detailed {
+    #Product > .content > .specification > .btn-detailed {
         background-color: var(--gray-light);
     }
 
@@ -133,7 +138,7 @@ input:disabled + .btn-radio {
     cursor: default;
 }
 
-[class*=btn_count_] {
+[class*=btn-count_] {
     cursor: pointer;
     color: var(--gray-middle);
     border: 1px solid var(--gray-middle);
@@ -147,7 +152,7 @@ input:disabled + .btn-radio {
     height: 2rem;
 }
 
-#Product > .content > .btn_buy {
+#Product > .content > .btn-buy {
     background-color: var(--red-middle);
     line-height: 3;
 }

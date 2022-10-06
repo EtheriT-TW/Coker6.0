@@ -1,16 +1,10 @@
-﻿/* Universal */
-.container_title {
-    margin: 20px 0;
-    font-size: 2rem;
-}
-
-/* Modal */
+﻿/* Modal */
 .modal-dialog {
     max-width: fit-content;
     position: relative;
 }
 
-.modal-body > .btn_close {
+.modal-body > .btn-close {
     position: absolute;
     z-index: 1;
     top: 10px;
@@ -86,7 +80,7 @@ input:disabled + .btn-radio {
     color: var(--gray-middle);
 }
 
-[class*=btn_count_] {
+[class*=btn-count_] {
     cursor: pointer;
     color: var(--gray-middle);
     border: 1px solid var(--gray-middle);
@@ -100,7 +94,7 @@ input:disabled + .btn-radio {
     height: 2rem;
 }
 
-.modal-body > .frame > .options > div > .btn_buy {
+.modal-body > .frame > .options > div > .btn-buy {
     background-color: var(--red-middle);
     height: 2rem;
 }
@@ -149,7 +143,7 @@ input:disabled + .btn-radio {
                 font-weight: 900;
             }
 
-            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title > .icon > i {
+            .swiper_four_grid > .swiper > .swiper-wrapper > .card > .card-body > .card-title > .icon > button > i {
                 font-size: larger;
                 color: #BFBFBF;
                 cursor: pointer;
@@ -201,7 +195,7 @@ input:disabled + .btn-radio {
                 cursor: pointer;
             }
 
-[class*=btn_swiper_] {
+[class*=btn-swiper_] {
     position: absolute;
     top: calc(50% - 25px);
     z-index: 10;
@@ -216,24 +210,28 @@ input:disabled + .btn-radio {
     border-radius: 50%;
 }
 
-[class*=btn_swiper_next_] {
+[class*=btn-swiper_next_] {
     right: calc(10vw - 25px);
     left: auto;
 }
 
-[class*=btn_swiper_prev] {
+[class*=btn-swiper_prev] {
     right: auto;
     left: calc(10vw - 25px);
 }
 
 /* Breadcrumb */
 #Breadcrumb {
-    --bs-breadcrumb-divider: '-';
+    --bs-breadcrumb-divider: '/';
 }
 
-.breadcrumb-item, .breadcrumb-item > a {
-    color: var(--gray-middle);
-}
+    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
+        color: var(--gray-middle);
+    }
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
+        color: var(--gray-middle);
+    }
 
 /* Filter */
 #Filter {
@@ -245,7 +243,7 @@ input:disabled + .btn-radio {
         text-align: end;
     }
 
-.btn_confirm {
+.btn-confirm {
     white-space: nowrap;
     background-color: var(--gray-dark);
     cursor: pointer;
@@ -361,7 +359,7 @@ input:disabled + .btn-radio {
 }
 
 @media only screen and (max-width: 576px) {
-    .modal-body > .frame > .options > div > .btn_buy {
+    .modal-body > .frame > .options > div > .btn-buy {
         height: 2.5rem;
     }
 }

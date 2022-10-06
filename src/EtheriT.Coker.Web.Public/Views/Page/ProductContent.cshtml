@@ -1,4 +1,4 @@
-﻿@*
+﻿@*<
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
@@ -62,8 +62,8 @@
 					</div>
 				</div>
 			</div>
-			<button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 "><i class="fa-solid fa-chevron-left fs-3"></i></button>
-			<button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0"><i class="fa-solid fa-chevron-right fs-3"></i></button>
+			<button class="btn-swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 "><i class="fa-solid fa-chevron-left fs-3"></i></button>
+			<button class="btn-swiper_next_product rounded-circle border-0 text-white position-absolute end-0"><i class="fa-solid fa-chevron-right fs-3"></i></button>
 		</div>
 
 		<div thumbsSlider="" class="PreviewSwiper swiper my-3">
@@ -128,7 +128,9 @@
 				<li>雙漩洗技術為您實現真乾淨</li>
 			</ul>
 			<div class="track text-center">
-				<i class="btn_favorites fa-regular fa-heart"></i>
+				<button class="btn-favorites bg-transparent border-0 p-0">
+					<i class="fa-regular fa-heart"></i>
+				</button>
 				<div>追蹤</div>
 			</div>
 		</div>
@@ -146,7 +148,7 @@
 				<li>第二代微波感應技術</li>
 			</ul>
 
-			<button class="btn_detailed icon_down px-4 py-1 border-0 rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target=".specification > .collapse" aria-expanded="false" aria-controls="collapseSpecification">
+			<button class="btn-detailed icon_down px-4 py-1 border-0 rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target=".specification > .collapse" aria-expanded="false" aria-controls="collapseSpecification">
 				詳細規格
 			</button>
 		</div>
@@ -191,20 +193,20 @@
 			<div class="counter d-flex align-items-center my-2">
 				<div class="title">數量</div>
 				<div class="counter_input d-flex">
-					<button class="btn_count_minus bg-white my-1">
+					<button class="btn-count_minus bg-white my-1">
 						<i class="fa-solid fa-minus"></i>
 					</button>
 
 					<input class="input_count text-center my-1" name="counter" value="1">
 
-					<button class="btn_count_plus bg-white my-1">
+					<button class="btn-count_plus bg-white my-1">
 						<i class="fa-solid fa-plus"></i>
 					</button>
 				</div>
 			</div>
 		</div>
 
-		<div class="btn_buy d-flex align-items-center justify-content-center text-white" type="button">
+		<div class="btn-buy d-flex align-items-center justify-content-center text-white" type="button">
 			<div class="icon_plus">我要購買</div>
 		</div>
 	</div>
@@ -214,7 +216,7 @@
 	<div id="shareBlock" class="d-flex align-items-center justify-content-center justify-content-sm-end">
 		<div>分享：</div>
 	</div>
-	<ul id="btn_tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
+	<ul id="btn-tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
 		<li class="nav-item" role="presentation">
 			<button id="pills-description-tab" class="mx-sm-0 nav-link active" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">產品說明</button>
 		</li>

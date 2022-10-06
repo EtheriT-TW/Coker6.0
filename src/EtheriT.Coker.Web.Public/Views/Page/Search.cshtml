@@ -7,4 +7,607 @@
 <link rel="stylesheet" href="~/css/Page/Search.css" asp-append-version="true" />
 <script src="~/js/Page/Search.js" asp-append-version="true"></script>
 
-<div>我是搜尋</div>
+<nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item"><a href="/">首頁</a></li>
+		<li class="breadcrumb-item active" aria-current="page">搜尋結果</li>
+	</ol>
+</nav>
+
+<div id="Search_Input" class="text-center">
+	<div class="search_place d-flex my-2 justify-content-center">
+		<input id="find_pro" type="radio" class="btn-check" name="choose_color" autocomplete="off" checked>
+		<label class="btn-search_place fs-5 mx-3" for="find_pro">找商品</label>
+
+		<input id="find_article" type="radio" class="btn-check" name="choose_color" autocomplete="off">
+		<label class="btn-search_place fs-5 mx-3" for="find_article">找文章</label>
+	</div>
+	<div class="searchblock rounded-pill border border-dark fs-3 col-12 col-md-5 m-auto ps-4 pe-2 d-flex">
+		<input type="text" class="bg-transparent border-0 fw-bold flex-grow-1">
+		<button class="btn-search bg-transparent border-0 ms-1"><i class="fa-solid fa-magnifying-glass"></i></button>
+	</div>
+</div>
+
+<div class="tick_area container row border m-auto mt-4 mb-0 p-0 pe-2 align-items-center">
+	<div class="title col-auto px-4 hstack">分類</div>
+	<ul class="col row my-2">
+		<li class="col-auto">
+			<input id="category_01" type="checkbox" value="">
+			<label class="form-check-label" for="category_01">
+				智慧馬桶(10)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_02" type="checkbox" value="">
+			<label class="form-check-label" for="category_02">
+				單體馬桶(30)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_03" type="checkbox" value="">
+			<label class="form-check-label" for="category_03">
+				二件式馬桶(17)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_04" type="checkbox" value="">
+			<label class="form-check-label" for="category_04">
+				幼兒馬桶(5)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_05" type="checkbox" value="">
+			<label class="form-check-label" for="category_05">
+				奈米馬桶(10)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_06" type="checkbox" value="">
+			<label class="form-check-label" for="category_06">
+				蹲式馬桶(10)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_07" type="checkbox" value="">
+			<label class="form-check-label" for="category_07">
+				高背馬桶(20)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_08" type="checkbox" value="">
+			<label class="form-check-label" for="category_08">
+				馬桶蓋(20)
+			</label>
+		</li>
+	</ul>
+</div>
+
+<div class="tick_area container row border m-auto mt-0 mb-5 p-0 pe-2 align-items-center">
+	<div class="title col-auto px-4 hstack">認證</div>
+	<ul class="col row my-2">
+		<li class="col-auto">
+			<input id="category_01" type="checkbox" value="">
+			<label class="form-check-label" for="category_01">
+				奈米磁(50)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_02" type="checkbox" value="">
+			<label class="form-check-label" for="category_02">
+				淨未來(2)
+			</label>
+		</li>
+		<li class="col-auto">
+			<input id="category_03" type="checkbox" value="">
+			<label class="form-check-label" for="category_03">
+				省水標章(50)
+			</label>
+		</li>
+	</ul>
+</div>
+
+<div Id="Search_Title" class="fs-4 text-center my-3">
+	搜尋<span class="search_text fw-bold"> 馬桶 </span>共<span class="total">70</span>項<span class="search_place"></span> 商品
+</div>
+
+<div id="Filter" class="container-fluid border-bottom border-2">
+	<div class="container row m-auto">
+		<div class="sort_radio container col">
+			<input id="sort_complex" type="radio" class="btn-check" name="choose_sort" autocomplete="off" checked>
+			<label class="btn-sort_complex" for="sort_complex">綜合排序</label>
+
+			<input id="sort_sales" type="radio" class="btn-check" name="choose_sort" autocomplete="off">
+			<label class="btn-sort_sales" for="sort_sales">銷量排行</label>
+
+			<input id="sort_new" type="radio" class="btn-check" name="choose_sort" autocomplete="off">
+			<label class="btn-sort_new" for="sort_new">新上市</label>
+		</div>
+
+		<div class="options col-auto row row-cols-sm-auto align-items-center justify-content-center">
+			<button class="btn-sort_hot col-3 mx-2 p-0 border-0 bg-transparent">熱門搜尋</button>
+			<button class="btn-sort_price col-2 mx-2 p-0 border-0 bg-transparent">
+				價格
+				<i class="fa-solid fa-arrows-up-down"></i>
+			</button>
+			<button class="btn-filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
+			<button class="btn-typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
+				<i class="fa-solid fa-table-list"></i>
+			</button>
+			<input class="price_low border-0 price_low text-end px-1" placeholder="最低價">
+			<div class="col-1 p-0 mt-sm-0 mt-2 text-center">~</div>
+			<input class="price_high border-0 price_low text-end px-1" placeholder="最高價">
+			<button class="btn-confirm col-2 mx-2 mt-sm-0 mt-2 border-0 text-white" type="button">確認</button>
+		</div>
+	</div>
+</div>
+
+<div id="Search_Result" class="container-fluid py-4 pb-0">
+	<div class="container row row-cols-1 row-cols-md-4 m-auto g-4">
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+
+		<div class="col m-0 pb-4">
+			<figure class="card m-auto">
+				<div class="">
+					<div class="text-center w-auto">
+						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					</div>
+					<figcaption class="position-relative">
+						<div class="top_line position-absolute">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+
+						<div class="card-body">
+							<h5 class="card-title price fw-bold">9,100</h5>
+							<p class="">CS230一段省水分離式幼兒馬桶</p>
+						</div>
+
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
+								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
+								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
+							</ul>
+							<div class="col-auto priceframe align-items-end">
+								<div class="price pe-4 text-decoration-line-through">9,300</div>
+								<div class="price fs-5 fw-bold">9,100</div>
+							</div>
+							<button class="btn-cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+								<span class="fa-stack">
+									<i class="fa-solid fa-circle fa-stack-2x"></i>
+									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
+								</span>
+								<div class="text-white">放入購物車</div>
+							</button>
+						</div>
+					</figcaption>
+				</div>
+			</figure>
+		</div>
+	</div>
+</div>
+
+<div class="p-3 text-center">
+	<button class="btn-more icon_down border-0 rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target=".specification > .collapse" aria-expanded="false" aria-controls="collapseSpecification">
+		更多商品
+	</button>
+</div>
+
+<div class="fs-2 my-4 text-center">相關商品</div>
+<div class="swiper_four_grid container-fluid">
+	<div class="swiper RelatedProductsSwiper">
+		<div class="swiper-wrapper">
+			<div class="card swiper-slide border-light">
+				<a href="Toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
+				<div class="card-body">
+					<div class="card-title">
+						<div class="price">2,800</div>
+						<div class="icon d-flex justify-content-center">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+					</div>
+					<div class="name">96657 單桿毛巾架</div>
+				</div>
+				<div class="card-footer bg-transparent d-flex">
+					<ul class="d-block">
+						@*<li class="rounded-pill">一段省水</li>
+						<li class="rounded-pill">幼兒</li>*@
+					</ul>
+					<button class="btn-cart col-2 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<i class="fa-solid fa-cart-shopping"></i>
+					</button>
+				</div>
+			</div>
+
+			<div class="card swiper-slide border-light">
+				<a href="Toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
+				<div class="card-body">
+					<div class="card-title">
+						<div class="price">1,500</div>
+						<div class="icon d-flex justify-content-center">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+					</div>
+					<div class="name">6602 衛生紙架</div>
+				</div>
+				<div class="card-footer bg-transparent d-flex">
+					<ul class="d-block">
+						@*<li class="rounded-pill">一段省水</li>
+						<li class="rounded-pill">幼兒</li>*@
+					</ul>
+					<button class="btn-cart col-2 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<i class="fa-solid fa-cart-shopping"></i>
+					</button>
+				</div>
+			</div>
+
+			<div class="card swiper-slide border-light">
+				<a href="Toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
+				<div class="card-body">
+					<div class="card-title">
+						<div class="price">2,800</div>
+						<div class="icon d-flex justify-content-center">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+					</div>
+					<div class="name">96657 單桿毛巾架</div>
+				</div>
+				<div class="card-footer bg-transparent d-flex">
+					<ul class="d-block">
+						@*<li class="rounded-pill">一段省水</li>
+						<li class="rounded-pill">幼兒</li>*@
+					</ul>
+					<button class="btn-cart col-2 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<i class="fa-solid fa-cart-shopping"></i>
+					</button>
+				</div>
+			</div>
+
+			<div class="card swiper-slide border-light">
+				<a href="Toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
+				<div class="card-body">
+					<div class="card-title">
+						<div class="price">1,500</div>
+						<div class="icon d-flex justify-content-center">
+							<button class="btn-favorites bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-regular fa-heart"></i>
+							</button>
+							<button class="bg-transparent border-0 pe-0">
+								<i class="fs-5 fa-solid fa-share"></i>
+							</button>
+						</div>
+					</div>
+					<div class="name">6602 衛生紙架</div>
+				</div>
+				<div class="card-footer bg-transparent d-flex">
+					<ul class="d-block">
+						@*<li class="rounded-pill">一段省水</li>
+						<li class="rounded-pill">幼兒</li>*@
+					</ul>
+					<button class="btn-cart col-2 p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<i class="fa-solid fa-cart-shopping"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<i class="btn-swiper_next_relatedproducts fa-solid fa-chevron-right"></i>
+	<i class="btn-swiper_prev_relatedproducts fa-solid fa-chevron-left"></i>
+</div>

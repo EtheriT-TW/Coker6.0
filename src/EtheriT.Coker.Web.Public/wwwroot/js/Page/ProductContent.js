@@ -22,8 +22,8 @@
         spaceBetween: 15,
         loop: true,
         navigation: {
-            nextEl: ".btn_swiper_next_product",
-            prevEl: ".btn_swiper_prev_product",
+            nextEl: ".btn-swiper_next_product",
+            prevEl: ".btn-swiper_prev_product",
         },
         thumbs: {
             swiper: preview_swiper,
@@ -35,10 +35,10 @@
         showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
     });
 
-    $(document).on('click', '.btn_count_plus', function () {
+    $(document).on('click', '.btn-count_plus', function () {
         $('.input_count').val(parseInt($('.input_count').val()) + 1);
     });
-    $(document).on('click', '.btn_count_minus', function () {
+    $(document).on('click', '.btn-count_minus', function () {
         $('.input_count').val(parseInt($('.input_count').val()) - 1);
         if ($('.input_count').val() == 0) {
             $('.input_count').val(1);

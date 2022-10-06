@@ -33,14 +33,14 @@
             background: #B73925;
         }
 
-/* btn_gonews*/
-#btn_gonews {
+/* btn-gonews*/
+#btn-gonews {
     display: flex;
     justify-content: center;
     padding: 10px;
 }
 
-    #btn_gonews > i {
+    #btn-gonews > i {
         color: #4891C4;
         cursor: pointer;
         border: 1px gray solid;
@@ -86,7 +86,7 @@
                     height: 3rem;
                 }
 
-                #Guess_Like > .content > .frame > .top > i {
+                #Guess_Like > .content > .frame > .top > button > i {
                     margin-top: 5px;
                     margin-left: 5px;
                     cursor: pointer;
@@ -128,7 +128,7 @@
                     margin-right: 1rem;
                 }
 
-                #Guess_Like > .content > .frame > .buy > .btn_buy {
+                #Guess_Like > .content > .frame > .buy > .btn-buy {
                     width: 7rem;
                     font-size: 0.8rem;
                     display: flex;
@@ -187,7 +187,8 @@
             margin-bottom: 0;
         }
 
-            #Favorite > .content > .frame > .content > .icon_button > i {
+            #Favorite > .content > .frame > .content > .icon_button > button > i {
+                color: #929292;
                 margin-left: 0.5rem;
                 cursor: pointer;
             }
@@ -238,7 +239,7 @@
                 align-items: center;
             }
 
-                #Favorite > .content > .blank > .content > .btn_add > i {
+                #Favorite > .content > .blank > .content > .btn-add > i {
                     font-size: xx-large;
                     width: 40px;
                     height: 40px;
@@ -523,7 +524,7 @@
             padding-right: 45%;
         }
 
-        #InquiryAndCconsult > .consult > .frame > .btn_consult {
+        #InquiryAndCconsult > .consult > .frame > .btn-consult {
             color: gray;
             cursor: pointer;
             background-color: white;
@@ -714,7 +715,7 @@
             font-size: 0.65rem;
         }
 
-        #InquiryAndCconsult > .consult > .frame > .btn_consult {
+        #InquiryAndCconsult > .consult > .frame > .btn-consult {
             font-size: 0.85rem;
         }
 }
@@ -844,7 +845,7 @@
                 font-size: 0.85rem;
             }
 
-            #InquiryAndCconsult > .consult > .frame > .btn_consult {
+            #InquiryAndCconsult > .consult > .frame > .btn-consult {
                 font-size: 1rem;
             }
 

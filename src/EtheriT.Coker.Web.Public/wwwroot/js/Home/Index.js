@@ -1,5 +1,5 @@
 ﻿function PageReady() {
-    $("#btn_gonews").on("click", GoNews);
+    $("#btn-gonews").on("click", GoNews);
 
     var banner_swiper = new Swiper(".mySwiper", {
         slidesPerView: 1,

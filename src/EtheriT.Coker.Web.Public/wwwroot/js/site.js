@@ -4,14 +4,14 @@
     FooterInit();
 
     $("#Collapse_Button > i").on("click", collapse);
-    $(".btn_cookie_accept").on("click", cookie_accept);
-    $(".btn_cookie_reject").on("click", cookie_reject);
+    $(".btn-cookie_accept").on("click", cookie_accept);
+    $(".btn-cookie_reject").on("click", cookie_reject);
     $("#Floating_Objects").on("click", function () {
         $('html,body').stop().animate({
             scrollTop: 0
         }, 0)
     });
-    $(".btn_favorites").on("click", AddFavorites);
+    $(".btn-favorites").on("click", AddFavorites);
 }
 
 function collapse() {
@@ -27,7 +27,7 @@ function cookie_reject() {
 }
 
 function AddFavorites() {
-    var $self = $(this)
+    var $self = $(this).children('i');
     var $p = $self.parents(".frame").first();
     var toastLiveExample = document.getElementById('liveToast')
     var $toastBody = $("#liveToast>.toast-body");

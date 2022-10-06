@@ -18,10 +18,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
             string view = string.Empty;
             if (!string.IsNullOrEmpty(key))
             {
-                view = "Product";
-                if (id != 0) view = "ProductContent";
+                if (key == "Search")
+                {
+                    view = "Search";
+                }
+                else
+                {
+                    view = "Product";
+                    if (id != 0) view = "ProductContent";
+                }
             }
-            else {
+            else
+            {
                 view = "index";
             }
             return View(view);

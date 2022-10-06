@@ -95,7 +95,7 @@
 	</ol>
 </nav>
 
-<div id="Filter">
+<div id="Filter" class="container-fluid">
 	<div class="container row m-auto  px-0 py-3 justify-content-sm-between justify-content-center align-items-center">
 		<div class="col-auto row align-items-center">
 			<div class="title col-auto fs-3 fw-bold">馬桶</div>
@@ -107,10 +107,10 @@
 				價格
 				<i class="fa-solid fa-arrows-up-down"></i>
 			</button>
-			<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
+			@*<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
 			<button class="btn_typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
 				<i class="fa-solid fa-border-all"></i>
-			</button>
+			</button>*@
 			<input class="price_low col-3 mt-sm-0 mt-2 p-0" placeholder="最低價">
 			<div class="col-1 p-0 mt-sm-0 mt-2 text-center">~</div>
 			<input class="price_high col-3 p-0 mt-sm-0 mt-2 " placeholder="最高價">
@@ -138,7 +138,7 @@
 	<div class="swiper GuessYouLikeSwiper">
 		<div class="swiper-wrapper">
 			<div class="card swiper-slide border-light">
-				<a href="toilet/01"><img src="~/images/product/pro_pic_01.jpg" alt="" /></a>
+				<a href="Toilet/01"><img src="~/images/product/pro_pic_01.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">9,100</div>
@@ -161,7 +161,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/02"><img src="~/images/product/pro_pic_02.jpg" alt="" /></a>
+				<a href="Toilet/02"><img src="~/images/product/pro_pic_02.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">11,900</div>
@@ -183,7 +183,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/03"><img src="~/images/product/pro_pic_03.jpg" alt="" /></a>
+				<a href="Toilet/03"><img src="~/images/product/pro_pic_03.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">26,200</div>
@@ -206,7 +206,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/04"><img src="~/images/product/pro_pic_04.jpg" alt="" /></a>
+				<a href="Toilet/04"><img src="~/images/product/pro_pic_04.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">25,400</div>
@@ -233,37 +233,36 @@
 	<i class="btn_swiper_prev_guessyoulike fa-solid fa-chevron-left"></i>
 </div>
 
-<div id="Ads">
-	<div class="title">廣告</div>
-	<div class="content">
-		<div class="frame">
-			<a class="image" href=""><img src="~/images/hotad1.jpg" alt="" /></a>
-			<div class="describe">
-				<a href="">
-					母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」，給天下媽媽們一份療癒身心之禮
-				</a>
-			</div>
-			<div class="keywords">
-				<ul>
-					<li>#淨未來</li>
-					<li>#全自動</li>
-					<li>#冷熱SPA按摩</li>
-				</ul>
-			</div>
-		</div>
-		<div class="frame">
-			<a class="image" href=" "><img src="~/images/hotad2.jpg" alt="" /></a>
-			<div class="describe">
-				<a href="">
-					Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。
-				</a>
-			</div>
-			<div class="keywords">
-				<ul>
-					<li>#浴缸</li>
-					<li>#新品</li>
-				</ul>
-			</div>
+<div id="Ads" class="container-fluid">
+	<div class="container">
+		<div class="title fs-4 fw-bold py-3">廣告</div>
+		<div class="content row">
+			<figure class="col-sm-6 col-12 d-flex flex-column">
+				<a href=""><img class="w-100" src="~/images/hotad1.jpg" alt="ads_1" /></a>
+				<figcaption class="d-flex flex-column flex-grow-1 justify-content-between">
+					<a class="describe" href="ads_1_describe">
+						母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」，給天下媽媽們一份療癒身心之禮
+					</a>
+					<ul class="keywords row my-2">
+						<li class="col-auto">淨未來</li>
+						<li class="col-auto">全自動</li>
+						<li class="col-auto">冷熱SPA按摩</li>
+					</ul>
+				</figcaption>
+			</figure>
+
+			<figure class="col-sm-6 col-12 d-flex flex-column">
+				<a href=""><img class="w-100" src="~/images/hotad2.jpg" alt="ads_2" /></a>
+				<figcaption class="d-flex flex-column flex-grow-1 justify-content-between">
+					<a class="describe" href="ads_2_describe">
+						Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。
+					</a>
+					<ul class="keywords row my-2">
+						<li class="col-auto">浴缸</li>
+						<li class="col-auto">新品</li>
+					</ul>
+				</figcaption>
+			</figure>
 		</div>
 	</div>
 </div>
@@ -294,7 +293,7 @@
 	<div class="swiper HotProductsSwiper">
 		<div class="swiper-wrapper">
 			<div class="card swiper-slide border-light">
-				<a href="toilet/05"><img src="~/images/product/pro_pic_05.jpg" alt="" /></a>
+				<a href="Toilet/05"><img src="~/images/product/pro_pic_05.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">105,000</div>
@@ -317,7 +316,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/06"><img src="~/images/product/pro_pic_06.jpg" alt="" /></a>
+				<a href="Toilet/06"><img src="~/images/product/pro_pic_06.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">11,900</div>
@@ -340,7 +339,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/07"><img src="~/images/product/pro_pic_07.jpg" alt="" /></a>
+				<a href="Toilet/07"><img src="~/images/product/pro_pic_07.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">26,200</div>
@@ -363,7 +362,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/08"><img src="~/images/product/pro_pic_08.jpg" alt="" /></a>
+				<a href="Toilet/08"><img src="~/images/product/pro_pic_08.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">25,400</div>
@@ -450,7 +449,7 @@
 	<div class="swiper RelatedProductsSwiper">
 		<div class="swiper-wrapper">
 			<div class="card swiper-slide border-light">
-				<a href="toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
+				<a href="Toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">2,800</div>
@@ -473,7 +472,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
+				<a href="Toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">1,500</div>
@@ -496,7 +495,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
+				<a href="Toilet/09"><img src="~/images/product/pro_pic_09.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">2,800</div>
@@ -519,7 +518,7 @@
 			</div>
 
 			<div class="card swiper-slide border-light">
-				<a href="toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
+				<a href="Toilet/10"><img src="~/images/product/pro_pic_10.jpg" alt="" /></a>
 				<div class="card-body">
 					<div class="card-title">
 						<div class="price">1,500</div>

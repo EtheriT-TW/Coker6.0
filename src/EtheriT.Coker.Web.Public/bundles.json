@@ -3,7 +3,8 @@
     {
       "output": "lib/jquery/dist/jquery.min.js",
       "input": [
-        "node_modules/jquery/dist/jquery.min.js"
+        "node_modules/jquery/dist/jquery.min.js",
+        "wwwroot/lib/jquery/dist/jquery-vertical-loop.js"
       ]
     },
     {

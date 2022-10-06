@@ -8,90 +8,93 @@
 <script src="~/js/Header/Header.min.js" asp-append-version="true"></script>
 
 <nav>
-    <div id="Header_Top" class="abreast">
-        <ul class="news_box">
-            <li><p><a href="#"><span style="color: #B73925">New</span>&ensp;隆昌Derek正式上線蝦皮啦</a></p></li>
-            <li><p><a href="#"><span style="color: #B73925">New</span>&ensp;Derek新竹旗艦店盛大開幕！代言人張鈞甯驚艷賞「衛浴美術館」</a></p></li>
-        </ul>
-        <div class="abreast">
-            <div class="abreast smart-search d-none d-lg-flex">
-                <input type="text">
-                <i class="fa-solid fa-magnifying-glass"></i>
-            </div>
-            <p class="d-none d-lg-flex">智慧搜尋</p>
-            <i class="fa-solid fa-cart-shopping"></i>
-            <i class="fa-regular fa-user"></i>
-        </div>
-    </div>
-    <div id="Mega_Menu" class="abreast navbar navbar-expand-lg">
-        <div class="mega_menu_logo center">
-            <a href="/">
-                @if (string.IsNullOrEmpty(Model.Title))
-                {
-                    <h1>@Model.Title</h1>
-                }
-                else
-                {
-                    <img src="@Model.LogoImageUrl" alt="Derek" class="center" />
-                    <h1 class="d-none">@Model.Title</h1>
-                }
-            </a>
-            <div id="menuButton" class="menu-button navbar-toggler collapsed" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarSupportedContent">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
-        </div>
-        <div class="mega_menu_title offcanvas offcanvas-start" id="navbarSupportedContent" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasLabel">@Model.Title</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <ul class="navbar-nav me-auto offcanvas-body">
-                <li class="d-md-flex d-lg-none">
-                    <div class="abreast smart-search">
-                        <input type="text">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </div>
-                </li>
-                <li class="d-md-none">
-                    <p>智慧搜尋</p>
-                </li>
-                @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
-                {
-                    <li class="mega_menu_subtitle nav-item">
-                        <a class="nav-link center">@menu.Title</a>
-                        <div class="mega_menu_content abreast">
-                            <div class="text">
-                                <ul class="abreast">
-                                    @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
-                                    {
-                                        <li class="nav-item">
-                                            <a class="nav-link">@subMenu.Title</a>
-                                            <ul>
-                                                @foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
-                                                {
-                                                    <li><a = href="/@thirdMenu.Link">@thirdMenu.Title</a></li>
-                                                }
-                                            </ul>
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                            <div class="image">
-                                @if (!string.IsNullOrEmpty(menu.imageUrl))
-                                {
-                                    <img src="@menu.imageUrl" alt="Photo" class="center" />
-                                }
-                                @if (!string.IsNullOrEmpty(menu.Description))
-                                {
-                                    <div class="center"><p>@menu.Description</p></div>
-                                }
-                            </div>
-                        </div>
-                    </li>
-                }
-            </ul>
-        </div>
-    </div>
+	<div id="Header_Top" class="abreast">
+		<div class="news_box">
+			<ul class="clearfix">
+				<li><a href="#">隆昌Derek正式上線蝦皮啦</a></li>
+				<li><a href="#">Derek新竹旗艦店盛大開幕！代言人張鈞甯驚艷賞「衛浴美術館」</a></li>
+			</ul>
+		</div>
+
+		<div class="abreast">
+			<div class="searchblock bg-white rounded-pill d-lg-flex d-none pe-1 ps-3">
+				<input type="text" class="bg-transparent border-0">
+				<a class="align-self-center" href="/Search"><i class="fa-solid fa-magnifying-glass"></i></a>
+			</div>
+			<a class="fs-6 text-white d-lg-flex d-none ms-2 align-items-center" href="/Search">智慧搜尋</a>
+			<button class="bg-transparent border-0 text-white ms-1"><i class="fa-solid fa-cart-shopping"></i></button>
+			<button class="bg-transparent border-0 text-white mx-1"><i class="fa-regular fa-user"></i></button>
+		</div>
+	</div>
+	<div id="Mega_Menu" class="abreast navbar navbar-expand-lg">
+		<div class="mega_menu_logo center">
+			<a href="/">
+				@if (string.IsNullOrEmpty(Model.Title))
+				{
+					<h1>@Model.Title</h1>
+				}
+				else
+				{
+					<img src="@Model.LogoImageUrl" alt="Derek" class="center" />
+					<h1 class="d-none">@Model.Title</h1>
+				}
+			</a>
+			<div id="menuButton" class="menu-button navbar-toggler collapsed" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarSupportedContent">
+				<div class="bar"></div>
+				<div class="bar"></div>
+				<div class="bar"></div>
+			</div>
+		</div>
+		<div class="mega_menu_title offcanvas offcanvas-start" id="navbarSupportedContent" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+			<div class="offcanvas-header">
+				<h5 class="offcanvas-title" id="offcanvasLabel">@Model.Title</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+			</div>
+			<ul class="navbar-nav me-auto offcanvas-body">
+				<li class="d-md-flex d-lg-none">
+					<div class="abreast smart-search">
+						<input type="text">
+						<i class="fa-solid fa-magnifying-glass"></i>
+					</div>
+				</li>
+				<li class="d-md-none">
+					<p>智慧搜尋</p>
+				</li>
+				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+				{
+					<li class="mega_menu_subtitle nav-item">
+						<a class="nav-link center">@menu.Title</a>
+						<div class="mega_menu_content abreast">
+							<div class="text">
+								<ul class="abreast">
+									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+									{
+										<li class="nav-item">
+											<a class="nav-link">@subMenu.Title</a>
+											<ul>
+												@foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
+												{
+													<li><a = href="/@thirdMenu.Link">@thirdMenu.Title</a></li>
+												}
+											</ul>
+										</li>
+									}
+								</ul>
+							</div>
+							<div class="image">
+								@if (!string.IsNullOrEmpty(menu.imageUrl))
+								{
+									<img src="@menu.imageUrl" alt="Photo" class="center" />
+								}
+								@if (!string.IsNullOrEmpty(menu.Description))
+								{
+									<div class="center"><p>@menu.Description</p></div>
+								}
+							</div>
+						</div>
+					</li>
+				}
+			</ul>
+		</div>
+	</div>
 </nav>

@@ -1,7 +1,7 @@
 ﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-tw">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,6 +14,9 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EtheriT.Coker.Web.MVC.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/vendor.min.css" asp-append-version="true" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/vendor.min.js" asp-append-version="true"></script>
 </head>
 <body>
     <section class="wrapper">
@@ -92,7 +95,6 @@
             </div>
         </div>
     </div>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

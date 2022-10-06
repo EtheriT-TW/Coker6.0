@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EtheriT.Coker.Web.MVC</title>
+    <title>@ViewData["Title"] - Coker網站管理系統</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
@@ -16,12 +16,12 @@
         <div class="contents" role="main">
             <main class="container">
                 @RenderBody()
+                <footer class="border-top footer small text-muted ">
+                    <div class="container">
+                        易碩網際科技版權所有 Copyright © EtheriT Co.,Ltd. All Rights Reserved - <a asp-area="" asp-controller="Account" asp-action="Privacy">Privacy</a>
+                    </div>
+                </footer>
             </main>
-            <footer class="border-top footer small text-muted ">
-                <div class="container">
-                    易碩網際科技版權所有 Copyright © EtheriT Co.,Ltd. All Rights Reserved - <a asp-area="" asp-controller="Account" asp-action="Privacy">Privacy</a>
-                </div>
-            </footer>
         </div>
     </div>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

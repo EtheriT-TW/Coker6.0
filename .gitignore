@@ -370,5 +370,7 @@ FodyWeavers.xsd
 !bootstrap.min.css
 !**/wwwroot/lib/bootstrap/**/*.min.js.map
 !**/wwwroot/lib/jquery/**/*.min.js.map
+!**/wwwroot/lib/devextreme/**/*.min.js
+!**/wwwroot/css/devextreme/**/*.min.css
 */*/wwwroot/dist/
 *.lock

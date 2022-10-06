@@ -7,7 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\css\Dashboard\" />
     <Folder Include="wwwroot\lib\fortawesome\css\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BuildBundlerMinifier" Version="2.9.406" />
+    <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.10" />
+    <PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />
   </ItemGroup>
 
 </Project>

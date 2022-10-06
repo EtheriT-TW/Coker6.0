@@ -4,7 +4,8 @@
       "output": "lib/jquery/dist/jquery.min.js",
       "input": [
         "node_modules/jquery/dist/jquery.min.js",
-        "node_modules/chosen-js/chosen.jquery.min.js"
+        "node_modules/chosen-js/chosen.jquery.min.js",
+        "node_modules/jquery-ui-dist/jquery-ui.min.js"
       ]
     },
     {
@@ -17,6 +18,12 @@
       "output": "lib/swiper/swiper-bundle.min.js",
       "input": [
         "node_modules/swiper/swiper-bundle.min.js"
+      ]
+    },
+    {
+      "output": "lib/chart.js/chart.min.js",
+      "input": [
+        "node_modules/chart.js/dist/chart.min.js"
       ]
     }
   ],

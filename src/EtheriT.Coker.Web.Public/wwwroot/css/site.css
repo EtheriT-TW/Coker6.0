@@ -106,7 +106,7 @@ p {
     align-items: center;
 }
 
-.btn-cookie_accept {
+.btn_cookie_accept {
     background-color: #B73925;
     width: 85px;
     text-align: center;
@@ -116,7 +116,7 @@ p {
     cursor: pointer;
 }
 
-.btn-cookie_reject {
+.btn_cookie_reject {
     background-color: gray;
     width: 85px;
     height: fit-content;

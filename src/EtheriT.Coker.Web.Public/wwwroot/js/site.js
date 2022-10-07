@@ -4,14 +4,14 @@
     FooterInit();
 
     $("#Collapse_Button > i").on("click", collapse);
-    $(".btn-cookie_accept").on("click", cookie_accept);
-    $(".btn-cookie_reject").on("click", cookie_reject);
+    $(".btn_cookie_accept").on("click", cookie_accept);
+    $(".btn_cookie_reject").on("click", cookie_reject);
     $("#Floating_Objects").on("click", function () {
         $('html,body').stop().animate({
             scrollTop: 0
         }, 0)
     });
-    $(".btn-favorites").on("click", AddFavorites);
+    $(".btn_favorites").on("click", AddFavorites);
 }
 
 function collapse() {

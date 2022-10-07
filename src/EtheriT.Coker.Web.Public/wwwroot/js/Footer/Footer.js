@@ -5,9 +5,9 @@
 
     function scrollFunction() {
         if (document.body.scrollTop > 350 || document.documentElement.scrollTop > 350) {
-            $(".btn-gotop").css('display', 'block');
+            $(".btn_gotop").css('display', 'block');
         } else {
-            $(".btn-gotop").css('display', 'none');
+            $(".btn_gotop").css('display', 'none');
         }
     }
 }

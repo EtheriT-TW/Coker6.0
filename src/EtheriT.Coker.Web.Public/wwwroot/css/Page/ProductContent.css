@@ -22,7 +22,7 @@
     cursor: pointer;
 }
 
-[class*=btn-swiper_] {
+[class*=btn_swiper_] {
     z-index: 10;
     top: calc(50% - 25px);
     height: 50px;
@@ -40,7 +40,7 @@
         content: '．';
     }
 
-    #Product > .content > .describe > .track > .btn-favorites > i {
+    #Product > .content > .describe > .track > .btn_favorites > i {
         color: var(--gray-middle);
         font-size: 3rem;
         cursor: pointer;
@@ -79,7 +79,7 @@
         height: 2.5rem;
     }
 
-    #Product > .content > .specification > .btn-detailed {
+    #Product > .content > .specification > .btn_detailed {
         background-color: var(--gray-light);
     }
 
@@ -118,27 +118,27 @@
     color: var(--gray-middle);
 }
 
-.btn-radio {
+.btn_radio {
     white-space: nowrap;
     cursor: pointer;
     border: 1px solid var(--gray-middle);
 }
 
-input:checked + .btn-radio {
+input:checked + .btn_radio {
     font-weight: bold;
     border-color: var(--red-middle);
     border-width: medium;
     cursor: default;
 }
 
-input:disabled + .btn-radio {
+input:disabled + .btn_radio {
     border: var(--gray-light);
     background-color: var(--gray-light);
     color: var(--gray-middle);
     cursor: default;
 }
 
-[class*=btn-count_] {
+[class*=btn_count_] {
     cursor: pointer;
     color: var(--gray-middle);
     border: 1px solid var(--gray-middle);
@@ -152,7 +152,7 @@ input:disabled + .btn-radio {
     height: 2rem;
 }
 
-#Product > .content > .btn-buy {
+#Product > .content > .btn_buy {
     background-color: var(--red-middle);
     line-height: 3;
 }

@@ -1,14 +1,14 @@
 ﻿function PageReady() {
-    $(".btn-sort_price").on("click", SortByPrice);
-    $(".btn-typography").on("click", Typography);
+    $(".btn_sort_price").on("click", SortByPrice);
+    $(".btn_typography").on("click", Typography);
 
-    var related_products_swiper = new Swiper(".RelatedProductsSwiper", {
+    var related_products_swiper = new Swiper("#RelatedProductsSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
         navigation: {
-            nextEl: ".btn-swiper_next_relatedproducts",
-            prevEl: ".btn-swiper_prev_relatedproducts",
+            nextEl: ".btn_swiper_next_relatedproducts",
+            prevEl: ".btn_swiper_prev_relatedproducts",
         },
         breakpoints: {
             375: {
@@ -25,7 +25,7 @@
 }
 
 function SortByPrice() {
-    var $sort_icon = $(".btn-sort_price > i");
+    var $sort_icon = $(".btn_sort_price > i");
     if ($sort_icon.hasClass('fa-arrows-up-down')) {
         $sort_icon.toggleClass('fa-arrows-up-down');
         $sort_icon.toggleClass('fa-caret-down');
@@ -41,7 +41,7 @@ function SortByPrice() {
 }
 
 function Typography() {
-    var $btn_icon = $(".btn-typography > i");
+    var $btn_icon = $(".btn_typography > i");
     $btn_icon.toggleClass('fa-table-list');
     $btn_icon.toggleClass('fa-border-all');
 

@@ -1,14 +1,14 @@
 ﻿function PageReady() {
-    $(".btn-sort_price").on("click", SortByPrice);
-    $(".btn-typography").on("click", Typography);
+    $(".btn_sort_price").on("click", SortByPrice);
+    $(".btn_typography").on("click", Typography);
 
-    var guess_you_like_swiper = new Swiper(".GuessYouLikeSwiper", {
+    var guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
         navigation: {
-            nextEl: ".btn-swiper_next_guessyoulike",
-            prevEl: ".btn-swiper_prev_guessyoulike",
+            nextEl: ".btn_swiper_next_guessyoulike",
+            prevEl: ".btn_swiper_prev_guessyoulike",
         },
         breakpoints: {
             375: {
@@ -23,13 +23,13 @@
         }
     });
 
-    var hot_products_swiper = new Swiper(".HotProductsSwiper", {
+    var hot_products_swiper = new Swiper("#HotProductsSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
         navigation: {
-            nextEl: ".btn-swiper_next_hotproducts",
-            prevEl: ".btn-swiper_prev_hotproducts",
+            nextEl: ".btn_swiper_next_hotproducts",
+            prevEl: ".btn_swiper_prev_hotproducts",
         },
         breakpoints: {
             375: {
@@ -44,13 +44,13 @@
         }
     });
 
-    var related_products_swiper = new Swiper(".RelatedProductsSwiper", {
+    var related_products_swiper = new Swiper("#RelatedProductsSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
         navigation: {
-            nextEl: ".btn-swiper_next_relatedproducts",
-            prevEl: ".btn-swiper_prev_relatedproducts",
+            nextEl: ".btn_swiper_next_relatedproducts",
+            prevEl: ".btn_swiper_prev_relatedproducts",
         },
         breakpoints: {
             375: {
@@ -70,15 +70,15 @@
         spaceBetween: 15,
         loop: true,
         navigation: {
-            nextEl: ".btn-swiper_next_ads",
-            prevEl: ".btn-swiper_prev_ads",
+            nextEl: ".btn_swiper_next_ads",
+            prevEl: ".btn_swiper_prev_ads",
         },
     });
 
-    $(document).on('click', '.btn-count_plus', function () {
+    $(document).on('click', '.btn_count_plus', function () {
         $('.input_count').val(parseInt($('.input_count').val()) + 1);
     });
-    $(document).on('click', '.btn-count_minus', function () {
+    $(document).on('click', '.btn_count_minus', function () {
         $('.input_count').val(parseInt($('.input_count').val()) - 1);
         if ($('.input_count').val() == 0) {
             $('.input_count').val(1);
@@ -92,7 +92,7 @@
 }
 
 function SortByPrice() {
-    var $sort_icon = $(".btn-sort_price > i");
+    var $sort_icon = $(".btn_sort_price > i");
     if ($sort_icon.hasClass('fa-arrows-up-down')) {
         $sort_icon.toggleClass('fa-arrows-up-down');
         $sort_icon.toggleClass('fa-caret-down');
@@ -108,5 +108,5 @@ function SortByPrice() {
 }
 
 function Typography() {
-    $(".btn-typography > i").toggleClass('fa-table-list');
+    $(".btn_typography > i").toggleClass('fa-table-list');
 }

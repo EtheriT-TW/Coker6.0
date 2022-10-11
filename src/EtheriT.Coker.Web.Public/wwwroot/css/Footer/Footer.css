@@ -1,9 +1,4 @@
 ﻿
-li {
-    cursor: pointer;
-    list-style: none;
-}
-
 /* Footer */
 footer {
     background-color: #4A5859;
@@ -166,19 +161,6 @@ footer {
         background: #FF8C49;
         border-radius: 50%;
         margin-bottom: 20px;
-    }
-
-/* Go Top Button */
-.btn_gotop {
-    background: black;
-    width: 50px;
-    height: 50px;
-    border-radius: 5px;
-    display: none;
-}
-
-    .btn_gotop > i {
-        margin: 0
     }
 
 /* Animations */

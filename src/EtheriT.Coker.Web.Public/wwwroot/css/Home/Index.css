@@ -129,14 +129,8 @@
                 }
 
                 #Guess_Like > .content > .frame > .buy > .btn_buy {
-                    width: 7rem;
                     font-size: 0.8rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 50px;
-                    border: 1px gray solid;
-                    cursor: pointer;
+                    padding: 0.1rem 0;
                 }
 
 /* Favorite */
@@ -422,11 +416,11 @@
     background-color: #E2E2E2;
 }
 
-    #Most_Popular .content > figure > figcaption > .keywords > li {
+    #Most_Popular > div > .card-group > .card > .card-footer > li {
         font-size: 0.8rem;
     }
 
-        #Most_Popular .content > figure > figcaption > .keywords > li::before {
+        #Most_Popular > div > .card-group > .card > .card-footer > li::before {
             content: '#';
         }
 

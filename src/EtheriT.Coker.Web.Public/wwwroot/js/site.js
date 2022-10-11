@@ -12,6 +12,24 @@
         }, 0)
     });
     $(".btn_favorites").on("click", AddFavorites);
+
+    window.onscroll = function () {
+        scrollFunction();
+    };
+
+    $("#btn_gotop").on("click", GoTop);
+}
+
+function scrollFunction() {
+    if (document.body.scrollTop > 350 || document.documentElement.scrollTop > 350) {
+        $("#btn_gotop").css('display', 'block');
+    } else {
+        $("#btn_gotop").css('display', 'none');
+    }
+}
+
+function GoTop() {
+    $('html, body').animate({ scrollTop: 0 }, 0);
 }
 
 function collapse() {

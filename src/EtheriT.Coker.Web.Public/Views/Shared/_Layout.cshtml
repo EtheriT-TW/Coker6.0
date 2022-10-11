@@ -3,14 +3,14 @@
 <!DOCTYPE html>
 <html lang="zh-tw">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Derek</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Derek</title>
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
 	<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/EtheriT.Coker.Web.Public.styles.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/EtheriT.Coker.Web.Public.styles.css" asp-append-version="true" />
 </head>
 <body onload="ready()">
 	<header>
@@ -25,9 +25,44 @@
 		</div>
 	</div>
 
-    @RenderBody()
+	<div id="Floating_Right" class="position-fixed d-flex flex-column align-items-center">
+		<div id="History" class="text-end d-none d-sm-block">
+			<div id="CollapseHistory" class="">
+				<div class="title text-center text-white">瀏覽紀錄</div>
+				<ul class="m-0">
+					<li class="mb-1 border"><a href="/Toilet/01"><img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" /></a></li>
+					<li class="mb-1 border"><a href="/Toilet/01"><img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" /></a></li>
+					<li class="mb-1 border"><a href="/Toilet/01"><img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" /></a></li>
+					<li class="mb-1 border"><a href="/Toilet/01"><img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" /></a></li>
+				</ul>
+				<a class="collect d-flex justify-content-center align-items-center text-white mb-1" href="">
+					<i class="fa-solid fa-regular fa-heart px-1"></i>
+					<div class="text">收藏</div>
+					<div class="amount px-1">20</div>
+				</a>
+				<a class="checkout d-flex justify-content-center align-items-center text-white py-1 mb-1" href="">
+					<i class="fa-solid fa-cart-shopping px-1"></i>
+					<div class="text px-1">結帳</div>
+				</a>
+			</div>
+		</div>
 
-    <footer>
+		<button id="btn_chat" class="border-0 bg-transparent mt-3">
+			<span class="fa-stack fa-2x">
+				<i class="fa-solid fa-circle fa-stack-2x"></i>
+				<i class="fa-brands fa-facebook-messenger fa-stack-1x fa-inverse"></i>
+			</span>
+		</button>
+
+		<button id="btn_gotop" class="smoothScroll bg-black border-0 rounded-0 text-white my-3 px-3">
+			<i class="fa-solid fa-chevron-up"></i>
+			<div>Top</div>
+		</button>
+	</div>
+
+	@RenderBody()
+
+	<footer>
 		@await Component.InvokeAsync(nameof(Footer))
 		<div id="Cookie" class="cookie">
 			<p class="cookie_text">本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見&ensp;<span style="cursor:pointer">隱私權政策</span>。</p>
@@ -36,12 +71,12 @@
 				<div class="btn_cookie_reject">拒絕</div>
 			</div>
 		</div>
-    </footer>
+	</footer>
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
 	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="~/lib/swiper/swiper-bundle.min.js"></script>
 	<script src="~/lib/jquery-plugin-c-share/dist/jquery.c-share.min.js"></script>
 	<script src="~/js/site.min.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+	@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

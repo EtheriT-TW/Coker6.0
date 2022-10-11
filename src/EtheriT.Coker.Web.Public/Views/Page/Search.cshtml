@@ -1,4 +1,7 @@
-﻿@*
+﻿@using EtheriT.Coker.Web.Public.Models
+@model PageViewModel
+
+@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
@@ -23,87 +26,91 @@
 		<label class="btn_search_place fs-5 mx-3" for="find_article">找文章</label>
 	</div>
 	<div class="searchblock rounded-pill border border-dark fs-3 col-12 col-md-5 m-auto ps-4 pe-2 d-flex">
-		<input type="text" class="bg-transparent border-0 fw-bold flex-grow-1">
+		<input type="text" class="bg-transparent border-0 fw-bold flex-grow-1" value="@Model.search">
 		<button class="btn_search bg-transparent border-0 ms-1"><i class="fa-solid fa-magnifying-glass"></i></button>
 	</div>
 </div>
 
-<div class="tick_area container row border m-auto mt-4 mb-0 p-0 pe-2 align-items-center">
-	<div class="title col-auto px-4 hstack">分類</div>
-	<ul class="col row my-2">
-		<li class="col-auto">
-			<input id="category_01" type="checkbox" value="">
-			<label class="form-check-label" for="category_01">
-				智慧馬桶(10)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_02" type="checkbox" value="">
-			<label class="form-check-label" for="category_02">
-				單體馬桶(30)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_03" type="checkbox" value="">
-			<label class="form-check-label" for="category_03">
-				二件式馬桶(17)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_04" type="checkbox" value="">
-			<label class="form-check-label" for="category_04">
-				幼兒馬桶(5)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_05" type="checkbox" value="">
-			<label class="form-check-label" for="category_05">
-				奈米馬桶(10)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_06" type="checkbox" value="">
-			<label class="form-check-label" for="category_06">
-				蹲式馬桶(10)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_07" type="checkbox" value="">
-			<label class="form-check-label" for="category_07">
-				高背馬桶(20)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="category_08" type="checkbox" value="">
-			<label class="form-check-label" for="category_08">
-				馬桶蓋(20)
-			</label>
-		</li>
-	</ul>
+<div class="container">
+	<div class="tick_area row border m-auto mt-4 mb-0 align-items-center">
+		<div class="title col-auto px-4 hstack">分類</div>
+		<ul class="col row my-2">
+			<li class="col-auto">
+				<input id="category_01" type="checkbox" value="">
+				<label class="form-check-label" for="category_01">
+					智慧馬桶(10)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_02" type="checkbox" value="">
+				<label class="form-check-label" for="category_02">
+					單體馬桶(30)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_03" type="checkbox" value="">
+				<label class="form-check-label" for="category_03">
+					二件式馬桶(17)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_04" type="checkbox" value="">
+				<label class="form-check-label" for="category_04">
+					幼兒馬桶(5)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_05" type="checkbox" value="">
+				<label class="form-check-label" for="category_05">
+					奈米馬桶(10)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_06" type="checkbox" value="">
+				<label class="form-check-label" for="category_06">
+					蹲式馬桶(10)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_07" type="checkbox" value="">
+				<label class="form-check-label" for="category_07">
+					高背馬桶(20)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="category_08" type="checkbox" value="">
+				<label class="form-check-label" for="category_08">
+					馬桶蓋(20)
+				</label>
+			</li>
+		</ul>
+	</div>
 </div>
 
-<div class="tick_area container row border m-auto mt-0 mb-5 p-0 pe-2 align-items-center">
-	<div class="title col-auto px-4 hstack">認證</div>
-	<ul class="col row my-2">
-		<li class="col-auto">
-			<input id="certifi_01" type="checkbox" value="">
-			<label class="form-check-label" for="certifi_01">
-				奈米磁(50)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="certifi_02" type="checkbox" value="">
-			<label class="form-check-label" for="certifi_02">
-				淨未來(2)
-			</label>
-		</li>
-		<li class="col-auto">
-			<input id="certifi_03" type="checkbox" value="">
-			<label class="form-check-label" for="certifi_03">
-				省水標章(50)
-			</label>
-		</li>
-	</ul>
+<div class="container">
+	<div class="tick_area row border m-auto mt-0 mb-5 align-items-center">
+		<div class="title col-auto px-4 hstack">認證</div>
+		<ul class="col row my-2">
+			<li class="col-auto">
+				<input id="certifi_01" type="checkbox" value="">
+				<label class="form-check-label" for="certifi_01">
+					奈米磁(50)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="certifi_02" type="checkbox" value="">
+				<label class="form-check-label" for="certifi_02">
+					淨未來(2)
+				</label>
+			</li>
+			<li class="col-auto">
+				<input id="certifi_03" type="checkbox" value="">
+				<label class="form-check-label" for="certifi_03">
+					省水標章(50)
+				</label>
+			</li>
+		</ul>
+	</div>
 </div>
 
 <div Id="Search_Title" class="fs-4 text-center my-3">
@@ -111,8 +118,8 @@
 </div>
 
 <div id="Filter" class="container-fluid border-bottom border-2">
-	<div class="container row m-auto">
-		<div class="sort_radio container col">
+	<div class="container row m-auto px-sm-4 px-0 flex-wrap-reverse justify-content-center">
+		<div class="sort_radio container col d-flex justify-content-around justify-content-lg-start">
 			<input id="sort_complex" type="radio" class="btn-check" name="choose_sort" autocomplete="off" checked>
 			<label class="btn_sort_complex" for="sort_complex">綜合排序</label>
 
@@ -123,7 +130,7 @@
 			<label class="btn_sort_new" for="sort_new">新上市</label>
 		</div>
 
-		<div class="options col-auto row row-cols-sm-auto align-items-center justify-content-center">
+		<div class="options col-auto row row-cols-sm-auto my-2 align-items-center justify-content-center">
 			<button class="btn_sort_hot col-3 mx-2 p-0 border-0 bg-transparent">熱門搜尋</button>
 			<button class="btn_sort_price col-2 mx-2 p-0 border-0 bg-transparent">
 				價格
@@ -136,7 +143,7 @@
 			<input class="price_low border-0 price_low text-end px-1" placeholder="最低價">
 			<div class="col-1 p-0 mt-sm-0 mt-2 text-center">~</div>
 			<input class="price_high border-0 price_low text-end px-1" placeholder="最高價">
-			<button class="btn_confirm col-2 mx-2 mt-sm-0 mt-2 border-0 text-white" type="button">確認</button>
+			<button class="btn_confirm col-2 mx-2 border-0 text-white" type="button">確認</button>
 		</div>
 	</div>
 </div>
@@ -169,7 +176,7 @@
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="col-auto priceframe align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>

@@ -1,11 +1,4 @@
-﻿
-
-li {
-    cursor: pointer;
-    list-style: none;
-}
-
-/* Header Top*/
+﻿/* Header Top*/
 #Header_Top {
     background-color: #1E1E1E;
     color: white;
@@ -66,14 +59,33 @@ li {
         width: 125px;
     }
 
-    .searchblock > a > i {
-        color: #1E1E1E;
-        display: flex;
-        align-items: center;
-        margin: auto;
-        padding-left: 5px;
-        padding-right: 5px;
-        cursor: pointer;
+.cart_dropdown {
+    z-index: 1001;
+    min-width: 280px;
+}
+
+    .cart_dropdown > ul > li > figure > div > .btn_cart_buy {
+        background-color: var(--gray-dark);
+    }
+
+    .cart_dropdown > ul > li > figure > div > div:first-child {
+        max-width: 80px;
+    }
+
+    .cart_dropdown > ul > li > figure > div > figcaption > .card-body > .detailed {
+        color: var(--red-middle);
+    }
+
+        .cart_dropdown > ul > li > figure > div > figcaption > .card-body > .detailed > .amount::before {
+            content: '×';
+        }
+
+    .cart_dropdown > ul > li > figure > div > .btn_cart_delete {
+        color: var(--gray-middle);
+    }
+
+    .cart_dropdown > .btn_cart_buy {
+        background-color: var(--gray-dark);
     }
 
 /* menu_button */

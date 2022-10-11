@@ -17,12 +17,95 @@
 		</div>
 
 		<div class="abreast">
-			<div class="searchblock bg-white rounded-pill d-lg-flex d-none pe-1 ps-3">
-				<input type="text" class="bg-transparent border-0">
-				<a class="align-self-center" href="/Search"><i class="fa-solid fa-magnifying-glass"></i></a>
-			</div>
+			<form action="/Search" class="searchblock bg-white rounded-pill d-lg-flex d-none pe-1 ps-3">
+				<input type="hidden" name="id" />
+				<input type="text" name="search" class="bg-transparent border-0">
+				<button type="submit" class="align-self-center align-self-center bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
+			</form>
 			<a class="fs-6 text-white d-lg-flex d-none ms-2 align-items-center" href="/Search">智慧搜尋</a>
-			<button class="bg-transparent border-0 text-white ms-1"><i class="fa-solid fa-cart-shopping"></i></button>
+			<div class="btn-group">
+				<button class="bg-transparent border-0 text-white ms-1" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+					<i class="fa-solid fa-cart-shopping"></i>
+				</button>
+				<div class="cart_dropdown dropdown-menu dropdown-menu-end px-2 border-0 rounded-0">
+					<ul class="m-0">
+						<li class="border-bottom">
+							<figure class="card border-0 m-0" style="max-width: 540px;">
+								<div class="row g-0">
+									<div class="col align-self-center">
+										<img class="w-100" src="~/images/product/pro_pic_01.jpg" alt="" />
+									</div>
+
+									<figcaption class="col">
+										<div class="card-body p-1">
+											<p class="card-title">CS230一段省水分離式幼兒馬桶</p>
+											<div class="detailed d-flex">
+												<p class="card-text price fw-bold">9,100</p>
+												<p class="card-text amount fw-bold">1</p>
+											</div>
+										</div>
+									</figcaption>
+
+									<button class="btn_cart_delete col-auto bg-transparent border-0 ps-2">
+										<i class="fa-solid fa-trash"></i>
+									</button>
+								</div>
+							</figure>
+						</li>
+
+						<li class="border-bottom">
+							<figure class="card border-0 m-0" style="max-width: 540px;">
+								<div class="row g-0">
+									<div class="col align-self-center">
+										<img class="w-100" src="~/images/product/pro_pic_01.jpg" alt="" />
+									</div>
+
+									<figcaption class="col">
+										<div class="card-body p-1">
+											<p class="card-title">CS230一段省水分離式幼兒馬桶</p>
+											<div class="detailed d-flex">
+												<p class="card-text price fw-bold">9,100</p>
+												<p class="card-text amount fw-bold">1</p>
+											</div>
+										</div>
+									</figcaption>
+
+									<button class="btn_cart_delete col-auto bg-transparent border-0 ps-2">
+										<i class="fa-solid fa-trash"></i>
+									</button>
+								</div>
+							</figure>
+						</li>
+
+						<li class="border-bottom">
+							<figure class="card border-0 m-0" style="max-width: 540px;">
+								<div class="row g-0">
+									<div class="col align-self-center">
+										<img class="w-100" src="~/images/product/pro_pic_01.jpg" alt="" />
+									</div>
+
+									<figcaption class="col">
+										<div class="card-body p-1">
+											<p class="card-title">CS230一段省水分離式幼兒馬桶</p>
+											<div class="detailed d-flex">
+												<p class="card-text price fw-bold">9,100</p>
+												<p class="card-text amount fw-bold">1</p>
+											</div>
+										</div>
+									</figcaption>
+
+									<button class="btn_cart_delete col-auto bg-transparent border-0 ps-2">
+										<i class="fa-solid fa-trash"></i>
+									</button>
+								</div>
+							</figure>
+						</li>
+					</ul>
+					<button class="btn_cart_buy text-white border-0 rounded-1 w-100 py-1 mt-2">
+						購買
+					</button>
+				</div>
+			</div>
 			<button class="bg-transparent border-0 text-white mx-1"><i class="fa-regular fa-user"></i></button>
 		</div>
 	</div>

@@ -45,7 +45,7 @@
 			<div class="image"><img src="~/images/product/pro_01.png" alt="" /></div>
 			<div class="buy">
 				<div class="price">28,000</div>
-				<div class="btn_buy">立即購買</div>
+				<a href="/Toilet/01" class="btn_buy border border-secondary px-4 rounded-pill text-black align-self-center">立即購買</a>
 			</div>
 		</div>
 		<div class="frame">
@@ -65,7 +65,7 @@
 			<div class="image"><img src="~/images/product/pro_02.png" alt="" /></div>
 			<div class="buy">
 				<div class="price">135,000</div>
-				<div class="btn_buy">立即購買</div>
+				<a href="/Toilet/01" class="btn_buy border border-secondary px-4 rounded-pill text-black align-self-center">立即購買</a>
 			</div>
 		</div>
 		<div class="frame">
@@ -84,7 +84,7 @@
 			<div class="image"><img src="~/images/product/pro_03.png" alt="" /></div>
 			<div class="buy">
 				<div class="price">28,300</div>
-				<div class="btn_buy">立即購買</div>
+				<a href="/Toilet/01" class="btn_buy border border-secondary px-4 rounded-pill text-black align-self-center">立即購買</a>
 			</div>
 		</div>
 	</div>
@@ -97,7 +97,7 @@
 			<div class="content">
 				<div class="icon_button">
 					<button class="btn_favorites bg-transparent border-0">
-						<i class="fav_item fa-regular fa-heart"></i>
+						<i class="fa-solid fav_item fa-regular fa-heart"></i>
 					</button>
 					<button class="bg-transparent border-0 pe-0">
 						<i class="fa-solid fa-cart-shopping"></i>
@@ -114,7 +114,7 @@
 			<div class="content">
 				<div class="icon_button">
 					<button class="btn_favorites bg-transparent border-0">
-						<i class="fav_item fa-regular fa-heart"></i>
+						<i class="fa-solid fav_item fa-regular fa-heart"></i>
 					</button>
 					<button class="bg-transparent border-0 pe-0">
 						<i class="fa-solid fa-cart-shopping"></i>
@@ -131,7 +131,7 @@
 			<div class="content">
 				<div class="icon_button">
 					<button class="btn_favorites bg-transparent border-0">
-						<i class="fav_item fa-regular fa-heart"></i>
+						<i class="fa-solid fav_item fa-regular fa-heart"></i>
 					</button>
 					<button class="bg-transparent border-0 pe-0">
 						<i class="fa-solid fa-cart-shopping"></i>
@@ -148,7 +148,7 @@
 			<div class="content">
 				<div class="icon_button">
 					<button class="btn_favorites bg-transparent border-0">
-						<i class="fav_item fa-regular fa-heart"></i>
+						<i class="fa-solid fav_item fa-regular fa-heart"></i>
 					</button>
 					<button class="bg-transparent border-0 pe-0">
 						<i class="fa-solid fa-cart-shopping"></i>
@@ -165,7 +165,7 @@
 			<div class="content">
 				<div class="icon_button">
 					<button class="btn_favorites bg-transparent border-0">
-						<i class="fav_item fa-regular fa-heart"></i>
+						<i class="fa-solid fav_item fa-regular fa-heart"></i>
 					</button>
 					<button class="bg-transparent border-0 pe-0">
 						<i class="fa-solid fa-cart-shopping"></i>
@@ -288,35 +288,30 @@
 	</div>
 </div>
 
-<div id="Most_Popular" class="container-fluid">
+<div id="Most_Popular" class="container-fluid my-5">
 	<div class="container">
-		<div class="title fs-4 fw-bold py-3">今日最熱門</div>
-		<div class="content row">
-			<figure class="col-sm-6 col-12 d-flex flex-column">
-				<a href=""><img class="w-100" src="~/images/hotad1.jpg" alt="ads_1" /></a>
-				<figcaption class="d-flex flex-column flex-grow-1 justify-content-between">
-					<a class="describe" href="ads_1_describe">
-						母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」，給天下媽媽們一份療癒身心之禮
-					</a>
-					<ul class="keywords row my-2">
-						<li class="col-auto">淨未來</li>
-						<li class="col-auto">全自動</li>
-						<li class="col-auto">冷熱SPA按摩</li>
-					</ul>
+		<div class="fs-4 fw-bold py-3">今日最熱門</div>
+		<div class="card-group">
+			<div class="card bg-transparent border-0 me-sm-2 m-0">
+				<a href=""><img class="card-img-top w-100" src="~/images/hotad1.jpg" alt="ads_1" /></a>
+				<figcaption class="card-body">
+					<a class="card-text text-black" href="">母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」，給天下媽媽們一份療癒身心之禮</a>
 				</figcaption>
-			</figure>
-
-			<figure class="col-sm-6 col-12 d-flex flex-column">
-				<a href=""><img class="w-100" src="~/images/hotad2.jpg" alt="ads_2" /></a>
-				<figcaption class="d-flex flex-column flex-grow-1 justify-content-between">
-					<a class="describe" href="ads_2_describe">
-						Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。
-					</a>
-					<ul class="keywords row my-2">
-						<li class="col-auto">浴缸</li>
-						<li class="col-auto">新品</li>
-					</ul>
+				<ul class="card-footer row bg-transparent border-0 m-0">
+					<li class="col-auto ps-0">淨未來</li>
+					<li class="col-auto ps-0">全自動</li>
+					<li class="col-auto ps-0">冷熱SPA按摩</li>
+				</ul>
+			</div>
+			<figure class="card bg-transparent border-0 ms-sm-2 m-0">
+				<a href=""><img class="card-img-top w-100" src="~/images/hotad2.jpg" alt="ads_2" /></a>
+				<figcaption class="card-body">
+					<a class="card-text text-black" href="">Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。</a>
 				</figcaption>
+				<ul class="card-footer row bg-transparent border-0 m-0">
+					<li class="col-auto ps-0">浴缸</li>
+					<li class="col-auto ps-0">新品</li>
+				</ul>
 			</figure>
 		</div>
 	</div>

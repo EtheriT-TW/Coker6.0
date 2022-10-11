@@ -220,7 +220,7 @@ input:disabled + .btn_radio {
 }
 
 #Classification > ul > li {
-    margin-right: 0.25rem;
+    cursor: pointer;
 }
 
 /* Ads */
@@ -228,11 +228,11 @@ input:disabled + .btn_radio {
     background-color: #E2E2E2;
 }
 
-    #Ads .content > figure > figcaption > .keywords > li {
+    #Ads > div > .card-group > .card > .card-footer > li {
         font-size: 0.8rem;
     }
 
-        #Ads .content > figure > figcaption > .keywords > li::before {
+        #Ads > div > .card-group > .card > .card-footer > li::before {
             content: '#';
         }
 
@@ -278,12 +278,6 @@ input:disabled + .btn_radio {
         height: 15vw;
         align-self: center;
     }
-
-.swiper_ads {
-    padding: 40px 10vw;
-    position: relative;
-}
-
 
 #RelatedProductsSwiper {
     background-color: var(--gray-light);

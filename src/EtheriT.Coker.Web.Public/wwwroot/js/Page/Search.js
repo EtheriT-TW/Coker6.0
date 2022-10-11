@@ -49,6 +49,10 @@ function Typography() {
 
     var $fig_div = $("#Search_Result > div > div > figure > div");
     $fig_div.toggleClass('row g-0 showbycolumn');
-    $fig_div.children('div').toggleClass('col-md-4');
-    $fig_div.children('figcaption').toggleClass('col');
+    $fig_div.children('div').toggleClass('col-md-4 col');
+    $fig_div.children('figcaption').toggleClass('col-md');
+
+    var $bottom_line = $("#Search_Result > div > div > figure > div > figcaption > bottom_line");
+    $bottom_line.children('ul').toggleClass('col');
+
 }

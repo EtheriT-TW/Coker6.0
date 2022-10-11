@@ -15,6 +15,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
         public IActionResult Index(string key, int id, string search)
         {
+            PageViewModel model = new PageViewModel { 
+                id = id,
+                search = search??"".Trim()
+            };
             string view = string.Empty;
             if (!string.IsNullOrEmpty(key))
             {
@@ -32,7 +36,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 view = "index";
             }
-            return View(view);
+            return View(view, model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

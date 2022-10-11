@@ -373,4 +373,5 @@ FodyWeavers.xsd
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
 */*/wwwroot/dist/
+*/package-lock.json
 *.lock

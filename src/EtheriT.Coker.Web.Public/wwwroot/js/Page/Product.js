@@ -65,7 +65,7 @@
         }
     });
 
-    var ads_swiper = new Swiper(".AdsSwiper", {
+    var ads_swiper = new Swiper("#AdsSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,

@@ -122,14 +122,14 @@
 <div id="Classification" class="container row border m-auto my-4 p-0 pe-2 align-items-center">
 	<div class="title col-auto px-4 hstack">分類</div>
 	<ul class="col row my-2">
-		<li class="col-auto">智慧馬桶(10)</li>
-		<li class="col-auto">單體馬桶(30)</li>
-		<li class="col-auto">二件式馬桶(17)</li>
-		<li class="col-auto">幼兒馬桶(5)</li>
-		<li class="col-auto">奈米馬桶(10)</li>
-		<li class="col-auto">蹲式馬桶(10)</li>
-		<li class="col-auto">高背馬桶(20)</li>
-		<li class="col-auto">馬桶蓋(20)</li>
+		<li class="col-auto p-0 mx-2">智慧馬桶(10)</li>
+		<li class="col-auto p-0 mx-2">單體馬桶(30)</li>
+		<li class="col-auto p-0 mx-2">二件式馬桶(17)</li>
+		<li class="col-auto p-0 mx-2">幼兒馬桶(5)</li>
+		<li class="col-auto p-0 mx-2">奈米馬桶(10)</li>
+		<li class="col-auto p-0 mx-2">蹲式馬桶(10)</li>
+		<li class="col-auto p-0 mx-2">高背馬桶(20)</li>
+		<li class="col-auto p-0 mx-2">馬桶蓋(20)</li>
 	</ul>
 </div>
 
@@ -283,33 +283,28 @@
 
 <div id="Ads" class="container-fluid">
 	<div class="container">
-		<div class="title fs-4 fw-bold py-3">廣告</div>
-		<div class="content row">
-			<figure class="col-sm-6 col-12 d-flex flex-column">
-				<a href=""><img class="w-100" src="~/images/hotad1.jpg" alt="ads_1" /></a>
-				<figcaption class="d-flex flex-column flex-grow-1 justify-content-between">
-					<a class="describe" href="ads_1_describe">
-						母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」，給天下媽媽們一份療癒身心之禮
-					</a>
-					<ul class="keywords row my-2">
-						<li class="col-auto">淨未來</li>
-						<li class="col-auto">全自動</li>
-						<li class="col-auto">冷熱SPA按摩</li>
-					</ul>
+		<div class="fs-4 fw-bold py-3">廣告</div>
+		<div class="card-group">
+			<div class="card bg-transparent border-0 me-sm-2 m-0">
+				<a href=""><img class="card-img-top w-100" src="~/images/hotad1.jpg" alt="ads_1" /></a>
+				<figcaption class="card-body">
+					<a class="card-text text-black" href="">母親節來臨，以全新獨立式浴缸系列與「淨未來瞬熱式微電腦馬桶座」，給天下媽媽們一份療癒身心之禮</a>
 				</figcaption>
-			</figure>
-
-			<figure class="col-sm-6 col-12 d-flex flex-column">
-				<a href=""><img class="w-100" src="~/images/hotad2.jpg" alt="ads_2" /></a>
-				<figcaption class="d-flex flex-column flex-grow-1 justify-content-between">
-					<a class="describe" href="ads_2_describe">
-						Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。
-					</a>
-					<ul class="keywords row my-2">
-						<li class="col-auto">浴缸</li>
-						<li class="col-auto">新品</li>
-					</ul>
+				<ul class="card-footer row bg-transparent border-0 m-0">
+					<li class="col-auto ps-0">淨未來</li>
+					<li class="col-auto ps-0">全自動</li>
+					<li class="col-auto ps-0">冷熱SPA按摩</li>
+				</ul>
+			</div>
+			<figure class="card bg-transparent border-0 ms-sm-2 m-0">
+				<a href=""><img class="card-img-top w-100" src="~/images/hotad2.jpg" alt="ads_2" /></a>
+				<figcaption class="card-body">
+					<a class="card-text text-black" href="">Derek獨立式美型缸系列，以壓克力材質形塑柔和輪廓，分為經典款、魅力款、個性款、古典款，造型多樣、擺放自由度高，完美匹配多種裝潢風格。</a>
 				</figcaption>
+				<ul class="card-footer row bg-transparent border-0 m-0">
+					<li class="col-auto ps-0">浴缸</li>
+					<li class="col-auto ps-0">新品</li>
+				</ul>
 			</figure>
 		</div>
 	</div>
@@ -485,7 +480,7 @@
 	</div>
 </div>
 
-<div id="Badge" class="gap-1">
+<div id="Badge" class="gap-1 container">
 	<div class="card text-center">
 		<img src="~/images/pro_icon1.jpg" alt="" />
 		<div class="card-body">
@@ -525,19 +520,31 @@
 	</div>
 </div>
 
-<div class="swiper_ads container-fluid">
-	<div class="swiper AdsSwiper">
+<div id="AdsSwiper" class="container position-relative">
+	<div class="swiper">
 		<div class="swiper-wrapper">
 			<div class="swiper-slide">
-				<img class="img-fluid mx-auto " src="~/images/proban1.jpg" alt="" />
+				<img class="img-fluid" src="~/images/proban1.jpg" alt="" />
 			</div>
 			<div class="swiper-slide">
 				<img class="img-fluid " src="~/images/pro_ban2.jpg" alt="" />
 			</div>
 		</div>
 	</div>
-	<i class="btn_swiper_next_ads fa-solid fa-chevron-right"></i>
-	<i class="btn_swiper_prev_ads fa-solid fa-chevron-left"></i>
+	<div class="swiper_button container d-flex p-0 justify-content-between position-absolute">
+		<button class="btn_swiper_prev_ads border-0 p-0 text-center bg-transparent fs-3">
+			<span class="fa-stack">
+				<i class="fa-solid fa-circle fa-stack-2x"></i>
+				<i class="fa-solid fa-chevron-left fa-stack-1x fa-inverse"></i>
+			</span>
+		</button>
+		<button class="btn_swiper_next_ads border-0 p-0 text-center bg-transparent fs-3">
+			<span class="fa-stack">
+				<i class="fa-solid fa-circle fa-stack-2x"></i>
+				<i class="fa-solid fa-chevron-right fa-stack-1x fa-inverse"></i>
+			</span>
+		</button>
+	</div>
 </div>
 
 <div class="fs-2 my-4 text-center">相關商品</div>

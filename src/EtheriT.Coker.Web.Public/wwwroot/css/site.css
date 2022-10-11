@@ -51,8 +51,12 @@ ul {
     padding-left: 0;
 }
 
+li {
+    list-style: none;
+}
+
 p {
-    margin: 0 0 0 0;
+    margin: 0;
 }
 
 .price::before {
@@ -64,7 +68,7 @@ p {
     z-index: 100;
 }
 
-.fa-solid.fa-heart {
+.btn_favorites > .fa-solid.fa-heart {
     color: #AB0125 !important;
 }
 
@@ -79,6 +83,53 @@ p {
     z-index: 99;
 }
 
+/* Floating Right */
+#Floating_Right {
+    position: fixed;
+    right: 1rem;
+    z-index: 1000;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+/* Button Chat */
+#btn_chat > span > i:first-child {
+    color: #FF8C49;
+}
+
+/* Hsitory */
+#History {
+    max-width: 80px;
+}
+
+    #History > button {
+        width: 2rem;
+        font-size: 0.8rem;
+        background-color: var(--gray-middle);
+    }
+
+#CollapseHistory > .title {
+    background-color: var(--gray-middle);
+    font-size: 0.8rem;
+}
+
+#CollapseHistory > .collect {
+    background-color: var(--gray-middle);
+    font-size: 0.8rem;
+}
+
+#CollapseHistory > .checkout {
+    background-color: var(--red-middle);
+    font-size: 0.8rem;
+}
+
+#CollapseHistory > .collect > .amount::before {
+    content: '(';
+}
+
+#CollapseHistory > .collect > .amount::after {
+    content: ')';
+}
 
 /* Cookie */
 .cookie {
@@ -147,6 +198,11 @@ p {
 }
 
 @media only screen and (max-width: 576px) {
+    #Floating_Right {
+        top: auto;
+        transform: initial;
+        bottom: 0;
+    }
 
     #cookie_button {
         flex-direction: column;

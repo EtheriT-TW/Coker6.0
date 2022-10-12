@@ -25,7 +25,7 @@
 		<input id="find_article" type="radio" class="btn-check" name="choose_color" autocomplete="off">
 		<label class="btn_search_place fs-5 mx-3" for="find_article">找文章</label>
 	</div>
-	<div class="searchblock rounded-pill border border-dark fs-3 col-12 col-md-5 m-auto ps-4 pe-2 d-flex">
+	<div class="searchblock rounded-pill border border-dark fs-3 col-11 col-md-5 m-auto ps-4 pe-2 d-flex">
 		<input type="text" class="bg-transparent border-0 fw-bold flex-grow-1" value="@Model.search">
 		<button class="btn_search bg-transparent border-0 ms-1"><i class="fa-solid fa-magnifying-glass"></i></button>
 	</div>
@@ -114,7 +114,7 @@
 </div>
 
 <div Id="Search_Title" class="fs-4 text-center my-3">
-	搜尋<span class="search_text fw-bold"> 馬桶 </span>共<span class="total">70</span>項<span class="search_place"></span> 商品
+	搜尋 <span class="search_text fw-bold">@Model.search</span> 共<span class="total">70</span>項<span class="search_place"></span> 商品
 </div>
 
 <div id="Filter" class="container-fluid border-bottom border-2">
@@ -140,21 +140,21 @@
 			<button class="btn_typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
 				<i class="fa-solid fa-table-list"></i>
 			</button>
-			<input class="price_low border-0 price_low text-end px-1" placeholder="最低價">
-			<div class="col-1 p-0 mt-sm-0 mt-2 text-center">~</div>
-			<input class="price_high border-0 price_low text-end px-1" placeholder="最高價">
-			<button class="btn_confirm col-2 mx-2 border-0 text-white" type="button">確認</button>
+			<input class="price_low border-0 price_low text-end px-1 mt-1 mt-sm-0" placeholder="最低價">
+			<div class="col-1 p-0 text-center mt-1 mt-sm-0">~</div>
+			<input class="price_high border-0 price_low text-end px-1 mt-1 mt-sm-0" placeholder="最高價">
+			<button class="btn_confirm col-2 mx-2 border-0 text-white mt-1 mt-sm-0" type="button">確認</button>
 		</div>
 	</div>
 </div>
 
 <div id="Search_Result" class="container-fluid py-4 pb-0">
-	<div class="container row row-cols-1 row-cols-md-4 m-auto g-4">
+	<div class="container row row-cols-2 row-cols-lg-4 m-auto g-2 g-md-4 px-md-4 px-0">
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -171,12 +171,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end justify-content-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -196,8 +196,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -214,12 +214,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -239,8 +239,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -257,12 +257,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -282,8 +282,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -300,12 +300,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -325,8 +325,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -343,12 +343,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -368,8 +368,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -386,12 +386,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -411,8 +411,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -429,12 +429,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
@@ -454,8 +454,8 @@
 		<div class="col m-0 pb-4">
 			<figure class="card m-auto">
 				<div class="">
-					<div class="text-center w-auto">
-						<img class="card-img-top" src="~/images/product/pro_pic_01.jpg" alt="" />
+					<div class="text-center align-self-center">
+						<img class="card-img-top w-75" src="~/images/product/pro_pic_01.jpg" alt="" />
 					</div>
 					<figcaption class="position-relative">
 						<div class="top_line position-absolute">
@@ -472,12 +472,12 @@
 							<p class="">CS230一段省水分離式幼兒馬桶</p>
 						</div>
 
-						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-evenly">
+						<div class="bottom_line position-absolute row m-auto align-items-center justify-content-sm-evenly">
 							<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 								<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 								<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 							</ul>
-							<div class="col-auto priceframe align-items-end">
+							<div class="priceframe col-auto align-items-end justify-content-end">
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>

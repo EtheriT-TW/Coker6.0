@@ -183,8 +183,6 @@ input:disabled + .btn_radio {
         margin-left: -35px;
     }
 
-
-
 /* Breadcrumb */
 #Breadcrumb {
     --bs-breadcrumb-divider: '/';
@@ -203,9 +201,8 @@ input:disabled + .btn_radio {
     background-color: #E0E3E8;
 }
 
-    #Filter > div > .options > [class*=price_] {
+    #Filter > div > .range > input {
         width: 6rem;
-        text-align: end;
     }
 
 .btn_confirm {
@@ -214,12 +211,12 @@ input:disabled + .btn_radio {
     cursor: pointer;
 }
 
-/* Classification */
-#Classification > .title {
+/* Tick Area */
+.tick_area > .title {
     background-color: #F4F4F4;
 }
 
-#Classification > ul > li {
+.tick_area > ul > li {
     cursor: pointer;
 }
 

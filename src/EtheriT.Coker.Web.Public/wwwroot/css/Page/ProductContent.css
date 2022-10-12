@@ -253,6 +253,6 @@ input:disabled + .btn_radio {
 
 @media only screen and (max-width: 576px) {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {
-        height: 85vw;
+        height: 80vw;
     }
 }

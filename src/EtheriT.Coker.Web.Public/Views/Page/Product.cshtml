@@ -97,40 +97,40 @@
 
 <div id="Filter" class="container-fluid">
 	<div class="container row m-auto  px-0 py-3 justify-content-sm-between justify-content-center align-items-center">
-		<div class="col-auto row align-items-center">
+		<div class="col-auto col-md row align-items-center">
 			<div class="title col-auto fs-3 fw-bold">馬桶</div>
 			<div class="total col-auto">共<span>50</span>個品項</div>
 		</div>
-		<div class="options col-auto row row-cols-sm-auto align-items-center justify-content-center">
-			<button class="btn_sort_hot col-3 mx-2 p-0 border-0 bg-transparent">熱門搜尋</button>
-			<button class="btn_sort_price col-2 mx-2 p-0 border-0 bg-transparent">
+		<div class="sort col-auto">
+			<button class="btn_sort_hot border-0 bg-transparent">熱門搜尋</button>
+			<button class="btn_sort_price border-0 bg-transparent">
 				價格
 				<i class="fa-solid fa-arrows-up-down"></i>
 			</button>
-			@*<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
-			<button class="btn_typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
-			<i class="fa-solid fa-border-all"></i>
-			</button>*@
-			<input class="price_low col-3 mt-sm-0 mt-2 p-0" placeholder="最低價">
-			<div class="col-1 p-0 mt-sm-0 mt-2 text-center">~</div>
-			<input class="price_high col-3 p-0 mt-sm-0 mt-2 " placeholder="最高價">
-			<button class="btn_confirm col-2 mx-2 mt-sm-0 mt-2 border-0 text-white" type="button">確認</button>
+		</div>
+		<div class="range col-auto row mt-1 mt-sm-0">
+			<input class="price_low col px-1 text-end" placeholder="最低價">
+			<div class="text-center col-auto align-self-center">~</div>
+			<input class="price_high col px-1 text-end" placeholder="最高價">
+			<button class="btn_confirm border-0 text-white col-auto ms-2" type="button">確認</button>
 		</div>
 	</div>
 </div>
 
-<div id="Classification" class="container row border m-auto my-4 p-0 pe-2 align-items-center">
-	<div class="title col-auto px-4 hstack">分類</div>
-	<ul class="col row my-2">
-		<li class="col-auto p-0 mx-2">智慧馬桶(10)</li>
-		<li class="col-auto p-0 mx-2">單體馬桶(30)</li>
-		<li class="col-auto p-0 mx-2">二件式馬桶(17)</li>
-		<li class="col-auto p-0 mx-2">幼兒馬桶(5)</li>
-		<li class="col-auto p-0 mx-2">奈米馬桶(10)</li>
-		<li class="col-auto p-0 mx-2">蹲式馬桶(10)</li>
-		<li class="col-auto p-0 mx-2">高背馬桶(20)</li>
-		<li class="col-auto p-0 mx-2">馬桶蓋(20)</li>
-	</ul>
+<div class="container">
+	<div class="tick_area row border m-auto mt-4 mb-0 align-items-center">
+		<div class="title col-auto px-4 hstack">分類</div>
+		<ul class="col row my-2">
+			<li class="col-auto p-0 mx-2">智慧馬桶(10)</li>
+			<li class="col-auto p-0 mx-2">單體馬桶(30)</li>
+			<li class="col-auto p-0 mx-2">二件式馬桶(17)</li>
+			<li class="col-auto p-0 mx-2">幼兒馬桶(5)</li>
+			<li class="col-auto p-0 mx-2">奈米馬桶(10)</li>
+			<li class="col-auto p-0 mx-2">蹲式馬桶(10)</li>
+			<li class="col-auto p-0 mx-2">高背馬桶(20)</li>
+			<li class="col-auto p-0 mx-2">馬桶蓋(20)</li>
+		</ul>
+	</div>
 </div>
 
 <div class="fs-2 my-4 text-center">猜您會喜歡</div>

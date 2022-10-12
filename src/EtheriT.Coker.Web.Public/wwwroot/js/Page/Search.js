@@ -45,14 +45,16 @@ function Typography() {
     $btn_icon.toggleClass('fa-table-list');
     $btn_icon.toggleClass('fa-border-all');
 
-    $("#Search_Result > div").toggleClass('row row-cols-1 row-cols-md-4');
+    $("#Search_Result > div").toggleClass('row row-cols-2 row-cols-lg-4');
 
     var $fig_div = $("#Search_Result > div > div > figure > div");
     $fig_div.toggleClass('row g-0 showbycolumn');
-    $fig_div.children('div').toggleClass('col-md-4 col');
-    $fig_div.children('figcaption').toggleClass('col-md');
+    $fig_div.children('div').toggleClass('col-3');
+    $fig_div.children('div').children('img').toggleClass('img-fluid w-75');
+    $fig_div.children('figcaption').toggleClass('col');
 
-    var $bottom_line = $("#Search_Result > div > div > figure > div > figcaption > bottom_line");
-    $bottom_line.children('ul').toggleClass('col');
+    var $bottom_line = $("#Search_Result > div > div > figure > div > figcaption > .bottom_line");
+    $bottom_line.children('.pro_tag').toggleClass('col col-md');
+    $bottom_line.children('.priceframe ').toggleClass('col-auto col-md-auto');
 
 }

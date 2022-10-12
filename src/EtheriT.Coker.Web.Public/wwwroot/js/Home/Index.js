@@ -1,18 +1,22 @@
 ﻿function PageReady() {
     $("#btn_gonews").on("click", GoNews);
 
-    var banner_swiper = new Swiper(".mySwiper", {
+    var banner_swiper = new Swiper("#BannerSwiper > .swiper", {
         slidesPerView: 1,
-        spaceBetween: 30,
+        spaceBetween: 15,
         loop: true,
+        autoplay: {
+            delay: 2500,
+            disableOnInteraction: false,
+        },
         pagination: {
-            el: ".swiper-pagination",
+            el: ".swiper_pagination_banner",
             clickable: true,
         },
         navigation: {
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev",
-        },
+            nextEl: ".btn_swiper_next_banner",
+            prevEl: ".btn_swiper_prev_banner",
+        }
     });
 
     var new_swiper = new Swiper(".NewsSwiper", {

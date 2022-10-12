@@ -1,37 +1,50 @@
-﻿
-/* Banner */
-#banner {
-    padding: 0;
+﻿/* Banner */
+#BannerSwiper > .swiper > .swiper-wrapper > figure {
+    margin: 0;
 }
 
-    #banner > .swiper .swiper-slide {
-        position: relative;
+    #BannerSwiper > .swiper > .swiper-wrapper > figure > img {
+        max-width: 100%;
     }
 
-        #banner > .swiper .swiper-slide img {
-            max-width: 100%;
-        }
+    #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
 
-        #banner > .swiper .swiper-slide > h3 {
-            position: absolute;
-            left: 0%;
-            bottom: 10%;
+        #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
             padding: 1.5rem 3.5rem;
-            background-color: rgba(0, 0, 0, 0.3);
-            color: #fff;
             font-size: 2.5rem;
             text-shadow: 4px 4px 6px rgba(0,0,0,0.3);
         }
 
-    #banner .swiper-pagination-bullet {
+#BannerSwiper > .swiper_pagination_banner {
+    z-index: 1;
+    margin-bottom: -0.5rem;
+}
+
+    #BannerSwiper > .swiper_pagination_banner > .swiper-pagination-bullet {
         width: 4rem;
         height: 0.3rem;
         border-radius: 4px;
     }
 
-        #banner .swiper-pagination-bullet.swiper-pagination-bullet-active {
-            background: #B73925;
+        #BannerSwiper > .swiper_pagination_banner > .swiper-pagination-bullet.swiper-pagination-bullet-active {
+            background: var(--red-middle);
         }
+
+#BannerSwiper > .swiper_button {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+    #BannerSwiper > .swiper_button > [class*=btn_swiper_] {
+        height: 100%;
+        width: 10vw;
+    }
 
 /* Button Gonews*/
 #btn_gonews {
@@ -616,7 +629,7 @@
 
 /*RWD*/
 @media (max-width: 1366px) {
-    #banner > .swiper .swiper-slide > h3 {
+    #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
         padding: 1rem 0.7rem;
         font-size: 2rem;
     }
@@ -662,7 +675,8 @@
 }
 
 @media only screen and (max-width: 768.9px) {
-    #banner > .swiper .swiper-slide > h3 {
+    #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
+        padding: 0.7rem 0.7rem;
         font-size: 1.5rem;
     }
 
@@ -715,8 +729,13 @@
 }
 
 @media only screen and (max-width: 576px) {
-    #banner > .swiper .swiper-slide > h3 {
+    #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
+        padding: 0.5rem 0.5rem;
         font-size: 1rem;
+    }
+
+    #BannerSwiper > .swiper_pagination_banner > .swiper-pagination-bullet {
+        width: 2rem;
     }
 
     #Guess_Like > div:last-child {

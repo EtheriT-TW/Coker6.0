@@ -1,6 +1,5 @@
 ﻿function PageReady() {
     $(".btn_sort_price").on("click", SortByPrice);
-    $(".btn_typography").on("click", Typography);
 
     var guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
         slidesPerView: 1,
@@ -105,8 +104,4 @@ function SortByPrice() {
         $sort_icon.toggleClass('fa-caret-up');
         $sort_icon.toggleClass('fa-arrows-up-down');
     }
-}
-
-function Typography() {
-    $(".btn_typography > i").toggleClass('fa-table-list');
 }

@@ -154,6 +154,10 @@
         width: auto;
     }
 
+    #Search_Result > div > div > .card > .showbycolumn > figcaption > .card-body > p {
+        height: initial;
+    }
+
     #Search_Result > div > div > .card > .showbycolumn > figcaption > .card-body > .price {
         display: none;
     }
@@ -294,6 +298,23 @@
 }
 
 @media only screen and (max-width: 576px) {
+
+    #Search_Result > div > div > .card > .showbycolumn > figcaption > .top_line {
+        top: initial;
+        bottom: 1rem;
+    }
+
+    #Search_Result > div > div > .card > .showbycolumn > figcaption > .card-body > p {
+        margin-bottom: 6rem;
+    }
+
+    #Search_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .pro_tag {
+        min-width: 75px;
+    }
+
+    #Search_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart {
+        padding: 0 1rem 0 0.25rem;
+    }
 }
 
 @media only screen and (max-width: 368px) {

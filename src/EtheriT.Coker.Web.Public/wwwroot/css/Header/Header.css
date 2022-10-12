@@ -187,6 +187,7 @@
     align-content: center;
     flex-wrap: wrap;
     padding-bottom: 10px;
+    cursor: pointer;
 }
 
 /* Mega Menu Content */

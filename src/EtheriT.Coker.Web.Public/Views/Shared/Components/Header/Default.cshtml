@@ -8,7 +8,7 @@
 <script src="~/js/Header/Header.min.js" asp-append-version="true"></script>
 
 <nav>
-	<div id="Header_Top" class="abreast">
+	<div id="Header_Top" class="d-flex">
 		<div class="news_box">
 			<ul class="clearfix">
 				<li><a href="#">隆昌Derek正式上線蝦皮啦</a></li>
@@ -16,7 +16,7 @@
 			</ul>
 		</div>
 
-		<div class="abreast">
+		<div class="d-flex">
 			<form action="/Search" class="searchblock bg-white rounded-pill d-lg-flex d-none pe-1 ps-3">
 				<input type="hidden" name="id" />
 				<input type="text" name="search" class="bg-transparent border-0">
@@ -24,10 +24,11 @@
 			</form>
 			<a class="fs-6 text-white d-lg-flex d-none ms-2 align-items-center" href="/Search">智慧搜尋</a>
 			<div class="btn-group">
-				<button class="bg-transparent border-0 text-white ms-1" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+				<button id="btn_cart_dropdown" class="bg-transparent border-0 text-white ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
 					<i class="fa-solid fa-cart-shopping"></i>
 				</button>
-				<div class="cart_dropdown dropdown-menu dropdown-menu-end px-2 border-0 rounded-0">
+
+				<div class="cart_dropdown dropdown-menu dropdown-menu-end px-2 border-0 rounded-0" aria-labelledby="btn_cart_dropdown">
 					<ul class="m-0">
 						<li class="border-bottom">
 							<figure class="card border-0 m-0" style="max-width: 540px;">
@@ -101,9 +102,7 @@
 							</figure>
 						</li>
 					</ul>
-					<button class="btn_cart_buy text-white border-0 rounded-1 w-100 py-1 mt-2">
-						購買
-					</button>
+					<input type="button" onclick="location.href='/ShoppingCar';" value="購買" class="btn_cart_buy text-white border-0 rounded-1 w-100 py-1 mt-2" />
 				</div>
 			</div>
 			<button class="bg-transparent border-0 text-white mx-1"><i class="fa-regular fa-user"></i></button>

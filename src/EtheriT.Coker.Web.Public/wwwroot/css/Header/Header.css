@@ -59,6 +59,7 @@
         width: 125px;
     }
 
+/* Cart Dropdown*/
 .cart_dropdown {
     z-index: 1001;
     min-width: 280px;
@@ -83,6 +84,10 @@
     .cart_dropdown > ul > li > figure > div > .btn_cart_delete {
         color: var(--gray-middle);
     }
+
+        .cart_dropdown > ul > li > figure > div > .btn_cart_delete:hover {
+            color: var(--red-middle);
+        }
 
     .cart_dropdown > .btn_cart_buy {
         background-color: var(--gray-dark);

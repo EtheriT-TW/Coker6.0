@@ -301,7 +301,9 @@
 
     #Search_Result > div > div > .card > .showbycolumn > figcaption > .top_line {
         top: initial;
-        bottom: 1rem;
+        right: initial;
+        left: 1rem;
+        bottom: 1.15rem;
     }
 
     #Search_Result > div > div > .card > .showbycolumn > figcaption > .card-body > p {

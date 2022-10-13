@@ -373,5 +373,6 @@ FodyWeavers.xsd
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
 */*/wwwroot/dist/
-*/package-lock.json
+**/package-lock.json
 *.lock
+NuGet.config

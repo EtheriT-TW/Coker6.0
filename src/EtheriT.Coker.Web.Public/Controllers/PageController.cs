@@ -25,6 +25,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 if (key == "Search")
                 {
                     view = "Search";
+                }else if (key == "ShoppingCar")
+                {
+                    view = "ShoppingCar";
                 }
                 else
                 {

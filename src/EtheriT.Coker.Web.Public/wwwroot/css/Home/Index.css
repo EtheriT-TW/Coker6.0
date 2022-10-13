@@ -147,117 +147,66 @@
                 }
 
 /* Favorite */
-#Favorite {
-    padding: 10px 10vw;
-    margin: 40px 0;
+.favorite > .title {
+    font-size: 2rem;
+    height: 200px;
+    background-image: url(../../images/favorite_bg.png);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-    #Favorite > .title {
-        font-size: 2rem;
-        height: 200px;
-        background-image: url(../../images/favorite_bg.png);
-        background-size: contain;
-        background-position: center;
-        background-repeat: no-repeat;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding-bottom: 6rem;
+.favorite > ul > li > figure > .top_icon {
+    height: 1.5rem;
+}
+
+    .favorite > ul > li > figure > .top_icon > button > i {
+        color: var(--gray-middle);
     }
 
-    #Favorite > .content {
-        width: 100%;
-        display: flex;
-        justify-content: space-around;
+.favorite > ul > li > figure > figcaption {
+    width: fit-content;
+}
+
+    .favorite > ul > li > figure > figcaption > div {
+        font-size: 0.8rem;
+        border-bottom: 3px solid var(--red-middle);
+        background-color: var(--gray-middle);
+        height: 2.5rem;
     }
 
-        #Favorite > .content > .frame {
-            width: calc(100%/6 - 1%);
-            margin-right: 1%;
+.favorite > ul > li > figure {
+    border: 1px solid var(--gray-dark);
+}
+
+    .favorite > ul > li > figure > .btn_add_favorite {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+        .favorite > ul > li > figure > .btn_add_favorite > i:first-child {
+            color: var(--gray-middle);
         }
 
-        #Favorite > .content > div .content {
-            height: fit-content;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border: 1px #929292 solid;
-        }
+.favorite > ul > li > .name {
+    color: var(--gray-middle);
+    font-size: 0.8rem;
+    height: 2.5rem;
+}
 
-        #Favorite > .content > .frame > .content > .icon_button {
-            color: #929292;
-            display: flex;
-            justify-content: flex-end;
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 0;
-        }
+.favorite > ul > .blank:nth-child(n+7) {
+    display: none;
+}
 
-            #Favorite > .content > .frame > .content > .icon_button > button > i {
-                color: #929292;
-                margin-left: 0.5rem;
-                cursor: pointer;
-            }
+.favorite > ul > .blank > figure > img {
+    visibility: hidden;
+}
 
-        #Favorite > .content > .frame > .content > .image {
-            height: 150px;
-        }
-
-            #Favorite > .content > .frame > .content > .image > img {
-                height: 100%;
-            }
-
-        #Favorite > .content > .frame > .content > .title_bg {
-            width: 100%;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-            #Favorite > .content > .frame > .content > .title_bg > .title {
-                width: 80%;
-                display: flex;
-                justify-content: center;
-                background-color: #929292;
-                color: white;
-                font-size: 0.8rem;
-                padding: 5px;
-                border-color: #A32C48;
-                border-width: 0 0 3px 0;
-                border-style: solid;
-            }
-
-        #Favorite > .content > .frame > .name {
-            color: gray;
-            text-align: center;
-            font-size: 0.75rem;
-            margin: 5px 2.5px;
-            height: 2rem;
-        }
-
-        #Favorite > .content > .blank {
-            width: calc(100%/6 - 1%);
-        }
-
-            #Favorite > .content > .blank > .content {
-                height: 220.2px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-
-                #Favorite > .content > .blank > .content > .btn_add > i {
-                    font-size: xx-large;
-                    width: 40px;
-                    height: 40px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    color: white;
-                    background-color: #BFBFBF;
-                    border-radius: 50%;
-                    cursor: pointer;
-                }
+.favorite > ul > .blank > figure > figcaption > div {
+    border: none;
+    background: none;
+}
 
 /* Featured */
 #Featured {

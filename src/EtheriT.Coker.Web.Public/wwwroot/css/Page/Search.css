@@ -135,6 +135,10 @@
                 color: var(--gray-light);
             }
 
+            #Search_Result > div > div > .card > div > figcaption > .bottom_line > .btn_cart > span:hover > i:first-child {
+                color: var(--red-middle);
+            }
+
         #Search_Result > div > div > .card > div > figcaption > .bottom_line > .pro_tag {
             height: 2rem;
         }
@@ -171,6 +175,10 @@
         border-radius: 10px;
         padding: 0 2rem 0 1.25rem;
     }
+
+        #Search_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart:hover {
+            background-color: var(--red-middle);
+        }
 
         #Search_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart > div {
             display: flex;

@@ -1,70 +1,7 @@
 ﻿
-#stepform {
+body {
     background-color: var(--gray-light);
 }
-
-/* Step Progress Bar */
-#stepprogressbar {
-    width: 70%;
-    margin: 0 auto 2rem;
-    margin-bottom: 30px;
-    counter-reset: step;
-}
-
-    #stepprogressbar.li5 > li {
-        width: 19%;
-    }
-
-        #stepprogressbar.li5 > li:after {
-            left: -39%;
-        }
-
-    #stepprogressbar li {
-        list-style-type: none;
-        color: var(--gray-middle);
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        width: 24%;
-        float: left;
-        position: relative;
-    }
-
-        #stepprogressbar li.now {
-            font-weight: bold;
-        }
-
-        #stepprogressbar li:before {
-            content: counter(step);
-            counter-increment: step;
-            width: 2rem;
-            line-height: 2rem;
-            display: block;
-            font-size: 1rem;
-            font-weight: bold;
-            color: var(--gray-middle);
-            background: white;
-            border-radius: 25px;
-            margin: 0 auto 5px auto;
-        }
-
-        #stepprogressbar li:after {
-            content: '';
-            width: 84%;
-            height: 2px;
-            background: var(--gray-middle);
-            position: absolute;
-            left: -42%;
-            top: 1rem;
-        }
-
-        #stepprogressbar li:first-child:after {
-            content: none;
-        }
-
-        #stepprogressbar li.active:before, #stepprogressbar li.active:after {
-            background: var(--red-middle);
-            color: white;
-        }
 
 /* Member Login */
 #memberLogin > div > button {
@@ -72,37 +9,67 @@
     color: var(--gray-middle);
 }
 
-/* Step Content */
-[class*=step] {
-    display: none;
+/* Step Swiper */
+#BuyStepSwiper > .swiper {
+    border-radius: 15px;
 }
 
-    [class*=step] > div {
-        box-shadow: 0rem 0rem 5rem rgba(0,0,0,.25);
-        border-radius: 10px;
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-header > .bg-transparent {
+        color: var(--gray-middle);
+        border: 1px solid var(--gray-dark);
     }
 
-        [class*=step] > div > .title {
-            background-color: var(--gray-light);
-            border-radius: 10px 10px 0 0;
-        }
-
-            [class*=step] > div > .title > button {
-                color: var(--gray-dark);
-                border: 1px solid var(--gray-dark);
-            }
-
-        [class*=step] > div > .content {
-            border-radius: 0 0 10px 10px;
-        }
-
-    [class*=step].active {
-        display: block
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > ul > li > div > img {
+        width: 150px;
+        max-width: 30vw;
     }
 
-/* Back/Next Button */
-.btn_prev, .btn_next {
-    background-color: var(--gray-middle);
-    padding: 0.5rem;
-    width: 12.5rem;
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > ul > li > .unit {
+        color: var(--gray-dark);
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > ul > li > .counter_input {
+        height: fit-content;
+    }
+
+        #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > ul > li > .counter_input > button {
+            border: 1px solid var(--gray-middle);
+            color: var(--gray-dark);
+        }
+
+        #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > ul > li > .counter_input > .input_count {
+            border: 1px solid var(--gray-middle);
+            width: 6rem;
+        }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > ul > li > .subtotal {
+        color: var(--red-middle);
+    }
+
+    /* Swiper Button */
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button {
+        z-index: 1;
+        bottom: 5rem;
+    }
+
+        #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
+            background-color: var(--gray-middle);
+            padding: 0.5rem;
+            width: 12.5rem;
+        }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > button:nth-child(2n+1) {
+        color: var(--gray-middle);
+        width: fit-content;
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > button:nth-child(2) {
+        background-color: var(--red-middle);
+    }
+
+/* Swiper Pagination */
+#BuyStepSwiper > .swiper_pagination_buystep {
+    top: 0;
+    bottom: auto;
+    left: auto;
 }

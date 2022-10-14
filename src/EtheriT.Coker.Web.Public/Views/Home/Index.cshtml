@@ -33,10 +33,10 @@
 	<div class="swiper_pagination_banner position-absolute text-center"></div>
 </div>
 
-<div id="btn_gonews"><i class="fa-solid fa-chevron-down"></i></div>
+<div class="btn_gonews d-flex justify-content-center py-4"><i class="fa-solid fa-chevron-down p-1 rounded-circle border border-2"></i></div>
 
 <div id="Guess_Like">
-	<div class="title">猜您會喜歡</div>
+	<div class="fs-2 mb-4 text-center title">猜您會喜歡</div>
 	<div class="content">
 		<div class="frame">
 			<div class="top">
@@ -100,8 +100,9 @@
 	</div>
 </div>
 
-<div class="favorite container">
-	<div class="title d-flex align-items-center justify-content-center pb-5">您喜愛的商品</div>
+
+<div id="Favorite" class="container">
+	<div class="title fs-2 d-flex align-items-center justify-content-center pb-5">您喜愛的商品</div>
 	<ul class="row row-cols-2 row-cols-sm-3 row-cols-lg-6">
 		<li class="col">
 			<figure class="m-0">
@@ -208,54 +209,57 @@
 					<div class="text-white px-3 py-2"></div>
 				</figcaption>
 
-				<div class="btn_add_favorite fa-stack fa-2x position-absolute fs-4">
-					<i class="fa-solid fa-circle fa-stack-2x"></i>
-					<i class="fa-solid fa-plus fa-stack-1x fa-inverse"></i>
-				</div>
+				<button class="btn_add_favorite position-absolute bg-transparent border-0">
+					<span class="fa-stack fa-2x fs-4">
+						<i class="fa-solid fa-circle fa-stack-2x"></i>
+						<i class="fa-solid fa-plus fa-stack-1x fa-inverse"></i>
+					</span>
+				</button>
 			</figure>
 		</li>
 	</ul>
 </div>
 
-<div id="Featured">
-	<div class="title">Derek精選</div>
-	<div class="content">
-		<div class="frame">
-			<div class="image">
-				<a href=""><img src="~/images/featured_1.jpg" alt="" /></a>
-				<a href=""><img src="~/images/featured_2.jpg" alt="" /></a>
+<div id="Featured" class="container my-5">
+	<div class="fs-5 fw-bold p-2">Derek精選</div>
+	<div class="content d-flex flex-column flex-sm-row justify-content-between">
+		<figure>
+			<div class="d-flex mb-2">
+				<a href=""><img class="img-fluid" src="~/images/featured_1.jpg" alt="" /></a>
+				<a href=""><img class="img-fluid" src="~/images/featured_2.jpg" alt="" /></a>
 			</div>
-			<a class="describe" href="">
-				極致美學的衛浴產品受建商及消費者喜愛
-			</a>
-		</div>
-		<div class="frame">
-			<div class="image">
-				<a href=""><img src="~/images/featured_3.jpg" alt="" /></a>
-				<a href=""><img src="~/images/featured_4.jpg" alt="" /></a>
-				<a href=""><img src="~/images/featured_5.jpg" alt="" /></a>
+			<figcaption>
+				<a href="">極致美學的衛浴產品受建商及消費者喜愛</a>
+			</figcaption>
+		</figure>
+
+		<figure>
+			<div class="d-flex mb-2">
+				<a href=""><img class="img-fluid" src="~/images/featured_3.jpg" alt="" /></a>
+				<a href=""><img class="img-fluid" src="~/images/featured_4.jpg" alt="" /></a>
+				<a href=""><img class="img-fluid" src="~/images/featured_5.jpg" alt="" /></a>
 			</div>
-			<a class="describe" href="">
-				浴室門口的高質感盆浴櫃組好看又好收納！
-			</a>
-		</div>
+			<figcaption>
+				<a href="">浴室門口的高質感盆浴櫃組好看又好收納！</a>
+			</figcaption>
+		</figure>
 	</div>
 </div>
 
-<div id="Tiles">
-	<div class="content">
-		<div class="frame">
-			<a class="big" href=""><img src="~/images/tiles_1.jpg" alt="" /></a>
-			<div class="small">
-				<a href=""><img src="~/images/tiles_2.jpg" alt="" /></a>
-				<a href=""><img src="~/images/tiles_3.jpg" alt="" /></a>
+<div id="Tiles" class="container-fluid py-0">
+	<div class="container row row-cols-1 row-cols-sm-2 m-auto">
+		<div class="col my-4">
+			<a href=""><img class="img-fluid mb-4" src="~/images/tiles_1.jpg" alt="" /></a>
+			<div class="row">
+				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_2.jpg" alt="" /></a>
+				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_3.jpg" alt="" /></a>
 			</div>
 		</div>
-		<div class="frame">
-			<a class="big" href=""><img src="~/images/tiles_4.jpg" alt="" /></a>
-			<div class="small">
-				<a href=""><img src="~/images/tiles_5.jpg" alt="" /></a>
-				<a href=""><img src="~/images/tiles_6.jpg" alt="" /></a>
+		<div class="col my-4">
+			<a href=""><img class="img-fluid mb-4" src="~/images/tiles_4.jpg" alt="" /></a>
+			<div class="row">
+				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_5.jpg" alt="" /></a>
+				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_6.jpg" alt="" /></a>
 			</div>
 		</div>
 	</div>
@@ -376,39 +380,47 @@
 	</div>
 </div>
 
-<div id="Other_Page">
-	<div class="frame">
+<div id="Other_Page" class="container row row-cols-2 row-cols-sm-4 m-auto">
+	<figure class="col h-100">
 		<a href="">
-			<img src="~/images/other_page_1.jpg" alt="" />
-			<div class="page_name">關於Derek</div>
+			<div class="position-relative ">
+				<img class="img-fluid" src="~/images/other_page_1.jpg" alt="" />
+				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">關於Derek</figcaption>
+			</div>
 		</a>
-	</div>
-	<div class="frame">
+	</figure>
+	<figure class="col h-100">
 		<a href="">
-			<img src="~/images/other_page_2.jpg" alt="" />
-			<div class="page_name">標章認證</div>
+			<div class="position-relative ">
+				<img class="img-fluid" src="~/images/other_page_2.jpg" alt="" />
+				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">標章認證</figcaption>
+			</div>
 		</a>
-	</div>
-	<div class="frame">
+	</figure>
+	<figure class="col h-100">
 		<a href="">
-			<img src="~/images/other_page_3.jpg" alt="" />
-			<div class="page_name">銷售據點</div>
+			<div class="position-relative ">
+				<img class="img-fluid" src="~/images/other_page_3.jpg" alt="" />
+				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">銷售據點</figcaption>
+			</div>
 		</a>
-	</div>
-	<div class="frame">
+	</figure>
+	<figure class="col h-100">
 		<a href="">
-			<img src="~/images/other_page_4.jpg" alt="" />
-			<div class="page_name">我們的服務</div>
+			<div class="position-relative ">
+				<img class="img-fluid" src="~/images/other_page_4.jpg" alt="" />
+				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">我們的服務</figcaption>
+			</div>
 		</a>
-	</div>
+	</figure>
 </div>
 
-<div id="Reserve">
-	<div class="frame">
-		<a class="content" href="" target="_blank">
+<figure id="Reserve" class="container my-5">
+	<figcaption class="frame h-100 d-flex align-items-center justify-content-center">
+		<a class="content d-flex flex-column align-items-center justify-content-center rounded-circle" href="" target="_blank">
 			<div>Reservation</div>
 			<div>預約參觀</div>
-			<div><i class="fa-solid fa-chevron-up"></i></div>
+			<i class="fa-solid fa-chevron-up fs-4 text-black"></i>
 		</a>
-	</div>
-</div>
+	</figcaption>
+</figure>

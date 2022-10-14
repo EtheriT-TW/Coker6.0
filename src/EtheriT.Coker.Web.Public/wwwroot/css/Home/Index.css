@@ -47,34 +47,21 @@
     }
 
 /* Button Gonews*/
-#btn_gonews {
-    display: flex;
-    justify-content: center;
-    padding: 10px;
+.btn_gonews > i {
+    color: var(--blue-keyword);
+    cursor: pointer;
 }
 
-    #btn_gonews > i {
-        color: #4891C4;
-        cursor: pointer;
-        border: 1px gray solid;
-        border-radius: 50%;
-        padding: 0.1rem;
-        height: 1.3rem;
-        width: 1.3rem;
-    }
+.guess_like > div > div {
+    background-color: var(--pale);
+}
+
 
 /* Guess_Like */
 #Guess_Like {
     padding: 10px 10vw;
     margin-bottom: 40px;
 }
-
-    #Guess_Like > .title {
-        display: flex;
-        justify-content: center;
-        font-size: 2rem;
-        margin-bottom: 2rem;
-    }
 
     #Guess_Like > .content {
         display: flex;
@@ -147,8 +134,7 @@
                 }
 
 /* Favorite */
-.favorite > .title {
-    font-size: 2rem;
+#Favorite > .title {
     height: 200px;
     background-image: url(../../images/favorite_bg.png);
     background-size: contain;
@@ -156,139 +142,71 @@
     background-repeat: no-repeat;
 }
 
-.favorite > ul > li > figure > .top_icon {
+#Favorite > ul > li > figure > .top_icon {
     height: 1.5rem;
 }
 
-    .favorite > ul > li > figure > .top_icon > button > i {
+    #Favorite > ul > li > figure > .top_icon > button > i {
         color: var(--gray-middle);
     }
 
-.favorite > ul > li > figure > figcaption {
+#Favorite > ul > li > figure > figcaption {
     width: fit-content;
 }
 
-    .favorite > ul > li > figure > figcaption > div {
+    #Favorite > ul > li > figure > figcaption > div {
         font-size: 0.8rem;
         border-bottom: 3px solid var(--red-middle);
         background-color: var(--gray-middle);
         height: 2.5rem;
     }
 
-.favorite > ul > li > figure {
+#Favorite > ul > li > figure {
     border: 1px solid var(--gray-dark);
 }
 
-    .favorite > ul > li > figure > .btn_add_favorite {
+    #Favorite > ul > li > figure > .btn_add_favorite {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
     }
 
-        .favorite > ul > li > figure > .btn_add_favorite > i:first-child {
+        #Favorite > ul > li > figure > .btn_add_favorite > span > i:first-child {
             color: var(--gray-middle);
         }
 
-.favorite > ul > li > .name {
+#Favorite > ul > li > .name {
     color: var(--gray-middle);
     font-size: 0.8rem;
     height: 2.5rem;
 }
 
-.favorite > ul > .blank:nth-child(n+7) {
+#Favorite > ul > .blank:nth-child(n+7) {
     display: none;
 }
 
-.favorite > ul > .blank > figure > img {
+#Favorite > ul > .blank > figure > img {
     visibility: hidden;
 }
 
-.favorite > ul > .blank > figure > figcaption > div {
+#Favorite > ul > .blank > figure > figcaption > div {
     border: none;
     background: none;
 }
 
 /* Featured */
-#Featured {
-    padding: 10px 10vw;
-    margin: 40px 0;
+#Featured > .content > figure:first-child {
+    width: 39%;
 }
 
-    #Featured > .title {
-        font-size: 1.25rem;
-        font-weight: bold;
-        padding: 10px 10px;
-    }
-
-    #Featured > .content {
-        display: flex;
-        justify-content: space-between;
-    }
-
-        #Featured > .content > div:first-child {
-            width: 39%;
-        }
-
-        #Featured > .content > div:last-child {
-            width: 59%;
-        }
-
-        #Featured > .content > .frame {
-            display: flex;
-            flex-direction: column;
-        }
-
-            #Featured > .content > .frame > .image {
-                display: flex;
-                margin-bottom: 10px;
-            }
-
-                #Featured > .content > .frame > .image img {
-                    width: 100%;
-                }
-
-            #Featured > .content > .frame > .describe {
-                color: black;
-                width: fit-content;
-            }
+#Featured > .content > figure:nth-child(2) {
+    width: 59%;
+}
 
 /* Tiles */
 #Tiles {
     background-image: url("../../images/tiles_bg.jpg");
-    padding: 50px 10vw;
-    margin: 40px 0;
-    display: flex;
-    flex-direction: row;
 }
-
-    #Tiles > .content {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-    }
-
-        #Tiles > .content > .frame {
-            width: 49%;
-            display: flex;
-            flex-direction: column;
-        }
-
-            #Tiles > .content > .frame a > img {
-                width: 100%;
-            }
-
-            #Tiles > .content > .frame > .big {
-                margin-bottom: 2%;
-            }
-
-            #Tiles > .content > .frame > .small {
-                display: flex;
-                justify-content: space-between;
-            }
-
-                #Tiles > .content > .frame > .small > a {
-                    width: 49%;
-                }
 
 /* News */
 #News {
@@ -491,56 +409,19 @@
         }
 
 /* Other Page */
-#Other_Page {
-    width: 100%;
-    padding: 10px 10vw;
-    margin: 40px 0;
-    display: flex;
-    justify-content: space-between;
+#Other_Page > figure > a > div > figcaption {
+    background-color: #4A5859aa;
 }
-
-    #Other_Page > .frame {
-        position: relative;
-        width: 24%;
-    }
-
-        #Other_Page > .frame img {
-            width: 100%;
-        }
-
-        #Other_Page > .frame .page_name {
-            color: white;
-            background-color: #4A5859aa;
-            position: absolute;
-            bottom: 4%;
-            left: auto;
-            width: 100%;
-            height: 3rem;
-            display: flex;
-            align-items: center;
-            padding-left: 1rem;
-        }
 
 /* Reserve */
 #Reserve {
-    width: 100%;
-    padding: 10px 10vw;
-    margin: 40px 0;
     height: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
     #Reserve > .frame {
         background-image: url("../../images/reserve_bg.jpg");
         background-size: auto 300px;
         background-position: center;
-        height: 100%;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
         #Reserve > .frame > .content {
@@ -550,10 +431,6 @@
             background-repeat: no-repeat;
             height: 175px;
             width: 175px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
             #Reserve > .frame > .content > div {
@@ -570,10 +447,6 @@
 
                 #Reserve > .frame > .content > div:nth-child(2) {
                     color: #7D6131;
-                }
-
-                #Reserve > .frame > .content > div:last-child {
-                    color: black;
                 }
 
 /*RWD*/
@@ -637,19 +510,6 @@
             display: none;
         }
 
-    #Favorite > .content > .frame {
-        width: calc(100%/3 - 1%);
-        margin-right: 1%;
-    }
-
-        #Favorite > .content > .frame:nth-child(3), #Favorite > .content > .frame:nth-child(4), #Favorite > .content > .frame:nth-child(5) {
-            display: none;
-        }
-
-    #Favorite > .content > .blank {
-        width: calc(100%/3 - 1%);
-    }
-
     #News > .NewsSwiper > .content > .frame > .text > .content {
         flex-grow: 1;
         overflow: hidden;
@@ -704,52 +564,13 @@
             height: fit-content;
         }
 
-    #Favorite > .title > .image > img {
+    #Featured > .content > figure:first-child {
         width: 100%;
     }
 
-    #Favorite > .content > .frame {
-        width: calc(100%/2 - 1%);
-        margin-right: 1%;
+    #Featured > .content > figure:nth-child(2) {
+        width: 100%;
     }
-
-        #Favorite > .content > .frame:nth-child(2) {
-            display: none;
-        }
-
-    #Favorite > .content > .blank {
-        width: calc(100%/2 - 1%);
-    }
-
-    #Featured > .content {
-        flex-direction: column;
-        align-items: center;
-    }
-
-        #Featured > .content > div:first-child {
-            width: 100%;
-            margin-bottom: 4%;
-        }
-
-        #Featured > .content > div:last-child {
-            width: 100%;
-        }
-
-    #Tiles {
-        padding: 25px 25px;
-    }
-
-        #Tiles > .content {
-            flex-direction: column;
-        }
-
-            #Tiles > .content > .frame {
-                width: 100%;
-            }
-
-                #Tiles > .content > .frame:first-child {
-                    margin-bottom: 4%;
-                }
 
     #News > .NewsSwiper > .content {
         height: fit-content;
@@ -810,16 +631,6 @@
             #InquiryAndCconsult > .consult > .frame > .btn_consult {
                 font-size: 1rem;
             }
-
-
-    #Other_Page {
-        flex-wrap: wrap;
-    }
-
-        #Other_Page > .frame {
-            width: 49%;
-            margin-bottom: 2%;
-        }
 }
 
 @media only screen and (max-width: 390px) {

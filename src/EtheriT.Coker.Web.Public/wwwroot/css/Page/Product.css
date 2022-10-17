@@ -242,11 +242,11 @@ input:disabled + .btn_radio {
 }
 
     #Catalog > .text > .fs-3, #Catalog > .text > .fs-2 {
-        color: #A2784E;
+        color: var(--img-text);
     }
 
     #Catalog > .text span > i:first-child {
-        color: #C3A88D;
+        color: var(--img-text-trans);
     }
 
 /* Hot_Product_Title */

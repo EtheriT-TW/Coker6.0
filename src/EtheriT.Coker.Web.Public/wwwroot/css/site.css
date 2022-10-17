@@ -7,7 +7,13 @@
     --red-light: #F3BDBD;
     --red-middle: #B73925;
     --red-dark: #952318;
-    --blue-keyword: #007AEA;
+    --blue: #007AEA;
+    --img-text-trans: #9F774480;
+    --img-text-light: #B28A56;
+    --img-text: #9F7744;
+    --img-text-dark: #826032;
+    --menu-bottom: #4A5859;
+    --menu-bottom-trans: #4A585980;
 }
 
 /* Default */
@@ -180,6 +186,7 @@ p {
         top: auto;
         transform: initial;
         bottom: 0;
+        right: 0;
     }
 
     #cookie_button {

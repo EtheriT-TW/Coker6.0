@@ -1,4 +1,36 @@
-﻿function PageReady() {
+﻿var total_price = 0;
+var total_price_end = 0;
+var subtotal_price = 0;
+
+function PageReady() {
+    $(".purchase_list > li").each(function () {
+        var $self_unit = $(this).children(".unit");
+        var $self_subtotal = $(this).children(".subtotal");
+        total_price = total_price + $self_unit.data('unittotal');
+        $self_subtotal.text($self_unit.data('unittotal').toLocaleString('en-US'));
+    });
+    $("#Totalprice").text(total_price.toLocaleString('en-US'));
+    $("#Subtotal").text(total_price.toLocaleString('en-US'));
+    $("#Freight").text($("#Freight").data('freight').toLocaleString('en-US'));
+    $("#EndTotalprice").text(total_price.toLocaleString('en-US'));
+    subtotal_price = total_price + $("#Freight").data('freight');
+    $("#Freight").text($("#Freight").data('freight').toLocaleString('en-US'));
+    $("#EndSubtotal").text(subtotal_price.toLocaleString('en-US'));
+    $("#TotalSpend").text(subtotal_price.toLocaleString('en-US'));
+
+    var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl)
+    })
+
+    $(".btn_remove_pro").on("click", function () {
+        $(this).parents("li").first().remove();
+    });
+    $(".btn_count_plus").on("click", AmountPlus);
+    $(".btn_count_minus").on("click", AmountMinus);
+    $(".btn_edit_data").on("click", function () {
+        $(this).parents(".orderer").children("form").children("div").children("div").toggleClass("show");
+    });
 
     var buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
         slidesPerView: 1,
@@ -8,12 +40,58 @@
         loop: false,
         simulateTouch: false,
         pagination: {
-            el: ".swiper_pagination_buystep",
+            el: ".swiper_pagination_buystep > div",
             clickable: true,
+            renderBullet: function (index, className) {
+                return '<span class="' + className + '">' + (index + 1) + "</span>";
+            },
         },
         navigation: {
             nextEl: ".btn_swiper_next_buystep",
             prevEl: ".btn_swiper_prev_buystep",
         }
     });
+}
+
+function AmountPlus() {
+    var $self_unit = $(this).parents("li").first().children(".unit");
+    var $self_subtotal = $(this).parents("li").first().children(".subtotal");
+    var $self_input_count = $(this).parents("li").first().children(".counter_input").children(".input_count");
+    $self_input_count.val(parseInt($self_input_count.val()) + 1);
+    var subtotal = parseInt($self_unit.data('unittotal')) * parseInt($self_input_count.val());
+    $self_subtotal.text(subtotal.toLocaleString('en-US'));
+
+    total_price = total_price + $self_unit.data('unittotal');
+    $("#Totalprice").text(total_price.toLocaleString('en-US'));
+    $("#Subtotal").text(total_price.toLocaleString('en-US'));
+    total_price_end = total_price;
+    $("#EndTotalprice").text(total_price_end.toLocaleString('en-US'));
+    subtotal_price = total_price + $("#Freight").data('freight');
+    $("#Freight").text($("#Freight").data('freight').toLocaleString('en-US'));
+    $("#EndSubtotal").text(subtotal_price.toLocaleString('en-US'));
+    $("#TotalSpend").text(subtotal_price.toLocaleString('en-US'));
+}
+
+function AmountMinus() {
+    var $self_unit = $(this).parents("li").first().children(".unit");
+    var $self_subtotal = $(this).parents("li").first().children(".subtotal");
+    var $self_input_count = $(this).parents("li").first().children(".counter_input").children(".input_count");
+    if ($self_input_count.val() > 1) {
+        $self_input_count.val(parseInt($self_input_count.val()) - 1);
+        var subtotal = parseInt($self_unit.data('unittotal')) * parseInt($self_input_count.val());
+        $self_subtotal.text(subtotal.toLocaleString('en-US'));
+        total_price = total_price - $self_unit.data('unittotal');
+        $("#Totalprice").text(total_price.toLocaleString('en-US'));
+        $("#Subtotal").text(total_price.toLocaleString('en-US'));
+        total_price_end = total_price;
+        $("#EndTotalprice").text(total_price_end.toLocaleString('en-US'));
+        subtotal_price = total_price + $("#Freight").data('freight');
+        $("#Freight").text($("#Freight").data('freight').toLocaleString('en-US'));
+        $("#EndSubtotal").text(subtotal_price.toLocaleString('en-US'));
+        $("#TotalSpend").text(subtotal_price.toLocaleString('en-US'));
+    }
+}
+
+function RemoveProduct() {
+    $(this).parents("li").first().remove();
 }

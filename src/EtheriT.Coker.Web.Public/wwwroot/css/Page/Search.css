@@ -39,7 +39,7 @@
 }
 
 #Search_Title > span:first-child {
-    color: var(--blue-keyword);
+    color: var(--blue);
 }
 
 /* Filter */

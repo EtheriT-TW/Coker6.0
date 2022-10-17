@@ -48,90 +48,41 @@
 
 /* Button Gonews*/
 .btn_gonews > i {
-    color: var(--blue-keyword);
+    color: var(--blue);
     cursor: pointer;
 }
 
-.guess_like > div > div {
+/* Guess_Like */
+.guess_like_frame {
     background-color: var(--pale);
 }
 
-
-/* Guess_Like */
-#Guess_Like {
-    padding: 10px 10vw;
-    margin-bottom: 40px;
-}
-
-    #Guess_Like > .content {
-        display: flex;
-        justify-content: space-between;
+    .guess_like_frame > .topline {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        height: 3rem;
     }
 
-        #Guess_Like > .content > .frame {
-            background-color: #F2F2F2;
-            display: flex;
-            flex-direction: column;
-            width: calc(100%/3 - 1%);
-            padding: 10px 25px;
+    .guess_like_frame > .tag {
+        height: 1.75rem;
+        font-size: 0.8rem;
+        color: var(--gray-middle);
+    }
+
+        .guess_like_frame > .tag > li {
+            line-height: 1.5rem;
+            white-space: nowrap;
         }
 
-            #Guess_Like > .content > .frame > .top {
-                display: flex;
-                justify-content: space-between;
-            }
+    .guess_like_frame > .bottom_line > .price {
+        color: var(--red-middle);
+    }
 
-                #Guess_Like > .content > .frame > .top > .name {
-                    font-weight: bold;
-                    height: 3rem;
-                }
-
-                #Guess_Like > .content > .frame > .top > button > i {
-                    margin-top: 5px;
-                    margin-left: 5px;
-                    cursor: pointer;
-                }
-
-            #Guess_Like > .content > .frame > .tag {
-                height: 1.5rem;
-            }
-
-                #Guess_Like > .content > .frame > .tag > ul {
-                    display: flex;
-                    color: #8E8E8E;
-                    font-size: 0.8rem;
-                    text-decoration: underline;
-                }
-
-                    #Guess_Like > .content > .frame > .tag > ul > li {
-                        margin-right: 0.5rem;
-                    }
-
-            #Guess_Like > .content > .frame > .image {
-                display: flex;
-                justify-content: center;
-            }
-
-                #Guess_Like > .content > .frame > .image > img {
-                    height: calc(330px - 6rem);
-                }
-
-            #Guess_Like > .content > .frame > .buy {
-                display: flex;
-                justify-content: center;
-                height: 1.5rem;
-            }
-
-                #Guess_Like > .content > .frame > .buy > .price {
-                    font-weight: bold;
-                    color: #AD0226;
-                    margin-right: 1rem;
-                }
-
-                #Guess_Like > .content > .frame > .buy > .btn_buy {
-                    font-size: 0.8rem;
-                    padding: 0.1rem 0;
-                }
+    .guess_like_frame > .bottom_line > .btn_buy {
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
 
 /* Favorite */
 #Favorite > .title {
@@ -410,7 +361,7 @@
 
 /* Other Page */
 #Other_Page > figure > a > div > figcaption {
-    background-color: #4A5859aa;
+    background-color: var(--menu-bottom-trans);
 }
 
 /* Reserve */
@@ -442,11 +393,11 @@
             }
 
                 #Reserve > .frame > .content > div:first-child {
-                    color: #B38A56;
+                    color: var(--img-text-light);
                 }
 
                 #Reserve > .frame > .content > div:nth-child(2) {
-                    color: #7D6131;
+                    color: var(--img-text-dark);
                 }
 
 /*RWD*/
@@ -502,14 +453,6 @@
         font-size: 1.5rem;
     }
 
-    #Guess_Like > .content > .frame {
-        width: 49%;
-    }
-
-        #Guess_Like > .content > .frame:last-child {
-            display: none;
-        }
-
     #News > .NewsSwiper > .content > .frame > .text > .content {
         flex-grow: 1;
         overflow: hidden;
@@ -546,23 +489,6 @@
     #BannerSwiper > .swiper_pagination_banner > .swiper-pagination-bullet {
         width: 2rem;
     }
-
-    #Guess_Like > div:last-child {
-        flex-direction: column;
-    }
-
-    #Guess_Like > .content > .frame {
-        width: 100%;
-        margin-bottom: 4%;
-    }
-
-        #Guess_Like > .content > .frame:last-child {
-            display: initial;
-        }
-
-        #Guess_Like > .content > .frame > .name {
-            height: fit-content;
-        }
 
     #Featured > .content > figure:first-child {
         width: 100%;

@@ -1,7 +1,7 @@
 ﻿
 /* Footer */
 footer {
-    background-color: #4A5859;
+    background-color: var(--menu-bottom);
     color: white;
     font-family: Microsoft JhengHei;
     cursor: default;
@@ -112,7 +112,7 @@ footer {
     position: absolute;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #4A5859;
+    background: var(--menu-bottom);
     color: #fff;
     z-index: 1;
     margin-top: -45px;

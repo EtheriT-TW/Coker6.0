@@ -10,11 +10,11 @@
     top: 10px;
     right: 10px;
     font-size: xx-large;
-    color: var(--gray-middle);
+    color: var(--gray-icon);
 }
 
 .modal-body > .frame > .card > div > .card-body > .describe {
-    color: var(--gray-middle);
+    color: var(--gray-text);
     font-size: 0.8rem;
 }
 
@@ -33,15 +33,15 @@
         padding: 0.25rem 0.8rem;
         margin-right: 0.5rem;
         font-size: 0.5rem;
-        background-color: var(--gray-light);
-        color: var(--gray-middle);
+        background-color: var(--gray-bg-light);
+        color: var(--gray-text);
         float: left;
         list-style: none;
         white-space: nowrap;
     }
 
 .modal-body > .frame > .card > div > .card-body > .priceframe > .price {
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 .modal-body > .frame > .card > div > .card-body > .priceframe > .discount {
@@ -51,7 +51,7 @@
 .modal-body > .frame > .options > .radio > .title {
     white-space: nowrap;
     padding-right: 0.5rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 .btn_radio {
@@ -62,40 +62,40 @@
 
 input:checked + .btn_radio {
     font-weight: bold;
-    border-color: var(--red-middle);
+    border-color: var(--red-main);
     border-width: medium;
     cursor: default;
 }
 
 input:disabled + .btn_radio {
-    border: var(--gray-light);
-    background-color: var(--gray-light);
-    color: var(--gray-middle);
+    border: var(--gray-text);
+    background-color: var(--gray-text);
+    color: var(--black-text);
     cursor: default;
 }
 
 .modal-body > .frame > .options > .buy_line > .counter > .title {
     white-space: nowrap;
     padding-right: 0.5rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 [class*=btn_count_] {
     cursor: pointer;
-    color: var(--gray-middle);
-    border: 1px solid var(--gray-middle);
+    color: var(--gray-text);
+    border: 1px solid var(--gray-text);
     width: 2rem;
     height: 2rem;
 }
 
 .input_count {
-    border: 1px solid var(--gray-middle);
+    border: 1px solid var(--gray-text);
     width: 8rem;
     height: 2rem;
 }
 
 .modal-body > .frame > .options > div > .btn_buy {
-    background-color: var(--red-middle);
+    background-color: var(--red-main);
     height: 2rem;
 }
 
@@ -107,7 +107,7 @@ input:disabled + .btn_radio {
 
 /* Swiper */
 .swiper_four_grid {
-    background-color: var(--pale);
+    background-color: var(--gray-bg-light);
 }
 
     .swiper_four_grid > .swiper {
@@ -124,7 +124,7 @@ input:disabled + .btn_radio {
             }
 
                 .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .top_line > button > i {
-                    color: var(--gray-middle);
+                    color: var(--gray-icon);
                 }
 
             .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .card-body > p {
@@ -150,13 +150,13 @@ input:disabled + .btn_radio {
                     .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .pro_tag > li {
                         font-size: 0.8rem;
                         line-height: 1.5rem;
-                        background-color: var(--pale);
-                        color: var(--gray-middle);
+                        background-color: var(--gray-bg-light);
+                        color: var(--gray-text);
                         white-space: nowrap;
                     }
 
                 .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .btn_cart > span > i:first-child {
-                    color: var(--gray-light);
+                    color: var(--gray-icon);
                 }
 
 .swiper_button {
@@ -166,14 +166,9 @@ input:disabled + .btn_radio {
     transform: translate(-50%,-50%);
 }
 
-    .swiper_button > button {
-        background-color: var(--gray-middle);
+    .swiper_button > button > span > i:first-child {
+        color: var(--black-text-trans);
     }
-
-        .swiper_button > button > span > i:first-child {
-            color: var(--gray-dark);
-            opacity: 50%;
-        }
 
     .swiper_button > [class*=btn_swiper_next_] {
         margin-right: -35px;
@@ -189,16 +184,16 @@ input:disabled + .btn_radio {
 }
 
     #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
-        color: var(--gray-middle);
+        color: var(--gray-text);
     }
 
     #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
-        color: var(--gray-middle);
+        color: var(--gray-text);
     }
 
 /* Filter */
 #Filter {
-    background-color: #E0E3E8;
+    background-color: var(--gray-blue);
 }
 
     #Filter > div > .range > input {
@@ -207,13 +202,13 @@ input:disabled + .btn_radio {
 
 .btn_confirm {
     white-space: nowrap;
-    background-color: var(--gray-dark);
+    background-color: var(--black-text);
     cursor: pointer;
 }
 
 /* Tick Area */
 .tick_area > .title {
-    background-color: #F4F4F4;
+    background-color: var(--gray-bg-light);
 }
 
 .tick_area > ul > li {
@@ -222,7 +217,7 @@ input:disabled + .btn_radio {
 
 /* Ads */
 #Ads {
-    background-color: #E2E2E2;
+    background-color: var(--gray-bg-dark);
 }
 
     #Ads > div > .card-group > .card > .card-footer > li {
@@ -242,11 +237,11 @@ input:disabled + .btn_radio {
 }
 
     #Catalog > .text > .fs-3, #Catalog > .text > .fs-2 {
-        color: var(--img-text);
+        color: #9F7744;
     }
 
     #Catalog > .text span > i:first-child {
-        color: var(--img-text-trans);
+        color: #9F774480;
     }
 
 /* Hot_Product_Title */
@@ -277,7 +272,7 @@ input:disabled + .btn_radio {
     }
 
 #RelatedProductsSwiper {
-    background-color: var(--gray-light);
+    background-color: var(--gray-bg-dark);
 }
 
 

@@ -126,7 +126,7 @@
 
 input:checked + .btn_radio {
     font-weight: bold;
-    border-color: var(--red-middle);
+    border-color: var(--red-main);
     border-width: medium;
     cursor: default;
 }
@@ -153,7 +153,7 @@ input:disabled + .btn_radio {
 }
 
 #Product > .content > .btn_buy {
-    background-color: var(--red-middle);
+    background-color: var(--red-main);
     line-height: 3;
 }
 
@@ -182,13 +182,13 @@ input:disabled + .btn_radio {
 }
 
     .nav-link:focus, .nav-link:hover {
-        color: var(--red-dark);
+        color: var(--red-text);
     }
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
     font-weight: bold;
-    color: var(--red-dark);
-    background-color: var(--red-light);
+    color: var(--red-text);
+    background-color: var(--red-main-light);
 }
 
 .nav-pills .nav-link {

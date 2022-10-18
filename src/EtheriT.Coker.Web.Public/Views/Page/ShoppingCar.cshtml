@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="~/css/Page/ShoppingCar.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCar.min.js" asp-append-version="true"></script>
 
-<div class="history container my-4 d-flex justify-content-end">
+<div class="history container my-4 d-flex justify-content-center justify-content-md-end">
 	<a href="" class="bg-white text-center me-3 py-2">
 		<div>收藏商品<span class="fw-bold">20</span>件</div>
 	</a>
@@ -19,9 +19,9 @@
 
 <div id="BuyStepSwiper" class="container py-4 position-relative">
 	<div id="memberLogin" class="container my-5">
-		<div class="rounded-1 d-flex align-items-center px-3 py-4 bg-white">
+		<div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
 			<div>購買前登入會員可更方便查詢訂單！</div>
-			<button class="bg-transparent rounded-1 mx-2">會員登入</button>
+			<button class="bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
 		</div>
 	</div>
 
@@ -33,7 +33,7 @@
 				</div>
 
 				<div class="card-body pt-5">
-					<div class="row pe-4">
+					<div class="row pe-4 d-none d-lg-flex">
 						<div class="col-6 text-start">商品資訊</div>
 						<div class="col-2">單價</div>
 						<div class="col-2">數量</div>
@@ -45,29 +45,33 @@
 							<div class="col-sm-6 col-12 text-start d-flex">
 								<img src="/images/product/pro_pic_03.jpg">
 								<div>
-									<div class="fs-5 fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
+									<div class="fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
 									<div class="d-flex">
 										<div class="pe-3">白色</div>
 										<div>規格說明文字</div>
 									</div>
 								</div>
 							</div>
-							<div class="unit col-2 price fw-bold" data-unittotal="26200">26,200</div>
 
-							<div class="counter_input col-2 d-flex justify-content-center">
-								<button class="btn_count_minus bg-white border-end-0 px-3">
-									<i class="fa-solid fa-minus"></i>
-								</button>
+							<div class="content col-sm-6 col-12 row">
+								<div class="unit col-4 price fw-bold" data-unittotal="26200">26,200</div>
 
-								<input class="input_count text-center py-2" type="number" name="counter" value="1">
+								<div class="counter_input col-4 d-flex justify-content-center">
+									<button class="btn_count_minus bg-white border-end-0">
+										<i class="fa-solid fa-minus"></i>
+									</button>
 
-								<button class="btn_count_plus bg-white border-start-0 px-3">
-									<i class="fa-solid fa-plus"></i>
-								</button>
+									<input class="input_count text-center py-1" type="number" name="counter" value="1">
+
+									<button class="btn_count_plus bg-white border-start-0">
+										<i class="fa-solid fa-plus"></i>
+									</button>
+								</div>
+
+								<div class="subtotal col-4 price fw-bold fs-5 d-lg-block d-none"></div>
 							</div>
 
-							<div class="subtotal col-2 price fw-bold fs-5"></div>
-							<div class="btn_side_icon position-absolute d-flex flex-column end-0">
+							<div class="btn_side_icon position-absolute d-flex flex-column end-0 p-2">
 								<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
 									<button class="btn_favorites bg-transparent border-0">
 										<i class="fa-regular fa-heart"></i>
@@ -119,9 +123,7 @@
 									免運
 								</label>
 							</div>
-							<div class="w-50">
-								免運<span>(您以符合免運條件)</span>
-							</div>
+							<div class="w-50">免運<span>(您已符合免運條件)</span></div>
 						</li>
 					</ul>
 
@@ -420,7 +422,9 @@
 		</div>
 	</div>
 
-	<div class="swiper_pagination_buystep position-absolute ">
-		<div class="text-center"></div>
+	<div class="swiper_pagination container position-absolute position-relative">
+		<div class="centerline position-absolute container"><hr class="opacity-100" /></div>
+		<div class="swiper_pagination_buystep position-absolute"></div>
 	</div>
+
 </div>

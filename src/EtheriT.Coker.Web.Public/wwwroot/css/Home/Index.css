@@ -8,7 +8,7 @@
     }
 
     #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption {
-        background-color: rgba(0, 0, 0, 0.3);
+        background-color: var(--black-text-trans);
     }
 
         #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
@@ -29,7 +29,7 @@
     }
 
         #BannerSwiper > .swiper_pagination_banner > .swiper-pagination-bullet.swiper-pagination-bullet-active {
-            background: var(--red-middle);
+            background: var(--red-main);
         }
 
 #BannerSwiper > .swiper_button {
@@ -54,7 +54,7 @@
 
 /* Guess_Like */
 .guess_like_frame {
-    background-color: var(--pale);
+    background-color: var(--gray-bg-light);
 }
 
     .guess_like_frame > .topline {
@@ -67,7 +67,7 @@
     .guess_like_frame > .tag {
         height: 1.75rem;
         font-size: 0.8rem;
-        color: var(--gray-middle);
+        color: var(--gray-text);
     }
 
         .guess_like_frame > .tag > li {
@@ -76,7 +76,7 @@
         }
 
     .guess_like_frame > .bottom_line > .price {
-        color: var(--red-middle);
+        color: var(--red-number);
     }
 
     .guess_like_frame > .bottom_line > .btn_buy {
@@ -98,7 +98,7 @@
 }
 
     #Favorite > ul > li > figure > .top_icon > button > i {
-        color: var(--gray-middle);
+        color: var(--gray-icon);
     }
 
 #Favorite > ul > li > figure > figcaption {
@@ -107,8 +107,8 @@
 
     #Favorite > ul > li > figure > figcaption > div {
         font-size: 0.8rem;
-        border-bottom: 3px solid var(--red-middle);
-        background-color: var(--gray-middle);
+        border-bottom: 3px solid var(--red-main);
+        background-color: var(--gray-text);
         height: 2.5rem;
     }
 
@@ -123,11 +123,11 @@
     }
 
         #Favorite > ul > li > figure > .btn_add_favorite > span > i:first-child {
-            color: var(--gray-middle);
+            color: var(--gray-icon);
         }
 
 #Favorite > ul > li > .name {
-    color: var(--gray-middle);
+    color: var(--gray-text);
     font-size: 0.8rem;
     height: 2.5rem;
 }
@@ -205,7 +205,7 @@
                 #News > .NewsSwiper > .content > .frame > .text > .time {
                     display: flex;
                     align-items: center;
-                    color: #888888;
+                    color: var(--gray-text);
                     font-weight: bold;
                     height: fit-content;
                 }
@@ -228,13 +228,13 @@
                     -webkit-line-clamp: 3;
                     font-size: 1rem;
                     font-weight: bold;
-                    color: #545454;
+                    color: var(--black-text);
                 }
 
                 #News > .NewsSwiper > .content > .frame > .text > .more {
                     height: fit-content;
                     cursor: pointer;
-                    color: #4991C3;
+                    color: var(--blue);
                 }
 
     #News > .NewsSwiper > .swiper-pagination {
@@ -244,7 +244,7 @@
 
 /* Most Popular */
 #Most_Popular {
-    background-color: #E2E2E2;
+    background-color: var(--gray-bg-dark);
 }
 
     #Most_Popular > div > .card-group > .card > .card-footer > li {
@@ -311,7 +311,7 @@
             }
 
             #InquiryAndCconsult > .inquire > .frame > .search > i {
-                color: gray;
+                color: var(--gray-icon);
                 display: flex;
                 align-items: center;
                 cursor: pointer;
@@ -325,7 +325,7 @@
 
             #InquiryAndCconsult > .inquire > .frame > .tag > ul > li {
                 text-decoration: underline;
-                color: gray;
+                color: var(--gray-text);
                 margin: 0.5rem 0 0 0.5rem;
             }
 
@@ -350,7 +350,7 @@
         }
 
         #InquiryAndCconsult > .consult > .frame > .btn_consult {
-            color: gray;
+            color: var(--gray-text);
             cursor: pointer;
             background-color: white;
             width: 10rem;
@@ -361,7 +361,7 @@
 
 /* Other Page */
 #Other_Page > figure > a > div > figcaption {
-    background-color: var(--menu-bottom-trans);
+    background-color: var(--green-main-trans);
 }
 
 /* Reserve */
@@ -393,11 +393,11 @@
             }
 
                 #Reserve > .frame > .content > div:first-child {
-                    color: var(--img-text-light);
+                    color: #B28A56;
                 }
 
                 #Reserve > .frame > .content > div:nth-child(2) {
-                    color: var(--img-text-dark);
+                    color: #826032;
                 }
 
 /*RWD*/
@@ -538,7 +538,7 @@
                 }
 
                 #InquiryAndCconsult > .inquire > .frame > .tag > ul > li {
-                    color: #333333;
+                    color: var(--gray-text);
                 }
 
         #InquiryAndCconsult > .consult > .frame {

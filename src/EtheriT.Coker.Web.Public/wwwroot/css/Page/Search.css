@@ -44,7 +44,7 @@
 
 /* Filter */
 #Filter {
-    background-color: var(--pale);
+    background-color: var(--gray-bg-light);
 }
 
     #Filter .sort_radio > [class*=btn_sort_] {
@@ -55,8 +55,8 @@
 
     #Filter .sort_radio > input:checked + [class*=btn_sort_] {
         font-weight: bold;
-        color: var(--red-middle);
-        background-color: var(--red-light);
+        color: var(--red-main);
+        background-color: var(--red-main-light);
         padding: 1rem 2rem;
         cursor: default;
     }
@@ -73,7 +73,7 @@
 
 /* Search Result */
 #Search_Result {
-    background-color: var(--pale);
+    background-color: var(--gray-bg-light);
 }
 
     #Search_Result > div > div > figure {
@@ -136,7 +136,7 @@
             }
 
             #Search_Result > div > div > .card > div > figcaption > .bottom_line > .btn_cart > span:hover > i:first-child {
-                color: var(--red-middle);
+                color: var(--red-main);
             }
 
         #Search_Result > div > div > .card > div > figcaption > .bottom_line > .pro_tag {
@@ -147,7 +147,7 @@
             #Search_Result > div > div > .card > div > figcaption > .bottom_line > .pro_tag > li {
                 font-size: 0.8rem;
                 line-height: 1.5rem;
-                background-color: var(--pale);
+                background-color: var(--gray-bg-light);
                 color: var(--gray-middle);
                 white-space: nowrap;
             }
@@ -177,7 +177,7 @@
     }
 
         #Search_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart:hover {
-            background-color: var(--red-middle);
+            background-color: var(--red-main);
         }
 
         #Search_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart > div {
@@ -245,7 +245,7 @@
                     .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .pro_tag > li {
                         font-size: 0.8rem;
                         line-height: 1.5rem;
-                        background-color: var(--pale);
+                        background-color: var(--gray-bg-light);
                         color: var(--gray-middle);
                         white-space: nowrap;
                     }

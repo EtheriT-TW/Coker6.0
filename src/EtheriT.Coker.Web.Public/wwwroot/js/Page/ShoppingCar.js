@@ -4,8 +4,9 @@ var subtotal_price = 0;
 
 function PageReady() {
     $(".purchase_list > li").each(function () {
-        var $self_unit = $(this).children(".unit");
-        var $self_subtotal = $(this).children(".subtotal");
+        var $self_unit = $(this).children(".content").children(".unit");
+        console.log($self_unit);
+        var $self_subtotal = $(this).children(".content").children(".subtotal");
         total_price = total_price + $self_unit.data('unittotal');
         $self_subtotal.text($self_unit.data('unittotal').toLocaleString('en-US'));
     });
@@ -40,7 +41,7 @@ function PageReady() {
         loop: false,
         simulateTouch: false,
         pagination: {
-            el: ".swiper_pagination_buystep > div",
+            el: ".swiper_pagination > .swiper_pagination_buystep",
             clickable: true,
             renderBullet: function (index, className) {
                 return '<span class="' + className + '">' + (index + 1) + "</span>";
@@ -54,9 +55,9 @@ function PageReady() {
 }
 
 function AmountPlus() {
-    var $self_unit = $(this).parents("li").first().children(".unit");
-    var $self_subtotal = $(this).parents("li").first().children(".subtotal");
-    var $self_input_count = $(this).parents("li").first().children(".counter_input").children(".input_count");
+    var $self_unit = $(this).parents("li").first().children(".content").children(".unit");
+    var $self_subtotal = $(this).parents("li").first().children(".content").children(".subtotal");
+    var $self_input_count = $(this).parents("li").first().children(".content").children(".counter_input").children(".input_count");
     $self_input_count.val(parseInt($self_input_count.val()) + 1);
     var subtotal = parseInt($self_unit.data('unittotal')) * parseInt($self_input_count.val());
     $self_subtotal.text(subtotal.toLocaleString('en-US'));
@@ -73,9 +74,9 @@ function AmountPlus() {
 }
 
 function AmountMinus() {
-    var $self_unit = $(this).parents("li").first().children(".unit");
-    var $self_subtotal = $(this).parents("li").first().children(".subtotal");
-    var $self_input_count = $(this).parents("li").first().children(".counter_input").children(".input_count");
+    var $self_unit = $(this).parents("li").first().children(".content").children(".unit");
+    var $self_subtotal = $(this).parents("li").first().children(".content").children(".subtotal");
+    var $self_input_count = $(this).parents("li").first().children(".content").children(".counter_input").children(".input_count");
     if ($self_input_count.val() > 1) {
         $self_input_count.val(parseInt($self_input_count.val()) - 1);
         var subtotal = parseInt($self_unit.data('unittotal')) * parseInt($self_input_count.val());

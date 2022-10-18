@@ -1,19 +1,25 @@
 /* Color */
 :root {
-    --pale: #F4F4F4;
     --gray-light: #E2E2E2;
     --gray-middle: #A0A0A0;
     --gray-dark: #4A4A4A;
-    --red-light: #F3BDBD;
-    --red-middle: #B73925;
-    --red-dark: #952318;
     --blue: #007AEA;
-    --img-text-trans: #9F774480;
-    --img-text-light: #B28A56;
-    --img-text: #9F7744;
-    --img-text-dark: #826032;
-    --menu-bottom: #4A5859;
-    --menu-bottom-trans: #4A585980;
+    --green-main: #4A5859;
+    --green-main-trans: #4A585980;
+    --red-main: #B73925;
+    --red-main-light: #F3BDBD;
+    --red-number: #B8230F;
+    --red-text: #962209;
+    --red-popup: #FF5152;
+    --gray-blue: #E0E3E8;
+    --gray-bg-light: #F4F4F4;
+    --gray-bg-dark: #E2E2E2;
+    --gray-icon: #BFBFBF;
+    --gray-text: #8E8E8E;
+    --black-text: #4F4F4F;
+    --black-text-trans: #4F4F4F80;
+    --black-bottom-line: #333333;
+    --black-top-line: #1E1E1E;
 }
 
 /* Default */
@@ -125,7 +131,7 @@ p {
 }
 
 #CollapseHistory > .checkout {
-    background-color: var(--red-middle);
+    background-color: var(--red-main);
     font-size: 0.8rem;
 }
 
@@ -159,7 +165,7 @@ p {
 }
 
 .btn_cookie_accept {
-    background-color: var(--red-middle);
+    background-color: var(--red-main);
     cursor: pointer;
 }
 

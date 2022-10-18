@@ -1,6 +1,6 @@
 ﻿/* Header Top*/
 #Header_Top {
-    background-color: #1E1E1E;
+    background-color: var(--black-top-line);
     color: white;
     font-size: 14px;
     padding: 5px 20px;
@@ -47,7 +47,7 @@
 
                 .news_box > ul > li > a:before {
                     content: 'New ';
-                    color: #B73925;
+                    color: var(--red-main);
                 }
 
 .searchblock {
@@ -65,16 +65,12 @@
     min-width: 280px;
 }
 
-    .cart_dropdown > ul > li > figure > div > .btn_cart_buy {
-        background-color: var(--gray-dark);
-    }
-
     .cart_dropdown > ul > li > figure > div > div:first-child {
         max-width: 80px;
     }
 
     .cart_dropdown > ul > li > figure > div > figcaption > .card-body > .detailed {
-        color: var(--red-middle);
+        color: var(--red-main);
     }
 
         .cart_dropdown > ul > li > figure > div > figcaption > .card-body > .detailed > .amount::before {
@@ -82,15 +78,15 @@
         }
 
     .cart_dropdown > ul > li > figure > div > .btn_cart_delete {
-        color: var(--gray-middle);
+        color: var(--gray-icon);
     }
 
         .cart_dropdown > ul > li > figure > div > .btn_cart_delete:hover {
-            color: var(--red-middle);
+            color: var(--red-main);
         }
 
     .cart_dropdown > .btn_cart_buy {
-        background-color: var(--gray-dark);
+        background-color: var(--black-text);
     }
 
 /* menu_button */
@@ -146,8 +142,7 @@
 /* Mega Menu */
 #Mega_Menu {
     position: relative;
-    background-color: #B73925;
-    color: white;
+    background-color: var(--red-main);
     padding: 0 5%;
 }
 
@@ -271,7 +266,7 @@
 }
 
     .mega_menu_title > ul > li:hover > a {
-        color: #B73925;
+        color: var(--red-main);
         font-weight: bold;
     }
 
@@ -305,7 +300,7 @@
     #Header_Top {
         padding: 13px 20px;
         justify-content: flex-end;
-        background-color: #B73925;
+        background-color: var(--red-main);
     }
 
     .news_box {

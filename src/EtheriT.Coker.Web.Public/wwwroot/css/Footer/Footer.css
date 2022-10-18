@@ -1,7 +1,7 @@
 ﻿
 /* Footer */
 footer {
-    background-color: var(--menu-bottom);
+    background-color: var(--green-main);
     color: white;
     font-family: Microsoft JhengHei;
     cursor: default;
@@ -22,7 +22,6 @@ footer {
         cursor: pointer;
         transform: rotate(180deg);
         font-size: 18px;
-        color: black;
         transition: all 1s;
     }
 
@@ -112,8 +111,7 @@ footer {
     position: absolute;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--menu-bottom);
-    color: #fff;
+    background: var(--green-main);
     z-index: 1;
     margin-top: -45px;
 }
@@ -134,7 +132,7 @@ footer {
 /* Copyright */
 #Copyright {
     font-size: 12px;
-    background-color: #333333;
+    background-color: var(--black-bottom-line);
     justify-content: center;
     padding: 10px 0;
 }

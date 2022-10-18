@@ -41,8 +41,8 @@
 					</div>
 
 					<ul class="purchase_list pb-4">
-						<li class="row border-bottom border-top py-2 align-items-center pe-4 position-relative">
-							<div class="col-sm-6 col-12 text-start d-flex">
+						<li class="row border-bottom border-top py-2 pe-0 pe-sm-4 align-items-center position-relative">
+							<div class="col-sm-6 col-12 text-start pe-5 ps-0 px-sm-2 d-flex">
 								<img src="/images/product/pro_pic_03.jpg">
 								<div>
 									<div class="fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
@@ -53,7 +53,7 @@
 								</div>
 							</div>
 
-							<div class="content col-sm-6 col-12 row">
+							<div class="content col-sm-6 col-12 row align-items-center">
 								<div class="unit col-4 price fw-bold" data-unittotal="26200">26,200</div>
 
 								<div class="counter_input col-4 d-flex justify-content-center">
@@ -73,7 +73,7 @@
 
 							<div class="btn_side_icon position-absolute d-flex flex-column end-0 p-2">
 								<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
-									<button class="btn_favorites bg-transparent border-0">
+									<button class="btn_move_to_favorites bg-transparent border-0">
 										<i class="fa-regular fa-heart"></i>
 									</button>
 								</span>
@@ -86,7 +86,7 @@
 						</li>
 					</ul>
 
-					<div class="endline pe-5 col-12 col-md-6 offset-md-6">
+					<div class="endline pe-sm-5 col-12 col-md-6 offset-md-6">
 						<div class="border-bottom py-2 d-flex justify-content-end text-end">
 							<div>商品金額</div>
 							<div id="Totalprice" class="price"></div>
@@ -152,7 +152,7 @@
 						</li>
 					</ul>
 
-					<div class="endline pe-5 col-12 col-md-6 offset-md-6">
+					<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
 						<div class="py-2 d-flex justify-content-end text-end">
 							<div>商品金額</div>
 							<div id="EndTotalprice" class="price"></div>
@@ -187,10 +187,10 @@
 
 
 				<div class="card-body px-0">
-					<div class="d-flex align-items-center justify-content-end ">
+					<div class="container d-flex align-items-center justify-content-center justify-content-sm-end">
 						<div>本次消費總金額：</div>
 						<div id="TotalSpend" class="totalprice fw-bold fs-5 price"></div>
-						<button class="bg-transparent px-4 py-2 ms-4 text-decoration-underline">返回查看商品明細</button>
+						<button class="bg-transparent ms-4 px-2 px-sm-4 text-decoration-underline">返回查看商品明細</button>
 					</div>
 
 					<div class="orderer">
@@ -201,9 +201,9 @@
 							</button>
 						</div>
 
-						<form class="content text-start my-4">
+						<form class="content text-start my-4 p-sm-0 px-4">
 							<div class="mb-2 row align-items-center">
-								<label for="InputName" class="col-sm-2 col-form-label text-end">姓　名：</label>
+								<label for="InputName" class="col-sm-2 col-form-label text-sm-end text-start">姓　名：</label>
 								<div class="col-sm-10 show">姓名</div>
 								<div class="col-sm-4">
 									<input type="text" class="form-control" id="InputName" placeholder="請輸入真實中文姓名">

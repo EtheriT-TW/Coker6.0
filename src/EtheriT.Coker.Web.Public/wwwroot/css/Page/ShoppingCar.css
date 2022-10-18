@@ -143,7 +143,8 @@ input[type="number"] {
 /* Step2 */
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step2 > .card-body > .transport > li > div > span {
     font-size: 0.8rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
+    white-space: nowrap;
 }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step2 > .card-body > .endline > div > div:last-child {
@@ -260,17 +261,20 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 576px) {
-
-    #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep {
-        width: 100%;
-    }
-
-    #BuyStepSwiper > .swiper_pagination > .centerline {
-        width: 100%;
+    #BuyStepSwiper > .swiper_pagination > .swiper_pagination_buystep, #BuyStepSwiper > .swiper_pagination > .centerline {
+        width: 90vw;
     }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .btn_side_icon {
         top: 0;
         transform: translate(0, 0);
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
+        width: 8rem;
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > div > button {
+        width: 5rem;
     }
 }

@@ -3,6 +3,14 @@
     HeaderInit();
     FooterInit();
 
+    var mega_menu_height = $("header").css("height");
+    $("body").css("padding-top", mega_menu_height);
+
+    $(window).resize(function () {
+        var mega_menu_height = $("header").css("height");
+        $("body").css("padding-top", mega_menu_height);
+    });
+
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         $("#Cookie").toggleClass("show");
     }

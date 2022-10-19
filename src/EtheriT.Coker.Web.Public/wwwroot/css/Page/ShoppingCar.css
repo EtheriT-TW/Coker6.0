@@ -22,7 +22,7 @@ input[type="number"] {
 
 .history > a > div {
     width: 10rem;
-    color: var(--gray-dark);
+    color: var(--black-text);
 }
 
     .history > a > div > span {
@@ -32,7 +32,7 @@ input[type="number"] {
 /* Member Login */
 #memberLogin > div > button {
     border: 1px solid var(--gray-middle);
-    color: var(--gray-middle);
+    color: var(--gray-text);
     white-space: nowrap;
 }
 
@@ -71,7 +71,7 @@ input[type="number"] {
             font-weight: bold;
             text-align: center;
             line-height: 2rem;
-            color: var(--gray-dark);
+            color: var(--black-text);
             background: white;
             margin: 0;
         }
@@ -94,18 +94,45 @@ input[type="number"] {
     }
 
         #BuyStepSwiper > .swiper_pagination > .centerline > hr {
-            color: var(--gray-dark);
+            color: var(--black-text);
         }
 
+    #BuyStepSwiper > .swiper_pagination > .step_name {
+        width: calc(50vw + 2rem);
+        top: calc(50% + 3.5rem);
+        left: 50%;
+        transform: translate(-50%, -50%);
+        cursor: default;
+    }
+
+        #BuyStepSwiper > .swiper_pagination > .step_name > div {
+            width: 4rem;
+            font-size: 0.8rem;
+        }
 
 /* Step1 */
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > img {
     width: 150px;
     max-width: 30vw;
+    height: fit-content;
+}
+
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > .pro_name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > div > .specifications {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .unit {
-    color: var(--gray-dark);
+    color: var(--black-text);
 }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input {
@@ -114,7 +141,7 @@ input[type="number"] {
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input > button {
         border: 1px solid var(--gray-middle);
-        color: var(--gray-dark);
+        color: var(--black-text);
     }
 
         #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input > button > i {
@@ -154,7 +181,7 @@ input[type="number"] {
 /* Step3 */
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-header > button {
     font-size: 0.8rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
 
@@ -164,12 +191,12 @@ input[type="number"] {
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > div > button {
     font-size: 0.8rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .title > button {
-    color: var(--gray-dark);
+    color: var(--black-text);
 }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .content > div > div {
@@ -180,38 +207,42 @@ input[type="number"] {
         display: flex;
     }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > div > .phone > .phone_front {
-    width: 4rem;
+#InputExt {
+    width: 5rem;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > div > .phone > .ext > input {
-    width: 6rem;
-}
-
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > contact_phone > label:nth-child(2) {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .content > div > .example {
     font-size: 0.8rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > div > .example {
     font-size: 0.8rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method > button {
-    font-size: 0.8rem;
-    color: var(--red-main);
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > div > div {
+    display: flex;
 }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method > button::after {
-        font-weight: 900;
-        font-family: 'Font Awesome 6 Free';
-        content: "\f054";
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method {
+    white-space: nowrap;
+}
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method > button {
+        font-size: 0.8rem;
+        color: var(--red-main);
     }
+
+        #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method > button::after {
+            font-weight: 900;
+            font-family: 'Font Awesome 6 Free';
+            content: "\f054";
+        }
 
 /* Popover */
 body > .popover.bs-popover-auto.fade {
-    background-color: #4A4A4A80;
+    background-color: var(--green-main-trans);
     border: none;
     border-radius: 5px;
 }
@@ -232,13 +263,13 @@ body > .popover.bs-popover-auto.fade {
 }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
-        background-color: var(--gray-middle);
+        background-color: var(--gray-text);
         padding: 0.5rem;
         width: 12.5rem;
     }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > button:nth-child(2n+1) {
-    color: var(--gray-middle);
+    color: var(--gray-text);
     width: fit-content;
 }
 
@@ -255,6 +286,10 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 992px) {
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .btn_side_icon {
+        top: 0;
+        transform: translate(0, 0);
+    }
 }
 
 @media only screen and (max-width: 768px) {
@@ -265,16 +300,19 @@ body > .popover.bs-popover-auto.fade {
         width: 90vw;
     }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .btn_side_icon {
-        top: 0;
-        transform: translate(0, 0);
+    #BuyStepSwiper > .swiper_pagination > .step_name {
+        width: calc(90vw + 2rem);
     }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
         width: 8rem;
     }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > div > button {
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > .pro-detail {
+        height: 5rem;
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .record > button {
         width: 5rem;
     }
 }

@@ -47,14 +47,25 @@
 			</div>
 		</div>
 
-		<button id="btn_chat" class="border-0 bg-transparent my-3 ">
-			<span class="fa-stack fa-2x">
-				<i class="fa-solid fa-circle fa-stack-2x"></i>
-				<i class="fa-brands fa-facebook-messenger fa-stack-1x fa-inverse"></i>
-			</span>
+		<button id="btn_chat" class="bg-transparent border-0 rounded-circle my-2">
+			<img class="img-fluid" src="~/images/icon-linechat.png" alt="" />
 		</button>
 
-		<button id="btn_gotop" class="smoothScroll bg-black border-0 rounded-0 text-white mb-3 px-3">
+		<div id="Chatbot_Frame" class="card position-absolute border-0">
+			<div class="card-header">LINE</div>
+			<div class="card-body text-center">
+				<figure class="m-0">
+					<img class="w-50" src="~/images/QRcode_linechatbot.png" class="card-img-top" alt="Chatbot QRcode">
+					<figcaption>
+						<div class="mt-3">透過行動條碼加入LINE好友</div>
+					</figcaption>
+				</figure>
+				<div>或直接點擊下方按鈕進行連結</div>
+				<a class="h-100" href="line://ti/p/&#64;993kweuu?oat_referrer=PROFILE"><div class="btn_gochat mt-2 py-1">前往聊天</div></a>
+			</div>
+		</div>
+
+		<button id="btn_gotop" class="smoothScroll bg-black border-0 rounded-0 text-white mb-3 px-3 rounded-3">
 			<i class="fa-solid fa-chevron-up"></i>
 			<div>Top</div>
 		</button>

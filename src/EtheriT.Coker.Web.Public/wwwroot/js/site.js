@@ -27,6 +27,10 @@
         }, 0)
     });
 
+    $("#btn_chat").on("click", function () {
+        $("#Chatbot_Frame").toggleClass("show");
+    });
+
     $(".btn_favorites").on("click", AddFavorites);
 
     window.onscroll = function () {

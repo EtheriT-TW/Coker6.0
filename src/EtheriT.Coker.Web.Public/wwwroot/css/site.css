@@ -4,6 +4,7 @@
     --gray-middle: #A0A0A0;
     --gray-dark: #4A4A4A;
     --blue: #007AEA;
+    --orange: #FF8C49;
     --green-main: #4A5859;
     --green-main-trans: #4A585980;
     --red-main: #B73925;
@@ -99,15 +100,35 @@ p {
 #Floating_Right {
     position: fixed;
     right: 1rem;
-    z-index: 1000;
+    z-index: 1030;
     top: 50%;
     transform: translate(0, -50%);
 }
 
 /* Button Chat */
-#btn_chat > span > i:first-child {
-    color: #FF8C49;
+#btn_chat {
+    width: 4.5rem;
 }
+
+#Chatbot_Frame {
+    transform: scale(0,0);
+    transform-origin: right bottom;
+    width: 250px;
+    right: 100px;
+    bottom: 0;
+    transition: ease-in-out all 0.25s;
+}
+
+    #Chatbot_Frame.show {
+        transform-origin: right top;
+        transform: scale(1,1);
+        transition: ease-in-out all 0.25s;
+    }
+
+    #Chatbot_Frame > .card-header, #Chatbot_Frame > .card-body > a > .btn_gochat {
+        color: white;
+        background-color: var(--orange);
+    }
 
 /* Hsitory */
 #History {
@@ -182,19 +203,18 @@ p {
 }
 
 @media only screen and (max-width: 992px) {
+    #Floating_Right {
+        top: auto;
+        transform: initial;
+        bottom: 0;
+        right: 0rem;
+    }
 }
 
 @media only screen and (max-width: 768px) {
 }
 
 @media only screen and (max-width: 576px) {
-    #Floating_Right {
-        top: auto;
-        transform: initial;
-        bottom: 0;
-        right: 0;
-    }
-
     #cookie_button {
         flex-direction: column;
         align-items: center;

@@ -160,15 +160,10 @@
 }
 
 /* News */
-#News {
-    padding: 10px 10vw;
+#News > .title {
+    color: var(--black-text);
 }
 
-    #News > .title {
-        font-size: 1.25rem;
-        font-weight: bold;
-        padding: 10px 10px;
-    }
 
     #News > .NewsSwiper > .content {
         display: flex;

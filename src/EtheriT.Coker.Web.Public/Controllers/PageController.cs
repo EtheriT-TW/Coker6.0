@@ -15,19 +15,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
         public IActionResult Index(string key, int id, string search)
         {
-            PageViewModel model = new PageViewModel { 
+            PageViewModel model = new PageViewModel
+            {
                 id = id,
-                search = search??"".Trim()
+                search = search ?? "".Trim()
             };
             string view = string.Empty;
             if (!string.IsNullOrEmpty(key))
             {
-                if (key == "Search")
+                if (key == "Search" || key == "ShoppingCar" || key == "Favorites")
                 {
-                    view = "Search";
-                }else if (key == "ShoppingCar")
-                {
-                    view = "ShoppingCar";
+                    view = key;
                 }
                 else
                 {

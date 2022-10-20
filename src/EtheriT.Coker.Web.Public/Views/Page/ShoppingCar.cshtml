@@ -8,7 +8,7 @@
 <script src="~/js/Page/ShoppingCar.min.js" asp-append-version="true"></script>
 
 <div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end">
-	<a href="" class="bg-white text-center m-1 py-2">
+	<a class="bg-white text-center m-1 py-2" href="/Favorites">
 		<div>收藏商品<span class="fw-bold">20</span>件</div>
 	</a>
 	<a href="" class="bg-white text-center m-1 py-2">
@@ -177,7 +177,7 @@
 
 					<div class="swiper_button my-5">
 						<button class="btn_swiper_prev_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
-							返回購物
+							返回上一頁
 						</button>
 
 						<button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
@@ -198,7 +198,7 @@
 					<div class="record container d-flex align-items-center justify-content-center justify-content-sm-end">
 						<div>本次消費總金額：</div>
 						<div id="TotalSpend" class="totalprice fw-bold fs-5 price"></div>
-						<button class="bg-transparent ms-4 px-2 px-sm-4 py-1 py-sm-2 text-decoration-underline">返回查看商品明細</button>
+						<button class="btn_gofirst bg-transparent ms-4 px-2 px-sm-4 py-1 py-sm-2 text-decoration-underline">返回查看商品明細</button>
 					</div>
 
 					<div class="orderer">
@@ -407,7 +407,7 @@
 							<div class="fs-5">付款方式</div>
 							<div class="fs-2 fw-bold px-3">Line Pay</div>
 						</div>
-						<button class="bg-transparent border-0">變更付款方式</button>
+						<button class="btn_goprev bg-transparent border-0">變更付款方式</button>
 					</div>
 
 					<div class="swiper_button my-0 my-sm-5 d-flex flex-column flex-sm-row align-items-center justify-content-center">

@@ -4,7 +4,7 @@
     --gray-middle: #A0A0A0;
     --gray-dark: #4A4A4A;
     --blue: #007AEA;
-    --orange: #FF8C49;
+    --green-LINE: #00C300;
     --green-main: #4A5859;
     --green-main-trans: #4A585980;
     --red-main: #B73925;
@@ -127,7 +127,7 @@ p {
 
     #Chatbot_Frame > .card-header, #Chatbot_Frame > .card-body > a > .btn_gochat {
         color: white;
-        background-color: var(--orange);
+        background-color: var(--green-LINE);
     }
 
 /* Hsitory */

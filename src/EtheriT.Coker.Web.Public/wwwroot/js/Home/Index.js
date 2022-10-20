@@ -19,17 +19,17 @@
         }
     });
 
-    var new_swiper = new Swiper(".NewsSwiper", {
+    var new_swiper = new Swiper("#NewsSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
-        pagination: {
-            el: ".swiper-pagination",
-            clickable: true,
+        autoplay: {
+            delay: 2500,
+            disableOnInteraction: false,
         },
-        navigation: {
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev",
+        pagination: {
+            el: ".swiper_pagination_news",
+            clickable: true,
         },
         breakpoints: {
             769: {

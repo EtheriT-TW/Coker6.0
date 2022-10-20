@@ -45,6 +45,14 @@ function PageReady() {
             prevEl: ".btn_swiper_prev_buystep",
         }
     });
+
+    $(".btn_gofirst").on("click", function () {
+        buy_step_swiper.slideTo(0);
+    });
+
+    $(".btn_goprev").on("click", function () {
+        buy_step_swiper.slidePrev();
+    });
 }
 
 function AmountPlus() {

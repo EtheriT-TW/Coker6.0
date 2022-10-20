@@ -1,14 +1,13 @@
 ﻿@using EtheriT.Coker.Web.Public.Models
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @model PageViewModel
-
-@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
 
 <link rel="stylesheet" href="~/css/Page/Search.css" asp-append-version="true" />
 <script src="~/js/Page/Search.js" asp-append-version="true"></script>
+
+<div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
+</div>
 
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">
@@ -180,7 +179,8 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -223,7 +223,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -266,7 +266,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -309,7 +309,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -352,7 +352,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -395,7 +395,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -438,7 +438,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -481,7 +481,7 @@
 								<div class="price pe-4 text-decoration-line-through">9,300</div>
 								<div class="price fs-5 fw-bold">9,100</div>
 							</div>
-							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#cartModal">
+							<button class="btn_cart col-auto border-0 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 								<span class="fa-stack">
 									<i class="fa-solid fa-circle fa-stack-2x"></i>
 									<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -527,7 +527,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -558,7 +558,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -589,7 +589,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -620,7 +620,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>

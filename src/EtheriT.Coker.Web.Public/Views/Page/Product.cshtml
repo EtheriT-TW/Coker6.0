@@ -1,90 +1,10 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 
 <link rel="stylesheet" href="~/css/Page/Product.css" asp-append-version="true" />
 <script src="~/js/Page/Product.js" asp-append-version="true"></script>
 
-<div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-body">
-				<button class="btn_close mx-2 p-0 border-0 bg-transparent" data-bs-dismiss="modal">
-					<i class="fa-regular fa-circle-xmark"></i>
-				</button>
-
-				<div class="frame mx-3">
-					<div class="card border-0 mb-3" style="max-width: 540px;">
-						<div class="row g-0">
-							<div class="col-md-4 align-self-center border col-md-4">
-								<img class="w-100" src="~/images/product/pro_01.png" alt="" />
-							</div>
-
-							<div class="col-md-8 card-body">
-								<div class="card-title">C659NA德瑞克Smart III淨未來智慧馬桶</div>
-
-								<ul class="describe align-items-center justify-content-between">
-									<li>描述</li>
-									<li>描述</li>
-									<li>描述</li>
-								</ul>
-
-								<ul class="tag d-flex my-2">
-									<li class="rounded-pill">奈米</li>
-									<li class="rounded-pill">奈米</li>
-									<li class="rounded-pill">奈米</li>
-									<li class="rounded-pill">奈米</li>
-								</ul>
-
-								<div class="priceframe d-flex flex-wrap ps-3 align-items-center">
-									<div class="price text-decoration-line-through me-2">150,000</div>
-									<div class="discount d-flex align-items-center">
-										折扣&ensp;<span class="fs-4 fw-bold text-danger price">135,000</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="options px-3">
-						<div class="radio d-flex align-items-center my-2">
-							<div class="title">顏色</div>
-							<div class="control d-flex flex-wrap">
-								<input id="color_01" type="radio" class="btn-check" name="choose_color" autocomplete="off">
-								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="color_01">白色</label>
-
-								<input id="color_02" type="radio" class="btn-check" name="choose_color" autocomplete="off">
-								<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="color_02">灰色</label>
-							</div>
-						</div>
-
-						<div class="buy_line row d-sm-flex d-block justify-content-evenly align-items-center">
-							<div class="counter col-auto d-flex align-items-center my-2">
-								<div class="title">數量</div>
-								<div class="counter_input d-flex">
-									<button class="btn_count_minus bg-white my-1">
-										<i class="fa-solid fa-minus"></i>
-									</button>
-
-									<input class="input_count text-center my-1" name="counter" value="1">
-
-									<button class="btn_count_plus bg-white my-1">
-										<i class="fa-solid fa-plus"></i>
-									</button>
-								</div>
-							</div>
-
-							<div class="btn_buy col d-flex align-items-center justify-content-center text-white" type="button">
-								<div class="icon_plus">加入購物車</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+<div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
 </div>
 
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
@@ -159,7 +79,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -190,7 +110,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -222,7 +142,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">二段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">單體</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -254,7 +174,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">二段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">單體</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -357,7 +277,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">雙漩洗</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -389,7 +309,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">一段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">幼兒</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -421,7 +341,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">二段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">單體</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -453,7 +373,7 @@
 							<li class="rounded-pill me-1 px-3 py-1">二段省水</li>
 							<li class="rounded-pill me-1 px-3 py-1">單體</li>
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -572,7 +492,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -603,7 +523,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -634,7 +554,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
@@ -665,7 +585,7 @@
 						<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden">
 							<!--<li class="rounded-pill me-1 px-3 py-1"></li>-->
 						</ul>
-						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#cartModal">
+						<button class="btn_cart border-0 col-auto bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">
 							<span class="fa-stack">
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>

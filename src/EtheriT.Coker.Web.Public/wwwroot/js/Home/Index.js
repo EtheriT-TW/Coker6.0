@@ -1,4 +1,6 @@
 ﻿function PageReady() {
+    ShoppingCarModalInit();
+
     $(".btn_gonews").on("click", GoNews);
 
     var banner_swiper = new Swiper("#BannerSwiper > .swiper", {
@@ -40,5 +42,5 @@
 }
 
 function GoNews() {
-    $('html, body').animate({ scrollTop: $("#News").offset().top }, 0);
+    $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top }, 0);
 }

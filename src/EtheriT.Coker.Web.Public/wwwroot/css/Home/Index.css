@@ -81,6 +81,8 @@
     }
 
     .guess_like_frame > .bottom_line > .btn_buy {
+        border: 1px solid var(--black-text);
+        color: var(--black-text);
         font-size: 0.8rem;
         white-space: nowrap;
     }

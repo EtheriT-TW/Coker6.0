@@ -1,4 +1,6 @@
 ﻿function PageReady() {
+    ShoppingCarModalInit();
+
     $(".btn_sort_price").on("click", SortByPrice);
 
     var guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
@@ -73,21 +75,6 @@
             prevEl: ".btn_swiper_prev_ads",
         },
     });
-
-    $(document).on('click', '.btn_count_plus', function () {
-        $('.input_count').val(parseInt($('.input_count').val()) + 1);
-    });
-    $(document).on('click', '.btn_count_minus', function () {
-        $('.input_count').val(parseInt($('.input_count').val()) - 1);
-        if ($('.input_count').val() == 0) {
-            $('.input_count').val(1);
-        }
-    });
-
-    var $radio_btn = $('#Product > .content > .options > .radio > .control')
-    if ($radio_btn.children().length <= 2) {
-        $radio_btn.children('label').toggleClass('pe-none');
-    }
 }
 
 function SortByPrice() {

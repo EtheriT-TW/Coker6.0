@@ -1,0 +1,83 @@
+﻿.btn_close {
+    color: var(--gray-icon);
+}
+
+.pro_content > .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.pro_content > .describe {
+    color: var(--black-text);
+}
+
+    .pro_content > .describe > li::before {
+        content: '．';
+    }
+
+.pro_content > .tag {
+    height: 1.75rem;
+}
+
+    .pro_content > .tag > li {
+        font-size: 0.8rem;
+        color: var(--black-text);
+        background-color: var(--gray-bg-light);
+        padding: 0.25rem 1rem;
+        float: left;
+        list-style: none;
+        white-space: nowrap;
+    }
+
+.pro_content > .priceframe > .discount > span {
+    color: var(--red-number);
+}
+
+
+.options > .radio > .title {
+    color: var(--black-text);
+    font-size: 0.8rem;
+}
+
+.options > .radio > .control > .btn_radio {
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid var(--gray-text);
+}
+
+.options > .radio > .control > input:checked + .btn_radio {
+    font-weight: bold;
+    border-color: var(--red-main);
+    border-width: medium;
+    cursor: default;
+}
+
+.options > .radio > .control > input:disabled + .btn_radio {
+    border: var(--gray-text);
+    background-color: var(--gray-text);
+    color: var(--black-text);
+    cursor: default;
+}
+
+.buy_line > .counter > * {
+    border: 1px solid var(--gray-text);
+    padding: 0.25rem 0.5rem;
+}
+
+.buy_line > .counter > input {
+    max-width: 8rem;
+}
+
+.buy_line > .btn_buy {
+    max-width: 20rem;
+    background-color: var(--red-main);
+}
+
+    .buy_line > .btn_buy > div::before {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 400;
+        content: "\f0fe  ";
+    }

@@ -1,7 +1,9 @@
 ﻿function PageReady() {
     ShoppingCarModalInit();
 
-    $(".btn_gonews").on("click", GoNews);
+    $(".btn_gonews").on("click", function () {
+        $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top - $("header").height() }, 0);
+    });
 
     var banner_swiper = new Swiper("#BannerSwiper > .swiper", {
         slidesPerView: 1,
@@ -39,8 +41,4 @@
             }
         }
     });
-}
-
-function GoNews() {
-    $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top }, 0);
 }

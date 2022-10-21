@@ -111,19 +111,24 @@ input[type="number"] {
         }
 
 /* Step1 */
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > img {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > a > img {
     width: 150px;
     max-width: 30vw;
     height: fit-content;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > .pro_name {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > a > div > .pro_name {
+    color: var(--black-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > div > .specifications {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > a > div > .pro-detail {
+    color: var(--gray-text);
+}
+
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > div > a > .specifications {
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -179,7 +184,7 @@ input[type="number"] {
 }
 
 /* Step3 */
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-header > button {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-header > a {
     font-size: 0.8rem;
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
@@ -195,35 +200,58 @@ input[type="number"] {
     border: 1px solid var(--gray-middle);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .title > button {
+/* Step3 - Orderer Form */
+#OrdererForm > .title > button {
     color: var(--black-text);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .content > div > div {
+#OrdererForm > form > div, #OrdererForm > form > div > .input, #OrdererForm > form > div > .example {
     display: none;
 }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .content > div > div.show {
+    #OrdererForm > form > div.show, #OrdererForm > form > div.show > .input, #OrdererForm > form > div.show > .example {
         display: flex;
     }
 
-#InputExt {
-    width: 5rem;
+    #OrdererForm > form > div > .default {
+        display: flex;
+    }
+
+    #OrdererForm > form > div.show > .default {
+        display: none;
+    }
+
+    #OrdererForm > form > div > .example {
+        font-size: 0.8rem;
+        color: var(--gray-text);
+    }
+
+/* Step3 - Recipient Form */
+#RecipientForm > .content {
+    display: none;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .orderer > .content > div > .example {
-    font-size: 0.8rem;
-    color: var(--gray-text);
+    #RecipientForm > .content.show {
+        display: block;
+    }
+
+    #RecipientForm > .content > div > .example {
+        font-size: 0.8rem;
+        color: var(--gray-text);
+    }
+
+    #RecipientForm > .content > div > div {
+        display: flex;
+    }
+
+/* Step3 - Bill Form */
+#BillForm > form {
+    display: none;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > div > .example {
-    font-size: 0.8rem;
-    color: var(--gray-text);
-}
-
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .recipient > .content > div > div {
-    display: flex;
-}
+    #BillForm > form.show {
+        display: block;
+    }
 
 #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method {
     white-space: nowrap;
@@ -268,12 +296,13 @@ body > .popover.bs-popover-auto.fade {
         width: 12.5rem;
     }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > button:nth-child(2n+1) {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > .btn_gray_underline {
+    font-size: 1rem;
     color: var(--gray-text);
     width: fit-content;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > button:nth-child(2) {
+#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > div > button {
     background-color: var(--red-main);
 }
 

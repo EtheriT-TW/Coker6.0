@@ -1,2 +1,300 @@
-﻿body {
+﻿/* Breadcrumb */
+#Breadcrumb {
+    --bs-breadcrumb-divider: '/';
+}
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
+        color: var(--gray-middle);
+    }
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
+        color: var(--gray-middle);
+    }
+
+/* Filter */
+#Filter {
+    background-color: var(--gray-bg-light);
+}
+
+    #Filter .sort_radio > [class*=btn_sort_] {
+        white-space: nowrap;
+        padding: 1rem;
+        cursor: pointer;
+    }
+
+    #Filter .sort_radio > input:checked + [class*=btn_sort_] {
+        font-weight: bold;
+        color: var(--red-main);
+        background-color: var(--red-main-light);
+        padding: 1rem 2rem;
+        cursor: default;
+    }
+
+    #Filter .options > [class*=price_] {
+        width: 5.5rem;
+        outline: none;
+    }
+
+    #Filter .options > .btn_confirm {
+        white-space: nowrap;
+        background-color: var(--gray-dark);
+    }
+
+/* Search Result */
+#Facorites_Result {
+    background-color: var(--gray-bg-light);
+}
+
+    #Facorites_Result > div > div > figure {
+        height: 100%;
+        border: none;
+        overflow: hidden;
+        border-radius: 25px;
+    }
+
+    #Facorites_Result > div > div > .card > div > div > img {
+        width: 100%;
+    }
+
+    #Facorites_Result > div > div > .card > div > figcaption > .card-body > p {
+        overflow: hidden;
+        height: 3rem;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        margin-bottom: 2.5rem;
+    }
+
+    #Facorites_Result > div > div > .card > div > figcaption > .top_line {
+        top: 1rem;
+        right: 1rem;
+    }
+
+        #Facorites_Result > div > div > .card > div > figcaption > .top_line > button > i {
+            color: var(--gray-light);
+        }
+
+    #Facorites_Result > div > div > .card > div > figcaption > .bottom_line {
+        bottom: 1rem;
+        width: 100%;
+        padding: 0 1rem;
+    }
+
+    #Facorites_Result > div > div > .card > div > figcaption > .bottom_line {
+        bottom: 1rem;
+        width: 100%;
+        padding: 0 1rem;
+    }
+
+        #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .priceframe {
+            display: none;
+        }
+
+        #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .btn_cart {
+            background-color: transparent;
+            padding: 0;
+        }
+
+            #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .btn_cart > div {
+                display: none;
+            }
+
+            #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .btn_cart > span > i:first-child {
+                color: var(--gray-light);
+            }
+
+            #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .btn_cart > span:hover > i:first-child {
+                color: var(--red-main);
+            }
+
+        #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .pro_tag {
+            height: 2rem;
+        }
+
+
+            #Facorites_Result > div > div > .card > div > figcaption > .bottom_line > .pro_tag > li {
+                font-size: 0.8rem;
+                line-height: 1.5rem;
+                background-color: var(--gray-bg-light);
+                color: var(--gray-middle);
+                white-space: nowrap;
+            }
+
+    /* Show By Column */
+    #Facorites_Result > div > div > .card > .showbycolumn > div > img {
+        max-height: 125px;
+        width: auto;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .card-body > p {
+        height: initial;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .card-body > .price {
+        display: none;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .priceframe {
+        display: flex;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart {
+        background-color: var(--gray-middle);
+        border-radius: 10px;
+        padding: 0 2rem 0 1.25rem;
+    }
+
+        #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart:hover {
+            background-color: var(--red-main);
+        }
+
+        #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart > div {
+            display: flex;
+        }
+
+        #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart > span > i:first-child {
+            display: none;
+        }
+
+/* Buttton More */
+.btn_more {
+    padding: 0.5rem 5rem;
+    color: var(--gray-dark);
+}
+
+.icon_down::after {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: " \f107";
+}
+
+/* RelatedProducts */
+.swiper_four_grid {
+    background-color: var(--gray-light);
+}
+
+    .swiper_four_grid > .swiper {
+        padding-top: 15px;
+    }
+
+        .swiper_four_grid > .swiper > .swiper-wrapper > figure {
+            border-radius: 25px;
+        }
+
+            .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .top_line {
+                top: 1rem;
+                right: 1rem;
+            }
+
+                .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .top_line > button > i {
+                    color: var(--gray-middle);
+                }
+
+            .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .card-body > p {
+                overflow: hidden;
+                height: 3rem;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+                margin-bottom: 2.5rem;
+            }
+
+            .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line {
+                bottom: 1rem;
+                width: 100%;
+                padding: 0 1rem;
+            }
+
+                .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .pro_tag {
+                    height: 2rem;
+                }
+
+                    .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .pro_tag > li {
+                        font-size: 0.8rem;
+                        line-height: 1.5rem;
+                        background-color: var(--gray-bg-light);
+                        color: var(--gray-middle);
+                        white-space: nowrap;
+                    }
+
+                .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .btn_cart > span > i:first-child {
+                    color: var(--gray-light);
+                }
+
+.swiper_button {
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+    .swiper_button > button {
+        background-color: var(--gray-middle);
+    }
+
+        .swiper_button > button > span > i:first-child {
+            color: var(--gray-dark);
+            opacity: 50%;
+        }
+
+    .swiper_button > .btn_swiper_next_relatedproducts {
+        margin-right: -35px;
+    }
+
+    .swiper_button > .btn_swiper_prev_relatedproducts {
+        margin-left: -35px;
+    }
+
+/*RWD*/
+@media (max-width: 1366px) {
+}
+
+@media only screen and (max-width: 1072px) {
+    .swiper_button > .btn_swiper_next_relatedproducts {
+        margin-right: -30px;
+    }
+
+    .swiper_button > .btn_swiper_prev_relatedproducts {
+        margin-left: -30px;
+    }
+}
+
+@media only screen and (max-width: 992px) {
+}
+
+@media only screen and (max-width: 768px) {
+    .swiper_button > .btn_swiper_next_relatedproducts {
+        margin-right: 0;
+    }
+
+    .swiper_button > .btn_swiper_prev_relatedproducts {
+        margin-left: 0;
+    }
+}
+
+@media only screen and (max-width: 576px) {
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .top_line {
+        top: initial;
+        right: initial;
+        left: 1rem;
+        bottom: 1.15rem;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .card-body > p {
+        margin-bottom: 6rem;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .pro_tag {
+        min-width: 75px;
+    }
+
+    #Facorites_Result > div > div > .card > .showbycolumn > figcaption > .bottom_line > .btn_cart {
+        padding: 0 1rem 0 0.25rem;
+    }
+}
+
+@media only screen and (max-width: 368px) {
 }

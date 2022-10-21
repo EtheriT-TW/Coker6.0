@@ -1,6 +1,8 @@
 ﻿var total_price = 0;
 var total_price_end = 0;
 var subtotal_price = 0;
+var payment_method = "";
+var buy_step_swiper;
 
 function PageReady() {
 
@@ -11,28 +13,12 @@ function PageReady() {
         return new bootstrap.Popover(popoverTriggerEl)
     })
 
-    $(".btn_move_to_favorites").on("click", function () {
-        $(this).parents("li").first().remove();
-        ReloadAllAmount();
-    });
-    $(".btn_remove_pro").on("click", function () {
-        $(this).parents("li").first().remove();
-        ReloadAllAmount();
-    });
-    $(".btn_count_plus").on("click", AmountPlus);
-    $(".btn_count_minus").on("click", AmountMinus);
-    $(".btn_edit_data").on("click", function () {
-        $(this).parents(".orderer").children("form").children("div").children("div").toggleClass("show");
-    });
-
-
-    var buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
+    /* Buy Swiper */
+    buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
-        keyboard: false,
         autoHeight: true,
         loop: false,
-        simulateTouch: false,
         pagination: {
             el: ".swiper_pagination > .swiper_pagination_buystep",
             clickable: true,
@@ -46,6 +32,15 @@ function PageReady() {
         }
     });
 
+    buy_step_swiper.on('activeIndexChange', function () {
+        $('html, body').animate({ scrollTop: $(".swiper").offset().top - $("header").height() }, 0);
+    });
+
+    buy_step_swiper.on('reachEnd', function () {
+        console.log('到最後一頁了');
+    });
+
+    /* Swiper Button*/
     $(".btn_gofirst").on("click", function () {
         buy_step_swiper.slideTo(0);
     });
@@ -53,6 +48,60 @@ function PageReady() {
     $(".btn_goprev").on("click", function () {
         buy_step_swiper.slidePrev();
     });
+
+    /* Normal Button */
+    $(".btn_move_to_favorites").on("click", function () {
+        $(this).parents("li").first().remove();
+        ReloadAllAmount();
+    });
+    $(".btn_remove_pro").on("click", function () {
+        $(this).parents("li").first().remove();
+        ReloadAllAmount();
+    });
+    $(".btn_count_plus").on("click", AmountPlus);
+    $(".btn_count_minus").on("click", AmountMinus);
+    $(".btn_edit_data").on("click", function () {
+        $(this).parents("#OrdererForm").children("form").children("div").toggleClass("show");
+        buy_step_swiper.update();
+    });
+
+    /* Radio Button */
+    $('input[type=radio][name=PaymentRadio]').change(PaymentRadio);
+    $('input[type=radio][name=RecipientRadio]').change(RecipientRadio);
+    $('input[type=radio][name=BillRadio]').change(BillRadio);
+
+
+    var phone_front_box = document.getElementsByClassName("phone_front");
+    var phone_back_box = document.getElementsByClassName("phone_back");
+    var phone_ext_box = document.getElementsByClassName("phone_ext");
+    document.addEventListener("keyup", tabForward);
+
+}
+
+function PaymentRadio() {
+    payment_method = this.value;
+    var $payment = $("#PaymentMethod > div > .method");
+    $payment.text(payment_method);
+    $payment.addClass("fs-2 fw-bold");
+    buy_step_swiper.update();
+}
+
+function RecipientRadio() {
+    if (this.value == 'edit') {
+        $("#RecipientForm > form").addClass("show");
+    } else {
+        $("#RecipientForm > form").removeClass("show");
+    }
+    buy_step_swiper.update();
+}
+
+function BillRadio() {
+    if (this.value == 'company') {
+        $("#BillForm > form").addClass("show");
+    } else {
+        $("#BillForm > form").removeClass("show");
+    }
+    buy_step_swiper.update();
 }
 
 function AmountPlus() {
@@ -87,7 +136,6 @@ function ReloadAllAmount() {
 
     $(".purchase_list > li").each(function () {
         var $self_unit = $(this).children(".content").children(".unit");
-        console.log($self_unit);
         var $self_subtotal = $(this).children(".content").children(".subtotal");
         total_price = total_price + $self_unit.data('unittotal');
         $self_subtotal.text($self_unit.data('unittotal').toLocaleString('en-US'));
@@ -108,4 +156,28 @@ function AllAmountChange() {
 
 function RemoveProduct() {
     $(this).parents("li").first().remove();
+}
+
+function tabForward() {
+    var target = event.target
+    if (target.value.length == target.maxLength) {
+        var elements = document.getElementById("OrdererForm").getElementsByTagName("input")
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i] == target) {
+                if (elements[i + 1]) {
+                    elements[i + 1].focus();
+                }
+                return;
+            }
+        }
+        elements = document.getElementById("RecipientForm").getElementsByTagName("input")
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i] == target) {
+                if (elements[i + 1]) {
+                    elements[i + 1].focus();
+                }
+                return;
+            }
+        }
+    }
 }

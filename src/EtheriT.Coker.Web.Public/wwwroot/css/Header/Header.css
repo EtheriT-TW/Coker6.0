@@ -1,7 +1,7 @@
 ﻿/* Header Top*/
 #Header_Top {
     background-color: var(--black-top-line);
-    color: white;
+    color: #f5f5f5;
     font-size: 14px;
     padding: 5px 20px;
     justify-content: space-between;
@@ -204,7 +204,7 @@
     left: 50%;
     transform: translate(-50%, 0);
     width: 100%;
-    background-color: white;
+    background-color: #e0e0e0;
     color: black;
     padding: 2% 10% 5% 10%;
 }
@@ -266,7 +266,7 @@
 
 /* Mega Menu Hover*/
 .mega_menu_title > ul > li:hover {
-    background-color: white;
+    background-color: #e0e0e0;
 }
 
     .mega_menu_title > ul > li:hover > a {

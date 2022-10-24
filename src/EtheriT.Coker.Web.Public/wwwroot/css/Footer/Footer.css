@@ -4,6 +4,7 @@ footer {
     background-color: var(--green-main);
     color: white;
     font-family: Microsoft JhengHei;
+    font-size:0.85rem;
     cursor: default;
     padding-bottom: 10px;
 }
@@ -52,7 +53,8 @@ footer {
 
 /* Footer Menu */
 #Footer_Menu {
-    height: 240px;
+    height: 210px;
+    padding-top: 20px;
     transition: all 1s;
     justify-content: center;
     overflow: hidden;
@@ -91,7 +93,7 @@ footer {
     transform: translate(-50%, -50%);
     margin-top: -45px;
     width: 90%;
-    height: 1px;
+    height: 0.5px;
     background: white;
 }
 

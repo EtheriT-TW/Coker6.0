@@ -132,6 +132,7 @@
 #Favorite > ul > li > .name {
     color: var(--gray-text);
     font-size: 0.8rem;
+    padding-top: 0.5rem;
     height: 2.5rem;
 }
 

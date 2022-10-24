@@ -72,7 +72,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             new MenuItem.MenuItemModel {Title="最新消息", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="人才招募", Link=""},
                                     new MenuItem.MenuItemModel {Title="媒體專區", Link=""},
-                                    new MenuItem.MenuItemModel {Title="粉絲專業", Link=""},
+                                    new MenuItem.MenuItemModel {Title="粉絲專頁", Link=""},
                                 }
                             },
                         }

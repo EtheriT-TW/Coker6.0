@@ -1,10 +1,14 @@
 ﻿var total_price = 0;
 var total_price_end = 0;
 var subtotal_price = 0;
-var payment_method = "";
 var buy_step_swiper;
 
 function PageReady() {
+
+    $.cookie('subtotal', '');
+    $.cookie('delivery_fee', '');
+    $.cookie('total_amount', '');
+    $.cookie('payment_method', '');
 
     ReloadAllAmount();
 
@@ -12,6 +16,11 @@ function PageReady() {
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl)
     })
+
+    var phone_front_box = document.getElementsByClassName("phone_front");
+    var phone_back_box = document.getElementsByClassName("phone_back");
+    var phone_ext_box = document.getElementsByClassName("phone_ext");
+    document.addEventListener("keyup", tabForward);
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
@@ -34,10 +43,6 @@ function PageReady() {
 
     buy_step_swiper.on('activeIndexChange', function () {
         $('html, body').animate({ scrollTop: $(".swiper").offset().top - $("header").height() }, 0);
-    });
-
-    buy_step_swiper.on('reachEnd', function () {
-        console.log('到最後一頁了');
     });
 
     /* Swiper Button*/
@@ -64,41 +69,48 @@ function PageReady() {
         $(this).parents("#OrdererForm").children("form").children("div").toggleClass("show");
         buy_step_swiper.update();
     });
+    $(".btn_delete_recipient").on("click", DeleteRecipient);
+
+    $(".btn_checkout").on("click", function () {
+        buy_step_swiper.slideNext();
+        buy_step_swiper.update();
+    });
 
     /* Radio Button */
     $('input[type=radio][name=PaymentRadio]').change(PaymentRadio);
     $('input[type=radio][name=RecipientRadio]').change(RecipientRadio);
     $('input[type=radio][name=BillRadio]').change(BillRadio);
 
-
-    var phone_front_box = document.getElementsByClassName("phone_front");
-    var phone_back_box = document.getElementsByClassName("phone_back");
-    var phone_ext_box = document.getElementsByClassName("phone_ext");
-    document.addEventListener("keyup", tabForward);
-
 }
 
 function PaymentRadio() {
-    payment_method = this.value;
-    var $payment = $("#PaymentMethod > div > .method");
-    $payment.text(payment_method);
+    $.cookie('payment_method', this.value);
+    var $payment = $(".payment_method");
+    $payment.text($.cookie('payment_method'));
     $payment.addClass("fs-2 fw-bold");
+    if ($.cookie('payment_method') == 'ATM') {
+        $(".pay_byATM").removeClass("d-none");
+    } else {
+        $(".pay_byATM").addClass("d-none");
+    }
     buy_step_swiper.update();
 }
 
 function RecipientRadio() {
     if (this.value == 'edit') {
-        $("#RecipientForm > form").addClass("show");
+        $("#RecipientForm > form > div").addClass("show")
     } else {
-        $("#RecipientForm > form").removeClass("show");
+        $("#RecipientForm > form > div").removeClass("show");;
     }
     buy_step_swiper.update();
 }
 
 function BillRadio() {
     if (this.value == 'company') {
+        $("#BillForm > .default_data").removeClass("show");
         $("#BillForm > form").addClass("show");
     } else {
+        $("#BillForm > .default_data").addClass("show");
         $("#BillForm > form").removeClass("show");
     }
     buy_step_swiper.update();
@@ -130,6 +142,7 @@ function AmountMinus() {
 }
 
 function ReloadAllAmount() {
+    $.cookie('subtotal', '');
     total_price = 0;
     total_price_end = 0;
     subtotal_price = 0;
@@ -152,6 +165,8 @@ function AllAmountChange() {
     $("#Freight").text($("#Freight").data('freight').toLocaleString('en-US'));
     $("#EndSubtotal").text(subtotal_price.toLocaleString('en-US'));
     $("#TotalSpend").text(subtotal_price.toLocaleString('en-US'));
+
+    $(".subtotal").text = $.cookie('subtotal');
 }
 
 function RemoveProduct() {
@@ -180,4 +195,9 @@ function tabForward() {
             }
         }
     }
+}
+
+function DeleteRecipient() {
+    var $this_parent = $(this).parents("tr");
+    $this_parent.remove();
 }

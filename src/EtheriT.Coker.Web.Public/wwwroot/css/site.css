@@ -4,6 +4,7 @@
     --gray-middle: #A0A0A0;
     --gray-dark: #4A4A4A;
     --blue: #007AEA;
+    --yellow: #FBAB3C;
     --green-LINE: #00C300;
     --green-main: #4A5859;
     --green-main-trans: #4A585980;
@@ -100,7 +101,7 @@ p {
 #Floating_Right {
     position: fixed;
     right: 1rem;
-    z-index: 1030;
+    z-index: 1001;
     top: 50%;
     transform: translate(0, -50%);
 }

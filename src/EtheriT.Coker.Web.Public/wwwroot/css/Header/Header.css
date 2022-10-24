@@ -60,38 +60,41 @@
     }
 
 /* Cart Dropdown*/
-.cart_dropdown {
-    z-index: 1001;
-    min-width: 280px;
+#Car_Dropdown {
+    z-index: 1070;
+    width: 280px;
+    max-width: 100vw;
 }
 
-    .cart_dropdown > ul > li > figure > div > .image {
-        max-width: 80px;
+.car_pro img {
+    max-width: 80px;
+}
+
+.car_pro figcaption > .pro-name {
+    color: var(--black-text);
+}
+
+.car_pro figcaption > .number {
+    color: var(--red-number);
+}
+
+    .car_pro figcaption > .number > .quantity::before {
+        content: '×';
     }
 
-    .cart_dropdown > ul > li > figure > div > figcaption > .card-body > a > .card-title {
-        color: var(--black-text);
-    }
+.btn_cart_delete {
+    top: 50%;
+    transform: translate(0, -50%);
+    color: var(--gray-icon);
+}
 
-    .cart_dropdown > ul > li > figure > div > figcaption > .card-body > a > .detailed {
+    .btn_cart_delete:hover {
         color: var(--red-main);
     }
 
-        .cart_dropdown > ul > li > figure > div > figcaption > .card-body > a > .detailed > .amount::before {
-            content: '×';
-        }
-
-    .cart_dropdown > ul > li > figure > div > .btn_cart_delete {
-        color: var(--gray-icon);
-    }
-
-        .cart_dropdown > ul > li > figure > div > .btn_cart_delete:hover {
-            color: var(--red-main);
-        }
-
-    .cart_dropdown > .btn_cart_buy {
-        background-color: var(--black-text);
-    }
+.btn_cart_buy {
+    background-color: var(--black-text);
+}
 
 /* menu_button */
 .menu-button {

@@ -1,11 +1,80 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿
 
 <link rel="stylesheet" href="~/css/Page/ShoppingCar.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCar.min.js" asp-append-version="true"></script>
+
+<div id="CheckoutModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-body">
+				<p class="m-4">
+					謝謝您的訂購！<br />
+					訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！
+				</p>
+				<div class="d-flex justify-content-end">
+					<button type="button" class="btn_checkout_modal btn btn-primary px-4" data-bs-dismiss="modal">確定</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header border-0">
+				<h5 id="staticBackdropLabel" class="modal-title fw-bold">最近收件地址清單</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body text-center">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col" class="fw-normal">選擇</th>
+							<th scope="col" class="fw-normal">姓名</th>
+							<th scope="col" class="fw-normal">郵遞區號</th>
+							<th scope="col" class="fw-normal">地址</th>
+							<th scope="col" class="fw-normal">聯絡電話</th>
+							<th scope="col" class="fw-normal">行動電話</th>
+							<th scope="col" class="fw-normal">刪除</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row" class="fw-normal">
+								<input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
+							</th>
+							<td class="fw-normal">姓○名</td>
+							<td class="fw-normal">806</td>
+							<td class="fw-normal">地址資料***</td>
+							<td class="fw-normal">07-1234***</td>
+							<td class="fw-normal">0912-******</td>
+							<td class="fw-normal">
+								<button type="button" class="btn_delete_recipient bg-transparent border-0"><i class="fa-solid fa-xmark"></i></button>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row" class="fw-normal">
+								<input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
+							</th>
+							<td class="fw-normal">姓○名</td>
+							<td class="fw-normal">806</td>
+							<td class="fw-normal">地址資料***</td>
+							<td class="fw-normal">07-1234***</td>
+							<td class="fw-normal">0912-******</td>
+							<td class="fw-normal">
+								<button type="button" class="btn_delete_recipient bg-transparent border-0"><i class="fa-solid fa-xmark"></i></button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="modal-footer justify-content-center border-0">
+				<button type="button" class="text-white border-0 px-5 py-1" data-bs-dismiss="modal">確定</button>
+			</div>
+		</div>
+	</div>
+</div>
 
 <div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end">
 	<a class="bg-white text-center m-1 py-2" href="/Favorites">
@@ -15,7 +84,6 @@
 		<div>買過商品<span class="fw-bold">3</span>件</div>
 	</a>
 </div>
-
 
 <div id="BuyStepSwiper" class="container pt-5 pb-4 position-relative">
 	<div id="memberLogin" class="container my-5">
@@ -27,7 +95,7 @@
 
 	<div class="swiper shadow-lg">
 		<div class="swiper-wrapper">
-			<div class="step1 card text-center swiper-slide">
+			<div id="Step1" class="card text-center swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
 					<div class="fs-5 my-2">購物明細</div>
 				</div>
@@ -123,7 +191,7 @@
 				</div>
 			</div>
 
-			<div class="step2 card text-center swiper-slide">
+			<div id="Step2" class="card text-center swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
 					<div class="fs-5 my-2">運送方式</div>
 				</div>
@@ -187,7 +255,7 @@
 				</div>
 			</div>
 
-			<div class="step3 card text-center swiper-slide">
+			<div id="Step3" class="card text-center swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
 					<div class="fs-5 my-2">購物明細</div>
 					<a class="px-4 py-2 text-decoration-underline" href="/Toilet">我要再選購</a>
@@ -227,33 +295,36 @@
 
 							<div class="mb-2 row align-items-center d-flex">
 								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">手機號碼：</label>
-								<div class="default col">090****456</div>
+								<div class="default col">0912-****456</div>
 								<div class="input col-sm-4 phone justify-content-between align-items-center">
-									<div class="col-3 col-sm phone_front">
+									<div class="col-3 phone_front">
 										<input type="number" class="phone_front form-control" id="InputCellPhoneFront" maxlength="4">
 									</div>
 									<div>-</div>
-									<div class="col phone_back">
+									<div class="col-8 phone_back">
 										<input type="number" class="phone_back form-control" id="InputCellPhoneBack" maxlength="6">
 									</div>
 								</div>
 								<div class="example col">(例如：0900-123456)</div>
 							</div>
 
-							<div class="mb-2 row align-items-center contact_phone">
-								<label for="InputPhone" class="col-auto col-sm-2 col-form-label text-end">聯絡電話：</label>
+							<div class="mb-2 row align-items-center contact_phone d-flex">
+								<label for="InputPhone" class="col-auto col-sm-2 col-form-label text-end py-0">聯絡電話：</label>
+								<div class="default col">07-1234***分機</div>
 								<div class="input col-sm-4 phone justify-content-between align-items-center">
 									<div class="col-3 col-sm phone_front">
 										<input type="number" class="phone_front form-control" id="InputPhoneFront" maxlength="4">
 									</div>
 									<div>-</div>
-									<div class="col phone_back">
+									<div class="col-8 phone_back">
 										<input type="number" class="phone_back form-control" id="InputPhoneBack" maxlength="6">
 									</div>
 								</div>
-								<div class="col-auto text-center mt-2 mt-sm-0">分機</div>
-								<div class="col-auto phone_ext">
-									<input id="InputExt" type="number" class="form-control text-center px-2 mt-2 mt-sm-0">
+								<div class="input col-12 col-sm-3 row align-items-center">
+									<div class="col-3 col-sm-auto text-center mt-2 mt-sm-0">分機</div>
+									<div class="col-sm col-6 phone_ext">
+										<input id="InputExt" type="number" class="form-control text-center px-2 mt-2 mt-sm-0">
+									</div>
 								</div>
 								<div class="col example mt-2 mt-sm-0">(例如：0900-123456)</div>
 							</div>
@@ -282,10 +353,14 @@
 					<div id="RecipientForm">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center">
 							<div class="fs-5">收件人資料</div>
-							<ul class="d-sm-flex text-start">
+							<ul class="d-flex flex-wrap text-start">
 								<li class="form-check mb-0 ms-3">
 									<input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
 									<label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
+								</li>
+								<li class="form-check mb-0 ms-3">
+									<input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
+									<label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
 								</li>
 								<li class="form-check mb-0 ms-3">
 									<input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
@@ -294,55 +369,74 @@
 							</ul>
 						</div>
 
-						<form class="content text-start my-4 p-sm-0 px-4">
-							<div class="mb-2 row align-items-center">
-								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end">姓　　名：</label>
-								<div class="col-sm-4">
+						<form class="text-start my-4 p-sm-0 px-4">
+							<div class="mb-2 row align-items-center d-flex">
+								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">姓　名：</label>
+								<div class="default col">姓○名</div>
+								<div class="input col-sm-4">
 									<input type="text" class="form-control" id="InputName" placeholder="請輸入真實中文姓名">
 								</div>
 							</div>
 
 							<div class="mb-2 row align-items-center">
-								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end">手機號碼：</label>
-								<div class="col-sm-4 phone justify-content-between align-items-center">
-									<div class="col-3 col-sm phone_front">
+								<label for="InputMail" class="col-auto  col-sm-2 col-form-label text-end">E-mail：</label>
+								<div class="col-sm-4">
+									<input type="text" class="form-control" id="InputMail">
+								</div>
+							</div>
+
+							<div class="mb-2 row align-items-center d-flex">
+								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">手機號碼：</label>
+								<div class="default col">0912-******</div>
+								<div class="input col-sm-4 phone justify-content-between align-items-center">
+									<div class="col-3 phone_front">
 										<input type="number" class="phone_front form-control" id="InputCellPhoneFront" maxlength="4">
 									</div>
 									<div>-</div>
-									<div class="col phone_back">
+									<div class="col-8 phone_back">
 										<input type="number" class="phone_back form-control" id="InputCellPhoneBack" maxlength="6">
 									</div>
 								</div>
-								<div class="col example">(例如：0900-123456)</div>
+								<div class="example col">(例如：0900-123456)</div>
 							</div>
 
-							<div class="mb-2 row align-items-center contact_phone">
-								<label for="InputPhone" class="col-auto col-sm-2 col-form-label text-end">聯絡電話：</label>
-								<div class="col-sm-4 phone justify-content-between align-items-center">
+							<div class="mb-2 row align-items-center contact_phone d-flex">
+								<label for="InputPhone" class="col-auto col-sm-2 col-form-label text-end py-0">聯絡電話：</label>
+								<div class="default col">07-1234***分機</div>
+								<div class="input col-sm-4 phone justify-content-between align-items-center">
 									<div class="col-3 col-sm phone_front">
-										<input id="InputPhoneFront" class="phone_front form-control" type="number" maxlength="4">
+										<input type="number" class="phone_front form-control" id="InputPhoneFront" maxlength="4">
 									</div>
 									<div>-</div>
-									<div class="col phone_back">
-										<input id="InputPhoneBack" class="phone_back form-control" type="number" maxlength="6">
+									<div class="col-8 phone_back">
+										<input type="number" class="phone_back form-control" id="InputPhoneBack" maxlength="6">
 									</div>
 								</div>
-								<div class="col-auto text-center mt-2 mt-sm-0">分機</div>
-								<div class="col-auto ext">
-									<input type="number" class="form-control text-center px-2 mt-2 mt-sm-0" id="InputExt">
+								<div class="input col-12 col-sm-3 row align-items-center">
+									<div class="col-3 col-sm-auto text-center mt-2 mt-sm-0">分機</div>
+									<div class="col-sm col-6 phone_ext">
+										<input id="InputExt" type="number" class="form-control text-center px-2 mt-2 mt-sm-0">
+									</div>
 								</div>
 								<div class="col example mt-2 mt-sm-0">(例如：0900-123456)</div>
 							</div>
 
-							<div class="mb-2 row align-items-center">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">地　　址：</label>
-								<div class="col-sm-2">
-									<input type="text" class="form-control" aria-label="State" placeholder="請選擇縣市">
+							<div class="mb-2 row align-items-center d-flex">
+								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end py-0">地　　址：</label>
+								<div class="default col">地址資料***</div>
+								<div class="input col-sm-2">
+									<select id="inputCounty" class="form-select">
+										<option selected>請選擇縣市</option>
+										<option>...</option>
+									</select>
 								</div>
-								<div class="col-sm-2 my-2 my-sm-0">
-									<input type="text" class="form-control" aria-label="City" placeholder="請選擇鄉鎮">
+								<div class="input col-sm-2 my-2 my-sm-0">
+									<select id="inputCity" class="form-select">
+										<option selected>請選擇鄉鎮</option>
+										<option>...</option>
+									</select>
 								</div>
-								<div class="col-sm-4">
+								<div class="input col-sm-4">
 									<input type="text" class="form-control" id="InputAddress">
 								</div>
 							</div>
@@ -375,7 +469,29 @@
 							</ul>
 						</div>
 
-						<form class="content text-start my-4 p-sm-0 px-4">
+						<div class="default_data text-start my-4 p-sm-0 px-4 show">
+							<div class="mb-2 row align-items-center d-flex">
+								<div for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">姓　名：</div>
+								<div class="default col">姓○名</div>
+							</div>
+
+							<div class="mb-2 row align-items-center d-flex">
+								<div for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">手機號碼：</div>
+								<div class="default col">0912-******</div>
+							</div>
+
+							<div class="mb-2 row align-items-center contact_phone d-flex">
+								<div for="InputPhone" class="col-auto col-sm-2 col-form-label text-end py-0">聯絡電話：</div>
+								<div class="default col">07-1234***分機</div>
+							</div>
+
+							<div class="mb-2 row align-items-center d-flex">
+								<div for="InputAddress" class="col-auto col-sm-2 col-form-label text-end py-0">地　　址：</div>
+								<div class="default col">地址資料***</div>
+							</div>
+						</div>
+
+						<form class="text-start my-4 p-sm-0 px-4">
 							<div class="mb-2 row">
 								<label for="InputInvoice" class="col-auto col-sm-2 col-form-label text-end">發票抬頭：</label>
 								<div class="col-sm-6">
@@ -405,10 +521,10 @@
 						</form>
 					</div>
 
-					<div id="PaymentMethod" class="payment_method title px-3 py-2 my-3 d-flex align-items-center justify-content-between">
+					<div id="PaymentMethod" class="title px-3 py-2 my-3 d-flex align-items-center justify-content-between">
 						<div class="align-items-center d-flex">
 							<div class="fs-5">付款方式</div>
-							<div class="method px-3">尚未選擇付款方式</div>
+							<div class="payment_method px-3">尚未選擇付款方式</div>
 						</div>
 						<button class="btn_goprev bg-transparent border-0">變更付款方式</button>
 					</div>
@@ -419,7 +535,8 @@
 						</button>
 
 						<div class="col-12 col-sm-auto order-0 order-sm-1">
-							<button class="border-0 px-4 py-2 mx-3 rounded-3 text-center text-white">
+							<!--<button class="btn_checkout border-0 px-4 py-2 mx-3 rounded-3 text-center text-white" data-bs-toggle="modal" data-bs-target="#CheckoutModal">-->
+							<button class="btn_checkout border-0 px-4 py-2 mx-3 rounded-3 text-center text-white">
 								<div class="fs-2 fw-bold">確認結帳</div>
 								<div>進入付款程序</div>
 							</button>
@@ -432,7 +549,192 @@
 				</div>
 			</div>
 
-			<div class="swiper-slide"></div>
+			<div id="Step4" class="card swiper-slide">
+				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
+					<div class="fs-5 my-2">購物明細</div>
+					<div class="order_number fs-5 fw-bold">123456789</div>
+				</div>
+
+				<div class="card-body px-0">
+					<div id="Pruchase_Content">
+						<div class="fs-3 fw-bold mt-4 text-center">訂單已成立，謝謝您的訂購！</div>
+
+						<div class="row border-bottom border-top py-2 align-items-lg-center position-relative">
+							<div class="product col-auto col-lg-6 px-sm-2 d-flex align-items-center">
+								<a href="/Toilet/01">
+									<img src="/images/product/pro_pic_03.jpg">
+								</a>
+								<a href="/Toilet/01">
+									<div class="overflow-hidden pe-4">
+										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
+										<div class="pro-detail d-flex flex-wrap">
+											<div class="pe-3">白色</div>
+											<div class="specifications">規格說明文字</div>
+										</div>
+									</div>
+								</a>
+							</div>
+
+							<div class="col col-lg-6 row">
+								<div class="pro_unit col-4 text-center">26,200</div>
+
+								<div class="col-4 text-center">x1</div>
+
+								<div class="pro_total_amount col-4 price text-center">26,200</div>
+							</div>
+						</div>
+
+						<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+							<div class="py-2 d-flex justify-content-end text-end">
+								<div>總金額</div>
+								<div class="subtotal col-4 price">26,200</div>
+							</div>
+							<div class="py-2 d-flex justify-content-end text-end">
+								<div>運費</div>
+								<div class="delivery_fee col-4 price" data-freight="0">0</div>
+							</div>
+							<div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
+								<div>本次消費總金額</div>
+								<div class="total_amount col-4 price fs-5 fw-bold">26,200</div>
+							</div>
+						</div>
+
+						<div class="d-flex justify-content-center">
+							<button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2" type="button">
+								查看購物清單
+							</button>
+						</div>
+
+					</div>
+
+					<div id="OrdererData">
+						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">訂購人資料</div>
+
+						<div class="text-start my-4 p-sm-0 px-4">
+							<div class="mb-2 row align-items-center d-flex">
+								<div class="col-auto col-sm-2 text-end py-0">姓　　名：</div>
+								<div class="default col">姓○名</div>
+							</div>
+
+							<div class="mb-2 row align-items-center d-flex">
+								<div class="col-auto col-sm-2 text-end py-0">手機號碼：</div>
+								<div class="default col">090**-**456</div>
+							</div>
+
+							<div class="mb-2 row align-items-center contact_phone">
+								<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
+								<div class="default col">07-1234***分機</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="RecipientForm">
+						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">收件人資料</div>
+
+						<div class="text-start my-4 p-sm-0 px-4">
+							<div class="mb-2 row align-items-center d-flex">
+								<div class="col-auto col-sm-2 text-end py-0">姓　　名：</div>
+								<div class="default col">姓○名</div>
+							</div>
+
+							<div class="mb-2 row align-items-center d-flex">
+								<div class="col-auto col-sm-2 text-end py-0">手機號碼：</div>
+								<div class="default col">090**-**456</div>
+							</div>
+
+							<div class="mb-2 row align-items-center contact_phone">
+								<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
+								<div class="default col">07-1234***分機</div>
+							</div>
+
+							<div class="mb-2 row align-items-center">
+								<div class="col-auto col-sm-2 text-end">地　　址：</div>
+								<div class="default col">地址資料***</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="BillForm">
+						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
+
+						<div class="text-start my-4 p-sm-0 px-4">
+							<div class="mb-2 row align-items-center d-flex">
+								<div class="col-auto col-sm-2 text-end py-0">姓　　名：</div>
+								<div class="default col">姓○名</div>
+							</div>
+
+							<div class="mb-2 row align-items-center d-flex">
+								<div class="col-auto col-sm-2 text-end py-0">手機號碼：</div>
+								<div class="default col">090**-**456</div>
+							</div>
+
+							<div class="mb-2 row align-items-center contact_phone">
+								<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
+								<div class="default col">07-1234***分機</div>
+							</div>
+
+							<div class="mb-2 row align-items-center">
+								<div class="col-auto col-sm-2 text-end">地　　址：</div>
+								<div class="default col">地址資料***</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="PaymentData">
+						<div class="title px-3 py-2 my-3 d-flex align-items-center">
+							<div class="fs-5">付款方式</div>
+							<div class="payment_method px-3">尚未選擇付款方式</div>
+						</div>
+
+						<div class="pay_byATM px-4 d-none">
+							<p>繳費完成後，請利用Email主動與客服聯絡。告知您姓名、轉帳帳戶末五碼，或是相關匯款資訊，以利核對您的款項。</p>
+
+							<div class="border-bottom border-top text-start py-3 my-3">
+								<div class="mb-2 row align-items-center d-flex">
+									<div class="col-auto col-sm-2 text-end py-0">轉帳銀行代碼：</div>
+									<div class="default col">玉山銀行(808)</div>
+								</div>
+
+								<div class="mb-2 row align-items-center d-flex">
+									<div class="col-auto col-sm-2 text-end py-0">轉帳帳號：</div>
+									<div class="col">大昌分行123-123-123</div>
+								</div>
+
+								<div class="mb-2 row align-items-center contact_phone">
+									<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
+									<div class="col">07-1234***分機</div>
+								</div>
+
+								<div class="mb-2 row align-items-center">
+									<div class="col-auto col-sm-2 text-end">戶名：</div>
+									<div class="col">隆昌窯業股份有限公司</div>
+								</div>
+
+								<div class="mb-2 row align-items-center">
+									<div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
+									<div class="col">新台幣<span class="paid_amount fs-5 fw-bold">26,200</span></div>
+								</div>
+
+								<div class="mb-2 row align-items-center">
+									<div class="col-auto col-sm-2 text-end">繳費期限：</div>
+									<div class="paid_date col">2022年<span>10月24日23點59分</span></div>
+								</div>
+							</div>
+						</div>
+
+						<p class="d-flex justify-content-center px-4">
+							如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />
+							．隨後我們也會將轉帳的資料mail-封到您指定的電子信箱:ve***********
+						</p>
+
+						<div class="btn_back_home d-flex justify-content-center my-4">
+							<a href="/">
+								<div class="fs-5 fw-bold px-3 py-1 rounded text-white">回首頁</div>
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -441,7 +743,6 @@
 
 		<div class="swiper_pagination_buystep position-absolute"></div>
 
-
 		<div class="step_name position-absolute container d-flex text-center justify-content-between p-0">
 			<div class="">購物車</div>
 			<div class="">運送及付款方式</div>
@@ -449,5 +750,4 @@
 			<div class="">完成訂購</div>
 		</div>
 	</div>
-
 </div>

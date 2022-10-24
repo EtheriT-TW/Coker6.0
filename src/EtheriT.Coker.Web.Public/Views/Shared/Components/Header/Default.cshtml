@@ -1,8 +1,6 @@
 ﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
 @model HeaderViewModel
-@{
-}
 
 <link rel="stylesheet" href="~/css/Header/Header.min.css" asp-append-version="true" />
 <script src="~/js/Header/Header.min.js" asp-append-version="true"></script>
@@ -31,87 +29,63 @@
 					<i class="fa-solid fa-cart-shopping"></i>
 				</button>
 
-				<div class="cart_dropdown dropdown-menu dropdown-menu-end px-2 border-0 rounded-0" aria-labelledby="btn_cart_dropdown">
+				<div id="Car_Dropdown" class="cart_dropdown dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg" aria-labelledby="btn_cart_dropdown">
 					<ul class="m-0">
 						<li class="border-bottom">
-							<figure class="card border-0 m-0" style="max-width: 540px;">
-								<div class="row g-0">
-									<div class="image col align-self-center">
-										<a href="/Toilet/01"><img class="w-100" src="~/images/product/pro_pic_01.jpg" alt="" /></a>
-									</div>
-
-									<figcaption class="col">
-										<div class="card-body p-1">
-											<a href="/Toilet/01">
-												<p class="card-title">CS230 一段省水分離式幼兒馬桶</p>
-												<div class="detailed d-flex">
-													<p class="card-text price fw-bold">9,100</p>
-													<p class="card-text amount fw-bold">1</p>
-												</div>
-											</a>
+							<figure class="car_pro position-relative mb-0">
+								<a class="d-flex" href="/Toilet/01">
+									<img class="" src="~/images/product/pro_pic_01.jpg" alt="" />
+									<figcaption class="pe-4">
+										<div class="pro-name">CS230 一段省水分離式幼兒馬桶</div>
+										<div class="number d-flex">
+											<div class="price fw-bold">9,100</div>
+											<div class="quantity fw-bold">1</div>
 										</div>
 									</figcaption>
-
-									<button class="btn_cart_delete col-auto bg-transparent border-0 ps-2">
-										<i class="fa-solid fa-trash"></i>
-									</button>
-								</div>
+								</a>
+								<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
+									<i class="fa-solid fa-trash"></i>
+								</button>
 							</figure>
 						</li>
 
 						<li class="border-bottom">
-							<figure class="card border-0 m-0" style="max-width: 540px;">
-								<div class="row g-0">
-									<div class="image col align-self-center">
-										<a href="/Toilet/02"><img class="w-100" src="~/images/product/pro_pic_02.jpg" alt="" /></a>
-									</div>
-
-									<figcaption class="col">
-										<div class="card-body p-1">
-											<a href="/Toilet/02">
-												<p class="card-title">CS606 上押一段省水馬桶</p>
-												<div class="detailed d-flex">
-													<p class="card-text price fw-bold">9,100</p>
-													<p class="card-text amount fw-bold">3</p>
-												</div>
-											</a>
+							<figure class="car_pro position-relative mb-0">
+								<a class="d-flex" href="/Toilet/01">
+									<img class="" src="~/images/product/pro_pic_02.jpg" alt="" />
+									<figcaption class="pe-4">
+										<div class="pro-name">CS606 上押一段省水馬桶</div>
+										<div class="number d-flex">
+											<div class="price fw-bold">11,900</div>
+											<div class="quantity fw-bold">1</div>
 										</div>
 									</figcaption>
-
-									<button class="btn_cart_delete col-auto bg-transparent border-0 ps-2">
-										<i class="fa-solid fa-trash"></i>
-									</button>
-								</div>
+								</a>
+								<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
+									<i class="fa-solid fa-trash"></i>
+								</button>
 							</figure>
 						</li>
 
 						<li class="border-bottom">
-							<figure class="card border-0 m-0" style="max-width: 540px;">
-								<div class="row g-0">
-									<div class="image col align-self-center">
-										<a href="/Toilet/03"><img class="w-100" src="~/images/product/pro_pic_03.jpg" alt="" /></a>
-									</div>
-
-									<figcaption class="col">
-										<div class="card-body p-1">
-											<a href="/Toilet/02">
-												<p class="card-title">C613NA 二段省水奈米高背單體馬桶</p>
-												<div class="detailed d-flex">
-													<p class="card-text price fw-bold">9,100</p>
-													<p class="card-text amount fw-bold">1</p>
-												</div>
-											</a>
+							<figure class="car_pro position-relative mb-0">
+								<a class="d-flex" href="/Toilet/01">
+									<img class="" src="~/images/product/pro_pic_03.jpg" alt="" />
+									<figcaption class="pe-4">
+										<div class="pro-name">C613NA 二段省水奈米高背單體馬桶</div>
+										<div class="number d-flex">
+											<div class="price fw-bold">26,200</div>
+											<div class="quantity fw-bold">1</div>
 										</div>
 									</figcaption>
-
-									<button class="btn_cart_delete col-auto bg-transparent border-0 ps-2">
-										<i class="fa-solid fa-trash"></i>
-									</button>
-								</div>
+								</a>
+								<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
+									<i class="fa-solid fa-trash"></i>
+								</button>
 							</figure>
 						</li>
 					</ul>
-					<input type="button" onclick="location.href='/ShoppingCar';" value="購買" class="btn_cart_buy text-white border-0 rounded-1 w-100 py-1 mt-2" />
+					<button onclick="location.href='/ShoppingCar';" class="btn_cart_buy text-white border-0 rounded-1 w-100 py-1 mt-2">購買</button>
 				</div>
 			</div>
 			<button class="bg-transparent border-0 text-white mx-1"><i class="fa-regular fa-user"></i></button>

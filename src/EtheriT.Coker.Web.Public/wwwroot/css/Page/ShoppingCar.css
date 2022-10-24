@@ -3,7 +3,6 @@ body {
     background-color: var(--gray-bg-light);
 }
 
-
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -12,6 +11,20 @@ input::-webkit-inner-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
 }
+
+/* Recipient Modal */
+#RecipientModal > .modal-dialog {
+    width: 820px;
+    max-width: 90vw
+}
+
+    #RecipientModal > .modal-dialog > .modal-content > .modal-header {
+        background-color: var(--gray-bg-light);
+    }
+
+    #RecipientModal > .modal-dialog > .modal-content > .modal-footer > button {
+        background-color: var(--red-main);
+    }
 
 /* History */
 .history > a:first-child > div::before {
@@ -34,15 +47,6 @@ input[type="number"] {
     border: 1px solid var(--gray-middle);
     color: var(--gray-text);
     white-space: nowrap;
-}
-
-/* Step Swiper */
-#BuyStepSwiper > .swiper > .swiper-wrapper > [class*=step] > .card-header, #BuyStepSwiper > .swiper > .swiper-wrapper > [class*=step] > .card-body .title {
-    background-color: var(--gray-bg-light);
-}
-
-#BuyStepSwiper > .swiper {
-    border-radius: 15px;
 }
 
 /* Swiper Pagination */
@@ -110,25 +114,34 @@ input[type="number"] {
             font-size: 0.8rem;
         }
 
+/* Step Swiper */
+#BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-header, #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body .title {
+    background-color: var(--gray-bg-light);
+}
+
+#BuyStepSwiper > .swiper {
+    border-radius: 15px;
+}
+
 /* Step1 */
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > a > img {
+#Step1 > .card-body > .purchase_list > li > div > a > img {
     width: 150px;
     max-width: 30vw;
     height: fit-content;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > a > div > .pro_name {
+#Step1 > .card-body > .purchase_list > li > div > a > div > .pro_name {
     color: var(--black-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > a > div > .pro-detail {
+#Step1 > .card-body > .purchase_list > li > div > a > div > .pro-detail {
     color: var(--gray-text);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > div > div > div > a > .specifications {
+#Step1 > .card-body > .purchase_list > li > div > div > div > a > .specifications {
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -136,65 +149,65 @@ input[type="number"] {
     -webkit-line-clamp: 2;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .unit {
+#Step1 > .card-body > .purchase_list > li > .unit {
     color: var(--black-text);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input {
+#Step1 > .card-body > .purchase_list > li > .content > .counter_input {
     height: fit-content;
 }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input > button {
+    #Step1 > .card-body > .purchase_list > li > .content > .counter_input > button {
         border: 1px solid var(--gray-middle);
         color: var(--black-text);
     }
 
-        #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input > button > i {
+        #Step1 > .card-body > .purchase_list > li > .content > .counter_input > button > i {
             width: 1.25rem;
         }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .counter_input > .input_count {
+    #Step1 > .card-body > .purchase_list > li > .content > .counter_input > .input_count {
         border: 1px solid var(--gray-middle);
         width: 5rem;
     }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .content > .subtotal {
+#Step1 > .card-body > .purchase_list > li > .content > .subtotal {
     color: var(--red-number);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .btn_side_icon {
+#Step1 > .card-body > .purchase_list > li > .btn_side_icon {
     width: fit-content;
     top: 50%;
     transform: translate(0, -50%);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .endline > div > div:last-child {
+#Step1 > .card-body > .endline > div > div:last-child {
     width: 10rem;
 }
 
 /* Step2 */
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step2 > .card-body > .transport > li > div > span {
+#Step2 > .card-body > .transport > li > div > span {
     font-size: 0.8rem;
     color: var(--gray-text);
     white-space: nowrap;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step2 > .card-body > .endline > div > div:last-child {
+#Step2 > .card-body > .endline > div > div:last-child {
     width: 10rem;
 }
 
 /* Step3 */
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-header > a {
+#Step3 > .card-header > a {
     font-size: 0.8rem;
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > div > .totalprice {
+#Step3 > .card-body > div > .totalprice {
     color: var(--red-number);
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > div > button {
+#Step3 > .card-body > .record > button {
     font-size: 0.8rem;
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
@@ -227,46 +240,122 @@ input[type="number"] {
     }
 
 /* Step3 - Recipient Form */
-#RecipientForm > .content {
+#RecipientForm > .title {
+    white-space: nowrap;
+}
+
+#RecipientForm > form > div, #RecipientForm > form > div > .input, #RecipientForm > form > div > .example {
     display: none;
 }
 
-    #RecipientForm > .content.show {
-        display: block;
+    #RecipientForm > form > div.show, #RecipientForm > form > div.show > .input, #RecipientForm > form > div.show > .example {
+        display: flex;
     }
 
-    #RecipientForm > .content > div > .example {
+    #RecipientForm > form > div > .default {
+        display: flex;
+    }
+
+    #RecipientForm > form > div.show > .default {
+        display: none;
+    }
+
+    #RecipientForm > form > div > .example {
         font-size: 0.8rem;
         color: var(--gray-text);
     }
 
-    #RecipientForm > .content > div > div {
-        display: flex;
-    }
-
 /* Step3 - Bill Form */
-#BillForm > form {
+#BillForm > .default_data, #BillForm > form {
     display: none;
 }
 
-    #BillForm > form.show {
+    #BillForm > .default_data.show, #BillForm > form.show {
         display: block;
     }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method {
+/* Step3 - Payment Method */
+#PaymentMethod {
     white-space: nowrap;
 }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method > button {
+    #PaymentMethod > button {
         font-size: 0.8rem;
         color: var(--red-main);
     }
 
-        #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .payment_method > button::after {
+        #PaymentMethod > button::after {
             font-weight: 900;
             font-family: 'Font Awesome 6 Free';
             content: "\f054";
         }
+
+/* Step4 */
+#Step4 > .card-header > .order_number {
+    color: var(--red-number);
+}
+
+    #Step4 > .card-header > .order_number::before {
+        content: '訂單編號';
+        color: var(--black-text);
+    }
+
+#Pruchase_Content > div > .product > a > img {
+    width: 100px;
+    max-width: 30vw;
+    height: fit-content;
+}
+
+#Pruchase_Content > div > .product > a > div > .pro_name {
+    color: var(--black-text);
+}
+
+#Pruchase_Content > div > .product > a > div > .pro-detail {
+    color: var(--gray-text);
+}
+
+    #Pruchase_Content > div > .product > a > div > .pro-detail > .specifications {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+#Pruchase_Content > div > div > .pro_unit::before {
+    content: '單價：$'
+}
+
+#Pruchase_Content > div > div > .pro_total_amount {
+    color: var(--red-number);
+}
+
+#Pruchase_Content > .endline > div > .price {
+    color: var(--red-number);
+}
+
+#Pruchase_Content > div > .btn_view_list {
+    color: var(--gray-text);
+    background-color: var(--gray-bg-light);
+}
+
+#PaymentData > .pay_byATM > div > div > div > .paid_amount {
+    color: var(--red-number);
+}
+
+    #PaymentData > .pay_byATM > div > div > div > .paid_amount::before {
+        content: 'NT$';
+    }
+
+#PaymentData > .pay_byATM > div > div > .paid_date > span {
+    color: var(--red-number);
+}
+
+
+#PaymentData > .btn_back_home > a > div {
+    width: fit-content;
+    background-color: var(--yellow);
+}
 
 /* Popover */
 body > .popover.bs-popover-auto.fade {
@@ -296,13 +385,13 @@ body > .popover.bs-popover-auto.fade {
         width: 12.5rem;
     }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > .btn_gray_underline {
+#Step3 > .card-body > .swiper_button > .btn_gray_underline {
     font-size: 1rem;
     color: var(--gray-text);
     width: fit-content;
 }
 
-#BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .swiper_button > div > button {
+#Step3 > .card-body > .swiper_button > div > button {
     background-color: var(--red-main);
 }
 
@@ -315,7 +404,7 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 992px) {
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step1 > .card-body > .purchase_list > li > .btn_side_icon {
+    #Step1 > .card-body > .purchase_list > li > .btn_side_icon {
         top: 0;
         transform: translate(0, 0);
     }
@@ -341,7 +430,7 @@ body > .popover.bs-popover-auto.fade {
         height: 5rem;
     }
 
-    #BuyStepSwiper > .swiper > .swiper-wrapper > .step3 > .card-body > .record > button {
+    #Step3 > .card-body > .record > button {
         width: 5rem;
     }
 }

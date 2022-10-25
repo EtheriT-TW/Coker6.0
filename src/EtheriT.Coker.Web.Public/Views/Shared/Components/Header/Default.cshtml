@@ -24,71 +24,41 @@
 				<button type="submit" class="align-self-center align-self-center bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
 			</form>
 			<a class="fs-6 text-white d-lg-flex d-none ms-2 align-items-center" href="/Search">智慧搜尋</a>
-			<div class="btn-group">
-				<button id="btn_cart_dropdown" class="bg-transparent border-0 text-white ms-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+			<div class="btn-group px-2">
+				<button id="btn_cart_dropdown" class="bg-transparent border-0 text-white ms-1 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
 					<i class="fa-solid fa-cart-shopping"></i>
+					<span id="Car_Badge" class="badge position-absolute rounded-pill start-100 top-100 translate-middle"></span>
 				</button>
 
-				<div id="Car_Dropdown" class="cart_dropdown dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg" aria-labelledby="btn_cart_dropdown">
+				<div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg" aria-labelledby="btn_cart_dropdown">
 					<ul class="m-0">
-						<li class="border-bottom">
-							<figure class="car_pro position-relative mb-0">
-								<a class="d-flex" href="/Toilet/01">
-									<img class="" src="~/images/product/pro_pic_01.jpg" alt="" />
-									<figcaption class="pe-4">
-										<div class="pro-name">CS230 一段省水分離式幼兒馬桶</div>
-										<div class="number d-flex">
-											<div class="price fw-bold">9,100</div>
-											<div class="quantity fw-bold">1</div>
-										</div>
-									</figcaption>
-								</a>
-								<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
-									<i class="fa-solid fa-trash"></i>
-								</button>
-							</figure>
-						</li>
-
-						<li class="border-bottom">
-							<figure class="car_pro position-relative mb-0">
-								<a class="d-flex" href="/Toilet/01">
-									<img class="" src="~/images/product/pro_pic_02.jpg" alt="" />
-									<figcaption class="pe-4">
-										<div class="pro-name">CS606 上押一段省水馬桶</div>
-										<div class="number d-flex">
-											<div class="price fw-bold">11,900</div>
-											<div class="quantity fw-bold">1</div>
-										</div>
-									</figcaption>
-								</a>
-								<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
-									<i class="fa-solid fa-trash"></i>
-								</button>
-							</figure>
-						</li>
-
-						<li class="border-bottom">
-							<figure class="car_pro position-relative mb-0">
-								<a class="d-flex" href="/Toilet/01">
-									<img class="" src="~/images/product/pro_pic_03.jpg" alt="" />
-									<figcaption class="pe-4">
-										<div class="pro-name">C613NA 二段省水奈米高背單體馬桶</div>
-										<div class="number d-flex">
-											<div class="price fw-bold">26,200</div>
-											<div class="quantity fw-bold">1</div>
-										</div>
-									</figcaption>
-								</a>
-								<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
-									<i class="fa-solid fa-trash"></i>
-								</button>
-							</figure>
-						</li>
+						<template id="Template_Car_Dropdown">
+							<li class="border-bottom">
+								<figure class="position-relative mb-0">
+									<a class="pro_link d-flex">
+										<img class="pro_image" src="" alt="" />
+										<figcaption class="pe-4">
+											<div class="pro_name"></div>
+											<div class="number d-flex">
+												<div class="pro_unit price fw-bold"></div>
+												<div class="pro_quantity fw-bold"></div>
+											</div>
+										</figcaption>
+									</a>
+									<button class="btn_cart_delete bg-transparent border-0 position-absolute end-0">
+										<i class="fa-solid fa-trash"></i>
+									</button>
+								</figure>
+							</li>
+						</template>
 					</ul>
-					<button onclick="location.href='/ShoppingCar';" class="btn_cart_buy text-white border-0 rounded-1 w-100 py-1 mt-2">購買</button>
+
+					<div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
+
+					<button onclick="location.href='/ShoppingCar';" class="btn_car_buy text-white border-0 rounded-1 w-100 py-1 mt-2" disabled>購買</button>
 				</div>
 			</div>
-			<button class="bg-transparent border-0 text-white mx-1"><i class="fa-regular fa-user"></i></button>
+			<button class="bg-transparent border-0 text-white mx-1 px-2"><i class="fa-regular fa-user"></i></button>
 		</div>
 	</div>
 	<div id="Mega_Menu" class="abreast navbar navbar-expand-lg">

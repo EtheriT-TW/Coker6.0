@@ -13,4 +13,9 @@
     if ($radio_btn.children().length <= 2) {
         $radio_btn.children('label').toggleClass('pe-none');
     }
+
+    $(".btn_addToCar").on("click", function () {
+        $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + 1);
+        CarItemAdd();
+    });
 }

@@ -59,6 +59,14 @@
         width: 125px;
     }
 
+/* Button Car Dropdown */
+#btn_cart_dropdown > span {
+    background-color: #FF5059;
+    z-index: 1;
+    font-size: 0.05rem;
+    padding: 0.2rem 0.5rem;
+}
+
 /* Cart Dropdown*/
 #Car_Dropdown {
     z-index: 1070;
@@ -66,35 +74,40 @@
     max-width: 100vw;
 }
 
-.car_pro img {
-    max-width: 80px;
-}
-
-.car_pro figcaption > .pro-name {
-    color: var(--black-text);
-}
-
-.car_pro figcaption > .number {
-    color: var(--red-number);
-}
-
-    .car_pro figcaption > .number > .quantity::before {
-        content: '×';
+    #Car_Dropdown > ul > li > figure > a > .pro_image {
+        max-width: 80px;
     }
 
-.btn_cart_delete {
-    top: 50%;
-    transform: translate(0, -50%);
-    color: var(--gray-icon);
-}
-
-    .btn_cart_delete:hover {
-        color: var(--red-main);
+    #Car_Dropdown > ul > li > figure > a > figcaption > .pro_name {
+        color: var(--black-text);
+        height: 3rem;
     }
 
-.btn_cart_buy {
-    background-color: var(--black-text);
-}
+    #Car_Dropdown > ul > li > figure > a > figcaption > .number {
+        color: var(--red-number);
+    }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_quantity::before {
+            content: '×';
+        }
+
+    #Car_Dropdown > ul > li > figure > .btn_cart_delete {
+        top: 50%;
+        transform: translate(0, -50%);
+        color: var(--gray-icon);
+    }
+
+        #Car_Dropdown > ul > li > figure > .btn_cart_delete:hover {
+            color: var(--red-main);
+        }
+
+    #Car_Dropdown > .btn_car_buy {
+        background-color: var(--black-text);
+    }
+
+        #Car_Dropdown > .btn_car_buy[disabled] {
+            background-color: var(--gray-bg-dark);
+        }
 
 /* menu_button */
 .menu-button {

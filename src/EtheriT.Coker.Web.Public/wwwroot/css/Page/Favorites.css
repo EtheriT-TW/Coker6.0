@@ -1,16 +1,4 @@
-﻿/* Breadcrumb */
-#Breadcrumb {
-    --bs-breadcrumb-divider: '/';
-}
-
-    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
-        color: var(--gray-middle);
-    }
-
-    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
-        color: var(--gray-middle);
-    }
-
+﻿
 /* Filter */
 #Filter {
     background-color: var(--gray-bg-light);

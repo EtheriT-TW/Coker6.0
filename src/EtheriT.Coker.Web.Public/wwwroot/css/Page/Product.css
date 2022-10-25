@@ -71,19 +71,6 @@
         margin-left: -35px;
     }
 
-/* Breadcrumb */
-#Breadcrumb {
-    --bs-breadcrumb-divider: '/';
-}
-
-    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
-        color: var(--gray-text);
-    }
-
-    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
-        color: var(--gray-text);
-    }
-
 /* Filter */
 #Filter {
     background-color: var(--gray-blue);

@@ -72,8 +72,13 @@ function PageReady() {
     $(".btn_delete_recipient").on("click", DeleteRecipient);
 
     $(".btn_checkout").on("click", function () {
-        buy_step_swiper.slideNext();
-        buy_step_swiper.update();
+        Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", false, "是，開始付款", "否", function () {
+            Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", true, function () {
+                setTimeout(function () {
+                    buy_step_swiper.slideNext();
+                }, 300);
+            })
+        });
     });
 
     /* Radio Button */

@@ -12,6 +12,25 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
+.required_front::before {
+    color: var(--red-text);
+    content: '*';
+}
+
+.required_back::after {
+    color: var(--red-text);
+    content: '必填';
+    font-size: 0.8rem;
+    position: absolute;
+    right: -1.5rem;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.phone_back.required_back::after {
+    right: -2.25rem;
+}
+
 /* Recipient Modal */
 #RecipientModal > .modal-dialog {
     width: 820px;

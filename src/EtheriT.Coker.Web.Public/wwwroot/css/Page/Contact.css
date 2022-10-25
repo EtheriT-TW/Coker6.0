@@ -1,0 +1,42 @@
+﻿
+body {
+    background-color: var(--gray-bg-light);
+}
+
+.bigtitle {
+    color: var(--red-text);
+}
+
+.required::before {
+    content: '*';
+    color: var(--red-text);
+}
+
+.required::after {
+    content: '必填';
+    color: var(--red-text);
+    font-size: 0.5rem;
+}
+
+#ContactForm > .title > .call {
+    padding: 1rem 0.75rem;
+}
+
+#Explanation > .content {
+    height: 150px;
+    font-size: 0.8rem;
+}
+
+#Endline > .btn_refresh {
+    color: var(--gray-icon);
+}
+
+#Endline > .btn_send {
+    background-color: var(--red-main);
+}
+
+    #Endline > .btn_send::before {
+        font-weight: 400;
+        font-family: 'Font Awesome 6 Free';
+        content: "\f0e0";
+    }

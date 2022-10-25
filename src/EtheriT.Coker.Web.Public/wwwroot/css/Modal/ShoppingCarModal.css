@@ -1,4 +1,9 @@
-﻿.btn_close {
+﻿.Modal {
+    width: 650px;
+    max-width: 90vw;
+}
+
+.btn_close {
     color: var(--gray-icon);
 }
 
@@ -71,12 +76,12 @@
     max-width: 8rem;
 }
 
-.buy_line > .btn_buy {
+.buy_line > .btn_addToCar {
     max-width: 20rem;
     background-color: var(--red-main);
 }
 
-    .buy_line > .btn_buy > div::before {
+    .buy_line > .btn_addToCar > div::before {
         font-family: 'Font Awesome 6 Free';
         font-weight: 400;
         content: "\f0fe  ";

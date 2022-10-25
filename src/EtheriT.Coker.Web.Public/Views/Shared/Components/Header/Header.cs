@@ -110,7 +110,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="維修服務", Link=""},
                                     new MenuItem.MenuItemModel {Title="常見問題", Link=""},
                                     new MenuItem.MenuItemModel {Title="使用須知", Link=""},
-                                    new MenuItem.MenuItemModel {Title="聯絡我們", Link=""},
+                                    new MenuItem.MenuItemModel {Title="聯絡我們", Link="Contact"},
                                 }
                             },
                         }

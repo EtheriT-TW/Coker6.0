@@ -3,22 +3,6 @@
 <link rel="stylesheet" href="~/css/Page/ShoppingCar.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCar.min.js" asp-append-version="true"></script>
 
-<div id="CheckoutModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-body">
-				<p class="m-4">
-					謝謝您的訂購！<br />
-					訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！
-				</p>
-				<div class="d-flex justify-content-end">
-					<button type="button" class="btn_checkout_modal btn btn-primary px-4" data-bs-dismiss="modal">確定</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
@@ -277,11 +261,13 @@
 							</button>
 						</div>
 
-						<form class="text-start my-4 p-sm-0 px-4">
+						<form class="text-start my-4 p-sm-0 pe-5 ps-4">
 							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">姓　名：</label>
+								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">
+									<div class="required_front">姓　名：</div>
+								</label>
 								<div class="default col">姓○名</div>
-								<div class="input col-sm-4">
+								<div class="input col-sm-4 required_back position-relative">
 									<input type="text" class="form-control" id="InputName" placeholder="請輸入真實中文姓名">
 								</div>
 							</div>
@@ -294,14 +280,16 @@
 							</div>
 
 							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">手機號碼：</label>
+								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">
+									<div class="required_front">手機號碼：</div>
+								</label>
 								<div class="default col">0912-****456</div>
 								<div class="input col-sm-4 phone justify-content-between align-items-center">
 									<div class="col-3 phone_front">
 										<input type="number" class="phone_front form-control" id="InputCellPhoneFront" maxlength="4">
 									</div>
 									<div>-</div>
-									<div class="col-8 phone_back">
+									<div class="col-8 phone_back required_back position-relative">
 										<input type="number" class="phone_back form-control" id="InputCellPhoneBack" maxlength="6">
 									</div>
 								</div>
@@ -330,7 +318,9 @@
 							</div>
 
 							<div class="mb-2 row align-items-center">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">地　　址：</label>
+								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">
+									<div class="required_front">地　　址：</div>
+								</label>
 								<div class="col-sm-2">
 									<select id="inputCounty" class="form-select">
 										<option selected>請選擇縣市</option>
@@ -343,7 +333,7 @@
 										<option>...</option>
 									</select>
 								</div>
-								<div class="col-sm-4">
+								<div class="col-sm-4 required_back position-relative">
 									<input type="text" class="form-control" id="InputAddress">
 								</div>
 							</div>
@@ -369,11 +359,13 @@
 							</ul>
 						</div>
 
-						<form class="text-start my-4 p-sm-0 px-4">
+						<form class="text-start my-4 p-sm-0 pe-5 ps-4">
 							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">姓　名：</label>
+								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">
+									<div class="required_front">姓　名：</div>
+								</label>
 								<div class="default col">姓○名</div>
-								<div class="input col-sm-4">
+								<div class="input col-sm-4 required_back position-relative">
 									<input type="text" class="form-control" id="InputName" placeholder="請輸入真實中文姓名">
 								</div>
 							</div>
@@ -386,18 +378,20 @@
 							</div>
 
 							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">手機號碼：</label>
+								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">
+									<div class="required_front">手機號碼：</div>
+								</label>
 								<div class="default col">0912-******</div>
 								<div class="input col-sm-4 phone justify-content-between align-items-center">
 									<div class="col-3 phone_front">
 										<input type="number" class="phone_front form-control" id="InputCellPhoneFront" maxlength="4">
 									</div>
 									<div>-</div>
-									<div class="col-8 phone_back">
+									<div class="col-8 phone_back required_back position-relative">
 										<input type="number" class="phone_back form-control" id="InputCellPhoneBack" maxlength="6">
 									</div>
 								</div>
-								<div class="example col">(例如：0900-123456)</div>
+								<div class="example col ms-0 ms-sm-4">(例如：0900-123456)</div>
 							</div>
 
 							<div class="mb-2 row align-items-center contact_phone d-flex">
@@ -422,7 +416,9 @@
 							</div>
 
 							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end py-0">地　　址：</label>
+								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end py-0">
+									<div class="required_front">地　　址：</div>
+								</label>
 								<div class="default col">地址資料***</div>
 								<div class="input col-sm-2">
 									<select id="inputCounty" class="form-select">
@@ -436,7 +432,7 @@
 										<option>...</option>
 									</select>
 								</div>
-								<div class="input col-sm-4">
+								<div class="input col-sm-4 required_back position-relative">
 									<input type="text" class="form-control" id="InputAddress">
 								</div>
 							</div>
@@ -491,30 +487,36 @@
 							</div>
 						</div>
 
-						<form class="text-start my-4 p-sm-0 px-4">
+						<form class="text-start my-4 p-sm-0 pe-5 ps-4">
 							<div class="mb-2 row">
-								<label for="InputInvoice" class="col-auto col-sm-2 col-form-label text-end">發票抬頭：</label>
-								<div class="col-sm-6">
+								<label for="InputInvoice" class="col-auto col-sm-2 col-form-label text-end">
+									<div class="required_front">發票抬頭：</div>
+								</label>
+								<div class="col-sm-6 required_back position-relative">
 									<input type="text" class="form-control" id="InputInvoice">
 								</div>
 							</div>
 
 							<div class="mb-2 row">
-								<label for="InputGUINum" class="col-auto col-sm-2 col-form-label text-end">統　　編：</label>
-								<div class="col-sm-6">
+								<label for="InputGUINum" class="col-auto col-sm-2 col-form-label text-end">
+									<div class="required_front">統　　編：</div>
+								</label>
+								<div class="col-sm-6 required_back position-relative">
 									<input type="text" class="form-control" id="InputGUINum">
 								</div>
 							</div>
 
 							<div class="mb-2 row align-items-center">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">地　　址：</label>
+								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">
+									<div class="required_front">地　　址：</div>
+								</label>
 								<div class="col-sm-2">
 									<input type="text" class="form-control" aria-label="State" placeholder="請選擇縣市">
 								</div>
 								<div class="col-sm-2 my-2 my-sm-0">
 									<input type="text" class="form-control" aria-label="City" placeholder="請選擇鄉鎮">
 								</div>
-								<div class="col-sm-4">
+								<div class="col-sm-4 required_back position-relative">
 									<input type="text" class="form-control" id="InputAddress">
 								</div>
 							</div>
@@ -535,7 +537,6 @@
 						</button>
 
 						<div class="col-12 col-sm-auto order-0 order-sm-1">
-							<!--<button class="btn_checkout border-0 px-4 py-2 mx-3 rounded-3 text-center text-white" data-bs-toggle="modal" data-bs-target="#CheckoutModal">-->
 							<button class="btn_checkout border-0 px-4 py-2 mx-3 rounded-3 text-center text-white">
 								<div class="fs-2 fw-bold">確認結帳</div>
 								<div>進入付款程序</div>

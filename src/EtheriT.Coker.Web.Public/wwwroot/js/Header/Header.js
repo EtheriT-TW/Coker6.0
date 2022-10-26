@@ -22,10 +22,12 @@
 function CartDelete() {
     var $self = $(this);
     var $cart_pro = $self.parents("li").first();
-    $cart_pro.remove();
-    $.cookie('Purchased_Type_Quantity', 0);
-    $.cookie('Purchased_Item_Quantity', 0);
-    CarDropdownReset();
+    Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
+        $cart_pro.remove();
+        $.cookie('Purchased_Type_Quantity', 0);
+        $.cookie('Purchased_Item_Quantity', 0);
+        CarDropdownReset();
+    });
 }
 
 function CarDropdownReset() {

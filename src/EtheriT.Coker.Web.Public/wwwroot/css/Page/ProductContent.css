@@ -19,7 +19,7 @@
 
 /* Product - Content */
 #Product > .content > .describe {
-    color: var(--gray-middle);
+    color: var(--gray-text);
     font-size: 0.8rem;
 }
 
@@ -28,7 +28,7 @@
     }
 
     #Product > .content > .describe > .track > .btn_favorites > i {
-        color: var(--gray-middle);
+        color: var(--gray-text);
         font-size: 3rem;
         cursor: pointer;
     }
@@ -45,14 +45,14 @@
         margin-right: 0.5rem;
         font-size: 0.5rem;
         background-color: var(--gray-light);
-        color: var(--gray-middle);
+        color: var(--gray-text);
         float: left;
         list-style: none;
         white-space: nowrap;
     }
 
 #Product > .content > .specification {
-    color: var(--gray-middle);
+    color: var(--gray-text);
     font-size: 0.8rem;
 }
 
@@ -77,7 +77,7 @@
 }
 
 #Product > .content > .certification {
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
     #Product > .content > .certification > .image > li > a > img {
@@ -85,7 +85,7 @@
     }
 
 #Product > .content > .priceframe > div > .price {
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 #Product > .content > .priceframe > div > .discount {
@@ -95,20 +95,20 @@
 #Product > .content > .priceframe > .model {
     white-space: nowrap;
     font-size: 0.8rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 /* Product - Options */
 #Product > .content > .options > div > .title {
     white-space: nowrap;
     padding-right: 0.5rem;
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
 .btn_radio {
     white-space: nowrap;
     cursor: pointer;
-    border: 1px solid var(--gray-middle);
+    border: 1px solid var(--gray-text);
 }
 
 input:checked + .btn_radio {
@@ -121,25 +121,25 @@ input:checked + .btn_radio {
 input:disabled + .btn_radio {
     border: var(--gray-light);
     background-color: var(--gray-light);
-    color: var(--gray-middle);
+    color: var(--gray-text);
     cursor: default;
 }
 
 [class*=btn_count_] {
     cursor: pointer;
-    color: var(--gray-middle);
-    border: 1px solid var(--gray-middle);
+    color: var(--gray-text);
+    border: 1px solid var(--gray-text);
     width: 2rem;
     height: 2rem;
 }
 
-.input_count {
-    border: 1px solid var(--gray-middle);
+.input_pro_quantity {
+    border: 1px solid var(--gray-text);
     width: 8rem;
     height: 2rem;
 }
 
-#Product > .content > .btn_buy {
+#Product > .content > .btn_addToCar {
     background-color: var(--red-main);
     line-height: 3;
 }
@@ -164,7 +164,7 @@ input:disabled + .btn_radio {
 }
 /* nav */
 .nav-link {
-    color: var(--gray-middle);
+    color: var(--gray-text);
     padding: 0.5rem 2rem;
 }
 
@@ -184,7 +184,7 @@ input:disabled + .btn_radio {
 
 /* TabContent */
 #TabContent {
-    color: var(--gray-middle);
+    color: var(--gray-text);
 }
 
     #TabContent > div > img {

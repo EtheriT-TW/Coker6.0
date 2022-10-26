@@ -55,14 +55,8 @@ function PageReady() {
     });
 
     /* Normal Button */
-    $(".btn_move_to_favorites").on("click", function () {
-        $(this).parents("li").first().remove();
-        ReloadAllAmount();
-    });
-    $(".btn_remove_pro").on("click", function () {
-        $(this).parents("li").first().remove();
-        ReloadAllAmount();
-    });
+    $(".btn_move_to_favorites").on("click", MoveToFavorites);
+    $(".btn_remove_pro").on("click", RemoveProduct);
     $(".btn_count_plus").on("click", AmountPlus);
     $(".btn_count_minus").on("click", AmountMinus);
     $(".btn_edit_data").on("click", function () {
@@ -72,8 +66,8 @@ function PageReady() {
     $(".btn_delete_recipient").on("click", DeleteRecipient);
 
     $(".btn_checkout").on("click", function () {
-        Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", false, "是，開始付款", "否", function () {
-            Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", true, function () {
+        Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
+            Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
                 setTimeout(function () {
                     buy_step_swiper.slideNext();
                 }, 300);
@@ -174,8 +168,18 @@ function AllAmountChange() {
     $(".subtotal").text = $.cookie('subtotal');
 }
 
+function MoveToFavorites() {
+    Coker.sweet.confirm("確定將商品加入收藏？", "該商品將會加入收藏並從購物車中移除", "加入收藏", "取消", function () {
+        $(this).parents("li").first().remove();
+        ReloadAllAmount();
+    });
+}
+
 function RemoveProduct() {
-    $(this).parents("li").first().remove();
+    Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
+        $(this).parents("li").first().remove();
+        ReloadAllAmount();
+    });
 }
 
 function tabForward() {

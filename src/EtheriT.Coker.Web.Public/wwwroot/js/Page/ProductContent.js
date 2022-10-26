@@ -36,17 +36,31 @@
     });
 
     $(document).on('click', '.btn_count_plus', function () {
-        $('.input_count').val(parseInt($('.input_count').val()) + 1);
+        $('.input_pro_quantity').val(parseInt($('.input_pro_quantity').val()) + 1);
     });
     $(document).on('click', '.btn_count_minus', function () {
-        $('.input_count').val(parseInt($('.input_count').val()) - 1);
-        if ($('.input_count').val() == 0) {
-            $('.input_count').val(1);
+        $('.input_pro_quantity').val(parseInt($('.input_pro_quantity').val()) - 1);
+        if ($('.input_pro_quantity').val() == 0) {
+            $('.input_pro_quantity').val(1);
         }
     });
 
     var $radio_btn = $('#Product > .content > .options > .radio > .control')
     if ($radio_btn.children().length <= 2) {
         $radio_btn.children('label').toggleClass('pe-none');
+    }
+
+    $(".btn_addToCar").on("click", AddToCar);
+}
+
+function AddToCar() {
+    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()));
+    console.log($('.input_pro_quantity').val());
+    Coker.sweet.success("成功加入購物車！", null);
+    if ($.cookie('Purchased_Type_Quantity') == 0) {
+        $.cookie('Purchased_Type_Quantity', 1);
+        CarDropdownReset();
+    } else {
+        CarItemAdd();
     }
 }

@@ -21,7 +21,7 @@
 }
 
 #Search_Title > span:first-child {
-    color: var(--blue);
+    color: var(--blue-text);
 }
 
 /* Filter */

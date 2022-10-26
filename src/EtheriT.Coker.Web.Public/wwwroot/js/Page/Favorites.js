@@ -3,9 +3,7 @@
 
     $(".btn_sort_price").on("click", SortByPrice);
     $(".btn_typography").on("click", Typography);
-    $(".btn_remove_pro ").on("click", function () {
-        var $proremove = $(this).parents("figure").parents("div").first().remove();
-    });
+    $(".btn_remove_favorites ").on("click", RemoveFavorites);
 
     var related_products_swiper = new Swiper("#RelatedProductsSwiper > .swiper", {
         slidesPerView: 1,
@@ -26,6 +24,13 @@
                 slidesPerView: 4,
             }
         }
+    });
+}
+
+function RemoveFavorites() {
+    var $thispro = $(this).parents("figure").parents("div").first();
+    Coker.sweet.confirm("確定將商品從收藏移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
+        $thispro.remove();
     });
 }
 

@@ -1,4 +1,5 @@
-﻿/* Header Top*/
+﻿
+/* Header Top*/
 #Header_Top {
     background-color: var(--black-top-line);
     color: #f5f5f5;
@@ -93,6 +94,7 @@
 
     #Car_Dropdown > ul > li > figure > .btn_cart_delete {
         top: 50%;
+        right: -1.5rem;
         transform: translate(0, -50%);
         color: var(--gray-icon);
     }

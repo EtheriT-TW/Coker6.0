@@ -1,12 +1,8 @@
 ﻿function ready() {
+
     typeof (PageReady) === "function" && PageReady();
     HeaderInit();
     FooterInit();
-
-    $.cookie('Purchased_Type_Quantity', 1);
-    $.cookie('Purchased_Item_Quantity', 2);
-    console.log($.cookie('Purchased_Type_Quantity'));
-    console.log($.cookie('Purchased_Item_Quantity'));
 
     var mega_menu_height = $("header").css("height");
     $("body").css("padding-top", mega_menu_height);
@@ -68,90 +64,49 @@ function cookie_reject() {
 function AddFavorites() {
     var $self = $(this).children('i');
     var $self_parent = $self.parents("li").first();
-    var toastLiveExample = document.getElementById('liveToast')
-    var $toastBody = $("#liveToast>.toast-body");
-
-    $self.toggleClass('fa-solid');
-    $toastBody.empty();
-
-    if ($self.hasClass('fav_item')) {
-        $self_parent.remove();
-    }
 
     if ($self.hasClass("fa-solid")) {
-        $toastBody.append('<div>加入收藏成功</div>');
+        Coker.sweet.confirm("確定將商品從收藏中移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
+            $self.toggleClass('fa-solid');
+            if ($self.hasClass('fav_item')) {
+                $self_parent.remove();
+            }
+        });
     } else {
-        $toastBody.append('<div>移除收藏成功</div>');
+        $self.toggleClass('fa-solid');
+        Coker.sweet.success("加入收藏成功", null);
     }
-
-    var toast = new bootstrap.Toast(toastLiveExample)
-    $('#Mask').toggleClass('show modal-backdrop');
-    toast.show()
-    setTimeout(function () {
-        toast.hide();
-        $('#Mask').toggleClass('show modal-backdrop');
-    }, 1500);
 }
 
 var Coker = {
     sweet: {
-        success: function (text, isHteml, action) {
-            if (isHteml) {
-                Swal.fire({
-                    icon: 'success',
-                    html: text,
-                    showCancelButton: false,
-                    confirmButtonColor: '#3085d6',
-                    confirmButtonText: '確定'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        action();
-                    }
-                })
-            } else {
-                Swal.fire({
-                    icon: 'success',
-                    text: text,
-                    showCancelButton: false,
-                    confirmButtonColor: '#3085d6',
-                    confirmButtonText: '確定'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        action();
-                    }
-                })
-            }
+        success: function (text, action) {
+            Swal.fire({
+                icon: 'success',
+                html: text,
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: '確定'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
         },
-        confirm: function (title, text, isHteml, confirmtexet, cancanceltext, action) {
-            if (isHteml) {
-                Swal.fire({
-                    title: title,
-                    html: text,
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: confirmtexet,
-                    cancelButtonText: cancanceltext
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        action();
-                    }
-                })
-            } else {
-                Swal.fire({
-                    title: title,
-                    text: text,
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: confirmtexet,
-                    cancelButtonText: cancanceltext
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        action();
-                    }
-                })
-            }
+        confirm: function (title, text, confirmtexet, cancanceltext, action) {
+            Swal.fire({
+                title: title,
+                html: text,
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: confirmtexet,
+                cancelButtonText: cancanceltext
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
         }
     }
 }

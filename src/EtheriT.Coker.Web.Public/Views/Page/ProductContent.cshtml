@@ -1,11 +1,18 @@
-﻿@*<
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿<link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
+<script src="~/js/Page/ProductContent.min.js" asp-append-version="true"></script>
 
-<link rel="stylesheet" href="~/css/Page/ProductContent.css" asp-append-version="true" />
-<script src="~/js/Page/ProductContent.js" asp-append-version="true"></script>
+<div id="ProDisplayModal" class="modal fade" tabindex="-1" aria-labelledby="Product Display Modal" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content position-relative p-4">
+			<button class="btn_close_prodisplaymodal btn-close position-absolute end-0 top-0 p-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+			<div class="modal-body p-2 mx-auto">
+				<img class="pro_img img-fluid d-none" src="" alt="" />
+				<div id="Pro_360View" class="pro_360view d-none" data-folder="../images/product/3d_pro/" data-filename-x="" data-amount-x=""></div>
+				<iframe class="pro_youtube d-none" src="https://www.youtube.com/embed/JGEj2nhPvDs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+			</div>
+		</div>
+	</div>
+</div>
 
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">
@@ -22,23 +29,27 @@
 			<div class="ProductSwiper swiper">
 				<div class="swiper-wrapper">
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_01.png" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" data-display-protype="360view" data-filename-x="{index}.jpg" data-amount-x="15" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_02.png" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_01.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_03.png" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_content_01.png" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_03.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_content_02.png" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_content_01.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+					</div>
+
+					<div class="swiper-slide mb-0 d-flex align-items-center">
+						<img class="pro_display img-fluid" src="~/images/product/pro_content_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
@@ -46,19 +57,19 @@
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
 					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" />
+						<img class="pro_display img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 				</div>
 			</div>
@@ -67,7 +78,11 @@
 		</div>
 
 		<div thumbsSlider="" class="PreviewSwiper swiper my-3">
-			<div class="swiper-wrapper">
+			<div class="swiper-wrapper align-items-center">
+				<div class="swiper-slide">
+					<img class="img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" />
+				</div>
+
 				<div class="swiper-slide">
 					<img class="img-fluid" src="~/images/product/pro_01.png" alt="" />
 				</div>

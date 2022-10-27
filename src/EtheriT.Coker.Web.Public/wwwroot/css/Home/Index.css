@@ -1,4 +1,7 @@
-﻿
+﻿.gray_text {
+    color: var(--gray-text);
+}
+
 /* Banner */
 #BannerSwiper > .swiper > .swiper-wrapper > figure {
     margin: 0;
@@ -165,22 +168,13 @@
 }
 
 /* News */
-#NewsSwiper > .title {
-    color: var(--gray-text);
-}
-
-#NewsSwiper > .swiper > .content > .card > figure > div > div > img {
-    width: 100%;
+#NewsSwiper > .swiper > .swiper-wrapper > .swiper-slide > figure > div > div > img {
     height: auto;
     top: 50%;
     transform: translate(0, -50%);
 }
 
-#NewsSwiper > .swiper > .content > .card > figure > figcaption > .card-body > .card-title {
-    color: var(--gray-text);
-}
-
-#NewsSwiper > .swiper > .content > .card > figure > figcaption > .card-body > .card-text {
+#NewsSwiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .div > .content {
     min-height: 3rem;
     color: var(--blakc-text);
     overflow: hidden;
@@ -190,14 +184,12 @@
     -webkit-line-clamp: 2;
 }
 
-#NewsSwiper > .swiper > .content > .card > figure > figcaption > .card-body > a > .card-footer {
+#NewsSwiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > div > a > .btn_news_more {
     color: var(--blue-text);
 }
 
 #NewsSwiper > .swiper_pagination_news {
     z-index: 1;
-    top: 0;
-    right: 0;
     left: auto;
     width: fit-content;
     height: fit-content;
@@ -216,109 +208,24 @@
             content: '#';
         }
 
-/* InquiryAndCconsult */
-#InquiryAndCconsult {
-    width: 100%;
-    padding: 10px 10vw;
-    margin: 40px 0;
-    display: flex;
-    justify-content: space-between;
+/* Inquiry*/
+#Inquiry > .content {
+    top: 50%;
+    transform: translateY(-50%);
 }
 
-    #InquiryAndCconsult > div {
-        width: 49%;
-        position: relative;
+    #Inquiry > .content > .search > input {
+        outline: none;
     }
 
-        #InquiryAndCconsult > div > img {
-            width: 100%;
-        }
-
-        #InquiryAndCconsult > div > .frame {
-            position: absolute;
-            top: 50%;
-            transform: translate(0%, -50%);
-            width: 100%;
-            height: 100%;
-        }
-
-    #InquiryAndCconsult > .inquire > .frame {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-left: 3rem;
+    #Inquiry > .content > .tag > li > a {
+        color: var(--gray-text);
     }
 
-        #InquiryAndCconsult > .inquire > .frame > .title {
-            font-weight: bold;
-            font-size: 1.5rem;
-            margin: 0 0 0.25rem 0.5rem;
-        }
-
-        #InquiryAndCconsult > .inquire > .frame > .search {
-            display: flex;
-            background-color: white;
-            width: 60%;
-            padding: 0 10px 0 15px;
-            border-radius: 50px;
-            cursor: default;
-        }
-
-            #InquiryAndCconsult > .inquire > .frame > .search > input {
-                border: none;
-                outline: none;
-                background: none;
-                width: 97.5%;
-            }
-
-            #InquiryAndCconsult > .inquire > .frame > .search > i {
-                color: var(--gray-icon);
-                display: flex;
-                align-items: center;
-                cursor: pointer;
-                margin: 0 0.5rem;
-            }
-
-        #InquiryAndCconsult > .inquire > .frame > .tag > ul {
-            display: flex;
-            margin: 0.5rem 0 0 0.5rem;
-        }
-
-            #InquiryAndCconsult > .inquire > .frame > .tag > ul > li {
-                text-decoration: underline;
-                color: var(--gray-text);
-                margin: 0.5rem 0 0 0.5rem;
-            }
-
-    #InquiryAndCconsult > .consult > .frame {
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-        #InquiryAndCconsult > .consult > .frame > .title {
-            font-weight: bold;
-            font-size: 1.5rem;
-            width: 100%;
-            margin-bottom: 0.5rem;
-        }
-
-        #InquiryAndCconsult > .consult > .frame > .content {
-            flex-grow: 1;
-            padding-right: 45%;
-        }
-
-        #InquiryAndCconsult > .consult > .frame > .btn_consult {
-            color: var(--gray-text);
-            cursor: pointer;
-            background-color: white;
-            width: 10rem;
-            padding: 0.2rem;
-            border-radius: 50px;
-            text-align: center;
-        }
+/* Consult */
+#Consult > div > .btn_consult {
+    width: fit-content;
+}
 
 /* Other Page */
 #Other_Page > figure > a > div > figcaption {
@@ -367,78 +274,13 @@
         padding: 1rem 0.7rem;
         font-size: 2rem;
     }
-
-    #InquiryAndCconsult > .inquire > .frame {
-        padding-left: 2rem;
-    }
-
-        #InquiryAndCconsult > .inquire > .frame > .title {
-            font-size: 1.15rem;
-            margin-bottom: 0.125rem;
-        }
-
-        #InquiryAndCconsult > .inquire > .frame > .search {
-            width: 70%;
-        }
-
-        #InquiryAndCconsult > .inquire > .frame > .tag > ul {
-            margin-top: 0.25rem;
-        }
-
-            #InquiryAndCconsult > .inquire > .frame > .tag > ul > li {
-                font-size: 0.85rem;
-            }
-
-    #InquiryAndCconsult > .consult > .frame {
-        padding: 1rem;
-    }
-
-        #InquiryAndCconsult > .consult > .frame > .title {
-            font-size: 1.15rem;
-        }
-
-        #InquiryAndCconsult > .consult > .frame > .content {
-            font-size: 0.85rem;
-        }
 }
 
-@media only screen and (max-width: 1072px) {
-}
-
-@media only screen and (max-width: 992px) {
-}
-
-@media only screen and (max-width: 768.9px) {
+@media only screen and (max-width: 768px) {
     #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
         padding: 0.7rem 0.7rem;
         font-size: 1.5rem;
     }
-
-    #News > .NewsSwiper > .content > .frame > .text > .content {
-        flex-grow: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-    }
-
-    #InquiryAndCconsult > .consult > .frame {
-        padding: 0.5rem;
-    }
-
-        #InquiryAndCconsult > .consult > .frame > .title {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-
-        #InquiryAndCconsult > .consult > .frame > .content {
-            font-size: 0.65rem;
-        }
-
-        #InquiryAndCconsult > .consult > .frame > .btn_consult {
-            font-size: 0.85rem;
-        }
 }
 
 @media only screen and (max-width: 576px) {
@@ -446,10 +288,10 @@
         bottom: 10%;
     }
 
-    #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
-        padding: 0.5rem 0.5rem;
-        font-size: 1rem;
-    }
+        #BannerSwiper > .swiper > .swiper-wrapper > figure > figcaption > h3 {
+            padding: 0.5rem 0.5rem;
+            font-size: 1rem;
+        }
 
     #BannerSwiper > .swiper_pagination_banner > .swiper-pagination-bullet {
         width: 2rem;
@@ -462,79 +304,4 @@
     #Featured > .content > figure:nth-child(2) {
         width: 100%;
     }
-
-    #News > .NewsSwiper > .content {
-        height: fit-content;
-    }
-
-        #News > .NewsSwiper > .content > .frame {
-            flex-direction: column;
-            align-items: center;
-            height: fit-content;
-        }
-
-            #News > .NewsSwiper > .content > .frame > .image {
-                width: 100%;
-                height: 45vw;
-            }
-
-            #News > .NewsSwiper > .content > .frame > .text {
-                width: 100%;
-            }
-
-    #InquiryAndCconsult {
-        flex-direction: column;
-    }
-
-        #InquiryAndCconsult > div {
-            width: 100%;
-        }
-
-        #InquiryAndCconsult > .inquire {
-            margin-bottom: 2%;
-        }
-
-            #InquiryAndCconsult > .inquire > .frame {
-                padding-left: 1rem;
-            }
-
-                #InquiryAndCconsult > .inquire > .frame > .search {
-                    width: 80%;
-                }
-
-                #InquiryAndCconsult > .inquire > .frame > .tag > ul > li {
-                    color: var(--gray-text);
-                }
-
-        #InquiryAndCconsult > .consult > .frame {
-            padding: 1rem;
-        }
-
-            #InquiryAndCconsult > .consult > .frame > .title {
-                font-size: 1.15rem;
-                margin-bottom: 0.5rem;
-            }
-
-            #InquiryAndCconsult > .consult > .frame > .content {
-                font-size: 0.85rem;
-            }
-
-            #InquiryAndCconsult > .consult > .frame > .btn_consult {
-                font-size: 1rem;
-            }
-}
-
-@media only screen and (max-width: 390px) {
-    #InquiryAndCconsult > .consult > .frame {
-        padding: 0.5rem;
-        padding-right: 50%;
-        justify-content: center;
-    }
-
-        #InquiryAndCconsult > .consult > .frame > .content {
-            display: none;
-        }
-}
-
-@media only screen and (max-width: 368px) {
 }

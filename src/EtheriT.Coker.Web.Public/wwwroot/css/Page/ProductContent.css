@@ -1,8 +1,18 @@
 ﻿
+/* Product Display Modal */
+#ProDisplayModal > .modal-dialog {
+    max-width: 90vmin;
+    max-height: 90vmin;
+}
+
 /* ProductSwiper */
 .ProductSwiper > .swiper-wrapper > .swiper-slide {
     height: 600px;
 }
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display {
+        cursor: pointer;
+    }
 
 /* PreviewSwiper */
 .PreviewSwiper > .swiper-wrapper > .swiper-slide {

@@ -3,8 +3,8 @@
 	ViewData["Title"] = "Home Page";
 }
 
-<link rel="stylesheet" href="~/css/Home/Index.css" asp-append-version="true" />
-<script src="~/js/Home/Index.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
+<script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
 
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
 	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
@@ -255,13 +255,13 @@
 <div id="Tiles" class="container-fluid py-0">
 	<div class="container row row-cols-1 row-cols-sm-2 m-auto px-0 gx-0 gx-sm-4">
 		<div class="col my-4">
-			<a href=""><img class="img-fluid mt-4" src="~/images/tiles_1.jpg" alt="" /></a>
+			<a href=""><img class="img-fluid mb-4" src="~/images/tiles_1.jpg" alt="" /></a>
 			<div class="row">
 				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_2.jpg" alt="" /></a>
 				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_3.jpg" alt="" /></a>
 			</div>
 		</div>
-		<div class="col my-4">
+		<div class="col mb-4 my-sm-4">
 			<a href=""><img class="img-fluid mb-4" src="~/images/tiles_4.jpg" alt="" /></a>
 			<div class="row">
 				<a class="col" href=""><img class="img-fluid" src="~/images/tiles_5.jpg" alt="" /></a>
@@ -272,91 +272,91 @@
 </div>
 
 <div id="NewsSwiper" class="container position-relative my-5">
-	<div class="title fs-4 fw-bold my-3">最新消息</div>
+	<div class="fs-4 fw-bold my-3 gray_text">最新消息</div>
 	<div class="swiper">
-		<div class="swiper-wrapper content">
-			<div class="card mb-3 swiper-slide border-0">
-				<figure class="row g-0 align-items-center">
+		<div class="swiper-wrapper">
+			<div class="swiper-slide">
+				<figure class="row g-0">
 					<div class="col-sm-6">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img src="~/images/news_pic1.jpg" class="img-fluid rounded-start" alt="...">
+							<img class="img-fluid rounded-start" src="~/images/news_pic1.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6">
-						<div class="card-body">
-							<div class="card-title d-flex align-items-baseline">
+					<figcaption class="col-sm-6 align-self-stretch p-2">
+						<div class="d-flex flex-column h-100">
+							<div class="d-flex align-items-baseline gray_text">
 								<div class="fs-5 fw-bold me-2">08/15</div>
 								<div class="fw-bold">2022</div>
 							</div>
-							<p class="card-text fw-bold">新品上市，全省門市販售中</p>
-							<a href=""><div class="card-footer px-0 border-0 bg-transparent">More  ></div></a>
+							<p class="content fw-bold flex-grow-1">新品上市，全省門市販售中</p>
+							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
 						</div>
 					</figcaption>
 				</figure>
 			</div>
 
-			<div class="card mb-3 swiper-slide border-0">
-				<figure class="row g-0 align-items-center">
+			<div class="swiper-slide">
+				<figure class="row g-0">
 					<div class="col-sm-6">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img src="~/images/news_pic2.jpg" class="img-fluid rounded-start" alt="...">
+							<img class="img-fluid rounded-start" src="~/images/news_pic2.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6">
-						<div class="card-body">
-							<div class="card-title d-flex align-items-baseline">
+					<figcaption class="col-sm-6 align-self-stretch p-2">
+						<div class="d-flex flex-column h-100">
+							<div class="d-flex align-items-baseline gray_text">
 								<div class="fs-5 fw-bold me-2">07/28</div>
 								<div class="fw-bold">2022</div>
 							</div>
-							<p class="card-text fw-bold">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
-							<a href=""><div class="card-footer px-0 border-0 bg-transparent">More  ></div></a>
+							<p class="content fw-bold flex-grow-1">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
+							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
 						</div>
 					</figcaption>
 				</figure>
 			</div>
 
-			<div class="card mb-3 swiper-slide border-0">
-				<figure class="row g-0 align-items-center">
+			<div class="swiper-slide">
+				<figure class="row g-0">
 					<div class="col-sm-6">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img src="~/images/news_pic1.jpg" class="img-fluid rounded-start" alt="...">
+							<img class="img-fluid rounded-start" src="~/images/news_pic1.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6">
-						<div class="card-body">
-							<div class="card-title d-flex align-items-baseline">
+					<figcaption class="col-sm-6 align-self-stretch p-2">
+						<div class="d-flex flex-column h-100">
+							<div class="d-flex align-items-baseline gray_text">
 								<div class="fs-5 fw-bold me-2">08/15</div>
 								<div class="fw-bold">2022</div>
 							</div>
-							<p class="card-text fw-bold">新品上市，全省門市販售中</p>
-							<a href=""><div class="card-footer px-0 border-0 bg-transparent">More  ></div></a>
+							<p class="content fw-bold flex-grow-1">新品上市，全省門市販售中</p>
+							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
 						</div>
 					</figcaption>
 				</figure>
 			</div>
 
-			<div class="card mb-3 swiper-slide border-0">
-				<figure class="row g-0 align-items-center">
+			<div class="swiper-slide">
+				<figure class="row g-0">
 					<div class="col-sm-6">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img src="~/images/news_pic2.jpg" class="img-fluid rounded-start" alt="...">
+							<img class="img-fluid rounded-start" src="~/images/news_pic2.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6">
-						<div class="card-body">
-							<div class="card-title d-flex align-items-baseline">
+					<figcaption class="col-sm-6 align-self-stretch p-2">
+						<div class="d-flex flex-column h-100">
+							<div class="d-flex align-items-baseline gray_text">
 								<div class="fs-5 fw-bold me-2">07/28</div>
 								<div class="fw-bold">2022</div>
 							</div>
-							<p class="card-text fw-bold">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
-							<a href=""><div class="card-footer px-0 border-0 bg-transparent">More  ></div></a>
+							<p class="content fw-bold flex-grow-1">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
+							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
 						</div>
 					</figcaption>
 				</figure>
 			</div>
 		</div>
 	</div>
-	<div class="swiper_pagination_news position-absolute px-3 fs-4"></div>
+	<div class="swiper_pagination_news position-absolute px-3 fs-4 top-0 end-0"></div>
 </div>
 
 <div id="Most_Popular" class="container-fluid my-5">
@@ -388,30 +388,38 @@
 	</div>
 </div>
 
-<div id="InquiryAndCconsult">
-	<div class="inquire">
-		<img src="~/images/inquire_bg.jpg" alt="" />
-		<div class="frame">
-			<div class="title">經銷據點查詢</div>
-			<div class="search">
-				<input type="text">
-				<i class="fa-solid fa-magnifying-glass"></i>
+<div id="InquiryAndCconsult" class="container row m-auto my-5 p-0">
+	<div id="Inquiry" class="col-12 col-sm-6 position-relative">
+		<img class="img-fluid" src="~/images/inquire_bg.jpg" alt="Inquiry Search" />
+
+		<div class="content position-absolute w-100 row px-4 px-sm-5 px-md-4 px-lg-5">
+			<div class="title fs-4 fw-bold">經銷據點查詢</div>
+
+			<div class="search bg-white rounded-pill col-8 row gx-0 py-1 my-2">
+				<input class="col bg-transparent border-0 px-3 flex-grow-1" type="text">
+				<button class="btn_inquiry_search col-auto bg-transparent border-0 pe-3 gray_text">
+					<i class="fa-solid fa-magnifying-glass"></i>
+				</button>
 			</div>
-			<div class="tag">
-				<ul>
-					<li>分公司</li>
-					<li>經銷據點</li>
-					<li>公共專案經銷</li>
-				</ul>
-			</div>
+
+			<ul class="tag d-flex ms-3">
+				<li class="me-3 text-decoration-underline"><a href="">分公司</a></li>
+				<li class="me-3 text-decoration-underline"><a href="">經銷據點</a></li>
+				<li class="me-3 text-decoration-underline"><a href="">公共專案經銷</a></li>
+			</ul>
 		</div>
 	</div>
-	<div class="consult">
-		<img src="~/images/consult_bg.jpg" alt="" />
-		<div class="frame">
-			<div class="title">Derek購買諮詢服務</div>
-			<div class="content">不管是產品安裝、或是採購建議，都有專人來為您解答！</div>
-			<div class="btn_consult">馬上諮詢</div>
+
+	<div id="Consult" class="col-12 col-sm-6 mt-3 mt-sm-0 position-relative">
+		<img class="img-fluid" src="~/images/consult_bg.jpg" alt="Consultation Service" />
+
+		<div class="content position-absolute top-0 px-4 px-sm-5 px-md-4 px-lg-5 row pt-4 pt-xl-5">
+			<div class="fs-4 fw-bold">Derek購買諮詢服務</div>
+			<div class="col-7 d-none d-lg-block">不管是產品安裝、或是採購建議，都有專人來為您解答！</div>
+		</div>
+
+		<div class="position-absolute row w-100 bottom-0 mb-3 justify-content-center justify-lg-content-start">
+			<button class="btn_consult bg-white border-0 rounded-pill px-5 py-1 gray_text">馬上諮詢</button>
 		</div>
 	</div>
 </div>

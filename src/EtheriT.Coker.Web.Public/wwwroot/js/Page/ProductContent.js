@@ -1,4 +1,5 @@
 ﻿function PageReady() {
+
     var preview_swiper = new Swiper(".PreviewSwiper", {
         slidesPerView: 4,
         loop: false,
@@ -29,6 +30,8 @@
             swiper: preview_swiper,
         },
     });
+
+    $(".pro_display").on("click", Show3DPro);
 
     $('#shareBlock').cShare({
         description: 'jQuery plugin - C Share buttons',
@@ -63,4 +66,40 @@ function AddToCar() {
     } else {
         CarItemAdd();
     }
+}
+
+function Show3DPro() {
+    var pro_360view = $(this);
+    var pro_viewModalSpace = $("#ProDisplayModal > .modal-dialog > .modal-content > .modal-body");
+    pro_viewModalSpace.children(".pro_img").addClass("d-none");
+    pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
+    pro_viewModalSpace.children(".pro_360view").addClass("d-none");
+    switch (pro_360view.data("display-protype")) {
+        case "image":
+            pro_viewModalSpace.children(".pro_img").removeClass("d-none");
+            pro_viewModalSpace.children(".pro_img").attr("src", ".." + $(this).attr("src"));
+            break;
+        case "youtube":
+            pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
+            pro_viewModalSpace.children(".pro_youtube").attr("src", "https://www.youtube.com/embed/JGEj2nhPvDs");
+            break;
+        case "360view":
+            pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
+            add360View(pro_360view);
+            break;
+    }
+}
+
+function add360View(pro_self) {
+    var pro360View_Self = $("#Pro_360View");
+    pro360View_Self.attr("data-filename-x", pro_self.data("filename-x"));
+    pro360View_Self.attr("data-amount-x", pro_self.data("amount-x"));
+
+    window.CI360.init();
+    $("#ProDisplayModal").on("shown.bs.modal", function () {
+        console.log("click");
+        const pro360View = document.getElementById("Pro_360View");
+        pro360View.classList.add("cloudimage-360");
+        window.CI360.add("Pro_360View");
+    });
 }

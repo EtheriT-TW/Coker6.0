@@ -61,7 +61,7 @@
     }
 
 /* Button Car Dropdown */
-#btn_cart_dropdown > span {
+#btn_car_dropdown > span {
     background-color: #FF5059;
     z-index: 1;
     font-size: 0.05rem;

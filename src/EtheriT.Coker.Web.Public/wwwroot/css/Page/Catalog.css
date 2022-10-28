@@ -1,0 +1,14 @@
+﻿.catalog_item > .img_frame > .btn_more {
+    background-color: var(--black-text-trans);
+    display: none;
+}
+
+.catalog_item > .img_frame:hover > .btn_more {
+    display: flex;
+}
+
+.catalog_item > .img_frame > .btn_more > a > .text {
+    width: 5rem;
+    height: 5rem;
+    background-color: var(--gray-bg-light-trans);
+}

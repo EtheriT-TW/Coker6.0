@@ -27,7 +27,7 @@
 			<div class="btn-group px-2">
 				<button id="btn_car_dropdown" class="bg-transparent border-0 text-white ms-1 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
 					<i class="fa-solid fa-cart-shopping"></i>
-					<span id="Car_Badge" class="badge position-absolute rounded-pill start-100 top-100 translate-middle"></span>
+					<span id="Car_Badge" class="badge position-absolute rounded-pill start-100 top-0 py-0 translate-middle"></span>
 				</button>
 
 				<div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg" aria-labelledby="btn_car_dropdown">
@@ -100,7 +100,7 @@
 				{
 					<li class="mega_menu_subtitle nav-item">
 						<a class="nav-link center">@menu.Title</a>
-						<div class="mega_menu_content abreast bg-white shadow">
+						<div class="mega_menu_content abreast shadow">
 							<div class="text">
 								<ul class="abreast">
 									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
@@ -120,11 +120,15 @@
 							<div class="image">
 								@if (!string.IsNullOrEmpty(menu.imageUrl))
 								{
-									<img src="@menu.imageUrl" alt="Photo" class="center" />
+									<a href="@menu.imageLink">
+										<img src="@menu.imageUrl" alt="Photo" class="center" />
+									</a>
 								}
 								@if (!string.IsNullOrEmpty(menu.Description))
 								{
-									<div class="center"><p>@menu.Description</p></div>
+									<a href="@menu.imageLink">
+										<div class="center"><p>@menu.Description</p></div>
+									</a>
 								}
 							</div>
 						</div>

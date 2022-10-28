@@ -17,6 +17,7 @@
     --red-popup: #FF5152;
     --gray-blue: #E0E3E8;
     --gray-bg-light: #F4F4F4;
+    --gray-bg-light-trans: #F4F4F4C0;
     --gray-bg-dark: #E2E2E2;
     --gray-icon: #BFBFBF;
     --gray-text: #8E8E8E;
@@ -24,6 +25,10 @@
     --black-text-trans: #4F4F4F80;
     --black-bottom-line: #333333;
     --black-top-line: #1E1E1E;
+}
+
+.gray_text {
+    color: var(--gray-text);
 }
 
 /* Default */

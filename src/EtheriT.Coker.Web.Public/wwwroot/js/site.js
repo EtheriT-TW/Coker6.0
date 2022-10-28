@@ -1,4 +1,7 @@
 ﻿function ready() {
+    $.cookie('Member_Name', "會員一", { path: '/' });
+    typeof $.cookie('Purchased_Type_Quantity') == "undefined" && $.cookie('Purchased_Type_Quantity', 0, { path: '/' })
+    typeof $.cookie('Purchased_Item_Quantity') == "undefined" && $.cookie('Purchased_Item_Quantity', 0, { path: '/' })
 
     typeof (PageReady) === "function" && PageReady();
     HeaderInit();
@@ -70,23 +73,32 @@ function AddFavorites() {
             $self.toggleClass('fa-solid');
             if ($self.hasClass('fav_item')) {
                 $self_parent.remove();
+                Coker.sweet.success("成功移除商品", null, true);
             }
         });
     } else {
         $self.toggleClass('fa-solid');
-        Coker.sweet.success("加入收藏成功", null);
+        Coker.sweet.success("成功加入收藏", null, true);
     }
 }
 
 var Coker = {
+    timeout: {
+        time: 1500
+    },
     sweet: {
-        success: function (text, action) {
+        success: function (text, action, autoclose) {
+            var closetime = false;
+            if (autoclose) { closetime = Coker.timeout.time }
+
             Swal.fire({
                 icon: 'success',
                 html: text,
+                showConfirmButton: !autoclose,
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
-                confirmButtonText: '確定'
+                confirmButtonText: '確定',
+                timer: closetime
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
@@ -95,6 +107,7 @@ var Coker = {
         },
         confirm: function (title, text, confirmtexet, cancanceltext, action) {
             Swal.fire({
+                icon: 'info',
                 title: title,
                 html: text,
                 showCancelButton: true,

@@ -19,7 +19,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="企業沿革", Link=""},
                                     new MenuItem.MenuItemModel {Title="企業設備", Link=""},
                                     new MenuItem.MenuItemModel {Title="品牌故事", Link=""},
-                                } 
+                                }
                             },
                             new MenuItem.MenuItemModel {Title="實績列舉", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="近期建案實績", Link=""},
@@ -40,6 +40,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         Title = "Derek商品",
                         Description = "線上型錄",
                         imageUrl = "/images/mu_0.jpg",
+                        imageLink = "/Catalog",
                         menuItemModels = new List<MenuItem.MenuItemModel>{
                             new MenuItem.MenuItemModel {Title="商品分類", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="微電腦馬桶座", Link=""},
@@ -54,7 +55,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="浴缸", Link=""},
                                     new MenuItem.MenuItemModel {Title="三機", Link=""},
                                     new MenuItem.MenuItemModel {Title="無障礙設施", Link=""},
-                                    new MenuItem.MenuItemModel {Title="線上型錄", Link=""},
+                                    new MenuItem.MenuItemModel {Title="線上型錄", Link="Catalog"},
                                     new MenuItem.MenuItemModel {Title="清倉品", Link=""},
                                 }
                             },
@@ -72,15 +73,16 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             new MenuItem.MenuItemModel {Title="最新消息", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="人才招募", Link=""},
                                     new MenuItem.MenuItemModel {Title="媒體專區", Link=""},
-                                    new MenuItem.MenuItemModel {Title="粉絲專頁", Link=""},
+                                    new MenuItem.MenuItemModel { Title = "粉絲專頁", Link = "" },
                                 }
                             },
                         }
-                    },new MenuItem.MenuItemModel {
-                        Title = "銷售據點",
-                        Description = "新竹旗艦店",
-                        imageUrl = "/images/mu_2.jpg",
-                        menuItemModels = new List<MenuItem.MenuItemModel>{
+                    },new MenuItem.MenuItemModel
+                      {
+                          Title = "銷售據點",
+                          Description = "新竹旗艦店",
+                          imageUrl = "/images/mu_2.jpg",
+                          menuItemModels = new List<MenuItem.MenuItemModel>{
                             new MenuItem.MenuItemModel {Title="銷售據點", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="龍頭分公司", Link=""},
                                     new MenuItem.MenuItemModel {Title="花東總經銷-百健行", Link=""},
@@ -96,11 +98,12 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 }
                             },
                         }
-                    },new MenuItem.MenuItemModel {
-                        Title = "客戶服務",
-                        Description = "預約參觀",
-                        imageUrl = "/images/mu_3.jpg",
-                        menuItemModels = new List<MenuItem.MenuItemModel>{
+                      },new MenuItem.MenuItemModel
+                      {
+                          Title = "客戶服務",
+                          Description = "預約參觀",
+                          imageUrl = "/images/mu_3.jpg",
+                          menuItemModels = new List<MenuItem.MenuItemModel>{
                             new MenuItem.MenuItemModel {Title="售前服務", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="購買諮詢服務", Link=""},
                                 }
@@ -114,7 +117,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 }
                             },
                         }
-                    }
+                      }
                 }
             };
             return View(headerViewModel);

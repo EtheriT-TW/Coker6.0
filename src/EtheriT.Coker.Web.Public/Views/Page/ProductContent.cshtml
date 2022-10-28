@@ -5,10 +5,21 @@
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content position-relative p-4">
 			<button class="btn_close_prodisplaymodal btn-close position-absolute end-0 top-0 p-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
-			<div class="modal-body p-2 mx-auto">
-				<img class="pro_img img-fluid d-none" src="" alt="" />
-				<div id="Pro_360View" class="pro_360view d-none" data-folder="../images/product/3d_pro/" data-filename-x="" data-amount-x=""></div>
-				<iframe class="pro_youtube d-none" src="https://www.youtube.com/embed/JGEj2nhPvDs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+			<div class="modal-body p-2 mx-auto w-100 h-100 d-flex">
+				<div id="Pro_Image" class="pro_img d-none"
+					 data-folder="../images/product/"
+					 data-filename-x=""
+					 data-amount-x="1"
+					 data-pointer-zoom="2"
+					 hide-360-logo></div>
+				<div id="Pro_360View" class="pro_360view d-none"
+					 data-folder="../images/product/3d_pro/"
+					 data-filename-x=""
+					 data-amount-x=""
+					 data-speed="100"
+					 data-drag-speed="120"
+					 data-pointer-zoom="2"></div>
+				<iframe id="Pro_Youtube" class="pro_youtube d-none w-100" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 			</div>
 		</div>
 	</div>
@@ -28,47 +39,48 @@
 		<div class="container-fluid position-relative">
 			<div class="ProductSwiper swiper">
 				<div class="swiper-wrapper">
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" data-display-protype="360view" data-filename-x="{index}.jpg" data-amount-x="15" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_01.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
+						<img class="pro_display img-fluid" src="~/images/product/pro_01.png" alt="" data-display-protype="image" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_03.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_content_01.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_content_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
-						<iframe class="w-100 h-100" src="https://www.youtube.com/embed/JGEj2nhPvDs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center position-relative">
+						<img class="img-fluid" src="~/images/product/pro_content_03.png" alt="" />
+						<button class="pro_display btn_youtube bg-transparent border-0 position-absolute" data-youtube-link="JGEj2nhPvDs" data-display-protype="youtube" data-bs-toggle="modal" data-bs-target="#ProDisplayModal"><i class="fa-brands fa-youtube"></i></button>
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 
-					<div class="swiper-slide mb-0 d-flex align-items-center">
+					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
 						<img class="pro_display img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
 					</div>
 				</div>

@@ -17,6 +17,10 @@
         delay: 3000,
         order: 'asc'
     });
+
+    $("#btn_car_dropdown").on("click", function () {
+        $("#btn_car_dropdown > i").toggleClass("open");
+    })
 }
 
 function CartDelete() {
@@ -24,14 +28,16 @@ function CartDelete() {
     var $cart_pro = $self.parents("li").first();
     Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
         $cart_pro.remove();
-        $.cookie('Purchased_Type_Quantity', 0);
-        $.cookie('Purchased_Item_Quantity', 0);
+        $.cookie('Purchased_Type_Quantity', 0, {path: '/'});
+        $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
         CarDropdownReset();
+        $("#btn_car_dropdown > i").removeClass("open");
+        Coker.sweet.success("成功移除商品", null, true);
     });
 }
 
 function CarDropdownReset() {
-    if ($.cookie('Purchased_Type_Quantity') != 0) {
+    if ($.cookie('Purchased_Type_Quantity') > 0) {
         if ('content' in document.createElement('template')) {
             var item = document.querySelector("#Template_Car_Dropdown");
             var item_link = item.content.querySelector(".pro_link"),

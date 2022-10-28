@@ -172,6 +172,7 @@ function MoveToFavorites() {
     Coker.sweet.confirm("確定將商品加入收藏？", "該商品將會加入收藏並從購物車中移除", "加入收藏", "取消", function () {
         $(this).parents("li").first().remove();
         ReloadAllAmount();
+        Coker.sweet.success("成功加入收藏！", null, true);
     });
 }
 
@@ -179,6 +180,7 @@ function RemoveProduct() {
     Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
         $(this).parents("li").first().remove();
         ReloadAllAmount();
+        Coker.sweet.success("成功移除商品", null, true);
     });
 }
 

@@ -7,6 +7,7 @@
         public string? Link { get; set; }
         public bool? Target { get; set; }
         public string? imageUrl { get; set; }
+        public string? imageLink { get; set; }
         public string? hoverImageUrl { get; set; }
         public List<MenuItemModel>? menuItemModels { get; set; }
     }

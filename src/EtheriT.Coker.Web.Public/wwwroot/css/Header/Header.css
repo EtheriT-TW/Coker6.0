@@ -61,6 +61,10 @@
     }
 
 /* Button Car Dropdown */
+#btn_car_dropdown > i.open {
+    color: var(--red-popup);
+}
+
 #btn_car_dropdown > span {
     background-color: #FF5059;
     z-index: 1;
@@ -264,8 +268,7 @@
     display: block;
 }
 
-    .mega_menu_content > .image > img {
-        cursor: pointer;
+    .mega_menu_content > .image > a > img {
         display: block;
         margin: auto;
         height: 150px;
@@ -273,7 +276,7 @@
         padding: 5px;
     }
 
-    .mega_menu_content > .image > div {
+    .mega_menu_content > .image > a > div {
         margin-top: 20px;
     }
 

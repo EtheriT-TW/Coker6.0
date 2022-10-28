@@ -1,7 +1,4 @@
-﻿.gray_text {
-    color: var(--gray-text);
-}
-
+﻿
 /* Banner */
 #BannerSwiper > .swiper > .swiper-wrapper > figure {
     margin: 0;

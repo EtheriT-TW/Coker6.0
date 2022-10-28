@@ -1,20 +1,21 @@
 ﻿function PageReady() {
+    window.CI360.init();
 
     var preview_swiper = new Swiper(".PreviewSwiper", {
-        slidesPerView: 4,
+        slidesPerView: 3.5,
         loop: false,
         spaceBetween: 10,
         freeMode: true,
         watchSlidesProgress: true,
         breakpoints: {
             576: {
-                slidesPerView: 4,
+                slidesPerView: 3.5,
             },
             768: {
-                slidesPerView: 6,
+                slidesPerView: 5.5,
             },
             992: {
-                slidesPerView: 8,
+                slidesPerView: 7.5,
             }
         }
     });
@@ -31,7 +32,13 @@
         },
     });
 
-    $(".pro_display").on("click", Show3DPro);
+    $(".pro_display").on("click", ShowBigPro);
+    const proDisplayModal = document.getElementById('ProDisplayModal')
+    proDisplayModal.addEventListener('hidden.bs.modal', event => {
+        window.CI360.destroy();
+        $("#Pro_Youtube").attr("src", "");
+    })
+
 
     $('#shareBlock').cShare({
         description: 'jQuery plugin - C Share buttons',
@@ -57,37 +64,59 @@
 }
 
 function AddToCar() {
-    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()));
+    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()), { path: '/' });
     console.log($('.input_pro_quantity').val());
-    Coker.sweet.success("成功加入購物車！", null);
-    if ($.cookie('Purchased_Type_Quantity') == 0) {
-        $.cookie('Purchased_Type_Quantity', 1);
-        CarDropdownReset();
-    } else {
+    Coker.sweet.success("成功加入購物車！", null, true);
+    if ($.cookie('Purchased_Type_Quantity') > 0) {
         CarItemAdd();
+    } else {
+        $.cookie('Purchased_Type_Quantity', 1, { path: '/' });
+        CarDropdownReset();
     }
 }
 
-function Show3DPro() {
-    var pro_360view = $(this);
+function ShowBigPro() {
+    var pro_self = $(this);
     var pro_viewModalSpace = $("#ProDisplayModal > .modal-dialog > .modal-content > .modal-body");
     pro_viewModalSpace.children(".pro_img").addClass("d-none");
     pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
     pro_viewModalSpace.children(".pro_360view").addClass("d-none");
-    switch (pro_360view.data("display-protype")) {
+    switch (pro_self.data("display-protype")) {
         case "image":
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");
-            pro_viewModalSpace.children(".pro_img").attr("src", ".." + $(this).attr("src"));
+            addImage(pro_self);
             break;
         case "youtube":
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
-            pro_viewModalSpace.children(".pro_youtube").attr("src", "https://www.youtube.com/embed/JGEj2nhPvDs");
+            addYoutube(pro_self);
+            //pro_viewModalSpace.children(".pro_youtube").attr("src", "https://www.youtube.com/embed/JGEj2nhPvDs");
             break;
         case "360view":
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
-            add360View(pro_360view);
+            add360View(pro_self);
             break;
     }
+}
+
+function addImage(pro_self) {
+    var pro_filename = pro_self.attr("src");
+    while (pro_filename.indexOf('/') >= 0) {
+        pro_filename = pro_filename.substr(pro_filename.indexOf('/') + 1);
+    }
+
+    var proImage_Self = $("#Pro_Image");
+    proImage_Self.attr("data-filename-x", pro_filename);
+
+    $("#ProDisplayModal").on("shown.bs.modal", function () {
+        const proImage = document.getElementById("Pro_Image");
+        proImage.classList.add("cloudimage-360");
+        window.CI360.add("Pro_Image");
+    });
+}
+
+function addYoutube(pro_self) {
+    var pro_YoutubeLink = pro_self.data("youtube-link");
+    $("#Pro_Youtube").attr("src", "https://www.youtube.com/embed/" + pro_YoutubeLink);
 }
 
 function add360View(pro_self) {
@@ -95,9 +124,7 @@ function add360View(pro_self) {
     pro360View_Self.attr("data-filename-x", pro_self.data("filename-x"));
     pro360View_Self.attr("data-amount-x", pro_self.data("amount-x"));
 
-    window.CI360.init();
     $("#ProDisplayModal").on("shown.bs.modal", function () {
-        console.log("click");
         const pro360View = document.getElementById("Pro_360View");
         pro360View.classList.add("cloudimage-360");
         window.CI360.add("Pro_360View");

@@ -1,6 +1,8 @@
 ﻿function PageReady() {
     ShoppingCarModalInit();
 
+    $(".member_name").text($.cookie('Member_Name'));
+
     $(".btn_sort_price").on("click", SortByPrice);
     $(".btn_typography").on("click", Typography);
     $(".btn_remove_favorites ").on("click", RemoveFavorites);
@@ -25,12 +27,14 @@
             }
         }
     });
+
 }
 
 function RemoveFavorites() {
     var $thispro = $(this).parents("figure").parents("div").first();
     Coker.sweet.confirm("確定將商品從收藏移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
         $thispro.remove();
+        Coker.sweet.success("成功移除商品", null, true);
     });
 }
 

@@ -1,8 +1,25 @@
 ﻿
 /* Product Display Modal */
+#ProDisplayModal.show {
+    display: flex !important;
+}
+
 #ProDisplayModal > .modal-dialog {
-    max-width: 90vmin;
-    max-height: 90vmin;
+    min-width: 90vmin;
+    min-height: 90vmin;
+}
+
+    #ProDisplayModal > .modal-dialog > .modal-content {
+        min-height: 50vmin;
+    }
+
+#Pro_Image {
+    cursor: zoom-in !important;
+}
+
+.btn_youtube {
+    font-size: 4rem;
+    color: #ff0000;
 }
 
 /* ProductSwiper */

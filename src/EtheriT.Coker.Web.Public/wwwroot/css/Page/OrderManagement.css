@@ -6,10 +6,6 @@
     color: var(--red-number);
 }
 
-.color_gray_text {
-    color: var(--gray-text);
-}
-
 /* Top Line*/
 .btn_print {
     background-color: var(--blue-button);

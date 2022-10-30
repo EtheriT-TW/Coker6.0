@@ -66,10 +66,12 @@
 }
 
 #btn_car_dropdown > span {
+
     background-color: #FF5059;
+    border:0.15rem black solid;
     z-index: 1;
-    font-size: 0.05rem;
-    padding: 0.2rem 0.5rem;
+    margin-top: .6rem;
+ 
 }
 
 /* Cart Dropdown*/

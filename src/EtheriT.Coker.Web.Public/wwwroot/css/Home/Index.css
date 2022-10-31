@@ -197,11 +197,11 @@
     background-color: var(--gray-bg-dark);
 }
 
-    #Most_Popular > div > .card-group > .card > .card-footer > li {
+    #Most_Popular > .content > figure > .most_popular_tag > li {
         font-size: 0.8rem;
     }
 
-        #Most_Popular > div > .card-group > .card > .card-footer > li::before {
+        #Most_Popular > .content > figure > .most_popular_tag > li::before {
             content: '#';
         }
 

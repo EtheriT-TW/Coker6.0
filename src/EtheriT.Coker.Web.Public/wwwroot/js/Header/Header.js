@@ -28,7 +28,7 @@ function CartDelete() {
     var $cart_pro = $self.parents("li").first();
     Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
         $cart_pro.remove();
-        $.cookie('Purchased_Type_Quantity', 0, {path: '/'});
+        $.cookie('Purchased_Type_Quantity', 0, { path: '/' });
         $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
         CarDropdownReset();
         $("#btn_car_dropdown > i").removeClass("open");
@@ -67,6 +67,6 @@ function CarDropdownReset() {
 }
 
 function CarItemAdd() {
-    console.log($("#Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_quantity"))
-    $("#Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_quantity").text($.cookie('Purchased_Item_Quantity'));
+    console.log($("#Car_Dropdown > ul li > figure > a > figcaption > .number > .pro_quantity"))
+    $("#Car_Dropdown > ul li > figure > a > figcaption > .number > .pro_quantity").text($.cookie('Purchased_Item_Quantity'));
 }

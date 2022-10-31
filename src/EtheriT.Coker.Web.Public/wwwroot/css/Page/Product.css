@@ -1,4 +1,40 @@
-﻿/* Swiper */
+﻿
+/* Button Share */
+.btn_share > a {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0) !important;
+    transition: all 1s;
+}
+
+.btn_share.show > a {
+    top: calc(-100% - 0.5rem);
+    transform: translateY(0%) scale(1) !important;
+    transition: all 1s;
+}
+
+    .btn_share.show > a:nth-child(2) {
+        transform: translateX(-450%) !important;
+    }
+
+    .btn_share.show > a:nth-child(3) {
+        transform: translateX(-350%) !important;
+    }
+
+    .btn_share.show > a:nth-child(4) {
+        transform: translateX(-250%) !important;
+    }
+
+    .btn_share.show > a:nth-child(5) {
+        transform: translateX(-150%) !important;
+    }
+
+    .btn_share.show > a:nth-child(6) {
+        transform: translateX(-50%) !important;
+    }
+
+/* Swiper */
 .swiper_four_grid {
     background-color: var(--gray-bg-light);
 }

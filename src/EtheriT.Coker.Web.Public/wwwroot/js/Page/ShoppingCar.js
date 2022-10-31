@@ -8,7 +8,7 @@ function PageReady() {
     $.cookie('subtotal', '');
     $.cookie('delivery_fee', '');
     $.cookie('total_amount', '');
-    $.cookie('payment_method', '');
+    $.cookie('payment_method', '', { path: '/' });
 
     ReloadAllAmount();
 
@@ -60,8 +60,8 @@ function PageReady() {
     $(".btn_count_plus").on("click", AmountPlus);
     $(".btn_count_minus").on("click", AmountMinus);
     $(".btn_edit_data").on("click", function () {
-        $(this).parents("#OrdererForm").children("form").children("div").toggleClass("show");
-        buy_step_swiper.update();
+        $("#OrdererForm > .default_data").toggleClass("d-none");
+        $("#OrdererForm > form").toggleClass("d-none");
     });
     $(".btn_delete_recipient").on("click", DeleteRecipient);
 
@@ -83,10 +83,11 @@ function PageReady() {
 }
 
 function PaymentRadio() {
-    $.cookie('payment_method', this.value);
+    $.cookie('payment_method', this.value, { path: '/' });
+    console.log($.cookie('payment_method'));
     var $payment = $(".payment_method");
     $payment.text($.cookie('payment_method'));
-    $payment.addClass("fs-2 fw-bold");
+    $payment.addClass("fs-2 fw-bold px-3");
     if ($.cookie('payment_method') == 'ATM') {
         $(".pay_byATM").removeClass("d-none");
     } else {
@@ -97,20 +98,22 @@ function PaymentRadio() {
 
 function RecipientRadio() {
     if (this.value == 'edit') {
-        $("#RecipientForm > form > div").addClass("show")
+        $("#RecipientForm > .default_data").addClass("d-none");
+        $("#RecipientForm > form").removeClass("d-none");
     } else {
-        $("#RecipientForm > form > div").removeClass("show");;
+        $("#RecipientForm > .default_data").removeClass("d-none");
+        $("#RecipientForm > form").addClass("d-none");
     }
     buy_step_swiper.update();
 }
 
 function BillRadio() {
     if (this.value == 'company') {
-        $("#BillForm > .default_data").removeClass("show");
-        $("#BillForm > form").addClass("show");
+        $("#BillForm > .default_data").addClass("d-none");
+        $("#BillForm > form").removeClass("d-none");
     } else {
-        $("#BillForm > .default_data").addClass("show");
-        $("#BillForm > form").removeClass("show");
+        $("#BillForm > .default_data").removeClass("d-none");
+        $("#BillForm > form").addClass("d-none");
     }
     buy_step_swiper.update();
 }

@@ -28,6 +28,11 @@
         }
     });
 
+    $('.btn_share').cShare({
+        description: 'jQuery plugin - C Share buttons',
+        showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
+    });
+    $(".btn_share").hover(ProShare);
 }
 
 function RemoveFavorites() {
@@ -70,4 +75,9 @@ function Typography() {
     var $bottom_line = $("#Facorites_Result > div > div > figure > div > figcaption > .bottom_line");
     $bottom_line.children('.pro_tag').toggleClass('col col-md');
     $bottom_line.children('.priceframe ').toggleClass('col-auto col-md-auto');
+}
+
+function ProShare() {
+    var $self = $(this);
+    $self.toggleClass('show');
 }

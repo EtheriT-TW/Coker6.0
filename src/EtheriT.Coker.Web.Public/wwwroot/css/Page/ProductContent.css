@@ -17,11 +17,6 @@
     cursor: zoom-in !important;
 }
 
-.btn_youtube {
-    font-size: 4rem;
-    color: #ff0000;
-}
-
 /* ProductSwiper */
 .ProductSwiper > .swiper-wrapper > .swiper-slide {
     height: 600px;
@@ -29,6 +24,28 @@
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display {
         cursor: pointer;
+    }
+
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_360view {
+        pointer-events: none;
+        transform: scale(0.15);
+    }
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_image {
+        display: none;
+        pointer-events: none;
+        transform: scale(0.15);
+    }
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display.img-fluid:hover + .schematic_image {
+        display: block;
+    }
+
+    .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_youtube {
+        font-size: 4rem;
+        color: #ff0000;
+        pointer-events: none
     }
 
 /* PreviewSwiper */
@@ -41,7 +58,7 @@
     top: calc(50% - 25px);
     height: 50px;
     width: 50px;
-    background-color: var(--gray-light);
+    background-color: var(--gray-bg-light-trans);
 }
 
 /* Product - Content */
@@ -60,22 +77,22 @@
         cursor: pointer;
     }
 
-#Product > .image > .tag {
+#Product > .image > .pro_tag {
     width: calc(100% - 30px);
-    height: 1.625rem;
+    height: 2rem;
     margin: 0;
     overflow: hidden;
 }
 
-    #Product > .image > .tag > li {
+    #Product > .image > .pro_tag > li {
         padding: 0.25rem 0.8rem;
         margin-right: 0.5rem;
-        font-size: 0.5rem;
+        float: left;
+        font-size: 0.8rem;
+        line-height: 1.5rem;
+        white-space: nowrap;
         background-color: var(--gray-light);
         color: var(--gray-text);
-        float: left;
-        list-style: none;
-        white-space: nowrap;
     }
 
 #Product > .content > .specification {
@@ -189,6 +206,11 @@ input:disabled + .btn_radio {
 #shareBlock {
     flex-grow: 1;
 }
+
+    #shareBlock > a {
+        margin: 0 !important;
+    }
+
 /* nav */
 .nav-link {
     color: var(--gray-text);

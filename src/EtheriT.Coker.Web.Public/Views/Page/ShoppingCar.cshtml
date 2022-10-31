@@ -245,7 +245,6 @@
 					<a class="px-4 py-2 text-decoration-underline" href="/Toilet">我要再選購</a>
 				</div>
 
-
 				<div class="card-body px-0">
 					<div class="record container d-flex align-items-center justify-content-center justify-content-sm-end">
 						<div>本次消費總金額：</div>
@@ -261,80 +260,66 @@
 							</button>
 						</div>
 
-						<form class="text-start my-4 p-sm-0 pe-5 ps-4">
-							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">
-									<div class="required_front">姓　名：</div>
-								</label>
-								<div class="default col">姓○名</div>
-								<div class="input col-sm-4 required_back position-relative">
-									<input type="text" class="form-control" id="InputName" placeholder="請輸入真實中文姓名">
+						<div class="default_data">
+							<div class="row">
+								<div class="orderer_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="col text-start">姓○名</div>
+							</div>
+							<div class="row">
+								<div class="orderer_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="col text-start">098***321</div>
+							</div>
+							<div class="row">
+								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
+								<div class="col text-start"><span class="orderer_areacode">07</span>-<span class="orderer_cellphone">12***67</span> 分機 <span class="orderer_extension">******</span></div>
+							</div>
+						</div>
+
+						<form class="px-3 px-sm-5 d-none">
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓加名">
+								<label class="required" for="OrdererInputName">姓　　名</label>
+							</div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com">
+								<label class="required" for="OrdererInputMail">E-mail</label>
+							</div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="OrdererInputPhone" class="orderer_phone form-control" type="number" placeholder="0987654321" value="0987654321">
+								<label class="required" for="OrdererInputPhone">手機號碼</label>
+							</div>
+							<div class="row">
+								<div class="form-floating mb-3 col-4 col-sm-2">
+									<input id="OrdererInputAreaCode" class="orderer_areacode form-control" type="number" placeholder="07" value="07">
+									<label class="px-4" for="OrdererInputAreaCode">區碼</label>
+								</div>
+								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+									<input id="OrdererInputCellPhone" class="orderer_cellphone form-control" type="number" placeholder="1234567" value="123456767">
+									<label for="OrdererInputCellPhone">聯絡電話</label>
+								</div>
+								<div class="form-floating mb-3 col-6 col-sm-3">
+									<input id="OrdererInputExtension" class="orderer_extension form-control" type="number" placeholder="123456" value="111111">
+									<label class="px-4" for="OrdererInputExtension">分機</label>
 								</div>
 							</div>
-
-							<div class="mb-2 row align-items-center">
-								<label for="InputMail" class="col-auto  col-sm-2 col-form-label text-end">E-mail：</label>
-								<div class="col-sm-4">
-									<input type="text" class="form-control" id="InputName">
-								</div>
-							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">
-									<div class="required_front">手機號碼：</div>
-								</label>
-								<div class="default col">0912-****456</div>
-								<div class="input col-sm-4 phone justify-content-between align-items-center">
-									<div class="col-3 phone_front">
-										<input type="number" class="phone_front form-control" id="InputCellPhoneFront" maxlength="4">
-									</div>
-									<div>-</div>
-									<div class="col-8 phone_back required_back position-relative">
-										<input type="number" class="phone_back form-control" id="InputCellPhoneBack" maxlength="6">
-									</div>
-								</div>
-								<div class="example col">(例如：0900-123456)</div>
-							</div>
-
-							<div class="mb-2 row align-items-center contact_phone d-flex">
-								<label for="InputPhone" class="col-auto col-sm-2 col-form-label text-end py-0">聯絡電話：</label>
-								<div class="default col">07-1234***分機</div>
-								<div class="input col-sm-4 phone justify-content-between align-items-center">
-									<div class="col-3 col-sm phone_front">
-										<input type="number" class="phone_front form-control" id="InputPhoneFront" maxlength="4">
-									</div>
-									<div>-</div>
-									<div class="col-8 phone_back">
-										<input type="number" class="phone_back form-control" id="InputPhoneBack" maxlength="6">
-									</div>
-								</div>
-								<div class="input col-12 col-sm-3 row align-items-center">
-									<div class="col-3 col-sm-auto text-center mt-2 mt-sm-0">分機</div>
-									<div class="col-sm col-6 phone_ext">
-										<input id="InputExt" type="number" class="form-control text-center px-2 mt-2 mt-sm-0">
-									</div>
-								</div>
-								<div class="col example mt-2 mt-sm-0">(例如：0900-123456)</div>
-							</div>
-
-							<div class="mb-2 row align-items-center">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">
-									<div class="required_front">地　　址：</div>
-								</label>
-								<div class="col-sm-2">
-									<select id="inputCounty" class="form-select">
-										<option selected>請選擇縣市</option>
-										<option>...</option>
+							<div class="row">
+								<div class="form-floating mb-3 col-6 col-sm-3">
+									<select id="OrdererSelectCity" class="orderer_city form-select" aria-label="Floating label select example">
+										<option>請選擇縣市</option>
+										<option value="1" selected>高雄市</option>
 									</select>
+									<label class="px-4 required" for="OrdererSelectCity">縣市</label>
 								</div>
-								<div class="col-sm-2 my-2 my-sm-0">
-									<select id="inputCity" class="form-select">
-										<option selected>請選擇鄉鎮</option>
-										<option>...</option>
+								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
+									<select id="OrdererSelectTown" class="orderer_town form-select" aria-label="Floating label select example">
+										<option>請選擇鄉鎮</option>
+										<option value="1" selected>前鎮區</option>
 									</select>
+									<label class="required" for="OrdererSelectTown">鄉鎮</label>
 								</div>
-								<div class="col-sm-4 required_back position-relative">
-									<input type="text" class="form-control" id="InputAddress">
+								<div class="form-floating mb-3 col-12 col-sm-6">
+									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="復興四路">
+									<label class="px-4 required" for="OrdererInputAddress">地址</label>
 								</div>
 							</div>
 						</form>
@@ -359,89 +344,75 @@
 							</ul>
 						</div>
 
-						<form class="text-start my-4 p-sm-0 pe-5 ps-4">
-							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">
-									<div class="required_front">姓　名：</div>
-								</label>
-								<div class="default col">姓○名</div>
-								<div class="input col-sm-4 required_back position-relative">
-									<input type="text" class="form-control" id="InputName" placeholder="請輸入真實中文姓名">
-								</div>
-							</div>
-
-							<div class="mb-2 row align-items-center">
-								<label for="InputMail" class="col-auto  col-sm-2 col-form-label text-end">E-mail：</label>
-								<div class="col-sm-4">
-									<input type="text" class="form-control" id="InputMail">
-								</div>
-							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">
-									<div class="required_front">手機號碼：</div>
-								</label>
-								<div class="default col">0912-******</div>
-								<div class="input col-sm-4 phone justify-content-between align-items-center">
-									<div class="col-3 phone_front">
-										<input type="number" class="phone_front form-control" id="InputCellPhoneFront" maxlength="4">
-									</div>
-									<div>-</div>
-									<div class="col-8 phone_back required_back position-relative">
-										<input type="number" class="phone_back form-control" id="InputCellPhoneBack" maxlength="6">
-									</div>
-								</div>
-								<div class="example col ms-0 ms-sm-4">(例如：0900-123456)</div>
-							</div>
-
-							<div class="mb-2 row align-items-center contact_phone d-flex">
-								<label for="InputPhone" class="col-auto col-sm-2 col-form-label text-end py-0">聯絡電話：</label>
-								<div class="default col">07-1234***分機</div>
-								<div class="input col-sm-4 phone justify-content-between align-items-center">
-									<div class="col-3 col-sm phone_front">
-										<input type="number" class="phone_front form-control" id="InputPhoneFront" maxlength="4">
-									</div>
-									<div>-</div>
-									<div class="col-8 phone_back">
-										<input type="number" class="phone_back form-control" id="InputPhoneBack" maxlength="6">
-									</div>
-								</div>
-								<div class="input col-12 col-sm-3 row align-items-center">
-									<div class="col-3 col-sm-auto text-center mt-2 mt-sm-0">分機</div>
-									<div class="col-sm col-6 phone_ext">
-										<input id="InputExt" type="number" class="form-control text-center px-2 mt-2 mt-sm-0">
-									</div>
-								</div>
-								<div class="col example mt-2 mt-sm-0">(例如：0900-123456)</div>
-							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end py-0">
-									<div class="required_front">地　　址：</div>
-								</label>
-								<div class="default col">地址資料***</div>
-								<div class="input col-sm-2">
-									<select id="inputCounty" class="form-select">
-										<option selected>請選擇縣市</option>
-										<option>...</option>
-									</select>
-								</div>
-								<div class="input col-sm-2 my-2 my-sm-0">
-									<select id="inputCity" class="form-select">
-										<option selected>請選擇鄉鎮</option>
-										<option>...</option>
-									</select>
-								</div>
-								<div class="input col-sm-4 required_back position-relative">
-									<input type="text" class="form-control" id="InputAddress">
-								</div>
-							</div>
-
+						<div class="default_data">
 							<div class="row">
-								<label for="InputNotes" class="col-auto col-sm-2 col-form-label text-end">備　　註：</label>
-								<div class="col-sm-9">
-									<textarea class="form-control" id="InputNotes" rows="3"></textarea>
+								<div class="recipient_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="col text-start">姓○名</div>
+							</div>
+							<div class="row">
+								<div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="col text-start">098***321</div>
+							</div>
+							<div class="row">
+								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
+								<div class="col text-start"><span class="recipient_areacode">07</span>-<span class="recipient_cellphone">12***67</span> 分機 <span class="recipient_extension">******</span></div>
+							</div>
+							<div class="row">
+								<div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
+								<div class="col text-start">高雄市前鎮區***</div>
+							</div>
+						</div>
+
+						<form class="px-3 px-sm-5 d-none">
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="">
+								<label class="required" for="RecipientInputName">姓　　名</label>
+							</div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="name@example.com" value="">
+								<label class="required" for="RecipientInputMail">E-mail</label>
+							</div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="RecipientInputPhone" class="recipient_phone form-control" type="number" placeholder="0987654321" value="">
+								<label class="required" for="RecipientInputPhone">手機號碼</label>
+							</div>
+							<div class="row">
+								<div class="form-floating mb-3 col-4 col-sm-2">
+									<input id="RecipientInputAreaCode" class="recipient_areacode form-control" type="number" placeholder="07" value="">
+									<label class="px-4" for="RecipientInputAreaCode">區碼</label>
 								</div>
+								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+									<input id="RecipientInputCellPhone" class="recipient_cellphone form-control" type="number" placeholder="1234567" value="">
+									<label for="RecipientInputCellPhone">聯絡電話</label>
+								</div>
+								<div class="form-floating mb-3 col-6 col-sm-3">
+									<input id="RecipientInputExtension" class="recipient_extension form-control" type="number" placeholder="123456" value="">
+									<label class="px-4" for="RecipientInputExtension">分機</label>
+								</div>
+							</div>
+							<div class="row">
+								<div class="form-floating mb-3 col-6 col-sm-3">
+									<select id="RecipientSelectCity" class="recipient_city form-select" aria-label="Floating label select example">
+										<option selected>請選擇縣市</option>
+										<option value="1">高雄市</option>
+									</select>
+									<label class="px-4 required" for="RecipientSelectCity">縣市</label>
+								</div>
+								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
+									<select id="RecipientSelectTown" class="recipient_town form-select" aria-label="Floating label select example">
+										<option>請選擇鄉鎮</option>
+										<option value="1">前鎮區</option>
+									</select>
+									<label class="required" for="RecipientSelectTown">鄉鎮</label>
+								</div>
+								<div class="form-floating mb-3 col-12 col-sm-6">
+									<input id="RecipientInputAddress" class="recipient_address form-control" type="text" placeholder="復興四路" value="">
+									<label class="px-4 required" for="RecipientInputAddress">地址</label>
+								</div>
+							</div>
+							<div class="form-floating mb-3 col-12">
+								<textarea id="TextareaNote" class="form-control" placeholder="備註" style="height: 150px"></textarea>
+								<label for="TextareaNote">Comments</label>
 							</div>
 						</form>
 					</div>
@@ -465,59 +436,52 @@
 							</ul>
 						</div>
 
-						<div class="default_data text-start my-4 p-sm-0 px-4 show">
-							<div class="mb-2 row align-items-center d-flex">
-								<div for="InputName" class="col-auto col-sm-2 col-form-label text-end py-0">姓　名：</div>
-								<div class="default col">姓○名</div>
+						<div class="default_data">
+							<div class="row">
+								<div class="bill_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="col text-start">姓○名</div>
 							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<div for="InputCellPhone" class="col-auto col-sm-2 col-form-label text-end py-0">手機號碼：</div>
-								<div class="default col">0912-******</div>
+							<div class="row">
+								<div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="col text-start">098***321</div>
 							</div>
-
-							<div class="mb-2 row align-items-center contact_phone d-flex">
-								<div for="InputPhone" class="col-auto col-sm-2 col-form-label text-end py-0">聯絡電話：</div>
-								<div class="default col">07-1234***分機</div>
+							<div class="row">
+								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
+								<div class="col text-start"><span class="bill_areacode">07</span>-<span class="bill_cellphone">12***67</span> 分機 <span class="bill_extension">******</span></div>
 							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<div for="InputAddress" class="col-auto col-sm-2 col-form-label text-end py-0">地　　址：</div>
-								<div class="default col">地址資料***</div>
+							<div class="row">
+								<div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
+								<div class="col text-start">高雄市前鎮區***</div>
 							</div>
 						</div>
 
-						<form class="text-start my-4 p-sm-0 pe-5 ps-4">
-							<div class="mb-2 row">
-								<label for="InputInvoice" class="col-auto col-sm-2 col-form-label text-end">
-									<div class="required_front">發票抬頭：</div>
-								</label>
-								<div class="col-sm-6 required_back position-relative">
-									<input type="text" class="form-control" id="InputInvoice">
-								</div>
+						<form class="px-3 px-sm-5 d-none">
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="BillInputInvoice" class="bill_name form-control" type="text" placeholder="invoice" value="">
+								<label class="required" for="BillInputInvoice">發票抬頭</label>
 							</div>
-
-							<div class="mb-2 row">
-								<label for="InputGUINum" class="col-auto col-sm-2 col-form-label text-end">
-									<div class="required_front">統　　編：</div>
-								</label>
-								<div class="col-sm-6 required_back position-relative">
-									<input type="text" class="form-control" id="InputGUINum">
-								</div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="BillInputGUINum" class="bill_guinum form-control" type="text" placeholder="GUINum" value="">
+								<label class="required" for="BillInputGUINum">統　　編</label>
 							</div>
-
-							<div class="mb-2 row align-items-center">
-								<label for="InputAddress" class="col-auto col-sm-2 col-form-label text-end">
-									<div class="required_front">地　　址：</div>
-								</label>
-								<div class="col-sm-2">
-									<input type="text" class="form-control" aria-label="State" placeholder="請選擇縣市">
+							<div class="row">
+								<div class="form-floating mb-3 col-6 col-sm-3">
+									<select id="RecipientSelectCity" class="recipient_city form-select" aria-label="Floating label select example">
+										<option selected>請選擇縣市</option>
+										<option value="1">高雄市</option>
+									</select>
+									<label class="px-4 required" for="RecipientSelectCity">縣市</label>
 								</div>
-								<div class="col-sm-2 my-2 my-sm-0">
-									<input type="text" class="form-control" aria-label="City" placeholder="請選擇鄉鎮">
+								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
+									<select id="RecipientSelectTown" class="recipient_town form-select" aria-label="Floating label select example">
+										<option>請選擇鄉鎮</option>
+										<option value="1">前鎮區</option>
+									</select>
+									<label class="required" for="RecipientSelectTown">鄉鎮</label>
 								</div>
-								<div class="col-sm-4 required_back position-relative">
-									<input type="text" class="form-control" id="InputAddress">
+								<div class="form-floating mb-3 col-12 col-sm-6">
+									<input id="RecipientInputAddress" class="recipient_address form-control" type="text" placeholder="復興四路" value="">
+									<label class="px-4 required" for="RecipientInputAddress">地址</label>
 								</div>
 							</div>
 						</form>
@@ -526,7 +490,7 @@
 					<div id="PaymentMethod" class="title px-3 py-2 my-3 d-flex align-items-center justify-content-between">
 						<div class="align-items-center d-flex">
 							<div class="fs-5">付款方式</div>
-							<div class="payment_method px-3">尚未選擇付款方式</div>
+							<div class="payment_method ps-2">尚未選擇付款方式</div>
 						</div>
 						<button class="btn_goprev bg-transparent border-0">變更付款方式</button>
 					</div>
@@ -611,72 +575,64 @@
 					<div id="OrdererData">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">訂購人資料</div>
 
-						<div class="text-start my-4 p-sm-0 px-4">
-							<div class="mb-2 row align-items-center d-flex">
-								<div class="col-auto col-sm-2 text-end py-0">姓　　名：</div>
-								<div class="default col">姓○名</div>
+						<div class="content">
+							<div class="row">
+								<div class="orderer_name col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="col text-start">姓○名</div>
 							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<div class="col-auto col-sm-2 text-end py-0">手機號碼：</div>
-								<div class="default col">090**-**456</div>
+							<div class="row">
+								<div class="orderer_phone col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="col text-start">098***321</div>
 							</div>
-
-							<div class="mb-2 row align-items-center contact_phone">
-								<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
-								<div class="default col">07-1234***分機</div>
+							<div class="row">
+								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+								<div class="col text-start"><span class="orderer_areacode">07</span>-<span class="orderer_cellphone">12***67</span> 分機 <span class="orderer_extension">******</span></div>
 							</div>
 						</div>
 					</div>
 
-					<div id="RecipientForm">
+					<div id="RecipientData">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">收件人資料</div>
 
-						<div class="text-start my-4 p-sm-0 px-4">
-							<div class="mb-2 row align-items-center d-flex">
-								<div class="col-auto col-sm-2 text-end py-0">姓　　名：</div>
-								<div class="default col">姓○名</div>
+						<div class="content">
+							<div class="row">
+								<div class="recipient_name col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="col text-start">姓○名</div>
 							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<div class="col-auto col-sm-2 text-end py-0">手機號碼：</div>
-								<div class="default col">090**-**456</div>
+							<div class="row">
+								<div class="recipient_phone col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="col text-start">098***321</div>
 							</div>
-
-							<div class="mb-2 row align-items-center contact_phone">
-								<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
-								<div class="default col">07-1234***分機</div>
+							<div class="row">
+								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+								<div class="col text-start"><span class="recipient_areacode">07</span>-<span class="recipient_cellphone">12***67</span> 分機 <span class="recipient_extension">******</span></div>
 							</div>
-
-							<div class="mb-2 row align-items-center">
-								<div class="col-auto col-sm-2 text-end">地　　址：</div>
-								<div class="default col">地址資料***</div>
+							<div class="row">
+								<div class="recipient_phone col-auto col-sm-2 text-end ps-4">地　　址：</div>
+								<div class="col text-start">高雄市前鎮區***</div>
 							</div>
 						</div>
 					</div>
 
-					<div id="BillForm">
+					<div id="BillData">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
 
-						<div class="text-start my-4 p-sm-0 px-4">
-							<div class="mb-2 row align-items-center d-flex">
-								<div class="col-auto col-sm-2 text-end py-0">姓　　名：</div>
-								<div class="default col">姓○名</div>
+						<div class="content">
+							<div class="row">
+								<div class="bill_name col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="col text-start">姓○名</div>
 							</div>
-
-							<div class="mb-2 row align-items-center d-flex">
-								<div class="col-auto col-sm-2 text-end py-0">手機號碼：</div>
-								<div class="default col">090**-**456</div>
+							<div class="row">
+								<div class="bill_phone col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="col text-start">098***321</div>
 							</div>
-
-							<div class="mb-2 row align-items-center contact_phone">
-								<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
-								<div class="default col">07-1234***分機</div>
+							<div class="row">
+								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+								<div class="col text-start"><span class="bill_areacode">07</span>-<span class="bill_cellphone">12***67</span> 分機 <span class="bill_extension">******</span></div>
 							</div>
-
-							<div class="mb-2 row align-items-center">
-								<div class="col-auto col-sm-2 text-end">地　　址：</div>
-								<div class="default col">地址資料***</div>
+							<div class="row">
+								<div class="bill_phone col-auto col-sm-2 text-end ps-4">地　　址：</div>
+								<div class="col text-start">高雄市前鎮區***</div>
 							</div>
 						</div>
 					</div>

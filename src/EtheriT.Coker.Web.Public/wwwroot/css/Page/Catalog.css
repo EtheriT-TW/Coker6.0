@@ -1,4 +1,10 @@
-﻿.catalog_item > .img_frame > .btn_more {
+﻿.catalog_item:hover > .img_frame {
+    transform: scale(1.25);
+    z-index: 1;
+    box-shadow: 0px 5px 25px gray;
+}
+
+.catalog_item > .img_frame > .btn_more {
     background-color: var(--black-text-trans);
     display: none;
 }

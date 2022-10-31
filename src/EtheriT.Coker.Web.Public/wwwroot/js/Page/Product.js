@@ -75,6 +75,12 @@
             prevEl: ".btn_swiper_prev_ads",
         },
     });
+
+    $('.btn_share').cShare({
+        description: 'jQuery plugin - C Share buttons',
+        showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
+    });
+    $(".btn_share").hover(ProShare);
 }
 
 function SortByPrice() {
@@ -91,4 +97,9 @@ function SortByPrice() {
         $sort_icon.toggleClass('fa-caret-up');
         $sort_icon.toggleClass('fa-arrows-up-down');
     }
+}
+
+function ProShare() {
+    var $self = $(this);
+    $self.toggleClass('show');
 }

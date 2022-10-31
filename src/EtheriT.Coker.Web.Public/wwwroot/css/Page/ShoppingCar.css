@@ -17,6 +17,22 @@ input[type="number"] {
     content: '*';
 }
 
+.required::before {
+    color: var(--red-text);
+    content: '*';
+}
+
+.required::after {
+    color: var(--red-text);
+    content: '必填';
+    font-size: 0.5rem;
+}
+
+.required_front::before {
+    color: var(--red-text);
+    content: '*';
+}
+
 .required_back::after {
     color: var(--red-text);
     content: '必填';
@@ -231,67 +247,6 @@ input[type="number"] {
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
-
-/* Step3 - Orderer Form */
-#OrdererForm > .title > button {
-    color: var(--black-text);
-}
-
-#OrdererForm > form > div, #OrdererForm > form > div > .input, #OrdererForm > form > div > .example {
-    display: none;
-}
-
-    #OrdererForm > form > div.show, #OrdererForm > form > div.show > .input, #OrdererForm > form > div.show > .example {
-        display: flex;
-    }
-
-    #OrdererForm > form > div > .default {
-        display: flex;
-    }
-
-    #OrdererForm > form > div.show > .default {
-        display: none;
-    }
-
-    #OrdererForm > form > div > .example {
-        font-size: 0.8rem;
-        color: var(--gray-text);
-    }
-
-/* Step3 - Recipient Form */
-#RecipientForm > .title {
-    white-space: nowrap;
-}
-
-#RecipientForm > form > div, #RecipientForm > form > div > .input, #RecipientForm > form > div > .example {
-    display: none;
-}
-
-    #RecipientForm > form > div.show, #RecipientForm > form > div.show > .input, #RecipientForm > form > div.show > .example {
-        display: flex;
-    }
-
-    #RecipientForm > form > div > .default {
-        display: flex;
-    }
-
-    #RecipientForm > form > div.show > .default {
-        display: none;
-    }
-
-    #RecipientForm > form > div > .example {
-        font-size: 0.8rem;
-        color: var(--gray-text);
-    }
-
-/* Step3 - Bill Form */
-#BillForm > .default_data, #BillForm > form {
-    display: none;
-}
-
-    #BillForm > .default_data.show, #BillForm > form.show {
-        display: block;
-    }
 
 /* Step3 - Payment Method */
 #PaymentMethod {

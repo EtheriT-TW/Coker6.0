@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Core.Models
+{
+    public class Token
+    {
+        public Guid id { get; set; } = Guid.NewGuid();
+        public long? UserID { get; set; }
+        public DateTime StartTime { get; set; } = DateTime.Now;
+        public DateTime? EndTime { get; set; }
+        public string ip { get; set; }
+    }
+}

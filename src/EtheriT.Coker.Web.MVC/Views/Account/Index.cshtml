@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "登入";
 }
+<script src="~/js/Account/Index.min.js" asp-append-version="true"></script>
 
 <div class="row align-items-center justify-content-center align-items-center">
     <div class="col-md-12">
@@ -8,7 +9,7 @@
             <div class="text-center mb-5">
                 <h3 class="text-uppercase">登入 <strong>Coker 6.0</strong></h3>
             </div>
-            <form asp-controller="Dashboard" asp-action="Index" method="post">
+            <form asp-controller="Account" asp-action="Login" method="post">
                 <div class="form-group first">
                     <label for="username">使用者帳號</label>
                     <input type="text" class="form-control" placeholder="請輸入Email" id="username">
@@ -27,7 +28,7 @@
                         <a class="forgot-pass" asp-area="" asp-controller="Account" asp-action="Forget">忘記密碼</a>
                     </span>
                 </div>
-                <input type="submit" value="登入" class="btn btn-block py-2 btn-secondary">
+                <input id="loginBtn" type="button" value="登入" class="btn btn-block py-2 btn-secondary">
                 <span class="text-center my-3 d-block">或</span>
                 <div class="">
                     <a href="#" class="btn btn-block py-2 btn-facebook">

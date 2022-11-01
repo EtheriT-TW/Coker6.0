@@ -6,8 +6,10 @@
 var PreLoader;
 $(window).on("load",
     function () {
+        typeof (PageReady) === "function" && PageReady();
         $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })
-    });
+    }
+);
 (function (a) {
     var tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

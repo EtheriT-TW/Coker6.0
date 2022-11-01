@@ -9,6 +9,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Web.MVC", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Web.Public", "src\EtheriT.Coker.Web.Public\EtheriT.Coker.Web.Public.csproj", "{51AE817B-759A-435E-B359-853018E23F04}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.EntityFrameworkCore", "src\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj", "{43DBB0CF-8F0F-4867-9BE4-010EBC2CD5B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Core", "src\EtheriT.Coker.Core\EtheriT.Coker.Core.csproj", "{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Application.Shared", "src\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj", "{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Application", "src\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj", "{D8036602-9658-4AFA-B75A-322121A37006}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +31,22 @@ Global
 		{51AE817B-759A-435E-B359-853018E23F04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51AE817B-759A-435E-B359-853018E23F04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51AE817B-759A-435E-B359-853018E23F04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43DBB0CF-8F0F-4867-9BE4-010EBC2CD5B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43DBB0CF-8F0F-4867-9BE4-010EBC2CD5B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43DBB0CF-8F0F-4867-9BE4-010EBC2CD5B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43DBB0CF-8F0F-4867-9BE4-010EBC2CD5B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8036602-9658-4AFA-B75A-322121A37006}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8036602-9658-4AFA-B75A-322121A37006}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8036602-9658-4AFA-B75A-322121A37006}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8036602-9658-4AFA-B75A-322121A37006}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -30,6 +54,10 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{D5483E43-7BC7-4663-ABCE-B6E892707983} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
 		{51AE817B-759A-435E-B359-853018E23F04} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
+		{43DBB0CF-8F0F-4867-9BE4-010EBC2CD5B4} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
+		{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
+		{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
+		{D8036602-9658-4AFA-B75A-322121A37006} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8029B80B-F0C2-4A1D-B6CF-B53520B1D55B}

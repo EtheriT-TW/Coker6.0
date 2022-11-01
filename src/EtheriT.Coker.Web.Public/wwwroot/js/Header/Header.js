@@ -47,7 +47,7 @@ function CarDropdownReset() {
             item_quantity = item.find(".pro_quantity");
 
         item_link.attr("href", "/Toilet/01");
-        item_image.attr("src", "images/product/pro_pic_01.jpg");
+        item_image.attr("src", "../images/product/pro_pic_01.jpg");
         item_name.text("CS230 一段省水分離式幼兒馬桶");
         item_unit.text((9100).toLocaleString('en-US'));
         item_quantity.text($.cookie('Purchased_Item_Quantity'));

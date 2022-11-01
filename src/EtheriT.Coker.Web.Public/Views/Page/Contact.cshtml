@@ -1,9 +1,4 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-
+﻿
 <link rel="stylesheet" href="~/css/Page/Contact.min.css" asp-append-version="true" />
 <script src="~/js/Page/Contact.min.js" asp-append-version="true"></script>
 
@@ -17,35 +12,38 @@
 
 <div class="fs-2 text-center bigtitle">聯絡我們</div>
 
-<form id="ContactForm" class="col-12 col-lg-6 col-sm-8 container bg-white rounded shadow p-5 mt-3 mb-5">
-
+<form id="ContactForm" class="col-12 col-lg-6 col-sm-8 container bg-white rounded shadow p-5 mt-3 mb-5 needs-validation" novalidate>
 	<div class="form-floating mb-3 col-12 col-sm-6">
-		<select class="form-select" id="SelectType" aria-label="Select the problem location">
-			<option value="1" selected>台北分公司</option>
+		<select class="form-select" id="SelectType" aria-label="Select the problem location" required>
+			<option selected disabled value="">問題分類</option>
+			<option value="1">台北分公司</option>
 			<option value="2">新竹分公司</option>
 			<option value="3">台中分公司</option>
 			<option value="4">台南分公司</option>
 			<option value="5">高雄分公司</option>
 			<option value="6">總公司</option>
 		</select>
+		<div class="invalid-feedback">請選擇問題分類</div>
 		<label class="required" for="floatingSelect">問題分類</label>
 	</div>
 
 	<div class="title row gx-0">
 		<div class="form-floating col-12 col-sm-6 mb-3">
-			<input type="text" class="form-control" id="InputName" placeholder="姓○名">
+			<input type="text" class="form-control" id="InputName" placeholder="姓○名" required>
 			<label class="required" for="InputName">姓　名</label>
+			<div class="invalid-feedback">請輸入真實姓名</div>
 		</div>
 
-		<div class="call col-12 col-sm-6 align-self-center mb-3 py-sm-0">
+		<div class="call col-12 col-sm-6 mt-1 mb-3 py-sm-0">
 			<div class="required">稱　謂</div>
 			<div class="d-flex">
 				<div class="form-check pe-3">
-					<input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" checked>
+					<input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" required>
 					<label class="form-check-label" for="RadioSir">先生</label>
+					<div class="invalid-feedback">請選擇稱謂</div>
 				</div>
 				<div class="form-check">
-					<input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender">
+					<input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender" required>
 					<label class="form-check-label" for="RadioMiss">小姐</label>
 				</div>
 			</div>
@@ -53,8 +51,9 @@
 	</div>
 
 	<div class="form-floating mb-3">
-		<input type="email" class="form-control" id="InputMaill" placeholder="name@example.com">
+		<input type="email" class="form-control" id="InputMaill" placeholder="name@example.com" required>
 		<label class="required" for="InputMaill">Email</label>
+		<div class="invalid-feedback">請輸入電子郵件</div>
 	</div>
 
 	<div class="form-floating mb-3">
@@ -63,13 +62,15 @@
 	</div>
 
 	<div class="form-floating mb-3">
-		<input type="text" class="form-control" id="InputSubject " placeholder="Ask Subject">
+		<input type="text" class="form-control" id="InputSubject " placeholder="Ask Subject" required>
 		<label class="required" for="InputSubject ">詢問主題</label>
+		<div class="invalid-feedback">請輸入詢問主題</div>
 	</div>
 
 	<div class="form-floating mb-3">
-		<textarea class="form-control" id="TextareaDescription" style="height: 150px" placeholder="Content Description"></textarea>
+		<textarea class="form-control" id="TextareaDescription" style="height: 150px" placeholder="Content Description" required></textarea>
 		<label class="required" for="TextareaDescription">內容描述</label>
+		<div class="invalid-feedback">請輸入詢問內容</div>
 	</div>
 
 	<div id="Explanation">
@@ -89,14 +90,15 @@
 		</p>
 
 		<div class="form-check">
-			<input id="CheckAgree" class="form-check-input" type="checkbox" value="">
+			<input id="CheckAgree" class="form-check-input" type="checkbox" value="" required>
 			<label for="CheckAgree">我已閱讀並同意隱私權及個人資料保護說明</label>
+			<div class="invalid-feedback">請閱讀並同意隱私權及個人資料保護說明</div>
 		</div>
 	</div>
 
 	<div id="Endline" class="row gx-0 align-items-center mt-3">
 		<div class="form-floating col-5 col-sm-3">
-			<input id="InputCaptcha" type="text" class="form-control" placeholder="Captcha">
+			<input id="InputCaptcha" type="text" class="form-control" placeholder="Captcha" required>
 			<label class="required" for="InputCaptcha">驗證碼</label>
 		</div>
 
@@ -106,6 +108,6 @@
 			<i class="fa-solid fa-repeat"></i>
 		</button>
 
-		<button class="btn_send border-0 rounded py-2 my-3 text-white col-12 col-sm" type="submit">&ensp;送出</button>
+		<button class="btn_send border-0 rounded py-2 my-3 text-white col-12 col-sm">&ensp;送出</button>
 	</div>
 </form>

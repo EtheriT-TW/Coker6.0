@@ -27,6 +27,14 @@
             nextEl: ".btn_swiper_next_product",
             prevEl: ".btn_swiper_prev_product",
         },
+        breakpoints: {
+            768: {
+                allowTouchMove: true,
+            },
+            992: {
+                allowTouchMove: false,
+            }
+        },
         thumbs: {
             swiper: preview_swiper,
         },
@@ -38,7 +46,6 @@
         window.CI360.destroy();
         $("#Pro_Youtube").attr("src", "");
     })
-
 
     $('#shareBlock').cShare({
         description: 'jQuery plugin - C Share buttons',
@@ -88,7 +95,6 @@ function ShowBigPro() {
         case "youtube":
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
             addYoutube(pro_self);
-            //pro_viewModalSpace.children(".pro_youtube").attr("src", "https://www.youtube.com/embed/JGEj2nhPvDs");
             break;
         case "360view":
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");

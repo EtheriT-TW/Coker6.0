@@ -69,9 +69,12 @@
     border: 0.15rem black solid;
     background-color: var(--red-popup);
     top: 0;
-    right: -1rem;
-    transform: scale(0.8);
+    left: 2rem;
+    transform: scale(0.75);
     z-index: 1;
+    height: 1.8rem;
+    min-width: 1.8rem;
+    line-height: 1rem;
 }
 
 /* Cart Dropdown*/

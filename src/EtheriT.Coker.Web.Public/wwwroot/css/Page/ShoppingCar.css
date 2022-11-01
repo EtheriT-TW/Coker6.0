@@ -12,6 +12,7 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
+/* Required Sign */
 .required_front::before {
     color: var(--red-text);
     content: '*';
@@ -28,23 +29,11 @@ input[type="number"] {
     font-size: 0.5rem;
 }
 
-.required_front::before {
-    color: var(--red-text);
-    content: '*';
-}
-
-.required_back::after {
-    color: var(--red-text);
-    content: '必填';
-    font-size: 0.8rem;
-    position: absolute;
-    right: -1.5rem;
-    top: 50%;
-    transform: translate(0, -50%);
-}
-
-.phone_back.required_back::after {
-    right: -2.25rem;
+/* Generic Button Style */
+.btn_gray_dark {
+    background-color: var(--gray-text);
+    padding: 0.5rem;
+    width: 12.5rem;
 }
 
 /* Recipient Modal */

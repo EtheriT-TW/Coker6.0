@@ -1,13 +1,13 @@
-﻿var total_price = 0;
+var total_price = 0;
 var total_price_end = 0;
 var subtotal_price = 0;
 var buy_step_swiper;
 
 function PageReady() {
 
-    $.cookie('subtotal', '');
-    $.cookie('delivery_fee', '');
-    $.cookie('total_amount', '');
+    $.cookie('subtotal', '', { path: '/' });
+    $.cookie('delivery_fee', '', { path: '/' });
+    $.cookie('total_amount', '', { path: '/' });
     $.cookie('payment_method', '', { path: '/' });
 
     ReloadAllAmount();
@@ -57,8 +57,10 @@ function PageReady() {
     /* Normal Button */
     $(".btn_move_to_favorites").on("click", MoveToFavorites);
     $(".btn_remove_pro").on("click", RemoveProduct);
+
     $(".btn_count_plus").on("click", AmountPlus);
     $(".btn_count_minus").on("click", AmountMinus);
+
     $(".btn_edit_data").on("click", function () {
         $("#OrdererForm > .default_data").toggleClass("d-none");
         $("#OrdererForm > form").toggleClass("d-none");
@@ -84,7 +86,6 @@ function PageReady() {
 
 function PaymentRadio() {
     $.cookie('payment_method', this.value, { path: '/' });
-    console.log($.cookie('payment_method'));
     var $payment = $(".payment_method");
     $payment.text($.cookie('payment_method'));
     $payment.addClass("fs-2 fw-bold px-3");

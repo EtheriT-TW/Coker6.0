@@ -19,7 +19,6 @@
 
 function AddToCar() {
     $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()), { path: '/' });
-    console.log($('.input_pro_quantity').val());
     Coker.sweet.success("成功加入購物車！", null, true);
     if ($.cookie('Purchased_Type_Quantity') > 0) {
         CarItemAdd();

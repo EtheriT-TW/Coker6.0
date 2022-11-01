@@ -14,7 +14,7 @@
     --red-main-light: #F3BDBD;
     --red-number: #B8230F;
     --red-text: #962209;
-    --red-popup: #FF5152;
+    --red-popup: #FF5059;
     --gray-blue: #E0E3E8;
     --gray-bg-light: #F4F4F4;
     --gray-bg-light-trans: #F4F4F4C0;
@@ -35,6 +35,10 @@
 html {
     font-size: 87.5%;
 }
+
+    html.locked {
+        overflow: hidden;
+    }
 
 html, body {
     height: 100%;

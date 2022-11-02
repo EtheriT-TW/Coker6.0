@@ -1,7 +1,7 @@
 ﻿
 
-<link rel="stylesheet" href="~/css/Page/ShoppingCar.min.css" asp-append-version="true" />
-<script src="~/js/Page/ShoppingCar.min.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
+<script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
@@ -181,36 +181,36 @@
 				</div>
 
 				<div class="card-body px-0">
-					<ul class="px-5 mb-3 transport">
-						<li class="d-flex">
+					<form id="ShippingRadio" class="px-5 mb-3 shipping needs-validation" novalidate>
+						<div class="d-flex">
 							<div class="form-check w-50 text-start">
-								<input class="form-check-input" type="radio" name="TransportRadio" id="FreeTrans">
-								<label class="form-check-label" for="FreeTrans">
-									免運
-								</label>
+								<input id="FreeShip" class="form-check-input" type="radio" name="ShippingRadio" required>
+								<label class="form-check-label" for="FreeShip">免運</label>
+								<div class="invalid-feedback">請選擇運送方式</div>
 							</div>
 							<div class="w-50">免運<span>(您已符合免運條件)</span></div>
-						</li>
-					</ul>
+						</div>
+					</form>
 
 					<div class="title px-3 py-2 d-flex align-items-center justify-content-between">
 						<div class="fs-5 my-2">付款方式</div>
 					</div>
 
-					<ul class="px-5 text-start py-4 border-bottom mb-4">
-						<li class="form-check py-2">
-							<input id="radio_payment_atm" class="form-check-input" type="radio" name="PaymentRadio" value="ATM">
+					<form id="PaymentRadio" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" novalidate>
+						<div class="form-check py-2">
+							<input id="radio_payment_atm" class="form-check-input" type="radio" name="PaymentRadio" value="ATM" required>
 							<label class="form-check-label" for="radio_payment_atm">ATM</label>
-						</li>
-						<li class="form-check py-2">
-							<input id="radio_payment_card" class="form-check-input" type="radio" name="PaymentRadio" value="線上刷卡">
+						</div>
+						<div class="form-check py-2">
+							<input id="radio_payment_card" class="form-check-input" type="radio" name="PaymentRadio" value="線上刷卡" required>
 							<label class="form-check-label" for="radio_payment_card">線上刷卡</label>
-						</li>
-						<li class="form-check py-2">
-							<input id="radio_payment_LINE" class="form-check-input" type="radio" name="PaymentRadio" value="LINE Pay">
+						</div>
+						<div class="form-check py-2">
+							<input id="radio_payment_LINE" class="form-check-input" type="radio" name="PaymentRadio" value="LINE Pay" required>
 							<label class="form-check-label" for="radio_payment_LINE">LINE Pay</label>
-						</li>
-					</ul>
+							<div class="invalid-feedback">請選擇付款方式</div>
+						</div>
+					</form>
 
 					<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
 						<div class="py-2 d-flex justify-content-end text-end">
@@ -232,7 +232,7 @@
 							返回上一頁
 						</button>
 
-						<button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
+						<button class="btn_step2_next btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
 							下一步
 						</button>
 					</div>
@@ -522,9 +522,9 @@
 
 				<div class="card-body px-0">
 					<div id="Pruchase_Content">
-						<div class="fs-3 fw-bold mt-4 text-center">訂單已成立，謝謝您的訂購！</div>
+						<div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
 
-						<div class="row border-bottom border-top py-2 align-items-lg-center position-relative">
+						<div class="row gx-0 border-bottom border-top py-2 align-items-lg-center position-relative">
 							<div class="product col-auto col-lg-6 px-sm-2 d-flex align-items-center">
 								<a href="/Toilet/01">
 									<img src="/images/product/pro_pic_03.jpg">

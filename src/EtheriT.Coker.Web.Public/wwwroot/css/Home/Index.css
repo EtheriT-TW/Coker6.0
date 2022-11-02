@@ -60,6 +60,7 @@
 }
 
     .guess_like_frame > .topline {
+        color: var(--black-text);
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
@@ -97,58 +98,68 @@
     background-repeat: no-repeat;
 }
 
-#Favorite > ul > li > figure > .top_icon {
+.border_six_frame > .top_icon {
+    top: 0;
+    right: 0;
     height: 1.5rem;
 }
 
-    #Favorite > ul > li > figure > .top_icon > button > i {
+    .border_six_frame > .top_icon > button > i {
         color: var(--gray-icon);
     }
 
-#Favorite > ul > li > figure > figcaption {
-    width: fit-content;
+.border_six_frame > a > figure {
+    padding-top: 1.5rem;
 }
 
-    #Favorite > ul > li > figure > figcaption > div {
-        font-size: 0.8rem;
-        border-bottom: 3px solid var(--red-main);
-        background-color: var(--gray-text);
-        height: 2.5rem;
+    .border_six_frame > a > figure > figcaption {
+        width: fit-content;
     }
 
-#Favorite > ul > li > figure {
-    border: 1px solid var(--gray-dark);
-}
+        .border_six_frame > a > figure > figcaption > .pro_tag {
+            font-size: 0.8rem;
+            border-bottom: 3px solid var(--red-main);
+            background-color: var(--gray-text);
+            height: 2.5rem;
+        }
 
-    #Favorite > ul > li > figure > .btn_add_favorite {
+    .border_six_frame > a > figure > .btn_add_favorite {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
     }
 
-        #Favorite > ul > li > figure > .btn_add_favorite > span > i:first-child {
+        .border_six_frame > a > figure > .btn_add_favorite > span > i:first-child {
             color: var(--gray-icon);
         }
 
-#Favorite > ul > li > .name {
+.border_six_frame > .pro_name {
     color: var(--gray-text);
     font-size: 0.8rem;
     padding-top: 0.5rem;
-    height: 2.5rem;
+    height: 3rem;
+    line-height: 1.25rem;
 }
 
-#Favorite > ul > .blank:nth-child(n+7) {
-    display: none;
+#Favorite > ul > .blank {
+    display: flex;
 }
 
-#Favorite > ul > .blank > figure > img {
-    visibility: hidden;
-}
+    #Favorite > ul > .blank:nth-child(n+8) {
+        display: none;
+    }
 
-#Favorite > ul > .blank > figure > figcaption > div {
-    border: none;
-    background: none;
-}
+    #Favorite > ul > .blank > .frame > a > span {
+        color: var(--gray-icon);
+        transform: scale(1.25);
+    }
+
+    #Favorite > ul > .blank > .bottom_line {
+        font-size: 0.8rem;
+        padding-top: 0.5rem;
+        height: 3rem;
+        line-height: 1.25rem;
+    }
 
 /* Featured */
 #Featured > .content > figure:first-child {

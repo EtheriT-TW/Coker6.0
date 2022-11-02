@@ -2,20 +2,23 @@
     window.CI360.init();
 
     var preview_swiper = new Swiper(".PreviewSwiper", {
-        slidesPerView: 3.5,
+        slidesPerView: 4,
         loop: false,
         spaceBetween: 10,
         freeMode: true,
         watchSlidesProgress: true,
+        scrollbar: {
+            el: ".swiper-scrollbar",
+        },
         breakpoints: {
             576: {
-                slidesPerView: 3.5,
+                slidesPerView: 4,
             },
             768: {
-                slidesPerView: 5.5,
+                slidesPerView: 6,
             },
             992: {
-                slidesPerView: 7.5,
+                slidesPerView: 8,
             }
         }
     });

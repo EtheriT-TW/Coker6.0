@@ -1,6 +1,16 @@
 ﻿function HeaderInit() {
     CarDropdownReset();
 
+    const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
+    Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
+        $("#btn_car_dropdown > i").addClass("open");
+        $("html").addClass("locked");
+    })
+    Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
+        $("#btn_car_dropdown > i").removeClass("open");
+        $("html").removeClass("locked");
+    })
+
     $(".btn_cart_delete").on("click", CartDelete);
 
     var $myOffcanvas = $("#Mega_Menu>.offcanvas");
@@ -16,11 +26,6 @@
         delay: 3000,
         order: 'asc'
     });
-
-    $("#btn_car_dropdown").on("click", function () {
-        $("#btn_car_dropdown > i").toggleClass("open");
-        $("html").toggleClass("locked");
-    })
 }
 
 function CartDelete() {
@@ -31,7 +36,6 @@ function CartDelete() {
         $.cookie('Purchased_Type_Quantity', 0, { path: '/' });
         $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
         CarDropdownReset();
-        $("#btn_car_dropdown > i").removeClass("open");
         $("html").removeClass("locked");
         Coker.sweet.success("成功移除商品", null, true);
     });

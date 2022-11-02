@@ -1,9 +1,39 @@
+﻿
+/*var unit_price = 0;*/
 var total_price = 0;
 var total_price_end = 0;
 var subtotal_price = 0;
 var buy_step_swiper;
+var gotop_switch = false;
+var top_position;
+
+var ShippingForms, PaymentForms;
+var shipMethodsChosen = false, payMethodsChosen = false;
 
 function PageReady() {
+
+    var isCheckout = false;
+
+    /* Swiper 畫面高度 */
+    top_position = $(".swiper").offset().top;
+
+    $(window).scroll(function () {
+        var topPosition = $(".swiper").offset().top - $("header").height();
+        if (document.body.scrollTop > topPosition || document.documentElement.scrollTop > topPosition) {
+            gotop_switch = true;
+        } else {
+            gotop_switch = false;
+        }
+    });
+
+    /* 讀取Cookie購買資訊 */
+    /*
+     unit_price = $(".purchase_list > li > .content > .unit").data('unittotal');
+    $.cookie('subtotal', parseInt($.cookie('Purchased_Item_Quantity')) * unit_price, { path: '/' });
+    $.cookie('delivery_fee', $("#Pruchase_Content > .endline > div > .delivery_fee").data('freight'), { path: '/' });
+    $.cookie('total_amount', parseInt($.cookie('subtotal')) + parseInt($.cookie('delivery_fee')), { path: '/' });
+    $.cookie('payment_method', '', { path: '/' });
+     */
 
     $.cookie('subtotal', '', { path: '/' });
     $.cookie('delivery_fee', '', { path: '/' });
@@ -12,11 +42,13 @@ function PageReady() {
 
     ReloadAllAmount();
 
+    /* Popover */
     var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl)
     })
 
+    /* 欄位檢測 */
     var phone_front_box = document.getElementsByClassName("phone_front");
     var phone_back_box = document.getElementsByClassName("phone_back");
     var phone_ext_box = document.getElementsByClassName("phone_ext");
@@ -42,7 +74,44 @@ function PageReady() {
     });
 
     buy_step_swiper.on('activeIndexChange', function () {
-        $('html, body').animate({ scrollTop: $(".swiper").offset().top - $("header").height() }, 0);
+        if (gotop_switch) {
+            $('html, body').animate({ scrollTop: $(".swiper").offset().top - $("header").height() }, 0);
+        }
+    });
+
+    buy_step_swiper.on('activeIndexChange', function () {
+        switch (buy_step_swiper.activeIndex) {
+            case 2:
+                ShipPayCheck();
+                if (!(shipMethodsChosen && payMethodsChosen)) {
+                    Coker.sweet.error("請確實選擇運送及付款方式！", null, true);
+                    setTimeout(function () {
+                        buy_step_swiper.slidePrev();
+                    }, 1500);
+                }
+                break;
+            case 3:
+                if (isCheckout) {
+                    $("#Pruchase_Content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+                } else {
+                    Coker.sweet.error("未完成結帳流程！", null, true);
+                    setTimeout(function () {
+                        buy_step_swiper.slidePrev();
+                    }, 1500);
+                }
+                break;
+        }
+    });
+
+    buy_step_swiper.on('reachEnd', function () {
+        if (isCheckout) {
+            $("#Pruchase_Content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+        } else {
+            Coker.sweet.error("未完成結帳流程！", null, true);
+            setTimeout(function () {
+                buy_step_swiper.slidePrev();
+            }, 1500);
+        }
     });
 
     /* Swiper Button*/
@@ -53,6 +122,40 @@ function PageReady() {
     $(".btn_goprev").on("click", function () {
         buy_step_swiper.slidePrev();
     });
+
+    /* Step2 Form */
+    ShippingForms = $('#ShippingRadio');
+    PaymentForms = $('#PaymentRadio');
+
+    (() => {
+        Array.from(ShippingForms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    shipMethodsChosen = true;
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+
+        Array.from(PaymentForms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    payMethodsChosen = true;
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    $(".btn_step2_next").on("click", Step2Monitor);
 
     /* Normal Button */
     $(".btn_move_to_favorites").on("click", MoveToFavorites);
@@ -71,7 +174,9 @@ function PageReady() {
         Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
             Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
                 setTimeout(function () {
+                    isCheckout = true;
                     buy_step_swiper.slideNext();
+                    buy_step_swiper.disable();
                 }, 300);
             })
         });
@@ -82,6 +187,34 @@ function PageReady() {
     $('input[type=radio][name=RecipientRadio]').change(RecipientRadio);
     $('input[type=radio][name=BillRadio]').change(BillRadio);
 
+}
+
+function Step2Monitor() {
+    ShipPayCheck();
+
+    if (!(shipMethodsChosen && payMethodsChosen)) {
+        Coker.sweet.error("請確實選擇運送及付款方式！", null, true);
+    } else {
+        buy_step_swiper.slideNext();
+    }
+
+    buy_step_swiper.update();
+}
+
+function ShipPayCheck() {
+    Array.from(ShippingForms).forEach(form => {
+        if (form.checkValidity()) {
+            shipMethodsChosen = true;
+        }
+        form.classList.add('was-validated')
+    })
+
+    Array.from(PaymentForms).forEach(form => {
+        if (form.checkValidity()) {
+            payMethodsChosen = true;
+        }
+        form.classList.add('was-validated')
+    })
 }
 
 function PaymentRadio() {

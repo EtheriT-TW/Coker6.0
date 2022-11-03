@@ -36,10 +36,6 @@ html {
     font-size: 87.5%;
 }
 
-    html.locked {
-        overflow: hidden;
-    }
-
 html, body {
     height: 100%;
     position: relative;

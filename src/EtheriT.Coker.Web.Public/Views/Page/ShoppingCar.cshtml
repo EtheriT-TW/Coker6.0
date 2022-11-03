@@ -73,7 +73,7 @@
 	<div id="memberLogin" class="container my-5">
 		<div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
 			<div>購買前登入會員可更方便查詢訂單！</div>
-			<button class="bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
+			<button class="btn_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
 		</div>
 	</div>
 
@@ -85,7 +85,7 @@
 				</div>
 
 				<div class="card-body pt-5">
-					<div class="row pe-4 d-none d-lg-flex">
+					<div class="list_title row d-none d-lg-flex">
 						<div class="col-6 text-start">商品資訊</div>
 						<div class="col-2">單價</div>
 						<div class="col-2">數量</div>
@@ -93,51 +93,51 @@
 					</div>
 
 					<ul class="purchase_list pb-4">
-						<li class="row border-bottom border-top py-2 align-items-lg-center position-relative">
-							<div class="image col-auto col-lg-6 text-start px-sm-2 d-flex">
-								<a href="/Toilet/01">
-									<img src="/images/product/pro_pic_03.jpg">
+						<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+							<div class="image col-sm-6 col-4 row gx-0">
+								<a class="col-lg-2 col-sm-4 col-12" href="/Toilet/01">
+									<img class="img-fluid" src="/images/product/pro_pic_03.jpg">
 								</a>
-								<a href="/Toilet/01">
-									<div class="d-lg-block d-none overflow-hidden">
+								<a class="col text-start" href="/Toilet/01">
+									<div class="content d-sm-block d-none overflow-hidden">
 										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
-										<div class="pro-detail d-flex flex-wrap">
-											<div class="pe-3">白色</div>
-											<div class="specifications">規格說明文字</div>
+										<div class="pro_detail d-flex flex-wrap">
+											<div class="pro_specification pe-3">白色</div>
+											<div class="pro_instructions">規格說明文字</div>
 										</div>
 									</div>
 								</a>
 							</div>
 
-							<div class="content col col-lg-6 row align-items-lg-center overflow-hidden ps-0">
+							<div class="content col-sm-6 col row gx-0">
 								<a href="/Toilet/01">
-									<div class="d-lg-none d-block text-start pe-5 pe-sm-0">
+									<div class="d-sm-none d-block text-start">
 										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
-										<div class="pro-detail d-flex flex-wrap">
+										<div class="pro_detail d-flex flex-wrap">
 											<div class="pe-3">白色</div>
 											<div class="specifications">規格說明文字</div>
 										</div>
 									</div>
 								</a>
 
-								<div class="unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-end text-lg-center" data-unittotal="26200">26,200</div>
+								<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-end text-lg-center" data-unitprice="26200">26,200</div>
 
 								<div class="counter_input col-12 col-lg-4 d-flex justify-content-end justify-content-lg-center">
 									<button class="btn_count_minus bg-white border-end-0">
 										<i class="fa-solid fa-minus"></i>
 									</button>
 
-									<input class="input_count text-center py-1" type="number" name="counter" value="1">
+									<input class="pro_quantity text-center py-1" type="number" name="counter" value="1">
 
 									<button class="btn_count_plus bg-white border-start-0">
 										<i class="fa-solid fa-plus"></i>
 									</button>
 								</div>
 
-								<div class="subtotal col-4 price fw-bold fs-5 d-lg-block d-none"></div>
+								<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none"></div>
 							</div>
 
-							<div class="btn_side_icon position-absolute d-flex flex-column end-0 p-2">
+							<div class="btn_side_icon position-absolute d-flex flex-column top-0 end-0 p-2">
 								<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
 									<button class="btn_move_to_favorites bg-transparent border-0">
 										<i class="fa-regular fa-heart"></i>
@@ -152,21 +152,19 @@
 						</li>
 					</ul>
 
-					<div class="endline pe-sm-5 col-12 col-md-6 offset-md-6">
+					<div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
 						<div class="border-bottom py-2 d-flex justify-content-end text-end">
 							<div>商品金額</div>
-							<div id="Totalprice" class="price"></div>
+							<div class="subtotal price"></div>
 						</div>
 						<div class="py-2 d-flex justify-content-end text-end">
 							<div>小計</div>
-							<div id="Subtotal" class="price"></div>
+							<div class="subtotal price"></div>
 						</div>
 					</div>
 
-					<div class="swiper_button my-5">
-						<button class="btn_swiper_prev_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
-							返回購物
-						</button>
+					<div class="swiper_button my-5 d-flex justify-content-center">
+						<a href="/" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
 
 						<button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
 							下一步
@@ -184,7 +182,7 @@
 					<form id="ShippingRadio" class="px-5 mb-3 shipping needs-validation" novalidate>
 						<div class="d-flex">
 							<div class="form-check w-50 text-start">
-								<input id="FreeShip" class="form-check-input" type="radio" name="ShippingRadio" required>
+								<input id="FreeShip" class="form-check-input" type="radio" name="ShippingRadio" value="0" required>
 								<label class="form-check-label" for="FreeShip">免運</label>
 								<div class="invalid-feedback">請選擇運送方式</div>
 							</div>
@@ -212,18 +210,18 @@
 						</div>
 					</form>
 
-					<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+					<div class="priceline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
 						<div class="py-2 d-flex justify-content-end text-end">
 							<div>商品金額</div>
-							<div id="EndTotalprice" class="price"></div>
+							<div class="subtotal price"></div>
 						</div>
 						<div class="py-2 d-flex justify-content-end text-end">
 							<div>運費</div>
-							<div id="Freight" class="price" data-freight="0"></div>
+							<div class="shipping_fee price"></div>
 						</div>
 						<div class="py-2 border-top d-flex justify-content-end text-end">
 							<div>小計</div>
-							<div id="EndSubtotal" class="price"></div>
+							<div class="total_amount price"></div>
 						</div>
 					</div>
 
@@ -248,7 +246,7 @@
 				<div class="card-body px-0">
 					<div class="record container d-flex align-items-center justify-content-center justify-content-sm-end">
 						<div>本次消費總金額：</div>
-						<div id="TotalSpend" class="totalprice fw-bold fs-5 price"></div>
+						<div class="total_amount totalprice fw-bold fs-5 price"></div>
 						<button class="btn_gofirst bg-transparent ms-4 px-2 px-sm-4 py-1 py-sm-2 text-decoration-underline">返回查看商品明細</button>
 					</div>
 
@@ -275,50 +273,50 @@
 							</div>
 						</div>
 
-						<form class="px-3 px-sm-5 d-none">
+						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓名">
+								<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
 								<label class="required" for="OrdererInputName">姓　　名</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com">
+								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
 								<label class="required" for="OrdererInputMail">E-mail</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputPhone" class="orderer_phone form-control" type="number" placeholder="0987654321" value="0987654321">
+								<input id="OrdererInputPhone" class="orderer_phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
 								<label class="required" for="OrdererInputPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="OrdererInputAreaCode" class="orderer_areacode form-control" type="number" placeholder="07" value="07">
+									<input id="OrdererInputAreaCode" class="orderer_areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
 									<label class="px-4" for="OrdererInputAreaCode">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="OrdererInputCellPhone" class="orderer_cellphone form-control" type="number" placeholder="1234567" value="123456767">
+									<input id="OrdererInputCellPhone" class="orderer_cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
 									<label for="OrdererInputCellPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="OrdererInputExtension" class="orderer_extension form-control" type="number" placeholder="123456" value="111111">
+									<input id="OrdererInputExtension" class="orderer_extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
 									<label class="px-4" for="OrdererInputExtension">分機</label>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<select id="OrdererSelectCity" class="orderer_city form-select" aria-label="Floating label select example">
-										<option>請選擇縣市</option>
+									<select id="OrdererSelectCity" class="orderer_city form-select" aria-label="Floating label select example" required>
+										<option disabled>請選擇縣市</option>
 										<option value="1" selected>高雄市</option>
 									</select>
 									<label class="px-4 required" for="OrdererSelectCity">縣市</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
-									<select id="OrdererSelectTown" class="orderer_town form-select" aria-label="Floating label select example">
-										<option>請選擇鄉鎮</option>
+									<select id="OrdererSelectTown" class="orderer_town form-select" aria-label="Floating label select example" required>
+										<option disabled>請選擇鄉鎮</option>
 										<option value="1" selected>前鎮區</option>
 									</select>
 									<label class="required" for="OrdererSelectTown">鄉鎮</label>
 								</div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="復興四路">
+									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="復興四路" required>
 									<label class="px-4 required" for="OrdererInputAddress">地址</label>
 								</div>
 							</div>
@@ -363,56 +361,56 @@
 							</div>
 						</div>
 
-						<form class="px-3 px-sm-5 d-none">
+						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="">
+								<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="" minlength="2" required>
 								<label class="required" for="RecipientInputName">姓　　名</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="name@example.com" value="">
+								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="name@example.com" value="" required>
 								<label class="required" for="RecipientInputMail">E-mail</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputPhone" class="recipient_phone form-control" type="number" placeholder="0987654321" value="">
+								<input id="RecipientInputPhone" class="recipient_phone form-control" type="tel" placeholder="0987654321" value="" pattern="[0][9]\d{8}" maxlength="10" required>
 								<label class="required" for="RecipientInputPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="RecipientInputAreaCode" class="recipient_areacode form-control" type="number" placeholder="07" value="">
+									<input id="RecipientInputAreaCode" class="recipient_areacode form-control" type="tel" placeholder="07" value="" pattern="[0]\d{1,3}" maxlength="4">
 									<label class="px-4" for="RecipientInputAreaCode">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="RecipientInputCellPhone" class="recipient_cellphone form-control" type="number" placeholder="1234567" value="">
+									<input id="RecipientInputCellPhone" class="recipient_cellphone form-control" type="tel" placeholder="1234567" value="" pattern="\d{7}" maxlength="7">
 									<label for="RecipientInputCellPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="RecipientInputExtension" class="recipient_extension form-control" type="number" placeholder="123456" value="">
+									<input id="RecipientInputExtension" class="recipient_extension form-control" type="tel" placeholder="123456" value="" pattern="\d*">
 									<label class="px-4" for="RecipientInputExtension">分機</label>
 								</div>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<select id="RecipientSelectCity" class="recipient_city form-select" aria-label="Floating label select example">
-										<option selected>請選擇縣市</option>
+									<select id="RecipientSelectCity" class="recipient_city form-select" aria-label="Floating label select example" required>
+										<option selected disabled value="">請選擇縣市</option>
 										<option value="1">高雄市</option>
 									</select>
 									<label class="px-4 required" for="RecipientSelectCity">縣市</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
-									<select id="RecipientSelectTown" class="recipient_town form-select" aria-label="Floating label select example">
-										<option>請選擇鄉鎮</option>
+									<select id="RecipientSelectTown" class="recipient_town form-select" aria-label="Floating label select example" required>
+										<option selected disabled value="">請選擇鄉鎮</option>
 										<option value="1">前鎮區</option>
 									</select>
 									<label class="required" for="RecipientSelectTown">鄉鎮</label>
 								</div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="RecipientInputAddress" class="recipient_address form-control" type="text" placeholder="復興四路" value="">
+									<input id="RecipientInputAddress" class="recipient_address form-control" type="text" placeholder="復興四路" value="" required>
 									<label class="px-4 required" for="RecipientInputAddress">地址</label>
 								</div>
 							</div>
 							<div class="form-floating mb-3 col-12">
 								<textarea id="TextareaNote" class="form-control" placeholder="備註" style="height: 150px"></textarea>
-								<label for="TextareaNote">Comments</label>
+								<label for="TextareaNote">備　　註</label>
 							</div>
 						</form>
 					</div>
@@ -455,33 +453,33 @@
 							</div>
 						</div>
 
-						<form class="px-3 px-sm-5 d-none">
+						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="BillInputInvoice" class="bill_name form-control" type="text" placeholder="invoice" value="">
+								<input id="BillInputInvoice" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
 								<label class="required" for="BillInputInvoice">發票抬頭</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="BillInputGUINum" class="bill_guinum form-control" type="text" placeholder="GUINum" value="">
+								<input id="BillInputGUINum" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
 								<label class="required" for="BillInputGUINum">統　　編</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<select id="RecipientSelectCity" class="recipient_city form-select" aria-label="Floating label select example">
-										<option selected>請選擇縣市</option>
+									<select id="BillSelectCity" class="bill_city form-select" aria-label="Floating label select example" required>
+										<option selected disabled value="">請選擇縣市</option>
 										<option value="1">高雄市</option>
 									</select>
-									<label class="px-4 required" for="RecipientSelectCity">縣市</label>
+									<label class="px-4 required" for="BillSelectCity">縣市</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
-									<select id="RecipientSelectTown" class="recipient_town form-select" aria-label="Floating label select example">
-										<option>請選擇鄉鎮</option>
+									<select id="BillSelectTown" class="bill_town form-select" aria-label="Floating label select example" required>
+										<option selected disabled value="">請選擇鄉鎮</option>
 										<option value="1">前鎮區</option>
 									</select>
-									<label class="required" for="RecipientSelectTown">鄉鎮</label>
+									<label class="required" for="BillSelectTown">鄉鎮</label>
 								</div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="RecipientInputAddress" class="recipient_address form-control" type="text" placeholder="復興四路" value="">
-									<label class="px-4 required" for="RecipientInputAddress">地址</label>
+									<input id="BillInputAddress" class="bill_address form-control" type="text" placeholder="復興四路" value="" required>
+									<label class="px-4 required" for="BillInputAddress">地址</label>
 								</div>
 							</div>
 						</form>
@@ -532,7 +530,7 @@
 								<a href="/Toilet/01">
 									<div class="overflow-hidden pe-4">
 										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
-										<div class="pro-detail d-flex flex-wrap">
+										<div class="pro_detail d-flex flex-wrap">
 											<div class="pe-3">白色</div>
 											<div class="specifications">規格說明文字</div>
 										</div>

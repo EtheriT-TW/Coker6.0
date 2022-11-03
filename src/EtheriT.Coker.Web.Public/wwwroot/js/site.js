@@ -105,12 +105,13 @@ var Coker = {
                 }
             })
         },
-        error: function (text, action, autoclose) {
+        error: function (title, text, action, autoclose) {
             var closetime = false;
             if (autoclose) { closetime = Coker.timeout.time }
 
             Swal.fire({
                 icon: 'error',
+                title: title,
                 html: text,
                 showConfirmButton: !autoclose,
                 showCancelButton: false,

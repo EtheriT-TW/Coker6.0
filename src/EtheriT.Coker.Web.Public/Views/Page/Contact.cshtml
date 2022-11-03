@@ -29,9 +29,9 @@
 
 	<div class="title row gx-0">
 		<div class="form-floating col-12 col-sm-6 mb-3">
-			<input type="text" class="form-control" id="InputName" placeholder="姓○名" required>
+			<input type="text" class="form-control" id="InputName" placeholder="姓○名" minlength="2" required>
 			<label class="required" for="InputName">姓　名</label>
-			<div class="invalid-feedback">請輸入真實姓名</div>
+			<div class="invalid-feedback">請輸入姓名</div>
 		</div>
 
 		<div class="call col-12 col-sm-6 mt-1 mb-3 py-sm-0">
@@ -57,18 +57,19 @@
 	</div>
 
 	<div class="form-floating mb-3">
-		<input type="tel" class="form-control" id="InputPhone" placeholder="0987654321">
+		<input id="InputPhone" class="form-control" type="tel" placeholder="0987654321" pattern="[0]\d*" maxlength="11">
 		<label for="InputPhone">連絡電話</label>
+		<div class="invalid-feedback">請輸入正確的電話格式</div>
 	</div>
 
 	<div class="form-floating mb-3">
-		<input type="text" class="form-control" id="InputSubject " placeholder="Ask Subject" required>
+		<input id="InputSubject " class="form-control" type="text" placeholder="Ask Subject" required>
 		<label class="required" for="InputSubject ">詢問主題</label>
 		<div class="invalid-feedback">請輸入詢問主題</div>
 	</div>
 
 	<div class="form-floating mb-3">
-		<textarea class="form-control" id="TextareaDescription" style="height: 150px" placeholder="Content Description" required></textarea>
+		<textarea id="TextareaDescription" class="form-control" style="height: 150px" placeholder="Content Description" required></textarea>
 		<label class="required" for="TextareaDescription">內容描述</label>
 		<div class="invalid-feedback">請輸入詢問內容</div>
 	</div>

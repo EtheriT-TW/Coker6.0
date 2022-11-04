@@ -4,6 +4,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddMemoryCache()
+    .AddSimpleCaptcha(builder =>
+    {
+        builder.UseMemoryStore();
+        builder.AddConfiguration(options =>
+        {
+            options.CodeLength = 4;
+            options.ImageWidth = 100;
+            options.ImageHeight = 40;
+        });
+    });
 
 var app = builder.Build();
 

@@ -61,12 +61,13 @@ function CarDropdownReset() {
         $("#Car_Dropdown_Null").addClass("d-none");
         $(".btn_car_buy").removeAttr("disabled");
     } else {
+        $("#Car_Dropdown > ul > li").remove();
         $("#Car_Badge").text("");
         $("#Car_Dropdown_Null").removeClass("d-none");
         $(".btn_car_buy").attr("disabled", "");
     }
 }
 
-function CarItemAdd() {
+function CarItemChange() {
     $("#Car_Dropdown > ul li > figure > a > figcaption > .number > .pro_quantity").text($.cookie('Purchased_Item_Quantity'));
 }

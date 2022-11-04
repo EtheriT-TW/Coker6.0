@@ -27,7 +27,7 @@ body {
     font-size: 0.8rem;
 }
 
-#Endline > .btn_refresh {
+#Endline > .btn_refresh > i {
     color: var(--gray-icon);
 }
 

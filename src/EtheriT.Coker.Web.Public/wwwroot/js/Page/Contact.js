@@ -3,12 +3,10 @@
     var $imgCaptcha = $('#imgCaptcha')
 
     $('.btn_refresh').on('click', function () {
-        console.log("btn_refresh Click")
-        $imgCaptcha.attr('src', '/Page/Conta/Captcha?id=12345&time=' + new Date().getTime())
-        console.log($imgCaptcha.attr('src'))
+        $imgCaptcha.attr('src', '/api/Captcha/index?id=' + new Date().getTime())
     })
 
-    $('#btnValidate').on('click', function () {
+    /*$('#btnValidate').on('click', function () {
         var code = $('#InputCaptcha').val()
         console.log("Code = " + code)
         $.ajax('/Page/Validate?id=12345&code=' + code, {
@@ -21,7 +19,7 @@
                 }
             }
         })
-    })
+    })*/
 
     const forms = $('#ContactForm');
 

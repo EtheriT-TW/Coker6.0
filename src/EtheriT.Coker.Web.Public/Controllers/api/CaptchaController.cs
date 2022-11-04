@@ -8,7 +8,8 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class CaptchaController : Controller
     {
         private readonly ICaptcha _captcha;
-        public CaptchaController(ICaptcha captcha) {
+        public CaptchaController(ICaptcha captcha)
+        {
             _captcha = captcha;
         }
         public IActionResult Index()

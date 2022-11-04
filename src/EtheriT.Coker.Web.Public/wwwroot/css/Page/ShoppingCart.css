@@ -36,6 +36,13 @@ input[type="number"] {
     width: 12.5rem;
 }
 
+/* Single Line Display */
+.single_line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Recipient Modal */
 #RecipientModal > .modal-dialog {
     width: 820px;
@@ -164,6 +171,10 @@ input[type="number"] {
             color: var(--gray-text);
         }
 
+    #Step1 > .card-body > .purchase_list > .purchase_item > .content > a > div > .pro_detail {
+        color: var(--gray-text);
+    }
+
     #Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > button {
         color: var(--black-text);
         border: 1px solid var(--gray-text);
@@ -175,7 +186,7 @@ input[type="number"] {
         color: var(--black-text);
         border: 1px solid var(--gray-text);
         height: 2.25rem;
-        width: 7rem;
+        width: 5rem;
     }
 
     #Step1 > .card-body > .purchase_list > .purchase_item > .content > .pro_subtotal {
@@ -188,6 +199,10 @@ input[type="number"] {
 
 .priceline > div > div:last-child {
     width: 10rem;
+}
+
+#Purchase_Null {
+    display: flex;
 }
 
 /* Step2 */

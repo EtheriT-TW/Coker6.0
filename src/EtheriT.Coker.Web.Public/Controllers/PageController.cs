@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
+using SimpleCaptcha;
 using System.Diagnostics;
 
 namespace EtheriT.Coker.Web.Public.Controllers
@@ -26,7 +27,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog")
                 {
                     view = key;
-                }else if (key == "OrderManagement")
+                }
+                else if (key == "OrderManagement")
                 {
                     view = key;
                 }

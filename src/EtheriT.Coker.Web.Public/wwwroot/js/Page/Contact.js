@@ -1,4 +1,28 @@
 ﻿function PageReady() {
+
+    var $imgCaptcha = $('#imgCaptcha')
+
+    $('.btn_refresh').on('click', function () {
+        console.log("btn_refresh Click")
+        $imgCaptcha.attr('src', '/Page/Conta/Captcha?id=12345&time=' + new Date().getTime())
+        console.log($imgCaptcha.attr('src'))
+    })
+
+    $('#btnValidate').on('click', function () {
+        var code = $('#InputCaptcha').val()
+        console.log("Code = " + code)
+        $.ajax('/Page/Validate?id=12345&code=' + code, {
+            dataType: "JSON",
+            success: function (result) {
+                if (result.success) {
+                    console.log('驗證碼輸入正確')
+                } else {
+                    console.log('驗證碼輸入錯誤')
+                }
+            }
+        })
+    })
+
     const forms = $('#ContactForm');
 
     (() => {

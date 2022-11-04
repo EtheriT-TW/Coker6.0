@@ -4,6 +4,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddMemoryCache()
+    .AddSimpleCaptcha(builder =>
+    {
+        builder.UseMemoryStore();
+        builder.AddConfiguration(options =>
+        {
+            options.CodeLength = 4;
+            options.ImageWidth = 100;
+            options.ImageHeight = 40;
+        });
+    });
 
 var app = builder.Build();
 
@@ -23,6 +34,10 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    name: "api",
+    pattern: "api/{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
     name: "Page",
     pattern: "{key}/{id?}/{search?}",
     defaults: new { controller = "Page", action = "Index" }
@@ -32,10 +47,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{id?}",
     defaults: new { controller = "Home", action = "Index" });
-
-app.MapControllerRoute(
-    name: "api",
-    pattern: "api/{controller=Home}/{action=Index}/{id?}");
 
 //var options = new RewriteOptions()
 //        .AddRedirect("^Search/(.*)/(.*)", "Search?id=$&search=$2", 301);

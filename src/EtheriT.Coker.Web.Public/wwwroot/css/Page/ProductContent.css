@@ -29,13 +29,15 @@
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_360view {
         pointer-events: none;
-        transform: scale(0.15);
+        Opacity: 0.8;
+        transform: scale(0.2);
     }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_image {
         display: none;
+        Opacity: 0.6;
         pointer-events: none;
-        transform: scale(0.15);
+        transform: scale(0.1);
     }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display.img-fluid:hover + .schematic_image {
@@ -43,8 +45,9 @@
     }
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_youtube {
-        font-size: 4rem;
-        color: #ff0000;
+        font-size: 4.5rem;
+        color:#a39292;
+        Opacity: 0.8;
         pointer-events: none
     }
 
@@ -58,7 +61,7 @@
     top: calc(50% - 25px);
     height: 50px;
     width: 50px;
-    background-color: var(--gray-bg-light-trans);
+    background-color: var(--black-text-trans);
 }
 
 /* Product - Content */

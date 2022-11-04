@@ -34,6 +34,10 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    name: "api",
+    pattern: "api/{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
     name: "Page",
     pattern: "{key}/{id?}/{search?}",
     defaults: new { controller = "Page", action = "Index" }
@@ -43,10 +47,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{id?}",
     defaults: new { controller = "Home", action = "Index" });
-
-app.MapControllerRoute(
-    name: "api",
-    pattern: "api/{controller=Home}/{action=Index}/{id?}");
 
 //var options = new RewriteOptions()
 //        .AddRedirect("^Search/(.*)/(.*)", "Search?id=$&search=$2", 301);

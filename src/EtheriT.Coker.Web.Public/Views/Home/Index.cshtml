@@ -10,24 +10,25 @@
 	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
 </div>
 
+<!-- BannerSwiper -->
 <div id="BannerSwiper" class="container-fluid position-relative p-0">
 	<div class="swiper">
 		<div class="swiper-wrapper">
-			<figure class="swiper-slide">
-				<img src="~/images/banner/Home/banner.jpg" alt="" />
+			<figure class="template_full_swiper swiper-slide mb-0">
+				<img class="swiper_image img-fluid" src="~/images/banner/Home/banner.jpg" alt="" />
 				<figcaption class="position-absolute me-5 text-white">
-					<h3 class="my-1">Derek獨立式浴缸新上市 打造身心專屬舒壓時光</h3>
+					<h3 class="swiper_title my-1">Derek獨立式浴缸新上市 打造身心專屬舒壓時光</h3>
 				</figcaption>
 			</figure>
-			<figure class="swiper-slide">
-				<img src="~/images/banner/Home/banner02.jpg" alt="" />
+			<figure class="template_full_swiper swiper-slide mb-0">
+				<img class="swiper_image img-fluid" src="~/images/banner/Home/banner02.jpg" alt="" />
 				<figcaption class="position-absolute me-5 text-white">
-					<h3 class="my-1">「淨未來」微電腦馬桶座系列享受瞬熱式潔淨 冬季溫暖就靠它</h3>
+					<h3 class="swiper_title my-1">「淨未來」微電腦馬桶座系列享受瞬熱式潔淨 冬季溫暖就靠它</h3>
 				</figcaption>
 			</figure>
 		</div>
 	</div>
-	<div class="swiper_button d-flex p-0 justify-content-between position-absolute">
+	<div class="swiper_button h-100 top-50 start-50 w-100 d-flex justify-content-between position-absolute">
 		<button class="btn_swiper_prev_banner fs-3 bg-transparent border-0 fs-3 p-3">
 			<i class="fa-solid fa-chevron-left"></i>
 		</button>
@@ -35,77 +36,151 @@
 			<i class="fa-solid fa-chevron-right"></i>
 		</button>
 	</div>
-	<div class="swiper_pagination_banner position-absolute text-center"></div>
+	<div class="swiper_pagination_banner position-absolute text-center -2"></div>
 </div>
+
+<!--One Full Container Swiper
+<div id="" class="container-fluid position-relative p-0">
+	<div class="swiper">
+		<div class="swiper-wrapper">
+
+		</div>
+	</div>
+	<div class="swiper_button h-100 top-50 start-50 w-100 d-flex justify-content-between position-absolute">
+		<button class="btn_swiper_prev_banner fs-3 bg-transparent border-0 fs-3 p-3">
+			<i class="fa-solid fa-chevron-left"></i>
+		</button>
+		<button class="btn_swiper_next_banner fs-3 bg-transparent border-0 fs-3 p-3">
+			<i class="fa-solid fa-chevron-right"></i>
+		</button>
+	</div>
+	<div class="swiper_pagination_banner position-absolute text-center -2"></div>
+</div>
+-->
+<!-- <template id="Template_Full_Swiper">
+	<figure class="template_full_swiper swiper-slide mb-0">
+		<img class="swiper_image img-fluid" src="" alt="" />
+		<figcaption class="position-absolute me-5 text-white">
+			<h3 class="swiper_title my-1"></h3>
+		</figcaption>
+	</figure>
+</template>
+-->
 
 <div class="btn_gonews d-flex justify-content-center py-4"><i class="fa-solid fa-chevron-down p-1 rounded-circle border border-2"></i></div>
 
-<div id="Guess_Like" class="container">
-	<div class="fs-2 mb-4 text-center">猜您會喜歡</div>
-	<div class="row row-cols-1 row-cols-sm-3">
-		<div class="col py-3">
-			<div class="guess_like_frame position-relative p-4">
-				<a href="/Toilet/01" class="topline pe-4 fw-bold overflow-hidden">DE-R1073 德瑞克直熱式微電腦馬桶座／遙控型</a>
-				<ul class="tag d-flex flex-wrap overflow-hidden text-decoration-underline">
-					<li class="pe-2">熱銷款</li>
-					<li class="pe-2">直熱式</li>
-					<li class="pe-2">遙控型</li>
-				</ul>
-				<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
-					<i class="fa-regular fa-heart"></i>
-				</button>
-				<div class="text-center">
-					<a href="Toilet/01"><img class="w-75" src="~/images/product/pro_01.png" alt="" /></a>
-				</div>
-				<div class="bottom_line d-flex justify-content-center">
-					<div class="price pe-3 fw-bold">28,000</div>
-					<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
-				</div>
+<!-- Three Container
+<div class="container-fluid">
+	<div class="container">
+		<div class="row row-cols-1 row-cols-sm-3">
+			<div class="col py-3">
+			</div>
+
+			<div class="col py-3">
+			</div>
+
+			<div class="col py-3">
 			</div>
 		</div>
+	</div>
+</div>
+ -->
 
-		<div class="col py-3">
-			<div class="guess_like_frame position-relative p-4">
-				<a href="/Toilet/01" class="topline pe-4 fw-bold overflow-hidden">C659NA 德瑞克Smart III淨未來智慧馬桶</a>
-				<ul class="tag d-flex flex-wrap overflow-hidden text-decoration-underline">
-					<li class="pe-2">奈米</li>
-					<li class="pe-2">智慧馬桶</li>
-					<li class="pe-2">一觸即掀</li>
-				</ul>
-				<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
-					<i class="fa-regular fa-heart"></i>
-				</button>
-				<div class="text-center">
-					<a href="Toilet/01"><img class="w-75" src="~/images/product/pro_02.png" alt="" /></a>
-				</div>
-				<div class="bottom_line d-flex justify-content-center">
-					<div class="price pe-3 fw-bold">28,000</div>
-					<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+<div id="Guess_Like" class="container-fluid">
+	<div class="container">
+		<div class="row row-cols-1 row-cols-sm-3">
+			<div class="col py-3">
+				<div class="frame position-relative p-4">
+					<a class="pro_link" href="/Toilet/01">
+						<div class="pro_name fw-bold overflow-hidden pe-4">DE-R1073 德瑞克直熱式微電腦馬桶座／遙控型</div>
+					</a>
+					<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">熱銷款</button></li>
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">直熱式</button></li>
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">遙控型</button></li>
+					</ul>
+					<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
+						<i class="fa-regular fa-heart"></i>
+					</button>
+					<div class="text-center">
+						<a class="pro_link" href="Toilet/01"><img class="pro_image w-75" src="~/images/product/pro_01.png" alt="" /></a>
+					</div>
+					<div class="bottom_line d-flex justify-content-center">
+						<div class="pro_price price pe-3 fw-bold">28,000</div>
+						<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+					</div>
 				</div>
 			</div>
-		</div>
 
-		<div class="col py-3">
-			<div class="guess_like_frame position-relative p-4">
-				<a href="/Toilet/01" class="topline pe-4 fw-bold overflow-hidden">L602 檯上三角盆</a>
-				<ul class="tag d-flex flex-wrap overflow-hidden text-decoration-underline">
-					<li class="pe-2">歐洲省水二段</li>
-					<li class="pe-2">三角盆</li>
-				</ul>
-				<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
-					<i class="fa-regular fa-heart"></i>
-				</button>
-				<div class="text-center">
-					<a href="Toilet/01"><img class="w-75" src="~/images/product/pro_03.png" alt="" /></a>
+			<div class="col py-3">
+				<div class="frame position-relative p-4">
+					<a class="pro_link" href="/Toilet/01">
+						<div class="pro_name fw-bold overflow-hidden pe-4">C659NA 德瑞克Smart III淨未來智慧馬桶</div>
+					</a>
+					<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">奈米</button></li>
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">智慧馬桶</button></li>
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">一觸即掀</button></li>
+					</ul>
+					<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
+						<i class="fa-regular fa-heart"></i>
+					</button>
+					<div class="text-center">
+						<a class="pro_link" href="Toilet/02"><img class="pro_image w-75" src="~/images/product/pro_02.png" alt="" /></a>
+					</div>
+					<div class="bottom_line d-flex justify-content-center">
+						<div class="pro_price price pe-3 fw-bold">28,000</div>
+						<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+					</div>
 				</div>
-				<div class="bottom_line d-flex justify-content-center">
-					<div class="price pe-3 fw-bold">28,000</div>
-					<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+			</div>
+
+			<div class="col py-3">
+				<div class="frame position-relative p-4">
+					<a class="pro_link" href="/Toilet/01">
+						<div class="pro_name fw-bold overflow-hidden pe-4">L602 檯上三角盆</div>
+					</a>
+					<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">歐洲省水二段</button></li>
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">三角盆</button></li>
+					</ul>
+					<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
+						<i class="fa-regular fa-heart"></i>
+					</button>
+					<div class="text-center">
+						<a class="pro_link" href="Toilet/03"><img class="pro_image w-75" src="~/images/product/pro_03.png" alt="" /></a>
+					</div>
+					<div class="bottom_line d-flex justify-content-center">
+						<div class="pro_price price pe-3 fw-bold">28,000</div>
+						<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<!-- <template id="Template_Product_Gray_Background">
+	<div class="frame position-relative p-4">
+		<a class="pro_link" href="">
+			<div class="pro_name fw-bold overflow-hidden pe-4"></div>
+		</a>
+		<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
+			<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0"></button></li>
+		</ul>
+		<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
+			<i class="fa-regular fa-heart"></i>
+		</button>
+		<div class="text-center">
+			<a class="pro_link" href=""><img class="pro_image w-75" src="" alt="" /></a>
+		</div>
+		<div class="bottom_line d-flex justify-content-center">
+			<div class="pro_price price pe-3 fw-bold"></div>
+			<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+		</div>
+	</div>
+</template>
+-->
 
 <div id="Favorite" class="container">
 	<div class="title fs-2 d-flex align-items-center justify-content-center pb-5">您喜愛的商品</div>
@@ -125,7 +200,6 @@
 					<figcaption class="ms-auto">
 						<div class="pro_tag text-white px-3 py-2">微電腦馬桶座</div>
 					</figcaption>
-
 				</figure>
 			</a>
 			<div class="pro_name text-center">DE-R1073&ensp;德瑞克直熱式微電腦馬桶座／遙控型</div>
@@ -258,8 +332,8 @@
 	<div class="content d-flex flex-column flex-sm-row justify-content-between">
 		<figure>
 			<div class="d-flex mb-2">
-				<a href=""><img class="img-fluid" src="~/images/featured_1.jpg" alt="" /></a>
-				<a href=""><img class="img-fluid" src="~/images/featured_2.jpg" alt="" /></a>
+				<a class="overflow-hidden" href=""><img class="img-fluid" src="~/images/featured_1.jpg" alt="" /></a>
+				<a class="overflow-hidden" href=""><img class="img-fluid" src="~/images/featured_2.jpg" alt="" /></a>
 			</div>
 			<figcaption>
 				<a href="">極致美學的衛浴產品受建商及消費者喜愛</a>
@@ -268,9 +342,9 @@
 
 		<figure>
 			<div class="d-flex mb-2">
-				<a href=""><img class="img-fluid" src="~/images/featured_3.jpg" alt="" /></a>
-				<a href=""><img class="img-fluid" src="~/images/featured_4.jpg" alt="" /></a>
-				<a href=""><img class="img-fluid" src="~/images/featured_5.jpg" alt="" /></a>
+				<a class="overflow-hidden" href=""><img class="img-fluid" src="~/images/featured_3.jpg" alt="" /></a>
+				<a class="overflow-hidden" href=""><img class="img-fluid" src="~/images/featured_4.jpg" alt="" /></a>
+				<a class="overflow-hidden" href=""><img class="img-fluid" src="~/images/featured_5.jpg" alt="" /></a>
 			</div>
 			<figcaption>
 				<a href="">浴室門口的高質感盆浴櫃組好看又好收納！</a>
@@ -302,82 +376,96 @@
 	<div class="fs-4 fw-bold my-3 gray_text">最新消息</div>
 	<div class="swiper">
 		<div class="swiper-wrapper">
-			<div class="swiper-slide">
-				<figure class="row g-0">
-					<div class="col-sm-6">
+			<!--
+			<template id="Template_Swiper_Two_Graphics">
+				<div class="template_swiper_two_graphics swiper-slide">
+					<figure class="row">
+						<div class="col-sm-6 col">
+							<div class="ratio ratio-16x9 overflow-hidden">
+								<img class="swiper_image img-fluid h-auto top-50 translate-middle-y" src="" alt="...">
+							</div>
+						</div>
+						<figcaption class="col-sm-6 col d-flex flex-column align-self-stretch p-2">
+							<div class="d-flex align-items-baseline gray_text">
+								<div class="swiper_big_title fs-5 fw-bold me-2"></div>
+								<div class="swiper_title fw-bold"></div>
+							</div>
+							<p class="swiper_content fw-bold flex-grow-1"></p>
+							<a href=""><div class="btn_news_more blue_text">More  ></div></a>
+						</figcaption>
+					</figure>
+				</div>
+			</template>
+			-->
+
+			<div class="template_swiper_two_graphics swiper-slide">
+				<figure class="row">
+					<div class="col-sm-6 col">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img class="img-fluid rounded-start" src="~/images/news_pic1.jpg" alt="...">
+							<img class="swiper_image img-fluid h-auto top-50 translate-middle-y" src="~/images/news_pic1.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6 align-self-stretch p-2">
-						<div class="d-flex flex-column h-100">
-							<div class="d-flex align-items-baseline gray_text">
-								<div class="fs-5 fw-bold me-2">08/15</div>
-								<div class="fw-bold">2022</div>
-							</div>
-							<p class="content fw-bold flex-grow-1">新品上市，全省門市販售中</p>
-							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
+					<figcaption class="col-sm-6 col d-flex flex-column align-self-stretch p-2">
+						<div class="d-flex align-items-baseline gray_text">
+							<div class="swiper_big_title fs-5 fw-bold me-2">08/15</div>
+							<div class="swiper_title fw-bold">2022</div>
 						</div>
+						<p class="swiper_content fw-bold flex-grow-1">新品上市，全省門市販售中</p>
+						<a href=""><div class="btn_news_more blue_text">More  ></div></a>
 					</figcaption>
 				</figure>
 			</div>
 
-			<div class="swiper-slide">
-				<figure class="row g-0">
-					<div class="col-sm-6">
+			<div class="template_swiper_two_graphics swiper-slide">
+				<figure class="row">
+					<div class="col-sm-6 col">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img class="img-fluid rounded-start" src="~/images/news_pic2.jpg" alt="...">
+							<img class="swiper_image img-fluid h-auto top-50 translate-middle-y" src="~/images/news_pic2.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6 align-self-stretch p-2">
-						<div class="d-flex flex-column h-100">
-							<div class="d-flex align-items-baseline gray_text">
-								<div class="fs-5 fw-bold me-2">07/28</div>
-								<div class="fw-bold">2022</div>
-							</div>
-							<p class="content fw-bold flex-grow-1">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
-							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
+					<figcaption class="col-sm-6 col d-flex flex-column align-self-stretch p-2">
+						<div class="d-flex align-items-baseline gray_text">
+							<div class="swiper_big_title fs-5 fw-bold me-2">07/28</div>
+							<div class="swiper_title fw-bold">2022</div>
 						</div>
+						<p class="swiper_content fw-bold flex-grow-1">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
+						<a href=""><div class="btn_news_more blue_text">More  ></div></a>
 					</figcaption>
 				</figure>
 			</div>
 
-			<div class="swiper-slide">
-				<figure class="row g-0">
-					<div class="col-sm-6">
+			<div class="template_swiper_two_graphics swiper-slide">
+				<figure class="row">
+					<div class="col-sm-6 col">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img class="img-fluid rounded-start" src="~/images/news_pic1.jpg" alt="...">
+							<img class="swiper_image img-fluid h-auto top-50 translate-middle-y" src="~/images/news_pic1.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6 align-self-stretch p-2">
-						<div class="d-flex flex-column h-100">
-							<div class="d-flex align-items-baseline gray_text">
-								<div class="fs-5 fw-bold me-2">08/15</div>
-								<div class="fw-bold">2022</div>
-							</div>
-							<p class="content fw-bold flex-grow-1">新品上市，全省門市販售中</p>
-							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
+					<figcaption class="col-sm-6 col d-flex flex-column align-self-stretch p-2">
+						<div class="d-flex align-items-baseline gray_text">
+							<div class="swiper_big_title fs-5 fw-bold me-2">08/15</div>
+							<div class="swiper_title fw-bold">2022</div>
 						</div>
+						<p class="swiper_content fw-bold flex-grow-1">新品上市，全省門市販售中</p>
+						<a href=""><div class="btn_news_more blue_text">More  ></div></a>
 					</figcaption>
 				</figure>
 			</div>
 
-			<div class="swiper-slide">
-				<figure class="row g-0">
-					<div class="col-sm-6">
+			<div class="template_swiper_two_graphics swiper-slide">
+				<figure class="row">
+					<div class="col-sm-6 col">
 						<div class="ratio ratio-16x9 overflow-hidden">
-							<img class="img-fluid rounded-start" src="~/images/news_pic2.jpg" alt="...">
+							<img class="swiper_image img-fluid h-auto top-50 translate-middle-y" src="~/images/news_pic2.jpg" alt="...">
 						</div>
 					</div>
-					<figcaption class="col-sm-6 align-self-stretch p-2">
-						<div class="d-flex flex-column h-100">
-							<div class="d-flex align-items-baseline gray_text">
-								<div class="fs-5 fw-bold me-2">07/28</div>
-								<div class="fw-bold">2022</div>
-							</div>
-							<p class="content fw-bold flex-grow-1">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
-							<a href=""><div class="btn_news_more px-0 border-0 bg-transparent">More  ></div></a>
+					<figcaption class="col-sm-6 col d-flex flex-column align-self-stretch p-2">
+						<div class="d-flex align-items-baseline gray_text">
+							<div class="swiper_big_title fs-5 fw-bold me-2">07/28</div>
+							<div class="swiper_title fw-bold">2022</div>
 						</div>
+						<p class="swiper_content fw-bold flex-grow-1">台灣最卓越的衛浴品牌需要您一票支援！！！</p>
+						<a href=""><div class="btn_news_more blue_text">More  ></div></a>
 					</figcaption>
 				</figure>
 			</div>
@@ -460,47 +548,87 @@
 	</div>
 </div>
 
-<div id="Other_Page" class="container row row-cols-2 row-cols-sm-4 m-auto px-0">
-	<figure class="col h-100">
-		<a href="">
-			<div class="position-relative ">
-				<img class="img-fluid" src="~/images/other_page_1.jpg" alt="" />
-				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">關於Derek</figcaption>
+<!-- Four Container
+<div class="container-fluid">
+	<div class="container">
+		<div class="row row-cols-2 row-cols-sm-4">
+			<div class="col py-3">
 			</div>
-		</a>
-	</figure>
-	<figure class="col h-100">
-		<a href="">
-			<div class="position-relative ">
-				<img class="img-fluid" src="~/images/other_page_2.jpg" alt="" />
-				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">標章認證</figcaption>
+
+			<div class="col py-3">
 			</div>
-		</a>
-	</figure>
-	<figure class="col h-100">
-		<a href="">
-			<div class="position-relative ">
-				<img class="img-fluid" src="~/images/other_page_3.jpg" alt="" />
-				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">銷售據點</figcaption>
+
+			<div class="col py-3">
 			</div>
-		</a>
-	</figure>
-	<figure class="col h-100">
-		<a href="">
-			<div class="position-relative ">
-				<img class="img-fluid" src="~/images/other_page_4.jpg" alt="" />
-				<figcaption class="position-absolute bottom-0 w-100 mb-3 p-2 text-white">我們的服務</figcaption>
+
+			<div class="col py-3">
 			</div>
-		</a>
-	</figure>
+		</div>
+	</div>
+</div>
+-->
+
+<div id="Other_Page" class="container-fluid">
+	<div class="container">
+		<div class="row row-cols-2 row-cols-sm-4">
+			<div class="col py-3">
+				<figure class="position-relative overflow-hidden">
+					<a class="pro_link" href="">
+						<img class="pro_image img-fluid" src="~/images/other_page_1.jpg" alt="" />
+						<figcaption class="pro_text position-absolute fs-5 fw-bold ps-4 py-2 text-white w-100">關於Derek</figcaption>
+					</a>
+				</figure>
+			</div>
+
+			<div class="col py-3">
+				<figure class="position-relative overflow-hidden">
+					<a class="pro_link" href="">
+						<img class="pro_image img-fluid" src="~/images/other_page_2.jpg" alt="" />
+						<figcaption class="pro_text position-absolute fs-5 fw-bold ps-4 py-2 text-white w-100">標章認證</figcaption>
+					</a>
+				</figure>
+			</div>
+
+			<div class="col py-3">
+				<figure class="position-relative overflow-hidden">
+					<a class="pro_link" href="">
+						<img class="pro_image img-fluid" src="~/images/other_page_3.jpg" alt="" />
+						<figcaption class="pro_text position-absolute fs-5 fw-bold ps-4 py-2 text-white w-100">銷售據點</figcaption>
+					</a>
+				</figure>
+			</div>
+
+			<div class="col py-3">
+				<figure class="position-relative overflow-hidden">
+					<a class="pro_link" href="">
+						<img class="pro_image img-fluid" src="~/images/other_page_4.jpg" alt="" />
+						<figcaption class="pro_text position-absolute fs-5 fw-bold ps-4 py-2 text-white w-100">我們的服務</figcaption>
+					</a>
+				</figure>
+			</div>
+		</div>
+	</div>
 </div>
 
-<figure id="Reserve" class="container my-5">
-	<figcaption class="frame h-100 d-flex align-items-center justify-content-center">
-		<a class="content d-flex flex-column align-items-center justify-content-center rounded-circle" href="" target="_blank">
-			<div>Reservation</div>
-			<div>預約參觀</div>
-			<i class="fa-solid fa-chevron-up fs-4 text-black"></i>
+<!-- <template id="Template_Figure_Figcaption">
+	<figure class="position-relative overflow-hidden">
+		<a class="pro_link" href="">
+			<img class="pro_image img-fluid" src="" alt="" />
+			<figcaption class="pro_text position-absolute fs-5 fw-bold ps-4 py-2 text-white w-100"></figcaption>
+		</a>
+	</figure>
+</template>
+-->
+
+<figure id="Reserve" class="container my-5 overflow-hidden">
+	<figcaption class="w-100 h-100 position-relative">
+		<a class="w-100" href="/">
+			<img class="img-fluid rounded-circle position-absolute start-50 top-50 translate-middle" src="~/images/reserve_bg_round.png">
+			<div class="content position-absolute start-50 text-center top-50 translate-middle">
+				<div class="fs-3 fw-bold">Reservation</div>
+				<div class="fs-3 fw-bold">預約參觀</div>
+				<i class="fa-solid fa-chevron-up fs-4 text-black"></i>
+			</div>
 		</a>
 	</figcaption>
 </figure>

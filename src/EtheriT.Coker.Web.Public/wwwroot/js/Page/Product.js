@@ -74,6 +74,10 @@
             nextEl: ".btn_swiper_next_ads",
             prevEl: ".btn_swiper_prev_ads",
         },
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        }
     });
 
     $('.btn_share').cShare({

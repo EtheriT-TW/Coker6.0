@@ -1,4 +1,13 @@
 ﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 /* Product Display Modal */
 #ProDisplayModal.show {
     display: flex !important;
@@ -46,7 +55,7 @@
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_youtube {
         font-size: 4.5rem;
-        color:#a39292;
+        color: #a39292;
         Opacity: 0.8;
         pointer-events: none
     }
@@ -54,6 +63,10 @@
 /* PreviewSwiper */
 .PreviewSwiper > .swiper-wrapper > .swiper-slide {
     cursor: pointer;
+}
+
+.PreviewSwiper > .swiper-scrollbar {
+    height: calc(5px * 2 / 3);
 }
 
 [class*=btn_swiper_] {

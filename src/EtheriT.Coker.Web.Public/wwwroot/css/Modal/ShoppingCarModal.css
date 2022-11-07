@@ -1,4 +1,14 @@
-﻿.Modal {
+﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.Modal {
     width: 650px;
     max-width: 90vw;
 }

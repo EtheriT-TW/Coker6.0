@@ -1,4 +1,5 @@
 ﻿var buy_step_swiper;
+var $Orderer_TWzipcode, $Recipient_TWzipcode, $Bill_TWzipcode;
 var gotop_switch = false;
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, BillForms;
 var OrdererOpen = false, RecipientOpen = false, BillOpen = false;
@@ -59,6 +60,11 @@ function PageReady() {
                 break;
         }
     });
+
+    $Orderer_TWzipcode = $('#Orderer_TWzipcode');
+    $Recipient_TWzipcode = $('#Recipient_TWzipcode');
+    $Bill_TWzipcode = $('#Bill_TWzipcode');
+    TWZipCodeInit();
 
     /* 根據畫面高度判斷切換Swiper是否滑動到上方 */
     top_position = $(".swiper").offset().top;
@@ -135,6 +141,89 @@ function PageReady() {
     $('input[type=radio][name=RecipientRadio]').change(RecipientRadio);
     $('input[type=radio][name=BillRadio]').change(BillRadio);
 
+}
+
+function TWZipCodeInit() {
+    $Orderer_TWzipcode.twzipcode({
+        'zipcodeIntoDistrict': true,
+        'countySel': '高雄市',
+        'districtSel': '前鎮區'
+    });
+    $Recipient_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
+    $Bill_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
+
+    var $county, $district;
+
+    $county = $Orderer_TWzipcode.children('.county');
+    $district = $Orderer_TWzipcode.children('.district');
+
+    $county.children('select').attr({
+        id: "OrdererSelectCity",
+        class: "orderer_city form-select",
+        required: "required"
+    });
+    $county.append("<label class='px-4 required' for='OrdererSelectCity'>縣市</label>");
+    var $county_first_option = $county.children('select').children('option').first();
+    $county_first_option.text("請選擇縣市");
+    $county_first_option.attr('disabled', 'disabled');
+
+    $district.children('select').attr({
+        id: "OrdererSelectTown",
+        class: "orderer_town form-select",
+        required: "required"
+    });
+    $district.append("<label class='px-4 required' for='OrdererSelectCity'>鄉鎮</label>");
+    var $district_first_option = $district.children('select').children('option').first();
+    $district_first_option.text("請選擇鄉鎮");
+    $district_first_option.attr('disabled', 'disabled');
+
+
+    $county = $Recipient_TWzipcode.children('.county');
+    $district = $Recipient_TWzipcode.children('.district');
+
+    $county.children('select').attr({
+        id: "RecipientSelectCity",
+        class: "recipient_city form-select",
+        required: "required"
+    });
+    $county.append("<label class='px-4 required' for='RecipientSelectCity'>縣市</label>");
+    var $county_first_option = $county.children('select').children('option').first();
+    $county_first_option.text("請選擇縣市");
+    $county_first_option.attr('disabled', 'disabled');
+
+    $district.children('select').attr({
+        id: "RecipientSelectTown",
+        class: "recipient_town form-select",
+        required: "required"
+    });
+    $district.append("<label class='px-4 required' for='RecipientSelectCity'>鄉鎮</label>");
+    var $district_first_option = $district.children('select').children('option').first();
+    $district_first_option.text("請選擇鄉鎮");
+    $district_first_option.attr('disabled', 'disabled');
+
+
+    $county = $Bill_TWzipcode.children('.county');
+    $district = $Bill_TWzipcode.children('.district');
+
+    $county.children('select').attr({
+        id: "BillSelectCity",
+        class: "bill_city form-select",
+        required: "required"
+    });
+    $county.append("<label class='px-4 required' for='BillSelectCity'>縣市</label>");
+    var $county_first_option = $county.children('select').children('option').first();
+    $county_first_option.text("請選擇縣市");
+    $county_first_option.attr('disabled', 'disabled');
+
+    $district.children('select').attr({
+        id: "BillSelectTown",
+        class: "bill_town form-select",
+        required: "required"
+    });
+    $district.append("<label class='px-4 required' for='BillSelectCity'>鄉鎮</label>");
+    var $district_first_option = $district.children('select').children('option').first();
+    $district_first_option.text("請選擇鄉鎮");
+    $district_first_option.attr('disabled', 'disabled');
 }
 
 function Step2Monitor() {

@@ -20,7 +20,7 @@
         $("#menuButton").removeClass("collapsed");
     });
 
-    $('.news_box').verticalLoop({
+    $('#News_Marquee > .news_box').verticalLoop({
         delay: 3000,
         order: 'asc'
     });

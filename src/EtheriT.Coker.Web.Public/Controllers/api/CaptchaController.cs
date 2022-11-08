@@ -12,13 +12,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             _captcha = captcha;
         }
-        public IActionResult Index()
+        public IActionResult Index(string id)
         {
-            // Generate a random number  
-            Random random = new Random();
-            // Any random integer   
-            string num = (random.Next()).ToString();
-            var info = _captcha.Generate(num);
+            var info = _captcha.Generate(id);
             var stream = new MemoryStream(info.CaptchaByteData);
             return File(stream, "image/png");
         }

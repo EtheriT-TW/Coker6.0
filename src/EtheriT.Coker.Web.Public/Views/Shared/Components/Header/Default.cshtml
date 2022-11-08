@@ -5,14 +5,14 @@
 <link rel="stylesheet" href="~/css/Header/Header.min.css" asp-append-version="true" />
 <script src="~/js/Header/Header.min.js" asp-append-version="true"></script>
 
-<nav>
-	<div id="Header_Top" class="d-flex">
-		<div class="d-flex">
+<nav class="navbar navbar-expand-lg flex-column p-0">
+	<div id="Header_Top" class="d-flex justify-content-end justify-content-lg-between p-2 w-100 ">
+		<div id="News_Marquee" class="d-lg-flex d-none">
 			<div class="news_text">New&ensp;</div>
 			<div class="news_box">
 				<ul class="clearfix">
-					<li><a href="#">隆昌Derek正式上線蝦皮啦</a></li>
-					<li><a href="#">Derek新竹旗艦店盛大開幕！代言人張鈞甯驚艷賞「衛浴美術館」</a></li>
+					<li><a class="text-white overflow-hidden" href="#">隆昌Derek正式上線蝦皮啦</a></li>
+					<li><a class="text-white overflow-hidden" href="#">Derek新竹旗艦店盛大開幕！代言人張鈞甯驚艷賞「衛浴美術館」</a></li>
 				</ul>
 			</div>
 		</div>
@@ -62,8 +62,9 @@
 		</div>
 	</div>
 
-	<div id="Mega_Menu" class="abreast navbar navbar-expand-lg">
-		<div class="mega_menu_logo center">
+	<div id="Mega_Menu" class="navbar navbar-expand-lg w-100">
+
+		<div class="logo col-lg-4 col text-center">
 			<a href="/">
 				@if (string.IsNullOrEmpty(Model.Title))
 				{
@@ -71,36 +72,27 @@
 				}
 				else
 				{
-					<img src="@Model.LogoImageUrl" alt="Derek" class="center" />
+					<img class="" src="@Model.LogoImageUrl" alt="Derek" />
 					<h1 class="d-none">@Model.Title</h1>
 				}
 			</a>
-			<div id="menuButton" class="menu-button navbar-toggler collapsed" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarSupportedContent">
-				<div class="bar"></div>
-				<div class="bar"></div>
-				<div class="bar"></div>
-			</div>
 		</div>
-		<div class="mega_menu_title offcanvas offcanvas-start" id="navbarSupportedContent" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
-			<div class="offcanvas-header">
-				<h5 class="offcanvas-title" id="offcanvasLabel">@Model.Title</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+
+		<div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-8 mt-lg-2 visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+			<div class="offcanvas-header d-flex flex-column justify-content-center p-2 d-lg-none">
+				<h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+				<div class="d-lg-none d-flex justify-content-center align-items-center mt-4">
+					<input class="border-1 rounded-pill" type="text">
+					<button class="bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
+					<button class="bg-transparent border-0 d-none d-sm-flex">智慧搜尋</button>
+				</div>
 			</div>
 			<ul class="navbar-nav me-auto offcanvas-body">
-				<li class="d-md-flex d-lg-none">
-					<div class="abreast smart-search">
-						<input type="text">
-						<i class="fa-solid fa-magnifying-glass"></i>
-					</div>
-				</li>
-				<li class="d-md-none">
-					<p>智慧搜尋</p>
-				</li>
 				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
 				{
-					<li class="mega_menu_subtitle nav-item">
+					<li class="title nav-item col-lg pb-2">
 						<a class="nav-link center">@menu.Title</a>
-						<div class="mega_menu_content abreast shadow">
+						<div class="mega_menu_content abreast">
 							<div class="text">
 								<ul class="abreast">
 									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
@@ -136,5 +128,12 @@
 				}
 			</ul>
 		</div>
+
+		<div class="btn_menu navbar-toggler collapsed position-fixed top-0 start-0 px-2 py-0 row-cols-lg-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
+			<div class="bar"></div>
+			<div class="bar"></div>
+			<div class="bar"></div>
+		</div>
 	</div>
+
 </nav>

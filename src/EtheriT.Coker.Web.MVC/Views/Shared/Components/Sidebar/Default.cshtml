@@ -2,21 +2,39 @@
 @model Site;
 
 <nav class="navbar navbar-dark bg-primary">
-    <a class="navbar-brand m-0 py-2 brand-title" href="#">@Model.Title</a>
-    <span></span>
-    <a class="navbar-brand py-2 material-icons toggle-sidebar" href="#">menu</a>
+	<a class="navbar-brand m-0 py-2 brand-title" href="#">@Model.Title</a>
+	<span></span>
+	<a class="navbar-brand py-2 material-icons toggle-sidebar" href="#">menu</a>
 </nav>
 <nav class="navigation">
-    <ul>
-        @{
-            foreach (var item in Model.Jobs) {
-                string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
-                <li class="@myClass">
-                    <a title="@item.PageName" asp-controller="@item.Controller" asp-action="@item.Action">
-                        <span class="nav-icon material-icons">@item.Icon</span>@item.Title
-                    </a>
-                </li>
-            }
-        }
-    </ul>
+	<ul>
+		@{
+			foreach (var item in Model.Jobs)
+			{
+				string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
+				<li class="@myClass">
+					@if (item.jobItemModels == null)
+					{
+						<a title="@item.PageName" asp-controller="@item.Controller" asp-action="@item.Action">
+							<span class="nav-icon material-icons">@item.Icon</span>@item.Title
+						</a>
+					}
+					else
+					{
+						<a class="" title="@item.PageName" data-bs-toggle="collapse" href="@item.CollapseId" role="button" aria-expanded="false" aria-controls="collapseExample">
+							<span class="nav-icon material-icons">@item.Icon</span>@item.Title<span class="nav-icon material-icons">expand_more</span>
+						</a>
+						@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
+						{
+							<ul id="@item.PageName" class="collapse">
+								<li>
+									<a class="" title="@subJob.PageName" asp-controller="@subJob.Controller" asp-action="@subJob.Action">@subJob.Title</a>
+								</li>
+							</ul>
+						}
+					}
+				</li>
+			}
+		}
+	</ul>
 </nav>

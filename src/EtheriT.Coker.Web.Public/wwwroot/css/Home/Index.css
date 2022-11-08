@@ -278,8 +278,8 @@
         }
 
     #Reserve:hover > figcaption {
-        filter: saturate(200%);
-        background-size: auto 375px;
+        filter: saturate(120%);
+        background-size: auto 320px;
         transition: all 0.5s;
     }
 

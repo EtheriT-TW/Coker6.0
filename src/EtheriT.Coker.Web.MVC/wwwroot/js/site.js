@@ -164,3 +164,64 @@ function toggleFullScreen() {
         }
     }
 };
+
+var Coker = {
+    timeout: {
+        time: 1500
+    },
+    sweet: {
+        success: function (text, action, autoclose) {
+            var closetime = false;
+            if (autoclose) { closetime = Coker.timeout.time }
+
+            Swal.fire({
+                icon: 'success',
+                html: text,
+                showConfirmButton: !autoclose,
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: '確定',
+                timer: closetime
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
+        },
+        error: function (title, text, action, autoclose) {
+            var closetime = false;
+            if (autoclose) { closetime = Coker.timeout.time }
+
+            Swal.fire({
+                icon: 'error',
+                title: title,
+                html: text,
+                showConfirmButton: !autoclose,
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: '確定',
+                timer: closetime
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
+        },
+        confirm: function (title, text, confirmtexet, cancanceltext, action) {
+            Swal.fire({
+                icon: 'info',
+                title: title,
+                html: text,
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: confirmtexet,
+                cancelButtonText: cancanceltext
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
+        }
+    }
+}

@@ -1,0 +1,182 @@
+﻿@{
+	ViewData["Title"] = "MemberData";
+}
+
+<link rel="stylesheet" href="~/css/MemberManagement/MemberDetails.min.css" asp-append-version="true" />
+<script src="~/js/MemberManagement/MemberDetails.min.js" asp-append-version="true"></script>
+
+
+<div class="py-2 px-4 position-relative">
+	<div id="TopLine" class="d-flex justify-content-end mb-4">
+		<button class="btn_save border-0 px-4 py-1 text-white fw-bold fs-5">儲存</button>
+	</div>
+
+	<!-- Main Block -->
+	<div class="row gx-0">
+		<div id="MainBlock" class="col-9 overflow-auto">
+
+			<!-- Member Data -->
+			<div class="card border-0 ">
+				<div id="MemberData" class="card-body">
+					<div class="d-flex align-items-center justify-content-between pb-2">
+						<div class="fs-5 fw-bold">客戶基本資料</div>
+						<div class="member_number">200907730911</div>
+					</div>
+
+					<form class="row needs-validation" novalidate>
+						<div class="form-floating mb-3 col-12 col-sm-6">
+							<input id="InputName" class="name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
+							<label class="required px-4" for="InputName">姓名</label>
+						</div>
+						<div class="gender align-self-center col-auto d-flex mb-3">
+							<div class="form-check pe-3">
+								<input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" checked required>
+								<label class="form-check-label" for="RadioSir">男</label>
+							</div>
+							<div class="form-check">
+								<input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender" required>
+								<label class="form-check-label" for="RadioMiss">女</label>
+							</div>
+						</div>
+						<div class="state align-self-center col d-flex mb-3 ps-5 row">
+							<label class="form-label col-auto mb-0 ps-0 align-self-center" for="MemberStatusLevel">會員狀態</label>
+							<select id="MemberStatusLevel" class="form-select col" aria-label="Default select example">
+								<option value="open">開通</option>
+								<option value="suspension">停權</option>
+								<option value="nonactivated" selected>未開通</option>
+							</select>
+						</div>
+						<div class="form-floating mb-3 col-12 col-sm-6">
+							<input id="InputContactMail" class="mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
+							<label class="required px-4" for="InputContactMail">E-mail</label>
+						</div>
+						<div class="col-6 d-none d-sm-flex"></div>
+						<div class="form-floating mb-3 col-12 col-sm-6">
+							<input id="InputPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
+							<label class="required px-4" for="InputPhone">手機號碼</label>
+						</div>
+						<div class="row">
+							<div class="form-floating mb-3 col-4 col-sm-2">
+								<input id="InputAreaCode" class="areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
+								<label class="px-4" for="InputAreaCode">區碼</label>
+							</div>
+							<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+								<input id="InputCellPhone" class="cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
+								<label for="InputCellPhone">聯絡電話</label>
+							</div>
+							<div class="form-floating mb-3 col-6 col-sm-3">
+								<input id="InputExtension" class="extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
+								<label class="px-4" for="InputExtension">分機</label>
+							</div>
+						</div>
+
+						<div id="TWzipcode" class="row">
+							<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+							<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="InputAddress" class="address form-control" type="text" placeholder="復興四路" value="復興四路" required>
+								<label class="px-4 required" for="InputAddress">地址</label>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- Login Data -->
+			<div class="card border-0 my-4">
+				<div id="LoginData" class="card-body">
+					<div class="d-flex align-items-center pb-2">
+						<div class="fs-5 fw-bold">登入資料</div>
+					</div>
+					<form class="row needs-validation" novalidate>
+						<div class="form-floating mb-3 col-12 col-lg-8 position-relative">
+							<input id="InputLoginMail" class="mail form-control pe-5" type="email" placeholder="name@example.com" value="">
+							<label class="px-4" for="InputLoginMail">電子郵件</label>
+							<button class="position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><i class="fa-solid fa-lock"></i></button>
+						</div>
+						<div class="col-4 d-none d-lg-flex"></div>
+						<div class="form-floating mb-3 col-6 col-lg-4 position-relative">
+							<input id="InputNewPassword" class="mail form-control pe-5" type="text" placeholder="******" value="" minlength="6">
+							<label class="px-4" for="InputNewPassword">新密碼</label>
+							<button class="position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><i class="fa-regular fa-eye-slash"></i></button>
+						</div>
+						<div class="form-floating mb-3 col-6 col-lg-4 position-relative">
+							<input id="InputConfirmPassword" class="mail form-control pe-5" type="text" placeholder="******" value="" minlength="6">
+							<label class="px-4" for="InputConfirmPassword">密碼確認</label>
+							<button class="position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><i class="fa-regular fa-eye-slash"></i></button>
+						</div>
+					</form>
+					<div>（輸入6個字元以上的英文字母及數字，至少一位英文字母及數字，不可使用特殊符號。）</div>
+				</div>
+			</div>
+
+			<!-- Community Login Binding -->
+			<div class="card border-0 ">
+				<div id="CommunityLoginBinding" class="card-body">
+					<div class="d-flex align-items-center pb-2">
+						<div class="fs-5 fw-bold">社群登入綁定</div>
+					</div>
+					<div class="account d-flex">
+						<div class="frame mx-4 mt-3">
+							<div class="d-flex align-items-center">
+								<img src="/images/icon_google.png" />
+								<div class="ps-3">
+									<div class="fw-bold">Google 帳戶</div>
+									<div>Google 帳戶名稱</div>
+								</div>
+							</div>
+							<div class="d-flex justify-content-center my-3">
+								<button class="bg-transparent border border-danger px-2 rounded-pill text-danger">停用</button>
+							</div>
+						</div>
+						<div class="frame mx-4 mt-3">
+							<div class="d-flex align-items-center">
+								<img src="/images/icon_facebook.png" />
+								<div class="ps-3">
+									<div class="fw-bold">臉書 帳戶</div>
+									<div>臉書 帳戶名稱</div>
+								</div>
+							</div>
+							<div class="d-flex justify-content-center my-3">
+								<button class="bg-transparent border border-danger px-2 rounded-pill text-danger">停用</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Side Block -->
+		<div id="SideBlock" class="" data-bs-scroll="true" tabindex="-1" aria-labelledby="Side Block Offcanvas">
+			<div class="offcanvas-header d-md-none">
+				<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+			</div>
+
+			<div class="offcanvas-body pt-0 px-0">
+				<div class="card border-0 mb-3">
+					<div class="card-body">
+						<div class="row align-items-center px-3">
+							<label class="form-label col-auto mb-0 ps-0" for="MemberStatusLevel">會員身分等級</label>
+							<select id="MemberStatusLevel" class="form-select col" aria-label="Default select example">
+								<option selected>無設定</option>
+								<option value="1">One</option>
+								<option value="2">Two</option>
+								<option value="3">Three</option>
+							</select>
+						</div>
+						<div class="my-5"></div>
+						<a class="text-decoration-none" href=""><div class="border fs-5 fw-bold p-2 rounded text-black">歷史訂單</div></a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Side Collapse Button -->
+	<button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#ManagementData" aria-controls="offcanvasWithBothOptions">
+		<div class="above position-absolute end-0"></div>
+		<div>右側收合</div>
+		<div class="under position-absolute end-0"></div>
+	</button>
+
+</div>

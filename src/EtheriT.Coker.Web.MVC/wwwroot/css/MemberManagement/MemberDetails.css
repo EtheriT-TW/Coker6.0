@@ -1,0 +1,65 @@
+﻿
+/* Required Sign */
+.required::before {
+    color: var(--colors-red);
+    content: '*';
+}
+
+.required::after {
+    color: var(--colors-red);
+    content: '必填';
+    font-size: 0.5rem;
+}
+
+/* Top Line*/
+.btn_save {
+    background-color: var(--colors-blue-button);
+}
+
+/* MemberData */
+#MemberData > div > .member_number::before {
+    content: "會員編號："
+}
+
+/* SideBlock */
+#SideBlock {
+    max-width: 90vw;
+}
+
+    #SideBlock > div > .card {
+        min-height: 150px;
+    }
+
+        #SideBlock > div > .card > .card-body > a > div {
+            width: fit-content;
+        }
+
+/* Btn Side Collapse */
+#Btn_Side_Collapse {
+    width: 2rem;
+    top: 150px;
+    background-color: white;
+}
+
+    #Btn_Side_Collapse > .above {
+        border: 1rem solid white;
+        border-top-color: transparent;
+        border-left-color: transparent;
+        top: -2rem;
+    }
+
+    #Btn_Side_Collapse > .under {
+        border: 1rem solid white;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+        bottom: -2rem;
+    }
+
+#CommunityLoginBinding > .account > .frame > div > img {
+    width: auto;
+    height: 40px;
+}
+
+#CommunityLoginBinding > .account > .frame > div > button {
+    font-size: 0.8rem;
+}

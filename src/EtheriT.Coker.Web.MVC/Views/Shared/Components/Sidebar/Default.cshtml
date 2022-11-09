@@ -11,29 +11,32 @@
 		@{
 			foreach (var item in Model.Jobs)
 			{
-				string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
-				<li class="@myClass">
-					@if (item.jobItemModels == null)
-					{
+				@if (item.jobItemModels == null)
+				{
+					string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
+					<li class="@myClass">
 						<a title="@item.PageName" asp-controller="@item.Controller" asp-action="@item.Action">
 							<span class="nav-icon material-icons">@item.Icon</span>@item.Title
 						</a>
-					}
-					else
-					{
+					</li>
+				}
+				else
+				{
+					<li>
 						<a class="" title="@item.PageName" data-bs-toggle="collapse" href="@item.CollapseId" role="button" aria-expanded="false" aria-controls="collapseExample">
 							<span class="nav-icon material-icons">@item.Icon</span>@item.Title<span class="nav-icon material-icons">expand_more</span>
 						</a>
-						@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
-						{
-							<ul id="@item.PageName" class="collapse">
-								<li>
-									<a class="" title="@subJob.PageName" asp-controller="@subJob.Controller" asp-action="@subJob.Action">@subJob.Title</a>
+						<ul id="@item.PageName" class="collapse">
+							@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
+							{
+								string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
+								<li class="@myClass ps-4">
+									<a class="lh-lg" title="@subJob.PageName" asp-controller="@subJob.Controller" asp-action="@subJob.Action">@subJob.Title</a>
 								</li>
-							</ul>
-						}
-					}
-				</li>
+							}
+						</ul>
+					</li>
+				}
 			}
 		}
 	</ul>

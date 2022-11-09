@@ -25,7 +25,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                     new JobMenu{
                         PageName="OrderManagement",
                         Title="訂單管理",
-                        Controller="Dashboard",
+                        Controller="OrderManagement",
                         Action="Index",
                         Icon="receipt_long",
                         CollapseId="#OrderManagement",
@@ -33,7 +33,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="SingleOrder",
                                 Title="單筆訂單畫面",
-                                Controller="Dashboard",
+                                Controller="OrderManagement",
                                 Action="Index",
                                 Icon="",
                             }
@@ -73,7 +73,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                     new JobMenu{
                         PageName="MemberManagement",
                         Title="會員管理",
-                        Controller="Dashboard",
+                        Controller="MemberManagement",
                         Action="Index",
                         Icon="people_alt",
                         CollapseId="#MemberManagement",
@@ -81,7 +81,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="MemberData",
                                 Title="會員資料",
-                                Controller="Dashboard",
+                                Controller="MemberManagement",
                                 Action="Index",
                                 Icon="",
                             }
@@ -177,7 +177,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                     new JobMenu{
                         PageName="SystemManagement",
                         Title="系統管理",
-                        Controller="Dashboard",
+                        Controller="SystemManagement",
                         Action="Index",
                         Icon="settings",
                         CollapseId="#SystemManagement",
@@ -185,7 +185,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="WebData",
                                 Title="網站資料",
-                                Controller="Dashboard",
+                                Controller="SystemManagement",
                                 Action="Index",
                                 Icon="",
                             },

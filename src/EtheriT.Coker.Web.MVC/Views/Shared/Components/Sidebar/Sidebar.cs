@@ -107,7 +107,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                     new JobMenu{
                         PageName="ContentManagement",
                         Title="內容管理",
-                        Controller="Dashboard",
+                        Controller="ContentManagement",
                         Action="Index",
                         Icon="sticky_note_2",
                         CollapseId="#ContentManagement",
@@ -122,8 +122,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="MarqueeMessage",
                                 Title="跑馬燈訊息",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ContentManagement",
+                                Action="MarqueeMessage",
                                 Icon="",
                             },
                             new JobMenu{

@@ -200,6 +200,7 @@ var Coker = {
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
                 confirmButtonText: '確定',
+                reverseButtons: true,
                 timer: closetime
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -216,10 +217,29 @@ var Coker = {
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
                 confirmButtonText: confirmtexet,
-                cancelButtonText: cancanceltext
+                cancelButtonText: cancanceltext,
+                reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
+                }
+            })
+        },
+        draft_or_publish: function (draft_action, publish_action) {
+            Swal.fire({
+                icon: 'info',
+                title: "儲成草稿或直接發布？",
+                showCancelButton: true,
+                confirmButtonColor: '#4B89FC',
+                cancelButtonColor: '#FBB357',
+                confirmButtonText: "直接發布",
+                cancelButtonText: "存成草稿",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    publish_action();
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    draft_action();
                 }
             })
         }

@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Views\Page\OrderManagement.cshtml" />
+    <Content Remove="wwwroot\css\Page\OrderManagement.css" />
+    <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
+    <Content Remove="wwwroot\js\Page\OrderManagement.js" />
+    <Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

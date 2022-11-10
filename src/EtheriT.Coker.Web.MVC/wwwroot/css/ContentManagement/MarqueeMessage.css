@@ -1,0 +1,20 @@
+﻿
+#CreatePost > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#CreatePost > .card-body > .select_placement > div > label {
+    width: fit-content;
+}
+
+#CreatePost > .card-body > .select_placement > div > select {
+    width: 8rem;
+}
+
+#CreatePost > .card-body > .input_text > div > .input_number::after {
+    content: '/60';
+}
+
+#CreatePost > .card-body > .input_link > input:last-child {
+    z-index: 3;
+}

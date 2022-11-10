@@ -8,7 +8,7 @@
         content: '網站起始日：';
     }
 
-    #CompanyInfo > .website_deadline > .deadline_date > .expiry_date::before {
+    #CompanyInfo > .website_deadline > .deadline_date > .end_date::before {
         content: '網站到期日：';
     }
 

@@ -9,16 +9,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     public class AccountController : Controller
     {
         private readonly ILogger<AccountController> _logger;
-        private readonly IAccountAppService accountAppService;
-        public AccountController(ILogger<AccountController> logger, IAccountAppService accountAppService)
+        public AccountController(ILogger<AccountController> logger)
         {
             _logger = logger;
-            this.accountAppService = accountAppService;
-        }
-        [HttpPost]
-        public async Task<LoginOutputDto> Login(LoginInputDto dto) {
-            var result = await accountAppService.Login(dto);
-            return result;
         }
         public IActionResult Index()
         {

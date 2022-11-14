@@ -5,7 +5,8 @@
       "input": [
         "node_modules/jquery/dist/jquery.min.js",
         "node_modules/chosen-js/chosen.jquery.min.js",
-        "node_modules/jquery-ui-dist/jquery-ui.min.js"
+        "node_modules/jquery-ui-dist/jquery-ui.min.js",
+        "node_modules/jquery.cookie/jquery.cookie.js"
       ]
     },
     {

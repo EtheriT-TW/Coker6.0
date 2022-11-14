@@ -4,13 +4,24 @@
 // Write your JavaScript code.
 "use strict";
 var PreLoader;
-$(window).on("load",
-    function () {
-        typeof (PageReady) === "function" && PageReady();
-        $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })
-    }
-);
 (function (a) {
+    var now = new Date();
+    var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
+    edt = 0;
+    if (!!!co.Cookie.Get("token")) {
+        if (location.pathname != "/") location.href = "/";
+        else co.Page.Ready();
+    } else if (edt > (now.getTime() + co.Data.Time.ReCheckTime)) {
+        co.Page.Ready();
+    } else {
+        co.User.Check().done(function (result) {
+            if (result.success) co.Page.Ready();
+            else location.href = "/";
+        });
+    }
+    if (location.pathname != "/") $.cookie("lastViewPage", location.pathname);
+    $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })
+
     var tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -37,6 +48,10 @@ $(window).on("load",
             localStorage.setItem("asideMode", "expanded")
         } else { localStorage.setItem("asideMode", "collapsed") }
         return false
+    });
+    a("body").delegate(".logout", "click", function (e) {
+        e.preventDefault();
+        co.User.Logout();
     });
     var b;
     a("body").delegate(".hide-sidebar", "click", function () {

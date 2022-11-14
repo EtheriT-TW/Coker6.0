@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221101101121_Added_Table_Token")]
+    partial class Added_Table_Token
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,9 +44,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 
@@ -69,18 +68,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 1L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1457),
+                            CreationTime = new DateTime(2022, 11, 1, 18, 11, 21, 208, DateTimeKind.Local).AddTicks(1688),
                             CreatorUserId = 0L,
-                            IsDeleted = false,
                             UserId = 1L,
                             WebsiteId = 1L
                         },
                         new
                         {
                             Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1458),
+                            CreationTime = new DateTime(2022, 11, 1, 18, 11, 21, 208, DateTimeKind.Local).AddTicks(1689),
                             CreatorUserId = 0L,
-                            IsDeleted = false,
                             UserId = 2L,
                             WebsiteId = 2L
                         });
@@ -110,9 +107,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 
@@ -136,8 +130,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 {
                     b.Property<Guid>("id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("newid()");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
@@ -158,77 +151,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("UserID");
 
                     b.ToTable("Tokens");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("FK_TopNodeId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("ImgId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("LanBar")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("LinkUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<long?>("OverImgId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Popular")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("PopularVisible")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SerNO")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Target")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("Visible")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_TopNodeId");
-
-                    b.ToTable("WebMenus");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Website", b =>
@@ -260,9 +182,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Keywords")
                         .HasColumnType("nvarchar(max)");
 
@@ -292,9 +211,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 1L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1441),
+                            CreationTime = new DateTime(2022, 11, 1, 18, 11, 21, 208, DateTimeKind.Local).AddTicks(1676),
                             CreatorUserId = 0L,
-                            IsDeleted = false,
                             Locale = "zh-tw",
                             Title = "Coker雲端開店大師",
                             Type = "website"
@@ -302,9 +220,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1443),
+                            CreationTime = new DateTime(2022, 11, 1, 18, 11, 21, 208, DateTimeKind.Local).AddTicks(1677),
                             CreatorUserId = 0L,
-                            IsDeleted = false,
                             Locale = "zh-tw",
                             Title = "｜Derek｜德瑞克．隆昌窯業",
                             Type = "website"
@@ -341,20 +258,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ErrorTimes")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("LockTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -374,26 +282,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Id = 1L,
                             Account = "EtheriT",
                             CellPhone = "0906801568",
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1328),
+                            CreationTime = new DateTime(2022, 11, 1, 18, 11, 21, 208, DateTimeKind.Local).AddTicks(1576),
                             CreatorUserId = 0L,
                             Email = "service@ether.com.tw",
-                            ErrorTimes = 0,
-                            IsDeleted = false,
                             Name = "易碩網際科技科技股份有限公司",
-                            Password = "AQAAAAEAACcQAAAAEE3X/SrNcUs6zaH9K+51XEMp8G2z3r9d/5SYuLJpKy3TlYNX7DdHF6PDW8NxWk7CWg=="
+                            Password = "AM4OLBpptxBYmM79lGOX9egzZk3vIQU3d/gFCJzaBjAPXzYIK3tQ2N7X4fcrHtElTw=="
                         },
                         new
                         {
                             Id = 2L,
                             Account = "lcb",
                             CellPhone = "0920497649",
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1338),
+                            CreationTime = new DateTime(2022, 11, 1, 18, 11, 21, 208, DateTimeKind.Local).AddTicks(1586),
                             CreatorUserId = 0L,
                             Email = "lienmienchou@evergreen.com.tw",
-                            ErrorTimes = 0,
-                            IsDeleted = false,
                             Name = "隆昌窯業",
-                            Password = "AQAAAAEAACcQAAAAEE3X/SrNcUs6zaH9K+51XEMp8G2z3r9d/5SYuLJpKy3TlYNX7DdHF6PDW8NxWk7CWg=="
+                            Password = "AM4OLBpptxBYmM79lGOX9egzZk3vIQU3d/gFCJzaBjAPXzYIK3tQ2N7X4fcrHtElTw=="
                         });
                 });
 
@@ -425,20 +329,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "FK_TopNode")
-                        .WithMany("FK_ChildNodes")
-                        .HasForeignKey("FK_TopNodeId");
-
-                    b.Navigation("FK_TopNode");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
-                {
-                    b.Navigation("FK_ChildNodes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Website", b =>

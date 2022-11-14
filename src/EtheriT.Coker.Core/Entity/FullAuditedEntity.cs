@@ -13,7 +13,8 @@ namespace EtheriT.Coker.Core.Entity
         public virtual long Id { get; set; }
         public virtual long CreatorUserId { get; set; }
         public virtual long? DeleterUserId { get; set; }
-        public long? LastModifierUserId { get; set; }
+        public virtual long? LastModifierUserId { get; set; }
+        public virtual bool IsDeleted { get; set; }
         public virtual DateTime CreationTime { get; set; } = DateTime.Now;
         public virtual DateTime? DeletionTime { get; set; }
         public virtual DateTime? LastModificationTime { get; set; }

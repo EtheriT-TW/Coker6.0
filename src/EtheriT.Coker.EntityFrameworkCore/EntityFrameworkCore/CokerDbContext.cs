@@ -16,7 +16,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<User> Users { get; set; }
         public DbSet<Website> Websites { get; set; }
         public DbSet<MappingUserAndWebsite> MappingUserAndWebsites { get; set; }
+        public DbSet<Token> Tokens { get; set; }
         public DbSet<Prod> Prods { get; set; }
+        public DbSet<WebMenu> WebMenus { get; set; }
         
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
         : base(options)
@@ -27,6 +29,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<MappingUserAndWebsite>(o => {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
+            });
+            modelBuilder.Entity<Token>(o => {
+                o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasOne(t => t.User).WithMany(u => u.Tokens).HasForeignKey(f => f.UserID);
+            });
+            modelBuilder.Entity<WebMenu>(o => {
+                o.HasOne(t => t.FK_TopNode).WithMany(u => u.FK_ChildNodes).HasForeignKey(f => f.FK_TopNodeId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

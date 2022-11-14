@@ -36,7 +36,7 @@ namespace EtheriT.Coker.Web.MVC.Resources
             //claims.Add(new Claim(JwtRegisteredClaimNames.NameId, userName));
 
             // This Claim can be replaced by JwtRegisteredClaimNames.Sub, so it's redundant.
-            //claims.Add(new Claim(ClaimTypes.Name, userName));
+            claims.Add(new Claim(ClaimTypes.Name, userName));
 
             // TODO: You can define your "roles" to your Claims.
             claims.Add(new Claim("roles", "Admin"));

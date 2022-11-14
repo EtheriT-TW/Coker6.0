@@ -307,21 +307,10 @@
 									<label class="px-4" for="OrdererInputExtension">分機</label>
 								</div>
 							</div>
-							<div class="row">
-								<div class="form-floating mb-3 col-6 col-sm-3">
-									<select id="OrdererSelectCity" class="orderer_city form-select" aria-label="Floating label select example" required>
-										<option disabled>請選擇縣市</option>
-										<option value="1" selected>高雄市</option>
-									</select>
-									<label class="px-4 required" for="OrdererSelectCity">縣市</label>
-								</div>
-								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
-									<select id="OrdererSelectTown" class="orderer_town form-select" aria-label="Floating label select example" required>
-										<option disabled>請選擇鄉鎮</option>
-										<option value="1" selected>前鎮區</option>
-									</select>
-									<label class="required" for="OrdererSelectTown">鄉鎮</label>
-								</div>
+
+							<div id="Orderer_TWzipcode" class="row">
+								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
 									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="復興四路" required>
 									<label class="px-4 required" for="OrdererInputAddress">地址</label>
@@ -395,24 +384,12 @@
 									<label class="px-4" for="RecipientInputExtension">分機</label>
 								</div>
 							</div>
-							<div class="row">
-								<div class="form-floating mb-3 col-6 col-sm-3">
-									<select id="RecipientSelectCity" class="recipient_city form-select" aria-label="Floating label select example" required>
-										<option selected disabled value="">請選擇縣市</option>
-										<option value="1">高雄市</option>
-									</select>
-									<label class="px-4 required" for="RecipientSelectCity">縣市</label>
-								</div>
-								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
-									<select id="RecipientSelectTown" class="recipient_town form-select" aria-label="Floating label select example" required>
-										<option selected disabled value="">請選擇鄉鎮</option>
-										<option value="1">前鎮區</option>
-									</select>
-									<label class="required" for="RecipientSelectTown">鄉鎮</label>
-								</div>
+							<div id="Recipient_TWzipcode" class="row">
+								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="RecipientInputAddress" class="recipient_address form-control" type="text" placeholder="復興四路" value="" required>
-									<label class="px-4 required" for="RecipientInputAddress">地址</label>
+									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+									<label class="px-4 required" for="OrdererInputAddress">地址</label>
 								</div>
 							</div>
 							<div class="form-floating mb-3 col-12">
@@ -469,24 +446,13 @@
 								<input id="BillInputGUINum" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
 								<label class="required" for="BillInputGUINum">統　　編</label>
 							</div>
-							<div class="row">
-								<div class="form-floating mb-3 col-6 col-sm-3">
-									<select id="BillSelectCity" class="bill_city form-select" aria-label="Floating label select example" required>
-										<option selected disabled value="">請選擇縣市</option>
-										<option value="1">高雄市</option>
-									</select>
-									<label class="px-4 required" for="BillSelectCity">縣市</label>
-								</div>
-								<div class="form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0">
-									<select id="BillSelectTown" class="bill_town form-select" aria-label="Floating label select example" required>
-										<option selected disabled value="">請選擇鄉鎮</option>
-										<option value="1">前鎮區</option>
-									</select>
-									<label class="required" for="BillSelectTown">鄉鎮</label>
-								</div>
+
+							<div id="Bill_TWzipcode" class="row">
+								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="BillInputAddress" class="bill_address form-control" type="text" placeholder="復興四路" value="" required>
-									<label class="px-4 required" for="BillInputAddress">地址</label>
+									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+									<label class="px-4 required" for="OrdererInputAddress">地址</label>
 								</div>
 							</div>
 						</form>

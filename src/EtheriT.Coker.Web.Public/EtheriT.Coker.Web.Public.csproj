@@ -7,7 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
+    <Content Remove="Views\Page\OrderManagement.cshtml" />
+    <Content Remove="wwwroot\css\Page\OrderManagement.css" />
+    <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
+    <Content Remove="wwwroot\js\Page\OrderManagement.js" />
+    <Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
   </ItemGroup>
 
   <ItemGroup>

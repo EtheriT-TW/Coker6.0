@@ -31,6 +31,10 @@
     color: var(--gray-text);
 }
 
+.blue_text {
+    color: var(--blue-text);
+}
+
 /* Default */
 html {
     font-size: 87.5%;

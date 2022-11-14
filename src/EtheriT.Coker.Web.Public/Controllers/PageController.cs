@@ -28,10 +28,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 {
                     view = key;
                 }
-                else if (key == "OrderManagement")
-                {
-                    view = key;
-                }
                 else
                 {
                     view = "Product";

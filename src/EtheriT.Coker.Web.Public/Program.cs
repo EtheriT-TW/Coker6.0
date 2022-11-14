@@ -11,8 +11,8 @@ builder.Services.AddMemoryCache()
         builder.AddConfiguration(options =>
         {
             options.CodeLength = 4;
-            options.ImageWidth = 100;
-            options.ImageHeight = 40;
+            options.ImageWidth = 125;
+            options.ImageHeight = 36;
         });
     });
 

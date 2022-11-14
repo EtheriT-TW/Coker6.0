@@ -1,0 +1,51 @@
+﻿@{
+	ViewData["Title"] = "MarqueeMessage";
+}
+
+<link rel="stylesheet" href="~/css/ContentManagement/MarqueeMessage.min.css" asp-append-version="true" />
+<script src="~/js/ContentManagement/MarqueeMessage.min.js" asp-append-version="true"></script>
+
+
+<div class="py-2 px-4 position-relative">
+	<div id="TopLine" class="d-flex justify-content-between mb-4">
+		<div class="title fw-bold fs-4">跑馬燈訊息</div>
+	</div>
+
+	<div id="CreatePost" class="card border-0">
+		<div class="card-header d-flex justify-content-between">
+			<div class="fw-bold fs-5">建立貼文</div>
+			<div><button class="btn_done btn-success border-0 px-3 py-1 text-white">完成</button></div>
+		</div>
+
+		<div class="card-body">
+			<div class="select_placement d-flex align-self-center justify-content-between mb-3">
+				<div class="d-flex">
+					<label class="form-label mb-0 pe-3 align-self-center" for="Placement">刊登位置</label>
+					<select id="Placement" class="form-select" aria-label="Placement Select">
+						<option selected value="HomePage">首頁</option>
+					</select>
+				</div>
+				<button class="bg-transparent border-0 fs-4 text-primary"><i class="fa-regular fa-eye"></i></button>
+			</div>
+
+			<div class="input_text border mb-3 p-2 rounded">
+				<div class="d-flex justify-content-between w-100">
+					<span class="input-group-text bg-transparent border-0 p-0">跑馬燈訊息</span>
+					<div class="input_number">0</div>
+				</div>
+				<textarea id="InputText" class="form-control border-0" aria-label="With textarea" maxlength="60"></textarea>
+			</div>
+
+			<div class="input_link input-group mb-3">
+				<span class="input-group-text bg-transparent border-right-0"><i class="fa-solid fa-link pe-2"></i>https://</span>
+				<input class="input_link form-control rounded-right border-left-0" type="text" aria-label="Input Link of Marquee">
+				<input class="checkbox_link form-check-input end-0 me-1 mt-0 rounded top-50 translate-middle" type="checkbox" value="" aria-label="Checkbox for Marquee Link">
+			</div>
+
+			<div class="input_date input-group mb-3">
+				<span class="input-group-text bg-transparent"><i class="fa-regular fa-calendar pe-2"></i>調整顯示日期</span>
+				<input id="Datepicker" class="form-control rounded-right border-left-0" type="text" aria-label="Input Duration of Marquee">
+			</div>
+		</div>
+	</div>
+</div>

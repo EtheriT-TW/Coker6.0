@@ -8,16 +8,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class CaptchaController : Controller
     {
         private readonly ICaptcha _captcha;
-        public CaptchaController(ICaptcha captcha) {
+        public CaptchaController(ICaptcha captcha)
+        {
             _captcha = captcha;
         }
-        public IActionResult Index()
+        public IActionResult Index(string id)
         {
-            // Generate a random number  
-            Random random = new Random();
-            // Any random integer   
-            string num = (random.Next()).ToString();
-            var info = _captcha.Generate(num);
+            var info = _captcha.Generate(id);
             var stream = new MemoryStream(info.CaptchaByteData);
             return File(stream, "image/png");
         }

@@ -26,6 +26,24 @@
       "input": [
         "node_modules/chart.js/dist/chart.min.js"
       ]
+    },
+    {
+      "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
+      "input": [
+        "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
+      ]
+    },
+    {
+      "output": "lib/moment/moment.min.js",
+      "input": [
+        "node_modules/moment/moment.js"
+      ]
+    },
+    {
+      "output": "lib/lightpick/lightpick.min.js",
+      "input": [
+        "node_modules/lightpick/lightpick.js"
+      ]
     }
   ],
   "styles": [
@@ -45,6 +63,12 @@
       "output": "lib/swiper/swiper-bundle.min.css",
       "input": [
         "node_modules/swiper/swiper-bundle.css"
+      ]
+    },
+    {
+      "output": "lib/lightpick/lightpick.min.css",
+      "input": [
+        "node_modules/lightpick/css/lightpick.css"
       ]
     }
   ],

@@ -1,0 +1,32 @@
+﻿
+/* Website Info */
+#CompanyInfo > .website_deadline > .deadline_date {
+    background-color: #F5F7FA;
+}
+
+    #CompanyInfo > .website_deadline > .deadline_date > .start_date::before {
+        content: '網站起始日：';
+    }
+
+    #CompanyInfo > .website_deadline > .deadline_date > .end_date::before {
+        content: '網站到期日：';
+    }
+
+#WebsiteInfo > form > div > textarea {
+    height: 6rem;
+}
+
+#WebsiteInfo > .image_upload > button {
+    height: 2.5rem;
+    width: 2.5rem;
+    border: 1px solid #ced4da;
+}
+
+#GoogleSetting > div > img {
+    width: 30px;
+    height: auto;
+}
+
+#GoogleSetting > div > input {
+    width: 10rem;
+}

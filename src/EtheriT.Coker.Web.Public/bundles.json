@@ -25,6 +25,12 @@
       "input": [
         "node_modules/jquery-plugin-c-share/dist/jquery.c-share.js"
       ]
+    },
+    {
+      "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
+      "input": [
+        "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
+      ]
     }
   ],
   "styles": [

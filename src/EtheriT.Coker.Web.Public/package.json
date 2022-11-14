@@ -21,6 +21,7 @@
     "gulp-uglify-es": "^3.0.0",
     "jquery": "^3.6.1",
     "jquery-plugin-c-share": "^1.2.0",
+    "jquery-twzipcode": "^1.7.15-rc1",
     "jquery.cookie": "^1.4.1",
     "merge-stream": "^2.0.0",
     "path": "^0.12.7",

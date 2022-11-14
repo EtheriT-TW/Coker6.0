@@ -1,4 +1,13 @@
 ﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 /* Button Share */
 .btn_share > a {
     position: absolute;
@@ -90,22 +99,30 @@
 
 .swiper_button {
     z-index: 1;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
+    height: 3.75rem;
 }
 
     .swiper_button > button > span > i:first-child {
         color: var(--black-text-trans);
     }
 
-    .swiper_button > [class*=btn_swiper_next_] {
-        margin-right: -35px;
-    }
+.swiper_four_grid > .swiper_button > [class*=btn_swiper_next_] {
+    margin-right: -5rem;
+    transform: scale(0);
+    transition: all 1s;
+}
 
-    .swiper_button > [class*=btn_swiper_prev_] {
-        margin-left: -35px;
-    }
+.swiper_four_grid > .swiper_button > [class*=btn_swiper_prev_] {
+    margin-left: -5rem;
+    transform: scale(0);
+    transition: all 1s;
+}
+
+.swiper_four_grid:hover > .swiper_button > [class*=btn_swiper_] {
+    margin: 0;
+    transform: scale(1);
+    transition: all 0.5s;
+}
 
 /* Filter */
 #Filter {

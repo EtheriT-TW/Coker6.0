@@ -1,4 +1,13 @@
 ﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 /* Button Share */
 .btn_share > a {
     position: absolute;
@@ -273,9 +282,7 @@
 
 .swiper_button {
     z-index: 1;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
+    height: 3.75rem;
 }
 
     .swiper_button > button {
@@ -283,17 +290,26 @@
     }
 
         .swiper_button > button > span > i:first-child {
-            color: var(--gray-dark);
-            opacity: 50%;
+            color: var(--black-text-trans);
         }
 
     .swiper_button > .btn_swiper_next_relatedproducts {
-        margin-right: -35px;
+        margin-right: -5rem;
+        transform: scale(0);
+        transition: all 1s;
     }
 
     .swiper_button > .btn_swiper_prev_relatedproducts {
-        margin-left: -35px;
+        margin-left: -5rem;
+        transform: scale(0);
+        transition: all 1s;
     }
+
+.swiper_four_grid:hover > .swiper_button > [class*=btn_swiper_] {
+    margin: 0;
+    transform: scale(1);
+    transition: all 0.5s;
+}
 
 /*RWD*/
 @media (max-width: 1366px) {

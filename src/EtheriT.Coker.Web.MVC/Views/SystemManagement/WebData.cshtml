@@ -1,0 +1,178 @@
+﻿@{
+	ViewData["Title"] = "WebData";
+}
+
+<link rel="stylesheet" href="~/css/SystemManagement/WebData.min.css" asp-append-version="true" />
+<script src="~/js/SystemManagement/WebData.min.js" asp-append-version="true"></script>
+
+<div class="">
+	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+		<div class="title fw-bold fs-3">網站資料</div>
+	</div>
+
+	<div class="d-flex">
+		<!-- Company Info -->
+		<div class="align-items-stretch d-flex pb-2 pe-2 w-50">
+			<div class="card border-0 w-100">
+				<div id="CompanyInfo" class="card-body">
+					<div class="d-flex align-items-center pb-2">
+						<div class="fs-5 fw-bold">公司資訊</div>
+						<button class="btn_company_info_edit bg-transparent border-0 fs-5"><i class="fa-regular fa-pen-to-square"></i></button>
+					</div>
+
+					<form class="needs-validation" novalidate>
+						<div class="form-floating mb-3">
+							<input id="InputCustomerInfo" class="customer_info form-control" type="text" placeholder="name" value="客戶資料" disabled="disabled" required>
+							<label class="required" for="InputCustomerInfo">客戶資料</label>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="InputGUINum" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="00000000" pattern="\d{8}" maxlength="8" disabled="disabled" required>
+							<label class="required" for="InputGUINum">統　　編</label>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="聯絡人" minlength="2" disabled="disabled" required>
+							<label class="required" for="OrdererInputName">聯絡人</label>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com" disabled="disabled" required>
+							<label class="required" for="OrdererInputMail">聯絡人信箱</label>
+						</div>
+						<div id="TWzipcode" class="row">
+							<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+							<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+							<div class="form-floating mb-3 col-12 col-sm-6">
+								<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="鶯桃路41號" value="鶯桃路41號" disabled="disabled" required>
+								<label class="px-4 required" for="OrdererInputAddress">地址</label>
+							</div>
+						</div>
+					</form>
+
+					<div class="form_btn d-none justify-content-end mb-2">
+						<button class="btn_exit btn-danger border-0 px-3 py-1">離開</button>
+						<button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
+					</div>
+
+					<div class="website_deadline d-flex">
+						<div class="title bg-danger fs-5 fw-bold px-3 text-white d-flex">
+							<div class="align-self-center">智慧電商系統</div>
+						</div>
+						<div class="deadline_date fw-bold text-danger py-2 px-4">
+							<div class="start_date">2022/01/07</div>
+							<div class="end_date">2023/01/07</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Website Info -->
+		<div class="calign-items-stretch d-flex pb-2 ps-2 w-50">
+			<div class="card border-0 w-100">
+				<div id="WebsiteInfo" class="card-body">
+					<div class="fs-5 fw-bold pb-2">網站資訊</div>
+
+					<form class="needs-validation" novalidate>
+						<div class="form-floating mb-3">
+							<input id="InputWebsiteURL" class="website_URL form-control" type="text" placeholder="網址" value="">
+							<label class="required" for="InputWebsiteURL">網址</label>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="InputWebsiteName" class="website_name form-control" type="text" placeholder="網站名稱" value="">
+							<label class="required" for="InputWebsiteName">網站名稱</label>
+						</div>
+						<div class="form-floating mb-3">
+							<textarea id="InputWebsiteDescription" class="website_description form-control col" type="text" placeholder="META網站描述"></textarea>
+							<label class="required" for="InputWebsiteDescription">META網站描述</label>
+							<div class="textarea_placeholder">簡單描述網站主要內容，將有助於搜尋結果。建議不超過100個中文字。</div>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="InputWebsiteContact" class="website_contact form-control" type="text" placeholder="網站聯絡人" value="">
+							<label class="required" for="InputWebsiteContact">網站聯絡人</label>
+						</div>
+					</form>
+
+					<div class="image_upload d-flex align-items-center">
+						<input class="input_icon d-none" type="file" accept="image/*" />
+						<button class="btn_input_icon d-flex align-items-center justify-content-center bg-transparent">
+							<span class="fs-6 fw-bold material-icons">add</span>
+						</button>
+						<div class="px-2 fw-bold">新增頁籤icon</div>
+
+						<input class="input_logo d-none" type="file" accept="image/*" />
+						<button class="btn_input_logo d-flex align-items-center justify-content-center bg-transparent">
+							<span class="fs-6 fw-bold material-icons">add</span>
+						</button>
+						<div class="px-2 fw-bold">新增Logo</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Value-added service -->
+	<div class="py-2">
+		<div class="card border-0">
+			<div class="card-body">
+				<div class="fs-5 fw-bold pb-2">加值服務</div>
+				<button class="bg-transparent border-0">網域申請</button>
+				<br />
+				<button class="bg-transparent border-0">網域帳密</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Google Setting -->
+	<div class="py-2">
+		<div class="card border-0">
+			<div id="GoogleSetting" class="card-body">
+				<div class="d-flex align-items-center pb-2">
+					<img src="~/images/icon_google.png" />
+					<div class="fs-5 fw-bold px-2">GOOGLE設定</div>
+				</div>
+				<div class="d-flex align-items-center">
+					<label class="form-label m-0" for="VerificationCode">Google Analytics(4)</label>
+					<input id="VerificationCode" class="form-control text-center rounded mx-3" type="tel" placeholder="" pattern="\d{6}-\d" maxlength="8">
+					<label class="form-label m-0" for="VerificationCode">請輸入GOOGLE提供之驗證碼：xxxxxx-x</label>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Privacy Statement -->
+	<div class="py-2">
+		<div class="card border-0">
+			<div id="PrivacyStatement" class="card-body">
+				<div class="d-flex align-items-center pb-2">
+					<div class="fs-5 fw-bold">隱私權聲明</div>
+					<button class="bg-transparent border-0 fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePrivacyStatement" aria-expanded="false" aria-controls="CollapsePrivacyStatement"><i class="fa-regular fa-pen-to-square"></i></button>
+				</div>
+				<div id="CollapsePrivacyStatement" class="collapse">
+					<textarea id="InputPrivacyStatement" class="form-control col" type="text" placeholder=""></textarea>
+					<div class="form_btn d-flex justify-content-end mt-2">
+						<button class="btn_exit btn-danger border-0 px-3 py-1">離開</button>
+						<button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Membership Terms -->
+	<div class="py-2">
+		<div class="card border-0">
+			<div id="MembershipTerms" class="card-body">
+				<div class="d-flex align-items-center pb-2">
+					<div class="fs-5 fw-bold">會員條款說明</div>
+					<button class="bg-transparent border-0 fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseMembershipTerms" aria-expanded="false" aria-controls="CollapseMembershipTerms"><i class="fa-regular fa-pen-to-square"></i></button>
+				</div>
+				<div id="CollapseMembershipTerms" class="collapse">
+					<textarea id="InputMembershipTerms" class="form-control col" type="text" placeholder=""></textarea>
+					<div class="form_btn d-flex justify-content-end mt-2">
+						<button class="btn_exit btn-danger border-0 px-3 py-1">離開</button>
+						<button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

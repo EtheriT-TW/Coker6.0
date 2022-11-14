@@ -99,20 +99,20 @@
 
 	<div id="Endline" class="row gx-0 align-items-center mt-3">
 		<div class="form-floating col-5 col-sm-3">
-			<input id="InputCaptcha" type="text" class="form-control" placeholder="Captcha" required>
+			<input id="InputCaptcha" class="form-control" type="text" placeholder="Captcha" minlength="4" required>
 			<label class="required" for="InputCaptcha">驗證碼</label>
+			<div class="invalid-feedback position-absolute">請輸入正確的驗證碼</div>
 		</div>
 
-		<div class="col col-sm-3 text-center mx-3">
-			<img id="imgCaptcha" src="/api/Captcha/index" />
+		<div class="col col-sm-3 text-center mx-sm-2">
+			<img id="imgCaptcha" class="img-fluid" src="" />
 		</div>
 
-		<a class="btn_refresh col-auto bg-transparent border-0 fs-4 pe-sm-3" href="javascript:void(0);">
+		<a class="btn_refresh col-auto bg-transparent border-0 fs-4 pe-sm-2" href="javascript:void(0);">
 			<i class="fa-solid fa-repeat"></i>
 		</a>
 
-		<div><button type="button" id="btnValidate">驗證</button></div>
-
 		<button class="btn_send border-0 rounded py-2 my-3 text-white col-12 col-sm">&ensp;送出</button>
 	</div>
+
 </form>

@@ -1,14 +1,11 @@
-﻿body {
-    background-color: var(--gray-bg-light);
-}
-
+﻿
 .color_red_number {
-    color: var(--red-number);
+    color: var(--colors-red-number);
 }
 
 /* Top Line*/
 .btn_print {
-    background-color: var(--blue-button);
+    background-color: var(--colors-blue-button);
 }
 
 /* Order Details */
@@ -17,7 +14,7 @@
 }
 
     #OrderDetails > .card-header {
-        background-color: var(--gray-bg-dark);
+        background-color: var(--color-gray-bg-dark);
     }
 
 .pro_name, .pro_specifications {
@@ -45,10 +42,6 @@
 
 .status-select {
     height: fit-content;
-}
-
-.btn_send_notification {
-    background-color: var(--green-button);
 }
 
 /* Btn Side Collapse */

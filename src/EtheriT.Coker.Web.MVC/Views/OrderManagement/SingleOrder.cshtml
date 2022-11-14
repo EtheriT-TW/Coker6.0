@@ -1,15 +1,18 @@
-﻿
-<link rel="stylesheet" href="~/css/Page/OrderManagement.min.css" asp-append-version="true" />
-<script src="~/js/Page/OrderManagement.min.js" asp-append-version="true"></script>
+﻿@{
+	ViewData["Title"] = "SingleOrder";
+}
 
-<div class="p-5 px-4 position-relative">
+<link rel="stylesheet" href="~/css/OrderManagement/SingleOrder.min.css" asp-append-version="true" />
+<script src="~/js/OrderManagement/SingleOrder.min.js" asp-append-version="true"></script>
+
+<div class="py-2 px-4 position-relative">
 	<div id="TopLine" class="d-flex justify-content-between mb-4">
-		<div class="title fw-bold fs-5">訂單管理</div>
+		<div class="title fw-bold fs-4">單筆訂單管理</div>
 		<button class="btn_print border-0 px-4 py-1 text-white fw-bold fs-5">列印訂單</button>
 	</div>
 
 	<div class="row gx-0">
-		<div id="OrderDetails" class="card border-0 col-12 col-lg-9 overflow-auto rounded">
+		<div id="OrderDetails" class="card border-0 col-9 overflow-auto">
 			<div class="card-header fw-bold fs-5 row gx-0 text-end">
 				<div class="col-auto">訂單明細</div>
 				<div class="col">訂單編號</div>
@@ -24,7 +27,7 @@
 
 				<ul class="purchase_list px-2 px-sm-5">
 					<li class="purchase_item border-bottom align-items-lg-center row py-2">
-						<img class="pro_image col-4 col-sm-2" src="~/images/product/pro_pic_03.jpg">
+						<img class="pro_image col-4 col-sm-2" src="~/images/product/pro_pic_01.jpg">
 
 						<div class="pro_text col-8 col-sm-6">
 							<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
@@ -68,11 +71,11 @@
 					<div class="border-bottom py-2 text-end">
 						<div class="d-flex">
 							<div class="col fw-bold">總金額：</div>
-							<div class="purchase_subtotal price color_red_number col-4 col-lg-1 col-sm-2">26,200</div>
+							<div class="purchase_subtotal price color_red_number col-4 col-sm-2">26,200</div>
 						</div>
 						<div class="d-flex">
 							<div class="col fw-bold">運費：</div>
-							<div class="purchase_delivery_fee price color_red_number col-4 col-lg-1 col-sm-2">0</div>
+							<div class="purchase_delivery_fee price color_red_number col-4 col-sm-2">0</div>
 						</div>
 					</div>
 					<div class="row align-items-center text-end fw-bold">
@@ -88,8 +91,8 @@
 				<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
 			</div>
 
-			<div class="offcanvas-body pt-0">
-				<div id="OrderData" class="card rounded border-0 mb-3">
+			<div class="offcanvas-body pt-0 px-0">
+				<div id="OrderData" class="card border-0 mb-3">
 					<div class="card-body">
 						<div class="fs-5 fw-bold pb-2">訂單資料</div>
 
@@ -116,14 +119,14 @@
 									<option value="fail">付款失敗</option>
 								</select>
 							</div>
-							<button class="btn_send_notification border-0 text-white px-1 my-2 m-xl-0">發送出貨通知</button>
+							<button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0">發送出貨通知</button>
 						</div>
 
 						<p class="gray_text">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>
 					</div>
 				</div>
 
-				<div id="RecipientData" class="card rounded border-0 mb-3">
+				<div id="RecipientData" class="card border-0 mb-3">
 					<div class="card-body">
 						<div class="fs-5 fw-bold pb-2">收件人資料</div>
 
@@ -144,7 +147,7 @@
 					</div>
 				</div>
 
-				<div id="OrdererData" class="card rounded border-0 mb-3">
+				<div id="OrdererData" class="card border-0 mb-3">
 					<div class="card-body">
 						<div class="fs-5 fw-bold pb-2">訂購人資料</div>
 
@@ -168,14 +171,14 @@
 					</div>
 				</div>
 
-				<div id="OrderNotes" class="card rounded border-0 mb-3">
+				<div id="OrderNotes" class="card border-0 mb-3">
 					<div class="card-body">
 						<div class="fs-5 fw-bold pb-2">訂單備註</div>
 						<div class="ordernotes gray_text">無</div>
 					</div>
 				</div>
 
-				<div id="CustomerServiceMemo" class="card rounded border-0 mb-5">
+				<div id="CustomerServiceMemo" class="card border-0 mb-5">
 					<div class="card-body d-flex flex-column">
 						<div class="fs-5 fw-bold pb-2">客服專用-Memo區</div>
 						<textarea class="memo_block form-control flex-grow-1" rows="3"></textarea>
@@ -185,7 +188,7 @@
 		</div>
 	</div>
 
-	<button id="Btn_Side_Collapse" class="position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#ManagementData" aria-controls="offcanvasWithBothOptions">
+	<button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#ManagementData" aria-controls="offcanvasWithBothOptions">
 		<div class="above position-absolute end-0"></div>
 		<div>右側收合</div>
 		<div class="under position-absolute end-0"></div>

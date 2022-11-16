@@ -17,6 +17,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Website> Websites { get; set; }
         public DbSet<MappingUserAndWebsite> MappingUserAndWebsites { get; set; }
         public DbSet<Prod> Prods { get; set; }
+        public DbSet<Marquee> Marquees { get; set; }
         
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
         : base(options)
@@ -27,6 +28,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<MappingUserAndWebsite>(o => {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
+            });
+            modelBuilder.Entity<Marquee>(o => {
+                o.HasOne(u => u.Website).WithMany(u => u.Marquees).HasForeignKey(f => f.WebsiteId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

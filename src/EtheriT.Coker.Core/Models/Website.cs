@@ -17,5 +17,6 @@ namespace EtheriT.Coker.Core.Models
         public string Type { get; set; }
         public string? Keywords { get; set; }
         public List<MappingUserAndWebsite> Users;
+        public List<Marquee> Marquees { get; set; }
     }
 }

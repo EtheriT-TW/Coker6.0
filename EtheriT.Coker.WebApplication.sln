@@ -13,9 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.EntityFramewo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Core", "src\EtheriT.Coker.Core\EtheriT.Coker.Core.csproj", "{B88C717F-F300-4FCB-B5BA-D2DD2F5C3A20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Application.Shared", "src\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj", "{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Application.Shared", "src\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj", "{9C35EB0C-4717-47E1-8811-E7ADDDA3D2CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Application", "src\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj", "{D8036602-9658-4AFA-B75A-322121A37006}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Application", "src\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj", "{D8036602-9658-4AFA-B75A-322121A37006}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

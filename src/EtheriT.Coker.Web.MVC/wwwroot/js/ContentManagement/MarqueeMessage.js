@@ -1,7 +1,7 @@
 ﻿
 function PageReady() {
     $(".btn_done").on('click', function () {
-        Coker.sweet.draft_or_publish(Draft, Publish);
+        Coker.sweet.draft_or_publish("直接發布", Draft, Publish);
     })
 
     $input_number = $("#CreatePost > .card-body > .input_text > div > .input_number");
@@ -26,11 +26,11 @@ function PageReady() {
         selectForward: true,
         minDate: moment(),
         format: 'YYYY/MM/DD',
-        separator: '~',
+        separator: ' ~ ',
         onSelect: function (start, end) {
             var str = '';
             str += start ? start.format('YYYY MMMM Do') + ' to ' : '';
-            str += end ? end.format('YYYY MMMM Do') : '...';
+            str += end ? end.format('YYYY MMMM Do') : '　...　';
         }
     });
 }

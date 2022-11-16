@@ -1,4 +1,15 @@
 ﻿
+.price::before {
+    content: '$';
+}
+
+.bg_fluorescent {
+    background: yellow;
+    font-weight: bold;
+    line-height: 1.5rem;
+    padding: 0 0.25rem;
+}
+
 /* Required Sign */
 .required::before {
     color: var(--colors-red);
@@ -11,14 +22,18 @@
     font-size: 0.5rem;
 }
 
-/* Top Line*/
-.btn_save {
-    background-color: var(--colors-blue-button);
-}
-
 /* MemberData */
 #MemberData > div > .member_number::before {
     content: "會員編號："
+}
+
+#CommunityLoginBinding > .account > .frame > div > img {
+    width: auto;
+    height: 40px;
+}
+
+#CommunityLoginBinding > .account > .frame > div > button {
+    font-size: 0.8rem;
 }
 
 /* SideBlock */
@@ -26,13 +41,26 @@
     max-width: 90vw;
 }
 
-    #SideBlock > div > .card {
-        min-height: 150px;
+    #SideBlock > div > .card > .card-body > a > div {
+        width: fit-content;
     }
 
-        #SideBlock > div > .card > .card-body > a > div {
-            width: fit-content;
-        }
+.latest_order > .order_data > div > .title {
+    width: 4rem;
+}
+
+.latest_order > .order_data > a {
+    bottom: 0.5rem;
+}
+
+    .latest_order > .order_data > a > div {
+        width: fit-content;
+    }
+
+#SideBlock > .offcanvas-body > .card > .card-body > .remind {
+    color: var(--colors-red-text);
+    font-size: 0.75rem;
+}
 
 /* Btn Side Collapse */
 #Btn_Side_Collapse {
@@ -54,12 +82,3 @@
         border-left-color: transparent;
         bottom: -2rem;
     }
-
-#CommunityLoginBinding > .account > .frame > div > img {
-    width: auto;
-    height: 40px;
-}
-
-#CommunityLoginBinding > .account > .frame > div > button {
-    font-size: 0.8rem;
-}

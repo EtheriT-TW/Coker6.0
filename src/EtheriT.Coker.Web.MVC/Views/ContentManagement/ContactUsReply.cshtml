@@ -1,0 +1,65 @@
+﻿@{
+	ViewData["Title"] = "ContactUs";
+}
+
+<link rel="stylesheet" href="~/css/ContentManagement/ContactUsReply.min.css" asp-append-version="true" />
+<script src="~/js/ContentManagement/ContactUsReply.min.js" asp-append-version="true"></script>
+
+<div class="py-2 px-4 position-relative">
+
+	<div id="Form" class="card border-0">
+		<div class="card-header d-flex justify-content-between">
+			<div class="fw-bold fs-5 me-auto">查看及回覆</div>
+			<div><button class="btn_back btn-danger border-0 px-3 py-1 text-white mx-3">返回</button></div>
+			<div><button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="ReplyForm">儲存</button></div>
+		</div>
+
+		<div class="card-body row">
+			<div class="col-12 col-sm-6 d-flex mb-3">
+				<div class="title pe-3 text-end">問題分類</div>
+				<div class="category">問題分類</div>
+			</div>
+			<div class="col-12 col-sm-6 d-flex mb-3">
+				<div class="title pe-3 text-end">詢問日期</div>
+				<div class="date">詢問日期</div>
+			</div>
+			<div class="col-12 d-flex mb-3">
+				<div class="title pe-3 text-end">姓名</div>
+				<div class="name">姓名 稱謂</div>
+			</div>
+			<div class="col-12 d-flex mb-3">
+				<div class="title pe-3 text-end">email</div>
+				<div class="email">email</div>
+			</div>
+			<div class="col-12 mb-3">
+				<div class="select_status d-flex">
+					<label class="form-label mb-0 pe-3 text-end align-self-center" for="Status">處理狀態</label>
+					<select id="Status" class="form-select" aria-label="Status Select" disabled>
+						<option selected value="Unprocessed">未處理</option>
+						<option value="Processed">已處理</option>
+					</select>
+				</div>
+			</div>
+			<div class="col-12 d-flex mb-3">
+				<div class="title pe-3 text-end">聯絡電話</div>
+				<div class="tel">聯絡電話</div>
+			</div>
+			<div class="col-12 d-flex mb-3">
+				<div class="title pe-3 text-end">詢問主題</div>
+				<div class="theme">詢問主題</div>
+			</div>
+			<div class="col-12 d-flex mb-3">
+				<div class="title pe-3 text-end">內容描述</div>
+				<div class="describe">內容描述</div>
+			</div>
+
+			<div class="col-12 mb-3">
+				<form id="ReplyForm" class="form-floating needs-validation" novalidate>
+					<textarea id="InputReply" class="website_description form-control col" type="text" placeholder="回覆" required></textarea>
+					<label class="required" for="InputReply">回覆</label>
+					<div class="invalid-tooltip">尚未填寫回覆</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

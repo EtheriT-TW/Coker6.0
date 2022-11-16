@@ -1,11 +1,6 @@
 ﻿
 .color_red_number {
-    color: var(--colors-red-number);
-}
-
-/* Top Line*/
-.btn_print {
-    background-color: var(--colors-blue-button);
+    color: var(--colors-red-text);
 }
 
 /* Order Details */

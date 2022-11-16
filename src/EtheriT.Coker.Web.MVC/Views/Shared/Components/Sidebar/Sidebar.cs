@@ -139,6 +139,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Controller="Dashboard",
                                 Action="Index",
                                 Icon="",
+                            },
+                            new JobMenu{
+                                PageName="ContactUs",
+                                Title="聯絡我們",
+                                Controller="ContentManagement",
+                                Action="ContactUs",
+                                Icon="",
                             }
                         }
                     },

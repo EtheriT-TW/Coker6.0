@@ -240,19 +240,19 @@ var Coker = {
                 }
             })
         },
-        draft_or_publish: function (draft_action, publish_action) {
+        draft_or_publish: function (action_name, draft_action, action) {
             Swal.fire({
                 icon: 'info',
-                title: "儲成草稿或直接發布？",
+                title: "儲成草稿或" + action_name + "？",
                 showCancelButton: true,
                 confirmButtonColor: '#4B89FC',
                 cancelButtonColor: '#FBB357',
-                confirmButtonText: "直接發布",
+                confirmButtonText: action_name,
                 cancelButtonText: "存成草稿",
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    publish_action();
+                    action();
                 } else if (result.dismiss === Swal.DismissReason.cancel) {
                     draft_action();
                 }

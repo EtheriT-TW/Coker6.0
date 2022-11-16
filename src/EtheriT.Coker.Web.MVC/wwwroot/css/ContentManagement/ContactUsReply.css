@@ -1,0 +1,24 @@
+﻿
+#Form > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#Form > .card-body > div > .title {
+    width: 5rem;
+}
+
+#Form > .card-body > div > .select_status > label {
+    width: 5rem;
+}
+
+#Form > .card-body > div > .select_status > select {
+    width: 8rem;
+}
+
+#Form > .card-body > div > form > textarea {
+    height: 100px;
+}
+
+#Form > .card-body > div > form > div {
+    right: 0px;
+}

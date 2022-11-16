@@ -17,6 +17,9 @@ namespace EtheriT.Coker.Web.Core.Models
         public string Email { get; set; }
         public string? CellPhone { get; set; }
         public string Password { get; set; }
+        public int ErrorTimes { get; set; }
+        public DateTime? LockTime { get; set; }
         public List<MappingUserAndWebsite> Webs { get; set; }
+        public List<Token> Tokens { get; set; }
     }
 }

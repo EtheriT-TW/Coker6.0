@@ -26,6 +26,7 @@
     "jquery-twzipcode": "^1.7.15-rc1",
     "jquery-ui-dist": "^1.13.2",
     "lightpick": "^1.6.2",
+    "jquery.cookie": "^1.4.1",
     "merge-stream": "^2.0.0",
     "path": "^0.12.7",
     "postcss-url": "^9.0.0",

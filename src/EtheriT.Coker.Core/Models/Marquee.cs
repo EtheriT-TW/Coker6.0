@@ -16,13 +16,11 @@ namespace EtheriT.Coker.Core.Models
         public string title { get; set; }
         public bool disp_opt { get; set; }
         public int ser_no { get; set; }
-
         [StringLength(255)]
         public string link { get; set; }
         public bool target { get; set; }
         public virtual DateTime StartTime { get; set; }
         public virtual DateTime EndTime { get; set; }
-
         public Website? Website { get; set; }
     }
 }

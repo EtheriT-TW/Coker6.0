@@ -1,22 +1,19 @@
-﻿var Login = function (para) {
-    return $.ajax({
-        url: "Account/Login",
-        type: "POST",
-        contentType: 'application/x-www-form-urlencoded; charset=utf-8',
-        data: para,
-        dataType: "json"
-    });
-}
-var PageReady = function () {
+﻿var PageReady = function () {
+    if (!!$.cookie("token")) {
+        co.User.Check().done(function (result) {
+            if (result.success)
+                location.href = $.cookie("lastViewPage") || co.Data.DefauleUrl;
+        });
+    }
     $("#loginBtn").on("click", function (e) {
         e.preventDefault();
-        Login({
+        co.User.Login({
             UserName: $("#username").val(),
             Password: $("#password").val()
         }).done(function (result) {
-            if (result.success) location.href = "Dashboard/index";
-            else alert(result.error);
-            console.log(result);
+            if (result.success) {
+                location.href = co.Data.DefauleUrl;
+            } else alert(result.error);
         });
     });
 }

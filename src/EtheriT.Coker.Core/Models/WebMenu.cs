@@ -23,7 +23,9 @@ namespace EtheriT.Coker.Core.Models
         public string? Target { get; set; }
         public bool LanBar { get; set; }
         public long? FK_TopNodeId { get; set; }
+        public long FK_WebsiteId { get; set; }
         public WebMenu? FK_TopNode { get; set; }
         public List<WebMenu>? FK_ChildNodes { get; set; }
+        public Website Website { get; set; }
     }
 }

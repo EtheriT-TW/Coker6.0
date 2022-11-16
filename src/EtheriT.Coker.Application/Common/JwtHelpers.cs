@@ -3,20 +3,34 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 
 namespace EtheriT.Coker.Web.MVC.Resources
 {
     public class JwtHelpers
     {
+        //private readonly CokerDbContext db;
         private readonly IConfiguration Configuration;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public JwtHelpers(IConfiguration configuration)
+        public JwtHelpers(
+            //CokerDbContext db,
+            IConfiguration configuration, 
+            IHttpContextAccessor httpContextAccessor)
         {
+            //this.db = db;
             this.Configuration = configuration;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
-        public string GenerateToken(string userName, int expireMinutes = 30)
+        public async Task<string> GenerateToken(string Account, List<string> roles, int expireMinutes = 30)
         {
+            //var user = await db.Users.Where(e => e.Account == Account).FirstOrDefaultAsync();
             var issuer = Configuration.GetValue<string>("JwtSettings:Issuer");
             var signKey = Configuration.GetValue<string>("JwtSettings:SignKey");
 
@@ -25,7 +39,7 @@ namespace EtheriT.Coker.Web.MVC.Resources
 
             // In RFC 7519 (Section#4), there are defined 7 built-in Claims, but we mostly use 2 of them.
             //claims.Add(new Claim(JwtRegisteredClaimNames.Iss, issuer));
-            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, userName)); // User.Identity.Name
+            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, Account)); // User.Identity.Name
                                                                           //claims.Add(new Claim(JwtRegisteredClaimNames.Aud, "The Audience"));
                                                                           //claims.Add(new Claim(JwtRegisteredClaimNames.Exp, DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds().ToString()));
                                                                           //claims.Add(new Claim(JwtRegisteredClaimNames.Nbf, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())); // 必須為數字
@@ -36,11 +50,13 @@ namespace EtheriT.Coker.Web.MVC.Resources
             //claims.Add(new Claim(JwtRegisteredClaimNames.NameId, userName));
 
             // This Claim can be replaced by JwtRegisteredClaimNames.Sub, so it's redundant.
-            claims.Add(new Claim(ClaimTypes.Name, userName));
+            claims.Add(new Claim(ClaimTypes.Name, Account));
+            //claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Account));
 
             // TODO: You can define your "roles" to your Claims.
-            claims.Add(new Claim("roles", "Admin"));
-            claims.Add(new Claim("roles", "Users"));
+            roles.ForEach(e => {
+                claims.Add(new Claim("roles", e));
+            });
 
             var userClaimsIdentity = new ClaimsIdentity(claims);
 
@@ -67,6 +83,21 @@ namespace EtheriT.Coker.Web.MVC.Resources
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityToken = tokenHandler.CreateToken(tokenDescriptor);
             var serializeToken = tokenHandler.WriteToken(securityToken);
+
+            // also add cookie auth for Swagger Access
+            var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
+            //identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Account));
+            identity.AddClaim(new Claim(ClaimTypes.Name, Account));
+            var principal = new ClaimsPrincipal(identity);
+            await httpContextAccessor.HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    AllowRefresh = true,
+                    ExpiresUtc = DateTime.UtcNow.AddDays(1)
+                });
 
             return serializeToken;
         }

@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Core.Models
 {
-    [Table("Tokens")]
     public class Token
     {
         public Guid id { get; set; }

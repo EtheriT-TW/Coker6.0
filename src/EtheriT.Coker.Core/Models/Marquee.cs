@@ -11,7 +11,7 @@ namespace EtheriT.Coker.Core.Models
 {
     public class Marquee : FullAuditedEntity
     {
-        public long WebsiteId { get; set; }
+        public long FK_WebsiteId { get; set; }
         [StringLength(60)]
         public string title { get; set; }
         public bool disp_opt { get; set; }

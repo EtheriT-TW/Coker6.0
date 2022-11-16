@@ -10,6 +10,10 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Net.Http.Headers;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -21,8 +25,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<JwtHelpers>();
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddAuthentication(options => {
+        // custom scheme defined in .AddPolicyScheme() below
+        options.DefaultScheme = "JWT_OR_COOKIE";
+        options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+    })
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.LoginPath = "/";
+        options.ExpireTimeSpan = TimeSpan.FromDays(1);
+    })
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,options =>
     {
         // 當驗證失敗時，回應標頭會包含 WWW-Authenticate 標頭，這裡會顯示失敗的詳細錯誤原因
         options.IncludeErrorDetails = true; // 預設值為 true，有時會特別關閉
@@ -51,7 +64,21 @@ builder.Services
             // "1234567890123456" 應該從 IConfiguration 取得
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey")))
         };
-    });
+    })
+    .AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+    {
+        // runs on each request
+        options.ForwardDefaultSelector = context =>
+        {
+            // filter by auth type
+            string authorization = context.Request.Headers[HeaderNames.Authorization];
+            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                return "Bearer";
+
+            // otherwise always check for cookie auth
+            return "Cookies";
+        };
+    }); ;
 
 builder.Services.AddAuthorization();
 

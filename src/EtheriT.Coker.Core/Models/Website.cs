@@ -16,7 +16,8 @@ namespace EtheriT.Coker.Core.Models
         public string Locale { get; set; }
         public string Type { get; set; }
         public string? Keywords { get; set; }
-        public List<MappingUserAndWebsite> Users;
+        public List<MappingUserAndWebsite> Users { get; set; }
         public List<Marquee> Marquees { get; set; }
+        public List<WebMenu> WebMenus { get; set; }
     }
 }

@@ -35,7 +35,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Marquee>(o =>
             {
-                o.HasOne(u => u.Website).WithMany(u => u.Marquees).HasForeignKey(f => f.WebsiteId);
+                o.HasOne(u => u.Website).WithMany(u => u.Marquees).HasForeignKey(f => f.FK_WebsiteId);
             });
             modelBuilder.Entity<Token>(o =>
             {
@@ -44,6 +44,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<WebMenu>(o =>
             {
+                o.HasOne(u => u.Website).WithMany(u => u.WebMenus).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(t => t.FK_TopNode).WithMany(u => u.FK_ChildNodes).HasForeignKey(f => f.FK_TopNodeId);
             });
             base.OnModelCreating(modelBuilder);

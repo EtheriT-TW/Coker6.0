@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221116103138_Added_Table_Marquee")]
+    partial class Added_Table_Marquee
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -295,8 +297,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_TopNodeId");
 
-                    b.HasIndex("FK_WebsiteId");
-
                     b.ToTable("WebMenus");
                 });
 
@@ -513,15 +513,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .WithMany("FK_ChildNodes")
                         .HasForeignKey("FK_TopNodeId");
 
-                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
-                        .WithMany("WebMenus")
-                        .HasForeignKey("FK_WebsiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("FK_TopNode");
-
-                    b.Navigation("Website");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -534,8 +526,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Marquees");
 
                     b.Navigation("Users");
-
-                    b.Navigation("WebMenus");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>

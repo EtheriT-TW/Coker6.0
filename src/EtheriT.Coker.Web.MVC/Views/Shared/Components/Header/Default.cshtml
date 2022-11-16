@@ -1,8 +1,6 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@using EtheriT.Coker.Web.MVC.Models.Header;
+@model EtheriT.Coker.Web.MVC.Models.Header.HeaderModel;
+
 <nav class="navbar navbar-light bg-white px-sm-4 ">
     <a class="navbar-brand py-2 d-md-none  m-0 material-icons toggle-sidebar" href="#">menu</a>
     <ul class="navbar-nav flex-row ml-auto">
@@ -21,7 +19,10 @@
                     </div>
                 </a>
                 <a class="dropdown-item py-3 border-bottom" href="#">
-                    <p class="text-muted mb-1"><small>Akshay Application</small></p><div class="progress" style="height:8px;"><div class="progress-bar bg-warning" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div></div>
+                    <p class="text-muted mb-1"><small>Akshay Application</small></p>
+                    <div class="progress" style="height:8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
                 </a>
                 <a class="dropdown-item whitespace-normal py-3 border-bottom" href="#">
                     <div class="media"><img class="mr-3 rounded" width="26" src="/images/user.png"><div class="media-body"><h6 class="m-0 weight-400">Media heading</h6><small class="text-muted">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante.</small></div></div>
@@ -30,9 +31,10 @@
         </li>
         <li class="nav-item ml-sm-3 user-logedin dropdown">
             <a href="#" id="userLogedinDropdown" data-bs-toggle="dropdown" class="nav-link weight-400 dropdown-toggle">
-                <img src="/images/user.png" class="mr-2 rounded" width="28">Akshay kumar
+                <img src="/images/user.png" class="mr-2 rounded" width="28">
+                <span id="UserName">@Model.User.Account</span>
             </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userLogedinDropdown">
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userLogedinDropdown">
                 <a class="dropdown-item" href="profile.html">My Account</a>
                 <a class="dropdown-item" href="profile.html">Account Settings</a>
                 <a class="dropdown-item" target="_blank" href="https://themeforest.net/item/brio-web-app-bootstrap-admin-template-dashboard/9529051/support">Help & Support</a>

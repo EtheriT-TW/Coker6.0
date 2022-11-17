@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Distributed;
 using EtheriT.Coker.Core.Models;
 using Microsoft.Extensions.Primitives;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -27,20 +29,17 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IPasswordHasher passwordHasher;
         private readonly ITokenAppService tokenAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private readonly IDistributedCache cache;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
-            IHttpContextAccessor httpContextAccessor,
-            IDistributedCache cache
+            IHttpContextAccessor httpContextAccessor
         )
         {
             this.db = db;
             this.passwordHasher = passwordHasher;
             this.tokenAppService = tokenAppService;
             this.httpContextAccessor = httpContextAccessor;
-            this.cache = cache;
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
         {
@@ -68,7 +67,7 @@ namespace EtheriT.Coker.Application.Authorization
                         db.Tokens.Add(t);
                         db.SaveChanges();
                         output.Success = true;
-                        output.Token = tokenAppService.CreateToken(user.Account);
+                        output.Token = await tokenAppService.CreateToken(user.Account);
                         output.Secret = t.id;
                         output.EndDateTime = EndDateTime;
                     }
@@ -82,6 +81,35 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Error = e.Message;
             }
 
+            return output;
+        }
+        [Authorize]
+        public async Task<UserDto> GetCurrentUser() {
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            UserDto output = new UserDto();
+            try
+            {
+                var theUser = await db.Users
+                    .Where(e => e.Account == name).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                if (theUser != null)
+                {
+                    var o = from w in db.Websites
+                            join m in db.MappingUserAndWebsites on w.Id equals m.WebsiteId
+                            where m.UserId == theUser.Id
+                            select new Webs.Dto.WebsDto
+                            {
+                                Id = w.Id,
+                                Name = w.Title
+                            };
+                    output.Account = theUser.Account;
+                    output.UserName = theUser.Name;
+                    output.Webs = await o.ToListAsync();
+                }
+            }
+            catch {
+                output.Account = "";
+            }
             return output;
         }
         public async Task<LoginOutputDto> Chech() {
@@ -110,7 +138,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
                             }
                             response.Success = true;
-                            response.Token = tokenAppService.CreateToken(users.Account);
+                            response.Token = await tokenAppService.CreateToken(users.Account);
                             response.Secret = t.id;
                             response.EndDateTime = t.EndTime.Value;
                         }
@@ -131,7 +159,6 @@ namespace EtheriT.Coker.Application.Authorization
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             string? secret = httpContextAccessor.HttpContext?.Request.Headers["secret"].ToString();
-            string token = GetCurrentAsync();
             if (!string.IsNullOrEmpty(secret)) {
                 var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
                 if (t != null)
@@ -140,33 +167,10 @@ namespace EtheriT.Coker.Application.Authorization
                     db.SaveChanges();
                 }
             }
-            await cache.SetStringAsync(
-                GetKey(token),
-                " ", 
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow =
-                        TimeSpan.FromMinutes(0.001)
-                }
-            );
-            ResponseMessageDto response = new ResponseMessageDto
+            return new ResponseMessageDto
             {
-                Success = true
+                Success = await tokenAppService.DelToken()
             };
-            return response;
-        }
-        private string GetCurrentAsync()
-        {
-            var authorizationHeader = httpContextAccessor
-                .HttpContext.Request.Headers["authorization"];
-
-            return authorizationHeader == StringValues.Empty
-                ? string.Empty
-                : authorizationHeader.Single().Split(" ").Last();
-        }
-        private static string GetKey(string token)
-        {
-            return $"tokens:{token}:deactivated";
         }
     }
 }

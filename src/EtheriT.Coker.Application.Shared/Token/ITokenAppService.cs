@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application.Token
 {
     public interface ITokenAppService
     {
-        public string CreateToken(string account);
+        public Task<string> CreateToken(string account);
+        public Task<bool> DelToken();
     }
 }

@@ -40,8 +40,13 @@ namespace EtheriT.Coker.Application.Website
 			if (string.IsNullOrEmpty(httpContextAccessor.HttpContext.Request.Cookies["WebSiteId"])) {
 				httpContextAccessor.HttpContext.Response.Cookies.Append("WebSiteId", (await date.FirstAsync()).Id.ToString());
             }
-
-            return await date.ToListAsync();
+            long siteId = 0;
+			var output = await date.ToListAsync();
+			if(long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["WebSiteId"],out siteId)){
+				var item = output.Find(e => e.Id == siteId);
+				if(item!=null) item.Check=true;
+            }
+            return output;
 
         }
 	}

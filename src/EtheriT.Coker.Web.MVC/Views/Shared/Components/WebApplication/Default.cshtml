@@ -1,5 +1,8 @@
 ﻿@using EtheriT.Coker.Web.MVC.Models.Website;
 @model WebsiteInvokeModel;
+@{
+    string action = "";
+}
 <div class="modal fade" id="switchApp" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -15,11 +18,21 @@
                     {
                         <div class="col-lg-3 col-6 mb-4">
                             <a href="index.html" class="text-dark">
-                                <div class="card h-100">
+                                @if (item.Check)
+                                {
+                                    action = "active-app";
+                                }else{
+                                    action = "";
+                                }
+                                <div class="card h-100 @action">
                                     <div class="card-body text-center">
                                         <span class="material-icons md-48 " style="color:#21C3E0;">bubble_chart</span>
                                         <p class="weight-400 m-0">@item.Name</p>
                                         <small class="weight-300 text-muted">@item.Description</small>
+                                        @if (item.Check)
+                                        {
+                                            <span b-k5k3aldxno="" class="material-icons app-selected md-16">check</span>
+                                        }
                                     </div>
                                 </div>
                             </a>
@@ -28,10 +41,6 @@
                 </div>
             </div>
             <div class="modal-footer px-4">
-                <div class="custom-control custom-checkbox mr-auto">
-                    <input type="checkbox" class="custom-control-input" id="customCheck1">
-                    <label class="custom-control-label" for="customCheck1">Default open this application</label>
-                </div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Switch Application</button>
             </div>

@@ -6,7 +6,10 @@
 <script src="~/js/Header/Header.min.js" asp-append-version="true"></script>
 
 <nav class="navbar navbar-expand-lg flex-column p-0">
+	<!-- Top Line -->
 	<div id="Header_Top" class="d-flex justify-content-end justify-content-lg-between p-2 w-100 ">
+
+		<!-- News Marquee -->
 		<div id="News_Marquee" class="d-lg-flex d-none">
 			<div class="news_text">New&ensp;</div>
 			<div class="news_box">
@@ -17,12 +20,16 @@
 			</div>
 		</div>
 
+		<!-- Right Control -->
 		<div class="d-flex">
+
+			<!-- Search Block -->
 			<form action="/Search" class="searchblock bg-white rounded-pill d-lg-flex d-none pe-1 ps-3">
 				<input type="hidden" name="id" />
 				<input type="text" name="search" class="bg-transparent border-0">
 				<button type="submit" class="align-self-center align-self-center bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
 			</form>
+
 			<a class="fs-6 text-white d-lg-flex d-none ms-2 align-items-center" href="/Search">智慧搜尋</a>
 			<div id="Cart_Dropdown_Parent" class="btn-group px-3">
 				<button id="btn_car_dropdown" class="bg-transparent border-0 text-white ms-1 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -58,12 +65,16 @@
 					<button onclick="location.href='/ShoppingCar';" class="btn_car_buy text-white border-0 rounded-1 w-100 py-1 mt-2" disabled>購買</button>
 				</div>
 			</div>
+
+			<!-- Icon Button -->
 			<button class="bg-transparent border-0 text-white mx-1 px-3"><i class="fa-regular fa-user"></i></button>
 		</div>
 	</div>
 
+	<!-- Mega Menu -->
 	<div id="Mega_Menu" class="navbar navbar-expand-lg w-100">
 
+		<!-- Logo -->
 		<div class="logo col-lg-4 col text-center">
 			<a href="/">
 				@if (string.IsNullOrEmpty(Model.Title))
@@ -78,7 +89,9 @@
 			</a>
 		</div>
 
+		<!-- Menu Canvas -->
 		<div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-8 mt-lg-2 visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+			<!-- Menu Canvas Search Block -->
 			<div class="offcanvas-header d-flex flex-column justify-content-center p-2 d-lg-none">
 				<h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
 				<div class="d-lg-none d-flex justify-content-center align-items-center mt-4">
@@ -87,19 +100,22 @@
 					<button class="bg-transparent border-0 d-none d-sm-flex">智慧搜尋</button>
 				</div>
 			</div>
-			<ul class="navbar-nav me-auto offcanvas-body">
+
+			<!-- Menu Canvas Menu -->
+			<ul class="navbar-nav offcanvas-body w-100 m-0">
 				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
 				{
 					<li class="title nav-item col-lg pb-2">
-						<a class="nav-link center">@menu.Title</a>
-						<div class="mega_menu_content abreast">
-							<div class="text">
-								<ul class="abreast">
+						<a class="nav-link text-center">@menu.Title</a>
+						<div class="content w-100 start-50 translate-middle-x">
+							@if (string.IsNullOrEmpty(menu.imageUrl))
+							{
+								<ul class="d-flex w-100 h-100">
 									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
 									{
 										<li class="nav-item">
-											<a class="nav-link">@subMenu.Title</a>
-											<ul>
+											<a class="sub_title nav-link">@subMenu.Title</a>
+											<ul class="sub_content d-flex flex-column flex-wrap h-100">
 												@foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
 												{
 													<li><a = href="/@thirdMenu.Link">@thirdMenu.Title</a></li>
@@ -108,22 +124,31 @@
 										</li>
 									}
 								</ul>
-							</div>
-							<div class="image">
-								@if (!string.IsNullOrEmpty(menu.imageUrl))
-								{
-									<a href="@menu.imageLink">
-										<img src="@menu.imageUrl" alt="Photo" class="center" />
-									</a>
-								}
-								@if (!string.IsNullOrEmpty(menu.Description))
-								{
-									<a href="@menu.imageLink">
-										<div class="center"><p>@menu.Description</p></div>
-									</a>
-								}
-							</div>
+							}
+							else
+							{
+								<ul class="d-flex w-100 h-100">
+									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+									{
+										<li class="nav-item">
+											<a class="sub_title nav-link">@subMenu.Title</a>
+											<ul class="sub_content d-flex flex-column flex-wrap h-100">
+												@foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
+												{
+													<li><a = href="/@thirdMenu.Link">@thirdMenu.Title</a></li>
+												}
+											</ul>
+										</li>
+									}
+									<li class="nav-item">
+										<a href="@menu.imageLink">
+											<img class="" src="@menu.imageUrl" alt="Photo" />
+										</a>
+									</li>
+								</ul>
+							}
 						</div>
+
 					</li>
 				}
 			</ul>
@@ -135,5 +160,4 @@
 			<div class="bar"></div>
 		</div>
 	</div>
-
 </nav>

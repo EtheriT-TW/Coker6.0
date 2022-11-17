@@ -1,26 +1,65 @@
-﻿
-function PageReady() {
-    $(".btn_done").on('click', function () {
-        Coker.sweet.draft_or_publish("直接發布", Draft, Publish);
-    })
+﻿var $space, $title, $link, $target
+var picker
 
-    $input_number = $("#CreatePost > .card-body > .input_text > div > .input_number");
-    $InputText = $("#InputText");
-    $InputText.on('keyup', function () {
-        $input_number.text($InputText.val().length);
+function PageReady() {
+    co.Marquees = {
+        Add: function (data) {
+            return $.ajax({
+                url: "/api/Marquee/Add",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Marquee/Get/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        }
+    };
+
+    $CardBody = $("#CreatePost > .card-body")
+    $space = $CardBody.children(".select_placement").children("div").children("select");
+    $title = $CardBody.children(".input_text").children("textarea");
+    $link = $CardBody.children(".input_link").children(".input_link");
+    $target = $CardBody.children(".input_link").children(".checkbox_link");
+
+    const forms = $('#PostForm');
+    (() => {
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    Coker.sweet.draft_or_publish("直接發布", Draft, Publish);
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    $input_number = $CardBody.children(".input_text").children("div").children(".input_number");
+    $title.on('keyup', function () {
+        $input_number.text($title.val().length);
     });
 
-    $input_link = $("#CreatePost > .card-body > .input_link > .input_link");
-    $checkbox_link = $("#CreatePost > .card-body > .input_link > .checkbox_link");
-    $input_link.on('keyup', function () {
-        if ($input_link.val().length > 0) {
-            $checkbox_link.attr('checked', 'checked');
+    $link.on('keyup', function () {
+        if ($link.val().length > 0) {
+            $target.attr('checked', 'checked');
         } else {
-            $checkbox_link.removeAttr("checked");
+            $target.removeAttr("checked");
         }
     });
 
-    var picker = new Lightpick({
+    picker = new Lightpick({
         field: document.getElementById('Datepicker'),
         singleDate: false,
         selectForward: true,
@@ -33,12 +72,41 @@ function PageReady() {
             str += end ? end.format('YYYY MMMM Do') : '　...　';
         }
     });
+
 }
 
 function Draft() {
-    Coker.sweet.success("已存成草稿", null, true);
+    co.Marquees.Add({
+        WebsiteId: 1,
+        title: $title.val(),
+        disp_opt: false,
+        ser_no: 1,
+        link: "https://" + $link.val(),
+        target: $target.is(":checked"),
+        StartTime: picker.getStartDate().format(),
+        EndTime: picker.getEndDate().format()
+    }).done(function () {
+        Coker.sweet.success("已存為草稿", null, true);
+        setTimeout(function () { location.reload() }, 1000);
+    }).fail(function () {
+        Coker.sweet.error("錯誤", "儲存草稿發生未知錯誤", null, true);
+    });
 }
 
 function Publish() {
-    Coker.sweet.success("已成功發布", null, true);
+    co.Marquees.Add({
+        WebsiteId: 1,
+        title: $title.val(),
+        disp_opt: true,
+        ser_no: 1,
+        link: "https://" + $link.val(),
+        target: $target.is(":checked"),
+        StartTime: picker.getStartDate().format(),
+        EndTime: picker.getEndDate().format()
+    }).done(function () {
+        Coker.sweet.success("已成功發布", null, true);
+        setTimeout(function () { location.reload() }, 1000);
+    }).fail(function () {
+        Coker.sweet.error("錯誤", "發布發生未知錯誤", null, true);
+    });
 }

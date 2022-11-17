@@ -19,7 +19,6 @@ var PreLoader;
             else location.href = "/";
         });
     }
-    if (location.pathname != "/") $.cookie("lastViewPage", location.pathname);
     $(".loader-wrapper").not(".incomponent").fadeOut(1000, function () { PreLoader = $(this).detach() })
 
     var tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))

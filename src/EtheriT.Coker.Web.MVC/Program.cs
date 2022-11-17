@@ -15,6 +15,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
 using Microsoft.Extensions.Options;
 using EtheriT.Coker.Application.Website;
+using EtheriT.Coker.Application.Shared.Marquee;
+using EtheriT.Coker.Application.Marquee;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -26,7 +28,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<JwtHelpers>();
 
 builder.Services
-    .AddAuthentication(options => {
+    .AddAuthentication(options =>
+    {
         // custom scheme defined in .AddPolicyScheme() below
         options.DefaultScheme = "JWT_OR_COOKIE";
         options.DefaultChallengeScheme = "JWT_OR_COOKIE";
@@ -36,7 +39,7 @@ builder.Services
         options.LoginPath = "/";
         options.ExpireTimeSpan = TimeSpan.FromDays(1);
     })
-    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,options =>
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         // 當驗證失敗時，回應標頭會包含 WWW-Authenticate 標頭，這裡會顯示失敗的詳細錯誤原因
         options.IncludeErrorDetails = true; // 預設值為 true，有時會特別關閉
@@ -88,7 +91,7 @@ builder.Services.AddTransient<IAccountAppService, AccountAppService>();
 builder.Services.AddTransient<ITokenAppService, TokenAppService>();
 builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
-
+builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -138,7 +141,8 @@ else
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c => {
+    app.UseSwaggerUI(c =>
+    {
         c.SwaggerEndpoint("/swagger/EtheriT.Coker.Web.MVC/swagger.json", "EtheriT.Coker.Web.MVC v1");
     });
 }

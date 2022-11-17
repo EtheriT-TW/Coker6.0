@@ -1,0 +1,48 @@
+﻿using EtheriT.Coker.Application.Website;
+using EtheriT.Coker.Application.Webs.Dto;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Application.Website
+{
+	public class WebsiteApplication : IWebsiteApplication
+	{
+		private readonly CokerDbContext db;
+        private readonly IHttpContextAccessor httpContextAccessor;
+        public WebsiteApplication(
+			CokerDbContext db,
+            IHttpContextAccessor httpContextAccessor
+        ) {
+			this.db = db;
+			this.httpContextAccessor = httpContextAccessor;
+		}
+		public async Task<List<WebsDto>> GetAll()
+		{
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            var date = from w in db.Websites
+					   join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+					   join u in db.Users on bind.UserId equals u.Id
+					   where u.Account == name
+                       select new WebsDto { 
+							Id = w.Id,
+							Name = w.Title,
+							Description = w.Description??"",
+							Images = w.Icon??""
+					   };
+			if (string.IsNullOrEmpty(httpContextAccessor.HttpContext.Request.Cookies["WebSiteId"])) {
+				httpContextAccessor.HttpContext.Response.Cookies.Append("WebSiteId", (await date.FirstAsync()).Id.ToString());
+            }
+
+            return await date.ToListAsync();
+
+        }
+	}
+}

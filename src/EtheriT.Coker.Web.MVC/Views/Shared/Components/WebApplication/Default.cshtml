@@ -1,0 +1,40 @@
+﻿@using EtheriT.Coker.Web.MVC.Models.Website;
+@model WebsiteInvokeModel;
+<div class="modal fade" id="switchApp" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header px-4">
+                <h5 class="modal-title" id="exampleModalLabel">Select Web Application</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="material-icons ">close</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row align-items-stretch app-switcher">
+                    @foreach (var item in Model.webs)
+                    {
+                        <div class="col-lg-3 col-6 mb-4">
+                            <a href="index.html" class="text-dark">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <span class="material-icons md-48 " style="color:#21C3E0;">bubble_chart</span>
+                                        <p class="weight-400 m-0">@item.Name</p>
+                                        <small class="weight-300 text-muted">@item.Description</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer px-4">
+                <div class="custom-control custom-checkbox mr-auto">
+                    <input type="checkbox" class="custom-control-input" id="customCheck1">
+                    <label class="custom-control-label" for="customCheck1">Default open this application</label>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Switch Application</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
 using Microsoft.Extensions.Options;
+using EtheriT.Coker.Application.Website;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -86,6 +87,8 @@ builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddTransient<IAccountAppService, AccountAppService>();
 builder.Services.AddTransient<ITokenAppService, TokenAppService>();
 builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
+builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

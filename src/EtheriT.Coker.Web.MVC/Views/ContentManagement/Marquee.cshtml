@@ -1,0 +1,82 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Marquee
+@using EtheriT.Coker.Core.Models
+
+@{
+	ViewData["Title"] = "Marquee";
+}
+
+<link rel="stylesheet" href="~/css/ContentManagement/Marquee.min.css" asp-append-version="true" />
+<script src="~/js/ContentManagement/Marquee.min.js" asp-append-version="true"></script>
+
+<div class="">
+	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+		<div class="title fw-bold fs-3">跑馬燈訊息</div>
+	</div>
+
+	<div class="py-2">
+		<div class="card border-0">
+			<div class="card-body position-relative">
+				<a class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none" href="/ContentManagement/Marquee?id=-1">
+					<span class="material-symbols-outlined">add</span>
+				</a>
+				@(
+					Html.DevExtreme().DataGrid<MarqueeGetDto>()
+					.DataSource(d => d.Mvc()
+					.Controller("Marquee")
+					.LoadAction("GetAll")
+					.UpdateAction("GetAll")
+					.DeleteAction("Delete")
+					.Key("id")
+					)
+					.ColumnHidingEnabled(true)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Width(480)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.ShowRowLines(true)
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號");
+						c.AddFor(e => e.WebsiteId).Caption("網站編號");
+						c.AddFor(e => e.title).Caption("內文");
+						c.AddFor(e => e.disp_opt).Caption("是否顯示");
+						c.AddFor(e => e.ser_no).Caption("排序編號");
+						c.AddFor(e => e.link).Caption("網址");
+						c.AddFor(e => e.target).Caption("另開視窗");
+						c.AddFor(e => e.StartTime).Caption("起始日期");
+						c.AddFor(e => e.EndTime).Caption("結束日期");
+						c.Add()
+						.Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
+						{
+							b.Add().Name("edit").OnClick("editButtonClicked");
+							b.Add().Name("delete").OnClick("deleteButtonClicked");
+						});
+					})
+					.ColumnAutoWidth(true)
+					.Paging(paging => paging.PageSize(30))
+					.Pager(pager =>
+					{
+						pager.Visible(true);
+						pager.ShowPageSizeSelector(true);
+						pager.AllowedPageSizes(new[] { 10, 20, 30 });
+						pager.ShowInfo(true);
+					})
+					.Editing(editing =>
+					{
+						editing.AllowDeleting(true);
+						editing.AllowUpdating(true);
+						editing.UseIcons(true);
+					})
+					)
+			</div>
+		</div>
+	</div>
+</div>

@@ -3,7 +3,7 @@ using EtheriT.Coker.Application.Dto;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Marquee
 {
-	public class MarqueeDto
+	public class MarqueeAddDto
     {
         public long WebsiteId { get; set; }
         public string title { get; set; }

@@ -1,4 +1,5 @@
-﻿var $space, $title, $link, $target
+﻿var $space, $title, $link, $target, $disp_opt
+var Dataid
 var picker
 
 function PageReady() {
@@ -21,14 +22,39 @@ function PageReady() {
                 headers: _c.Data.Header,
                 data: { id: id },
             });
+        },
+        Update: function (data) {
+            return $.ajax({
+                url: "/api/Marquee/Update",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
         }
     };
 
+    var url = location.href;
+
+    if (url.indexOf('?id=') != -1) {
+        Dataid = (url.split('?id='))[1];
+    }
+
     $CardBody = $("#CreatePost > .card-body")
     $space = $CardBody.children(".select_placement").children("div").children("select");
+    $disp_opt = $CardBody.children(".select_placement").children("button").children("span");
     $title = $CardBody.children(".input_text").children("textarea");
     $link = $CardBody.children(".input_link").children(".input_link");
-    $target = $CardBody.children(".input_link").children(".checkbox_link");
+    $target = $CardBody.children(".input_link").children(".checkbox_link").children("input");
+
+    if (Dataid > 0) {
+        co.Marquees.Get(Dataid).done(function (result) {
+            $title.text(result.title);
+            $disp_opt.text(result.disp_opt ? "visibility" : "visibility_off");
+            $link.val(result.link);
+        });
+    }
 
     const forms = $('#PostForm');
     (() => {
@@ -39,24 +65,39 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    Coker.sweet.draft_or_publish("直接發布", Draft, Publish);
+                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                        if (Dataid > 0) {
+                            Update($disp_opt.text() == "visibility" ? true : false, "已成功發布", "發布發生未知錯誤");
+                        } else {
+                            Add($disp_opt.text() == "visibility" ? true : false, "已成功發布", "發布發生未知錯誤");
+                        }
+                    });
                 }
                 form.classList.add('was-validated')
             }, false)
         })
     })()
 
+    $(".btn_save").on("click", function () {
+        $disp_opt.text("visibility_off");
+        if (Dataid > 0) {
+            Update(false, "已存為草稿", "儲存草稿發生未知錯誤");
+        } else {
+            Add(false, "已存為草稿", "儲存草稿發生未知錯誤");
+        }
+    })
+
+    $disp_opt.on("click", function () {
+        if ($disp_opt.text() == "visibility") {
+            $disp_opt.text("visibility_off");
+        } else if ($disp_opt.text() == "visibility_off") {
+            $disp_opt.text("visibility");
+        }
+    })
+
     $input_number = $CardBody.children(".input_text").children("div").children(".input_number");
     $title.on('keyup', function () {
         $input_number.text($title.val().length);
-    });
-
-    $link.on('keyup', function () {
-        if ($link.val().length > 0) {
-            $target.attr('checked', 'checked');
-        } else {
-            $target.removeAttr("checked");
-        }
     });
 
     picker = new Lightpick({
@@ -72,41 +113,41 @@ function PageReady() {
             str += end ? end.format('YYYY MMMM Do') : '　...　';
         }
     });
-
 }
 
-function Draft() {
+function Add(display, success_text, error_text) {
     co.Marquees.Add({
         WebsiteId: 1,
         title: $title.val(),
-        disp_opt: false,
+        disp_opt: display,
         ser_no: 1,
-        link: "https://" + $link.val(),
+        link: $link.val(),
         target: $target.is(":checked"),
         StartTime: picker.getStartDate().format(),
         EndTime: picker.getEndDate().format()
     }).done(function () {
-        Coker.sweet.success("已存為草稿", null, true);
-        setTimeout(function () { location.reload() }, 1000);
+        Coker.sweet.success(success_text, null, true);
+        setTimeout(function () { history.back() }, 1000);
     }).fail(function () {
-        Coker.sweet.error("錯誤", "儲存草稿發生未知錯誤", null, true);
+        Coker.sweet.error("錯誤", error_text, null, true);
     });
 }
 
-function Publish() {
-    co.Marquees.Add({
+function Update(display, success_text, error_text) {
+    co.Marquees.Update({
+        id: Dataid,
         WebsiteId: 1,
         title: $title.val(),
-        disp_opt: true,
+        disp_opt: display,
         ser_no: 1,
-        link: "https://" + $link.val(),
+        link: $link.val(),
         target: $target.is(":checked"),
         StartTime: picker.getStartDate().format(),
         EndTime: picker.getEndDate().format()
     }).done(function () {
-        Coker.sweet.success("已成功發布", null, true);
-        setTimeout(function () { location.reload() }, 1000);
+        Coker.sweet.success(success_text, null, true);
+        setTimeout(function () { history.back() }, 1000);
     }).fail(function () {
-        Coker.sweet.error("錯誤", "發布發生未知錯誤", null, true);
+        Coker.sweet.error("錯誤", error_text, null, true);
     });
 }

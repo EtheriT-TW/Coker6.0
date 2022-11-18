@@ -1,4 +1,8 @@
 ﻿
+.was-validated .form-control:valid {
+    border-color: rgba(0, 0, 0, 0.125);
+}
+
 #CreatePost > .card-header {
     background-color: var(--color-gray-bg-dark);
 }
@@ -15,6 +19,11 @@
     content: '/60';
 }
 
-#CreatePost > .card-body > .input_link > input:last-child {
+#CreatePost > .card-body > .input_link > .input_link {
+    padding-right: 6.25rem;
+}
+
+#CreatePost > .card-body > .input_link > .checkbox_link {
     z-index: 3;
+    padding-right: 2.25rem;
 }

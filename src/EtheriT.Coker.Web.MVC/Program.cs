@@ -25,6 +25,7 @@ var configuration = provider.GetRequiredService<IConfiguration>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllersWithViews().AddNewtonsoftJson();
 builder.Services.AddSingleton<JwtHelpers>();
 
 builder.Services

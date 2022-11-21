@@ -2,7 +2,10 @@
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace EtheriT.Coker.Application.Marquee
 {
@@ -111,7 +114,7 @@ namespace EtheriT.Coker.Application.Marquee
 
             return null;
         }
-        public async Task<List<MarqueeGetDto>> GetAll()
+        public async Task<JsonResult> GetAll()
         {
             try
             {
@@ -119,7 +122,7 @@ namespace EtheriT.Coker.Application.Marquee
 
                 if (result != null)
                 {
-                    var output = (from e in result
+                    var output = await (from e in result
                                   where !e.IsDeleted
                                   select new MarqueeGetDto
                                   {
@@ -132,9 +135,8 @@ namespace EtheriT.Coker.Application.Marquee
                                       target = e.target,
                                       StartTime = e.StartTime,
                                       EndTime = e.EndTime
-                                  }).ToList();
-
-                    return output;
+                                  }).ToArrayAsync();
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無跑馬燈資料");
             }
@@ -143,7 +145,7 @@ namespace EtheriT.Coker.Application.Marquee
 
             }
 
-            return null;
+            return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }); ;
         }
         public async Task<ResponseMessageDto> Delete(int id)
         {

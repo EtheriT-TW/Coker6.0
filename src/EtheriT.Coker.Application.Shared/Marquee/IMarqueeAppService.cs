@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Shared.Marquee
 {
@@ -9,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Marquee
         public Task<ResponseMessageDto> Add(MarqueeAddDto dto);
         public Task<ResponseMessageDto> Update(MarqueeUpdateDto dto);
         public Task<MarqueeGetDto> Get(int id);
-        public Task<List<MarqueeGetDto>> GetAll();
+        public Task<JsonResult> GetAll();
         public Task<ResponseMessageDto> Delete(int id);
     }
 }

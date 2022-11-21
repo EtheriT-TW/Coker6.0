@@ -37,7 +37,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpGet]
-        public async Task<List<MarqueeGetDto>> GetAll()
+        public async Task<JsonResult> GetAll()
         {
             return await marqueeAppService.GetAll();
         }

@@ -22,23 +22,21 @@
 				</a>
 				@(
 					Html.DevExtreme().DataGrid<MarqueeGetDto>()
-					.DataSource(d => d.Mvc()
-					.Controller("Marquee")
-					.LoadAction("GetAll")
-					.UpdateAction("GetAll")
-					.DeleteAction("Delete")
-					.Key("id")
+					.DataSource(d => d.RemoteController().Key("Id")
+						.LoadUrl("/api/Marquee/GetAll").LoadMethod("Get")
+						.DeleteUrl("/api/Marquee/Delete").DeleteMethod("Delete")
+						.UpdateUrl("/api/Marquee/Update").UpdateMethod("Post")
 					)
 					.ColumnHidingEnabled(true)
 					.ShowBorders(true)
 					.FilterRow(filterRow => filterRow
-					.Visible(true)
-					.ApplyFilter(GridApplyFilterMode.Auto)
+						.Visible(true)
+						.ApplyFilter(GridApplyFilterMode.Auto)
 					)
 					.SearchPanel(searchPanel => searchPanel
-					.Visible(true)
-					.Width(480)
-					.Placeholder("請輸入要搜尋的資料")
+						.Visible(true)
+						.Width(480)
+						.Placeholder("請輸入要搜尋的資料")
 					)
 					.ShowRowLines(true)
 					.Columns(c =>

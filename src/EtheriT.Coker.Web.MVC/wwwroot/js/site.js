@@ -7,7 +7,6 @@ var PreLoader;
 (function (a) {
     var now = new Date();
     var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
-    edt = 0;
     if (!!!co.Cookie.Get("token")) {
         if (location.pathname != "/") location.href = "/";
         else co.Page.Ready();

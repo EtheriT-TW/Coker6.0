@@ -120,10 +120,10 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Icon="",
                             },
                             new JobMenu{
-                                PageName="MarqueeMessage",
+                                PageName="Marquee",
                                 Title="跑馬燈訊息",
                                 Controller="ContentManagement",
-                                Action="MarqueeMessage",
+                                Action="Marquee",
                                 Icon="",
                             },
                             new JobMenu{

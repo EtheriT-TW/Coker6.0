@@ -14,32 +14,35 @@
 				@if (item.jobItemModels == null)
 				{
 					string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
-							<li class="@myClass">
-								<a title="@item.PageName" asp-controller="@item.Controller" asp-action="@item.Action">
-									<span class="nav-icon material-icons">@item.Icon</span>@item.Title
-								</a>
+					<li class="@myClass">
+						<a title="@item.PageName" asp-controller="@item.Controller" asp-action="@item.Action">
+							<span class="nav-icon material-icons">@item.Icon</span>@item.Title
+						</a>
 					</li>
 				}
 				else
 				{
 					<li>
 						@{
-							string showed="";
-							if (item.jobItemModels.Exists(e => e.PageName == ViewData["Title"].ToString())) {
+							string showed = "";
+							string brighten = "";
+							if (item.jobItemModels.Exists(e => e.PageName == ViewData["Title"].ToString()))
+							{
 								showed = "show";
+								brighten = "text-white";
 							}
 						}
-					<a class="" title="@item.PageName" data-bs-toggle="collapse" href="@item.CollapseId" role="button" aria-expanded="false" aria-controls="collapseExample">
-						<span class="nav-icon material-icons">@item.Icon</span>@item.Title<span class="nav-icon material-icons">expand_more</span>
-					</a>
+						<a class="@brighten" title="@item.PageName" data-bs-toggle="collapse" href="@item.CollapseId" role="button" aria-expanded="false" aria-controls="collapseExample">
+							<span class="nav-icon material-icons">@item.Icon</span>@item.Title<span class="nav-icon material-icons">expand_more</span>
+						</a>
 						<ul id="@item.PageName" class="collapse @showed">
-						@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
-						{
-							string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
-							<li class="@myClass ps-4">
-								<a class="lh-lg" title="@subJob.PageName" asp-controller="@subJob.Controller" asp-action="@subJob.Action">@subJob.Title</a>
-							</li>
-						}
+							@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
+							{
+								string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
+								<li class="@myClass ps-4">
+									<a class="lh-lg" title="@subJob.PageName" asp-controller="@subJob.Controller" asp-action="@subJob.Action">@subJob.Title</a>
+								</li>
+							}
 						</ul>
 					</li>
 				}

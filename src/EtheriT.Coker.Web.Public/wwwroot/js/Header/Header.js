@@ -24,6 +24,20 @@
         delay: 3000,
         order: 'asc'
     });
+
+    var $menu_content = $("#Offcanvas_Mega_Menu > ul > .title > .content > ul");
+
+    $menu_content.each(function () {
+        if ($(this).children('li').length < 4) {
+            console.log("Small" + $(this).children('li').length);
+            $(this).css("justify-content", "center");
+        } else {
+            console.log("Big" + $(this).children('li').length);
+            $(this).css("justify-content", "start");
+            console.log($menu_content.css("justify-content"));
+        }
+    });
+
 }
 
 function CartDelete() {

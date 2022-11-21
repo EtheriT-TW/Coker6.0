@@ -48,9 +48,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="面盆", Link=""},
                                     new MenuItem.MenuItemModel {Title="便斗", Link=""},
                                     new MenuItem.MenuItemModel {Title="龍頭", Link=""},
-                                }
-                            },
-                            new MenuItem.MenuItemModel {Title="", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="配件", Link=""},
                                     new MenuItem.MenuItemModel {Title="浴缸", Link=""},
                                     new MenuItem.MenuItemModel {Title="三機", Link=""},
@@ -59,11 +56,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="清倉品", Link=""},
                                 }
                             },
-                            new MenuItem.MenuItemModel {Title="", menuItemModels = new List<MenuItem.MenuItemModel>{
-                                    new MenuItem.MenuItemModel {Title="使用須知", Link=""},
-                                    new MenuItem.MenuItemModel {Title="購買諮詢服務", Link=""},
-                                }
-                            },
+                            new MenuItem.MenuItemModel {Title="使用須知", menuItemModels = new List<MenuItem.MenuItemModel>{}},
+                            new MenuItem.MenuItemModel {Title="購買諮詢服務", menuItemModels = new List<MenuItem.MenuItemModel>{}},
                         }
                     },new MenuItem.MenuItemModel {
                         Title = "最新消息",

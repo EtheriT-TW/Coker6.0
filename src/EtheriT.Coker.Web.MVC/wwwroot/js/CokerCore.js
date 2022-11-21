@@ -37,6 +37,7 @@ var Coker = {
     },
     Page: {
         Ready: function () {
+            if (location.pathname != "/") co.Cookie.Add("lastViewPage", location.pathname);
             typeof (PageReady) === "function" && PageReady();
         }
     },

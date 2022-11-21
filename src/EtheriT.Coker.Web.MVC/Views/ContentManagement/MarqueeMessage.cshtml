@@ -21,7 +21,7 @@
 				<div class="d-flex">
 					<label class="form-label mb-0 pe-3 align-self-center" for="Placement">刊登位置</label>
 					<select id="Placement" class="form-select" aria-label="Placement Select" required>
-						<option selected value="HomePage">首頁</option>
+						<option selected value="HomePage">頁首</option>
 					</select>
 				</div>
 				<button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
@@ -34,7 +34,7 @@
 					<span class="input-group-text bg-transparent border-0 p-0">跑馬燈訊息</span>
 					<div class="input_number">0</div>
 				</div>
-				<textarea id="InputText" class="form-control border-0" aria-label="With textarea" maxlength="60" required></textarea>
+				<textarea id="InputText" class="form-control border-0" aria-label="With textarea" maxlength="60" placeholder="輸入跑馬燈內文" required></textarea>
 			</div>
 
 			<div class="input_link input-group mb-3">
@@ -47,11 +47,13 @@
 			</div>
 
 			<div class="input_date input-group mb-3">
-				<span class="input-group-text bg-transparent"><i class="fa-regular fa-calendar pe-3"></i>調整顯示日期</span>
-				<input id="Datepicker" class="form-control rounded-right border-left-0" type="text" aria-label="Input Duration of Marquee" pattern="[1-9]\d{3}/\d{2}/\d{2} ~ [1-9]\d{3}/\d{2}/\d{2}" required>
+				<span class="input-group-text"><i class="fa-regular fa-calendar pe-3"></i>調整顯示日期</span>
+				<input id="Datepicker" class="form-control rounded-right border-left-0" type="text" aria-label="Input Duration of Marquee" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+				<div class="checkbox_permanent position-absolute end-0 top-50 translate-middle-y">
+					<input id="PermanentCheck" class="form-check-input" type="checkbox" value=" ">
+					<label class="form-check-label fs-6" for="PermanentCheck">永久顯示</label>
+				</div>
 			</div>
 		</form>
 	</div>
-	
-	<!--<button class="btn_get btn-danger m-2">測試Get用</button>-->
 </div>

@@ -19,8 +19,9 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(255)]
         public string link { get; set; }
         public bool target { get; set; }
-        public virtual DateTime StartTime { get; set; }
-        public virtual DateTime EndTime { get; set; }
+        public virtual DateTime? StartTime { get; set; }
+        public virtual DateTime? EndTime { get; set; }
+        public bool permanent { get; set; }
         public Website? Website { get; set; }
     }
 }

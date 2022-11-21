@@ -34,15 +34,15 @@
       ]
     },
     {
-      "output": "lib/moment/moment.min.js",
+      "output": "lib/daterangepicker/moment.min.js",
       "input": [
-        "node_modules/moment/moment.js"
+        "node_modules/daterangepicker/moment.min.js"
       ]
     },
     {
-      "output": "lib/lightpick/lightpick.min.js",
+      "output": "lib/daterangepicker/daterangepicker.min.js",
       "input": [
-        "node_modules/lightpick/lightpick.js"
+        "node_modules/daterangepicker/daterangepicker.js"
       ]
     }
   ],
@@ -66,9 +66,9 @@
       ]
     },
     {
-      "output": "lib/lightpick/lightpick.min.css",
+      "output": "lib/daterangepicker/daterangepicker.min.css",
       "input": [
-        "node_modules/lightpick/css/lightpick.css"
+        "node_modules/daterangepicker/daterangepicker.css"
       ]
     }
   ],

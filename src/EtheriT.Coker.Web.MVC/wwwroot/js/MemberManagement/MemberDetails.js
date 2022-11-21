@@ -1,4 +1,7 @@
-﻿function PageReady() {
+﻿var newpass, checkpass
+var newshow = false, checkshow = false
+
+function PageReady() {
     ManagementDataCollapse();
     OrderDetailsPosition();
 
@@ -10,6 +13,18 @@
     getLatestOrder();
 
     TWZipCodeInit();
+
+    $(".btn_newpass_lock ").on("click", function () {
+        $(this).children("span").text($(this).text() == "visibility_off" ? "visibility" : "visibility_off");
+        newshow = !newshow;
+        $(this).siblings(".new_pass").attr("type", newshow ? "text" : "password");
+    });
+
+    $(".btn_checkpass_lock ").on("click", function () {
+        $(this).children("span").text($(this).text() == "visibility_off" ? "visibility" : "visibility_off");
+        checkshow = !checkshow;
+        $(this).siblings(".check_pass").attr("type", checkshow ? "text" : "password");
+    });
 }
 
 function ManagementDataCollapse() {

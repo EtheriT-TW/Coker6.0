@@ -15,7 +15,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marquee
         public int ser_no { get; set; }
         public string link { get; set; }
         public bool target { get; set; }
-        public virtual DateTime StartTime { get; set; }
-        public virtual DateTime EndTime { get; set; }
+        public virtual DateTime? StartTime { get; set; }
+        public virtual DateTime? EndTime { get; set; }
+        public bool permanent { get; set; }
     }
 }

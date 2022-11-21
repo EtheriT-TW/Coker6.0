@@ -88,24 +88,24 @@
 					<div class="d-flex align-items-center pb-2">
 						<div class="fs-5 fw-bold">登入資料</div>
 					</div>
-					<form class="row needs-validation" novalidate>
+					<div class="row needs-validation" novalidate>
 						<div class="form-floating mb-3 col-12 col-lg-8 position-relative">
-							<input id="InputLoginMail" class="mail form-control pe-5" type="email" placeholder="name@example.com" value="">
+							<input id="InputLoginMail" class="mail form-control pe-5" type="email" placeholder="name@example.com" autocomplete="off" value="">
 							<label class="px-4" for="InputLoginMail">電子郵件</label>
-							<button class="position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><i class="fa-solid fa-lock"></i></button>
+							<div class="position-absolute top-50 translate-middle end-0 text-black pe-2"><i class="fa-solid fa-lock"></i></div>
 						</div>
 						<div class="col-4 d-none d-lg-flex"></div>
-						<div class="form-floating mb-3 col-6 col-lg-4 position-relative">
-							<input id="InputNewPassword" class="mail form-control pe-5" type="text" placeholder="******" value="" minlength="6">
+						<div class="input_newpass form-floating mb-3 col-6 col-lg-4 position-relative">
+							<input id="InputNewPassword" class="new_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="" minlength="6">
 							<label class="px-4" for="InputNewPassword">新密碼</label>
-							<button class="position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><i class="fa-regular fa-eye-slash"></i></button>
+							<button class="btn_newpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><span class="material-symbols-outlined fs-5">visibility_off</span></button>
 						</div>
-						<div class="form-floating mb-3 col-6 col-lg-4 position-relative">
-							<input id="InputConfirmPassword" class="mail form-control pe-5" type="text" placeholder="******" value="" minlength="6">
+						<div class="input_checkpass form-floating mb-3 col-6 col-lg-4 position-relative">
+							<input id="InputConfirmPassword" class="check_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="" minlength="6">
 							<label class="px-4" for="InputConfirmPassword">密碼確認</label>
-							<button class="position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><i class="fa-regular fa-eye-slash"></i></button>
+							<button class="btn_checkpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2"><span class="material-symbols-outlined fs-5">visibility_off</span></button>
 						</div>
-					</form>
+					</div>
 					<div>（輸入6個字元以上的英文字母及數字，至少一位英文字母及數字，不可使用特殊符號。）</div>
 				</div>
 			</div>

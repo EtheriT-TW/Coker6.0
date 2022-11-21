@@ -1,3 +1,27 @@
-﻿.btn_add {
+﻿
+/* Marquee List */
+.btn_add {
     z-index: 1;
+}
+
+/* Marquee Content */
+#MarqueeContent > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#MarqueeContent > .card-body > .select_placement > div > select {
+    width: 8rem;
+}
+
+#MarqueeContent > .card-body > .input_text > div > .input_number::after {
+    content: '/60';
+}
+
+#MarqueeContent > .card-body > div[class*= input_] > input {
+    padding-right: 6.25rem;
+}
+
+#MarqueeContent > .card-body > div[class*= input_] > div[class*= checkbox_] {
+    z-index: 3;
+    padding-right: 2.25rem;
 }

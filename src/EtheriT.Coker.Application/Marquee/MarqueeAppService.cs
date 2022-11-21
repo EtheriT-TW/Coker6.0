@@ -34,7 +34,8 @@ namespace EtheriT.Coker.Application.Marquee
                     link = dto.link,
                     target = dto.target,
                     StartTime = dto.StartTime,
-                    EndTime = dto.EndTime
+                    EndTime = dto.EndTime,
+                    permanent = dto.permanent
                 };
                 db.Marquees.Add(m);
                 db.SaveChanges();
@@ -67,6 +68,7 @@ namespace EtheriT.Coker.Application.Marquee
                     result.target = dto.target;
                     result.StartTime = dto.StartTime;
                     result.EndTime = dto.EndTime;
+                    result.permanent = dto.permanent;
                     result.LastModificationTime = DateTime.Now;
                     db.SaveChanges();
                     output.Success = true;
@@ -99,8 +101,8 @@ namespace EtheriT.Coker.Application.Marquee
                         link = result.link,
                         target = result.target,
                         StartTime = result.StartTime,
-                        EndTime = result.EndTime
-
+                        EndTime = result.EndTime,
+                        permanent = result.permanent
                     };
 
                     return output;
@@ -134,7 +136,8 @@ namespace EtheriT.Coker.Application.Marquee
                                       link = e.link,
                                       target = e.target,
                                       StartTime = e.StartTime,
-                                      EndTime = e.EndTime
+                                      EndTime = e.EndTime,
+                                      permanent = e.permanent
                                   }).ToArrayAsync();
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }

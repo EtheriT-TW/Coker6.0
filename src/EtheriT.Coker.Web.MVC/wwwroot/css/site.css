@@ -12,6 +12,10 @@
         box-shadow: 0 0 0 0.2rem #006fae80 !important;
     }
 
+.dx-checkbox-icon {
+    border-color: gray !important;
+}
+
 :root {
     --colors-red-text: #B8230F;
     --color-gray-bg-dark: #E2E2E2;

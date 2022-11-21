@@ -1,6 +1,5 @@
-﻿var $space, $title, $link, $target, $disp_opt
-var Dataid
-var picker
+﻿var $space, $title, $link, $target, $disp_opt, $permanent
+var Dataid, startDate, endDate
 
 function PageReady() {
     co.Marquees = {
@@ -35,10 +34,8 @@ function PageReady() {
         }
     };
 
-    var url = location.href;
-
-    if (url.indexOf('?id=') != -1) {
-        Dataid = (url.split('?id='))[1];
+    if (location.href.indexOf('?id=') != -1) {
+        Dataid = (location.href.split('?id='))[1];
     }
 
     $CardBody = $("#CreatePost > .card-body")
@@ -47,14 +44,50 @@ function PageReady() {
     $title = $CardBody.children(".input_text").children("textarea");
     $link = $CardBody.children(".input_link").children(".input_link");
     $target = $CardBody.children(".input_link").children(".checkbox_link").children("input");
+    $date = $CardBody.children(".input_date").children("input");
+    $permanent = $CardBody.children(".input_date").children(".checkbox_permanent").children("input");
+
+    var $picker = $("#Datepicker");
+
+    $picker.daterangepicker({
+        timePicker: true,
+        timePicker24Hour: true,
+        autoUpdateInput: Dataid > 0 ? true : false,
+        locale: {
+            format: 'YYYY/M/DD HH:mm'
+        }
+    });
 
     if (Dataid > 0) {
         co.Marquees.Get(Dataid).done(function (result) {
             $title.text(result.title);
             $disp_opt.text(result.disp_opt ? "visibility" : "visibility_off");
             $link.val(result.link);
+            $target.prop("checked", result.target);
+            $permanent.prop("checked", result.permanent);
+            if (result.permanent) {
+                $date.val('');
+                $date.attr("disabled", "disabled");
+                $date.siblings("span").removeClass("bg-transparent");
+                startDate = null;
+                endDate = null;
+            } else {
+                $date.siblings("span").addClass("bg-transparent");
+                $picker.data('daterangepicker').setStartDate(result.startTime);
+                $picker.data('daterangepicker').setEndDate(result.endTime);
+            }
         });
     }
+
+    $picker.on('apply.daterangepicker', function (ev, picker) {
+        $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
+        startDate = picker.startDate.format("");
+        endDate = picker.startDate.format("");
+    });
+
+    $picker.on('cancel.daterangepicker', function (ev, picker) {
+        $(this).val('');
+    });
 
     const forms = $('#PostForm');
     (() => {
@@ -100,19 +133,19 @@ function PageReady() {
         $input_number.text($title.val().length);
     });
 
-    picker = new Lightpick({
-        field: document.getElementById('Datepicker'),
-        singleDate: false,
-        selectForward: true,
-        minDate: moment(),
-        format: 'YYYY/MM/DD',
-        separator: ' ~ ',
-        onSelect: function (start, end) {
-            var str = '';
-            str += start ? start.format('YYYY MMMM Do') + ' to ' : '';
-            str += end ? end.format('YYYY MMMM Do') : '　...　';
+    $permanent.on("click", function () {
+        if ($permanent.is(":checked")) {
+            $date.val('');
+            $date.attr("disabled", "disabled");
+            $date.siblings("span").removeClass("bg-transparent");
+            startDate = null;
+            endDate = null;
+        } else {
+            $date.removeAttr("disabled");
+            $date.siblings("span").addClass("bg-transparent");
         }
-    });
+    })
+
 }
 
 function Add(display, success_text, error_text) {
@@ -123,8 +156,9 @@ function Add(display, success_text, error_text) {
         ser_no: 1,
         link: $link.val(),
         target: $target.is(":checked"),
-        StartTime: picker.getStartDate().format(),
-        EndTime: picker.getEndDate().format()
+        StartTime: startDate,
+        EndTime: endDate,
+        permanent: $permanent.is(":checked")
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () { history.back() }, 1000);
@@ -142,8 +176,9 @@ function Update(display, success_text, error_text) {
         ser_no: 1,
         link: $link.val(),
         target: $target.is(":checked"),
-        StartTime: picker.getStartDate().format(),
-        EndTime: picker.getEndDate().format()
+        StartTime: startDate,
+        EndTime: endDate,
+        permanent: $permanent.is(":checked")
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () { history.back() }, 1000);

@@ -21,6 +21,7 @@ function PageReady() {
             history.back();
         } else {
             Coker.sweet.confirm("返回上一頁", "資料將不被保存", "確定", "取消", function () {
+                // 存草稿
                 history.back();
             });
         }
@@ -29,9 +30,7 @@ function PageReady() {
 }
 
 function Reply() {
-    Coker.sweet.draft_or_publish("直接回覆", function () {
-        Coker.sweet.success("已存成草稿", null, true);
-    }, function () {
+    Coker.sweet.confirm("直接回覆", "回覆後不可取消", "確定", "取消", function () {
         Coker.sweet.success("已成功回覆", null, true);
         $("#Status").val("Processed");
         $("#InputReply").attr("disabled", "disabled");

@@ -46,6 +46,19 @@ function PageReady() {
 
     $picker = $("#Datepicker");
 
+    $picker.daterangepicker({
+        timePicker: true,
+        timePicker24Hour: true,
+        autoUpdateInput: false,
+        locale: {
+            format: 'YYYY/M/DD HH:mm',
+            applyLabel: "　確認　",
+            cancelLabel: "　取消　",
+            daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
+            monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+        }
+    });
+
     $picker.on('apply.daterangepicker', function (ev, picker) {
         $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
         startDate = picker.startDate.format("");
@@ -112,20 +125,13 @@ function PageReady() {
 function contentReady(e) { marquee_list = e; }
 
 function addButtonClicked() {
+    $("#PostForm").removeClass("was-validated");
     $("#MarqueeList").toggleClass("d-none");
     $("#MarqueeContent").toggleClass("d-none");
-
-    $picker.daterangepicker({
-        timePicker: true,
-        timePicker24Hour: true,
-        autoUpdateInput: false,
-        locale: {
-            format: 'YYYY/M/DD HH:mm'
-        }
-    });
 }
 
 function editButtonClicked(e) {
+    $("#PostForm").removeClass("was-validated");
     $("#MarqueeList").toggleClass("d-none");
     $("#MarqueeContent").toggleClass("d-none");
 
@@ -144,8 +150,6 @@ function editButtonClicked(e) {
         $date.val('');
         $date.attr("disabled", "disabled");
         $date.siblings("span").removeClass("bg-transparent");
-        startDate = null;
-        endDate = null;
     } else {
         $date.removeAttr("disabled");
         $date.siblings("span").addClass("bg-transparent");
@@ -153,13 +157,17 @@ function editButtonClicked(e) {
         $picker.daterangepicker({
             timePicker: true,
             timePicker24Hour: true,
-            autoUpdateInput: true,
+            autoUpdateInput: (data.StartTime != null && data.EndTime != null) ? true : false,
             locale: {
-                format: 'YYYY/M/DD HH:mm'
+                format: 'YYYY/M/DD HH:mm',
+                applyLabel: "確認",
+                cancelLabel: "取消",
+                daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
+                monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
             }
         });
-        $picker.data('daterangepicker').setStartDate(data.StartTime);
-        $picker.data('daterangepicker').setEndDate(data.EndTime);
+        data.StartTime != null && $picker.data('daterangepicker').setStartDate(data.StartTime);
+        data.EndTime != null && $picker.data('daterangepicker').setEndDate(data.EndTime);
     }
 }
 

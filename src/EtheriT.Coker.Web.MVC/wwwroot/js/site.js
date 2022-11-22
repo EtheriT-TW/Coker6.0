@@ -156,6 +156,7 @@ var PreLoader;
     };
     a.fn.setThemeTone()
 })(jQuery);
+
 function toggleFullScreen() {
     if ((document.fullScreenElement && document.fullScreenElement !== null) || (!document.mozFullScreen && !document.webkitIsFullScreen)) {
         if (document.documentElement.requestFullScreen) { document.documentElement.requestFullScreen() } else {

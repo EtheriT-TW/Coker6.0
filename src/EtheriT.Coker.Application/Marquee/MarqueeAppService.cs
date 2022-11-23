@@ -125,20 +125,20 @@ namespace EtheriT.Coker.Application.Marquee
                 if (result != null)
                 {
                     var output = await (from e in result
-                                  where !e.IsDeleted
-                                  select new MarqueeGetDto
-                                  {
-                                      Id = e.Id,
-                                      WebsiteId = e.FK_WebsiteId,
-                                      title = e.title,
-                                      disp_opt = e.disp_opt,
-                                      ser_no = e.ser_no,
-                                      link = e.link,
-                                      target = e.target,
-                                      StartTime = e.StartTime,
-                                      EndTime = e.EndTime,
-                                      permanent = e.permanent
-                                  }).ToArrayAsync();
+                                        where !e.IsDeleted
+                                        select new MarqueeGetDto
+                                        {
+                                            Id = e.Id,
+                                            WebsiteId = e.FK_WebsiteId,
+                                            title = e.title,
+                                            disp_opt = e.disp_opt,
+                                            ser_no = e.ser_no,
+                                            link = e.link,
+                                            target = e.target,
+                                            StartTime = e.StartTime,
+                                            EndTime = e.EndTime,
+                                            permanent = e.permanent
+                                        }).ToArrayAsync();
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無跑馬燈資料");
@@ -149,6 +149,28 @@ namespace EtheriT.Coker.Application.Marquee
             }
 
             return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }); ;
+        }
+        public async Task<Array> GetAllKey()
+        {
+            try
+            {
+                var result = db.Marquees;
+
+                if (result != null)
+                {
+                    var output = await (from e in result
+                                        where !e.IsDeleted
+                                        select e.Id).ToArrayAsync();
+                    return output;
+                }
+                else throw new Exception("查無跑馬燈資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
         }
         public async Task<ResponseMessageDto> Delete(int id)
         {

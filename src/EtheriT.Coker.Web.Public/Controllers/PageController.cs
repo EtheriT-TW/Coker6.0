@@ -24,7 +24,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             string view = string.Empty;
             if (!string.IsNullOrEmpty(key))
             {
-                if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog")
+                if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter")
                 {
                     view = key;
                 }

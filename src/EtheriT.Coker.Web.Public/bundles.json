@@ -31,6 +31,12 @@
       "input": [
         "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
       ]
+    },
+    {
+      "output": "lib/masonry-layout/dist/masonry.pkgd.min.js",
+      "input": [
+        "node_modules/masonry-layout/dist/masonry.pkgd.js"
+      ]
     }
   ],
   "styles": [

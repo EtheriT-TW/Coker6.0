@@ -1,5 +1,10 @@
 ﻿function HeaderInit() {
     CarDropdownReset();
+    MenuLiSize();
+
+    $(window).resize(function () {
+        MenuLiSize();
+    });
 
     const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
     Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
@@ -29,15 +34,35 @@
 
     $menu_content.each(function () {
         if ($(this).children('li').length < 4) {
-            console.log("Small" + $(this).children('li').length);
             $(this).css("justify-content", "center");
         } else {
-            console.log("Big" + $(this).children('li').length);
             $(this).css("justify-content", "start");
-            console.log($menu_content.css("justify-content"));
         }
     });
 
+}
+
+function MenuLiSize() {
+    $(".sub_content").each(function () {
+        $self = $(this);
+        if ($(window).width() > 768) {
+            var content_width = $self.parents(".content").first().width();
+            console.log($self.children("li").length)
+            if ($self.children("li").length > 0) {
+                $self.css("height", "100%")
+                if ($self.children("li").length > 7) {
+                    var selfwidth = content_width / 6 * 2
+                    $self.css("width", selfwidth)
+                }
+            } else {
+                $self.css("height", "fit-content")
+                $self.parents("li").first().css("height", "fit-content");
+            }
+
+        } else {
+            $self.css("width", "unset")
+        }
+    });
 }
 
 function CartDelete() {

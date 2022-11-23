@@ -8,12 +8,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("MarqueeMessage");
         }
-        public IActionResult Marquee(int id)
+        public IActionResult Marquee()
         {
-            if (id != 0)
-            {
-                return View("MarqueeMessage");
-            }
             return View("Marquee");
         }
         public IActionResult ContactUs(int id)

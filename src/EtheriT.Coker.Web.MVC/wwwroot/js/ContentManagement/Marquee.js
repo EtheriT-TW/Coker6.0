@@ -1,5 +1,5 @@
 ﻿var $title, $link, $target, $disp_opt, $date, $permanent, $input_number
-var startDate, endDate, keyId
+var startDate, endDate, keyId, keyArray
 var $picker, marquee_list
 
 function PageReady() {
@@ -32,6 +32,14 @@ function PageReady() {
                 headers: _c.Data.Header,
                 data: { id: id },
             });
+        },
+        GetAllKey: function () {
+            return $.ajax({
+                url: "/api/Marquee/GetAllKey",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+            });
         }
     };
 
@@ -44,8 +52,13 @@ function PageReady() {
     $permanent = $CardBody.children(".input_date").children(".checkbox_permanent").children("input");
     $input_number = $CardBody.children(".input_text").children("div").children(".input_number");
 
-    $picker = $("#Datepicker");
+    if ("onhashchange" in window) {
+        window.onhashchange = hashChange;
+    } else {
+        setInterval(hashChange, 1000);
+    }
 
+    $picker = $("#Datepicker");
     $picker.daterangepicker({
         timePicker: true,
         timePicker24Hour: true,
@@ -58,16 +71,13 @@ function PageReady() {
             monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
         }
     });
-
     $picker.on('apply.daterangepicker', function (ev, picker) {
         $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
         startDate = picker.startDate.format("");
         endDate = picker.startDate.format("");
     });
-
     $picker.on('cancel.daterangepicker', function (ev, picker) {
         $(this).val("");
-        console.log($(this))
     });
 
     const forms = $('#PostForm');
@@ -93,7 +103,6 @@ function PageReady() {
     })()
 
     $(".btn_add").on("click", addButtonClicked);
-
     $(".btn_save").on("click", SaveAsDraft);
 
     $disp_opt.on("click", function () {
@@ -103,11 +112,9 @@ function PageReady() {
             $disp_opt.text("visibility");
         }
     })
-
     $title.on('keyup', function () {
         $input_number.text($title.val().length);
     });
-
     $permanent.on("click", function () {
         if ($permanent.is(":checked")) {
             $date.val('');
@@ -122,7 +129,37 @@ function PageReady() {
     })
 }
 
-function contentReady(e) { marquee_list = e; }
+function contentReady(e) {
+    co.Marquees.GetAllKey().done(function (result) {
+        keyArray = result
+        marquee_list = e;
+        DataEdit();
+    });
+}
+
+function hashChange(e) {
+    DataEdit();
+    !!e && e.preventDefault();
+}
+
+function DataEdit() {
+    if (window.location.hash != "") {
+        if (window.currentHash != window.location.hash) {
+            var hash = window.location.hash.replace("#", "");
+            if (keyArray.indexOf(parseInt(hash)) > -1) {
+                $("#PostForm").removeClass("was-validated");
+                $("#MarqueeList").addClass("d-none");
+                $("#MarqueeContent").removeClass("d-none");
+            } else {
+                window.location.hash = ""
+            }
+        }
+    } else {
+        $("#PostForm").removeClass("was-validated");
+        $("#MarqueeList").removeClass("d-none");
+        $("#MarqueeContent").addClass("d-none");
+    }
+}
 
 function addButtonClicked() {
     $("#PostForm").removeClass("was-validated");
@@ -137,8 +174,6 @@ function editButtonClicked(e) {
 
     var data = e.row.data;
     keyId = e.row.key;
-
-    console.log(data);
 
     $title.text(data.title);
     $input_number.text($title.val().length);
@@ -185,7 +220,6 @@ function SaveAsDraft() {
     } else {
         Add(false, "已存為草稿", "儲存草稿發生未知錯誤");
     }
-    marquee_list.component.refresh();
 }
 
 function Add(display, success_text, error_text) {

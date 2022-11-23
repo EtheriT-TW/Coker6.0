@@ -1,5 +1,6 @@
-﻿var newpass, checkpass
-var newshow = false, checkshow = false
+﻿var newshow = false, checkshow = false, maillock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
+var BasicInfoForm, LoginMailForm
+var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $InputMail, $InputNew, $InputCheck, $PassFeedBack
 
 function PageReady() {
     ManagementDataCollapse();
@@ -14,17 +15,141 @@ function PageReady() {
 
     TWZipCodeInit();
 
-    $(".btn_newpass_lock ").on("click", function () {
-        $(this).children("span").text($(this).text() == "visibility_off" ? "visibility" : "visibility_off");
-        newshow = !newshow;
-        $(this).siblings(".new_pass").attr("type", newshow ? "text" : "password");
+    ElementInit();
+
+    if ($("#InputLoginMail").val() != "") {
+        $(".btn_mail_lock > span").text("lock");
+        $("#InputLoginMail").attr("disabled", "disabled");
+        maillock = true;
+    }
+
+    $(".btn_save").on("click", DataSave);
+
+    $InputMail.keyup(function () {
+        LoginMailFilled = FormCheck(LoginMailForm);
+    });
+    $InputNew.keyup(function () {
+        PassIsCheck = PassCheck();
+    });
+    $InputCheck.keyup(function () {
+        PassIsCheck = PassCheck();
     });
 
-    $(".btn_checkpass_lock ").on("click", function () {
-        $(this).children("span").text($(this).text() == "visibility_off" ? "visibility" : "visibility_off");
-        checkshow = !checkshow;
-        $(this).siblings(".check_pass").attr("type", checkshow ? "text" : "password");
+    $btn_mail_lock.on("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        MailLock($(this));
     });
+
+    $btn_newpass_lock.on("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        newshow = PassDisplay($(this), newshow)
+    });
+
+    $btn_checkpass_lock.on("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        checkshow = PassDisplay($(this), checkshow)
+    });
+}
+
+function ElementInit() {
+    BasicInfoForm = $("#MemberData > form")
+    LoginMailForm = $("#LoginData form")
+    $btn_mail_lock = $(".btn_mail_lock")
+    $btn_newpass_lock = $(".btn_newpass_lock")
+    $btn_checkpass_lock = $(".btn_checkpass_lock")
+    $InputMail = $("#InputLoginMail")
+    $InputNew = $("#InputNewPassword");
+    $InputCheck = $("#InputConfirmPassword");
+    $PassFeedBack = $("#PassFeedBack");
+}
+
+function DataSave() {
+    BasicInfoFilled = FormCheck(BasicInfoForm);
+    LoginMailFilled = FormCheck(LoginMailForm);
+    PassIsCheck = PassCheck();
+    if (BasicInfoFilled && LoginMailFilled && PassIsCheck) {
+        Coker.sweet.success("資料更新成功", null, true);
+    } else {
+        Coker.sweet.error("資料填寫有誤", "請確認填寫資料是否正確", null, false);
+    }
+}
+
+function FormCheck(Forms) {
+    var Check = false;
+    Array.from(Forms).forEach(form => {
+        if (form.checkValidity()) {
+            Check = true;
+        }
+        form.classList.add('was-validated')
+    })
+    return Check;
+}
+
+function PassCheck() {
+    $btn_newpass_lock.addClass("pe-4");
+    $btn_checkpass_lock.addClass("pe-4");
+    var hasNum = /\d+/, hasLetter = /[a-zA-Z]+/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
+    $InputNew.addClass("is-invalid");
+    $InputCheck.addClass("is-invalid");
+    if ($InputNew.val().length >= 6) {
+        if (hasNum.test($InputNew.val()) && hasLetter.test($InputNew.val()) && !(hasSpesym.test($InputNew.val()))) {
+            $InputNew.removeClass("is-invalid");
+            $InputNew.addClass("is-valid");
+            if ($InputCheck.val() == $InputNew.val()) {
+                $InputCheck.removeClass("is-invalid");
+                $InputCheck.addClass("is-valid");
+                return true;
+            }
+        } else {
+            $PassFeedBack.text("密碼格式有誤");
+        }
+    } else {
+        if ($InputNew.val().length == 0 && $InputCheck.val().length == 0) {
+            $InputNew.removeClass("is-invalid");
+            $InputCheck.removeClass("is-invalid");
+            $InputNew.removeClass("is-valid");
+            $InputCheck.removeClass("is-valid");
+            $btn_newpass_lock.removeClass("pe-4");
+            $btn_checkpass_lock.removeClass("pe-4");
+            return true;
+        } else {
+            $PassFeedBack.text("請輸入6個以上的字元");
+        }
+    }
+    return false;
+}
+
+function MailLock($self) {
+    var $self_span = $self.children("span")
+    LoginMailFilled = FormCheck(LoginMailForm);
+    if (!maillock && $("#InputLoginMail").val() != "" && LoginMailFilled) {
+        $self_span.text("lock")
+        $("#InputLoginMail").attr("disabled", "disabled");
+        maillock = true;
+        $btn_mail_lock.removeClass("pe-4");
+    } else {
+        $self_span.text("lock_open")
+        $("#InputLoginMail").removeAttr("disabled");
+        maillock = false;
+        $btn_mail_lock.addClass("pe-4");
+    }
+}
+
+function PassDisplay($self, display) {
+    var $self_span = $self.children("span")
+    if (display) {
+        $self_span.text("visibility_off");
+        $self.siblings("input").attr("type", "password");
+        display = false;
+    } else {
+        $self_span.text("visibility");
+        $self.siblings("input").attr("type", "text");
+        display = true;
+    }
+    return display;
 }
 
 function ManagementDataCollapse() {

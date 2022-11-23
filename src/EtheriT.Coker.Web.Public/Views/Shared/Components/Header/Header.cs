@@ -83,7 +83,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="經銷據點", Link=""},
                                 }
                             },
-                            new MenuItem.MenuItemModel {Title="展示中心", menuItemModels = new List<MenuItem.MenuItemModel>{
+                            new MenuItem.MenuItemModel {Title="展示中心", Link="ExhibitionCenter", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="台北", Link=""},
                                     new MenuItem.MenuItemModel {Title="新竹", Link=""},
                                     new MenuItem.MenuItemModel {Title="台中", Link=""},

@@ -1,4 +1,5 @@
-﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
 @model HeaderViewModel
 
@@ -10,14 +11,27 @@
 	<div id="Header_Top" class="d-flex justify-content-end justify-content-lg-between p-2 w-100 ">
 
 		<!-- News Marquee -->
+
 		<div id="News_Marquee" class="d-lg-flex d-none">
-			<div class="news_text">New&ensp;</div>
-			<div class="news_box">
-				<ul class="clearfix">
-					<li><a class="text-white overflow-hidden" href="#">隆昌Derek正式上線蝦皮啦</a></li>
-					<li><a class="text-white overflow-hidden" href="#">Derek新竹旗艦店盛大開幕！代言人張鈞甯驚艷賞「衛浴美術館」</a></li>
-				</ul>
-			</div>
+			@if (Model.marqueeModels.Count > 0)
+			{
+				<div class="news_text">New&ensp;</div>
+				<div class="news_box">
+					<ul class="clearfix">
+						@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
+						{
+							@if (@marquee.target)
+							{
+								<li class="overflow-hidden text-white"><a class="text-white overflow-hidden" href="@marquee.link" target="_blank">@marquee.title</a></li>
+							}
+							else
+							{
+								<li class="overflow-hidden text-white"><a class="text-white overflow-hidden" href="@marquee.link">@marquee.title</a></li>
+							}
+						}
+					</ul>
+				</div>
+			}
 		</div>
 
 		<!-- Right Control -->
@@ -105,12 +119,12 @@
 			<ul class="navbar-nav offcanvas-body w-100 m-0">
 				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
 				{
-					<li class="title nav-item col-lg pb-2">
+					<li class="title nav-item col-lg pb-2 ">
 						<a class="nav-link text-center">@menu.Title</a>
 						<div class="content w-100 start-50 translate-middle-x">
 							@if (string.IsNullOrEmpty(menu.imageUrl))
 							{
-								<ul class="d-flex w-100 h-100">
+								<ul class="d-flex flex-column flex-wrap w-100 h-100">
 									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
 									{
 										<li class="nav-item">
@@ -127,7 +141,7 @@
 							}
 							else
 							{
-								<ul class="d-flex w-100 h-100">
+								<ul class="d-flex flex-column flex-wrap w-100 h-100 ">
 									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
 									{
 										<li class="nav-item">
@@ -140,7 +154,7 @@
 											</ul>
 										</li>
 									}
-									<li class="nav-item d-flex justify-content-center text-center">
+									<li class="nav-item image d-flex justify-content-center text-center">
 										<a class="h-100 d-flex flex-column justify-content-center align-items-center" href="@menu.imageLink">
 											<img class="border border-white border-4 rounded shadow" src="@menu.imageUrl" alt="Photo" />
 											<div class="mt-3 text-black">@menu.Description</div>

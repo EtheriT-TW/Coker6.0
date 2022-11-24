@@ -5,6 +5,7 @@
 "use strict";
 var PreLoader;
 (function (a) {
+
     var now = new Date();
     var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
     if (!!!co.Cookie.Get("token")) {
@@ -155,6 +156,8 @@ var PreLoader;
         }
     };
     a.fn.setThemeTone()
+
+    DevExpress.localization.locale('zh-tw');
 })(jQuery);
 
 function toggleFullScreen() {

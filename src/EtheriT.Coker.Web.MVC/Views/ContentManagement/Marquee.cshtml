@@ -46,13 +46,13 @@
 					{
 						c.AddFor(e => e.Id).Caption("編號").Width(50);
 						c.AddFor(e => e.title).Caption("內文");
-						c.AddFor(e => e.disp_opt).Caption("是否顯示").Width(80);
+						c.AddFor(e => e.disp_opt).Caption("是否顯示").Width(90);
 						c.AddFor(e => e.ser_no).Caption("排序").Width(50);
 						c.AddFor(e => e.link).Caption("網址");
-						c.AddFor(e => e.target).Caption("另開視窗").Width(80);
+						c.AddFor(e => e.target).Caption("另開視窗").Width(90);
 						c.AddFor(e => e.StartTime).Caption("起始日期");
 						c.AddFor(e => e.EndTime).Caption("結束日期");
-						c.AddFor(e => e.permanent).Caption("永久顯示").Width(80);
+						c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
 						c.Add()
 						.Type(GridCommandColumnType.Buttons)
 						.Buttons(b =>
@@ -130,5 +130,7 @@
 				</div>
 			</form>
 		</div>
+
+		<div class="text-end my-2">※最多僅顯示十筆資料</div>
 	</div>
 </div>

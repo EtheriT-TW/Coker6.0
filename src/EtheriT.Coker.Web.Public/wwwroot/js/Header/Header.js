@@ -34,9 +34,9 @@
 
     $menu_content.each(function () {
         if ($(this).children('li').length < 4) {
-            $(this).css("justify-content", "center");
+            $(this).css("align-content", "center");
         } else {
-            $(this).css("justify-content", "start");
+            $(this).css("align-content", "start");
         }
     });
 
@@ -44,16 +44,17 @@
 
 function MenuLiSize() {
     $(".sub_content").each(function () {
-        $self = $(this);
+        var $self = $(this);
         if ($(window).width() > 768) {
             var content_width = $self.parents(".content").first().width();
-            console.log($self.children("li").length)
             if ($self.children("li").length > 0) {
-                $self.css("height", "100%")
                 if ($self.children("li").length > 7) {
                     var selfwidth = content_width / 6 * 2
                     $self.css("width", selfwidth)
                 }
+                $self.css("height", "100%")
+                $self.parents("li").first().css("height", "100%");
+                $self.parents("li").first().css("padding-bottom", "3rem");
             } else {
                 $self.css("height", "fit-content")
                 $self.parents("li").first().css("height", "fit-content");
@@ -61,6 +62,7 @@ function MenuLiSize() {
 
         } else {
             $self.css("width", "unset")
+            $self.parents("li").first().css("padding-bottom", "0");
         }
     });
 }

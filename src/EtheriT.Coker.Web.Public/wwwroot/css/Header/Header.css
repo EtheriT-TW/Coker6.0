@@ -16,6 +16,15 @@
     overflow: hidden;
 }
 
+    #News_Marquee > .news_box > ul > li {
+        text-overflow: ellipsis;
+        max-width: 60vw;
+    }
+
+        #News_Marquee > .news_box > ul > li > a {
+            white-space: nowrap;
+        }
+
 /* Search Block */
 .searchblock {
     cursor: default;
@@ -163,6 +172,10 @@
         #Offcanvas_Mega_Menu > ul > .title > .content > ul > li {
             min-width: calc(100%/6);
         }
+
+            #Offcanvas_Mega_Menu > ul > .title > .content > ul > li.image {
+                height: 100%;
+            }
 
             #Offcanvas_Mega_Menu > ul > .title > .content > ul > li > a > img {
                 height: 75%;

@@ -1,6 +1,10 @@
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var provider = builder.Services.BuildServiceProvider();
+var configuration = provider.GetRequiredService<IConfiguration>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -15,6 +19,10 @@ builder.Services.AddMemoryCache()
             options.ImageHeight = 36;
         });
     });
+
+builder.Services.AddDbContext<CokerDbContext>(item =>
+    item.UseSqlServer(configuration.GetConnectionString("Default"))
+);
 
 var app = builder.Build();
 

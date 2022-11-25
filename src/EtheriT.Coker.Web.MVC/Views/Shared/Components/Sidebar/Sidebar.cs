@@ -19,7 +19,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Title="儀表板",
                         Controller="Dashboard",
                         Action="Index",
-                        Icon="space_dashboard",
+                        Icon="public",
                         CollapseId=""
                     },
                     new JobMenu{

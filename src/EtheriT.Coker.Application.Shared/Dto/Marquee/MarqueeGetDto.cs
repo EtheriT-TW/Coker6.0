@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marquee
 	public class MarqueeGetDto
     {
         public long Id { get; set; }
-        public long WebsiteId { get; set; }
+        public string placement { get; set; }
         public string title { get; set; }
         public bool disp_opt { get; set; }
         public int ser_no { get; set; }

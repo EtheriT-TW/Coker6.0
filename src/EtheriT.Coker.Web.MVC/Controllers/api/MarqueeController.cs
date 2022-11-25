@@ -44,12 +44,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpGet]
-        public async Task<Array> GetAllKey()
-        {
-            return await marqueeAppService.GetAllKey();
-        }
-
-        [HttpGet]
         public async Task<ResponseMessageDto> Delete(int id)
         {
             return await marqueeAppService.Delete(id);

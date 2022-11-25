@@ -1,4 +1,17 @@
 ﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
 /* Marquee List */
 .btn_add {
     z-index: 1;
@@ -9,19 +22,25 @@
     background-color: var(--color-gray-bg-dark);
 }
 
-#MarqueeContent > .card-body > .select_placement > div > select {
+#MarqueeContent > form .placement > select {
     width: 8rem;
 }
 
-#MarqueeContent > .card-body > .input_text > div > .input_number::after {
+#MarqueeContent > form > .title .title_count::after {
     content: '/60';
 }
 
-#MarqueeContent > .card-body > div[class*= input_] > input {
-    padding-right: 6.25rem;
+#MarqueeContent > form > .sort > input {
+    padding-left: 5rem;
+    padding-right: 7.5rem;
 }
 
-#MarqueeContent > .card-body > div[class*= input_] > div[class*= checkbox_] {
-    z-index: 3;
-    padding-right: 2.25rem;
+#MarqueeContent > form > .link > input {
+    padding-left: 2.25rem;
+    padding-right: 7.5rem;
+}
+
+#MarqueeContent > form > .date > input {
+    padding-left: 8rem;
+    padding-right: 7.5rem;
 }

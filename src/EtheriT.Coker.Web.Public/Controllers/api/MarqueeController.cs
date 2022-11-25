@@ -19,9 +19,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetAll(long webid)
+        public async Task<JsonResult> GetAll(long webid, string placement)
         {
-            return await marqueeAppService.GetAll(webid);
+            return await marqueeAppService.GetAll(webid, placement);
         }
 
     }

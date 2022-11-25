@@ -12,8 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Marquee
         public Task<ResponseMessageDto> Update(MarqueeUpdateDto dto);
         public Task<MarqueeGetDto> Get(int id);
         public Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions);
-        public Task<JsonResult> GetAll(long webid);
-        public Task<Array> GetAllKey();
+        public Task<JsonResult> GetAll(long webid, string placement);
         public Task<ResponseMessageDto> Delete(int id);
     }
 }

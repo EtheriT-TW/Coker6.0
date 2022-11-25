@@ -10,12 +10,13 @@ using System.Threading.Tasks;
 namespace EtheriT.Coker.Web.Core.Models
 {
     [Table("Users")]
-    public class User: FullAuditedEntity
+    public class User : FullAuditedEntity
     {
         public string Name { get; set; }
         public string? Account { get; set; }
         public string Email { get; set; }
         public string? CellPhone { get; set; }
+        public string? UniformId { get; set; }
         public string Password { get; set; }
         public int ErrorTimes { get; set; }
         public DateTime? LockTime { get; set; }

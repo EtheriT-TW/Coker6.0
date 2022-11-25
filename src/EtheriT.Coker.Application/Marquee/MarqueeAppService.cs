@@ -30,6 +30,7 @@ namespace EtheriT.Coker.Application.Marquee
                 Core.Models.Marquee m = new Core.Models.Marquee
                 {
                     FK_WebsiteId = dto.WebsiteId,
+                    placement = dto.placement,
                     title = dto.title,
                     disp_opt = dto.disp_opt,
                     ser_no = dto.ser_no,
@@ -63,6 +64,7 @@ namespace EtheriT.Coker.Application.Marquee
                 if (result != null)
                 {
                     result.FK_WebsiteId = dto.WebsiteId;
+                    result.placement = dto.placement;
                     result.title = dto.title;
                     result.disp_opt = dto.disp_opt;
                     result.ser_no = dto.ser_no;
@@ -96,7 +98,7 @@ namespace EtheriT.Coker.Application.Marquee
                     MarqueeGetDto output = new MarqueeGetDto()
                     {
                         Id = result.Id,
-                        WebsiteId = result.FK_WebsiteId,
+                        placement = result.placement,
                         title = result.title,
                         disp_opt = result.disp_opt,
                         ser_no = result.ser_no,
@@ -131,7 +133,7 @@ namespace EtheriT.Coker.Application.Marquee
                                         select new MarqueeGetDto
                                         {
                                             Id = e.Id,
-                                            WebsiteId = e.FK_WebsiteId,
+                                            placement = e.placement,
                                             title = e.title,
                                             disp_opt = e.disp_opt,
                                             ser_no = e.ser_no,
@@ -153,7 +155,7 @@ namespace EtheriT.Coker.Application.Marquee
 
             return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }); ;
         }
-        public async Task<JsonResult> GetAll(long webid)
+        public async Task<JsonResult> GetAll(long webid, string placement)
         {
             try
             {
@@ -162,7 +164,7 @@ namespace EtheriT.Coker.Application.Marquee
                 if (result != null)
                 {
                     var output = await (from e in result 
-                                        where e.FK_WebsiteId == webid && e.disp_opt && !e.IsDeleted
+                                        where e.FK_WebsiteId == webid && e.disp_opt && !e.IsDeleted && e.placement == placement 
                                         where e.permanent || ((DateTime.Compare((DateTime)e.StartTime, DateTime.Now) < 0) && (DateTime.Compare((DateTime)e.EndTime, DateTime.Now) > 0))
                                         orderby e.ser_no
                                         select new MarqueeDisplayDto
@@ -181,28 +183,6 @@ namespace EtheriT.Coker.Application.Marquee
             }
 
             return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }); ;
-        }
-        public async Task<Array> GetAllKey()
-        {
-            try
-            {
-                var result = db.Marquees;
-
-                if (result != null)
-                {
-                    var output = await (from e in result
-                                        where !e.IsDeleted
-                                        select e.Id).ToArrayAsync();
-                    return output;
-                }
-                else throw new Exception("查無跑馬燈資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
         }
         public async Task<ResponseMessageDto> Delete(int id)
         {

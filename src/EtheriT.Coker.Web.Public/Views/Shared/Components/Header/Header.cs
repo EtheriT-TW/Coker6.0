@@ -22,7 +22,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            var marq = JsonConvert.DeserializeObject <List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId)).Value));
+            var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel
             {
                 Title = "德瑞克",
@@ -130,7 +130,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         }
                       }
                 },
-                marqueeModels = marq
+                marqueeModels = marquee
             };
             return View(headerViewModel);
         }

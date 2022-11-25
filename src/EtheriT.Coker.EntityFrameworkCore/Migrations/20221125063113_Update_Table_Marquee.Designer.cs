@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221125063113_Update_Table_Marquee")]
+    partial class Update_Table_Marquee
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -168,9 +170,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("Amount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Bonus")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
@@ -197,9 +196,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
-
-                    b.Property<double>("Subtotal")
-                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -242,12 +238,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("Freight")
                         .HasColumnType("int");
 
-                    b.Property<string>("Invoice")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InvoiceAddress")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -258,10 +248,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Orderer")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OrdererAddress")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -298,9 +284,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("RecipientTelephone")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Remark")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("Service_Charge")
                         .HasColumnType("int");
 
@@ -310,9 +293,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<int>("Total")
                         .HasColumnType("int");
-
-                    b.Property<string>("UniformId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -343,9 +323,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double?>("Discount")
-                        .HasColumnType("float");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -362,12 +339,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<bool>("disp_opt")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("ser_no")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

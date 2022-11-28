@@ -153,7 +153,7 @@ namespace EtheriT.Coker.Application.Marquee
 
             }
 
-            return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() }); ;
+            return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<JsonResult> GetAll(long webid, string placement)
         {

@@ -140,7 +140,7 @@ input[type="number"] {
     color: var(--gray-text);
 }
 
-    #Product > .content > .certification > .image > li > a > img {
+    #Product > .content > .certification > .image > li > button > img {
         height: 3.25rem;
     }
 

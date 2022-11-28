@@ -2,11 +2,11 @@
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
-	public class OrderManagementController : Controller
+    public class ProductManagementController : Controller
     {
         public IActionResult Index()
         {
-            return View("OrderList");
+            return View("ProductList");
         }
     }
 }

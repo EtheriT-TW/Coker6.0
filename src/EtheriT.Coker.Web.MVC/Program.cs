@@ -17,6 +17,8 @@ using Microsoft.Extensions.Options;
 using EtheriT.Coker.Application.Website;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Marquee;
+using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Order;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -93,6 +95,7 @@ builder.Services.AddTransient<ITokenAppService, TokenAppService>();
 builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
+builder.Services.AddTransient<IOrderAppService, OrderAppService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

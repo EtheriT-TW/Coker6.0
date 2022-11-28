@@ -13,6 +13,10 @@ input[type="number"] {
 }
 
 /* Marquee List */
+.btn_back {
+    color: #4E565A;
+}
+
 .btn_add {
     z-index: 1;
 }

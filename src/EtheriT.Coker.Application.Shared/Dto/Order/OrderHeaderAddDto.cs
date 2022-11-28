@@ -1,15 +1,13 @@
-﻿using EtheriT.Coker.Core.Entity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
-namespace EtheriT.Coker.Core.Models
+namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
-    public class Order_Header : FullAuditedEntity
-    {
+	public class OrderHeaderAddDto
+	{
         public string Orderer { get; set; }
         public int OrdererSex { get; set; }
         public string OrdererEmail { get; set; }
@@ -35,7 +33,5 @@ namespace EtheriT.Coker.Core.Models
         public long? CouponId { get; set; }
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
-        public List<Order_Details> Order_Details { get; set; }
-
     }
 }

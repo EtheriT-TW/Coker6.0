@@ -3,6 +3,15 @@
     color: var(--colors-red-text);
 }
 
+/* Order List */
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
 /* Order Details */
 #OrderDetails {
     height: fit-content;

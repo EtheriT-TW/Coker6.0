@@ -31,8 +31,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         CollapseId="#OrderManagement",
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
-                                PageName="SingleOrder",
-                                Title="單筆訂單畫面",
+                                PageName="OrderList",
+                                Title="訂單列表",
                                 Controller="OrderManagement",
                                 Action="Index",
                                 Icon="",
@@ -50,7 +50,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="ProductList",
                                 Title="商品列表",
-                                Controller="Dashboard",
+                                Controller="ProductManagement",
                                 Action="Index",
                                 Icon="",
                             },
@@ -80,7 +80,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="MemberData",
-                                Title="會員資料",
+                                Title="會員管理",
                                 Controller="MemberManagement",
                                 Action="Index",
                                 Icon="",

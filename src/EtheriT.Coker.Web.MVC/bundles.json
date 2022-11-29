@@ -44,6 +44,12 @@
       "input": [
         "node_modules/daterangepicker/daterangepicker.js"
       ]
+    },
+    {
+      "output": "lib/masonry-layout/dist/masonry.pkgd.min.js",
+      "input": [
+        "node_modules/masonry-layout/dist/masonry.pkgd.js"
+      ]
     }
   ],
   "styles": [

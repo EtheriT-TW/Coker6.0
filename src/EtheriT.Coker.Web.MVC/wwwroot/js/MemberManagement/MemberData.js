@@ -1,26 +1,54 @@
-﻿var newshow = false, checkshow = false, maillock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
+﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
-var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $InputMail, $InputNew, $InputCheck, $PassFeedBack
+var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $PassFeedBack
+var $name, $sex, $status, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
+var member_list
 
 function PageReady() {
+    co.Member = {
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Member/GetAllData/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        },
+        Update: function (data) {
+            return $.ajax({
+                url: "/api/Member/Update",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        }
+    };
+
     ManagementDataCollapse();
+
     OrderDetailsPosition();
+
+    TWZipCodeInit();
+
+    ElementInit();
 
     $(window).resize(function () {
         ManagementDataCollapse();
         OrderDetailsPosition();
     });
 
-    getLatestOrder();
+    $(".order_data").each(function () {
+        var $self_status = $(this).children("div").children(".status");
+        ($self_status.text() == "出貨中") && $self_status.addClass("bg_fluorescent");
+    });
 
-    TWZipCodeInit();
-
-    ElementInit();
-
-    if ($("#InputLoginMail").val() != "") {
+    if ($email_login.val() != "") {
         $(".btn_mail_lock > span").text("lock");
-        $("#InputLoginMail").attr("disabled", "disabled");
-        maillock = true;
+        $email_login.attr("disabled", "disabled");
+        isMailLock = true;
     }
 
     $(".btn_save").on("click", DataSave);
@@ -30,38 +58,31 @@ function PageReady() {
             history.back();
         });
     })
-    $(".btn_add").on("click", function () {
-        /*FormDataClear();*/
-        window.location.hash = 0;
-        HashDataEdit();
-    });
 
-    $InputMail.keyup(function () {
+    $email_login.keyup(function () {
         LoginMailFilled = FormCheck(LoginMailForm);
     });
-    $InputNew.keyup(function () {
+    $newpass.keyup(function () {
         PassIsCheck = PassCheck();
     });
-    $InputCheck.keyup(function () {
+    $passcheck.keyup(function () {
         PassIsCheck = PassCheck();
     });
 
     $btn_mail_lock.on("click", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        MailLock($(this));
+        mail_lock($(this));
     });
-
     $btn_newpass_lock.on("click", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        newshow = PassDisplay($(this), newshow)
+        new_pass_show = PassDisplay($(this), new_pass_show)
     });
-
     $btn_checkpass_lock.on("click", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        checkshow = PassDisplay($(this), checkshow)
+        check_pass_show = PassDisplay($(this), check_pass_show)
     });
 
     if ("onhashchange" in window) {
@@ -77,14 +98,48 @@ function ElementInit() {
     $btn_mail_lock = $(".btn_mail_lock")
     $btn_newpass_lock = $(".btn_newpass_lock")
     $btn_checkpass_lock = $(".btn_checkpass_lock")
-    $InputMail = $("#InputLoginMail")
-    $InputNew = $("#InputNewPassword");
-    $InputCheck = $("#InputConfirmPassword");
     $PassFeedBack = $("#PassFeedBack");
+
+    $name = $("#InputName");
+    $sex = $("input[name=RadioGender]");
+    $status = $("select[name='MemberStatus']");
+    $email_basic = $("#InputMailBasic");
+    $cellphone = $("#InputCellPhone");
+    $telphone_area = $("#InputTelPhoneArea");
+    $telphone = $("#InputTelPhone");
+    $telphone_ext = $("#InputTelPhoneExt");
+    $address_city = $("select[name='county']");
+    $address_town = $("select[name='district']");
+    $address = $("#InputAddress");
+    $email_login = $("#InputMailLogin")
+    $newpass = $("#InputPasswordNew");
+    $passcheck = $("#InputPasswordCheck");
+}
+
+function FormDataClear() {
+    keyId = 0;
+    $name.val("");
+    $sex.each(function () {
+        if ($(this).val() == 3) {
+            $(this).prop("checked", true);
+        }
+    })
+    $status.val("");
+    $email_basic.val("");
+    $cellphone.val("");
+    $telphone_area.val("");
+    $telphone.val("");
+    $telphone_ext.val("");
+    $address_city.val("");
+    $address_town.val("");
+    $address.val("");
+    $email_login.val("");
+    $newpass.val("");
+    $passcheck.val("");
 }
 
 function contentReady(e) {
-    marquee_list = e;
+    member_list = e;
     HashDataEdit();
 }
 
@@ -100,40 +155,83 @@ function hashChange(e) {
 function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
+            FormDataClear();
             var hash = window.location.hash.replace("#", "");
-            if (parseInt(hash) == 0) {
-                /*FormDataClear();*/
-                MoveToContent();
-            } else {
-                //co.Marquees.Get(parseInt(hash)).done(function (result) {
-                //    if (result != null) {
-                //        MoveToContent();
-                //        keyId = result.id;
-                //        FormDataSet(result.placement, result.disp_opt, result.title, result.ser_no, result.link, result.target, result.permanent, result.startTime, result.endTime);
-                //    } else {
-                //        window.location.hash = ""
-                //    }
-                //})
-            }
+            co.Member.Get(parseInt(hash)).done(function (result) {
+                if (result != null) {
+                    MoveToContent();
+                    keyId = parseInt(hash);
+                    console.log(result)
+                    FormDataSet(result.name, result.sex, result.status, result.email, result.cellPhone, result.telPhone, result.address)
+                } else {
+                    window.location.hash = ""
+                }
+            })
         }
     } else {
         BackToList();
     }
 }
 
-function MoveToContent() {
-    $(".btn_back").addClass("d-flex");
-    $(".btn_save").removeClass("d-none");
-    $("#MemberList").addClass("d-none");
-    $("#MemberContent").removeClass("d-none");
+function editButtonClicked(e) {
+    keyId = e.row.key;
+    window.location.hash = keyId
+    HashDataEdit();
 }
 
-function BackToList() {
-    $(".btn_back").removeClass("d-flex");
-    $(".btn_save").addClass("d-none");
-    $("#MemberList").removeClass("d-none");
-    $("#MemberContent").addClass("d-none");
-    window.location.hash = ""
+function FormDataSet(name, sex, status, email, cellphone, telphone, address) {
+    $name.val(name);
+    $sex.each(function () {
+        if ($(this).val() == sex) {
+            $(this).prop("checked", true);
+        }
+    })
+    $status.val(status);
+    $email_basic.val(email);
+    $cellphone.val(cellphone);
+    if (telphone != null) {
+        var telphone_split = telphone.split("-");
+        $telphone_area.val(telphone_split[0]);
+        $telphone.val(telphone_split[1]);
+        $telphone_ext.val(telphone_split[2]);
+    }
+    if (address != null) {
+        var address_split = address.split(" ");
+        $TWzipcode.twzipcode('set', {
+            'county': address_split[0],
+            'district': address_split[1],
+        });
+        $address.val(address_split[2]);
+    }
+    $email_login.val(email);
+}
+
+function Update(success_text, error_text) {
+    var sex = 3
+    $sex.each(function () {
+        if ($(this).is(":checked")) {
+            sex = $(this).val();
+        }
+    })
+    co.Member.Update({
+        Id: keyId,
+        Name: $name.val(),
+        Sex: sex,
+        Status: $status.val(),
+        Email: $email_basic.val(),
+        CellPhone: $cellphone.val(),
+        TelPhone: $telphone_area.val() + "-" + $telphone.val() + "-" + $telphone_ext.val(),
+        Address: $address_city.val() + " " + $address_town.val() + " " + $address.val(),
+        /*Password: $newpass*/
+    }).done(function () {
+        Coker.sweet.success(success_text, null, true);
+        setTimeout(function () {
+            BackToList();
+            member_list.component.refresh();
+        }, 1000);
+    }).fail(function () {
+        Coker.sweet.error("錯誤", error_text, null, true);
+    });
 }
 
 function DataSave() {
@@ -141,7 +239,9 @@ function DataSave() {
     LoginMailFilled = FormCheck(LoginMailForm);
     PassIsCheck = PassCheck();
     if (BasicInfoFilled && LoginMailFilled && PassIsCheck) {
-        Coker.sweet.success("資料更新成功", null, true);
+        Coker.sweet.confirm("即將儲存", "確認儲存會員資料?", "儲存", "取消", function () {
+            Update("資料儲存成功", "資料儲存發生未知錯誤");
+        });
     } else {
         Coker.sweet.error("資料填寫有誤", "請確認填寫資料是否正確", null, false);
     }
@@ -162,26 +262,26 @@ function PassCheck() {
     $btn_newpass_lock.addClass("pe-4");
     $btn_checkpass_lock.addClass("pe-4");
     var hasNum = /\d+/, hasLetter = /[a-zA-Z]+/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
-    $InputNew.addClass("is-invalid");
-    $InputCheck.addClass("is-invalid");
-    if ($InputNew.val().length >= 6) {
-        if (hasNum.test($InputNew.val()) && hasLetter.test($InputNew.val()) && !(hasSpesym.test($InputNew.val()))) {
-            $InputNew.removeClass("is-invalid");
-            $InputNew.addClass("is-valid");
-            if ($InputCheck.val() == $InputNew.val()) {
-                $InputCheck.removeClass("is-invalid");
-                $InputCheck.addClass("is-valid");
+    $newpass.addClass("is-invalid");
+    $passcheck.addClass("is-invalid");
+    if ($newpass.val().length >= 6) {
+        if (hasNum.test($newpass.val()) && hasLetter.test($newpass.val()) && !(hasSpesym.test($newpass.val()))) {
+            $newpass.removeClass("is-invalid");
+            $newpass.addClass("is-valid");
+            if ($passcheck.val() == $newpass.val()) {
+                $passcheck.removeClass("is-invalid");
+                $passcheck.addClass("is-valid");
                 return true;
             }
         } else {
             $PassFeedBack.text("密碼格式有誤");
         }
     } else {
-        if ($InputNew.val().length == 0 && $InputCheck.val().length == 0) {
-            $InputNew.removeClass("is-invalid");
-            $InputCheck.removeClass("is-invalid");
-            $InputNew.removeClass("is-valid");
-            $InputCheck.removeClass("is-valid");
+        if ($newpass.val().length == 0 && $passcheck.val().length == 0) {
+            $newpass.removeClass("is-invalid");
+            $passcheck.removeClass("is-invalid");
+            $newpass.removeClass("is-valid");
+            $passcheck.removeClass("is-valid");
             $btn_newpass_lock.removeClass("pe-4");
             $btn_checkpass_lock.removeClass("pe-4");
             return true;
@@ -192,18 +292,18 @@ function PassCheck() {
     return false;
 }
 
-function MailLock($self) {
+function mail_lock($self) {
     var $self_span = $self.children("span")
     LoginMailFilled = FormCheck(LoginMailForm);
-    if (!maillock && $("#InputLoginMail").val() != "" && LoginMailFilled) {
+    if (!isMailLock && $email_login.val() != "" && LoginMailFilled) {
         $self_span.text("lock")
-        $("#InputLoginMail").attr("disabled", "disabled");
-        maillock = true;
+        $email_login.attr("disabled", "disabled");
+        isMailLock = true;
         $btn_mail_lock.removeClass("pe-4");
     } else {
         $self_span.text("lock_open")
-        $("#InputLoginMail").removeAttr("disabled");
-        maillock = false;
+        $email_login.removeAttr("disabled");
+        isMailLock = false;
         $btn_mail_lock.addClass("pe-4");
     }
 }
@@ -220,6 +320,21 @@ function PassDisplay($self, display) {
         display = true;
     }
     return display;
+}
+
+function MoveToContent() {
+    $(".btn_back").addClass("d-flex");
+    $(".btn_save").removeClass("d-none");
+    $("#MemberList").addClass("d-none");
+    $("#MemberContent").removeClass("d-none");
+}
+
+function BackToList() {
+    $(".btn_back").removeClass("d-flex");
+    $(".btn_save").addClass("d-none");
+    $("#MemberList").removeClass("d-none");
+    $("#MemberContent").addClass("d-none");
+    window.location.hash = ""
 }
 
 function ManagementDataCollapse() {
@@ -241,13 +356,6 @@ function ManagementDataCollapse() {
     }
 }
 
-function getLatestOrder() {
-    $(".order_data").each(function () {
-        var $self_status = $(this).children("div").children(".status");
-        ($self_status.text() == "出貨中") && $self_status.addClass("bg_fluorescent");
-    });
-}
-
 function OrderDetailsPosition() {
     if ($("#SideBlock").width() < 280) {
         $(".order_data").each(function () {
@@ -267,8 +375,6 @@ function TWZipCodeInit() {
 
     $TWzipcode.twzipcode({
         'zipcodeIntoDistrict': true,
-        'countySel': '高雄市',
-        'districtSel': '前鎮區'
     });
 
     var $county, $district;

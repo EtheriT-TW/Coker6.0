@@ -2,23 +2,20 @@ using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection;
-using EtheriT.Coker.Application.Authorizaion.Dto;
-using System.Security.Claims;
 using EtheriT.Coker.Application.Token;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
-using Microsoft.Extensions.Options;
 using EtheriT.Coker.Application.Website;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Shared.Member;
+using EtheriT.Coker.Application.Member;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -96,6 +93,7 @@ builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();
+builder.Services.AddTransient<IMemberAppService, MemberAppService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

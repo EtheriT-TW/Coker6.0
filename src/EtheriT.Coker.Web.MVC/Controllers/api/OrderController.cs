@@ -1,8 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Marquee;
-using EtheriT.Coker.Application.Shared.Dto.Marquee;
-using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

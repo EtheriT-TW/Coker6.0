@@ -71,6 +71,25 @@
 		</ul>
 	</div>
 </div>
+
+@*<div id="Footer_Menu" class="container">
+	<ul class="d-flex flex-wrap w-100">
+		@foreach (var menu in Model.footerViewModels ?? new List<FooterViewModel>())
+		{
+			<li class="title my-2 col-auto">
+				<a class="fs-6 fw-bold text-white" href="@menu.Link">@menu.Title</a>
+				<ul class="d-flex flex-column flex-wrap">
+					@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+					{
+						<li class=""><a class="text-white" href="@sub_menu.Link">@sub_menu.Title</a></li>
+					}
+				</ul>
+			</li>
+		}
+	</ul>
+</div>*@
+
+
 <div id="Footer_Bottom" class="center">
 	<div id="Logo_Bottom">
 		<div></div>

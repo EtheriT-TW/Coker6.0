@@ -6,17 +6,16 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Member
 {
-    public class MemberGetAllListDto
+    public class MemberGetAllDataDto
     {
-        public long Id { get; set; }
         public string Name { get; set; }
+        public int? Sex { get; set; }
+        public int? Status { get; set; }
+        public string Email { get; set; }
         public string? CellPhone { get; set; }
         public string? TelPhone { get; set; }
         public string? Address { get; set; }
-        public string Email { get; set; }
-        public int? Total { get; set; }
-        public int? Level { get; set; }
-        public virtual DateTime CreationTime { get; set; } = DateTime.Now;
+        public string Password { get; set; }
 
     }
 }

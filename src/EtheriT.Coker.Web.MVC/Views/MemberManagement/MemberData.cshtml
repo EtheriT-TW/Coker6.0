@@ -1,4 +1,6 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Member
+@{
 	ViewData["Title"] = "MemberData";
 }
 
@@ -20,10 +22,57 @@
 
 	<div id="MemberList" class="card border-0">
 		<div class="card-body position-relative pb-5">
-			<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-				<span class="material-symbols-outlined">add</span>
-			</button>
-			
+			@(
+				Html.DevExtreme().DataGrid<MemberGetAllListDto>()
+				.DataSource(d => d.RemoteController().Key("Id")
+				.LoadUrl("/api/Member/GetAllList").LoadMethod("Get")
+				/*.UpdateUrl("/api/Order/Update").UpdateMethod("Post")*/
+				)
+				.ColumnHidingEnabled(true)
+				.ShowBorders(true)
+				.FilterRow(filterRow => filterRow
+				.Visible(true)
+				.ApplyFilter(GridApplyFilterMode.Auto)
+				)
+				.SearchPanel(searchPanel => searchPanel
+				.Visible(true)
+				.Width(480)
+				.Placeholder("請輸入要搜尋的資料")
+				)
+				.ShowRowLines(true)
+				.Columns(c =>
+				{
+					c.AddFor(e => e.Name).Caption("會員名稱");
+					c.AddFor(e => e.CellPhone).Caption("手機");
+					c.AddFor(e => e.TelPhone).Caption("電話");
+					c.AddFor(e => e.Address).Caption("地址");
+					c.AddFor(e => e.Email).Caption("Email");
+					c.AddFor(e => e.Total).Caption("訂購總金額");
+					c.AddFor(e => e.Level).Caption("會員等級");
+					c.AddFor(e => e.CreationTime).Caption("註冊日期");
+					c.Add()
+					.Type(GridCommandColumnType.Buttons)
+					.Buttons(b =>
+					{
+						b.Add().Name("edit").OnClick("editButtonClicked");
+					});
+				})
+				.ColumnAutoWidth(true)
+				.Paging(paging => paging.PageSize(30))
+				.Pager(pager =>
+				{
+					pager.Visible(true);
+					pager.ShowPageSizeSelector(true);
+					pager.AllowedPageSizes(new[] { 10, 20, 30 });
+					pager.ShowInfo(true);
+				})
+				.Editing(editing =>
+				{
+					editing.AllowUpdating(true);
+					editing.UseIcons(true);
+				})
+				.OnContentReady("contentReady")
+				)
 		</div>
 	</div>
 
@@ -47,43 +96,47 @@
 							</div>
 							<div class="gender align-self-center col-auto d-flex mb-3">
 								<div class="form-check pe-3">
-									<input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" checked required>
+									<input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" value="1" required>
 									<label class="form-check-label" for="RadioSir">男</label>
 								</div>
-								<div class="form-check">
-									<input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender" required>
+								<div class="form-check pe-3">
+									<input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender" value="2" required>
 									<label class="form-check-label" for="RadioMiss">女</label>
+								</div>
+								<div class="form-check">
+									<input id="RadioElse" class="form-check-input" type="radio" name="RadioGender" value="3" required>
+									<label class="form-check-label" for="RadioElse">其他</label>
 								</div>
 							</div>
 							<div class="state align-self-center col d-flex mb-3 ps-5 row">
-								<label class="form-label col-auto mb-0 ps-0 align-self-center" for="MemberStatusLevel">會員狀態</label>
-								<select id="MemberStatusLevel" class="form-select col" aria-label="Default select example">
-									<option value="open">開通</option>
-									<option value="suspension">停權</option>
-									<option value="nonactivated" selected>未開通</option>
+								<label class="form-label col-auto mb-0 ps-0 align-self-center" for="MemberStatus">會員狀態</label>
+								<select id="MemberStatus" class="form-select col" aria-label="Default select example" name="MemberStatus">
+									<option value="1">開通</option>
+									<option value="2">停權</option>
+									<option value="3">未開通</option>
 								</select>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InputContactMail" class="mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
-								<label class="required px-4" for="InputContactMail">E-mail</label>
+								<input id="InputMailBasic" class="mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
+								<label class="required px-4" for="InputMailBasic">E-mail</label>
 							</div>
 							<div class="col-6 d-none d-sm-flex"></div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InputPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
-								<label class="required px-4" for="InputPhone">手機號碼</label>
+								<input id="InputCellPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
+								<label class="required px-4" for="InputCellPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="InputAreaCode" class="areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
-									<label class="px-4" for="InputAreaCode">區碼</label>
+									<input id="InputTelPhoneArea" class="areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
+									<label class="px-4" for="InputTelPhoneArea">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="InputCellPhone" class="cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
-									<label for="InputCellPhone">聯絡電話</label>
+									<input id="InputTelPhone" class="cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
+									<label for="InputTelPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="InputExtension" class="extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
-									<label class="px-4" for="InputExtension">分機</label>
+									<input id="InputTelPhoneExt" class="extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
+									<label class="px-4" for="InputTelPhoneExt">分機</label>
 								</div>
 							</div>
 
@@ -107,25 +160,25 @@
 						</div>
 						<div class="row">
 							<form class="form-floating mb-3 col-12 col-lg-8 position-relative needs-validation" novalidate>
-								<input id="InputLoginMail" class="mail form-control pe-5" type="email" placeholder="name@example.com" autocomplete="off" value="name@example.com" required>
-								<label class="px-4" for="InputLoginMail">電子郵件</label>
+								<input id="InputMailLogin" class="mail form-control pe-5" type="email" placeholder="name@example.com" autocomplete="off" value="name@example.com" required>
+								<label class="px-4" for="InputMailLogin">電子郵件</label>
 								<button class="btn_mail_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
 									<span class="material-symbols-outlined fs-5">lock_open</span>
 								</button>
 							</form>
 							<div class="col-4 d-none d-lg-flex"></div>
 							<div class="input_newpass form-floating mb-3 col-6 col-lg-4 position-relative">
-								<input id="InputNewPassword" class="new_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
+								<input id="InputPasswordNew" class="new_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
 								<div id="PassFeedBack" class="invalid-feedback position-absolute"></div>
-								<label class="px-4" for="InputNewPassword">新密碼</label>
+								<label class="px-4" for="InputPasswordNew">新密碼</label>
 								<button class="btn_newpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
 									<span class="material-symbols-outlined fs-5">visibility_off</span>
 								</button>
 							</div>
 							<div class="input_checkpass form-floating mb-3 col-6 col-lg-4 position-relative">
-								<input id="InputConfirmPassword" class="check_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
+								<input id="InputPasswordCheck" class="check_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
 								<div class="invalid-feedback position-absolute">密碼不相符</div>
-								<label class="px-4" for="InputConfirmPassword">密碼確認</label>
+								<label class="px-4" for="InputPasswordCheck">密碼確認</label>
 								<button class="btn_checkpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
 									<span class="material-symbols-outlined fs-5">visibility_off</span>
 								</button>

@@ -1,7 +1,7 @@
 ﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
 var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $PassFeedBack
-var $name, $sex, $status, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
+var $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
 var member_list
 
 function PageReady() {
@@ -103,6 +103,7 @@ function ElementInit() {
     $name = $("#InputName");
     $sex = $("input[name=RadioGender]");
     $status = $("select[name='MemberStatus']");
+    $level = $("select[name='MemberLevel']");
     $email_basic = $("#InputMailBasic");
     $cellphone = $("#InputCellPhone");
     $telphone_area = $("#InputTelPhoneArea");
@@ -125,6 +126,7 @@ function FormDataClear() {
         }
     })
     $status.val("");
+    $level.val("");
     $email_basic.val("");
     $cellphone.val("");
     $telphone_area.val("");
@@ -162,7 +164,7 @@ function HashDataEdit() {
                     MoveToContent();
                     keyId = parseInt(hash);
                     console.log(result)
-                    FormDataSet(result.name, result.sex, result.status, result.email, result.cellPhone, result.telPhone, result.address)
+                    FormDataSet(result.name, result.sex, result.status, result.level, result.email, result.cellPhone, result.telPhone, result.address)
                 } else {
                     window.location.hash = ""
                 }
@@ -175,11 +177,11 @@ function HashDataEdit() {
 
 function editButtonClicked(e) {
     keyId = e.row.key;
-    window.location.hash = keyId
+    window.location.hash = keyId;
     HashDataEdit();
 }
 
-function FormDataSet(name, sex, status, email, cellphone, telphone, address) {
+function FormDataSet(name, sex, status, level, email, cellphone, telphone, address) {
     $name.val(name);
     $sex.each(function () {
         if ($(this).val() == sex) {
@@ -187,6 +189,7 @@ function FormDataSet(name, sex, status, email, cellphone, telphone, address) {
         }
     })
     $status.val(status);
+    $level.val(level)
     $email_basic.val(email);
     $cellphone.val(cellphone);
     if (telphone != null) {
@@ -213,11 +216,13 @@ function Update(success_text, error_text) {
             sex = $(this).val();
         }
     })
+    console.log($level.val())
     co.Member.Update({
         Id: keyId,
         Name: $name.val(),
         Sex: sex,
         Status: $status.val(),
+        Level: $level.val(),
         Email: $email_basic.val(),
         CellPhone: $cellphone.val(),
         TelPhone: $telphone_area.val() + "-" + $telphone.val() + "-" + $telphone_ext.val(),

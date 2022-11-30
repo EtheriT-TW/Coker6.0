@@ -19,6 +19,58 @@ namespace EtheriT.Coker.Application.Order
         {
             this.db = db;
         }
+        public async Task<ResponseMessageDto> Add(OrderHeaderAddDto dto)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                Core.Models.Order_Header oh = new Core.Models.Order_Header
+                {
+                    Orderer = dto.Orderer,
+                    OrdererSex = dto.OrdererSex,
+                    OrdererEmail = dto.OrdererEmail,
+                    OrdererTelephone = dto.OrdererTelephone,
+                    OrdererCellPhone = dto.OrdererCellPhone,
+                    OrdererAddress = dto.OrdererAddress,
+                    Recipient = dto.Recipient,
+                    //RecipientSex = dto.RecipientSex,
+                    RecipientSex = dto.OrdererSex,
+                    RecipientEmail = dto.RecipientEmail,
+                    RecipientTelephone = dto.RecipientTelephone,
+                    RecipientCellPhone = dto.RecipientCellPhone,
+                    RecipientAddress = dto.RecipientAddress,
+                    Remark = dto.Remark,
+                    //InvoiceRecipient = dto.InvoiceRecipient,
+                    InvoiceRecipient = 1,
+                    InvoiceTitle = dto.InvoiceTitle,
+                    UniformId = dto.UniformId,
+                    InvoiceAddress = dto.InvoiceAddress,
+                    //Shipping = dto.Shipping,
+                    Shipping = 1,
+                    //Payment = dto.Payment,
+                    Payment = 1,
+                    State = dto.State,
+                    Total = dto.Total,
+                    Discount = dto.Discount,
+                    Bonus = dto.Bonus,
+                    CouponId = dto.CouponId,
+                    Freight = dto.Freight,
+                    Service_Charge = dto.Service_Charge,
+                };
+                db.Order_Headers.Add(oh);
+                db.SaveChanges();
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try

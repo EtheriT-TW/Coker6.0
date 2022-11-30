@@ -14,7 +14,6 @@ namespace EtheriT.Coker.Core.Models
         public int Amount { get; set; }
         public double Subtotal { get; set; }
         public int? Bonus { get; set; }
-
         public Order_Header? Order_Header { get; set; }
         public Prod? Prod { get; set; }
     }

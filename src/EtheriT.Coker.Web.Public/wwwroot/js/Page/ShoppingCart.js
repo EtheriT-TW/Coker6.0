@@ -1,12 +1,29 @@
-﻿var buy_step_swiper;
-var $Orderer_TWzipcode, $Recipient_TWzipcode, $Bill_TWzipcode;
+﻿
+var buy_step_swiper;
 var gotop_switch = false;
-var ShippingForms, PaymentForms, OrdererForms, RecipientForms, BillForms;
-var OrdererOpen = false, RecipientOpen = false, BillOpen = false;
-var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, BillFilled = true;
 var isCheckout = false;
 
+var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms;
+var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
+var shipMethodsChosen = false, payMethodsChosen = false, OrdererFilled = true, RecipientFilled = true, InvoiceFilled = true;
+var $Orderer_TWzipcode, $Recipient_TWzipcode, $Invoice_TWzipcode;
+var $orderer_name, $orderer_sex, $orderer_email, $orderer_cellphone, $orderer_telphone_area, $orderer_telphone, $orderer_telphone_ext, $orderer_address_city, $orderer_address_town, $orderer_address;
+var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $recipient_telphone_area, $recipient_telphone, $recipient_telphone_ext, $recipient_address_city, $recipient_address_town, $recipient_address, $remark;
+var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_city, $invoice_address_town, $invoice_address;
+var $ship_method, $pay_method;
+
 function PageReady() {
+    Coker.Order = {
+        Add: function (data) {
+            return $.ajax({
+                url: "/api/Order/Add",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        }
+    };
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
@@ -51,7 +68,7 @@ function PageReady() {
                 } else {
                     if (OrdererOpen) { OrdererFilled = FormCheck(OrdererForms) };
                     if (RecipientOpen) { RecipientFilled = FormCheck(RecipientForms) };
-                    if (BillOpen) { BillFilled = FormCheck(BillForms) };
+                    if (InvoiceOpen) { InvoiceFilled = FormCheck(InvoiceForms) };
                     Coker.sweet.error("未完成結帳流程！", "若資料已確實填寫完畢，請點選下方[確認付款]按鈕進入付款程序", null, false);
                     setTimeout(function () {
                         buy_step_swiper.slideTo(2);
@@ -61,10 +78,7 @@ function PageReady() {
         }
     });
 
-    $Orderer_TWzipcode = $('#Orderer_TWzipcode');
-    $Recipient_TWzipcode = $('#Recipient_TWzipcode');
-    $Bill_TWzipcode = $('#Bill_TWzipcode');
-    TWZipCodeInit();
+    ElementInit();
 
     /* 根據畫面高度判斷切換Swiper是否滑動到上方 */
     top_position = $(".swiper").offset().top;
@@ -105,15 +119,15 @@ function PageReady() {
     })
 
     /* Step2 Form 檢測 */
-    ShippingForms = $('#ShippingRadio');
-    PaymentForms = $('#PaymentRadio');
+    ShippingForms = $('#RadioShipping');
+    PaymentForms = $('#RadioPayment');
 
     $(".btn_step2_next").on("click", Step2Monitor);
 
     /* Step3 Form 檢測 */
     OrdererForms = $('#OrdererForm > form');
     RecipientForms = $('#RecipientForm > form');
-    BillForms = $('#BillForm > form');
+    InvoiceForms = $('#InvoiceForm > form');
 
     $(".btn_checkout").on("click", Step3Monitor);
 
@@ -136,94 +150,58 @@ function PageReady() {
     $(".btn_delete_recipient").on("click", DeleteRecipient);
 
     /* Radio Button */
-    $('input[type=radio][name=ShippingRadio]').change(ShippingRadio);
-    $('input[type=radio][name=PaymentRadio]').change(PaymentRadio);
+    $('input[type=radio][name=RadioShipping]').change(RadioShipping);
+    $('input[type=radio][name=RadioPayment]').change(RadioPayment);
     $('input[type=radio][name=RecipientRadio]').change(RecipientRadio);
-    $('input[type=radio][name=BillRadio]').change(BillRadio);
+    $('input[type=radio][name=InvoiceRadio]').change(InvoiceRadio);
 
 }
 
-function TWZipCodeInit() {
-    $Orderer_TWzipcode.twzipcode({
-        'zipcodeIntoDistrict': true,
-        'countySel': '高雄市',
-        'districtSel': '前鎮區'
-    });
-    $Recipient_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
-    $Bill_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
+/* 元素初始化 */
+function ElementInit() {
+    /* TWzipcode 初始化 */
+    $Orderer_TWzipcode = $('#Orderer_TWzipcode');
+    $Recipient_TWzipcode = $('#Recipient_TWzipcode');
+    $Invoice_TWzipcode = $('#Invoice_TWzipcode');
+    TWZipCodeInit();
 
-    var $county, $district;
+    /* 寄件者資訊 */
+    $orderer_name = $("#OrdererInputName");
+    $orderer_sex = $("input[name=OrdererRadioGender]");
+    $orderer_email = $("#OrdererInputMail");
+    $orderer_cellphone = $("#OrdererInputCellPhone");
+    $orderer_telphone_area = $("#OrdererInputTelPhoneArea");
+    $orderer_telphone = $("#OrdererInputTelPhone");
+    $orderer_telphone_ext = $("#OrdererInputTelPhoneExt");
+    $orderer_address_city = $Orderer_TWzipcode.children('.county').children("select");
+    $orderer_address_town = $Orderer_TWzipcode.children('.district').children("select");
+    $orderer_address = $("#OrdererInputAddress");
 
-    $county = $Orderer_TWzipcode.children('.county');
-    $district = $Orderer_TWzipcode.children('.district');
+    /* 收件者資訊 */
+    $recipient_radio = $("input[name=RecipientRadio]");
+    $recipient_name = $("#RecipientInputName");
+    $recipient_sex = $("input[name=RecipientRadioGender]");
+    $recipient_email = $("#RecipientInputMail");
+    $recipient_cellphone = $("#RecipientInputCellPhone");
+    $recipient_telphone_area = $("#RecipientInputTelPhoneArea");
+    $recipient_telphone = $("#RecipientInputTelPhone");
+    $recipient_telphone_ext = $("#RecipientInputTelPhoneExt");
+    $recipient_address_city = $Recipient_TWzipcode.children('.county').children("select");
+    $recipient_address_town = $Recipient_TWzipcode.children('.district').children("select");
+    $recipient_address = $("#RecipientInputAddress");
+    $remark = $("#TextareaRemark");
 
-    $county.children('select').attr({
-        id: "OrdererSelectCity",
-        class: "orderer_city form-select",
-        required: "required"
-    });
-    $county.append("<label class='px-4 required' for='OrdererSelectCity'>縣市</label>");
-    var $county_first_option = $county.children('select').children('option').first();
-    $county_first_option.text("請選擇縣市");
-    $county_first_option.attr('disabled', 'disabled');
+    /* 發票 */
+    $invoice_recipient = $("input[name=InvoiceRadio]");
+    $invoice_title = $("#InvoiceInputTitle");
+    $invoice_uniformid = $("#InvoiceInputUniformId");
+    $invoice_address_city = $Invoice_TWzipcode.children('.county').children("select");
+    $invoice_address_town = $Invoice_TWzipcode.children('.district').children("select");
+    $invoice_address = $("#InvoiceInputAddress");
 
-    $district.children('select').attr({
-        id: "OrdererSelectTown",
-        class: "orderer_town form-select",
-        required: "required"
-    });
-    $district.append("<label class='px-4 required' for='OrdererSelectCity'>鄉鎮</label>");
-    var $district_first_option = $district.children('select').children('option').first();
-    $district_first_option.text("請選擇鄉鎮");
-    $district_first_option.attr('disabled', 'disabled');
-
-
-    $county = $Recipient_TWzipcode.children('.county');
-    $district = $Recipient_TWzipcode.children('.district');
-
-    $county.children('select').attr({
-        id: "RecipientSelectCity",
-        class: "recipient_city form-select",
-        required: "required"
-    });
-    $county.append("<label class='px-4 required' for='RecipientSelectCity'>縣市</label>");
-    var $county_first_option = $county.children('select').children('option').first();
-    $county_first_option.text("請選擇縣市");
-    $county_first_option.attr('disabled', 'disabled');
-
-    $district.children('select').attr({
-        id: "RecipientSelectTown",
-        class: "recipient_town form-select",
-        required: "required"
-    });
-    $district.append("<label class='px-4 required' for='RecipientSelectCity'>鄉鎮</label>");
-    var $district_first_option = $district.children('select').children('option').first();
-    $district_first_option.text("請選擇鄉鎮");
-    $district_first_option.attr('disabled', 'disabled');
-
-
-    $county = $Bill_TWzipcode.children('.county');
-    $district = $Bill_TWzipcode.children('.district');
-
-    $county.children('select').attr({
-        id: "BillSelectCity",
-        class: "bill_city form-select",
-        required: "required"
-    });
-    $county.append("<label class='px-4 required' for='BillSelectCity'>縣市</label>");
-    var $county_first_option = $county.children('select').children('option').first();
-    $county_first_option.text("請選擇縣市");
-    $county_first_option.attr('disabled', 'disabled');
-
-    $district.children('select').attr({
-        id: "BillSelectTown",
-        class: "bill_town form-select",
-        required: "required"
-    });
-    $district.append("<label class='px-4 required' for='BillSelectCity'>鄉鎮</label>");
-    var $district_first_option = $district.children('select').children('option').first();
-    $district_first_option.text("請選擇鄉鎮");
-    $district_first_option.attr('disabled', 'disabled');
+    /* 運送、付款方式 */
+    $ship_method = $("input[name=RadioShipping]");
+    $pay_method = $("input[name=RadioPayment]");
 }
 
 function Step2Monitor() {
@@ -239,17 +217,17 @@ function Step2Monitor() {
     buy_step_swiper.update();
 }
 
-function ShippingRadio() {
+function RadioShipping() {
     $.cookie('shipping_fee', this.value, { path: '/' });
     AllAmountChange();
 }
 
-function PaymentRadio() {
+function RadioPayment() {
     $.cookie('payment_method', this.value, { path: '/' });
     var $payment = $(".payment_method");
     $payment.text($.cookie('payment_method'));
     $payment.addClass("fs-2 fw-bold px-3");
-    if ($.cookie('payment_method') == 'ATM') {
+    if ($.cookie('payment_method') == '1') {
         $(".pay_byATM").removeClass("d-none");
     } else {
         $(".pay_byATM").addClass("d-none");
@@ -261,24 +239,13 @@ function Step3Monitor() {
 
     if (OrdererOpen) { OrdererFilled = FormCheck(OrdererForms) };
     if (RecipientOpen) { RecipientFilled = FormCheck(RecipientForms) };
-    if (BillOpen) { BillFilled = FormCheck(BillForms) };
+    if (InvoiceOpen) { InvoiceFilled = FormCheck(InvoiceForms) };
 
-    if (!(OrdererFilled && RecipientFilled && BillFilled)) {
+    if (!(OrdererFilled && RecipientFilled && InvoiceFilled)) {
         Coker.sweet.error("請確實填寫資料！", null, true);
     } else {
         Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
-            Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
-                setTimeout(function () {
-                    isCheckout = true;
-                    setTimeout(function () {
-                        $.cookie('Purchased_Type_Quantity', 0, { path: '/' });
-                        $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
-                        CarDropdownReset();
-                        buy_step_swiper.slideNext();
-                        buy_step_swiper.disable();
-                    }, 300);
-                }, 300);
-            })
+            OrderAdd();
         });
     }
 
@@ -294,10 +261,12 @@ function OrdererEdit() {
 }
 
 function RecipientRadio() {
-    if (this.value == 'edit') {
+    var $self = $(this)
+    if ($self.val() == "edit") {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").removeClass("d-none");
         RecipientOpen = true;
+        RecipientFormClear();
     } else {
         $("#RecipientForm > .default_data").removeClass("d-none");
         $("#RecipientForm > form").addClass("d-none");
@@ -307,20 +276,77 @@ function RecipientRadio() {
     buy_step_swiper.update();
 }
 
-function BillRadio() {
-    if (this.value == 'company') {
-        $("#BillForm > .default_data").addClass("d-none");
-        $("#BillForm > form").removeClass("d-none");
-        BillOpen = true;
+function RecipientFormClear() {
+    $recipient_name.val("");
+    $recipient_sex.val("");
+    $recipient_sex.each(function () {
+        $(this).removeAttr("checked");
+    })
+    $recipient_email.val("");
+    $recipient_cellphone.val("");
+    $recipient_telphone_area.val("");
+    $recipient_telphone.val("");
+    $recipient_telphone_ext.val("");
+    $recipient_address_city.val("");
+    $recipient_address_town.val("");
+    $recipient_address.val("");
+    $remark.val("");
+}
+
+function RecipientFormSet(name, sex, email, cellphone, telphone_area, telphone, telphone_ext, address_city, address_town, address, remark) {
+    $recipient_name.val(name);
+    $recipient_sex.each(function () {
+        if ($(this).val() == sex) {
+            $(this).prop("checked", true);
+        }
+    })
+    $recipient_email.val(email);
+    $recipient_cellphone.val(cellphone);
+    $recipient_telphone_area.val(telphone_area);
+    $recipient_telphone.val(telphone);
+    $recipient_telphone_ext.val(telphone_ext);
+    $Recipient_TWzipcode.twzipcode('set', {
+        'county': address_city,
+        'district': address_town,
+    });
+    $recipient_address.val(address);
+    $remark.val(remark);
+}
+
+function InvoiceRadio() {
+    if (this.value == 3) {
+        $("#InvoiceForm > .default_data").addClass("d-none");
+        $("#InvoiceForm > form").removeClass("d-none");
+        InvoiceOpen = true;
+        InvoiceFormClear();
     } else {
-        $("#BillForm > .default_data").removeClass("d-none");
-        $("#BillForm > form").addClass("d-none");
-        BillOpen = false;
-        BillFilled = true;
+        $("#InvoiceForm > .default_data").removeClass("d-none");
+        $("#InvoiceForm > form").addClass("d-none");
+        InvoiceOpen = false;
+        InvoiceFilled = true;
     }
     buy_step_swiper.update();
 }
 
+function InvoiceFormClear() {
+    $invoice_title.val("");
+    $invoice_uniformid.val("");
+    $invoice_address_city.val("");
+    $invoice_address_town.val("");
+    $invoice_address.val("");
+}
+
+function InvoiceFormSet(title, uniformid, address_city, address_town, address) {
+    $invoice_title.val(title);
+    $invoice_uniformid.val(uniformid);
+    $Invoice_TWzipcode.twzipcode('set', {
+        'county': address_city,
+        'district': address_town,
+    });
+    $invoice_address.val(address);
+}
+
+/* 表單驗證 */
 function FormCheck(Forms) {
     var Check = false;
     Array.from(Forms).forEach(form => {
@@ -332,6 +358,7 @@ function FormCheck(Forms) {
     return Check;
 }
 
+/* 數量修改 */
 function AmountPlus() {
     var $self_unit = $(this).parents(".content").first().children(".pro_unit");
     var $self_subtotal = $(this).parents(".content").first().children(".pro_subtotal");
@@ -392,6 +419,7 @@ function AmountEnter() {
     CarItemChange();
 }
 
+/* 商品移動至喜愛/移除 */
 function MoveToFavorites() {
     $selfparent = $(this).parents("li").first();
     Coker.sweet.confirm("確定將商品加入收藏？", "該商品將會加入收藏並從購物車中移除", "加入收藏", "取消", function () {
@@ -418,6 +446,7 @@ function RemoveProduct() {
     });
 }
 
+/* 購物車無商品顯示的內容 */
 function HasProduct() {
     if ($.cookie("Purchased_Type_Quantity") > 0) {
         $("#Purchase_Null").addClass('d-none');
@@ -433,6 +462,7 @@ function HasProduct() {
     return true;
 }
 
+/* 暫時用來輸入購買資料 */
 function PurchaseListInit() {
     var item = $($("#Template_Purchase_Details").html()).clone();
     var item_link = item.find(".pro_link"),
@@ -456,6 +486,109 @@ function PurchaseListInit() {
     item_list_ul.append(item);
 }
 
+/* 刪除收件人 */
+function DeleteRecipient() {
+    var $this_parent = $(this).parents("tr");
+    $this_parent.remove();
+}
+
+function OrderAdd() {
+    var orderer_sex, orderer_telephone;
+    $orderer_sex.each(function () {
+        if ($(this).is(":checked")) { orderer_sex = $(this).val(); }
+    })
+    orderer_telephone = $orderer_telphone.val() != null ? ($orderer_telphone_area.val() + "-" + $orderer_telphone.val() + ($orderer_telphone_ext.val() != null ? "-" + $orderer_telphone_ext.val() : "")) : "";
+
+    var recipient_radio, recipient_sex, recipient_telephone;
+    $recipient_radio.each(function () {
+        if ($(this).is(":checked")) { recipient_radio = $(this).val(); }
+    })
+    switch (recipient_radio) {
+        case "order":
+            RecipientFormSet($orderer_name.val(), orderer_sex, $orderer_email.val(), $orderer_cellphone.val(), $orderer_telphone_area.val(), $orderer_telphone.val(), $orderer_telphone_ext.val(), $orderer_address_city.val(), $orderer_address_town.val(), $orderer_address.val(), "")
+            break;
+        case "choose":
+            RecipientFormSet($orderer_name.val(), orderer_sex, $orderer_email.val(), $orderer_cellphone.val(), $orderer_telphone_area.val(), $orderer_telphone.val(), $orderer_telphone_ext.val(), $orderer_address_city.val(), $orderer_address_town.val(), $orderer_address.val(), "")
+            break;
+    }
+    $recipient_sex.each(function () {
+        if ($(this).is(":checked")) { recipient_sex = $(this).val(); }
+    })
+    recipient_telephone = $recipient_telphone.val() != null ? ($recipient_telphone_area.val() + "-" + $recipient_telphone.val() + ($recipient_telphone_ext.val() != null ? "-" + $recipient_telphone_ext.val() : "")) : "";
+
+    var invoice_recipient;
+    $invoice_recipient.each(function () {
+        if ($(this).is(":checked")) { invoice_recipient = $(this).val(); }
+    })
+    switch (invoice_recipient) {
+        case "1":
+            InvoiceFormSet("", "", $orderer_address_city.val(), $orderer_address_town.val(), $orderer_address.val())
+            break;
+        case "2":
+            InvoiceFormSet("", "", $recipient_address_city.val(), $recipient_address_town.val(), $recipient_address.val())
+            break;
+    }
+
+    var shipping, payment;
+    $ship_method.each(function () {
+        if ($(this).is(":checked")) { shipping = $(this).val(); }
+    })
+    $pay_method.each(function () {
+        if ($(this).is(":checked")) { payment = $(this).val(); }
+    })
+
+    console.log("recipient_sex = " + recipient_sex)
+    console.log("invoice_recipient = " + invoice_recipient)
+    console.log("InvoiceAddress = " + $invoice_address_city.val() + $invoice_address_town.val() + $invoice_address.val())
+    console.log("shipping = " + shipping)
+    console.log("payment = " + payment)
+
+    Coker.Order.Add({
+        Orderer: $orderer_name.val(),
+        OrdererSex: orderer_sex,
+        OrdererEmail: $orderer_email.val(),
+        OrdererTelephone: orderer_telephone,
+        OrdererCellPhone: $orderer_cellphone.val(),
+        OrdererAddress: $orderer_address_city.val() + $orderer_address_town.val() + $orderer_address.val(),
+        Recipient: $recipient_name.val(),
+        RecipientSex: recipient_sex,
+        RecipientEmail: $recipient_email.val(),
+        RecipientTelephone: recipient_telephone,
+        RecipientCellPhone: $recipient_cellphone.val(),
+        RecipientAddress: $recipient_address_city.val() + $recipient_address_town.val() + $recipient_address.val(),
+        Remark: $remark.val(),
+        InvoiceRecipient: invoice_recipient,
+        InvoiceTitle: $invoice_title.val(),
+        UniformId: $invoice_uniformid.val(),
+        InvoiceAddress: $invoice_address_city.val() + $invoice_address_town.val() + $invoice_address.val(),
+        Shipping: shipping,
+        Payment: payment,
+        State: 1,
+        Total: 9100,
+        Discount: 0,
+        Bonus: 0,
+        CouponId: 0,
+        Freight: 0,
+        Service_Charge: 0
+    }).done(function () {
+        Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
+            setTimeout(function () {
+                isCheckout = true;
+                setTimeout(function () {
+                    $.cookie('Purchased_Type_Quantity', 0, { path: '/' });
+                    $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
+                    CarDropdownReset();
+                    buy_step_swiper.slideNext();
+                    buy_step_swiper.disable();
+                }, 300);
+            }, 300);
+        })
+    }).fail(function () {
+        Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+    });
+}
+
+/* 重新讀取全部訂單金額/小計 */
 function ReloadAllAmount() {
     var total_price = 0;
 
@@ -490,6 +623,7 @@ function AllAmountChange() {
     });
 }
 
+/* Input輸入自動切換 */
 function AutoSwapInput() {
     var target = event.target
 
@@ -512,7 +646,86 @@ function AutoSwapInput() {
     }
 }
 
-function DeleteRecipient() {
-    var $this_parent = $(this).parents("tr");
-    $this_parent.remove();
+/* 地址選單初始化 */
+function TWZipCodeInit() {
+    $Orderer_TWzipcode.twzipcode({
+        'zipcodeIntoDistrict': true,
+        'countySel': '高雄市',
+        'districtSel': '前鎮區'
+    });
+    $Recipient_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
+    $Invoice_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
+
+    var $county, $district;
+
+    $county = $Orderer_TWzipcode.children('.county');
+    $district = $Orderer_TWzipcode.children('.district');
+
+    $county.children('select').attr({
+        id: "OrdererSelectCity",
+        class: "orderer_city form-select",
+        required: "required"
+    });
+    $county.append("<label class='px-4 required' for='OrdererSelectCity'>縣市</label>");
+    var $county_first_option = $county.children('select').children('option').first();
+    $county_first_option.text("請選擇縣市");
+    $county_first_option.attr('disabled', 'disabled');
+
+    $district.children('select').attr({
+        id: "OrdererSelectTown",
+        class: "orderer_town form-select",
+        required: "required"
+    });
+    $district.append("<label class='px-4 required' for='OrdererSelectCity'>鄉鎮</label>");
+    var $district_first_option = $district.children('select').children('option').first();
+    $district_first_option.text("請選擇鄉鎮");
+    $district_first_option.attr('disabled', 'disabled');
+
+
+    $county = $Recipient_TWzipcode.children('.county');
+    $district = $Recipient_TWzipcode.children('.district');
+
+    $county.children('select').attr({
+        id: "RecipientSelectCity",
+        class: "recipient_city form-select",
+        required: "required"
+    });
+    $county.append("<label class='px-4 required' for='RecipientSelectCity'>縣市</label>");
+    var $county_first_option = $county.children('select').children('option').first();
+    $county_first_option.text("請選擇縣市");
+    $county_first_option.attr('disabled', 'disabled');
+
+    $district.children('select').attr({
+        id: "RecipientSelectTown",
+        class: "recipient_town form-select",
+        required: "required"
+    });
+    $district.append("<label class='px-4 required' for='RecipientSelectCity'>鄉鎮</label>");
+    var $district_first_option = $district.children('select').children('option').first();
+    $district_first_option.text("請選擇鄉鎮");
+    $district_first_option.attr('disabled', 'disabled');
+
+
+    $county = $Invoice_TWzipcode.children('.county');
+    $district = $Invoice_TWzipcode.children('.district');
+
+    $county.children('select').attr({
+        id: "InvoiceSelectCity",
+        class: "bill_city form-select",
+        required: "required"
+    });
+    $county.append("<label class='px-4 required' for='InvoiceSelectCity'>縣市</label>");
+    var $county_first_option = $county.children('select').children('option').first();
+    $county_first_option.text("請選擇縣市");
+    $county_first_option.attr('disabled', 'disabled');
+
+    $district.children('select').attr({
+        id: "InvoiceSelectTown",
+        class: "bill_town form-select",
+        required: "required"
+    });
+    $district.append("<label class='px-4 required' for='InvoiceSelectCity'>鄉鎮</label>");
+    var $district_first_option = $district.children('select').children('option').first();
+    $district_first_option.text("請選擇鄉鎮");
+    $district_first_option.attr('disabled', 'disabled');
 }

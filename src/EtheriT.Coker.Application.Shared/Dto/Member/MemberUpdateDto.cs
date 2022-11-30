@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Member
 {
-	public class MemberUpdateDto
+    public class MemberUpdateDto
     {
         public long Id { get; set; }
         public string Name { get; set; }
         public int? Sex { get; set; }
         public int? Status { get; set; }
+        public int? Level { get; set; }
         public string Email { get; set; }
         public string? CellPhone { get; set; }
         public string? TelPhone { get; set; }

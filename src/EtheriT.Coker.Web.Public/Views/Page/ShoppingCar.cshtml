@@ -186,10 +186,10 @@
 				</div>
 
 				<div class="card-body px-0">
-					<form id="ShippingRadio" class="px-5 mb-3 shipping needs-validation" novalidate>
+					<form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" novalidate>
 						<div class="d-flex">
 							<div class="form-check w-50 text-start">
-								<input id="FreeShip" class="form-check-input" type="radio" name="ShippingRadio" value="0" required>
+								<input id="FreeShip" class="form-check-input" type="radio" name="RadioShipping" value="1" required>
 								<label class="form-check-label" for="FreeShip">免運</label>
 								<div class="invalid-feedback">請選擇運送方式</div>
 							</div>
@@ -201,17 +201,17 @@
 						<div class="fs-5 my-2">付款方式</div>
 					</div>
 
-					<form id="PaymentRadio" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" novalidate>
+					<form id="RadioPayment" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" novalidate>
 						<div class="form-check py-2">
-							<input id="radio_payment_atm" class="form-check-input" type="radio" name="PaymentRadio" value="ATM" required>
+							<input id="radio_payment_atm" class="form-check-input" type="radio" name="RadioPayment" value="1" required>
 							<label class="form-check-label" for="radio_payment_atm">ATM</label>
 						</div>
 						<div class="form-check py-2">
-							<input id="radio_payment_card" class="form-check-input" type="radio" name="PaymentRadio" value="線上刷卡" required>
+							<input id="radio_payment_card" class="form-check-input" type="radio" name="RadioPayment" value="2" required>
 							<label class="form-check-label" for="radio_payment_card">線上刷卡</label>
 						</div>
 						<div class="form-check py-2">
-							<input id="radio_payment_LINE" class="form-check-input" type="radio" name="PaymentRadio" value="LINE Pay" required>
+							<input id="radio_payment_LINE" class="form-check-input" type="radio" name="RadioPayment" value="3" required>
 							<label class="form-check-label" for="radio_payment_LINE">LINE Pay</label>
 							<div class="invalid-feedback">請選擇付款方式</div>
 						</div>
@@ -281,33 +281,48 @@
 						</div>
 
 						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
-								<label class="required" for="OrdererInputName">姓　　名</label>
+							<div class="row mx-0">
+								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
+									<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
+									<label class="required" for="OrdererInputName">姓　　名</label>
+								</div>
+								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
+									<div class="form-check pe-3">
+										<input id="OrdererRadioSir" class="form-check-input" type="radio" name="OrdererRadioGender" value="1" required checked>
+										<label class="form-check-label" for="RadioSir">男</label>
+									</div>
+									<div class="form-check pe-3">
+										<input id="OrdererRadioMiss" class="form-check-input" type="radio" name="OrdererRadioGender" value="2" required>
+										<label class="form-check-label" for="RadioMiss">女</label>
+									</div>
+									<div class="form-check">
+										<input id="OrdererRadioElse" class="form-check-input" type="radio" name="OrdererRadioGender" value="3" required>
+										<label class="form-check-label" for="RadioElse">其他</label>
+									</div>
+								</div>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
 								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
 								<label class="required" for="OrdererInputMail">E-mail</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputPhone" class="orderer_phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
-								<label class="required" for="OrdererInputPhone">手機號碼</label>
+								<input id="OrdererInputCellPhone" class="orderer_phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
+								<label class="required" for="OrdererInputCellPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="OrdererInputAreaCode" class="orderer_areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
-									<label class="px-4" for="OrdererInputAreaCode">區碼</label>
+									<input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
+									<label class="px-4" for="OrdererInputTelPhoneArea">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="OrdererInputCellPhone" class="orderer_cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
-									<label for="OrdererInputCellPhone">聯絡電話</label>
+									<input id="OrdererInputTelPhone" class="orderer_cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
+									<label for="OrdererInputTelPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="OrdererInputExtension" class="orderer_extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
-									<label class="px-4" for="OrdererInputExtension">分機</label>
+									<input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
+									<label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
 								</div>
 							</div>
-
 							<div id="Orderer_TWzipcode" class="row">
 								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
 								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
@@ -358,61 +373,77 @@
 						</div>
 
 						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="" minlength="2" required>
-								<label class="required" for="RecipientInputName">姓　　名</label>
+							<div class="row mx-0">
+								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
+									<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="" minlength="2" required>
+									<label class="required" for="RecipientInputName">姓　　名</label>
+								</div>
+								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
+									<div class="form-check pe-3">
+										<input id="RecipientRadioSir" class="form-check-input" type="radio" name="RecipientRadioGender" value="1" required>
+										<label class="form-check-label" for="RadioSir">男</label>
+									</div>
+									<div class="form-check pe-3">
+										<input id="RecipientRadioMiss" class="form-check-input" type="radio" name="RecipientRadioGender" value="2" required>
+										<label class="form-check-label" for="RadioMiss">女</label>
+									</div>
+									<div class="form-check">
+										<input id="RecipientRadioElse" class="form-check-input" type="radio" name="RecipientRadioGender" value="3" required>
+										<label class="form-check-label" for="RadioElse">其他</label>
+									</div>
+								</div>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
 								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="name@example.com" value="" required>
 								<label class="required" for="RecipientInputMail">E-mail</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputPhone" class="recipient_phone form-control" type="tel" placeholder="0987654321" value="" pattern="[0][9]\d{8}" maxlength="10" required>
-								<label class="required" for="RecipientInputPhone">手機號碼</label>
+								<input id="RecipientInputCellPhone" class="recipient_phone form-control" type="tel" placeholder="0987654321" value="" pattern="[0][9]\d{8}" maxlength="10" required>
+								<label class="required" for="RecipientInputCellPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="RecipientInputAreaCode" class="recipient_areacode form-control" type="tel" placeholder="07" value="" pattern="[0]\d{1,3}" maxlength="4">
-									<label class="px-4" for="RecipientInputAreaCode">區碼</label>
+									<input id="RecipientInputTelPhoneArea" class="recipient_areacode form-control" type="tel" placeholder="07" value="" pattern="[0]\d{1,3}" maxlength="4">
+									<label class="px-4" for="RecipientInputTelPhoneArea">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="RecipientInputCellPhone" class="recipient_cellphone form-control" type="tel" placeholder="1234567" value="" pattern="\d{7}" maxlength="7">
-									<label for="RecipientInputCellPhone">聯絡電話</label>
+									<input id="RecipientInputTelPhone" class="recipient_cellphone form-control" type="tel" placeholder="1234567" value="" pattern="\d{7}" maxlength="7">
+									<label for="RecipientInputTelPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="RecipientInputExtension" class="recipient_extension form-control" type="tel" placeholder="123456" value="" pattern="\d*">
-									<label class="px-4" for="RecipientInputExtension">分機</label>
+									<input id="RecipientInputTelPhoneExt" class="recipient_extension form-control" type="tel" placeholder="123456" value="" pattern="\d*">
+									<label class="px-4" for="RecipientInputTelPhoneExt">分機</label>
 								</div>
 							</div>
 							<div id="Recipient_TWzipcode" class="row">
 								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
 								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
-									<label class="px-4 required" for="OrdererInputAddress">地址</label>
+									<input id="RecipientInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+									<label class="px-4 required" for="RecipientInputAddress">地址</label>
 								</div>
 							</div>
 							<div class="form-floating mb-3 col-12">
-								<textarea id="TextareaNote" class="form-control" placeholder="備註" style="height: 150px"></textarea>
-								<label for="TextareaNote">備　　註</label>
+								<textarea id="TextareaRemark" class="form-control" placeholder="備註" style="height: 150px"></textarea>
+								<label for="TextareaRemark">備　　註</label>
 							</div>
 						</form>
 					</div>
 
-					<div id="BillForm">
+					<div id="InvoiceForm">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center">
 							<div class="fs-5">發票寄送</div>
 							<ul class="d-sm-flex text-start">
 								<li class="form-check mb-0 ms-3">
-									<input id="radio_bill_orderer" class="form-check-input" type="radio" name="BillRadio" value="orderer" checked>
+									<input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="1" checked>
 									<label class="form-check-label" for="radio_bill_orderer">訂購人</label>
 								</li>
 								<li class="form-check mb-0 ms-3">
-									<input id="radio_bill_recipient" class="form-check-input" type="radio" name="BillRadio" value="recipient">
+									<input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="2">
 									<label class="form-check-label" for="radio_bill_recipient">收件人</label>
 								</li>
 								<li class="form-check mb-0 ms-3">
-									<input id="radio_bill_company" class="form-check-input" type="radio" name="BillRadio" value="company">
+									<input id="radio_bill_company" class="form-check-input" type="radio" name="InvoiceRadio" value="3">
 									<label class="form-check-label" for="radio_bill_company">公司(三聯)</label>
 								</li>
 							</ul>
@@ -439,20 +470,20 @@
 
 						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="BillInputInvoice" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
-								<label class="required" for="BillInputInvoice">發票抬頭</label>
+								<input id="InvoiceInputTitle" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
+								<label class="required" for="InvoiceInputTitle">發票抬頭</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="BillInputGUINum" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
-								<label class="required" for="BillInputGUINum">統　　編</label>
+								<input id="InvoiceInputUniformId" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
+								<label class="required" for="InvoiceInputUniformId">統　　編</label>
 							</div>
 
-							<div id="Bill_TWzipcode" class="row">
+							<div id="Invoice_TWzipcode" class="row">
 								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
 								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
-									<label class="px-4 required" for="OrdererInputAddress">地址</label>
+									<input id="InvoiceInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+									<label class="px-4 required" for="InvoiceInputAddress">地址</label>
 								</div>
 							</div>
 						</form>
@@ -583,7 +614,7 @@
 						</div>
 					</div>
 
-					<div id="BillData">
+					<div id="InvoiceData">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
 
 						<div class="content">

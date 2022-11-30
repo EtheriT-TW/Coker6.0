@@ -35,10 +35,10 @@ namespace EtheriT.Coker.Application.Member
                                     select new MemberGetAllListDto
                                     {
                                         Id = e.Id,
-                                        Name = e.Name,
-                                        CellPhone = e.CellPhone,
-                                        TelPhone = e.TelPhone,
-                                        Address = (e.Address).Replace(" ", ""),
+                                        Name = e.Name.Substring(0, 1) + "○" + e.Name.Substring(e.Name.Length - 1),
+                                        CellPhone = e.CellPhone.Substring(0, 3) + "****" + e.CellPhone.Substring(7),
+                                        TelPhone = e.TelPhone != null ? e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6) : "-",
+                                        Address = e.Address.Replace(" ", ""),
                                         Email = e.Email,
                                         Total = e.Total,
                                         Level = e.Level,
@@ -69,6 +69,7 @@ namespace EtheriT.Coker.Application.Member
                         Name = result.Name,
                         Sex = result.Sex,
                         Status = result.Status,
+                        Level = result.Level,
                         Email = result.Email,
                         CellPhone = result.CellPhone,
                         TelPhone = result.TelPhone,
@@ -101,6 +102,7 @@ namespace EtheriT.Coker.Application.Member
                     result.Name = dto.Name;
                     result.Sex = dto.Sex;
                     result.Status = dto.Status;
+                    result.Level = dto.Level;
                     result.Email = dto.Email;
                     result.CellPhone = dto.CellPhone;
                     result.TelPhone = dto.TelPhone;

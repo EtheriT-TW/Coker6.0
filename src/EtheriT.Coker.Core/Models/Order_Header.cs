@@ -1,10 +1,4 @@
 ﻿using EtheriT.Coker.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace EtheriT.Coker.Core.Models
 {
@@ -23,9 +17,10 @@ namespace EtheriT.Coker.Core.Models
         public string RecipientCellPhone { get; set; }
         public string RecipientAddress { get; set; }
         public string? Remark { get; set; }
-        public string? Invoice { get; set; }
+        public int InvoiceRecipient { get; set; }
+        public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
-        public string? InvoiceAddress { get; set; }
+        public string InvoiceAddress { get; set; }
         public int Shipping { get; set; }
         public int Payment { get; set; }
         public int State { get; set; }

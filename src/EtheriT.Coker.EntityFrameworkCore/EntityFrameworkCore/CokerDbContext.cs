@@ -42,7 +42,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Token>(o =>
             {
                 o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-                o.HasOne(t => t.User).WithMany(u => u.Tokens).HasForeignKey(f => f.UserID);
             });
             modelBuilder.Entity<WebMenu>(o =>
             {

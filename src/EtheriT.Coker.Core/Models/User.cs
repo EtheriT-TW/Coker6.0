@@ -27,6 +27,5 @@ namespace EtheriT.Coker.Web.Core.Models
         public int ErrorTimes { get; set; }
         public DateTime? LockTime { get; set; }
         public List<MappingUserAndWebsite> Webs { get; set; }
-        public List<Token> Tokens { get; set; }
     }
 }

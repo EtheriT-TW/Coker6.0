@@ -1,4 +1,13 @@
 ﻿function ready() {
+    Coker.Token = {
+        GetToken: function () {
+            return $.ajax({
+                url: "/api/Token/CreateToken",
+                type: "POST",
+            });
+        }
+    };
+
     $.cookie('Member_Name', "會員一", { path: '/' });
     typeof $.cookie('Purchased_Type_Quantity') == "undefined" && $.cookie('Purchased_Type_Quantity', 0, { path: '/' })
     typeof $.cookie('Purchased_Item_Quantity') == "undefined" && $.cookie('Purchased_Item_Quantity', 0, { path: '/' })
@@ -18,6 +27,13 @@
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         $("#Cookie").toggleClass("show");
     }
+
+    if ($.cookie("Token") == null) {
+        Coker.Token.GetToken().done(function (result) {
+            console.log(result)
+        })
+    }
+
     $(".btn_cookie_accept").on("click", cookie_accept);
     $(".btn_cookie_reject").on("click", cookie_reject);
 

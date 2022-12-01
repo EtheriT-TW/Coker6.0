@@ -1,0 +1,46 @@
+﻿@{
+    ViewData["Title"] = "CustomPage";
+}
+<!--導入grapesjs-->
+<link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
+<script src="/lib/grapesjs/grapes.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
+<!--導入頁面配置-->
+<link rel="stylesheet" href="~/css/Page/index.min.css" asp-append-version="true" />
+<script src="~/js/Page/Index.min.js" asp-append-version="true"></script>
+
+<div class="py-2 px-4 position-relative">
+    <div id="TopLine" class="d-flex justify-content-between mb-4">
+        <div class="title fw-bold fs-4">自訂頁面</div>
+    </div>
+</div>
+<div id="gjs">
+    <div class="container-fluid">
+        <div class="row gjs-row">
+            <div class="col-md-4 gjs-cell">
+                One of three columns
+            </div>
+            <div class="col-md-4 gjs-cell">
+                One of three columns
+            </div>
+            <div class="col-md-4 gjs-cell">
+                One of three columns
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <label for="validationCustom01" class="form-label">First name</label>
+        <input type="text" class="form-control" id="validationCustom01" value="Mark" required>
+        <div class="valid-feedback">
+            Looks good!
+        </div>
+        <table class="table"></table>
+    </div>
+
+</div>

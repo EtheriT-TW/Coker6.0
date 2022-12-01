@@ -12810,3 +12810,7 @@ a.bg-dark-light25:hover, a.bg-dark-light25:focus, button.bg-dark-light25:hover, 
     .color-swatch .top-bar {
         height: 12%;
     }
+
+.fa.gjs-block {
+    font-weight: bold;
+}

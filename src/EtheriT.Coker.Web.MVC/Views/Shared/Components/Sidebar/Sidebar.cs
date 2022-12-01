@@ -90,7 +90,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                     new JobMenu{
                         PageName="PageManagement",
                         Title="頁面管理",
-                        Controller="Dashboard",
+                        Controller="Page",
                         Action="Index",
                         Icon="web",
                         CollapseId="#PageManagement",
@@ -98,7 +98,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="CustomPage",
                                 Title="自訂頁面",
-                                Controller="Dashboard",
+                                Controller="Page",
                                 Action="Index",
                                 Icon="",
                             }

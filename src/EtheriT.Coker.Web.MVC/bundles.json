@@ -76,7 +76,67 @@
     {
       "outputFolder": "lib/swiper/",
       "input": [
-        "node_modules/swiper/*.mi.map"
+        "node_modules/swiper/*.map"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs",
+      "input": [
+        "node_modules/grapesjs/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/css",
+      "input": [
+        "node_modules/grapesjs/dist/css/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/fonts",
+      "input": [
+        "node_modules/grapesjs/dist/fonts/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-preset-webpage",
+      "input": [
+        "node_modules/grapesjs-preset-webpage/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-blocks-basic",
+      "input": [
+        "node_modules/grapesjs-blocks-basic/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-style-bg",
+      "input": [
+        "node_modules/grapesjs-style-bg/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-tabs",
+      "input": [
+        "node_modules/grapesjs-tabs/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-custom-code",
+      "input": [
+        "node_modules/grapesjs-custom-code/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-tui-image-editor",
+      "input": [
+        "node_modules/grapesjs-tui-image-editor/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-blocks-table",
+      "input": [
+        "node_modules/grapesjs-blocks-table/dist/*"
       ]
     }
   ]

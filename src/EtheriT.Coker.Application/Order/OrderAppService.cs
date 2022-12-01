@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -35,22 +36,18 @@ namespace EtheriT.Coker.Application.Order
                     OrdererCellPhone = dto.OrdererCellPhone,
                     OrdererAddress = dto.OrdererAddress,
                     Recipient = dto.Recipient,
-                    //RecipientSex = dto.RecipientSex,
-                    RecipientSex = dto.OrdererSex,
+                    RecipientSex = dto.RecipientSex,
                     RecipientEmail = dto.RecipientEmail,
                     RecipientTelephone = dto.RecipientTelephone,
                     RecipientCellPhone = dto.RecipientCellPhone,
                     RecipientAddress = dto.RecipientAddress,
                     Remark = dto.Remark,
-                    //InvoiceRecipient = dto.InvoiceRecipient,
-                    InvoiceRecipient = 1,
+                    InvoiceRecipient = dto.InvoiceRecipient,
                     InvoiceTitle = dto.InvoiceTitle,
                     UniformId = dto.UniformId,
                     InvoiceAddress = dto.InvoiceAddress,
-                    //Shipping = dto.Shipping,
-                    Shipping = 1,
-                    //Payment = dto.Payment,
-                    Payment = 1,
+                    Shipping = dto.Shipping,
+                    Payment = dto.Payment,
                     State = dto.State,
                     Total = dto.Total,
                     Discount = dto.Discount,
@@ -128,6 +125,36 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return output;
+        }
+        public async Task<List<EnumDictionaryDto>> GetPreserveTypeEnum()
+        {
+            Dictionary<string, int> preserveTypeEnum = Enum.GetValues(typeof(PreserveTypeEnum))
+                                        .Cast<PreserveTypeEnum>()
+                                        .ToDictionary(k => k.ToString(), v => (int)v);
+
+            var enumDictionaryDto = from data in preserveTypeEnum
+                                    select new EnumDictionaryDto
+                                    {
+                                        Key = data.Key,
+                                        Value = data.Value,
+                                    };
+
+            return enumDictionaryDto.ToList();
+        }
+        public async Task<List<EnumDictionaryDto>> GetShippingTypeEnum()
+        {
+            Dictionary<string, int> shippingTypeEnums = Enum.GetValues(typeof(ShippingTypeEnum))
+                                        .Cast<ShippingTypeEnum>()
+                                        .ToDictionary(k => k.ToString(), v => (int)v);
+
+            var enumDictionaryDto = from data in shippingTypeEnums
+                                    select new EnumDictionaryDto
+                                    {
+                                        Key = data.Key == "Seven取貨" ? "7-11取貨" : data.Key.Replace("_", "/"),
+                                        Value = data.Value,
+                                    };
+
+            return enumDictionaryDto.ToList();
         }
     }
 }

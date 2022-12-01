@@ -143,6 +143,10 @@ function PageReady() {
     $illustrate.on('keyup', function () {
         $illustrate_count.text($illustrate.val().length);
     });
+    $("input[type='number']").change(function () {
+        $(this).val($(this).val() < 0 ? 0 : $(this).val())
+    });
+
     $permanent.on("click", function () {
         if ($permanent.is(":checked")) {
             $date.val('');

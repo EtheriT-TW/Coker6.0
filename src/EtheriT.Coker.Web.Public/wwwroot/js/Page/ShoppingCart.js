@@ -537,12 +537,6 @@ function OrderAdd() {
         if ($(this).is(":checked")) { payment = $(this).val(); }
     })
 
-    console.log("recipient_sex = " + recipient_sex)
-    console.log("invoice_recipient = " + invoice_recipient)
-    console.log("InvoiceAddress = " + $invoice_address_city.val() + $invoice_address_town.val() + $invoice_address.val())
-    console.log("shipping = " + shipping)
-    console.log("payment = " + payment)
-
     Coker.Order.Add({
         Orderer: $orderer_name.val(),
         OrdererSex: orderer_sex,

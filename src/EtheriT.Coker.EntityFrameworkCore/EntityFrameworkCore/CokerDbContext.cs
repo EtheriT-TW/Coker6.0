@@ -54,6 +54,24 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OrderId);
                 o.HasOne(u => u.Prod).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_ProductId);
             });
+            modelBuilder.Entity<LogisticsType_PaymentType>(o =>
+            {
+                o.HasOne(u => u.Logisticstype).WithMany(u => u.LogisticsType_Payments).HasForeignKey(f => f.FK_Lid);
+                o.HasOne(u => u.PaymentType).WithMany(u => u.LogisticsType_Payments).HasForeignKey(f => f.FK_Pid);
+            });
+            modelBuilder.Entity<ThirdPartyKeypair>(o =>
+            {
+                o.HasOne(u => u.ThirdParty).WithMany(u => u.ThirdPartyKeypair).HasForeignKey(f => f.FK_TPid);
+            });
+            modelBuilder.Entity<Prod_Spec>(o =>
+            {
+                o.HasOne(u => u.Prod_Spec_Type).WithMany(u => u.Prod_Specs).HasForeignKey(f => f.FK_Tid);
+            });
+            modelBuilder.Entity<Prod_Stock>(o =>
+            {
+                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S1id);
+                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S2id);
+            });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }

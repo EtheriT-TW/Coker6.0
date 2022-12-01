@@ -12,8 +12,8 @@ namespace EtheriT.Coker.Core.Models
     {
         [StringLength(150)]
         public string Title { get; set; }
-        public bool disp_opt { get; set; }
-        public int ser_no { get; set; }
+        public bool Disp_Opt { get; set; }
+        public int Ser_No { get; set; }
         public string Description { get; set; }
         public double Price { get; set; }
         public double? Discount { get; set; }

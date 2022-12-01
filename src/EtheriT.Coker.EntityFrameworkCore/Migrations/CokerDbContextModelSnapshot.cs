@@ -135,6 +135,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<bool>("permanent")
                         .HasColumnType("bit");
 
+                    b.Property<string>("placement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("ser_no")
                         .HasColumnType("int");
 
@@ -151,6 +155,180 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("Marquees");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Details", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Bonus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<double>("Subtotal")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_OrderId");
+
+                    b.HasIndex("FK_ProductId");
+
+                    b.ToTable("Order_Details");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Header", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<int?>("Bonus")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("CouponId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Discount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Freight")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InvoiceAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InvoiceRecipient")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InvoiceTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Orderer")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrdererAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrdererCellPhone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrdererEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrdererSex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OrdererTelephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Payment")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Recipient")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecipientAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecipientCellPhone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RecipientSex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RecipientTelephone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Remark")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Service_Charge")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Shipping")
+                        .HasColumnType("int");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Total")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UniformId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Order_Headers");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
@@ -177,6 +355,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<double?>("Discount")
+                        .HasColumnType("float");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -193,6 +374,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("disp_opt")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ser_no")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -311,6 +498,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
+                    b.Property<string>("Contact")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Contract")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
@@ -329,6 +522,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
 
@@ -346,6 +542,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Locale")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Logo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Statement")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
@@ -394,6 +599,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Account")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CellPhone")
                         .HasColumnType("nvarchar(max)");
 
@@ -425,6 +633,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<int?>("Level")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("LockTime")
                         .HasColumnType("datetime2");
 
@@ -434,6 +645,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Sex")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TelPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Total")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UniformId")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -499,6 +725,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Details", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Order_Header", "Order_Header")
+                        .WithMany("Order_Details")
+                        .HasForeignKey("FK_OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
+                        .WithMany("Order_Details")
+                        .HasForeignKey("FK_ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order_Header");
+
+                    b.Navigation("Prod");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
                 {
                     b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
@@ -525,6 +770,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("FK_TopNode");
 
                     b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Header", b =>
+                {
+                    b.Navigation("Order_Details");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
+                {
+                    b.Navigation("Order_Details");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>

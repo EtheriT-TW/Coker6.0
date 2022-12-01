@@ -20,6 +20,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod> Prods { get; set; }
         public DbSet<Marquee> Marquees { get; set; }
         public DbSet<WebMenu> WebMenus { get; set; }
+        public DbSet<Order_Header> Order_Headers { get; set; }
+        public DbSet<Order_Details> Order_Details { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
         : base(options)
@@ -46,6 +48,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Website).WithMany(u => u.WebMenus).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(t => t.FK_TopNode).WithMany(u => u.FK_ChildNodes).HasForeignKey(f => f.FK_TopNodeId);
+            });
+            modelBuilder.Entity<Order_Details>(o =>
+            {
+                o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OrderId);
+                o.HasOne(u => u.Prod).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_ProductId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

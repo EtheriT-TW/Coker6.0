@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Dto;
+﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Authorization;
@@ -37,15 +38,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetAll()
+        public async Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions)
         {
-            return await marqueeAppService.GetAll();
-        }
-
-        [HttpGet]
-        public async Task<Array> GetAllKey()
-        {
-            return await marqueeAppService.GetAllKey();
+            return await marqueeAppService.GetAll(loadOptions);
         }
 
         [HttpGet]

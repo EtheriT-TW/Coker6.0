@@ -1,3 +1,7 @@
+using EtheriT.Coker.Application.Marquee;
+using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Shared.Marquee;
+using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +27,9 @@ builder.Services.AddMemoryCache()
 builder.Services.AddDbContext<CokerDbContext>(item =>
     item.UseSqlServer(configuration.GetConnectionString("Default"))
 );
+
+builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
+builder.Services.AddTransient<IOrderAppService, OrderAppService>();
 
 var app = builder.Build();
 

@@ -1,11 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application.Shared.Dto.Marquee;
+using EtheriT.Coker.Application.Shared.Marquee;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 {
     public class Header : ViewComponent
     {
+
+        private readonly IMarqueeAppService marqueeAppService;
+        private readonly IConfiguration Configuration;
+        public Header(
+            IMarqueeAppService marqueeAppService,
+            IConfiguration Configuration
+            )
+        {
+            this.marqueeAppService = marqueeAppService;
+            this.Configuration = Configuration;
+        }
         public async Task<IViewComponentResult> InvokeAsync()
         {
+            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel
             {
                 Title = "德瑞克",
@@ -112,7 +129,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             },
                         }
                       }
-                }
+                },
+                marqueeModels = marquee
             };
             return View(headerViewModel);
         }

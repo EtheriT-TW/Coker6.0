@@ -224,6 +224,11 @@ input[type="number"] {
 }
 
 @media only screen and (max-width: 768px) {
+    .swiper_four_grid > .swiper_button > [class*=btn_swiper_] {
+        margin: 0rem;
+        transform: scale(1);
+    }
+
     .swiper_button > [class*=btn_swiper_next_] {
         margin-right: 0px;
     }

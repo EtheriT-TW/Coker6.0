@@ -6,7 +6,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     {
         public IActionResult Index()
         {
-            return View("SingleOrder");
+            return View("OrderList");
         }
     }
 }

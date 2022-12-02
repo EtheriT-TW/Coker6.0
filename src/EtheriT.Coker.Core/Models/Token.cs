@@ -1,11 +1,4 @@
-﻿using EtheriT.Coker.Web.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace EtheriT.Coker.Core.Models
 {
     public class Token
@@ -15,5 +8,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime? EndTime { get; set; }
         public string ip { get; set; }
+        public List<Prod_Log> Prod_Logs { get; set; }
+        public List<ShoppingCart> ShoppingCarts { get; set; }
     }
 }

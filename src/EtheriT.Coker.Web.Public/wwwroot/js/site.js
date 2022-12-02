@@ -5,6 +5,13 @@
                 url: "/api/Token/CreateToken",
                 type: "POST",
             });
+        },
+        CheckToken: function (id) {
+            return $.ajax({
+                url: "/api/Token/CheckToken/",
+                type: "GET",
+                data: { id: id }
+            });
         }
     };
 
@@ -26,12 +33,8 @@
 
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         $("#Cookie").toggleClass("show");
-    }
-
-    if ($.cookie("Token") == null) {
-        Coker.Token.GetToken().done(function (result) {
-            console.log(result)
-        })
+    } else {
+        CheckToken();
     }
 
     $(".btn_cookie_accept").on("click", cookie_accept);
@@ -73,11 +76,26 @@ function scrollFunction() {
 function cookie_accept() {
     $.cookie('cookie', 'accept', { expires: 7 });
     $("#Cookie").toggleClass("show");
+    CreateToken();
 }
 
 function cookie_reject() {
     $.cookie('cookie', 'reject');
     $("#Cookie").toggleClass("show");
+}
+
+function CreateToken() {
+    Coker.Token.GetToken().done(function (result) {
+        $.cookie("Token", result.token, { expires: 30 })
+    })
+}
+
+function CheckToken() {
+    Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
+        if (!result.success) {
+            CheckToken();
+        }
+    })
 }
 
 function AddFavorites() {

@@ -1,5 +1,5 @@
 ﻿function HeaderInit() {
-    CarDropdownReset();
+    CartDropInit();
     MenuLiSize();
 
     $(window).resize(function () {
@@ -13,8 +13,6 @@
     Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
         $("#btn_car_dropdown > i").removeClass("open");
     })
-
-    $(".btn_cart_delete").on("click", CartDelete);
 
     var $myOffcanvas = $("#Mega_Menu>.offcanvas");
     $myOffcanvas.on('hidden.bs.offcanvas', function () {
@@ -67,19 +65,93 @@ function MenuLiSize() {
     });
 }
 
-function CartDelete() {
-    var $self = $(this);
-    var $cart_pro = $self.parents("li").first();
+function CartDropInit() {
+    Product.Get.DropCart($.cookie("Token")).done(function (result) {
+        if (result.length > 0) {
+            for (var i = 0; i < result.length; i++) {
+                var item = $($("#Template_Car_Dropdown").html()).clone();
+                var item_link = item.find(".pro_link"),
+                    item_image = item.find(".pro_image"),
+                    item_name = item.find(".pro_name"),
+                    item_unit = item.find(".pro_unit"),
+                    item_quantity = item.find(".pro_quantity"),
+                    item_btn_delete = item.find(".btn_cart_delete");
+
+                item.data("pid", result[i].id);
+                item_link.attr("href", "/Toilet/01");
+                item_image.attr("src", "../images/product/pro_pic_01.jpg");
+                item_name.text(result[i].title);
+                item_unit.text((result[i].price).toLocaleString('en-US'));
+                item_quantity.text(result[i].quantity);
+                item_btn_delete.on("click", function () {
+                    var $self = $(this).parents("li").first();
+                    CartDropDelete($self, $self.data("pid"))
+                });
+
+                var item_list_ul = $("#Car_Dropdown > ul");
+
+                item_list_ul.append(item);
+            }
+
+            $("#Car_Badge").text(result.length);
+            $("#Car_Dropdown_Null").addClass("d-none");
+            $(".btn_car_buy").removeAttr("disabled");
+        } else {
+            console.log("Down")
+            $("#Car_Dropdown > ul > li").remove();
+            $("#Car_Badge").text("");
+            $("#Car_Dropdown_Null").removeClass("d-none");
+            $(".btn_car_buy").attr("disabled", "");
+        }
+    })
+}
+
+function CartDropAdd() {
+
+}
+
+function CartDropDelete(self, id) {
     Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-        $cart_pro.remove();
-        $.cookie('Purchased_Type_Quantity', 0, { path: '/' });
-        $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
-        CarDropdownReset();
-        Coker.sweet.success("成功移除商品", null, true);
+        self.remove();
+        Product.Delete.DropCart(id).done(function () {
+            Coker.sweet.success("成功移除商品", null, true);
+            CheckIfCartNull() && CartClear();
+            $("#Car_Badge").text(parseInt($("#Car_Badge").text()) - 1);
+        }).fail(function () {
+            coker.sweet.error("錯誤", "移除商品發生未知錯誤", null, true);
+        })
     });
 }
 
-function CarDropdownReset() {
+function CheckIfCartNull() {
+    if ($("#Car_Dropdown > ul").children("li").length < 0) {
+        console.log("True")
+        return true;
+    }
+    console.log("False")
+    return false;
+}
+
+function CartClear() {
+    $("#Car_Dropdown > ul > li").remove();
+    $("#Car_Badge").text("");
+    $("#Car_Dropdown_Null").removeClass("d-none");
+    $(".btn_car_buy").attr("disabled", "");
+}
+
+//function CartDropDelete() {
+//    var $self = $(this);
+//    var $cart_pro = $self.parents("li").first();
+//    Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
+//        $cart_pro.remove();
+//        $.cookie('Purchased_Type_Quantity', 0, { path: '/' });
+//        $.cookie('Purchased_Item_Quantity', 0, { path: '/' });
+//        CarDropdownReset();
+//        Coker.sweet.success("成功移除商品", null, true);
+//    });
+//}
+
+/*function CarDropdownReset() {
     if ($.cookie('Purchased_Type_Quantity') > 0) {
         var item = $($("#Template_Car_Dropdown").html()).clone();
         var item_link = item.find(".pro_link"),
@@ -107,7 +179,7 @@ function CarDropdownReset() {
         $("#Car_Dropdown_Null").removeClass("d-none");
         $(".btn_car_buy").attr("disabled", "");
     }
-}
+}*/
 
 function CarItemChange() {
     $("#Car_Dropdown > ul li > figure > a > figcaption > .number > .pro_quantity").text($.cookie('Purchased_Item_Quantity'));

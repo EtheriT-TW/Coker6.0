@@ -1,13 +1,15 @@
-﻿
-using EtheriT.Coker.Core.Entity;
-using EtheriT.Coker.Web.Core.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Core.Models
+namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
 {
-    public class ShoppingCart : FullAuditedEntity
+    public class ShoppingCartAddUpDto
     {
+        public long? Id { get; set; }
         public Guid FK_Tid { get; set; }
-        public long? FK_Uid { get; set; }
         public long FK_Pid { get; set; }
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }
@@ -17,9 +19,7 @@ namespace EtheriT.Coker.Core.Models
         public int? Bonus { get; set; }
         public int? PriceType { get; set; }
         public bool IsAdditional { get; set; }
-        public int Ser_No { get; set; }
-        public Token? Token { get; set; }
-        public Prod? Prod { get; set; }
-        public Prod_Spec? Prod_Spec { get; set; }
+        public int? Ser_No { get; set; }
+
     }
 }

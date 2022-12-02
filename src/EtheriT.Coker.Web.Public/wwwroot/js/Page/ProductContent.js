@@ -70,18 +70,42 @@
         $radio_btn.children('label').toggleClass('pe-none');
     }
 
-    $(".btn_addToCar").on("click", AddToCar);
+    $(".btn_addToCar").on("click", AddToCart);
+    $(".btn_certification").on("click", function () {
+        console.log("Click")
+        console.log($(this))
+        console.log($(this).data("certification"))
+    })
 }
 
-function AddToCar() {
-    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()), { path: '/' });
-    Coker.sweet.success("成功加入購物車！", null, true);
-    if ($.cookie('Purchased_Type_Quantity') > 0) {
-        CarItemChange();
-    } else {
-        $.cookie('Purchased_Type_Quantity', 1, { path: '/' });
-        CarDropdownReset();
-    }
+//function AddToCart() {
+//    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()), { path: '/' });
+//    Coker.sweet.success("成功加入購物車！", null, true);
+//    if ($.cookie('Purchased_Type_Quantity') > 0) {
+//        CarItemChange();
+//    } else {
+//        $.cookie('Purchased_Type_Quantity', 1, { path: '/' });
+//        CarDropdownReset();
+//    }
+//}
+
+function AddToCart() {
+    Product.Add.Cart({
+        FK_Tid: $.cookie("Token"),
+        FK_Pid: 1,
+        FK_S1id: 1,
+        FK_S2id: 4,
+        Quantity: 1,
+        Discont: 0,
+        Bonus: 0,
+        PriceType: 0,
+        IsAdditional: false,
+        Ser_No: 500,
+    }).done(function () {
+        Coker.sweet.success("商品已成功加入購物車", null, true);
+    }).fail(function () {
+        Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+    });
 }
 
 function ShowBigPro() {

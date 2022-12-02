@@ -1,10 +1,12 @@
 ﻿using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Primitives;
+using System.Security.Principal;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -25,13 +27,13 @@ namespace EtheriT.Coker.Application.Token
             this.httpContextAccessor = httpContextAccessor;
             this.cache = cache;
         }
-        public async Task<ResponseMessageDto> CreateToken()
+        public async Task<TokenResponseDto> CreateToken()
         {
-            ResponseMessageDto output = new ResponseMessageDto();
+            TokenResponseDto output = new TokenResponseDto();
             try
             {
                 DateTime dateTime = DateTime.Now;
-                DateTime EndDateTime = dateTime.AddDays(7);
+                DateTime EndDateTime = dateTime.AddDays(30);
                 Core.Models.Token t = new Core.Models.Token
                 {
                     ip = httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString(),
@@ -42,7 +44,42 @@ namespace EtheriT.Coker.Application.Token
                 db.Tokens.Add(t);
                 db.SaveChanges();
                 output.Success = true;
-                output.Message = t.id.ToString();
+                output.Token = t.id.ToString();
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<TokenResponseDto> CheckToken(string id)
+        {
+            TokenResponseDto output = new TokenResponseDto();
+            try
+            {
+                var tokens = db.Tokens.Where(e => e.id == Guid.Parse(id)).First();
+                if (tokens == null)
+                {
+                    output.Success = false;
+                    output.Error = "Token doesn't exist";
+                }
+                else
+                {
+                    DateTime dateTime = DateTime.Now;
+                    if (tokens.UserID == null & DateTime.Compare(dateTime, (DateTime)tokens.EndTime) > 0)
+                    {
+                        output.Success = false;
+                        output.Error = "Token has expired";
+                        db.Tokens.Remove(tokens);
+                        db.SaveChanges();
+                    }
+                    else
+                    {
+                        output.Success = true;
+                    }
+                }
             }
             catch (Exception e)
             {

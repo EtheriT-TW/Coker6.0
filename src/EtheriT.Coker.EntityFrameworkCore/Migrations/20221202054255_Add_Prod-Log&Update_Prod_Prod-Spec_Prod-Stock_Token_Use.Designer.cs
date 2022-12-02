@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221202054255_Add_Prod-Log&Update_Prod_Prod-Spec_Prod-Stock_Token_Use")]
+    partial class Add_ProdLogUpdate_Prod_ProdSpec_ProdStock_Token_Use
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -878,6 +880,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Tid");
 
+                    b.HasIndex("FK_Uid");
+
                     b.ToTable("ShoppingCarts");
                 });
 
@@ -1470,11 +1474,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
+                        .WithMany("ShoppingCarts")
+                        .HasForeignKey("FK_Uid");
+
                     b.Navigation("Prod");
 
                     b.Navigation("Prod_Spec");
 
                     b.Navigation("Token");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypair", b =>
@@ -1572,6 +1582,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>
                 {
                     b.Navigation("Prod_Logs");
+
+                    b.Navigation("ShoppingCarts");
 
                     b.Navigation("Webs");
                 });

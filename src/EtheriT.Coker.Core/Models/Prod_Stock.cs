@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Core.Models
         public int? Stock { get; set; }
         public int? Safe_Qty { get; set; }
         public int Ser_No { get; set; }
+        public Prod? Prod { get; set; }
         public Prod_Spec? Prod_Spec { get; set; }
 
     }

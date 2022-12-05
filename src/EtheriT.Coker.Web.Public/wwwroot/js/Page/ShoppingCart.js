@@ -1,7 +1,7 @@
-﻿
-var buy_step_swiper;
-var gotop_switch = false;
-var isCheckout = false;
+﻿var buy_step_swiper;
+var gotop_switch = false, isCheckout = false;
+
+var subtotal
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms;
 var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
@@ -25,12 +25,16 @@ function PageReady() {
         }
     };
 
+    ElementInit();
+    CartInit();
+
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         autoHeight: true,
         loop: false,
+        enabled: false,
         pagination: {
             el: ".swiper_pagination > .swiper_pagination_buystep",
             clickable: true,
@@ -78,8 +82,6 @@ function PageReady() {
         }
     });
 
-    ElementInit();
-
     /* 根據畫面高度判斷切換Swiper是否滑動到上方 */
     top_position = $(".swiper").offset().top;
 
@@ -93,18 +95,18 @@ function PageReady() {
     });
 
     /* Cookie 資料初始設置 */
-    $.cookie('subtotal', '', { path: '/' });
-    $.cookie('shipping_fee', '', { path: '/' });
-    $.cookie('total_amount', '', { path: '/' });
-    $.cookie('payment_method', '', { path: '/' });
+    //$.cookie('subtotal', '', { path: '/' });
+    //$.cookie('shipping_fee', '', { path: '/' });
+    //$.cookie('total_amount', '', { path: '/' });
+    //$.cookie('payment_method', '', { path: '/' });
 
-    HasProduct() && ReloadAllAmount();
+    //HasProduct() && ReloadAllAmount();
 
-    /* Popover Init */
-    var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl)
-    })
+    ///* Popover Init */
+    //var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    //var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+    //    return new bootstrap.Popover(popoverTriggerEl)
+    //})
 
     /* 鍵盤輸入欄位檢測 */
     document.addEventListener("keyup", AutoSwapInput);
@@ -140,11 +142,11 @@ function PageReady() {
         buy_step_swiper.slidePrev();
     });
 
-    $(".btn_move_to_favorites").on("click", MoveToFavorites);
-    $(".btn_remove_pro").on("click", RemoveProduct);
+    //$(".btn_move_to_favorites").on("click", MoveToFavorites);
+    //$(".btn_remove_pro").on("click", RemoveProduct);
 
-    $(".btn_count_plus").on("click", AmountPlus);
-    $(".btn_count_minus").on("click", AmountMinus);
+    //$(".btn_count_plus").on("click", AmountPlus);
+    //$(".btn_count_minus").on("click", AmountMinus);
 
     $(".btn_edit_data").on("click", OrdererEdit);
     $(".btn_delete_recipient").on("click", DeleteRecipient);
@@ -358,112 +360,57 @@ function FormCheck(Forms) {
     return Check;
 }
 
-/* 數量修改 */
-function AmountPlus() {
-    var $self_unit = $(this).parents(".content").first().children(".pro_unit");
-    var $self_subtotal = $(this).parents(".content").first().children(".pro_subtotal");
-    var $self_input_count = $(this).parents(".counter_input").first().children("input");
-    $self_input_count.val(parseInt($self_input_count.val()) + 1);
-    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + 1, { path: '/' })
-    var subtotal = parseInt($self_unit.data('unitprice')) * parseInt($self_input_count.val());
-    $self_subtotal.text(subtotal.toLocaleString('en-US'));
-
-    $.cookie('subtotal', parseInt($.cookie('subtotal')) + $self_unit.data('unitprice'), { path: '/' })
-    AllAmountChange();
-    CarItemChange();
-}
-
-function AmountMinus() {
-    var $self_unit = $(this).parents(".content").first().children(".pro_unit");
-    var $self_subtotal = $(this).parents(".content").first().children(".pro_subtotal");
-    var $self_input_count = $(this).parents(".counter_input").first().children("input");
-
-    if (parseInt($.cookie('Purchased_Item_Quantity')) > 1) {
-        $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) - 1, { path: '/' })
-        $self_input_count.val(parseInt($self_input_count.val()) - 1);
-        var subtotal = parseInt($self_unit.data('unitprice')) * parseInt($self_input_count.val());
-        $self_subtotal.text(subtotal.toLocaleString('en-US'));
-
-        $.cookie('subtotal', parseInt($.cookie('subtotal')) - $self_unit.data('unitprice'), { path: '/' })
-        AllAmountChange();
-        CarItemChange();
-    }
-}
-
-function AmountEnter() {
-    var $self = $("#Step1 > .card-body > .purchase_list > .purchase_item > .content");
-    var $self_unit = $self.children(".pro_unit");
-    var $self_subtotal = $self.children(".pro_subtotal");
-    var $self_input_count = $self.children(".counter_input").children(".pro_quantity");
-
-    if ($self_input_count.val() <= 0) {
-        $self_input_count.val(1);
-        $.cookie('Purchased_Item_Quantity', 1, { path: '/' })
-    } else {
-        $.cookie('Purchased_Item_Quantity', $self_input_count.val(), { path: '/' })
-    }
-    var subtotal = parseInt($self_unit.data('unitprice')) * parseInt($self_input_count.val());
-    $self_subtotal.text(subtotal.toLocaleString('en-US'));
-
-    var total_price = 0;
-
-    $(".purchase_item").each(function () {
-        var $self_unit = $(this).children(".content").children(".pro_unit");
-        var $self_quantity = $(this).children(".content").children(".counter_input").children(".pro_quantity");
-        total_price = total_price + ($self_unit.data('unitprice') * $self_quantity.val());
-    });
-
-    $.cookie('subtotal', total_price, { path: '/' })
-
-    AllAmountChange();
-    CarItemChange();
-}
-
-/* 商品移動至喜愛/移除 */
-function MoveToFavorites() {
-    $selfparent = $(this).parents("li").first();
-    Coker.sweet.confirm("確定將商品加入收藏？", "該商品將會加入收藏並從購物車中移除", "加入收藏", "取消", function () {
-        $selfparent.remove();
-        Coker.sweet.success("成功加入收藏！", null, true);
-        $.cookie("Purchased_Type_Quantity", 0, { path: '/' });
-        $.cookie("Purchased_Item_Quantity", 0, { path: '/' });
-        HasProduct() && ReloadAllAmount();
-        buy_step_swiper.update();
-        CarDropdownReset();
-    });
-}
-
-function RemoveProduct() {
-    $selfparent = $(this).parents("li").first();
-    Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-        $selfparent.remove();
-        Coker.sweet.success("成功移除商品", null, true);
-        $.cookie("Purchased_Type_Quantity", 0, { path: '/' });
-        $.cookie("Purchased_Item_Quantity", 0, { path: '/' });
-        HasProduct() && ReloadAllAmount();
-        buy_step_swiper.update();
-        CarDropdownReset();
-    });
-}
-
 /* 購物車無商品顯示的內容 */
 function HasProduct() {
-    if ($.cookie("Purchased_Type_Quantity") > 0) {
-        $("#Purchase_Null").addClass('d-none');
-        $("#Step1 > .card-body").removeClass('d-none');
-        buy_step_swiper.enable();
-        PurchaseListInit();
-    } else {
-        $("#Purchase_Null").removeClass('d-none');
-        $("#Step1 > .card-body").addClass('d-none');
-        buy_step_swiper.disable();
-        return false;
-    }
-    return true;
+    /*PurchaseListInit();*/
+    //if ($.cookie("Purchased_Type_Quantity") > 0) {
+    //    $("#Purchase_Null").addClass('d-none');
+    //    $("#Step1 > .card-body").removeClass('d-none');
+    //    buy_step_swiper.enable();
+    //    PurchaseListInit();
+    //} else {
+    //    $("#Purchase_Null").removeClass('d-none');
+    //    $("#Step1 > .card-body").addClass('d-none');
+    //    buy_step_swiper.disable();
+    //    return false;
+    //}
+    //return true;
 }
 
-/* 暫時用來輸入購買資料 */
-function PurchaseListInit() {
+function CartInit() {
+    Product.GetAll.Cart($.cookie("Token")).done(function (result) {
+        if (result.length > 0) {
+            $("#Step1 > .card-body").removeClass("d-none");
+            for (var i = 0; i < result.length; i++) {
+                CartAdd(result[i])
+            }
+            $("#Purchase_Null").addClass("d-none");
+            buy_step_swiper.enable();
+
+            var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl)
+            })
+
+            buy_step_swiper.update();
+            SubTotalCount();
+        }
+    })
+
+    //Product.GetAll.Cart($.cookie("Token")).done(function (result) {
+    //    if (result.length > 0) {
+    //        for (var i = 0; i < result.length; i++) {
+    //            CartAdd(result[i])
+    //        }
+
+    //        $("#Purchase_Null").addClass("d-none");
+    //        $(".btn_car_buy").removeAttr("disabled");
+    //    }
+    //})
+}
+
+function CartAdd(result) {
+    console.log(result);
     var item = $($("#Template_Purchase_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
@@ -471,20 +418,247 @@ function PurchaseListInit() {
         item_specification = item.find(".pro_specification"),
         item_instructions = item.find(".pro_instructions"),
         item_unit = item.find(".pro_unit"),
-        item_quantity = item.find(".pro_quantity");
+        item_quantity = item.find(".pro_quantity"),
+        item_total = item.find(".pro_subtotal"),
+        item_btn_count_plus = item.find(".btn_count_plus"),
+        item_btn_count_minus = item.find(".btn_count_minus");
+    item_btn_remove_pro = item.find(".btn_remove_pro"),
+        item_btn_move_to_favorites = item.find(".btn_move_to_favorites");
 
-    item_link.attr("href", "/Toilet/01");
-    item_image.attr("src", "../images/product/pro_pic_01.jpg");
-    item_name.text("CS230 一段省水分離式幼兒馬桶");
+    item.data("scid", result.scId);
+    item_link.attr("href", "/Toilet/" + result.pId);
+    item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
+    item_name.text(result.title);
     item_specification.text("白色");
-    item_instructions.text("規格說明文字");
-    item_unit.data('unitprice', 9100);
-    item_quantity.val($.cookie('Purchased_Item_Quantity'));
+    item_instructions.text(result.description);
+    item_unit.text((result.price).toLocaleString('en-US'))
+    item_quantity.val(result.quantity);
+    item_total.data("subtotal", result.price * result.quantity)
+    item_total.text(item_total.data("subtotal").toLocaleString('en-US'))
+
+    item_btn_remove_pro.on("click", function () {
+        var $self = $(this).parents("li").first();
+        Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
+            CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
+        });
+    });
+    item_btn_move_to_favorites.on("click", function () {
+        var $self = $(this).parents("li").first();
+        Coker.sweet.confirm("確定將商品加入收藏？", "該商品將會加入收藏並從購物車中移除", "加入收藏", "取消", function () {
+            CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
+        });
+    });
+    item_btn_count_plus.on("click", function () {
+        var $self = $(this);
+        var $self_bro = $self.siblings(".pro_quantity");
+        $self_bro.val(parseInt($self_bro.val()) + 1)
+        CartQuantityUpdate(item.data("scid"), $self_bro.val());
+    });
+    item_btn_count_minus.on("click", function () {
+        var $self = $(this);
+        var $self_bro = $self.siblings(".pro_quantity");
+        if ($self_bro.val() > 1) {
+            $self_bro.val(parseInt($self_bro.val()) - 1)
+            CartQuantityUpdate(item.data("scid"), $self_bro.val());
+        }
+    });
 
     var item_list_ul = $("#Step1 > .card-body > .purchase_list");
 
     item_list_ul.append(item);
 }
+
+function SubTotalCount() {
+    subtotal = 0;
+    $('.purchase_list').children("li").each(function () {
+        subtotal += $(this).children(".content").children(".pro_subtotal").data("subtotal");
+    })
+    console.log(subtotal)
+    $(".subtotal").each(function () {
+        $(this).text(subtotal.toLocaleString('en-US'))
+    })
+}
+
+function CartQuantityUpdate(scid, quantity) {
+    Product.Update.Cart({
+        Id: scid,
+        FK_Tid: $.cookie("Token"),
+        Quantity: quantity,
+    }).done(function (result) {
+        Product.GetOne.Cart(result.message).done(function (result) {
+            CartUpdate(result);
+        });
+    }).fail(function () {
+        Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
+    });
+}
+
+function CartUpdate(result) {
+    console.log(result)
+    var $car_li = $("#Step1 > .card-body > .purchase_list > .purchase_item");
+    $car_li.each(function () {
+        var $self = $(this)
+        console.log($self)
+        //if ($self.data("scid") == result.scId) {
+        //    $self.find(".pro_quantity").text(result.quantity)
+        //}
+    });
+}
+
+function CartDelete(self, id, success, error) {
+    self.remove();
+    Product.Delete.Cart(id).done(function () {
+        Coker.sweet.success(success, null, true);
+        SubTotalCount();
+        CheckIfNull();
+        if (parseInt($("#Car_Badge").text()) == 0) {
+            DetailsClear();
+        }
+    }).fail(function () {
+        Coker.sweet.error("錯誤", error, null, true);
+    })
+}
+
+function DetailsClear() {
+    $("#Step1 > .card-body").addClass("d-none");
+    $("#Purchase_Null").removeClass("d-none");
+    buy_step_swiper.disable();
+}
+
+/* 數量修改 */
+//function AmountPlus() {
+//    var $self_unit = $(this).parents(".content").first().children(".pro_unit");
+//    var $self_subtotal = $(this).parents(".content").first().children(".pro_subtotal");
+//    var $self_input_count = $(this).parents(".counter_input").first().children("input");
+//    $self_input_count.val(parseInt($self_input_count.val()) + 1);
+//    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + 1, { path: '/' })
+//    var subtotal = parseInt($self_unit.data('unitprice')) * parseInt($self_input_count.val());
+//    $self_subtotal.text(subtotal.toLocaleString('en-US'));
+
+//    $.cookie('subtotal', parseInt($.cookie('subtotal')) + $self_unit.data('unitprice'), { path: '/' })
+//    AllAmountChange();
+//    CarItemChange();
+//}
+
+//function AmountMinus() {
+//    var $self_unit = $(this).parents(".content").first().children(".pro_unit");
+//    var $self_subtotal = $(this).parents(".content").first().children(".pro_subtotal");
+//    var $self_input_count = $(this).parents(".counter_input").first().children("input");
+
+//    if (parseInt($.cookie('Purchased_Item_Quantity')) > 1) {
+//        $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) - 1, { path: '/' })
+//        $self_input_count.val(parseInt($self_input_count.val()) - 1);
+//        var subtotal = parseInt($self_unit.data('unitprice')) * parseInt($self_input_count.val());
+//        $self_subtotal.text(subtotal.toLocaleString('en-US'));
+
+//        $.cookie('subtotal', parseInt($.cookie('subtotal')) - $self_unit.data('unitprice'), { path: '/' })
+//        AllAmountChange();
+//        CarItemChange();
+//    }
+//}
+
+function AmountEnter() {
+    var $self_input_count = $("#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > .pro_quantity");
+    if ($self_input_count.val() < 1) {
+        $self_input_count.val(1);
+    } else {
+    }
+
+    //var $self = $("#Step1 > .card-body > .purchase_list > .purchase_item > .content");
+    //var $self_unit = $self.children(".pro_unit");
+    //var $self_subtotal = $self.children(".pro_subtotal");
+    //var $self_input_count = $self.children(".counter_input").children(".pro_quantity");
+
+    //if ($self_input_count.val() <= 0) {
+    //    $self_input_count.val(1);
+    //    $.cookie('Purchased_Item_Quantity', 1, { path: '/' })
+    //} else {
+    //    $.cookie('Purchased_Item_Quantity', $self_input_count.val(), { path: '/' })
+    //}
+    //var subtotal = parseInt($self_unit.data('unitprice')) * parseInt($self_input_count.val());
+    //$self_subtotal.text(subtotal.toLocaleString('en-US'));
+
+    //var total_price = 0;
+
+    //$(".purchase_item").each(function () {
+    //    var $self_unit = $(this).children(".content").children(".pro_unit");
+    //    var $self_quantity = $(this).children(".content").children(".counter_input").children(".pro_quantity");
+    //    total_price = total_price + ($self_unit.data('unitprice') * $self_quantity.val());
+    //});
+
+    //$.cookie('subtotal', total_price, { path: '/' })
+
+    //AllAmountChange();
+    //CarItemChange();
+}
+
+/*
+ function CartDropInit() {
+    Product.GetAll.Cart($.cookie("Token")).done(function (result) {
+        if (result.length > 0) {
+            for (var i = 0; i < result.length; i++) {
+                CartDropAdd(result[i])
+            }
+
+            $("#Car_Dropdown_Null").addClass("d-none");
+            $(".btn_car_buy").removeAttr("disabled");
+        }
+    })
+}
+
+function CartDropAdd(result) {
+    var item = $($("#Template_Car_Dropdown").html()).clone();
+    var item_link = item.find(".pro_link"),
+        item_image = item.find(".pro_image"),
+        item_name = item.find(".pro_name"),
+        item_unit = item.find(".pro_unit"),
+        item_quantity = item.find(".pro_quantity"),
+        item_btn_delete = item.find(".btn_cart_delete");
+
+    item.data("scid", result.scId);
+    item_link.attr("href", "/Toilet/" + result.pId);
+    item_image.attr("src", "../images/product/pro_pic_0" + result.pId + ".jpg");
+    item_name.text(result.title);
+    item_unit.text((result.price + "").toLocaleString('en-US'));
+    item_quantity.text(result.quantity);
+    item_btn_delete.on("click", function () {
+        var $self = $(this).parents("li").first();
+        CartDropDelete($self, $self.data("scid"))
+    });
+
+    var item_list_ul = $("#Car_Dropdown > ul");
+
+    item_list_ul.append(item);
+
+    var car_num = $("#Car_Badge").text() == "" ? 1 : parseInt($("#Car_Badge").text()) + 1;
+    $("#Car_Badge").text(car_num.toString());
+}
+ 
+ */
+
+/* 暫時用來輸入購買資料 */
+//function PurchaseListInit() {
+//    var item = $($("#Template_Purchase_Details").html()).clone();
+//    var item_link = item.find(".pro_link"),
+//        item_image = item.find(".pro_image"),
+//        item_name = item.find(".pro_name"),
+//        item_specification = item.find(".pro_specification"),
+//        item_instructions = item.find(".pro_instructions"),
+//        item_unit = item.find(".pro_unit"),
+//        item_quantity = item.find(".pro_quantity");
+
+//    item_link.attr("href", "/Toilet/01");
+//    item_image.attr("src", "../images/product/pro_pic_01.jpg");
+//    item_name.text("CS230 一段省水分離式幼兒馬桶");
+//    item_specification.text("白色");
+//    item_instructions.text("規格說明文字");
+//    item_unit.data('unitprice', 9100);
+//    item_quantity.val($.cookie('Purchased_Item_Quantity'));
+
+//    var item_list_ul = $("#Step1 > .card-body > .purchase_list");
+
+//    item_list_ul.append(item);
+//}
 
 /* 刪除收件人 */
 function DeleteRecipient() {

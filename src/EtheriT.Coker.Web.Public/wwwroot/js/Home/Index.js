@@ -5,6 +5,17 @@
         $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top - ($("header").height() * 2) }, 0);
     });
 
+    $(".btn_buy").on("click", function () {
+        $frame = $(this).parents(".frame").first();
+        $("#ShoppingCarModal > .Modal").data("pid", $frame.data("pid"));
+    });
+
+    $(".btn_addcart").on("click", function () {
+        $frame = $(this).parents("li").first();
+        $("#ShoppingCarModal > .Modal").data("pid", $frame.data("pid"));
+    });
+
+
     var banner_swiper = new Swiper("#BannerSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,

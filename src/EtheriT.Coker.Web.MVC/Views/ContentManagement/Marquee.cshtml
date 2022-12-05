@@ -118,7 +118,9 @@
 				</div>
 
 				<div class="sort input-group mb-3">
-					<div class="position-absolute ps-2 top-50 translate-middle-y z-index-up"><i class="fa-solid fa-arrow-up-wide-short pe-2"></i>排序</div>
+					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+						<span class="material-symbols-outlined me-1">sort_by_alpha</span>排序
+					</div>
 					<input id="InputSort" class="form-control rounded" type="number" aria-label="Input Sort of Marquee" disabled="disabled" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
 						<input id="SortCheck" class="form-check-input" type="checkbox" value="">
@@ -127,7 +129,9 @@
 				</div>
 
 				<div class="link input-group mb-3">
-					<div class="position-absolute ps-2 top-50 translate-middle-y z-index-up"><i class="fa-solid fa-link pe-2"></i></div>
+					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+						<span class="material-symbols-outlined me-1">link</span>
+					</div>
 					<input id="InputLink" class="form-control rounded" type="text" aria-label="Input Link of Marquee" value="https://" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
 						<input id="TargetCheck" class="form-check-input" type="checkbox" value="">
@@ -136,7 +140,9 @@
 				</div>
 
 				<div class="date input-group mb-3">
-					<div class="position-absolute ps-2 top-50 translate-middle-y z-index-up"><i class="fa-regular fa-calendar pe-2"></i>調整顯示日期</div>
+					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+						<span class="material-symbols-outlined me-1">calendar_today</span>調整顯示日期
+					</div>
 					<input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Marquee" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
 						<input id="PermanentCheck" class="form-check-input" type="checkbox" value="">

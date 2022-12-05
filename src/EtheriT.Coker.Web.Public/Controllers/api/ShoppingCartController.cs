@@ -26,10 +26,22 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await shoppingCartAppService.AddUp(dto);
         }
 
-        [HttpGet]
-        public async Task<List<ShoppingCartGetDrop>> GetDrop(String id)
+        [HttpPost]
+        public async Task<ResponseMessageDto> QuantityUpdate(ShoppingQuantityUpdateDto dto)
         {
-            return await shoppingCartAppService.GetDrop(id);
+            return await shoppingCartAppService.QuantityUpdate(dto);
+        }
+
+        [HttpGet]
+        public async Task<List<ShoppingCartGetAllDto>> GetAll(String Tid)
+        {
+            return await shoppingCartAppService.GetAll(Tid);
+        }
+
+        [HttpGet]
+        public async Task<ShoppingCartGetDrop> GetDropOne(long id)
+        {
+            return await shoppingCartAppService.GetDropOne(id);
         }
 
         [HttpGet]

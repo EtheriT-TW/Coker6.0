@@ -1,5 +1,5 @@
 ﻿var Product = {
-    Add: {
+    AddUp: {
         Cart: function (data) {
             return $.ajax({
                 url: "/api/ShoppingCart/AddUp",
@@ -10,17 +10,37 @@
             });
         }
     },
-    Get: {
-        DropCart: function (id) {
+    Update: {
+        Cart: function (data) {
             return $.ajax({
-                url: "/api/ShoppingCart/GetDrop/",
+                url: "/api/ShoppingCart/QuantityUpdate",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        }
+    },
+    GetAll: {
+        Cart: function (Tid) {
+            return $.ajax({
+                url: "/api/ShoppingCart/GetAll/",
+                type: "GET",
+                data: { Tid: Tid }
+            });
+        }
+    },
+    GetOne: {
+        Cart: function (id) {
+            return $.ajax({
+                url: "/api/ShoppingCart/GetDropOne/",
                 type: "GET",
                 data: { id: id }
             });
         }
     },
     Delete: {
-        DropCart: function (id) {
+        Cart: function (id) {
             return $.ajax({
                 url: "/api/ShoppingCart/DeleteDrop/",
                 type: "GET",

@@ -8,7 +8,9 @@ namespace EtheriT.Coker.Application.Shared.ShoppingCart
     public interface IShoppingCartAppService
     {
         public Task<ResponseMessageDto> AddUp(ShoppingCartAddUpDto dto);
-        public Task<List<ShoppingCartGetDrop>> GetDrop(String id);
+        public Task<ResponseMessageDto> QuantityUpdate(ShoppingQuantityUpdateDto dto);
+        public Task<List<ShoppingCartGetAllDto>> GetAll(String Tid);
+        public Task<ShoppingCartGetDrop> GetDropOne(long id);
         public Task<ResponseMessageDto> DeleteDrop(long id);
 
     }

@@ -43,7 +43,7 @@ function DataClear() {
 function AddToCart() {
     Product.AddUp.Cart({
         FK_Tid: $.cookie("Token"),
-        FK_Pid: $modal.data("pid"),
+        FK_PSid: $modal.data("pid"),
         FK_S1id: 1,
         FK_S2id: 4,
         Quantity: $input_quantity.val(),
@@ -53,16 +53,20 @@ function AddToCart() {
         IsAdditional: false,
         Ser_No: 500,
     }).done(function (result) {
-        Coker.sweet.success("商品已成功加入購物車", null, true);
-        var type = (result.message).substr(0, 1);
-        var id = (result.message).substr(1);
-        Product.GetOne.Cart(id).done(function (result) {
-            if (type == 'N') {
-                CartDropAdd(result);
-            } else {
-                CartDropUpdate(result);
-            }
-        });
+        if (result.success) {
+            Coker.sweet.success("商品已成功加入購物車", null, true);
+            var type = (result.message).substr(0, 1);
+            var id = (result.message).substr(1);
+            Product.GetOne.Cart(id).done(function (result) {
+                if (type == 'N') {
+                    CartDropAdd(result);
+                } else {
+                    CartDropUpdate(result);
+                }
+            });
+        } else {
+            Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+        }
     }).fail(function () {
         Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
     });

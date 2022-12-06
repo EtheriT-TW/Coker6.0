@@ -189,7 +189,7 @@
 					<form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" novalidate>
 						<div class="d-flex">
 							<div class="form-check w-50 text-start">
-								<input id="FreeShip" class="form-check-input" type="radio" name="RadioShipping" value="1" required>
+								<input id="FreeShip" class="form-check-input" type="radio" name="RadioShipping" value="1" data-freight="0" required>
 								<label class="form-check-label" for="FreeShip">免運</label>
 								<div class="invalid-feedback">請選擇運送方式</div>
 							</div>
@@ -224,7 +224,7 @@
 						</div>
 						<div class="py-2 d-flex justify-content-end text-end">
 							<div>運費</div>
-							<div class="shipping_fee price"></div>
+							<div class="shipping_fee price">0</div>
 						</div>
 						<div class="py-2 border-top d-flex justify-content-end text-end">
 							<div>小計</div>
@@ -513,50 +513,60 @@
 					</div>
 				</div>
 			</div>
-
+			
 			<div id="Step4" class="card swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
 					<div class="fs-5 my-2">購物明細</div>
-					<div class="order_number fs-5 fw-bold">123456789</div>
+					<div class="order_number fs-5 fw-bold"></div>
 				</div>
-
+				
 				<div class="card-body px-0">
 					<div id="Pruchase_Content">
 						<div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
 
-						<div class="row gx-0 border-bottom border-top py-2 align-items-lg-center position-relative">
-							<div class="product col-auto col-lg-6 px-sm-2 d-flex align-items-center">
-								<a href="/Toilet/1">
-									<img src="~/images/product/pro_pic_03.jpg">
+						<div class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+							<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
+								<a class="pro_link col-lg-2 col-12" href="">
+									<img class="pro_image img-fluid" src="">
 								</a>
-								<a href="/Toilet/1">
-									<div class="overflow-hidden pe-4">
-										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
+								<a class="pro_link col text-start overflow-hidden" href="">
+									<div class="content d-lg-block d-none">
+										<div class="pro_name single_line fw-bold"></div>
 										<div class="pro_detail d-flex flex-wrap">
-											<div class="pe-3">白色</div>
-											<div class="specifications">規格說明文字</div>
+											<div class="pro_specification pe-3"></div>
+											<div class="pro_instructions single_line"></div>
 										</div>
 									</div>
 								</a>
 							</div>
 
-							<div class="col col-lg-6 row">
-								<div class="pro_unit col-4 text-center">26,200</div>
+							<div class="content col-sm-6 col row gx-0 overflow-hidden">
+								<a class="pro_link" href="">
+									<div class="d-lg-none d-block text-start">
+										<div class="pro_name single_line fw-bold"></div>
+										<div class="pro_detail d-flex flex-wrap">
+											<div class="pro_specification pe-3"></div>
+											<div class="pro_instructions single_line"></div>
+										</div>
+									</div>
+								</a>
 
-								<div class="col-4 text-center">x1</div>
+								<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center"></div>
 
-								<div class="pro_total_amount col-4 price text-center">26,200</div>
+								<div class="pro_quantity col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center"></div>
+
+								<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
 							</div>
 						</div>
 
 						<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
 							<div class="py-2 d-flex justify-content-end text-end">
 								<div>總金額</div>
-								<div class="subtotal col-4 price">26,200</div>
+								<div class="subtotal col-4 price"></div>
 							</div>
 							<div class="py-2 d-flex justify-content-end text-end">
 								<div>運費</div>
-								<div class="delivery_fee col-4 price" data-freight="0">0</div>
+								<div class="shipping_fee col-4 price">0</div>
 							</div>
 							<div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
 								<div>本次消費總金額</div>
@@ -669,7 +679,7 @@
 
 								<div class="mb-2 row align-items-center">
 									<div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
-									<div class="col">新台幣<span class="paid_amount fs-5 fw-bold">26,200</span></div>
+									<div class="col">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
 								</div>
 
 								<div class="mb-2 row align-items-center">

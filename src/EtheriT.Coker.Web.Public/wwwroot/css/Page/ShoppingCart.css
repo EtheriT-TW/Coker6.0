@@ -350,6 +350,9 @@ body > .popover.bs-popover-auto.fade {
     background-color: var(--red-main);
 }
 
+#Pruchase_Content > .purchase_item > .content > .pro_quantity::before {
+    content: '×';
+}
 
 /*RWD*/
 @media (max-width: 1366px) {

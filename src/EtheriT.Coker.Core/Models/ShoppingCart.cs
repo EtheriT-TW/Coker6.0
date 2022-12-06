@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public Guid FK_Tid { get; set; }
         public long? FK_Uid { get; set; }
-        public long FK_Pid { get; set; }
+        public long FK_PSid { get; set; }
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }
         public int Quantity { get; set; }
@@ -19,7 +19,6 @@ namespace EtheriT.Coker.Core.Models
         public bool IsAdditional { get; set; }
         public int Ser_No { get; set; }
         public Token? Token { get; set; }
-        public Prod? Prod { get; set; }
-        public Prod_Spec? Prod_Spec { get; set; }
+        public Prod_Stock Prod_Stock { get; set; }
     }
 }

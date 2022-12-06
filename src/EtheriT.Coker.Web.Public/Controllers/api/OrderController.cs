@@ -20,9 +20,21 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpPost]
-        public async Task<ResponseMessageDto> Add(OrderHeaderAddDto dto)
+        public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
-            return await orderAppService.Add(dto);
+            return await orderAppService.AddHeader(dto);
+        }
+
+        [HttpPost]
+        public async Task<ResponseMessageDto> AddDetails(OrderDetailsAddDto dto)
+        {
+            return await orderAppService.AddDetails(dto);
+        }
+
+        [HttpGet]
+        public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)
+        {
+            return await orderAppService.GetHeaderOne(id);
         }
 
     }

@@ -40,7 +40,6 @@
             $(this).css("align-content", "start");
         }
     });
-
 }
 
 function MenuLiSize() {
@@ -111,7 +110,6 @@ function CartDropAdd(result) {
         $("#Car_Dropdown_Null").addClass("d-none");
         $(".btn_car_buy").removeAttr("disabled");
     }
-
 }
 
 function CartDropUpdate(result) {

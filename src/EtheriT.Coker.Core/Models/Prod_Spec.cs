@@ -8,6 +8,5 @@ namespace EtheriT.Coker.Core.Models
         public string Title { get; set; }
         public Prod_Spec_Type? Prod_Spec_Type { get; set; }
         public List<Prod_Stock> Prod_Stocks { get; set; }
-        public List<ShoppingCart> ShoppingCarts { get; set; }
     }
 }

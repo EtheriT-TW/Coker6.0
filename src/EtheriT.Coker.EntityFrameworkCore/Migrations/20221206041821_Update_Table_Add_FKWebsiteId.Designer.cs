@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221206041821_Update_Table_Add_FKWebsiteId")]
+    partial class Update_Table_Add_FKWebsiteId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -614,61 +616,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<bool>("permanent")
-                        .HasColumnType("bit");
-
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("Prods");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            Description = "商品一的說明",
-                            Disp_Opt = true,
-                            FK_WebsiteId = 2L,
-                            Introduction = "商品一的介紹",
-                            IsDeleted = false,
-                            Price = 28000.0,
-                            Ser_No = 500,
-                            Title = "商品一的名稱",
-                            permanent = false
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            Description = "商品二的說明",
-                            Disp_Opt = true,
-                            FK_WebsiteId = 2L,
-                            Introduction = "商品二的介紹",
-                            IsDeleted = false,
-                            Price = 9500.0,
-                            Ser_No = 500,
-                            Title = "商品二的名稱",
-                            permanent = false
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            Description = "商品三的說明",
-                            Disp_Opt = true,
-                            FK_WebsiteId = 2L,
-                            Introduction = "商品三的介紹",
-                            IsDeleted = false,
-                            Price = 13000.0,
-                            Ser_No = 500,
-                            Title = "商品三的名稱",
-                            permanent = false
-                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Log", b =>
@@ -767,62 +719,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_Tid");
 
                     b.ToTable("Prod_Specs");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1461),
-                            CreatorUserId = 2L,
-                            FK_Tid = 1L,
-                            IsDeleted = false,
-                            Title = "white"
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1462),
-                            CreatorUserId = 2L,
-                            FK_Tid = 1L,
-                            IsDeleted = false,
-                            Title = "gray"
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1463),
-                            CreatorUserId = 2L,
-                            FK_Tid = 1L,
-                            IsDeleted = false,
-                            Title = "black"
-                        },
-                        new
-                        {
-                            Id = 4L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1464),
-                            CreatorUserId = 2L,
-                            FK_Tid = 2L,
-                            IsDeleted = false,
-                            Title = "small"
-                        },
-                        new
-                        {
-                            Id = 5L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1465),
-                            CreatorUserId = 2L,
-                            FK_Tid = 2L,
-                            IsDeleted = false,
-                            Title = "medium"
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
-                            CreatorUserId = 2L,
-                            FK_Tid = 2L,
-                            IsDeleted = false,
-                            Title = "large"
-                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec_Type", b =>
@@ -866,26 +762,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("Prod_Spec_Types");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_WebsiteId = 2L,
-                            IsDeleted = false,
-                            Type = "color"
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1460),
-                            CreatorUserId = 2L,
-                            FK_WebsiteId = 2L,
-                            IsDeleted = false,
-                            Type = "size"
-                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Stock", b =>
@@ -942,38 +818,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_S2id");
 
                     b.ToTable("Prod_Stocks");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_Pid = 1L,
-                            IsDeleted = false,
-                            Ser_No = 500,
-                            Stock = 100
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_Pid = 2L,
-                            IsDeleted = false,
-                            Ser_No = 500,
-                            Stock = 100
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_Pid = 3L,
-                            IsDeleted = false,
-                            Ser_No = 500,
-                            Stock = 100
-                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>

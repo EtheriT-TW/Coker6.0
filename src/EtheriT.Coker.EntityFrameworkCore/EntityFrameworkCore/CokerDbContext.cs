@@ -61,8 +61,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Order_Details>(o =>
             {
-                o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OrderId);
-                o.HasOne(u => u.Prod).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_ProductId);
+                o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OId);
+                o.HasOne(u => u.Prod_Stock).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_PSId);
             });
             modelBuilder.Entity<LogisticsType_PaymentType>(o =>
             {
@@ -73,15 +73,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.ThirdParty).WithMany(u => u.ThirdPartyKeypair).HasForeignKey(f => f.FK_TPid);
             });
-            modelBuilder.Entity<Prod_Spec>(o =>
+            modelBuilder.Entity<Prod>(o =>
             {
-                o.HasOne(u => u.Prod_Spec_Type).WithMany(u => u.Prod_Specs).HasForeignKey(f => f.FK_Tid);
-            });
-            modelBuilder.Entity<Prod_Stock>(o =>
-            {
-                o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid);
-                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S1id);
-                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S2id);
+                o.HasOne(u => u.Website).WithMany(u => u.Prods).HasForeignKey(f => f.FK_WebsiteId);
             });
             modelBuilder.Entity<Prod_Log>(o =>
             {
@@ -89,12 +83,24 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(u => u.User).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Uid);
                 o.HasOne(u => u.Token).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Tid);
             });
+            modelBuilder.Entity<Prod_Spec>(o =>
+            {
+                o.HasOne(u => u.Prod_Spec_Type).WithMany(u => u.Prod_Specs).HasForeignKey(f => f.FK_Tid);
+            });
+            modelBuilder.Entity<Prod_Spec_Type>(o =>
+            {
+                o.HasOne(u => u.Website).WithMany(u => u.Prod_Spec_Types).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<Prod_Stock>(o =>
+            {
+                o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid);
+                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S1id);
+                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S2id);
+            });
             modelBuilder.Entity<ShoppingCart>(o =>
             {
-                o.HasOne(u => u.Prod).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_Pid);
+                o.HasOne(u => u.Prod_Stock).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PSid);
                 o.HasOne(u => u.Token).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_Tid);
-                o.HasOne(u => u.Prod_Spec).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_S1id);
-                o.HasOne(u => u.Prod_Spec).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_S2id);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

@@ -13,7 +13,7 @@ body {
 }
 
 .required::after {
-    content: '必填';
+    content: '\5fc5\586b';
     color: var(--red-text);
     font-size: 0.5rem;
 }

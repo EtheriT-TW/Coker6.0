@@ -62,7 +62,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Order_Details>(o =>
             {
                 o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OId);
-                o.HasOne(u => u.Prod_Stock).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_PSId);
+                o.HasOne(u => u.ShoppingCart).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_SCId);
             });
             modelBuilder.Entity<LogisticsType_PaymentType>(o =>
             {

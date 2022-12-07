@@ -13,7 +13,6 @@ namespace EtheriT.Coker.Core.Models
         public Prod? Prod { get; set; }
         public Prod_Spec? Prod_Spec { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }
-        public List<Order_Details> Order_Details { get; set; }
 
     }
 }

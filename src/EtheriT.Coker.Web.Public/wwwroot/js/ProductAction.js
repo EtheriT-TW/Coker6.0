@@ -9,7 +9,7 @@
                 dataType: "json"
             });
         }
-    },
+    }, 
     Update: {
         Cart: function (data) {
             return $.ajax({

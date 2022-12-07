@@ -53,11 +53,11 @@ function PageReady() {
             history.back();
         });
     })
-    $(".btn_add").on("click", function () {
-        FormDataClear();
-        window.location.hash = 0;
-        HashDataEdit();
-    });
+    //$(".btn_add").on("click", function () {
+    //    FormDataClear();
+    //    window.location.hash = 0;
+    //    HashDataEdit();
+    //});
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;

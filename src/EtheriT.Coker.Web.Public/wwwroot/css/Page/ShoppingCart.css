@@ -25,7 +25,7 @@ input[type="number"] {
 
 .required::after {
     color: var(--red-text);
-    content: '必填';
+    content: '\5fc5\586b';
     font-size: 0.5rem;
 }
 
@@ -251,45 +251,47 @@ input[type="number"] {
 }
 
     #Step4 > .card-header > .order_number::before {
-        content: '訂單編號';
+        content: '\8a02\55ae\7de8\865f';
         color: var(--black-text);
     }
 
-#Pruchase_Content > div > .product > a > img {
-    width: 100px;
-    max-width: 30vw;
-    height: fit-content;
-}
-
-#Pruchase_Content > div > .product > a > div > .pro_name {
+#Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .image > a {
     color: var(--black-text);
 }
 
-#Pruchase_Content > div > .product > a > div > .pro_detail {
+    #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .image > a > .content > .pro_detail {
+        color: var(--gray-text);
+    }
+
+#Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > a > div > .pro_detail {
     color: var(--gray-text);
 }
 
-    #Pruchase_Content > div > .product > a > div > .pro_detail > .specifications {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
+#Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_unit {
+    color: var(--gray-text);
+}
+
+    #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_unit::before {
+        content: "\55ae\50f9：";
     }
 
-#Pruchase_Content > div > div > .pro_unit::before {
-    content: '單價：$'
+#Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_quantity {
+    color: var(--gray-text);
 }
 
-#Pruchase_Content > div > div > .pro_total_amount {
+    #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_quantity::before {
+        content: '×';
+    }
+
+#Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_subtotal {
     color: var(--red-number);
 }
 
-#Pruchase_Content > .endline > div > .price {
+#Step4 > .card-body > .pruchase_content > .endline > div > .price {
     color: var(--red-number);
 }
 
-#Pruchase_Content > div > .btn_view_list {
+#Step4 > .card-body > .pruchase_content > div > .btn_view_list {
     color: var(--gray-text);
     background-color: var(--gray-bg-light);
 }
@@ -305,7 +307,6 @@ input[type="number"] {
 #PaymentData > .pay_byATM > div > div > .paid_date > span {
     color: var(--red-number);
 }
-
 
 #PaymentData > .btn_back_home > a > div {
     width: fit-content;
@@ -350,7 +351,7 @@ body > .popover.bs-popover-auto.fade {
     background-color: var(--red-main);
 }
 
-#Pruchase_Content > .purchase_item > .content > .pro_quantity::before {
+#Step4 > .pruchase_content > .purchase_item > .content > .pro_quantity::before {
     content: '×';
 }
 

@@ -39,6 +39,14 @@ function PageReady() {
                 contentType: 'application/json; charset=utf-8',
                 data: { id: id },
             });
+        },
+        GetDetails: function (id) {
+            return $.ajax({
+                url: "/api/Order/GetDetailsOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { id: id },
+            });
         }
     };
 
@@ -223,7 +231,7 @@ function CartInit() {
 }
 
 function CartAdd(result) {
-    var item = $($("#Template_Purchase_Details").html()).clone();
+    var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
         item_name = item.find(".pro_name"),
@@ -293,6 +301,7 @@ function CartQuantityUpdate(self, price, scid, quantity) {
             self.data("subtotal", price * quantity)
             self.text(self.data("subtotal").toLocaleString('en-US'))
             TotalCount();
+            CartDropReset(scid, quantity)
         });
     }).fail(function () {
         Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
@@ -317,8 +326,8 @@ function CartDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
         Coker.sweet.success(success, null, true);
+        CartDropReset(id, 0)
         TotalCount();
-        CheckIfNull();
         if (parseInt($("#Car_Badge").text()) == 0) {
             DetailsClear();
         }
@@ -349,7 +358,6 @@ function RadioShipping() {
 
 function RadioPayment() {
     $.cookie('payment_method', this.value, { path: '/' });
-    console.log($(this).val())
     var $payment = $(".payment_method");
     $payment.text($.cookie('payment_method'));
     $payment.addClass("fs-2 fw-bold px-3");
@@ -371,7 +379,7 @@ function Step3Monitor() {
         Coker.sweet.error("請確實填寫資料！", null, true);
     } else {
         Coker.sweet.confirm("是否確定結帳？", "點選確認進入付款流程", "是，開始付款", "否", function () {
-            OrderAdd();
+            OrderHeaderAdd();
         });
     }
 
@@ -495,7 +503,7 @@ function DeleteRecipient() {
     $this_parent.remove();
 }
 
-function OrderAdd() {
+function OrderHeaderAdd() {
     var orderer_sex, orderer_telephone;
     $orderer_sex.each(function () {
         if ($(this).is(":checked")) { orderer_sex = $(this).val(); }
@@ -569,7 +577,7 @@ function OrderAdd() {
         Service_Charge: 0
     }).done(function (result) {
         Coker.Order.GetHeader(result.message).done(function (result) {
-            OrderSuccess(result)
+            OrderDetailsAdd(result.id, result)
             Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
                 setTimeout(function () {
                     isCheckout = true;
@@ -585,11 +593,139 @@ function OrderAdd() {
     });
 }
 
-function OrderSuccess(result) {
-    console.log(result)
-    console.log(result.id)
-    $("#Pruchase_Content > .status_alert").text("訂單已成立，謝謝您的訂購！");
-    $("#Step4 > .card-header > .order_number").text(("000000000" + result.id).substr(result.id.length));
+function OrderDetailsAdd(ohid, oh_result) {
+    var scarr = new Array();
+    var first_scid
+    $("#Step1").find(".purchase_item").each(function () {
+        first_scid = first_scid == null ? $(this).data("scid") : first_scid;
+        scarr.push($(this).data("scid"));
+    })
+
+    Coker.Order.AddDetails({
+        FK_OHId: ohid,
+        FK_SCId_Arr: scarr
+    }).done(function (result) {
+        if (result.success) {
+            OrderSuccess(oh_result);
+        }
+    });
+}
+
+function OrderSuccess(oh_result) {
+    CartClear();
+
+    $("#Step4 > .card-header > .order_number").text(("000000000" + oh_result.id).substr(oh_result.id.length));
+
+    $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+
+    Coker.Order.GetDetails(oh_result.id).done(function (result) {
+        if (result.length > 0) {
+            if (result.length > 1) {
+                $(".btn_view_list").removeClass("d-none")
+            }
+            for (var i = 0; i < result.length; i++) {
+                if (i == 0) {
+                    PurchaseAdd(result[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list").first())
+                } else {
+                    PurchaseAdd(result[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list.collapse"))
+                }
+            }
+        }
+    })
+
+    var order_item = $("#Step4 > .card-body > .orderer_data");
+    order_item.find(".name").text(HiddenCode(1, oh_result.orderer));
+    order_item.find(".cellphone").text(HiddenCode(2, oh_result.ordererCellPhone));
+    if (oh_result.ordererTelephone != null) {
+        order_item.find(".telphone").parents("div").first().removeClass("d-none");
+        order_item.find(".telphone").text(HiddenCode(3, oh_result.ordererTelephone));
+    }
+
+    var recipient_item = $("#Step4 >.card-body >  .recipient_data");
+    recipient_item.find(".name").text(HiddenCode(1, oh_result.recipient));
+    recipient_item.find(".cellphone").text(HiddenCode(2, oh_result.recipientCellPhone));
+    if (oh_result.recipientTelephone != null) {
+        recipient_item.find(".telphone").parents("div").first().removeClass("d-none");
+        recipient_item.find(".telphone").text(HiddenCode(3, oh_result.recipientTelephone));
+    }
+    recipient_item.find(".address").text(HiddenCode(4, oh_result.recipientAddress));
+
+    var invoice_item = $("#Step4 >.card-body >  .invoice_data");
+    switch (oh_result.invoiceRecipient) {
+        case 1:
+            invoice_item.find(".person").removeClass("d-none");
+            invoice_item.find(".name").text(order_item.find(".name").text());
+            invoice_item.find(".cellphone").text(order_item.find(".cellphone").text());
+            if (order_item.find(".telphone").text() != null) {
+                invoice_item.find(".telphone").parents("div").first().removeClass("d-none");
+                invoice_item.find(".telphone").text(order_item.find(".telphone").text());
+            }
+            break;
+        case 2:
+            invoice_item.find(".person").removeClass("d-none");
+            invoice_item.find(".name").text(recipient_item.find(".name").text());
+            invoice_item.find(".cellphone").text(recipient_item.find(".cellphone").text());
+            if (recipient_item.find(".telphone").text() != null) {
+                invoice_item.find(".telphone").parents("div").first().removeClass("d-none");
+                invoice_item.find(".telphone").text(recipient_item.find(".telphone").text());
+            }
+            break;
+        case 3:
+            invoice_item.find(".company").removeClass("d-none");
+            invoice_item.find(".invoice").text(oh_result.invoiceTitle);
+            invoice_item.find(".unid").text(oh_result.uniformId);
+            break;
+    }
+    invoice_item.find(".address").text(HiddenCode(4, oh_result.invoiceAddress));
+
+}
+
+function PurchaseAdd(result, item_list_ul) {
+    var item = $($("#Template_Purchase_Details").html()).clone();
+    var item_link = item.find(".pro_link"),
+        item_image = item.find(".pro_image"),
+        item_name = item.find(".pro_name"),
+        item_specification = item.find(".pro_specification"),
+        item_instructions = item.find(".pro_instructions"),
+        item_unit = item.find(".pro_unit"),
+        item_quantity = item.find(".pro_quantity"),
+        item_subtotal = item.find(".pro_subtotal");
+
+    item_link.attr("href", "/Toilet/" + result.pId);
+    item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
+    item_name.text(result.title);
+    item_specification.text("白色");
+    item_instructions.text(result.description);
+    item_unit.text((result.price).toLocaleString('en-US'))
+    item_quantity.text(result.quantity);
+    item_subtotal.text((result.price * result.quantity).toLocaleString('en-US'))
+
+    item_list_ul.append(item);
+}
+
+function HiddenCode(type, data) {
+    switch (type) {
+        case 1:
+            if (data.length > 2) {
+                return (data.substr(0, 1) + "○" + (data.substr(data.length - 1)));
+            } else {
+                return (data.substr(0, 1) + "○");
+            }
+            break;
+        case 2:
+            return (data.substr(0, 3) + "****" + data.substr(7));
+            break;
+        case 3:
+            var index1 = data.indexOf('-');
+            var index2 = data.indexOf('-', index1);
+            var new_data = (data.substr(index1 + 1, 2) + "***" + data.substr(index1 + 6, 2));
+            var ext = data.length > (index2 + 1) ? "分機" + data.substr(index2 + 1, 1) + "***" : "";
+            return new_data + ext;
+            break;
+        case 4:
+            return (data.substr(0, data.length - 6) + "○○○○○○");
+            break;
+    }
 }
 
 /* Input輸入自動切換 */

@@ -37,5 +37,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await orderAppService.GetHeaderOne(id);
         }
 
+        [HttpGet]
+        public async Task<List<OrderDetailsGetAllDto>> GetDetailsOne(long id)
+        {
+            return await orderAppService.GetDetailsOne(id);
+        }
+
     }
 }

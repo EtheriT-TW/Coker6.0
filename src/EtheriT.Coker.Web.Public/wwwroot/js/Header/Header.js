@@ -122,6 +122,19 @@ function CartDropUpdate(result) {
     });
 }
 
+function CartDropReset(scid, quantity) {
+    $("#Car_Dropdown > ul > li").each(function () {
+        if ($(this).data("scid") == scid) {
+            if (quantity == 0) {
+                $(this).remove();
+                $("#Car_Badge").text($("#Car_Badge").text() - 1)
+            } else {
+                $(this).find(".pro_quantity").text(quantity)
+            }
+        }
+    });
+}
+
 function CartDropDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
@@ -141,8 +154,4 @@ function CartClear() {
     $("#Car_Badge").text("");
     $("#Car_Dropdown_Null").removeClass("d-none");
     $(".btn_car_buy").attr("disabled", "");
-}
-
-function CarItemChange() {
-    $("#Car_Dropdown > ul li > figure > a > figcaption > .number > .pro_quantity").text($.cookie('Purchased_Item_Quantity'));
 }

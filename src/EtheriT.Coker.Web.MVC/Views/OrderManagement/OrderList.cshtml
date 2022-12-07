@@ -15,9 +15,9 @@
 
 	<div id="OrderList" class="card border-0">
 		<div class="card-body position-relative pb-5">
-			<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+			@*<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
 				<span class="material-symbols-outlined">add</span>
-			</button>
+			</button>*@
 			@(
 				Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
 				.DataSource(d => d.RemoteController().Key("Id")

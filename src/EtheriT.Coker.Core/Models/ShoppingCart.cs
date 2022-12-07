@@ -20,5 +20,6 @@ namespace EtheriT.Coker.Core.Models
         public int Ser_No { get; set; }
         public Token? Token { get; set; }
         public Prod_Stock Prod_Stock { get; set; }
+        public List<Order_Details> Order_Details { get; set; }
     }
 }

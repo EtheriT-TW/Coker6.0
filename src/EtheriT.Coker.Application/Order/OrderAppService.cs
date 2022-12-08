@@ -51,7 +51,7 @@ namespace EtheriT.Coker.Application.Order
                     Shipping = dto.Shipping,
                     Payment = dto.Payment,
                     State = dto.State,
-                    Total = dto.Total,
+                    Subtotal = dto.Subtotal,
                     Discount = dto.Discount,
                     Bonus = dto.Bonus,
                     CouponId = dto.CouponId,
@@ -78,7 +78,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var db_oh = db.Order_Headers.Where(e => e.Id == dto.FK_OHId).FirstOrDefault();
-                if(db_oh != null)
+                if (db_oh != null)
                 {
                     foreach (var scid in dto.FK_SCId_Arr)
                     {
@@ -149,10 +149,10 @@ namespace EtheriT.Coker.Application.Order
                                         Id = e.Id,
                                         Orderer = e.Orderer,
                                         RecipientAddress = e.RecipientAddress,
-                                        Shipping = e.Shipping,
-                                        Payment = e.Payment,
-                                        State = e.State,
-                                        Total = e.Total,
+                                        Shipping = ((ShippingTypeEnum)e.Shipping).ToString().Replace("-", "/").Replace("Seven", "7-11"),
+                                        Payment = ((PaymentTypeEnum)e.Payment).ToString(),
+                                        State = ((OrderStatusEnum)e.State).ToString(),
+                                        Total = e.Subtotal + e.Freight,
                                         CreationTime = e.CreationTime,
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
@@ -179,23 +179,28 @@ namespace EtheriT.Coker.Application.Order
                     {
                         Id = result.Id,
                         Orderer = result.Orderer,
-                        OrdererTelephone = result.OrdererTelephone,
+                        OrdererTelephone = result.OrdererTelephone == null ? "-" : result.OrdererTelephone,
                         OrdererCellPhone = result.OrdererCellPhone,
                         Recipient = result.Recipient,
-                        RecipientTelephone = result.RecipientTelephone,
+                        RecipientTelephone = result.RecipientTelephone == null ? "-" : result.RecipientTelephone,
                         RecipientCellPhone = result.RecipientCellPhone,
                         RecipientAddress = result.RecipientAddress,
                         InvoiceRecipient = result.InvoiceRecipient,
                         InvoiceTitle = result.InvoiceTitle,
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
-                        Payment = result.Payment,
-                        Total = result.Total,
+                        Payment = ((PaymentTypeEnum)result.Payment).ToString(),
+                        Shipping = ((ShippingTypeEnum)result.Shipping).ToString(),
+                        State = result.State,
+                        Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
+                        Subtotal = result.Subtotal,
+                        Total = result.Subtotal + result.Freight,
                         Discount = result.Discount,
                         Bonus = result.Bonus,
                         CouponId = result.CouponId,
                         Freight = result.Freight,
                         Service_Charge = result.Service_Charge,
+                        CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss")
                     };
                     return output;
                 }
@@ -208,26 +213,30 @@ namespace EtheriT.Coker.Application.Order
 
             return null;
         }
-        public async Task<List<OrderDetailsGetAllDto>> GetDetailsOne(long id)
+        public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
             try
             {
                 var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
-                if(db_oh != null)
+                if (db_oh != null)
                 {
-                    var output = from od in db.Order_Details where od.FK_OId == db_oh.Id
-                                    from sc in db.ShoppingCarts where sc.Id == od.FK_SCId
-                                    from ps in db.Prod_Stocks where ps.Id == sc.FK_PSid
-                                    from p in db.Prods where p.Id == ps.FK_Pid
-                                    select new OrderDetailsGetAllDto
-                                    {
-                                        PId = p.Id,
-                                        Title = p.Title,
-                                        Description = p.Description,
-                                        Price = p.Price,
-                                        Quantity = sc.Quantity,
-                                        Subtotal = p.Price * sc.Quantity
-                                    };
+                    var output = from od in db.Order_Details
+                                 where od.FK_OId == db_oh.Id
+                                 from sc in db.ShoppingCarts
+                                 where sc.Id == od.FK_SCId
+                                 from ps in db.Prod_Stocks
+                                 where ps.Id == sc.FK_PSid
+                                 from p in db.Prods
+                                 where p.Id == ps.FK_Pid
+                                 select new OrderDetailsGetAllDto
+                                 {
+                                     PId = p.Id,
+                                     Title = p.Title,
+                                     Description = p.Description,
+                                     Price = p.Price,
+                                     Quantity = sc.Quantity,
+                                     Subtotal = p.Price * sc.Quantity
+                                 };
                     return output.ToList();
                 }
                 else throw new Exception("查無資料");
@@ -289,6 +298,21 @@ namespace EtheriT.Coker.Application.Order
                                     select new EnumDictionaryDto
                                     {
                                         Key = data.Key == "Seven取貨" ? "7-11取貨" : data.Key.Replace("_", "/"),
+                                        Value = data.Value,
+                                    };
+
+            return enumDictionaryDto.ToList();
+        }
+        public async Task<List<EnumDictionaryDto>> GetPaymentTypeEnum()
+        {
+            Dictionary<string, int> paymentTypeEnums = Enum.GetValues(typeof(PaymentTypeEnum))
+                                        .Cast<PaymentTypeEnum>()
+                                        .ToDictionary(k => k.ToString(), v => (int)v);
+
+            var enumDictionaryDto = from data in paymentTypeEnums
+                                    select new EnumDictionaryDto
+                                    {
+                                        Key = data.Key,
                                         Value = data.Value,
                                     };
 

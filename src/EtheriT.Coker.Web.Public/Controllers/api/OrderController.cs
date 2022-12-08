@@ -38,10 +38,15 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<List<OrderDetailsGetAllDto>> GetDetailsOne(long id)
+        public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
-            return await orderAppService.GetDetailsOne(id);
+            return await orderAppService.GetOrderDetails(id);
         }
 
+        [HttpPost]
+        public async Task<List<EnumDictionaryDto>> GetPaymentTypeEnum()
+        {
+            return await orderAppService.GetPaymentTypeEnum();
+        }
     }
 }

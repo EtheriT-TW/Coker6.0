@@ -15,14 +15,10 @@
 
 	<div id="OrderList" class="card border-0">
 		<div class="card-body position-relative pb-5">
-			@*<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-				<span class="material-symbols-outlined">add</span>
-			</button>*@
 			@(
 				Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
 				.DataSource(d => d.RemoteController().Key("Id")
 				.LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
-				.DeleteUrl("/api/Order/Delete").DeleteMethod("Delete")
 				/*.UpdateUrl("/api/Order/Update").UpdateMethod("Post")*/
 				)
 				.ColumnHidingEnabled(true)
@@ -52,7 +48,6 @@
 					.Buttons(b =>
 					{
 						b.Add().Name("edit").OnClick("editButtonClicked");
-						b.Add().Name("delete").OnClick("deleteButtonClicked");
 					});
 				})
 				.ColumnAutoWidth(true)
@@ -66,7 +61,6 @@
 				})
 				.Editing(editing =>
 				{
-					editing.AllowDeleting(true);
 					editing.AllowUpdating(true);
 					editing.UseIcons(true);
 				})
@@ -88,71 +82,51 @@
 						<div class="lh-lg">訂單明細</div>
 					</div>
 					<div class="col">訂單編號</div>
-					<div class="col-auto order_num">000000320</div>
+					<div class="col-auto order_number"></div>
 				</div>
 
 				<div class="card-body">
-					<div class="row text-end mb-5 gray_text">
+					<div class="row text-end gray_text">
 						<div class="col">訂單成立時間</div>
-						<div class="date_time col-auto">2022-10-23 15:53:31</div>
+						<div class="order_date col-auto"></div>
 					</div>
 
-					<ul class="purchase_list px-2 px-sm-5">
+					<ul class="purchase_list px-2 px-sm-5"></ul>
+
+					<template id="Templat_Purchase_List">
 						<li class="purchase_item border-bottom align-items-lg-center row py-2">
-							<img class="pro_image col-4 col-sm-2" src="~/images/product/pro_pic_01.jpg">
+							<img class="pro_image col-4 col-sm-2" src="">
 
 							<div class="pro_text col-8 col-sm-6">
-								<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
+								<div class="pro_name fw-bold"></div>
 								<div class="pro_detail gray_text d-flex flex-wrap">
-									<div class="pro_color pe-3">白色</div>
-									<div class="pro_specifications">規格說明文字</div>
+									<div class="pro_specification pe-3"></div>
+									<div class="pro_instructions"></div>
 								</div>
 							</div>
 
-							<div class="pro_unit col-auto gray_text text-end">26,200</div>
+							<div class="pro_unit col-auto gray_text text-end"></div>
 
-							<div class="pro_quantity col-auto gray_text text-start">1</div>
+							<div class="pro_quantity col-auto gray_text text-start"></div>
 
-							<div class="pro_subtotal col price color_red_number text-end">26,200</div>
+							<div class="pro_subtotal col price color_red_number text-end"></div>
 						</li>
-
-						<!--
-							<template id="Templat_Purchase_List">
-								<li class="purchase_item border-bottom align-items-lg-center row py-2">
-									<img class="pro_image col-4 col-sm-2" src="~/images/product/pro_pic_03.jpg">
-
-									<div class="pro_text col-8 col-sm-6">
-										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
-										<div class="pro_detail gray_text d-flex flex-wrap">
-											<div class="pro_color pe-3">白色</div>
-											<div class="pro_specifications">規格說明文字</div>
-										</div>
-									</div>
-
-									<div class="pro_unit col-auto gray_text text-end">26,200</div>
-
-									<div class="pro_quantity col-auto gray_text text-start">1</div>
-
-									<div class="pro_subtotal col price color_red_number text-end">26,200</div>
-								</li>
-							</template>
-						-->
-					</ul>
+					</template>
 
 					<div class="purchase_amount px-2 px-sm-5">
 						<div class="border-bottom py-2 text-end">
 							<div class="d-flex">
 								<div class="col fw-bold">總金額：</div>
-								<div class="purchase_subtotal price color_red_number col-4 col-sm-2">26,200</div>
+								<div class="order_subtotal price color_red_number col-4 col-sm-2">26,200</div>
 							</div>
 							<div class="d-flex">
 								<div class="col fw-bold">運費：</div>
-								<div class="purchase_delivery_fee price color_red_number col-4 col-sm-2">0</div>
+								<div class="order_freight price color_red_number col-4 col-sm-2">0</div>
 							</div>
 						</div>
 						<div class="row align-items-center text-end fw-bold">
 							<div class="col p-0">本次消費總金額：</div>
-							<div class="purchase_total price color_red_number col-auto py-3 fs-5 text-end">26,200</div>
+							<div class="order_total price color_red_number col-auto py-3 fs-5 text-end">26,200</div>
 						</div>
 					</div>
 				</div>
@@ -174,16 +148,16 @@
 									<div class="gray_text">付款方式：</div>
 								</div>
 								<div class="col ps-0">
-									<div class="order_number">20210128003</div>
-									<div class="order_shipping">郵寄掛號</div>
-									<div class="order_payment">LINE Pay</div>
+									<div class="order_number"></div>
+									<div class="order_shipping"></div>
+									<div class="order_payment"></div>
 								</div>
 							</div>
 
 							<div class="d-flex flex-wrap justify-content-between pb-3 pt-5">
 								<div class="d-flex align-items-center">
 									<div class="fw-bold fs-5">狀態：</div>
-									<select class="status-select m-2" aria-label="Select status">
+									<select class="status_select m-2" aria-label="Select status">
 										<option value="1">待確認</option>
 										<option value="2">已付款</option>
 										<option value="3">已出貨</option>
@@ -201,20 +175,25 @@
 					<div id="RecipientData" class="card border-0 mb-3">
 						<div class="card-body">
 							<div class="fs-5 fw-bold pb-2">收件人資料</div>
+							<div class="row fw-bold">
+								<div class="col-auto pe-0">姓　　名：</div>
+								<div class="col recipient_name"></div>
+							</div>
 
 							<div class="row fw-bold">
-								<div class="col-auto pe-0">
-									<div>姓　　名：</div>
-									<div>手機號碼：</div>
-									<div>連絡電話：</div>
-									<div>地　　址：</div>
+								<div class="col-auto pe-0">手機號碼：</div>
+								<div class="col recipient_cellphone">
 								</div>
-								<div class="col">
-									<div class="recipient_name">收件人</div>
-									<div class="recipient_cellphone">0987654321</div>
-									<div class="recipient_phone">07-1234567</div>
-									<div class="recipient_address">806高雄市</div>
-								</div>
+							</div>
+
+							<div class="row fw-bold">
+								<div class="col-auto pe-0">連絡電話：</div>
+								<div class="col recipient_telphone"></div>
+							</div>
+
+							<div class="row fw-bold">
+								<div class="col-auto pe-0">地　　址：</div>
+								<div class="col recipient_address"></div>
 							</div>
 						</div>
 					</div>
@@ -224,21 +203,23 @@
 							<div class="fs-5 fw-bold pb-2">訂購人資料</div>
 
 							<div class="row gray_text">
-								<div class="col-auto pe-0">
-									<div>姓　　名：</div>
-									<div>手機號碼：</div>
-									<div>連絡電話：</div>
+								<div class="col-auto pe-0">姓　　名：</div>
+								<div class="col d-flex">
+									<div class="orderer_name">訂購人</div>
+									<button class="btn_orderer_data bg-transparent border-0">
+										<i class="fa-regular fa-address-card gray_text"></i>
+									</button>
 								</div>
-								<div class="col">
-									<div class="d-flex">
-										<div class="orderer_name">訂購人</div>
-										<button class="btn_orderer_data bg-transparent border-0">
-											<i class="fa-regular fa-address-card gray_text"></i>
-										</button>
-									</div>
-									<div class="orderer_cellphone">0987654321</div>
-									<div class="orderer_phone">07-1234567</div>
-								</div>
+							</div>
+
+							<div class="row gray_text">
+								<div class="col-auto pe-0">手機號碼：</div>
+								<div class="col orderer_cellphone"></div>
+							</div>
+
+							<div class="row gray_text">
+								<div class="col-auto pe-0">連絡電話：</div>
+								<div class="col orderer_telphone"></div>
 							</div>
 						</div>
 					</div>
@@ -246,7 +227,7 @@
 					<div id="OrderNotes" class="card border-0 mb-3">
 						<div class="card-body">
 							<div class="fs-5 fw-bold pb-2">訂單備註</div>
-							<div class="ordernotes gray_text">無</div>
+							<div class="order_notes gray_text"></div>
 						</div>
 					</div>
 

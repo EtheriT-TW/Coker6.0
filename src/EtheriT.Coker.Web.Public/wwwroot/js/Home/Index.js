@@ -8,11 +8,13 @@
     $(".btn_buy").on("click", function () {
         $frame = $(this).parents(".frame").first();
         $("#ShoppingCarModal > .Modal").data("pid", $frame.data("pid"));
+        ModalDefaultSet();
     });
 
     $(".btn_addcart").on("click", function () {
         $frame = $(this).parents("li").first();
         $("#ShoppingCarModal > .Modal").data("pid", $frame.data("pid"));
+        ModalDefaultSet();
     });
 
 

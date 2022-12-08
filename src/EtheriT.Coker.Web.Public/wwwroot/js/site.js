@@ -16,8 +16,6 @@
     };
 
     $.cookie('Member_Name', "會員一", { path: '/' });
-    typeof $.cookie('Purchased_Type_Quantity') == "undefined" && $.cookie('Purchased_Type_Quantity', 0, { path: '/' })
-    typeof $.cookie('Purchased_Item_Quantity') == "undefined" && $.cookie('Purchased_Item_Quantity', 0, { path: '/' })
 
     typeof (PageReady) === "function" && PageReady();
     HeaderInit();
@@ -74,7 +72,7 @@ function scrollFunction() {
 }
 
 function cookie_accept() {
-    $.cookie('cookie', 'accept', { expires: 7 });
+    $.cookie('cookie', 'accept', { expires: 7, path: '/' });
     $("#Cookie").toggleClass("show");
     CreateToken();
 }

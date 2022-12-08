@@ -1,6 +1,7 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Order;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await orderAppService.GetAllList(loadOptions);
         }
+        [HttpGet]
+        public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)
+        {
+            return await orderAppService.GetHeaderOne(id);
+        }
 
+        [HttpGet]
+        public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
+        {
+            return await orderAppService.GetOrderDetails(id);
+        }
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(int id)
         {

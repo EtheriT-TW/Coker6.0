@@ -12,9 +12,10 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<ResponseMessageDto> AddDetails(OrderDetailsAddDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<OrderHeaderGetOneDto> GetHeaderOne(long id);
-        public Task<List<OrderDetailsGetAllDto>> GetDetailsOne(long id);
+        public Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id);
         public Task<ResponseMessageDto> Delete(int id);
         public Task<List<EnumDictionaryDto>> GetPreserveTypeEnum();
         public Task<List<EnumDictionaryDto>> GetShippingTypeEnum();
+        public Task<List<EnumDictionaryDto>> GetPaymentTypeEnum();
     }
 }

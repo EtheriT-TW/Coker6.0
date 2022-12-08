@@ -1,7 +1,9 @@
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.ShoppingCart;
 using EtheriT.Coker.Application.Token;
@@ -37,6 +39,7 @@ builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();
 builder.Services.AddTransient<ITokenAppService, TokenAppService>();
 builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
+builder.Services.AddTransient<IProductAppService, ProductAppService>();
 
 var app = builder.Build();
 

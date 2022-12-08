@@ -1,7 +1,7 @@
 ﻿var buy_step_swiper;
 var gotop_switch = false, isCheckout = false;
 
-var subtotal, freight, total
+var subtotal, freight, total, paymentArr
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms;
 var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
@@ -42,16 +42,26 @@ function PageReady() {
         },
         GetDetails: function (id) {
             return $.ajax({
-                url: "/api/Order/GetDetailsOne/",
+                url: "/api/Order/GetOrderDetails/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 data: { id: id },
             });
-        }
+        },
+        GetPaymentTypeEnum: function () {
+            return $.ajax({
+                url: "/api/Order/GetPaymentTypeEnum",
+                type: "POST",
+            });
+        },
     };
 
     ElementInit();
     CartInit();
+
+    Coker.Order.GetPaymentTypeEnum().done(function (result) {
+        paymentArr = result;
+    });
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
@@ -357,15 +367,24 @@ function RadioShipping() {
 }
 
 function RadioPayment() {
-    $.cookie('payment_method', this.value, { path: '/' });
-    var $payment = $(".payment_method");
-    $payment.text($.cookie('payment_method'));
-    $payment.addClass("fs-2 fw-bold px-3");
-    if ($.cookie('payment_method') == '1') {
-        $(".pay_byATM").removeClass("d-none");
-    } else {
-        $(".pay_byATM").addClass("d-none");
-    }
+    var $pay_text = $(".payment_method");
+    $pay_text.addClass("fs-2 fw-bold px-3");
+    $pay_method.each(function () {
+        if ($(this).is(":checked")) {
+            var val = $(this).val();
+            if (val == 1) {
+                $(".pay_byATM").removeClass("d-none");
+            } else {
+                $(".pay_byATM").addClass("d-none");
+            }
+            $(paymentArr).each(function () {
+                var e = this;
+                if (e.value == val) {
+                    $pay_text.text(e.key);
+                }
+            });
+        }
+    })
     buy_step_swiper.update();
 }
 
@@ -569,7 +588,7 @@ function OrderHeaderAdd() {
         Shipping: shipping,
         Payment: payment,
         State: 1,
-        Total: total,
+        Subtotal: subtotal,
         Discount: 0,
         Bonus: 0,
         CouponId: 0,

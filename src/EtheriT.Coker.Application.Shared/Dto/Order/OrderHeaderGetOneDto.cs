@@ -15,12 +15,17 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? InvoiceTitle { get; set; }
         public string? UniformId { get; set; }
         public string InvoiceAddress { get; set; }
-        public int Payment { get; set; }
+        public string Payment { get; set; }
+        public string Shipping { get; set; }
+        public int State { get; set; }
+        public string Remark { get; set; }
+        public int Subtotal { get; set; }
         public int Total { get; set; }
         public int? Discount { get; set; }
         public int? Bonus { get; set; }
         public long? CouponId { get; set; }
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
+        public string CreationTime { get; set; }
     }
 }

@@ -88,36 +88,41 @@ function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
 }
 
+
 function AddToCart() {
-    Product.AddUp.Cart({
-        FK_Tid: $.cookie("Token"),
-        FK_Pid: Pid,
-        FK_S1id: 1,
-        FK_S2id: 4,
-        Quantity: $input_quantity.val(),
-        Discont: 0,
-        Bonus: 0,
-        PriceType: 0,
-        IsAdditional: false,
-        Ser_No: 500,
-    }).done(function (result) {
-        if (result.success) {
-            Coker.sweet.success("商品已成功加入購物車", null, true);
-            var type = (result.message).substr(0, 1);
-            var id = (result.message).substr(1);
-            Product.GetOne.Cart(id).done(function (result) {
-                if (type == 'N') {
-                    CartDropAdd(result);
-                } else {
-                    CartDropUpdate(result);
-                }
-            });
-        } else {
+    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
+        Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
+    } else {
+        Product.AddUp.Cart({
+            FK_Tid: $.cookie("Token"),
+            FK_PSid: Pid,
+            FK_S1id: 1,
+            FK_S2id: 4,
+            Quantity: $input_quantity.val(),
+            Discont: 0,
+            Bonus: 0,
+            PriceType: 0,
+            IsAdditional: false,
+            Ser_No: 500,
+        }).done(function (result) {
+            if (result.success) {
+                Coker.sweet.success("商品已成功加入購物車", null, true);
+                var type = (result.message).substr(0, 1);
+                var id = (result.message).substr(1);
+                Product.GetOne.Cart(id).done(function (result) {
+                    if (type == 'N') {
+                        CartDropAdd(result);
+                    } else {
+                        CartDropUpdate(result);
+                    }
+                });
+            } else {
+                Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+            }
+        }).fail(function () {
             Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
-        }
-    }).fail(function () {
-        Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
-    });
+        });
+    }
 }
 
 function ShowBigPro() {

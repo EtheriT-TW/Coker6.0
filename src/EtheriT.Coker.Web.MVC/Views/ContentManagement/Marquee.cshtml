@@ -23,9 +23,7 @@
 				@(
 					Html.DevExtreme().DataGrid<MarqueeGetDto>()
 					.DataSource(d => d.RemoteController().Key("Id")
-					.LoadUrl("/api/Marquee/GetAll").LoadMethod("Get")
-					.DeleteUrl("/api/Marquee/Delete").DeleteMethod("Delete")
-					.UpdateUrl("/api/Marquee/Update").UpdateMethod("Post")
+					.LoadUrl("/api/Marquee/GetAllList").LoadMethod("Get")
 					)
 					.ColumnHidingEnabled(true)
 					.ShowBorders(true)

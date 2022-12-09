@@ -17,6 +17,10 @@ input[type="number"] {
     color: #4E565A;
 }
 
+.btn_add {
+    z-index: 1;
+}
+
 /* Product Content */
 #FreightContent > .card-header {
     background-color: var(--color-gray-bg-dark);

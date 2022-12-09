@@ -1,8 +1,10 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.ShoppingCart
 {

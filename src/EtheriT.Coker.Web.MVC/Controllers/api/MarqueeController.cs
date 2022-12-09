@@ -20,29 +20,21 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             this.marqueeAppService = marqueeAppService;
         }
-
         [HttpPost]
-        public async Task<ResponseMessageDto> Add(MarqueeAddDto dto)
+        public async Task<ResponseMessageDto> AddUp(MarqueeDto dto)
         {
-            return await marqueeAppService.Add(dto);
-        }
-        [HttpPost]
-        public async Task<ResponseMessageDto> Update(MarqueeUpdateDto dto)
-        {
-            return await marqueeAppService.Update(dto);
+            return await marqueeAppService.AddUp(dto);
         }
         [HttpGet]
         public async Task<MarqueeGetDto> Get(int id)
         {
             return await marqueeAppService.Get(id);
         }
-
         [HttpGet]
-        public async Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
-            return await marqueeAppService.GetAll(loadOptions);
+            return await marqueeAppService.GetAllList(loadOptions);
         }
-
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(int id)
         {

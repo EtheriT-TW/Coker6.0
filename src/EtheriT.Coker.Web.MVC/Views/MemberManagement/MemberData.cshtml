@@ -26,7 +26,6 @@
 				Html.DevExtreme().DataGrid<MemberGetAllListDto>()
 				.DataSource(d => d.RemoteController().Key("Id")
 				.LoadUrl("/api/Member/GetAllList").LoadMethod("Get")
-				/*.UpdateUrl("/api/Order/Update").UpdateMethod("Post")*/
 				)
 				.ColumnHidingEnabled(true)
 				.ShowBorders(true)
@@ -86,7 +85,7 @@
 					<div id="MemberData" class="card-body">
 						<div class="d-flex align-items-center justify-content-between pb-2">
 							<div class="fs-5 fw-bold">客戶基本資料</div>
-							<div class="member_number">200907730911</div>
+							<div class="member_number"></div>
 						</div>
 
 						<form class="row needs-validation" novalidate>

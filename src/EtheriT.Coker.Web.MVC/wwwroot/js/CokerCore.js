@@ -1,8 +1,8 @@
 ﻿var MinutesSecond = 60 * 1000;
 var Coker = {
     Data: {
-        DefauleUrl : "/Dashboard/index",
-        Header : {
+        DefauleUrl: "/Dashboard/index",
+        Header: {
             Authorization: 'Bearer ' + $.cookie("token"),
             Secret: $.cookie("secret")
         },
@@ -12,23 +12,23 @@ var Coker = {
         }
     },
     Cookie: {
-        Add : function (key, value) {
+        Add: function (key, value) {
             var expDate = new Date();
             expDate.setTime(expDate.getTime() + _c.Data.Time.DataRetentionTime);
             $.cookie(key, value, { path: "/", expires: expDate });
         },
-        AddAll : function (obj) {
+        AddAll: function (obj) {
             for (var key in obj) {
                 if (typeof (key) != "object") _c.Cookie.Add(key, obj[key]);
             }
         },
-        Del : function (key) {
+        Del: function (key) {
             $.removeCookie(key, { path: "/" });
         },
         Get: function (key) {
             return $.cookie(key);
         },
-        DelAll : function () {
+        DelAll: function () {
             var cookies = $.cookie();
             for (var cookie in cookies) {
                 $.removeCookie(cookie, { path: "/" });
@@ -60,7 +60,7 @@ var Coker = {
             });
             return _dfr.promise();
         },
-        Logout : function () {
+        Logout: function () {
             var _dfr = $.Deferred();
             $.ajax({
                 url: "/api/User/Logout",
@@ -98,6 +98,27 @@ var Coker = {
             });
             return _dfr.promise();
         }
+    },
+    Picker: {
+        Init: function ($picker) {
+            $picker.daterangepicker({
+                timePicker: true,
+                timePicker24Hour: true,
+                autoUpdateInput: true,
+                locale: {
+                    format: 'YYYY/mm/DD HH:mm',
+                    separator: " ~ ",
+                    applyLabel: "　確認　",
+                    cancelLabel: "　取消　",
+                    daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
+                    monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
+                }
+            });
+
+            $picker.on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val("");
+            });
+        },
     }
 }
 var _c = Coker;

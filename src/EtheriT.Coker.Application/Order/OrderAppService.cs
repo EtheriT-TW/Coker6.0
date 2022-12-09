@@ -146,8 +146,8 @@ namespace EtheriT.Coker.Application.Order
                                     where !e.IsDeleted
                                     select new OrderHeaderGetAllListDto
                                     {
-                                        Id = e.Id,
-                                        Orderer = e.Orderer,
+                                        Id = ("000000000" + e.Id.ToString()).Substring(e.Id.ToString().Length, 9),
+                                        Orderer = e.Orderer.Substring(0, 1) + "○" + e.Orderer.Substring(e.Orderer.Length - 1, 1),
                                         RecipientAddress = e.RecipientAddress,
                                         Shipping = ((ShippingTypeEnum)e.Shipping).ToString().Replace("-", "/").Replace("Seven", "7-11"),
                                         Payment = ((PaymentTypeEnum)e.Payment).ToString(),

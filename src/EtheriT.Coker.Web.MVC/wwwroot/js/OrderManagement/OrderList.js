@@ -130,22 +130,10 @@ function HashDataEdit() {
 function editButtonClicked(e) {
     keyId = e.row.key;
     window.location.hash = keyId
-
-    co.Order.GetHeader(keyId).done(function (result) {
-        HeaderDataSet(result)
-    });
-
-    co.Order.GetDetails(keyId).done(function (result) {
-        for (var i = 0; i < result.length; i++) {
-            DetailsDataSet(result[i])
-        }
-    });
-
     MoveToContent();
 }
 
 function HeaderDataSet(result) {
-    console.log(result)
     $order_number.text(("000000000" + result.id).substr(result.id.length));
     $order_date.text(result.creationTime)
     $order_subtotal.text(result.subtotal.toLocaleString("en-US"))
@@ -169,7 +157,6 @@ function HeaderDataSet(result) {
 }
 
 function DetailsDataSet(result) {
-    console.log(result)
     var item = $($("#Templat_Purchase_List").html()).clone();
     var item_image = item.find(".pro_image"),
         item_name = item.find(".pro_name"),
@@ -224,6 +211,10 @@ function BackToList() {
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
     window.location.hash = ""
+
+    $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {
+        $(this).remove();
+    })
 }
 
 function OrderDataCollapse() {

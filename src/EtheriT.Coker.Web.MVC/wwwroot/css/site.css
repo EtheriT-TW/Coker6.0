@@ -50,6 +50,11 @@
     border-color: gray !important;
 }
 
+.required_sign::before {
+    color: var(--colors-red-text);
+    content: '*';
+}
+
 .required_text::before {
     color: var(--colors-red-text);
     content: '*';

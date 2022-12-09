@@ -156,8 +156,6 @@ var PreLoader;
         }
     };
     a.fn.setThemeTone()
-
-    DevExpress.localization.locale('zh-tw');
 })(jQuery);
 
 function toggleFullScreen() {

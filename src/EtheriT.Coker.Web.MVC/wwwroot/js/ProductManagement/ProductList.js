@@ -3,72 +3,47 @@ var startDate, endDate, keyId, disp_opt = true
 var product_list
 
 function PageReady() {
-    //co.Product = {
-    //    Add: function (data) {
-    //        return $.ajax({
-    //            url: "/api/Marquee/Add",
-    //            type: "POST",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: JSON.stringify(data),
-    //            dataType: "json"
-    //        });
-    //    },
-    //    Get: function (id) {
-    //        return $.ajax({
-    //            url: "/api/Marquee/Get/",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: { id: id },
-    //        });
-    //    },
-    //    Update: function (data) {
-    //        return $.ajax({
-    //            url: "/api/Marquee/Update",
-    //            type: "POST",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: JSON.stringify(data),
-    //            dataType: "json"
-    //        });
-    //    },
-    //    Delete: function (id) {
-    //        return $.ajax({
-    //            url: "/api/Marquee/Delete/",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: { id: id },
-    //        });
-    //    }
-    //};
+    co.Product = {
+        AddUp: function (data) {
+            return $.ajax({
+                url: "/api/Product/AddUp",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Product/GetOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        },
+        Delete: function (id) {
+            return $.ajax({
+                url: "/api/Product/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        }
+    };
 
     ElementInit();
 
     $picker = $("#InputDate");
 
-    $picker.daterangepicker({
-        timePicker: true,
-        timePicker24Hour: true,
-        autoUpdateInput: true,
-        locale: {
-            format: 'YYYY/M/DD HH:mm',
-            separator: " ~ ",
-            applyLabel: "　確認　",
-            cancelLabel: "　取消　",
-            daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-            monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
-        }
-    });
+    co.Picker.Init($picker);
 
     $picker.on('apply.daterangepicker', function (ev, picker) {
         $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
         startDate = picker.startDate.format("");
         endDate = picker.endDate.format("");
-    });
-    $picker.on('cancel.daterangepicker', function (ev, picker) {
-        $(this).val("");
     });
 
     const forms = $('#ProductForm');
@@ -81,11 +56,7 @@ function PageReady() {
                 } else {
                     event.preventDefault();
                     Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                        if (keyId > 0) {
-                            //Update(disp_opt, "已成功發布", "發布發生未知錯誤");
-                        } else {
-                            //Add(disp_opt, "已成功發布", "發布發生未知錯誤");
-                        }
+                        AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
                     });
                 }
                 form.classList.add('was-validated')
@@ -105,11 +76,7 @@ function PageReady() {
     });
     $(".btn_save").on("click", function () {
         disp_opt = false;
-        if (keyId > 0) {
-            //Update(false, "已存為草稿", "儲存草稿發生未知錯誤");
-        } else {
-            //Add(false, "已存為草稿", "儲存草稿發生未知錯誤");
-        }
+        AddUp(false, "已存為草稿", "儲存草稿發生未知錯誤");
     });
     $(".btn_input_pic").on("click", function (event) {
         event.preventDefault();
@@ -143,7 +110,7 @@ function PageReady() {
     $illustrate.on('keyup', function () {
         $illustrate_count.text($illustrate.val().length);
     });
-    $("input[type='number']").change(function () {
+    $("input[type='number']").on("input", function () {
         $(this).val($(this).val() < 0 ? 0 : $(this).val())
     });
 
@@ -224,15 +191,14 @@ function HashDataEdit() {
                 FormDataClear();
                 MoveToContent();
             } else {
-                //co.Marquees.Get(parseInt(hash)).done(function (result) {
-                //    if (result != null) {
-                //        MoveToContent();
-                //        keyId = result.id;
-                //        FormDataSet(result.placement, result.disp_opt, result.title, result.ser_no, result.link, result.target, result.permanent, result.startTime, result.endTime);
-                //    } else {
-                //        window.location.hash = ""
-                //    }
-                //})
+                co.Product.Get(parseInt(hash)).done(function (result) {
+                    if (result != null) {
+                        MoveToContent();
+                        FormDataSet(result);
+                    } else {
+                        window.location.hash = ""
+                    }
+                })
             }
         }
     } else {
@@ -242,35 +208,32 @@ function HashDataEdit() {
 
 function editButtonClicked(e) {
     MoveToContent();
-
-    var data = e.row.data;
     keyId = e.row.key;
     window.location.hash = keyId
-
-    //FormDataSet(data.placement, data.disp_opt, data.title, data.ser_no, data.link, data.target, data.permanent, data.StartTime, data.EndTime)
 }
 
-function FormDataSet(disp, name, introduction, illustrate, marks, tag, price, number, min_number, permanent, startTime, endTime) {
-    startDate = startTime;
-    endDate = endTime;
+function FormDataSet(result) {
     FormDataClear();
-    $btn_display.children("span").text(disp ? "visibility" : "visibility_off");
-    disp_opt = disp;
+    startTime = result.startTime;
+    endTime = result.endTime;
+    keyId = result.id;
+    $btn_display.children("span").text(result.disp_opt ? "visibility" : "visibility_off");
+    disp_opt = result.disp_opt;
 
-    $name.val(name);
+    $name.val(result.title);
     $name_count.text($name.val().length);
-    $introduction.val(introduction);
+    $introduction.val(result.introduction);
     $introduction_count.text($introduction.val().length);
-    $illustrate.val(illustrate);
+    $illustrate.val(result.description);
     $illustrate_count.text($illustrate.val().length);
 
-    $marks.val(marks);
-    $tag.val(tag);
-    $price.val(price);
-    $number.val(number);
-    $min_number.val(min_number);
+    $marks.val("");
+    $tag.val("");
+    $price.val(result.price);
+    $number.val("");
+    $min_number.val("");
     $date = $("#InputDate");
-    if (permanent) {
+    if (result.permanent) {
         $date.val('');
         $date.attr("disabled", "disabled");
         $permanent.prop("checked", true);
@@ -282,44 +245,22 @@ function FormDataSet(disp, name, introduction, illustrate, marks, tag, price, nu
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Marquees.Delete(e.row.key);
+        co.Product.Delete(e.row.key);
         e.component.refresh();
     });
 }
 
-function Add(display, success_text, error_text) {
-    co.Marquees.Add({
-        WebsiteId: $.cookie('WebSiteId'),
-        placement: $placement.val(),
-        title: $title.val(),
-        disp_opt: display,
-        ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-        link: $link.val(),
-        target: $target.is(":checked"),
-        StartTime: startDate,
-        EndTime: endDate,
-        permanent: $permanent.is(":checked")
-    }).done(function () {
-        Coker.sweet.success(success_text, null, true);
-        setTimeout(function () {
-            BackToList();
-            product_list.component.refresh();
-        }, 1000);
-    }).fail(function () {
-        Coker.sweet.error("錯誤", error_text, null, true);
-    });
-}
-
-function Update(display, success_text, error_text) {
-    co.Marquees.Update({
-        id: keyId,
-        WebsiteId: $.cookie('WebSiteId'),
-        placement: $placement.val(),
-        title: $title.val(),
-        disp_opt: display,
-        ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-        link: $link.val(),
-        target: $target.is(":checked"),
+function AddUp(display, success_text, error_text) {
+    co.Product.AddUp({
+        Id: keyId,
+        FK_WebsiteId: $.cookie('WebSiteId'),
+        Title: $name.val(),
+        Disp_Opt: display,
+        Ser_No: 500,
+        Introduction: $introduction.val(),
+        Description: $illustrate.val(),
+        Price: $price.val(),
+        Discount: 0,
         StartTime: startDate,
         EndTime: endDate,
         permanent: $permanent.is(":checked")

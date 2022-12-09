@@ -40,7 +40,7 @@
         },
         Prod: function (id) {
             return $.ajax({
-                url: "/api/Product/GetProdOne/",
+                url: "/api/Product/GetDisplayOne/",
                 type: "GET",
                 data: { id: id }
             });

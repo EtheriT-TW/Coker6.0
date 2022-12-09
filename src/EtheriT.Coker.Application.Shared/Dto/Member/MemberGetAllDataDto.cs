@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
 {
     public class MemberGetAllDataDto
     {
+        public string Id { get; set; }
         public string Name { get; set; }
         public int? Sex { get; set; }
         public int? Status { get; set; }

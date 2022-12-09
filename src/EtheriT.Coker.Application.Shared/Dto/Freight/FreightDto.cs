@@ -1,11 +1,13 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.Eventing.Reader;
 
-namespace EtheriT.Coker.Core.Models
+namespace EtheriT.Coker.Application.Shared.Dto.Freight
 {
-    public class LogisticsSetting : FullAuditedEntity
+    public class FreightDto
     {
-        [StringLength(50)] public string Title { get; set; }
+        public long? Id { get; set; }
+        public string Title { get; set; }
         public int PreserveType { get; set; }
         public int LogisticsType { get; set; }
         public int FreigntType { get; set; }

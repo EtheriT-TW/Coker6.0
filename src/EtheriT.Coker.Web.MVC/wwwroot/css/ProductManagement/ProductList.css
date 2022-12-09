@@ -17,6 +17,10 @@ input[type="number"] {
     color: #4E565A;
 }
 
+.btn_add {
+    z-index: 1;
+}
+
 /* Product Content */
 #ProductContent > .card-header {
     background-color: var(--color-gray-bg-dark);
@@ -52,7 +56,7 @@ input[type="number"] {
 }
 
 #ProductForm > .price > input {
-    padding-left: 4.5rem;
+    padding-left: 5.5rem;
 }
 
 #ProductForm > .number > input {
@@ -64,5 +68,5 @@ input[type="number"] {
 }
 
 #ProductForm > .date > input {
-    padding-left: 8.5rem;
+    padding-left: 9.5rem;
 }

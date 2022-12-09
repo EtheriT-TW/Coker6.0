@@ -66,6 +66,7 @@ namespace EtheriT.Coker.Application.Member
                 {
                     MemberGetAllDataDto output = new MemberGetAllDataDto()
                     {
+                        Id = ("000000000" + result.Id).Substring(result.Id.ToString().Length),
                         Name = result.Name,
                         Sex = result.Sex,
                         Status = result.Status,

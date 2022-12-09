@@ -28,11 +28,11 @@
 }
 
 .pro_unit::before {
-    content: "\55ae\50f9：$";
+    content: "\55ae\50f9\ff1a$";
 }
 
 .pro_quantity::before {
-    content: "×";
+    content: "\00d7";
 }
 
 /* ManagementData */

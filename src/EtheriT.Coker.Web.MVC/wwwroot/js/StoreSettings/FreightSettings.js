@@ -1,5 +1,5 @@
-﻿var $set_default, $name, $preserve, $shipping, $isFree, $freight, $low_con, $d_freight;
-var keyId, disp_opt = true
+﻿var $set_default, $title, $preserve, $shipping, $freight, $low_con, $d_freight, $pricing_method;
+var keyId, disp_opt = true, freight_type
 var freight_list
 
 function PageReady() {
@@ -17,45 +17,37 @@ function PageReady() {
                 type: "POST",
                 headers: _c.Data.Header
             });
+        }
+    };
+    co.Freight = {
+        AddUp: function (data) {
+            return $.ajax({
+                url: "/api/Freight/AddUp",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
         },
-        //    Add: function (data) {
-        //        return $.ajax({
-        //            url: "/api/Marquee/Add",
-        //            type: "POST",
-        //            contentType: 'application/json; charset=utf-8',
-        //            headers: _c.Data.Header,
-        //            data: JSON.stringify(data),
-        //            dataType: "json"
-        //        });
-        //    },
-        //    Get: function (id) {
-        //        return $.ajax({
-        //            url: "/api/Marquee/Get/",
-        //            type: "GET",
-        //            contentType: 'application/json; charset=utf-8',
-        //            headers: _c.Data.Header,
-        //            data: { id: id },
-        //        });
-        //    },
-        //    Update: function (data) {
-        //        return $.ajax({
-        //            url: "/api/Marquee/Update",
-        //            type: "POST",
-        //            contentType: 'application/json; charset=utf-8',
-        //            headers: _c.Data.Header,
-        //            data: JSON.stringify(data),
-        //            dataType: "json"
-        //        });
-        //    },
-        //    Delete: function (id) {
-        //        return $.ajax({
-        //            url: "/api/Marquee/Delete/",
-        //            type: "GET",
-        //            contentType: 'application/json; charset=utf-8',
-        //            headers: _c.Data.Header,
-        //            data: { id: id },
-        //        });
-        //    }
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Freight/GetOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        },
+        Delete: function (id) {
+            return $.ajax({
+                url: "/api/Freight/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        }
     };
 
     ElementInit();
@@ -69,7 +61,7 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    keyId > 0 ? Update() : Add();
+                    AddUp();
                 }
                 form.classList.add('was-validated')
             }, false)
@@ -85,21 +77,6 @@ function PageReady() {
         FormDataClear();
         window.location.hash = 0;
         HashDataEdit();
-    });
-
-    $isFree.on("click", function () {
-        if ($isFree.is(":checked")) {
-            $freight.val("");
-            $freight.attr("disabled", "disabled");
-            $low_con.val("");
-            $low_con.attr("disabled", "disabled");
-            $d_freight.val("");
-            $d_freight.attr("disabled", "disabled");
-        } else {
-            $freight.removeAttr("disabled");
-            $low_con.removeAttr("disabled");
-            $d_freight.removeAttr("disabled");
-        }
     });
 
     $("input[type='number']").change(function () {
@@ -120,6 +97,8 @@ function PageReady() {
         });
     });
 
+    $('input[type=radio][name=FreightRadio]').change(FreightRadio);
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -129,25 +108,32 @@ function PageReady() {
 
 function ElementInit() {
     $set_default = $("#CheckDefault");
-    $name = $("#InputName");
+    $title = $("#InputName");
     $preserve = $("#SelectPreserve");
     $shipping = $("#SelectShipping");
-    $isFree = $("#CheckFree");
     $freight = $("#InputFreight");
     $low_con = $("#InputLowCon");
     $d_freight = $("#InputDfreight");
+    $pricing_method = $("input[name=FreightRadio]");
 }
 
 function FormDataClear() {
     keyId = 0;
     $set_default.val("");
-    $name.val("");
+    $title.val("");
     $preserve.val("");
     $shipping.val("");
-    $isFree.val("");
     $freight.val("");
+    $freight.attr("disabled", "disabled");
     $low_con.val("");
+    $low_con.attr("disabled", "disabled");
     $d_freight.val("");
+    $d_freight.attr("disabled", "disabled");
+
+    $pricing_method.each(function () {
+        $(this).prop('checked', false)
+        FreightRadio();
+    })
 }
 
 function contentReady(e) {
@@ -172,15 +158,15 @@ function HashDataEdit() {
                 FormDataClear();
                 MoveToContent();
             } else {
-                //co.Marquees.Get(parseInt(hash)).done(function (result) {
-                //    if (result != null) {
-                //        MoveToContent();
-                //        keyId = result.id;
-                //        FormDataSet(result.placement, result.disp_opt, result.title, result.ser_no, result.link, result.target, result.permanent, result.startTime, result.endTime);
-                //    } else {
-                //        window.location.hash = ""
-                //    }
-                //})
+                co.Freight.Get(parseInt(hash)).done(function (result) {
+                    if (result != null) {
+                        keyId = result.id;
+                        FormDataSet(result);
+                        MoveToContent();
+                    } else {
+                        window.location.hash = ""
+                    }
+                })
             }
         }
     } else {
@@ -190,93 +176,76 @@ function HashDataEdit() {
 
 function editButtonClicked(e) {
     MoveToContent();
-
-    var data = e.row.data;
     keyId = e.row.key;
     window.location.hash = keyId
-
-    //FormDataSet(set_default, name, preserve, shipping, isFree, freight, low_con, d_freight)
 }
 
-function FormDataSet(set_default, name, preserve, shipping, isFree, freight, low_con, d_freight) {
-    $set_default.val("");
-    $name.val("");
-    $preserve.val("");
-    $shipping.val("");
-    $isFree.val("");
-    $freight.val("");
-    $low_con.val("");
-    $d_freight.val("");
+function FormDataSet(result) {
+    $set_default.prop("checked", result.set_Default);
+    $title.val(result.title);
+    $preserve.val(result.preserveType);
+    $shipping.val(result.freigntType);
+    $freight.val(result.freight);
+    $low_con.val(result.low_Con);
+    $d_freight.val(result.dis_Freight);
+    $pricing_method.each(function () {
+        if ($(this).val() == result.freigntType) {
+            $(this).prop('checked', true)
+            FreightRadio();
+        }
+    })
 }
 
-//function deleteButtonClicked(e) {
-//    Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-//        co.Marquees.Delete(e.row.key);
-//        e.component.refresh();
-//    });
-//}
-
-function Add() {
-    console.log("Default = " + $set_default.is(":checked"))
-    console.log("Name = " + $name.val())
-    console.log("Preserve = " + $preserve.val())
-    console.log("Shipping = " + $shipping.val())
-    console.log("IsFree = " + $isFree.is(":checked"))
-    console.log("Freight = " + $freight.val())
-    console.log("LowCon = " + $low_con.val())
-    console.log("Dfreight = " + $d_freight.val())
-    //co.Marquees.Add({
-    //    WebsiteId: $.cookie('WebSiteId'),
-    //    placement: $placement.val(),
-    //    title: $title.val(),
-    //    disp_opt: display,
-    //    ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-    //    link: $link.val(),
-    //    target: $target.is(":checked"),
-    //    StartTime: startDate,
-    //    EndTime: endDate,
-    //    permanent: $permanent.is(":checked")
-    //}).done(function () {
-    //    Coker.sweet.success(success_text, null, true);
-    //    setTimeout(function () {
-    //        BackToList();
-    //        freight_list.component.refresh();
-    //    }, 1000);
-    //}).fail(function () {
-    //    Coker.sweet.error("錯誤", error_text, null, true);
-    //});
+function deleteButtonClicked(e) {
+    Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
+        co.Freight.Delete(e.row.key);
+        e.component.refresh();
+    });
 }
 
-function Update() {
-    console.log("Default = " + $set_default.is(":checked"))
-    console.log("Name = " + $name.val())
-    console.log("Preserve = " + $preserve.val())
-    console.log("Shipping = " + $shipping.val())
-    console.log("IsFree = " + $isFree.is(":checked"))
-    console.log("Freight = " + $freight.val())
-    console.log("LowCon = " + $low_con.val())
-    console.log("Dfreight = " + $d_freight.val())
-    //co.Marquees.Update({
-    //    id: keyId,
-    //    WebsiteId: $.cookie('WebSiteId'),
-    //    placement: $placement.val(),
-    //    title: $title.val(),
-    //    disp_opt: display,
-    //    ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-    //    link: $link.val(),
-    //    target: $target.is(":checked"),
-    //    StartTime: startDate,
-    //    EndTime: endDate,
-    //    permanent: $permanent.is(":checked")
-    //}).done(function () {
-    //    Coker.sweet.success(success_text, null, true);
-    //    setTimeout(function () {
-    //        BackToList();
-    //        freight_list.component.refresh();
-    //    }, 1000);
-    //}).fail(function () {
-    //    Coker.sweet.error("錯誤", error_text, null, true);
-    //});
+function FreightRadio() {
+    $pricing_method.each(function () {
+        if ($(this).is(":checked")) {
+            freight_type = $(this).val();
+            switch (parseInt($(this).val())) {
+                case 1:
+                    $freight.val("");
+                    $freight.attr("disabled", "disabled");
+                    $low_con.val("");
+                    $low_con.attr("disabled", "disabled");
+                    $d_freight.val("");
+                    $d_freight.attr("disabled", "disabled");
+                    break;
+                case 2:
+                    $freight.removeAttr("disabled");
+                    $low_con.removeAttr("disabled");
+                    $d_freight.removeAttr("disabled");
+                    break;
+            }
+        }
+    })
+}
+
+function AddUp() {
+    co.Freight.AddUp({
+        Id: keyId,
+        Title: $title.val(),
+        PreserveType: $preserve.val(),
+        LogisticsType: $shipping.val(),
+        FreigntType: freight_type,
+        Freight: $freight.val(),
+        Low_Con: $low_con.val(),
+        Dis_Freight: $d_freight.val(),
+        Set_Default: $set_default.is(":checked")
+    }).done(function () {
+        Coker.sweet.success("運費設定儲存成功", null, true);
+        setTimeout(function () {
+            BackToList();
+            freight_list.component.refresh();
+        }, 1000);
+    }).fail(function () {
+        Coker.sweet.error("錯誤", "儲存運費設定發生錯誤", null, true);
+    });
 }
 
 function MoveToContent() {
@@ -288,5 +257,6 @@ function MoveToContent() {
 function BackToList() {
     $("#FreightList").removeClass("d-none");
     $("#FreightContent").addClass("d-none");
+    FormDataClear();
     window.location.hash = ""
 }

@@ -78,16 +78,23 @@ function PageReady() {
 
     $(".btn_addToCar").on("click", AddToCart);
     $(".btn_certification").on("click", function () {
-        console.log("Click")
-        console.log($(this))
-        console.log($(this).data("certification"))
+        $("#ProductDescription").removeClass("active show")
+        $("#TechnicalDocuments").addClass("active show")
+        $("#pills-description-tab").removeClass("active")
+        $("#pills-documents-tab").addClass("active")
+        var btn_data = $(this).data("certification")
+        $(".badge_directions").each(function () {
+            var $self = $(this)
+            if ($self.data("certification") == btn_data) {
+                $('html, body').animate({ scrollTop: $self.offset().top - ($("header").height() * 2) }, 0);
+            }
+        })
     })
 }
 
 function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
 }
-
 
 function AddToCart() {
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {

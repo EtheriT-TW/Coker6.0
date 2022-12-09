@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
     public class OrderHeaderGetAllListDto
     {
-        public long Id { get; set; }
+        public string Id { get; set; }
         public string Orderer { get; set; }
         public string RecipientAddress { get; set; }
         public string Shipping { get; set; }

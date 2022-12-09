@@ -84,7 +84,7 @@ input[type="number"] {
 }
 
     #Product > .content > .describe > .introduce > li::before {
-        content: '．';
+        content: '\ff0e';
     }
 
     #Product > .content > .describe > .track > .btn_favorites > i {

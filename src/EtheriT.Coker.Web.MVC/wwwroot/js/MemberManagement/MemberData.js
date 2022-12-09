@@ -1,7 +1,7 @@
 ﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
 var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $PassFeedBack
-var $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
+var $member_number, $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
 var member_list
 
 function PageReady() {
@@ -100,6 +100,7 @@ function ElementInit() {
     $btn_checkpass_lock = $(".btn_checkpass_lock")
     $PassFeedBack = $("#PassFeedBack");
 
+    $member_number = $(".member_number")
     $name = $("#InputName");
     $sex = $("input[name=RadioGender]");
     $status = $("select[name='MemberStatus']");
@@ -163,8 +164,7 @@ function HashDataEdit() {
                 if (result != null) {
                     MoveToContent();
                     keyId = parseInt(hash);
-                    console.log(result)
-                    FormDataSet(result.name, result.sex, result.status, result.level, result.email, result.cellPhone, result.telPhone, result.address)
+                    FormDataSet(result)
                 } else {
                     window.location.hash = ""
                 }
@@ -181,25 +181,26 @@ function editButtonClicked(e) {
     HashDataEdit();
 }
 
-function FormDataSet(name, sex, status, level, email, cellphone, telphone, address) {
-    $name.val(name);
+function FormDataSet(result) {
+    $member_number.text(result.id)
+    $name.val(result.name);
     $sex.each(function () {
-        if ($(this).val() == sex) {
+        if ($(this).val() == result.sex) {
             $(this).prop("checked", true);
         }
     })
-    $status.val(status);
-    $level.val(level)
-    $email_basic.val(email);
-    $cellphone.val(cellphone);
-    if (telphone != null) {
-        var telphone_split = telphone.split("-");
+    $status.val(result.status);
+    $level.val(result.level)
+    $email_basic.val(result.email);
+    $cellphone.val(result.cellphone);
+    if (result.telphone != null) {
+        var telphone_split = result.telphone.split("-");
         $telphone_area.val(telphone_split[0]);
         $telphone.val(telphone_split[1]);
         $telphone_ext.val(telphone_split[2]);
     }
-    if (address != null) {
-        var address_split = address.split(" ");
+    if (result.address != null) {
+        var address_split = result.address.split(" ");
         $TWzipcode.twzipcode('set', {
             'county': address_split[0],
             'district': address_split[1],

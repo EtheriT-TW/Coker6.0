@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
-	public class ProductController : Controller
+    public class ProductController : Controller
     {
         private readonly IProductAppService productAppService;
         public ProductController(
@@ -14,9 +14,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             this.productAppService = productAppService;
         }
         [HttpGet]
-        public async Task<ProdGetOneDto> GetProdOne(long id)
+        public async Task<ProdGetOneDto> GetDisplayOne(long id)
         {
-            return await productAppService.GetProdOne(id);
+            return await productAppService.GetDisplayOne(id);
         }
     }
 }

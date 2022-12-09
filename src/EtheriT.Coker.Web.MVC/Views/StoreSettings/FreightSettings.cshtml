@@ -1,4 +1,6 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Freight
+@{
 	ViewData["Title"] = "FreightSettings";
 }
 
@@ -18,62 +20,53 @@
 				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
 					<span class="material-symbols-outlined">add</span>
 				</button>
-				@*@(
-				Html.DevExtreme().DataGrid<MarqueeGetDto>()
-				.DataSource(d => d.RemoteController().Key("Id")
-				.LoadUrl("/api/Marquee/GetAll").LoadMethod("Get")
-				.DeleteUrl("/api/Marquee/Delete").DeleteMethod("Delete")
-				.UpdateUrl("/api/Marquee/Update").UpdateMethod("Post")
-				)
-				.ColumnHidingEnabled(true)
-				.ShowBorders(true)
-				.FilterRow(filterRow => filterRow
-				.Visible(true)
-				.ApplyFilter(GridApplyFilterMode.Auto)
-				)
-				.SearchPanel(searchPanel => searchPanel
-				.Visible(true)
-				.Width(480)
-				.Placeholder("請輸入要搜尋的資料")
-				)
-				.ShowRowLines(true)
-				.Columns(c =>
-				{
-				c.AddFor(e => e.Id).Caption("編號").Width(50);
-				c.AddFor(e => e.title).Caption("內文");
-				c.AddFor(e => e.disp_opt).Caption("是否顯示").Width(90);
-				c.AddFor(e => e.placement).Caption("顯示位置").Width(90);
-				c.AddFor(e => e.ser_no).Caption("排序").Width(50);
-				c.AddFor(e => e.link).Caption("網址");
-				c.AddFor(e => e.target).Caption("另開視窗").Width(90);
-				c.AddFor(e => e.StartTime).Caption("起始日期");
-				c.AddFor(e => e.EndTime).Caption("結束日期");
-				c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
-				c.Add()
-				.Type(GridCommandColumnType.Buttons)
-				.Buttons(b =>
-				{
-				b.Add().Name("edit").OnClick("editButtonClicked");
-				b.Add().Name("delete").OnClick("deleteButtonClicked");
-				});
-				})
-				.ColumnAutoWidth(true)
-				.Paging(paging => paging.PageSize(30))
-				.Pager(pager =>
-				{
-				pager.Visible(true);
-				pager.ShowPageSizeSelector(true);
-				pager.AllowedPageSizes(new[] { 10, 20, 30 });
-				pager.ShowInfo(true);
-				})
-				.Editing(editing =>
-				{
-				editing.AllowDeleting(true);
-				editing.AllowUpdating(true);
-				editing.UseIcons(true);
-				})
-				.OnContentReady("contentReady")
-				)*@
+				@(
+					Html.DevExtreme().DataGrid<FreightGetAllListDto>()
+					.DataSource(d => d.RemoteController().Key("Id")
+					.LoadUrl("/api/Freight/GetAllList").LoadMethod("Get")
+					)
+					.ColumnHidingEnabled(true)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Width(480)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.ShowRowLines(true)
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號").Width(50);
+						c.AddFor(e => e.Title).Caption("標題");
+						c.AddFor(e => e.Describe).Caption("");
+						c.Add()
+						.Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
+						{
+							b.Add().Name("edit").OnClick("editButtonClicked");
+							b.Add().Name("delete").OnClick("deleteButtonClicked");
+						});
+					})
+					.ColumnAutoWidth(true)
+					.Paging(paging => paging.PageSize(30))
+					.Pager(pager =>
+					{
+						pager.Visible(true);
+						pager.ShowPageSizeSelector(true);
+						pager.AllowedPageSizes(new[] { 10, 20, 30 });
+						pager.ShowInfo(true);
+					})
+					.Editing(editing =>
+					{
+						editing.AllowDeleting(true);
+						editing.AllowUpdating(true);
+						editing.UseIcons(true);
+					})
+					.OnContentReady("contentReady")
+					)
 			</div>
 		</div>
 
@@ -113,30 +106,36 @@
 					</div>
 				</div>
 
-				<div class="form-check mb-3">
-					<input id="CheckFree" class="form-check-input" type="checkbox" value="">
-					<label class="form-check-label" for="CheckFree">免運</label>
+				<div class="d-flex mb-3">
+					<div class="form-check me-5">
+						<input id="FreightRadio_Free" class="form-check-input" type="radio" name="FreightRadio" value="1">
+						<label class="form-check-label" for="FreightRadio_Free">免運</label>
+					</div>
+					<div class="form-check me-5">
+						<input id="FreightRadio_Single" class="form-check-input" type="radio" name="FreightRadio" value="2">
+						<label class="form-check-label" for="FreightRadio_Single">單筆計算</label>
+					</div>
 				</div>
 
 				<div class="freight input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 						<span class="material-symbols-outlined me-1">paid</span>單筆運費
 					</div>
-					<input id="InputFreight" class="form-control rounded" type="number" aria-label="Input Freight" required>
+					<input id="InputFreight" class="form-control rounded" type="number" aria-label="Input Freight" disabled="disabled" required>
 				</div>
 
 				<div class="low_con input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 						<span class="material-symbols-outlined me-1">toll</span>折抵低消
 					</div>
-					<input id="InputLowCon" class="form-control rounded" type="number" aria-label="Input Low Consumption" required>
+					<input id="InputLowCon" class="form-control rounded" type="number" aria-label="Input Low Consumption" disabled="disabled" required>
 				</div>
 
 				<div class="dfreight input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 						<span class="material-symbols-outlined me-1">generating_tokens</span>折抵後運費
 					</div>
-					<input id="InputDfreight" class="form-control rounded" type="number" aria-label="Input Discounted Freight" required>
+					<input id="InputDfreight" class="form-control rounded" type="number" aria-label="Input Discounted Freight" disabled="disabled" required>
 				</div>
 			</form>
 		</div>

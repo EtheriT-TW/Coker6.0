@@ -4,13 +4,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class ContentManagementController : Controller
     {
-        public IActionResult Index()
-        {
-            return View("MarqueeMessage");
-        }
         public IActionResult Marquee()
         {
             return View("Marquee");
+        }
+        public IActionResult EnterAd(int id)
+        {
+            return View("EnterAd");
+        }
+        public IActionResult RightSideAd(int id)
+        {
+            return View("RightSideAd");
         }
         public IActionResult ContactUs(int id)
         {

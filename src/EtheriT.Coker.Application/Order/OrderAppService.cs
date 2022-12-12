@@ -97,16 +97,20 @@ namespace EtheriT.Coker.Application.Order
 
                                 db_sc.IsDeleted = true;
                                 db_sc.DeletionTime = DateTime.Now;
-                                //Core.Models.Prod_Log pl = new Core.Models.Prod_Log
-                                //{
 
-                                //    FK_Pid = db_ps.FK_Pid,
-                                //    FK_Uid = user_id,
-                                //    FK_Tid = dto.FK_Tid,
-                                //    Action = 3,
-                                //    Db_Name = "Order_Details"
-                                //};
-                                //db.Prod_Logs.Add(pl);
+                                var db_t = db.Tokens.Where(e => e.id == dto.FK_TId).FirstOrDefault();
+                                if (db_t != null)
+                                {
+                                    Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                                    {
+                                        FK_Pid = db_ps.FK_Pid,
+                                        FK_Uid = db_t.UserID,
+                                        FK_Tid = db_t.id,
+                                        Action = 3,
+                                        Db_Name = "Order_Details"
+                                    };
+                                    db.Prod_Logs.Add(pl);
+                                }
 
                                 db.SaveChanges();
                                 output.Success = true;
@@ -233,9 +237,9 @@ namespace EtheriT.Coker.Application.Order
                                      PId = p.Id,
                                      Title = p.Title,
                                      Description = p.Description,
-                                     Price = p.Price,
+                                     Price = ps.Price,
                                      Quantity = sc.Quantity,
-                                     Subtotal = p.Price * sc.Quantity
+                                     Subtotal = ps.Price * sc.Quantity
                                  };
                     return output.ToList();
                 }

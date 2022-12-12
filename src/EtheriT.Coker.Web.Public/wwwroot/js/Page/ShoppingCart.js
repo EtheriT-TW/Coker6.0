@@ -251,12 +251,15 @@ function CartAdd(result) {
         item_quantity = item.find(".pro_quantity"),
         item_total = item.find(".pro_subtotal"),
         item_btn_count_plus = item.find(".btn_count_plus"),
-        item_btn_count_minus = item.find(".btn_count_minus");
-    item_btn_remove_pro = item.find(".btn_remove_pro"),
+        item_btn_count_minus = item.find(".btn_count_minus"),
+        item_btn_remove_pro = item.find(".btn_remove_pro"),
         item_btn_move_to_favorites = item.find(".btn_move_to_favorites");
 
     item.data("scid", result.scId);
     item_link.attr("href", "/Toilet/" + result.pId);
+    item_link.on("click", function () {
+        ClickLog(result.pId);
+    });
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
     item_specification.text("白色");
@@ -622,7 +625,8 @@ function OrderDetailsAdd(ohid, oh_result) {
 
     Coker.Order.AddDetails({
         FK_OHId: ohid,
-        FK_SCId_Arr: scarr
+        FK_SCId_Arr: scarr,
+        FK_TId: $.cookie("Token"),
     }).done(function (result) {
         if (result.success) {
             OrderSuccess(oh_result);
@@ -711,6 +715,9 @@ function PurchaseAdd(result, item_list_ul) {
         item_subtotal = item.find(".pro_subtotal");
 
     item_link.attr("href", "/Toilet/" + result.pId);
+    item_link.on("click", function () {
+        ClickLog(result.pId);
+    });
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
     item_specification.text("白色");
@@ -848,4 +855,14 @@ function TWZipCodeInit() {
     var $district_first_option = $district.children('select').children('option').first();
     $district_first_option.text("請選擇鄉鎮");
     $district_first_option.attr('disabled', 'disabled');
+}
+
+function ClickLog(Pid) {
+    if ($.cookie("Token") != null) {
+        Product.Log.Click({
+            FK_Pid: Pid,
+            FK_Tid: $.cookie("Token"),
+            Action: 2,
+        });
+    }
 }

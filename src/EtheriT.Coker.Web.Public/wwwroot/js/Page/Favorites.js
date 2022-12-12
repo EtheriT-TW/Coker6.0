@@ -39,6 +39,13 @@
         $("#ShoppingCarModal > .Modal").data("pid", 1);
         ModalDefaultSet();
     });
+
+    $(".pro_link").on("click", function () {
+        var $self = $(this);
+        if ($self.parents("figure").first().data("pid") != null) {
+            ClickLog($self.parents("figure").first().data("pid"));
+        }
+    });
 }
 
 function RemoveFavorites() {
@@ -86,4 +93,14 @@ function Typography() {
 function ProShare() {
     var $self = $(this);
     $self.toggleClass('show');
+}
+
+function ClickLog(Pid) {
+    if ($.cookie("Token") != null) {
+        Product.Log.Click({
+            FK_Pid: Pid,
+            FK_Tid: $.cookie("Token"),
+            Action: 2,
+        });
+    }
 }

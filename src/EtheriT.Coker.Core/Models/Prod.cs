@@ -19,7 +19,6 @@ namespace EtheriT.Coker.Core.Models
         public string Introduction { get; set; }
         [StringLength(3000)]
         public string Description { get; set; }
-        public double Price { get; set; }
         public double? Discount { get; set; }
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }

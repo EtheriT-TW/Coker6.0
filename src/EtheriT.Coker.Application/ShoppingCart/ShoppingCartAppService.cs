@@ -31,14 +31,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     if (db_token != null && db_prod != null)
                     {
-                        var user_id = (db_token != null && db_token.UserID != null) ? db_token.UserID : null;
-                        var price = (db_prod != null) ? (int)(db_prod.Price * dto.Quantity) : 0;
+                        var price = (db_prod != null) ? (int)(db_prod_stock.Price * dto.Quantity) : 0;
                         if (db_shoppingcart == null)
                         {
                             Core.Models.ShoppingCart sc = new Core.Models.ShoppingCart
                             {
                                 FK_Tid = dto.FK_Tid,
-                                FK_Uid = user_id,
+                                FK_Uid = db_token.UserID,
                                 FK_PSid = dto.FK_PSid,
                                 FK_S1id = dto.FK_S1id,
                                 FK_S2id = dto.FK_S2id,
@@ -54,9 +53,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                             Core.Models.Prod_Log pl = new Core.Models.Prod_Log
                             {
-
                                 FK_Pid = db_prod.Id,
-                                FK_Uid = user_id,
+                                FK_Uid = db_token.UserID,
                                 FK_Tid = dto.FK_Tid,
                                 Action = 3,
                                 Db_Name = "ShoppingCart"
@@ -70,7 +68,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         {
                             db_shoppingcart.Quantity += dto.Quantity;
                             db_shoppingcart.LastModificationTime = DateTime.Now;
-                            db_shoppingcart.LastModifierUserId = user_id;
+                            db_shoppingcart.LastModifierUserId = db_token.UserID;
                             output.Message = "U" + db_shoppingcart.Id.ToString();
                             db.SaveChanges();
                         }
@@ -144,7 +142,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                             PId = p.Id,
                                             Title = p.Title,
                                             Description = p.Description,
-                                            Price = p.Price,
+                                            Price = ps.Price,
                                             Quantity = sc.Quantity,
                                         }).ToListAsync();
                     return output;
@@ -174,7 +172,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         PId = db_prod.Id,
                         Title = db_prod.Title,
                         Quantity = db_shoppingcart.Quantity,
-                        Price = db_prod.Price
+                        Price = db_prod_stock.Price
                     };
 
                     return output;

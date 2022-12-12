@@ -76,6 +76,7 @@ function PageReady() {
     });
     $(".btn_save").on("click", function () {
         disp_opt = false;
+        $btn_display.children("span").text("visibility_off");
         AddUp(false, "已存為草稿", "儲存草稿發生未知錯誤");
     });
     $(".btn_input_pic").on("click", function (event) {
@@ -193,8 +194,9 @@ function HashDataEdit() {
             } else {
                 co.Product.Get(parseInt(hash)).done(function (result) {
                     if (result != null) {
-                        MoveToContent();
+                        console.log(result)
                         FormDataSet(result);
+                        MoveToContent();
                     } else {
                         window.location.hash = ""
                     }
@@ -217,8 +219,8 @@ function FormDataSet(result) {
     startTime = result.startTime;
     endTime = result.endTime;
     keyId = result.id;
-    $btn_display.children("span").text(result.disp_opt ? "visibility" : "visibility_off");
-    disp_opt = result.disp_opt;
+    disp_opt = result.disp_Opt;
+    $btn_display.children("span").text(result.disp_Opt ? "visibility" : "visibility_off");
 
     $name.val(result.title);
     $name_count.text($name.val().length);
@@ -230,8 +232,8 @@ function FormDataSet(result) {
     $marks.val("");
     $tag.val("");
     $price.val(result.price);
-    $number.val("");
-    $min_number.val("");
+    $number.val(result.stock);
+    $min_number.val(result.min_Qty);
     $date = $("#InputDate");
     if (result.permanent) {
         $date.val('');
@@ -263,7 +265,11 @@ function AddUp(display, success_text, error_text) {
         Discount: 0,
         StartTime: startDate,
         EndTime: endDate,
-        permanent: $permanent.is(":checked")
+        permanent: $permanent.is(":checked"),
+        FK_S1id: 1,
+        FK_S2id: 1,
+        Stock: $number.val(),
+        Min_Qty: $min_number.val(),
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () {

@@ -9,7 +9,7 @@
                 dataType: "json"
             });
         }
-    }, 
+    },
     Update: {
         Cart: function (data) {
             return $.ajax({
@@ -52,6 +52,17 @@
                 url: "/api/ShoppingCart/DeleteDrop/",
                 type: "GET",
                 data: { id: id }
+            });
+        }
+    },
+    Log: {
+        Click: function (data) {
+            return $.ajax({
+                url: "/api/Product/ClickLog",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         }
     }

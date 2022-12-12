@@ -94,8 +94,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod_Stock>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid);
-                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S1id);
-                o.HasOne(u => u.Prod_Spec).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_S2id);
             });
             modelBuilder.Entity<ShoppingCart>(o =>
             {

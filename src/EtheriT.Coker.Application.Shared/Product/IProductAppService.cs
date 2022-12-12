@@ -12,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<ProductDto> GetOne(long Id);
         public Task<ResponseMessageDto> Delete(long Id);
+        public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }
 }

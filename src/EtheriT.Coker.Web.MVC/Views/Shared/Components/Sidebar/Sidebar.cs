@@ -129,15 +129,15 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="EnterAd",
                                 Title="進入廣告",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ContentManagement",
+                                Action="EnterAd",
                                 Icon="",
                             },
                             new JobMenu{
                                 PageName="RightSideAd",
                                 Title="右側浮動廣告",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ContentManagement",
+                                Action="RightSideAd",
                                 Icon="",
                             },
                             new JobMenu{

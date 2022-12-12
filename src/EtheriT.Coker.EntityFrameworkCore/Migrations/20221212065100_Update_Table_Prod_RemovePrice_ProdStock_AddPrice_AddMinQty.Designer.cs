@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221212065100_Update_Table_Prod_RemovePrice_ProdStock_AddPrice_AddMinQty")]
+    partial class Update_Table_Prod_RemovePrice_ProdStock_AddPrice_AddMinQty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -868,7 +870,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 2L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1460),
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
@@ -933,6 +935,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Pid");
 
+                    b.HasIndex("FK_S2id");
+
                     b.ToTable("Prod_Stocks");
 
                     b.HasData(
@@ -942,12 +946,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             FK_Pid = 1L,
-                            FK_S1id = 0L,
-                            FK_S2id = 0L,
                             IsDeleted = false,
-                            Min_Qty = 1,
                             Price = 28000.0,
-                            Safe_Qty = 5,
                             Ser_No = 500,
                             Stock = 100
                         },
@@ -957,12 +957,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             FK_Pid = 2L,
-                            FK_S1id = 0L,
-                            FK_S2id = 0L,
                             IsDeleted = false,
-                            Min_Qty = 1,
                             Price = 9500.0,
-                            Safe_Qty = 5,
                             Ser_No = 500,
                             Stock = 100
                         },
@@ -972,12 +968,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             FK_Pid = 3L,
-                            FK_S1id = 0L,
-                            FK_S2id = 0L,
                             IsDeleted = false,
-                            Min_Qty = 1,
                             Price = 13000.0,
-                            Safe_Qty = 5,
                             Ser_No = 500,
                             Stock = 100
                         });
@@ -1641,7 +1633,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod_Spec", "Prod_Spec")
+                        .WithMany("Prod_Stocks")
+                        .HasForeignKey("FK_S2id");
+
                     b.Navigation("Prod");
+
+                    b.Navigation("Prod_Spec");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
@@ -1710,6 +1708,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 {
                     b.Navigation("Prod_Logs");
 
+                    b.Navigation("Prod_Stocks");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec", b =>
+                {
                     b.Navigation("Prod_Stocks");
                 });
 

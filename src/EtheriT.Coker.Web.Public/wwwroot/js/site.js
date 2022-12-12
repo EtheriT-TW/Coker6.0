@@ -84,7 +84,7 @@ function cookie_reject() {
 
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
-        $.cookie("Token", result.token, { expires: 30 })
+        $.cookie("Token", result.token, { expires: 30, path: "/" })
     })
 }
 

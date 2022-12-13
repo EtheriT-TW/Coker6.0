@@ -1,4 +1,6 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.EnterAd
+@{
 	ViewData["Title"] = "RightSideAd";
 }
 
@@ -7,8 +9,9 @@
 
 <div class="">
 	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
-		<div class="title fw-bold fs-3">右側浮動廣告頁</div>
+		<div class="title fw-bold fs-3">右側浮動廣告</div>
 	</div>
+
 
 	<div id="" class="py-2">
 		<div id="RightSideAdList" class="card border-0">
@@ -16,60 +19,63 @@
 				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
 					<span class="material-symbols-outlined">add</span>
 				</button>
-				@*@(
-				Html.DevExtreme().DataGrid<MarqueeGetDto>()
-				.DataSource(d => d.RemoteController().Key("Id")
-				.LoadUrl("/api/Marquee/GetAllList").LoadMethod("Get")
-				)
-				.ColumnHidingEnabled(true)
-				.ShowBorders(true)
-				.FilterRow(filterRow => filterRow
-				.Visible(true)
-				.ApplyFilter(GridApplyFilterMode.Auto)
-				)
-				.SearchPanel(searchPanel => searchPanel
-				.Visible(true)
-				.Width(480)
-				.Placeholder("請輸入要搜尋的資料")
-				)
-				.ShowRowLines(true)
-				.Columns(c =>
-				{
-				c.AddFor(e => e.Id).Caption("編號").Width(50);
-				c.AddFor(e => e.title).Caption("內文");
-				c.AddFor(e => e.disp_opt).Caption("是否顯示").Width(90);
-				c.AddFor(e => e.placement).Caption("顯示位置").Width(90);
-				c.AddFor(e => e.ser_no).Caption("排序").Width(50);
-				c.AddFor(e => e.link).Caption("網址");
-				c.AddFor(e => e.target).Caption("另開視窗").Width(90);
-				c.AddFor(e => e.StartTime).Caption("起始日期");
-				c.AddFor(e => e.EndTime).Caption("結束日期");
-				c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
-				c.Add()
-				.Type(GridCommandColumnType.Buttons)
-				.Buttons(b =>
-				{
-				b.Add().Name("edit").OnClick("editButtonClicked");
-				b.Add().Name("delete").OnClick("deleteButtonClicked");
-				});
-				})
-				.ColumnAutoWidth(true)
-				.Paging(paging => paging.PageSize(30))
-				.Pager(pager =>
-				{
-				pager.Visible(true);
-				pager.ShowPageSizeSelector(true);
-				pager.AllowedPageSizes(new[] { 10, 20, 30 });
-				pager.ShowInfo(true);
-				})
-				.Editing(editing =>
-				{
-				editing.AllowDeleting(true);
-				editing.AllowUpdating(true);
-				editing.UseIcons(true);
-				})
-				.OnContentReady("contentReady")
-				)*@
+				@(
+					Html.DevExtreme().DataGrid<HtmlContentGetAllListDto>()
+					.DataSource(d => d.RemoteController().Key("Id")
+					.LoadUrl("/api/HtmlContent/GetRightSideAdAllList").LoadMethod("Get")
+					)
+					.RemoteOperations(true)
+					.ColumnHidingEnabled(true)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Width(480)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.ShowRowLines(true)
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號").Width(50);
+						c.AddFor(e => e.Title).Caption("名稱");
+						c.AddFor(e => e.Img).Caption("圖片連結");
+						c.AddFor(e => e.Content).Caption("內容");
+						c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
+						c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
+						c.AddFor(e => e.ObjectType).Caption("廣告型態");
+						c.AddFor(e => e.Target).Caption("另開視窗").Width(90);
+						c.AddFor(e => e.Link).Caption("超連結").Width(90);
+						c.AddFor(e => e.StartDate).Caption("起始日期");
+						c.AddFor(e => e.EndDate).Caption("結束日期");
+						c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
+						c.Add()
+						.Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
+						{
+							b.Add().Name("edit").OnClick("editButtonClicked");
+							b.Add().Name("delete").OnClick("deleteButtonClicked");
+						});
+					})
+					.ColumnAutoWidth(true)
+					.Paging(paging => paging.PageSize(30))
+					.Pager(pager =>
+					{
+						pager.Visible(true);
+						pager.ShowPageSizeSelector(true);
+						pager.AllowedPageSizes(new[] { 10, 20, 30 });
+						pager.ShowInfo(true);
+					})
+					.Editing(editing =>
+					{
+						editing.AllowDeleting(true);
+						editing.AllowUpdating(true);
+						editing.UseIcons(true);
+					})
+					.OnContentReady("contentReady")
+					)
 			</div>
 		</div>
 
@@ -105,14 +111,17 @@
 
 				<div class="name input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">image</span>名稱
+						<span class="material-symbols-outlined me-1 required_sign">image</span>圖片名稱
 					</div>
 					<input id="InputName" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
+					<div class="icon_hint position-absolute ps-2 top-50 end-0 d-flex translate-middle-y z-index-up" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="建議輸入正確圖片說明，可以增加搜尋度">
+						<span class="material-icons me-1">help</span>
+					</div>
 				</div>
 
 				<div class="sort input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">sort_by_alpha</span>排序
+						<span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
 					</div>
 					<input id="InputSort" class="form-control rounded" type="number" aria-label="Input Sort of RightSideAd" disabled="disabled" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
@@ -123,7 +132,7 @@
 
 				<div class="link input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">link</span>
+						<span class="material-symbols-outlined me-1 required_sign">link</span>
 					</div>
 					<input id="InputLink" class="form-control rounded" type="text" aria-label="Input Link of RightSideAd" value="https://" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
@@ -134,7 +143,7 @@
 
 				<div class="date input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">calendar_today</span>調整顯示日期
+						<span class="material-symbols-outlined me-1 required_sign">calendar_today</span>調整顯示日期
 					</div>
 					<input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of RightSideAd" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
@@ -145,5 +154,6 @@
 			</form>
 		</div>
 
+		<div class="text-end my-2">※僅首次進入網站時有效，且前台最多僅顯示1筆資料</div>
 	</div>
 </div>

@@ -23,6 +23,7 @@
 					.DataSource(d => d.RemoteController().Key("Id")
 					.LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
 					)
+					.RemoteOperations(true)
 					.ColumnHidingEnabled(true)
 					.ShowBorders(true)
 					.FilterRow(filterRow => filterRow

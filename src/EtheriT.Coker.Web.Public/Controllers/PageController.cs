@@ -1,6 +1,8 @@
-﻿using EtheriT.Coker.Web.Public.Models;
+﻿using EtheriT.Coker.Application.Shared.Dto.Freight;
+using EtheriT.Coker.Application.Shared.Freight;
+using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
-using SimpleCaptcha;
+using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace EtheriT.Coker.Web.Public.Controllers
@@ -8,18 +10,28 @@ namespace EtheriT.Coker.Web.Public.Controllers
     public class PageController : Controller
     {
         private readonly ILogger<PageController> _logger;
+        private readonly IFreightAppService freightAppService;
+        private readonly IConfiguration Configuration;
 
-        public PageController(ILogger<PageController> logger)
+        public PageController(
+            ILogger<PageController> logger,
+            IFreightAppService freightAppService,
+            IConfiguration Configuration
+            )
         {
-            _logger = logger;
+            this._logger = logger;
+            this.freightAppService = freightAppService;
+            this.Configuration = Configuration;
         }
-
-        public IActionResult Index(string key, int id, string search)
+        public async Task<IActionResult> IndexAsync(string key, int id, string search)
         {
+            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay(siteId)).Value));
             PageViewModel model = new PageViewModel
             {
                 id = id,
-                search = search ?? "".Trim()
+                search = search ?? "".Trim(),
+                freightModels = freight
             };
             string view = string.Empty;
             if (!string.IsNullOrEmpty(key))

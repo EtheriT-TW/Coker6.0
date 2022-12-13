@@ -1,0 +1,191 @@
+﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.EnterAd;
+using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
+using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+
+namespace EtheriT.Coker.Application.HtmlContent
+{
+    public class HtmlContentAppService : IHtmlContentAppService
+    {
+        private readonly CokerDbContext db;
+        public HtmlContentAppService(
+            CokerDbContext db
+        )
+        {
+            this.db = db;
+        }
+        public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            try
+            {
+                if (dto.Id == 0)
+                {
+                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                    if (db_t != null)
+                    {
+                        Core.Models.Html_Content hc = new Core.Models.Html_Content
+                        {
+                            FK_WebsiteId = dto.FK_WebsiteId,
+                            Type = dto.Type,
+                            Title = dto.Title,
+                            Img = dto.Img,
+                            Content = dto.Content,
+                            Ser_no = dto.Ser_no,
+                            Disp_opt = dto.Disp_opt,
+                            ObjectType = dto.ObjectType,
+                            Link = dto.Link,
+                            Target = dto.Target,
+                            StartDate = dto.StartDate,
+                            EndDate = dto.EndDate,
+                            permanent = dto.permanent,
+                            CreatorUserId = (long)db_t.UserID
+                        };
+                        db.Html_Contents.Add(hc);
+                    }
+                    else throw new Exception("查無資料");
+                }
+                else
+                {
+                    var db_hc = db.Html_Contents.Where(e => e.Id == dto.Id).FirstOrDefault();
+                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                    if (db_hc != null && db_t != null)
+                    {
+                        db_hc.FK_WebsiteId = dto.FK_WebsiteId;
+                        db_hc.Type = dto.Type;
+                        db_hc.Title = dto.Title;
+                        db_hc.Img = dto.Img;
+                        db_hc.Content = dto.Content;
+                        db_hc.Ser_no = dto.Ser_no;
+                        db_hc.Disp_opt = dto.Disp_opt;
+                        db_hc.ObjectType = dto.ObjectType;
+                        db_hc.Link = dto.Link;
+                        db_hc.Target = dto.Target;
+                        db_hc.StartDate = dto.StartDate;
+                        db_hc.EndDate = dto.EndDate;
+                        db_hc.permanent = dto.permanent;
+
+                        db_hc.LastModificationTime = DateTime.Now;
+                        db_hc.LastModifierUserId = db_t.UserID;
+                    }
+                    else throw new Exception("查無資料");
+                }
+                db.SaveChanges();
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+            return output;
+        }
+        public async Task<JsonResult> GetAllList(int type, DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var result = db.Html_Contents;
+
+                if (result != null)
+                {
+                    var dataQuery = from e in result
+                                    where !e.IsDeleted && e.Type == type
+                                    select new HtmlContentGetAllListDto
+                                    {
+                                        Id = e.Id,
+                                        Type = e.Type,
+                                        Title = e.Title,
+                                        Img = e.Img,
+                                        Content = e.Content,
+                                        Ser_no = e.Ser_no,
+                                        Disp_opt = e.Disp_opt,
+                                        ObjectType = e.ObjectType,
+                                        Link = e.Link,
+                                        Target = e.Target,
+                                        StartDate = e.StartDate,
+                                        EndDate = e.EndDate,
+                                        permanent = e.permanent
+                                    };
+                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+            return new JsonResult(new List<HtmlContentGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<HtmlContentDto> GetOne(int id)
+        {
+            try
+            {
+                var result = db.Html_Contents.Where(e => e.Id == id && !e.IsDeleted).FirstOrDefault();
+
+                if (result != null)
+                {
+                    HtmlContentDto output = new HtmlContentDto()
+                    {
+                        Id = result.Id,
+                        FK_WebsiteId = result.FK_WebsiteId,
+                        Type = result.Type,
+                        Title = result.Title,
+                        Img = result.Img,
+                        Content = result.Content,
+                        Ser_no = result.Ser_no,
+                        Disp_opt = result.Disp_opt,
+                        ObjectType = result.ObjectType,
+                        Link = result.Link,
+                        Target = result.Target,
+                        StartDate = result.StartDate,
+                        EndDate = result.EndDate,
+                        permanent = result.permanent
+                    };
+
+                    return output;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<ResponseMessageDto> Delete(HtmlContentDelectDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var db_hc = db.Html_Contents.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+
+                if (db_hc != null && db_t != null)
+                {
+                    db_hc.IsDeleted = true;
+                    db_hc.DeletionTime = DateTime.Now;
+                    db_hc.DeleterUserId = db_t.UserID;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+    }
+}

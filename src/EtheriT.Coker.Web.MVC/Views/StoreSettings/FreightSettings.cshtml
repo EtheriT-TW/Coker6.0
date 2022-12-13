@@ -25,6 +25,7 @@
 					.DataSource(d => d.RemoteController().Key("Id")
 					.LoadUrl("/api/Freight/GetAllList").LoadMethod("Get")
 					)
+					.RemoteOperations(true)
 					.ColumnHidingEnabled(true)
 					.ShowBorders(true)
 					.FilterRow(filterRow => filterRow
@@ -92,7 +93,7 @@
 				<div class="row">
 					<div class="name input-group col-12 col-sm-6 mb-3">
 						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-							<span class="material-symbols-outlined me-1">local_shipping</span>名稱
+							<span class="material-symbols-outlined me-1 required_sign">local_shipping</span>名稱
 						</div>
 						<input id="InputName" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
 					</div>

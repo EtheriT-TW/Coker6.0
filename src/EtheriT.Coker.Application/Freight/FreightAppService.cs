@@ -10,6 +10,7 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.Marquee;
 
 namespace EtheriT.Coker.Application.Freight
 {
@@ -31,23 +32,31 @@ namespace EtheriT.Coker.Application.Freight
             {
                 if (dto.Id == 0)
                 {
-                    Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
+                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                    if (db_t != null)
                     {
-                        Title = dto.Title,
-                        PreserveType = dto.PreserveType,
-                        LogisticsType = dto.LogisticsType,
-                        FreigntType = dto.FreigntType,
-                        Freight = dto.Freight,
-                        Low_Con = dto.Low_Con,
-                        Dis_Freight = dto.Dis_Freight,
-                        Set_Default = dto.Set_Default
-                    };
-                    db.LogisticsSettings.Add(ls);
+                        Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
+                        {
+                            FK_WebsiteId = (long)dto.FK_WId,
+                            Title = dto.Title,
+                            PreserveType = dto.PreserveType,
+                            LogisticsType = dto.LogisticsType,
+                            FreigntType = dto.FreigntType,
+                            Freight = dto.Freight,
+                            Low_Con = dto.Low_Con,
+                            Dis_Freight = dto.Dis_Freight,
+                            Set_Default = dto.Set_Default,
+                            CreatorUserId = (long)db_t.UserID,
+                        };
+                        db.LogisticsSettings.Add(ls);
+                    }
+                    else throw new Exception("查無會員資料");
                 }
                 else
                 {
                     var db_ls = db.LogisticsSettings.Where(e => e.Id == dto.Id).FirstOrDefault();
-                    if (db_ls != null)
+                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                    if (db_ls != null && db_t != null)
                     {
                         db_ls.Title = dto.Title;
                         db_ls.PreserveType = dto.PreserveType;
@@ -58,8 +67,11 @@ namespace EtheriT.Coker.Application.Freight
                         db_ls.Dis_Freight = dto.Dis_Freight;
                         db_ls.Set_Default = dto.Set_Default;
                         db_ls.Set_Default = dto.Set_Default;
+
                         db_ls.LastModificationTime = DateTime.Now;
+                        db_ls.LastModifierUserId = db_t.UserID;
                     }
+                    else throw new Exception("查無資料");
                 }
                 db.SaveChanges();
                 output.Success = true;
@@ -93,7 +105,7 @@ namespace EtheriT.Coker.Application.Freight
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
-                else throw new Exception("查無會員資料");
+                else throw new Exception("查無運費資料");
             }
             catch (Exception e)
             {
@@ -132,6 +144,37 @@ namespace EtheriT.Coker.Application.Freight
             }
 
             return null;
+        }
+        public async Task<JsonResult> GetDisplay(long webid)
+        {
+            try
+            {
+                var result = db.LogisticsSettings;
+
+                if (result != null)
+                {
+                    var output = from e in result
+                                 where !e.IsDeleted && e.FK_WebsiteId == webid
+                                 select new FreightDisplayDto
+                                 {
+                                     Id = e.Id,
+                                     Title = e.Title,
+                                     Freight = e.Freight == null ? 0 : e.Freight,
+                                     Set_Default = e.Set_Default,
+                                     Describe = ((PreserveTypeEnum)e.PreserveType) + " - " +
+                                                ((ShippingTypeEnum)e.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +
+                                                (e.FreigntType == 1 ? "免運費" : "單筆運費" + e.Freight + "元(滿" + e.Low_Con + "元" + (e.Dis_Freight == 0 ? "免運)" : "運費" + e.Dis_Freight + "元)")),
+                                 };
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                else throw new Exception("查無運費資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<FreightDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ResponseMessageDto> Delete(long Id)
         {

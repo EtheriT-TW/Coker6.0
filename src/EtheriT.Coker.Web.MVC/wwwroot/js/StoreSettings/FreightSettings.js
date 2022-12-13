@@ -229,6 +229,8 @@ function FreightRadio() {
 function AddUp() {
     co.Freight.AddUp({
         Id: keyId,
+        FK_WId: $.cookie('WebSiteId'),
+        TId: $.cookie('secret'),
         Title: $title.val(),
         PreserveType: $preserve.val(),
         LogisticsType: $shipping.val(),

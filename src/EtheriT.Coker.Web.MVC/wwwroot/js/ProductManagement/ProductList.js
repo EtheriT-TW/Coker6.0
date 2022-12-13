@@ -41,7 +41,7 @@ function PageReady() {
     co.Picker.Init($picker);
 
     $picker.on('apply.daterangepicker', function (ev, picker) {
-        $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
+        $(this).val(picker.startDate.format('YYYY/MM/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/MM/DD HH:mm'));
         startDate = picker.startDate.format("");
         endDate = picker.endDate.format("");
     });

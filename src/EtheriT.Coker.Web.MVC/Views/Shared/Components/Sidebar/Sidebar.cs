@@ -51,7 +51,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 PageName="ProductList",
                                 Title="商品列表",
                                 Controller="ProductManagement",
-                                Action="Index",
+                                Action="ProductList",
                                 Icon="",
                             },
                             new JobMenu{
@@ -64,8 +64,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="TechnicalCertificate",
                                 Title="技術證照",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ProductManagement",
+                                Action="TechnicalCertificate",
                                 Icon="",
                             }
                         }

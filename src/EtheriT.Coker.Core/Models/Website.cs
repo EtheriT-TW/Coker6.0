@@ -27,5 +27,7 @@ namespace EtheriT.Coker.Core.Models
         public List<WebMenu> WebMenus { get; set; }
         public List<Prod> Prods { get; set; }
         public List<Prod_Spec_Type> Prod_Spec_Types { get; set; }
+        public List<Html_Content> Html_Contents { get; set; }
+        public List<LogisticsSetting> LogisticsSettings { get; set; }
     }
 }

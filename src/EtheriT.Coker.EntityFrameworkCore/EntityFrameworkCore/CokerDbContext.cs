@@ -33,6 +33,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod_Stock> Prod_Stocks { get; set; }
         public DbSet<ShoppingCart> ShoppingCarts { get; set; }
         public DbSet<Prod_Log> Prod_Logs { get; set; }
+        public DbSet<Html_Content> Html_Contents { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)
@@ -63,6 +64,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OId);
                 o.HasOne(u => u.ShoppingCart).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_SCId);
+            });
+            modelBuilder.Entity<LogisticsSetting>(o =>
+            {
+                o.HasOne(u => u.Website).WithMany(u => u.LogisticsSettings).HasForeignKey(f => f.FK_WebsiteId);
             });
             modelBuilder.Entity<LogisticsType_PaymentType>(o =>
             {
@@ -99,6 +104,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PSid);
                 o.HasOne(u => u.Token).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_Tid);
+            });
+            modelBuilder.Entity<Html_Content>(o =>
+            {
+                o.HasOne(u => u.Website).WithMany(u => u.Html_Contents).HasForeignKey(f => f.FK_WebsiteId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

@@ -12,6 +12,10 @@ input[type="number"] {
     z-index: 10;
 }
 
+.icon_hint {
+    cursor: default;
+}
+
 /* EnterAd List */
 .btn_back {
     color: #4E565A;
@@ -42,17 +46,22 @@ input[type="number"] {
     content: '/60';
 }
 
+#EnterAdContent > form > .name > input {
+    padding-left: 7.25rem;
+    padding-right: 7.5rem;
+}
+
 #EnterAdContent > form > .sort > input {
-    padding-left: 5rem;
+    padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
 
 #EnterAdContent > form > .link > input {
-    padding-left: 2.25rem;
+    padding-left: 3.25rem;
     padding-right: 7.5rem;
 }
 
 #EnterAdContent > form > .date > input {
-    padding-left: 8rem;
+    padding-left: 9rem;
     padding-right: 7.5rem;
 }

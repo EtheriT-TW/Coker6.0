@@ -19,8 +19,8 @@
 				Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
 				.DataSource(d => d.RemoteController().Key("Id")
 				.LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
-				/*.UpdateUrl("/api/Order/Update").UpdateMethod("Post")*/
 				)
+				.RemoteOperations(true)
 				.ColumnHidingEnabled(true)
 				.ShowBorders(true)
 				.FilterRow(filterRow => filterRow

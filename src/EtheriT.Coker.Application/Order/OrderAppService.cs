@@ -142,22 +142,24 @@ namespace EtheriT.Coker.Application.Order
         {
             try
             {
-                var result = db.Order_Headers;
+                var db_oh = db.Order_Headers;
+                var db_ls = db.LogisticsSettings;
 
-                if (result != null)
+                if (db_oh != null)
                 {
-                    var dataQuery = from e in result
-                                    where !e.IsDeleted
+                    var dataQuery = from oh in db_oh
+                                    where !oh.IsDeleted
+                                    from ls in db_ls
                                     select new OrderHeaderGetAllListDto
                                     {
-                                        Id = ("000000000" + e.Id.ToString()).Substring(e.Id.ToString().Length, 9),
-                                        Orderer = e.Orderer.Substring(0, 1) + "○" + e.Orderer.Substring(e.Orderer.Length - 1, 1),
-                                        RecipientAddress = e.RecipientAddress,
-                                        Shipping = ((ShippingTypeEnum)e.Shipping).ToString().Replace("-", "/").Replace("Seven", "7-11"),
-                                        Payment = ((PaymentTypeEnum)e.Payment).ToString(),
-                                        State = ((OrderStatusEnum)e.State).ToString(),
-                                        Total = e.Subtotal + e.Freight,
-                                        CreationTime = e.CreationTime,
+                                        Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
+                                        Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
+                                        RecipientAddress = oh.RecipientAddress,
+                                        Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
+                                        Payment = ((PaymentTypeEnum)oh.Payment).ToString(),
+                                        State = ((OrderStatusEnum)oh.State).ToString(),
+                                        Total = oh.Subtotal + oh.Freight,
+                                        CreationTime = oh.CreationTime,
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

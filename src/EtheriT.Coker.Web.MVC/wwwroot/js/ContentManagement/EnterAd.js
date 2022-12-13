@@ -1,38 +1,8 @@
-﻿var $placement, $btn_display, $title, $title_count, $input_sort, $check_sort, $link, $target, $date, $picker, $permanent
+﻿var $btn_display, $title, $input_sort, $check_sort, $link, $target, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
 
 function PageReady() {
-    //co.EnterAds = {
-    //    AddUp: function (data) {
-    //        return $.ajax({
-    //            url: "/api/EnterAd/AddUp",
-    //            type: "POST",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: JSON.stringify(data),
-    //            dataType: "json"
-    //        });
-    //    },
-    //    Get: function (id) {
-    //        return $.ajax({
-    //            url: "/api/EnterAd/Get/",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: { id: id },
-    //        });
-    //    },
-    //    Delete: function (id) {
-    //        return $.ajax({
-    //            url: "/api/EnterAd/Delete/",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: { id: id },
-    //        });
-    //    }
-    //};
 
     ElementInit();
 
@@ -41,7 +11,7 @@ function PageReady() {
     co.Picker.Init($picker);
 
     $picker.on('apply.daterangepicker', function (ev, picker) {
-        $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
+        $(this).val(picker.startDate.format('YYYY/MM/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/MM/DD HH:mm'));
         startDate = picker.startDate.format("");
         endDate = picker.endDate.format("");
     });
@@ -55,9 +25,9 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    //Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                    //    AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-                    //});
+                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                        AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                    });
                 }
                 form.classList.add('was-validated')
                 WasValidated();
@@ -67,7 +37,7 @@ function PageReady() {
 
 
     $(".btn_back").on("click", function () {
-        Coker.sweet.confirm("返回商品列表", "資料將不被保存", "確定", "取消", function () {
+        Coker.sweet.confirm("返回廣告列表", "資料將不被保存", "確定", "取消", function () {
             history.back();
         });
     })
@@ -80,7 +50,6 @@ function PageReady() {
         disp_opt = false;
         AddUp(disp_opt, "已存為草稿", "儲存草稿發生未知錯誤");
     });
-
     $btn_display.on("click", function () {
         if (disp_opt) {
             $btn_display.children("span").text("visibility_off");
@@ -90,9 +59,6 @@ function PageReady() {
             disp_opt = !disp_opt;
         }
     })
-    $title.on('keyup', function () {
-        $title_count.text($title.val().length);
-    });
     $check_sort.on("click", function () {
         if ($check_sort.is(":checked")) {
             $input_sort.removeAttr("disabled");
@@ -120,10 +86,8 @@ function PageReady() {
 }
 
 function ElementInit() {
-    $placement = $("#Placement");
     $btn_display = $("#Btn_Display");
-    $title = $("#InputTitle");
-    $title_count = $("#AdForm > .title .title_count");
+    $title = $("#InputName");
     $input_sort = $("#InputSort");
     $check_sort = $("#SortCheck");
     $link = $("#InputLink");
@@ -154,14 +118,14 @@ function HashDataEdit() {
                 FormDataClear();
                 MoveToContent();
             } else {
-                //co.EnterAds.Get(parseInt(hash)).done(function (result) {
-                //    if (result != null) {
-                //        MoveToContent();
-                //        FormDataSet(result);
-                //    } else {
-                //        window.location.hash = ""
-                //    }
-                //})
+                co.HtmlContent.Get(parseInt(hash)).done(function (result) {
+                    if (result != null) {
+                        MoveToContent();
+                        FormDataSet(result);
+                    } else {
+                        window.location.hash = ""
+                    }
+                })
             }
         }
     } else {
@@ -176,17 +140,16 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
+    console.log(result)
     FormDataClear();
     keyId = result.id;
-    startTime = result.startTime;
-    endTime = result.endTime;
-    $placement.val(result.placement);
+    startDate = result.startDate;
+    endDate = result.endDate;
     $btn_display.children("span").text(result.disp_opt ? "visibility" : "visibility_off");
     disp_opt = result.disp_opt;
     $title.val(result.title);
-    $title_count.text($title.val().length);
     if (result.ser_no != 500) {
-        $target.prop("checked", true);
+        $check_sort.prop("checked", true);
         $input_sort.removeAttr("disabled", "disabled");
         $input_sort.val(result.ser_no)
     }
@@ -197,57 +160,75 @@ function FormDataSet(result) {
         $date.attr("disabled", "disabled");
         $permanent.prop("checked", true);
     } else {
-        startTime != null && $picker.data('daterangepicker').setStartDate(startTime);
-        endTime != null && $picker.data('daterangepicker').setEndDate(endTime);
+        startDate != null && $picker.data('daterangepicker').setStartDate(startDate);
+        endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
     }
 }
 
 function FormDataClear() {
     keyId = 0;
-    $placement.val("Top");
     $btn_display.children("span").text("visibility");
     disp_opt = true;
     $title.val("");
-    $title_count.text(0);
     $input_sort.val("")
     $input_sort.attr("disabled", "disabled");
     $check_sort.prop("checked", false);
     $link.val("https://");
-    $target.prop("checked", false);
-    $permanent.prop("checked", false);
-    $date.val("");
-    $date.removeAttr("disabled");
+    $target.prop("checked", true);
+    $permanent.prop("checked", true);
+    $date.val('');
+    $date.attr("disabled", "disabled");
+    startDate = null;
+    endDate = null;
 }
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        //co.EnterAds.Delete(e.row.key);
-        //e.component.refresh();
+        co.HtmlContent.Delete({
+            Id: e.row.key,
+            TId: $.cookie('secret')
+        }).done(function (result) {
+            if (result.success) {
+                e.component.refresh();
+            } else {
+                Coker.sweet.error("錯誤", "刪除資料發生錯誤", null, true);
+            }
+        }).fail(function () {
+            Coker.sweet.error("錯誤", "刪除資料發生錯誤", null, true);
+        })
     });
 }
 
 function AddUp(display, success_text, error_text) {
-    //co.EnterAds.AddUp({
-    //    Id: keyId,
-    //    WebsiteId: $.cookie('WebSiteId'),
-    //    placement: $placement.val(),
-    //    title: $title.val(),
-    //    disp_opt: display,
-    //    ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-    //    link: $link.val(),
-    //    target: $target.is(":checked"),
-    //    StartTime: startDate,
-    //    EndTime: endDate,
-    //    permanent: $permanent.is(":checked")
-    //}).done(function () {
-    //    Coker.sweet.success(success_text, null, true);
-    //    setTimeout(function () {
-    //        BackToList();
-    //        enterAd_list.component.refresh();
-    //    }, 1000);
-    //}).fail(function () {
-    //    Coker.sweet.error("錯誤", error_text, null, true);
-    //});
+    co.HtmlContent.AddUp({
+        Id: keyId,
+        FK_WebsiteId: $.cookie('WebSiteId'),
+        TId: $.cookie('secret'),
+        Img: "~/images/product/pro_01.png",
+        Content: "",
+        Type: 8,
+        Title: $title.val(),
+        ObjectType: 1,
+        Disp_opt: display,
+        Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
+        Link: $link.val(),
+        Target: $target.is(":checked"),
+        StartDate: startDate,
+        EndDate: endDate,
+        permanent: $permanent.is(":checked")
+    }).done(function (result) {
+        if (result.success) {
+            Coker.sweet.success(success_text, null, true);
+            setTimeout(function () {
+                BackToList();
+                enterAd_list.component.refresh();
+            }, 1000);
+        } else {
+            Coker.sweet.error("錯誤", error_text, null, true);
+        }
+    }).fail(function () {
+        Coker.sweet.error("錯誤", error_text, null, true);
+    })
 }
 
 function MoveToContent() {
@@ -263,6 +244,7 @@ function BackToList() {
 }
 
 function WasValidated() {
+    $(".icon_hint").addClass("pe-4");
     $check_sort.parents(".checkbox").first().addClass("pe-4");
     $target.parents(".checkbox").first().addClass("pe-4");
     $permanent.parents(".checkbox").first().addClass("pe-4");
@@ -270,6 +252,7 @@ function WasValidated() {
 
 function UnValidated() {
     $("#AdForm").removeClass("was-validated");
+    $(".icon_hint").removeClass("pe-4");
     $check_sort.parents(".checkbox").first().removeClass("pe-4");
     $target.parents(".checkbox").first().removeClass("pe-4");
     $permanent.parents(".checkbox").first().removeClass("pe-4");

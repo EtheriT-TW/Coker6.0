@@ -41,7 +41,7 @@ function PageReady() {
     co.Picker.Init($picker);
 
     $picker.on('apply.daterangepicker', function (ev, picker) {
-        $(this).val(picker.startDate.format('YYYY/M/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/M/DD HH:mm'));
+        $(this).val(picker.startDate.format('YYYY/MM/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/MM/DD HH:mm'));
         startDate = picker.startDate.format("");
         endDate = picker.endDate.format("");
     });
@@ -186,7 +186,7 @@ function FormDataSet(result) {
     $title.val(result.title);
     $title_count.text($title.val().length);
     if (result.ser_no != 500) {
-        $target.prop("checked", true);
+        $check_sort.prop("checked", true);
         $input_sort.removeAttr("disabled", "disabled");
         $input_sort.val(result.ser_no)
     }

@@ -1,6 +1,6 @@
 ﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
-var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $PassFeedBack
+var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $NewPassFeedBack
 var $member_number, $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
 var member_list
 
@@ -98,7 +98,8 @@ function ElementInit() {
     $btn_mail_lock = $(".btn_mail_lock")
     $btn_newpass_lock = $(".btn_newpass_lock")
     $btn_checkpass_lock = $(".btn_checkpass_lock")
-    $PassFeedBack = $("#PassFeedBack");
+    $NewPassFeedBack = $("#NewPassFeedBack");
+    $CheckPassFeedBack = $("#CheckPassFeedBack");
 
     $member_number = $(".member_number")
     $name = $("#InputName");
@@ -278,9 +279,12 @@ function PassCheck() {
                 $passcheck.removeClass("is-invalid");
                 $passcheck.addClass("is-valid");
                 return true;
+            } else {
+                $CheckPassFeedBack.text("密碼不相符");
             }
         } else {
-            $PassFeedBack.text("密碼格式有誤");
+            $NewPassFeedBack.text("密碼格式有誤");
+            $CheckPassFeedBack.text("密碼格式有誤");
         }
     } else {
         if ($newpass.val().length == 0 && $passcheck.val().length == 0) {
@@ -292,7 +296,8 @@ function PassCheck() {
             $btn_checkpass_lock.removeClass("pe-4");
             return true;
         } else {
-            $PassFeedBack.text("請輸入6個以上的字元");
+            $NewPassFeedBack.text("請輸入6個以上的字元");
+            $CheckPassFeedBack.text("密碼格式有誤");
         }
     }
     return false;

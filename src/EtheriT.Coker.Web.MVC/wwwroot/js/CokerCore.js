@@ -106,7 +106,7 @@ var Coker = {
                 timePicker24Hour: true,
                 autoUpdateInput: true,
                 locale: {
-                    format: 'YYYY/mm/DD HH:mm',
+                    format: 'YYYY/MM/DD HH:mm',
                     separator: " ~ ",
                     applyLabel: "　確認　",
                     cancelLabel: "　取消　",
@@ -117,6 +117,37 @@ var Coker = {
 
             $picker.on('cancel.daterangepicker', function (ev, picker) {
                 $(this).val("");
+            });
+        },
+    },
+    HtmlContent: {
+        AddUp: function (data) {
+            return $.ajax({
+                url: "/api/HtmlContent/AddUp",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/HtmlContent/GetOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        },
+        Delete: function (data) {
+            return $.ajax({
+                url: "/api/HtmlContent/Delete",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         },
     }

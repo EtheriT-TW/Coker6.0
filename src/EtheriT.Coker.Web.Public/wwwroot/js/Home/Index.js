@@ -62,6 +62,8 @@
             }
         }
     });
+
+    GuessLikeGet();
 }
 
 function ClickLog(Pid) {
@@ -72,4 +74,37 @@ function ClickLog(Pid) {
             Action: 2,
         });
     }
+}
+
+function GuessLikeGet() {
+    Product.Get.RandomProd(3).done(function (result) {
+        var index = 0;
+        result.forEach(function (id) {
+            Product.GetOne.Prod(id).done(function (result) {
+                GuessLikeAdd(index, result);
+                index += 1;
+            })
+        })
+    }).fail(function () {
+        console.log("Fail")
+    });
+}
+
+function GuessLikeAdd(index, result) {
+    var item = $("#Guess_Like > div > div > div > .frame").eq(index);
+    var item_link = item.find(".pro_link"),
+        item_name = item.find(".pro_name"),
+        item_tag = item.find(".pro_tag"),
+        item_image = item.find(".pro_image"),
+        item_price = item.find(".pro_price");
+
+    item.data("pid", result.id);
+    item_link.attr("href", "/Toilet/" + result.id);
+    item_name.text(result.title);
+    item_tag.append("<li class='pe-2 align-self-center'><button class='bg-transparent border-0 gray_text text-decoration-underline ps-0'>" + "TAG" + "</button></li>");
+    item_image.attr("src", "../images/product/pro_0" + result.id + ".png");
+    item_price.text((result.price).toLocaleString('en-US'));
+
+    var item_list_ul = $("#Guess_Like > div > div > div");
+    item_list_ul.eq(index).children("span").remove();
 }

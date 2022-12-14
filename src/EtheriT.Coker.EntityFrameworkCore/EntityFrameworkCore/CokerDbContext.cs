@@ -34,6 +34,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<ShoppingCart> ShoppingCarts { get; set; }
         public DbSet<Prod_Log> Prod_Logs { get; set; }
         public DbSet<Html_Content> Html_Contents { get; set; }
+        public DbSet<TechnicalCertificate> TechnicalCertificates { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)
@@ -108,6 +109,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Html_Content>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Html_Contents).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<TechnicalCertificate>(o =>
+            {
+                o.HasOne(u => u.Website).WithMany(u => u.TechnicalCertificates).HasForeignKey(f => f.FK_WebsiteId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

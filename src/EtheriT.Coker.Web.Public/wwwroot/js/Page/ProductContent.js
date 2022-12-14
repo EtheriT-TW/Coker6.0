@@ -6,6 +6,7 @@ function PageReady() {
     window.CI360.init();
 
     Pid = $(location).attr('href').substr($(location).attr('href').lastIndexOf("/") + 1);
+    PageDefaultSet(Pid);
 
     var preview_swiper = new Swiper(".PreviewSwiper", {
         slidesPerView: 4,
@@ -94,6 +95,29 @@ function PageReady() {
 
 function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
+
+    $prod_content = $("#Product > .content");
+    $pro_name = $prod_content.find('.title');
+    $pro_introduce = $prod_content.find('.introduce');
+    $pro_specification = $prod_content.find('.specification').children("ul");
+    $pro_price = $prod_content.find(".ori_price");
+    $pro_discount = $prod_content.find(".discount");
+}
+
+function PageDefaultSet() {
+    Product.GetOne.Prod(Pid).done(function (result) {
+        console.log(result)
+        $pro_name.text(result.title);
+        $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
+        $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
+        if (result.discount > 0) {
+            $pro_price.removeClass("d-none");
+            $pro_price.append("<span class='text-decoration-line-through'>" + result.price.toLocaleString('en-US') + "</span>&ensp;折扣&ensp;");
+            $pro_discount.text(result.discount.toLocaleString('en-US'));
+        } else {
+            $pro_discount.text(result.price.toLocaleString('en-US'));
+        }
+    });
 }
 
 function AddToCart() {

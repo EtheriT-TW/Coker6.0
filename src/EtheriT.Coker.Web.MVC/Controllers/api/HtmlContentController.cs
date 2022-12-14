@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     [Route("api/[controller]/[action]")]
     [ApiController]
     [Authorize]
-    public class HtmlContentController
+    public class HtmlContentController : Controller
     {
 
         private readonly IHtmlContentAppService htmlContentAppService;

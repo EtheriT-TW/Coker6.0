@@ -102,14 +102,14 @@ function AddFavorites() {
 
     if ($self.hasClass("fa-solid")) {
         Coker.sweet.confirm("確定將商品從收藏中移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
-            $self.toggleClass('fa-solid');
+            $self.removeClass('fa-solid');
             if ($self.hasClass('fav_item')) {
                 $self_parent.remove();
                 Coker.sweet.success("成功移除商品", null, true);
             }
         });
     } else {
-        $self.toggleClass('fa-solid');
+        $self.addClass('fa-solid');
         Coker.sweet.success("成功加入收藏", null, true);
     }
 }

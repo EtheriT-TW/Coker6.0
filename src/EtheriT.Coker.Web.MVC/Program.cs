@@ -22,6 +22,8 @@ using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.HtmlContent;
+using EtheriT.Coker.Application.Shared.TechnicalCertificate;
+using EtheriT.Coker.Application.TechnicalCertificate;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -103,6 +105,7 @@ builder.Services.AddTransient<IMemberAppService, MemberAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
+builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

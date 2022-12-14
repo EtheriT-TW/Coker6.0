@@ -38,14 +38,6 @@ input[type="number"] {
     background-color: var(--color-gray-bg-dark);
 }
 
-#RightSideAdContent > form .placement > select {
-    width: 8rem;
-}
-
-#RightSideAdContent > form > .title .title_count::after {
-    content: '/60';
-}
-
 #RightSideAdContent > form > .name > input {
     padding-left: 7.25rem;
     padding-right: 7.5rem;

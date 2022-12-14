@@ -186,11 +186,38 @@ namespace EtheriT.Coker.Application.Product
                         Title = db_p.Title,
                         Introduction = db_p.Introduction,
                         Description = db_p.Description,
-                        Price = db_ps.Price
+                        Price = db_ps.Price,
+                        Discount = db_p.Discount,
                     };
                     return output;
                 }
                 else throw new Exception("查無跑馬燈資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+            return null;
+        }
+        public async Task<List<long>> GetRandomId(int num)
+        {
+            try
+            {
+                var db_p = db.Prods.Where(e => !e.IsDeleted);
+                List<long> output = new List<long>();
+
+                do
+                {
+                    Random myObject = new Random();
+                    int r;
+                    do
+                    {
+                        r = myObject.Next(1, db_p.Count() + 1);
+                    } while (output.IndexOf(r) > -1);
+                    output.Add(r);
+                } while (output.Count < 3);
+
+                return output;
             }
             catch (Exception e)
             {

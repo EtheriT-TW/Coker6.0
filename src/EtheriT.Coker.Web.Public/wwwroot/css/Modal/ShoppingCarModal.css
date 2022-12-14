@@ -47,7 +47,7 @@ input[type="number"] {
         white-space: nowrap;
     }
 
-.pro_content > .priceframe > .discount > span {
+.pro_content > .priceframe > .discount {
     color: var(--red-number);
 }
 

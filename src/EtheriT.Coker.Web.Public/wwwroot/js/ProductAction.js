@@ -21,6 +21,15 @@
             });
         }
     },
+    Get: {
+        RandomProd: function (num) {
+            return $.ajax({
+                url: "/api/Product/GetRandomId/",
+                type: "GET",
+                data: { num: num }
+            });
+        }
+    },
     GetAll: {
         Cart: function (Tid) {
             return $.ajax({

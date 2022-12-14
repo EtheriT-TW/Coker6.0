@@ -36,34 +36,36 @@ function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
     $content = $(".Modal > .modal-content > .modal-body > .content")
     $pro_image = $content.find(".pro_image");
-
+    $pro_name = $content.find(".name");
+    $pro_introduction = $content.find(".introduction");
+    $pro_price = $content.find(".ori_price");
+    $pro_discount = $content.find(".discount");
 }
 
 function DataClear() {
     $input_quantity.val(1);
     $pro_image.attr("src", "");
+    $pro_name.text("");
+    $pro_introduction.text("");
+    $pro_price.addClass("d-none");
+    $pro_price.text("");
+    $pro_discount.text("");
 }
 
 function ModalDefaultSet() {
-
     Product.GetOne.Prod($modal.data("pid")).done(function (result) {
         console.log(result)
+        $pro_image.attr("src", "../images/product/pro_0" + result.id + ".png");
+        $pro_name.text(result.title);
+        $pro_introduction.append("<div>．" + result.introduction.replaceAll("\n", "<br />．") + "</div>")
+        if (result.discount > 0) {
+            $pro_price.removeClass("d-none");
+            $pro_price.append("<span class='text-decoration-line-through'>" + result.price.toLocaleString('en-US') + "</span>&ensp;折扣&ensp;");
+            $pro_discount.text(result.discount.toLocaleString('en-US'));
+        } else {
+            $pro_discount.text(result.price.toLocaleString('en-US'));
+        }
     });
-
-    $pro_image.attr("src", "../images/product/pro_0" + $modal.data("pid") + ".png");
-
-    /*
-    item.data("scid", result.scId);
-    item_link.attr("href", "/Toilet/" + result.pId);
-    item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
-    item_name.text(result.title);
-    item_specification.text("白色");
-    item_instructions.text(result.description);
-    item_unit.text((result.price).toLocaleString('en-US'))
-    item_quantity.val(result.quantity);
-    item_total.data("subtotal", result.price * result.quantity)
-    item_total.text(item_total.data("subtotal").toLocaleString('en-US'))
-     */
 }
 
 function AddToCart() {

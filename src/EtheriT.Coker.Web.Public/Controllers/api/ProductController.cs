@@ -21,6 +21,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await productAppService.GetDisplayOne(id);
         }
+        [HttpGet]
+        public async Task<List<long>> GetRandomId(int num)
+        {
+            return await productAppService.GetRandomId(num);
+        }
         [HttpPost]
         public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
         {

@@ -7,10 +7,11 @@ namespace EtheriT.Coker.Application.Shared.Product
 {
 	public interface IProductAppService
 	{
-        public Task<ProdGetOneDto> GetDisplayOne(long id);
         public Task<ResponseMessageDto> AddUp(ProductDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<ProductDto> GetOne(long Id);
+        public Task<ProdGetOneDto> GetDisplayOne(long id);
+        public Task<List<long>> GetRandomId(int num);
         public Task<ResponseMessageDto> Delete(long Id);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }

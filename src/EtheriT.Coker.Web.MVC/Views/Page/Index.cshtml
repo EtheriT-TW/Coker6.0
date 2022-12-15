@@ -11,13 +11,21 @@
 <script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
+<script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
+<!--導入menuEditor-->
+<script type="text/javascript" src="/lib/jquery-menu-editor/jquery-menu-editor.min.js" asp-append-version="true"></script>
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/fontawesome5-3-1.min.js"></script>
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
 <!--導入頁面配置-->
 <link rel="stylesheet" href="~/css/Page/index.min.css" asp-append-version="true" />
-<script src="~/js/Page/Index.min.js" asp-append-version="true"></script>
+<script src="~/js/Page/index.min.js" asp-append-version="true"></script>
 
 <div class="py-2 px-4 position-relative">
     <div id="TopLine" class="d-flex justify-content-between mb-4">
         <div class="title fw-bold fs-4">自訂頁面</div>
+        <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
+            網站地圖
+        </a>
     </div>
 </div>
 <div id="gjs">
@@ -42,5 +50,61 @@
         </div>
         <table class="table"></table>
     </div>
-
+</div>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasSiteleLabel">網站地圖</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="row">
+            <button type="button" id="btnExtend" class="btn btn-primary d-flex justify-content-center">
+                <span class="material-symbols-outlined">arrow_forward_ios</span>
+                <span>新增選單</span>
+            </button>
+        </div>
+        <div id="EditBlock" class="row">
+            <ul id="myEditor" class="sortableLists list-group item-menu"></ul>
+            <div id="MenuEditorForm" class="card border-primary mb-3 item-menu">
+                <div class="card-header bg-primary text-white">Edit item</div>
+                <div class="card-body">
+                    <form id="frmEdit" class="form-horizontal">
+                        <input type="hidden" name="id" />
+                        <div class="form-group">
+                            <label for="text">標題</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control item-menu" name="text" id="text" placeholder="請輸入標題">
+                                <div class="input-group-append">
+                                    <button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>
+                                </div>
+                            </div>
+                            <input type="hidden" name="icon" class="item-menu">
+                        </div>
+                        <div class="form-group">
+                            <label for="href">連結</label>
+                            <input type="text" class="form-control item-menu" id="href" name="href" placeholder="請輸入連結">
+                        </div>
+                        <div class="form-group">
+                            <label for="target">另開視窗</label>
+                            <select name="target" id="target" class="form-control item-menu">
+                                <option value="_self">是</option>
+                                <option value="_blank">否</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="title">提示文字</label>
+                            <input type="text" name="title" class="form-control item-menu" id="title" placeholder="提示文字">
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <button type="button" id="btnUpdate" class="btn btn-primary" disabled><i class="fas fa-sync-alt"></i>更新</button>
+                    <button type="button" id="btnAdd" class="btn btn-success"><i class="fas fa-plus"></i>新增</button>
+                    <button type="button" id="btnRefresh" class="btn btn-info">
+                        <i class="fa-sharp fa-solid fa-rotate-right"></i>清空
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

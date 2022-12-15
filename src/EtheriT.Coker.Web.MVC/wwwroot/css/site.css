@@ -33,7 +33,10 @@
     --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 /* line 21, ../../scss/bootstrap/_reboot.scss */
-
+.ConfirmKeyWord {
+    color: #933;
+    font-weight: 600;
+}
 .btn-primary {
     background-color: #006FAE !important;
 }

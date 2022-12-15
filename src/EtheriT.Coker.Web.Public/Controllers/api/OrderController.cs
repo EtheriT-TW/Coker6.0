@@ -1,5 +1,4 @@
-﻿using DevExpress.Xpo;
-using EtheriT.Coker.Application.Dto;
+﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Marquee;
@@ -14,7 +13,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     [ApiController]
     public class OrderController : Controller
     {
-
         private readonly IOrderAppService orderAppService;
         public OrderController(
             IOrderAppService orderAppService

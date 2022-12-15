@@ -1069,11 +1069,12 @@
  * @param {object} options Options editor
  * */
 function MenuEditor(idSelector, options) {
+    var self = this;
     var $main = $("#" + idSelector).data("level", "0");
     var settings = {
         labelEdit: '<i class="fas fa-edit clickable"></i>',
         labelRemove: '<i class="fas fa-trash-alt clickable"></i>',
-        textConfirmDelete: 'This item will be deleted. Are you sure?',
+        textConfirmDelete: 'This item {0} will be deleted. Are you sure?',
         iconPicker: { cols: 4, rows: 4, footer: false, iconset: "fontawesome5" },
         maxLevel: -1,
         listOptions: { 
@@ -1092,12 +1093,14 @@ function MenuEditor(idSelector, options) {
             complete: function (cEl) {
                 MenuEditor.updateButtons($main);
                 $main.updateLevels(0);
+                !!settings.on.drop && settings.on.drop();
                 return true;
             },
             isAllowed: function(currEl, hint, target) {
                 return isValidLevel(currEl, target);
             }
-        }
+        },
+        on: {}
     };
     $.extend(true, settings, options);
     var itemEditing = null;
@@ -1116,7 +1119,8 @@ function MenuEditor(idSelector, options) {
 
     $main.on('click', '.btnRemove', function (e) {
         e.preventDefault();
-        if (confirm(settings.textConfirmDelete)) {
+        var title = $(this).closest('li').data("text");
+        co.sweet.confirm("即將刪除", settings.textConfirmDelete.replace("{0}", title), "確認", "取消", function () {
             var list = $(this).closest('ul');
             $(this).closest('li').remove();
             var isMainContainer = false;
@@ -1127,14 +1131,22 @@ function MenuEditor(idSelector, options) {
                 list.prev('div').children('.sortableListsOpener').first().remove();
                 list.remove();
             }
+            !!settings.on.del && settings.on.del();
             MenuEditor.updateButtons($main);
-        }
+        });
+    });
+    $main.on('click', '.btnPage', function (e) {
+        e.preventDefault();
+        itemEditing = $(this).closest('li');
+        !!settings.on.page && settings.on.page($(itemEditing).data());
+        editItem(itemEditing);
     });
 
     $main.on('click', '.btnEdit', function (e) {
         e.preventDefault();
         itemEditing = $(this).closest('li');
         editItem(itemEditing);
+        !!settings.on.edit && settings.on.edit();
     });
 
     $main.on('click', '.btnUp', function (e) {
@@ -1142,12 +1154,14 @@ function MenuEditor(idSelector, options) {
         var $li = $(this).closest('li');
         $li.prev('li').before($li);
         MenuEditor.updateButtons($main);
+        !!settings.on.drop && settings.on.drop();
     });
     $main.on('click', '.btnDown', function (e) {
         e.preventDefault();
         var $li = $(this).closest('li');
         $li.next('li').after($li);
         MenuEditor.updateButtons($main);
+        !!settings.on.drop && settings.on.drop();
     });
     $main.on('click', '.btnOut', function (e) {
         e.preventDefault();
@@ -1161,6 +1175,7 @@ function MenuEditor(idSelector, options) {
         }
         MenuEditor.updateButtons($main);
         $main.updateLevels();
+        !!settings.on.drop && settings.on.drop();
     });
     $main.on('click', '.btnIn', function (e) {
         e.preventDefault();
@@ -1183,6 +1198,7 @@ function MenuEditor(idSelector, options) {
         }
         MenuEditor.updateButtons($main);
         $main.updateLevels();
+        !!settings.on.drop && settings.on.drop();
     });
 
     /* PRIVATE METHODS */
@@ -1229,8 +1245,9 @@ function MenuEditor(idSelector, options) {
         var $btnUp = TButton({classCss: 'btn btn-secondary btn-sm btnUp btnMove', text: '<i class="fas fa-angle-up clickable"></i>'});
         var $btnDown = TButton({classCss: 'btn btn-secondary btn-sm btnDown btnMove', text: '<i class="fas fa-angle-down clickable"></i>'});
         var $btnOut = TButton({classCss: 'btn btn-secondary btn-sm btnOut btnMove', text: '<i class="fas fa-level-down-alt clickable"></i>'});
-        var $btnIn = TButton({classCss: 'btn btn-secondary btn-sm btnIn btnMove', text: '<i class="fas fa-level-up-alt clickable"></i>'});
-        $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut).append($btnEdit).append($btnRemv);
+        var $btnIn = TButton({ classCss: 'btn btn-secondary btn-sm btnIn btnMove', text: '<i class="fas fa-level-up-alt clickable"></i>' });
+        var $btnCont = TButton({ classCss: 'btn btn-info btn-sm btnPage', text: '<i class="fa fa-paint-roller clickable"></i>' });
+        $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut).append($btnEdit).append($btnRemv).append($btnCont);
         return $divbtn;
     }
 
@@ -1254,7 +1271,7 @@ function MenuEditor(idSelector, options) {
             $li.data(itemObject);
             var $div = $('<div>').css('overflow', 'auto');
             var $i = $('<i>').addClass(v.icon);
-            var $span = $('<span>').addClass('txt').append(v.text).css('margin-right', '5px');
+            var $span = $('<span>').addClass('txt font-weight-bold').append(v.text).css('margin-right', '5px');
             var $divbtn =  TButtonGroup();
             $div.append($i).append("&nbsp;").append($span).append($divbtn);
             $li.append($div);
@@ -1310,30 +1327,30 @@ function MenuEditor(idSelector, options) {
     }
 
     /* PUBLIC METHODS */
-    this.setForm = function(form){
+    self.setForm = function(form){
         $form = form;
     };
 
-    this.getForm = function(){
+    self.getForm = function(){
         return $form;
     };
 
-    this.setUpdateButton = function($btn) {
+    self.setUpdateButton = function($btn) {
         $updateButton = $btn;
         $updateButton.attr('disabled', true);
         itemEditing = null;
     };
 
-    this.getUpdateButton = function(){
+    self.getUpdateButton = function(){
         return $updateButton;
     };
 
-    this.getCurrentItem = function(){
+    self.getCurrentItem = function(){
         return itemEditing;
     };
 
-    this.update = function(){
-        var $cEl = this.getCurrentItem();
+    self.update = function () {
+        var $cEl = self.getCurrentItem();
         if ($cEl===null){
             return;
         }
@@ -1344,9 +1361,10 @@ function MenuEditor(idSelector, options) {
         $cEl.children().children('i').removeClass(oldIcon).addClass($cEl.data('icon'));
         $cEl.find('span.txt').first().text($cEl.data('text'));
         resetForm();
+        !!settings.on.update && settings.on.update($cEl.data());
     };
    
-    this.add = function(){
+    self.add = function(){
         var data = {};
         $form.find('.item-menu').each(function() {
             data[$(this).attr('name')] = $(this).val();
@@ -1360,12 +1378,17 @@ function MenuEditor(idSelector, options) {
         $main.append($li);
         MenuEditor.updateButtons($main);
         resetForm();
+        !!settings.on.add && settings.on.add($li.data());
     };
+
+    self.refresh = function(){
+        resetForm();
+    }
     /**
      * Data Output
      * @return String JSON menu scheme
      */
-    this.getString = function () {
+    self.getString = function () {
         var obj = $main.sortableListsToJson();
         return JSON.stringify(obj);
     };
@@ -1373,7 +1396,7 @@ function MenuEditor(idSelector, options) {
      * Data Input
      * @param {Array} Object array. The nested menu scheme
      */
-    this.setData = function (strJson) {
+    self.setData = function (strJson) {
         var arrayItem = (Array.isArray(strJson)) ? strJson : stringToArray(strJson);
         if (arrayItem !== null) {
             $main.empty();
@@ -1387,6 +1410,17 @@ function MenuEditor(idSelector, options) {
             MenuEditor.updateButtons($main);
         }
     };
+
+    if (!!settings.element) {
+        var e = settings.element;
+        self.setForm($(e.Form));
+        self.setUpdateButton($(e.Update));
+        //Calling the update method
+        $(e.Update).click(self.update);
+        // Calling the add method
+        $(e.Add).click(self.add);
+        $(e.Refresh).click(self.refresh);
+    }
 };
 /* STATIC METHOD */
 /**

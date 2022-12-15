@@ -10,6 +10,18 @@
       ]
     },
     {
+      "output": "lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js",
+      "input": [
+        "wwwroot/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.js"
+      ]
+    },
+    {
+      "output": "lib/jquery-menu-editor/jquery-menu-editor.min.js",
+      "input": [
+        "wwwroot/lib/jquery-menu-editor/jquery-menu-editor.js"
+      ]
+    },
+    {
       "output": "lib/sweetalert2/dist/sweetalert2.min.js",
       "input": [
         "node_modules/sweetalert2/dist/sweetalert2.min.js"

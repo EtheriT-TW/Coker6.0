@@ -20,6 +20,7 @@
     typeof (PageReady) === "function" && PageReady();
     HeaderInit();
     FooterInit();
+    SideFloatingInit();
 
     var mega_menu_height = $("header").css("height");
     $("body").css("padding-top", mega_menu_height);
@@ -42,25 +43,11 @@
         $("footer").toggleClass("footer_pack_up");
     });
 
-    $("#Floating_Objects").on("click", function () {
-        $('html,body').stop().animate({
-            scrollTop: 0
-        }, 0)
-    });
-
-    $("#btn_chat").on("click", function () {
-        $("#Chatbot_Frame").toggleClass("show");
-    });
-
     $(".btn_favorites").on("click", AddFavorites);
 
     window.onscroll = function () {
         scrollFunction();
     };
-
-    $("#btn_gotop").on("click", function () {
-        $('html, body').animate({ scrollTop: 0 }, 0);
-    });
 }
 
 function scrollFunction() {

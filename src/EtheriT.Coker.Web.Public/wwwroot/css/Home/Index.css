@@ -1,4 +1,8 @@
-﻿
+﻿/* Enter Ad Modal */
+#EnterAdModal > .modal-dialog {
+    min-width: fit-content;
+}
+
 /* Banner */
 .template_full_swiper > figcaption {
     background-color: var(--black-text-trans);
@@ -30,10 +34,11 @@
     z-index: 1;
 }
 
-/* Button Gonews*/
-.btn_gonews > i {
+.btn_gonews {
     color: var(--blue-text);
     cursor: pointer;
+    height: 2rem;
+    width: 2rem;
 }
 
 /* Guess_Like */

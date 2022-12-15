@@ -160,6 +160,8 @@ namespace EtheriT.Coker.Application.Freight
                                      Id = e.Id,
                                      Title = e.Title,
                                      Freight = e.Freight == null ? 0 : e.Freight,
+                                     Low_Con = e.Low_Con,
+                                     Dis_Freight= e.Dis_Freight,
                                      Set_Default = e.Set_Default,
                                      Describe = ((PreserveTypeEnum)e.PreserveType) + " - " +
                                                 ((ShippingTypeEnum)e.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +

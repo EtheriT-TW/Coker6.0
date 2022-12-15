@@ -1,7 +1,8 @@
 ﻿var buy_step_swiper;
 var gotop_switch = false, isCheckout = false;
 
-var subtotal, freight, total, paymentArr
+var subtotal, ori_freight, low_con, disfreight, freight, total, paymentArr
+var shipping = null, payment = null;
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms;
 var OrdererOpen = false, RecipientOpen = false, InvoiceOpen = false;
@@ -92,13 +93,21 @@ function PageReady() {
     buy_step_swiper.on('slideChange', function () {
         switch (buy_step_swiper.activeIndex) {
             case 2:
-                shipMethodsChosen = FormCheck(ShippingForms);
-                payMethodsChosen = FormCheck(PaymentForms);
-                if (!(shipMethodsChosen && payMethodsChosen)) {
-                    Coker.sweet.error("請確實選擇運送及付款方式！", null, true);
-                    setTimeout(function () {
-                        buy_step_swiper.slideTo(1);
-                    }, 1500);
+                if (shipping == null) {
+                    Coker.sweet.error("錯誤", "店家尚未設置運費方式，無法繼續", null, false);
+                    buy_step_swiper.slideTo(1);
+                } else if (payment == null) {
+                    Coker.sweet.error("錯誤", "店家尚未設置付款方式，無法繼續", null, false);
+                    buy_step_swiper.slideTo(1);
+                } else {
+                    shipMethodsChosen = FormCheck(ShippingForms);
+                    payMethodsChosen = FormCheck(PaymentForms);
+                    if (!(shipMethodsChosen && payMethodsChosen)) {
+                        Coker.sweet.error("請確實選擇運送及付款方式！", null, true);
+                        setTimeout(function () {
+                            buy_step_swiper.slideTo(1);
+                        }, 1500);
+                    }
                 }
                 break;
             case 3:
@@ -216,6 +225,16 @@ function ElementInit() {
 
     /* 運送、付款方式 */
     $ship_method = $("input[name=RadioShipping]");
+    $ship_method.each(function () {
+        if ($(this).is(":checked")) {
+            ori_freight = $(this).data("freight");
+            low_con = $(this).data("lowcon");
+            disfreight = $(this).data("disfreight");
+            freight = ori_freight
+        } else {
+            freight = 0;
+        }
+    })
     $pay_method = $("input[name=RadioPayment]");
 }
 
@@ -241,6 +260,7 @@ function CartInit() {
 }
 
 function CartAdd(result) {
+    console.log(result)
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
@@ -263,7 +283,7 @@ function CartAdd(result) {
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
     item_specification.text("白色");
-    item_instructions.text(result.description);
+    item_instructions.append(result.description.replaceAll("\n", "<br/>"))
     item_unit.text((result.price).toLocaleString('en-US'))
     item_quantity.val(result.quantity);
     item_total.data("subtotal", result.price * result.quantity)
@@ -325,12 +345,20 @@ function TotalCount() {
     subtotal = 0;
     $('.purchase_list').children("li").each(function () {
         subtotal += $(this).children(".content").children(".pro_subtotal").data("subtotal");
+        if (disfreight > 0 && subtotal > low_con) {
+            freight = disfreight;
+        } else {
+            freight = ori_freight;
+        }
     })
     $(".subtotal").each(function () {
         $(this).text(subtotal.toLocaleString('en-US'))
     })
+    $(".shipping_fee").each(function () {
+        $(this).text(freight == null ? 0 : freight.toLocaleString('en-US'))
+    })
     $(".total_amount").each(function () {
-        total = freight == null ? subtotal : subtotal + freight
+        total = freight == null ? subtotal : subtotal + freight;
         $(this).text(total.toLocaleString('en-us'))
     })
 }
@@ -363,10 +391,11 @@ function Step2Monitor() {
 }
 
 function RadioShipping() {
-    freight = $(this).data("freight");
-    $(".shipping_fee").each(function () {
-        $(this).text(freight.toLocaleString('en-US'))
-    })
+    ori_freight = $(this).data("freight");
+    low_con = $(this).data("lowcon");
+    disfreight = $(this).data("disfreight");
+    freight = ori_freight
+    TotalCount();
 }
 
 function RadioPayment() {
@@ -392,7 +421,6 @@ function RadioPayment() {
 }
 
 function Step3Monitor() {
-
     if (OrdererOpen) { OrdererFilled = FormCheck(OrdererForms) };
     if (RecipientOpen) { RecipientFilled = FormCheck(RecipientForms) };
     if (InvoiceOpen) { InvoiceFilled = FormCheck(InvoiceForms) };
@@ -404,7 +432,6 @@ function Step3Monitor() {
             OrderHeaderAdd();
         });
     }
-
     buy_step_swiper.update();
 }
 
@@ -562,7 +589,6 @@ function OrderHeaderAdd() {
             break;
     }
 
-    var shipping, payment;
     $ship_method.each(function () {
         if ($(this).is(":checked")) { shipping = $(this).val(); }
     })

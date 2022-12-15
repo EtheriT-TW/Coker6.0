@@ -204,7 +204,7 @@ function AddUp(display, success_text, error_text) {
         Id: keyId,
         FK_WebsiteId: $.cookie('WebSiteId'),
         TId: $.cookie('secret'),
-        Img: "~/images/product/pro_01.png",
+        Img: "/images/QRcode_linechatbot.png",
         Content: "",
         Type: 12,
         Title: $title.val(),

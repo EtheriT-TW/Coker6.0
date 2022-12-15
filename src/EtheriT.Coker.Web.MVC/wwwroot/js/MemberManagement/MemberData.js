@@ -208,7 +208,7 @@ function FormDataSet(result) {
         });
         $address.val(address_split[2]);
     }
-    $email_login.val(email);
+    $email_login.val(result.email);
 }
 
 function Update(success_text, error_text) {

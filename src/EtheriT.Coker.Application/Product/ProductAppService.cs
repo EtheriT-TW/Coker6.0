@@ -116,8 +116,6 @@ namespace EtheriT.Coker.Application.Product
                                         Title = p.Title,
                                         Disp_Opt = p.Disp_Opt,
                                         Ser_No = p.Ser_No,
-                                        Introduction = p.Introduction,
-                                        Description = p.Description,
                                         Price = ps.Price,
                                         Discount = p.Discount,
                                         StartTime = p.StartTime,

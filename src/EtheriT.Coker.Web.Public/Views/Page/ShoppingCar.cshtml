@@ -197,7 +197,7 @@
 								{
 									var check = freight.Set_Default ? "checked" : "";
 									<div class="form-check text-start col-12 col-sm-3 my-2">
-										<input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freight="@freight.Freight" @check required>
+										<input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" @check required>
 										<label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
 										@{
 											if (!has_invalid)
@@ -212,12 +212,7 @@
 							}
 							else
 							{
-								<div class="form-check text-start col-12 col-sm-3">
-									<input id="FreeShip" class="form-check-input" type="radio" name="RadioShipping" value="0" data-freight="0" required>
-									<label class="form-check-label" for="FreeShip">免運</label>
-									<div class="invalid-feedback">請選擇運送方式</div>
-								</div>
-								<div class="text-start col-12 col-sm-9">免運(您已符合免運條件)</div>
+								<div>店家尚未設定運費方式</div>
 							}
 						</div>
 

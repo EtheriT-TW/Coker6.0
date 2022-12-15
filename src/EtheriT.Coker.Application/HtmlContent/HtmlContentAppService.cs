@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.HtmlContent
 {
@@ -96,6 +98,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                 {
                     var dataQuery = from e in result
                                     where !e.IsDeleted && e.Type == type
+                                    orderby e.Ser_no
                                     select new HtmlContentGetAllListDto
                                     {
                                         Id = e.Id,
@@ -160,7 +163,37 @@ namespace EtheriT.Coker.Application.HtmlContent
 
             return null;
         }
-        public async Task<ResponseMessageDto> Delete(HtmlContentDelectDto dto)
+        public async Task<JsonResult> GetDisplay(long webid, int type, int number)
+        {
+            try
+            {
+                var result = db.Html_Contents;
+
+                if (result != null)
+                {
+                    var output = await (from e in result
+                                        where !e.IsDeleted && e.Disp_opt && e.Type == type && e.FK_WebsiteId == webid
+                                        where e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartDate) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndDate) < 0)
+                                        select new HtmlContentDisplayDto
+                                        {
+                                            Title = e.Title,
+                                            Img = e.Img,
+                                            Content = e.Content,
+                                            Link = e.Link,
+                                            Target = e.Target,
+                                        }).Take(number).ToArrayAsync();
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                else throw new Exception("查無運費資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<HtmlContentDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 

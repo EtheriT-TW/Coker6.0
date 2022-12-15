@@ -12,7 +12,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly ILogger<PageController> _logger;
         private readonly IFreightAppService freightAppService;
         private readonly IConfiguration Configuration;
-
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,

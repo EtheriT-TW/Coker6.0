@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -149,7 +150,7 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var dataQuery = from oh in db_oh
                                     where !oh.IsDeleted
-                                    from ls in db_ls
+                                    join ls in db_ls on oh.Shipping equals ls.Id
                                     select new OrderHeaderGetAllListDto
                                     {
                                         Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
@@ -161,6 +162,7 @@ namespace EtheriT.Coker.Application.Order
                                         Total = oh.Subtotal + oh.Freight,
                                         CreationTime = oh.CreationTime,
                                     };
+
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }

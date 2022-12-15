@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Core.Models
     {
         [StringLength(100)]
         public string? Title { get; set; }
+        public string? Description { get; set; }
         [StringLength(50)]
         public string? icone { get; set; }
         public bool Visible { get; set; }
@@ -34,8 +35,10 @@ namespace EtheriT.Coker.Core.Models
         [MaxLength]
         public string? Css { get; set; }
         public long? FK_TopNodeId { get; set; }
+        public long? FK_RootNodeId { get; set; }
         public long FK_WebsiteId { get; set; }
         public WebMenu? FK_TopNode { get; set; }
+        public WebMenu? FK_RootNode { get; set; }
         public List<WebMenu>? FK_ChildNodes { get; set; }
         public Website Website { get; set; }
     }

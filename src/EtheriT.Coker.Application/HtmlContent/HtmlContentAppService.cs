@@ -38,7 +38,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                             Type = dto.Type,
                             Title = dto.Title,
                             Img = dto.Img,
-                            Content = dto.Content,
+                            Html = dto.Html,
                             Ser_no = dto.Ser_no,
                             Disp_opt = dto.Disp_opt,
                             ObjectType = dto.ObjectType,
@@ -63,7 +63,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                         db_hc.Type = dto.Type;
                         db_hc.Title = dto.Title;
                         db_hc.Img = dto.Img;
-                        db_hc.Content = dto.Content;
+                        db_hc.Html = dto.Html;
                         db_hc.Ser_no = dto.Ser_no;
                         db_hc.Disp_opt = dto.Disp_opt;
                         db_hc.ObjectType = dto.ObjectType;
@@ -105,7 +105,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                                         Type = e.Type,
                                         Title = e.Title,
                                         Img = e.Img,
-                                        Content = e.Content,
+                                        Html = e.Html,
                                         Ser_no = e.Ser_no,
                                         Disp_opt = e.Disp_opt,
                                         ObjectType = e.ObjectType,
@@ -141,7 +141,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                         Type = result.Type,
                         Title = result.Title,
                         Img = result.Img,
-                        Content = result.Content,
+                        Html = result.Html,
                         Ser_no = result.Ser_no,
                         Disp_opt = result.Disp_opt,
                         ObjectType = result.ObjectType,
@@ -178,7 +178,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                                         {
                                             Title = e.Title,
                                             Img = e.Img,
-                                            Content = e.Content,
+                                            Html = e.Html,
                                             Link = e.Link,
                                             Target = e.Target,
                                         }).Take(number).ToArrayAsync();

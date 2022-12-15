@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,8 @@ namespace EtheriT.Coker.Core.Models
     {
         [StringLength(100)]
         public string? Title { get; set; }
+        [StringLength(50)]
+        public string? icone { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; } = 500;
         public int Popular { get; set; } = 0;
@@ -20,8 +23,16 @@ namespace EtheriT.Coker.Core.Models
         public long? OverImgId { get; set; }
         [StringLength(255)]
         public string? LinkUrl { get; set; }
-        public string? Target { get; set; }
+        public bool? Target { get; set; }
         public bool LanBar { get; set; }
+        [MaxLength]
+        public string? SaveHtml { get; set; }
+        [MaxLength]
+        public string? SaveCss { get; set; }
+        [MaxLength]
+        public string? Html { get; set; }
+        [MaxLength]
+        public string? Css { get; set; }
         public long? FK_TopNodeId { get; set; }
         public long FK_WebsiteId { get; set; }
         public WebMenu? FK_TopNode { get; set; }

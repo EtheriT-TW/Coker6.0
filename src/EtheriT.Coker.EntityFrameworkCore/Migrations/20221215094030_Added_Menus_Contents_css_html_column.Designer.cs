@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221215094030_Added_Menus_Contents_css_html_column")]
+    partial class Added_Menus_Contents_css_html_column
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,14 +32,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Css")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
@@ -53,9 +55,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Html")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Img")
                         .HasMaxLength(100)

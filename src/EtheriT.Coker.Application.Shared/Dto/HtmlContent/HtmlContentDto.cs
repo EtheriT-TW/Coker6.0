@@ -9,7 +9,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.EnterAd
         public Guid TId { get; set; }
         public int Type { get; set; }
         [StringLength(100)] public string? Img { get; set; }
-        public string? Content { get; set; }
+        public string? Html { get; set; }
+        public string? css { get; set; }
         public int Ser_no { get; set; }
         public bool Disp_opt { get; set; }
         public int ObjectType { get; set; }

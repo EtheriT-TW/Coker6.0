@@ -51,7 +51,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 PageName="ProductList",
                                 Title="商品列表",
                                 Controller="ProductManagement",
-                                Action="Index",
+                                Action="ProductList",
                                 Icon="",
                             },
                             new JobMenu{
@@ -64,8 +64,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="TechnicalCertificate",
                                 Title="技術證照",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ProductManagement",
+                                Action="TechnicalCertificate",
                                 Icon="",
                             }
                         }
@@ -129,15 +129,15 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="EnterAd",
                                 Title="進入廣告",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ContentManagement",
+                                Action="EnterAd",
                                 Icon="",
                             },
                             new JobMenu{
                                 PageName="RightSideAd",
                                 Title="右側浮動廣告",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ContentManagement",
+                                Action="RightSideAd",
                                 Icon="",
                             },
                             new JobMenu{
@@ -160,7 +160,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="FreightSettings",
                                 Title="運費設定",
-                                Controller="Dashboard",
+                                Controller="StoreSettings",
                                 Action="Index",
                                 Icon="",
                             },

@@ -1,4 +1,6 @@
-﻿@{
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Product
+@{
 	ViewData["Title"] = "ProductList";
 }
 
@@ -16,7 +18,61 @@
 				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
 					<span class="material-symbols-outlined">add</span>
 				</button>
-				
+				@(
+					Html.DevExtreme().DataGrid<ProductGetAllListDto>()
+					.DataSource(d => d.RemoteController().Key("Id")
+					.LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
+					)
+					.RemoteOperations(true)
+					.ColumnHidingEnabled(true)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Width(480)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.ShowRowLines(true)
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Disp_Opt).Caption("是否顯示").Width(90);
+						c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
+						c.AddFor(e => e.Title).Caption("商品名稱");
+						c.AddFor(e => e.Introduction).Caption("商品簡介");
+						c.AddFor(e => e.Description).Caption("商品說明");
+						c.AddFor(e => e.Price).Caption("價格");
+						c.AddFor(e => e.Discount).Caption("折扣");
+						c.AddFor(e => e.StartTime).Caption("起始日期");
+						c.AddFor(e => e.EndTime).Caption("結束日期");
+						c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
+						c.Add()
+						.Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
+						{
+							b.Add().Name("edit").OnClick("editButtonClicked");
+							b.Add().Name("delete").OnClick("deleteButtonClicked");
+						});
+					})
+					.ColumnAutoWidth(true)
+					.Paging(paging => paging.PageSize(30))
+					.Pager(pager =>
+					{
+						pager.Visible(true);
+						pager.ShowPageSizeSelector(true);
+						pager.AllowedPageSizes(new[] { 10, 20, 30 });
+						pager.ShowInfo(true);
+					})
+					.Editing(editing =>
+					{
+						editing.AllowDeleting(true);
+						editing.AllowUpdating(true);
+						editing.UseIcons(true);
+					})
+					.OnContentReady("contentReady")
+					)
 			</div>
 		</div>
 
@@ -32,7 +88,7 @@
 				</div>
 				<div class="d-flex">
 					<button class="btn_save btn-warning border-0 px-3 py-1 text-white mx-3" form="none">草稿</button>
-					<button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="PostForm">發布</button>
+					<button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="ProductForm">發布</button>
 				</div>
 			</div>
 
@@ -52,7 +108,7 @@
 
 				<div class="name border mb-3 p-2 rounded">
 					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_text">商品名稱</span>
+						<span class="input-group-text bg-transparent border-0 p-0 required_all">商品名稱</span>
 						<div class="name_count">0</div>
 					</div>
 					<textarea id="InputName" class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入商品名稱" required></textarea>
@@ -60,10 +116,10 @@
 
 				<div class="introduction border mb-3 p-2 rounded">
 					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_text">商品簡介</span>
+						<span class="input-group-text bg-transparent border-0 p-0 required_all">商品簡介</span>
 						<div class="introduction_count">0</div>
 					</div>
-					<div id="CollapseIntroduction" class="collapse">
+					<div id="CollapseIntroduction" class="collapse show">
 						<textarea id="InputIntroduction" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入商品簡介" required></textarea>
 					</div>
 					<div class="d-flex justify-content-center">
@@ -75,10 +131,10 @@
 
 				<div class="illustrate border mb-3 p-2 rounded">
 					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_text">詳細說明</span>
+						<span class="input-group-text bg-transparent border-0 p-0 required_all">詳細說明</span>
 						<div class="illustrate_count">0</div>
 					</div>
-					<div id="CollapseIllustrate" class="collapse">
+					<div id="CollapseIllustrate" class="collapse show">
 						<textarea id="InputIllustrate" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明" required></textarea>
 					</div>
 					<div class="d-flex justify-content-center">
@@ -104,9 +160,9 @@
 
 				<div class="price input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">attach_money</span>價格
+						<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
 					</div>
-					<input id="InputPrice" class="form-control rounded" type="number" aria-label="Input Price of Product">
+					<input id="InputPrice" class=" form-control rounded" type="number" aria-label="Input Price of Product" required>
 				</div>
 
 				<div class="number input-group mb-3">
@@ -125,7 +181,7 @@
 
 				<div class="date input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">calendar_today</span>設定上架日期
+						<span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
 					</div>
 					<input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">

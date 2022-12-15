@@ -1,9 +1,16 @@
+using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.ShoppingCart;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Rewrite;
+using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +19,7 @@ var configuration = provider.GetRequiredService<IConfiguration>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<JwtHelpers>();
 builder.Services.AddMemoryCache()
     .AddSimpleCaptcha(builder =>
     {
@@ -28,8 +36,13 @@ builder.Services.AddDbContext<CokerDbContext>(item =>
     item.UseSqlServer(configuration.GetConnectionString("Default"))
 );
 
+builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();
+builder.Services.AddTransient<ITokenAppService, TokenAppService>();
+builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
+builder.Services.AddTransient<IProductAppService, ProductAppService>();
+builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 
 var app = builder.Build();
 

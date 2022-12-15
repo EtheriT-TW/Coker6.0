@@ -10,14 +10,22 @@ namespace EtheriT.Coker.Core.Models
 {
     public class Prod : FullAuditedEntity
     {
+        public long FK_WebsiteId { get; set; }
         [StringLength(150)]
         public string Title { get; set; }
-        public bool disp_opt { get; set; }
-        public int ser_no { get; set; }
+        public bool Disp_Opt { get; set; }
+        public int Ser_No { get; set; }
+        [StringLength(3000)]
+        public string Introduction { get; set; }
+        [StringLength(3000)]
         public string Description { get; set; }
-        public double Price { get; set; }
         public double? Discount { get; set; }
-        public List<Order_Details> Order_Details { get; set; }
+        public virtual DateTime? StartTime { get; set; }
+        public virtual DateTime? EndTime { get; set; }
+        public bool permanent { get; set; }
+        public List<Prod_Stock> Prod_Stocks { get; set; }
+        public List<Prod_Log> Prod_Logs { get; set; }
+        public Website? Website { get; set; }
 
     }
 }

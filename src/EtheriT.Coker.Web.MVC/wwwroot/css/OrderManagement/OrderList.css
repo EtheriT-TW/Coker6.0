@@ -28,11 +28,11 @@
 }
 
 .pro_unit::before {
-    content: "單價：$";
+    content: "\55ae\50f9\ff1a$";
 }
 
 .pro_quantity::before {
-    content: "×";
+    content: "\00d7";
 }
 
 /* ManagementData */
@@ -44,7 +44,7 @@
         min-height: 150px;
     }
 
-.status-select {
+.status_select {
     height: fit-content;
 }
 

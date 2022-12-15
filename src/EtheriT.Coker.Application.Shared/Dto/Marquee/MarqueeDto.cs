@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace EtheriT.Coker.Application.Shared.Dto.Marquee
 {
-	public class MarqueeUpdateDto
+    public class MarqueeDto
     {
         public long Id { get; set; }
         public long WebsiteId { get; set; }

@@ -22,6 +22,248 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Html_Content", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Disp_opt")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Img")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<long?>("Menu_id")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ObjectType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Ser_no")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Target")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("permanent")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("Html_Contents");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Dis_Freight")
+                        .HasColumnType("int");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("Freight")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FreigntAmt2")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreigntType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("LogisticsType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Low_Con")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PreserveType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Set_Default")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("LogisticsSettings");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Logisticstype", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Ecpaycode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Logisticstypes");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsType_PaymentType", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("Amountlimit")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_Lid")
+                        .HasMaxLength(50)
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_Pid")
+                        .HasMaxLength(50)
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_Lid");
+
+                    b.HasIndex("FK_Pid");
+
+                    b.ToTable("LogisticsType_Payments");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndWebsite", b =>
                 {
                     b.Property<long>("Id")
@@ -165,12 +407,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Bonus")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
@@ -183,10 +419,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("FK_OrderId")
+                    b.Property<long>("FK_OId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("FK_ProductId")
+                    b.Property<long>("FK_SCId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
@@ -198,14 +434,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<double>("Subtotal")
-                        .HasColumnType("float");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_OrderId");
+                    b.HasIndex("FK_OId");
 
-                    b.HasIndex("FK_ProductId");
+                    b.HasIndex("FK_SCId");
 
                     b.ToTable("Order_Details");
                 });
@@ -238,6 +471,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<int?>("Discount")
                         .HasColumnType("int");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("Freight")
                         .HasColumnType("int");
@@ -320,7 +556,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("State")
                         .HasColumnType("int");
 
-                    b.Property<int>("Total")
+                    b.Property<int>("Subtotal")
                         .HasColumnType("int");
 
                     b.Property<string>("UniformId")
@@ -329,6 +565,68 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Order_Headers");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentType", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Disp_Opt")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Head_column")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Ser_No")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ThirdID")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("ThirdKey")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("Used")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PaymentTypes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
@@ -353,10 +651,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<double?>("Discount")
                         .HasColumnType("float");
+
+                    b.Property<bool>("Disp_Opt")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Introduction")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -367,23 +680,677 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("float");
+                    b.Property<int>("Ser_No")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<bool>("disp_opt")
+                    b.Property<bool>("permanent")
                         .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("Prods");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            Description = "商品一的說明",
+                            Disp_Opt = true,
+                            FK_WebsiteId = 2L,
+                            Introduction = "商品一的介紹",
+                            IsDeleted = false,
+                            Ser_No = 500,
+                            Title = "商品一的名稱",
+                            permanent = false
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            Description = "商品二的說明",
+                            Disp_Opt = true,
+                            FK_WebsiteId = 2L,
+                            Introduction = "商品二的介紹",
+                            IsDeleted = false,
+                            Ser_No = 500,
+                            Title = "商品二的名稱",
+                            permanent = false
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            Description = "商品三的說明",
+                            Disp_Opt = true,
+                            FK_WebsiteId = 2L,
+                            Introduction = "商品三的介紹",
+                            IsDeleted = false,
+                            Ser_No = 500,
+                            Title = "商品三的名稱",
+                            permanent = false
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Log", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Db_Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_Pid")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("FK_Tid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("FK_Uid")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_Pid");
+
+                    b.HasIndex("FK_Tid");
+
+                    b.HasIndex("FK_Uid");
+
+                    b.ToTable("Prod_Logs");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_Tid")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_Tid");
+
+                    b.ToTable("Prod_Specs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1461),
+                            CreatorUserId = 2L,
+                            FK_Tid = 1L,
+                            IsDeleted = false,
+                            Title = "white"
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1462),
+                            CreatorUserId = 2L,
+                            FK_Tid = 1L,
+                            IsDeleted = false,
+                            Title = "gray"
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1463),
+                            CreatorUserId = 2L,
+                            FK_Tid = 1L,
+                            IsDeleted = false,
+                            Title = "black"
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1464),
+                            CreatorUserId = 2L,
+                            FK_Tid = 2L,
+                            IsDeleted = false,
+                            Title = "small"
+                        },
+                        new
+                        {
+                            Id = 5L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1465),
+                            CreatorUserId = 2L,
+                            FK_Tid = 2L,
+                            IsDeleted = false,
+                            Title = "medium"
+                        },
+                        new
+                        {
+                            Id = 6L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
+                            CreatorUserId = 2L,
+                            FK_Tid = 2L,
+                            IsDeleted = false,
+                            Title = "large"
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec_Type", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("Prod_Spec_Types");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            FK_WebsiteId = 2L,
+                            IsDeleted = false,
+                            Type = "color"
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            FK_WebsiteId = 2L,
+                            IsDeleted = false,
+                            Type = "size"
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Stock", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_Pid")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_S1id")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_S2id")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("Min_Qty")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("Safe_Qty")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Ser_No")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Stock")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_Pid");
+
+                    b.ToTable("Prod_Stocks");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            FK_Pid = 1L,
+                            FK_S1id = 0L,
+                            FK_S2id = 0L,
+                            IsDeleted = false,
+                            Min_Qty = 1,
+                            Price = 28000.0,
+                            Safe_Qty = 5,
+                            Ser_No = 500,
+                            Stock = 100
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            FK_Pid = 2L,
+                            FK_S1id = 0L,
+                            FK_S2id = 0L,
+                            IsDeleted = false,
+                            Min_Qty = 1,
+                            Price = 9500.0,
+                            Safe_Qty = 5,
+                            Ser_No = 500,
+                            Stock = 100
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 2L,
+                            FK_Pid = 3L,
+                            FK_S1id = 0L,
+                            FK_S2id = 0L,
+                            IsDeleted = false,
+                            Min_Qty = 1,
+                            Price = 13000.0,
+                            Safe_Qty = 5,
+                            Ser_No = 500,
+                            Stock = 100
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<int?>("Bonus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Discont")
+                        .HasColumnType("int");
+
+                    b.Property<long>("FK_PSid")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_S1id")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_S2id")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("FK_Tid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("FK_Uid")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsAdditional")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Price")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PriceType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Ser_No")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_PSid");
+
+                    b.HasIndex("FK_Tid");
+
+                    b.ToTable("ShoppingCarts");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.TechnicalCertificate", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<bool>("Disp_opt")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Img")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Permanent")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Ser_no")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("TechnicalCertificates");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdParty", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("Account")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("AuditUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool>("Auto_Deposit")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code1")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Code2")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Expire_Day")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("MaxPay")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Password")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PaymentUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("RefundUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ShopID")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TaxID")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TokenUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("ser_no")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Prods");
+                    b.ToTable("ThirdParties");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypair", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_TPid")
+                        .HasMaxLength(50)
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_TPid");
+
+                    b.ToTable("ThirdPartyKeypairs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
@@ -400,7 +1367,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<long?>("UserID")
-                        .IsRequired()
                         .HasColumnType("bigint");
 
                     b.Property<string>("ip")
@@ -408,8 +1374,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("id");
-
-                    b.HasIndex("UserID");
 
                     b.ToTable("Tokens");
                 });
@@ -695,6 +1659,47 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         });
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Html_Content", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("Html_Contents")
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("LogisticsSettings")
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsType_PaymentType", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Logisticstype", "Logisticstype")
+                        .WithMany("LogisticsType_Payments")
+                        .HasForeignKey("FK_Lid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.PaymentType", "PaymentType")
+                        .WithMany("LogisticsType_Payments")
+                        .HasForeignKey("FK_Pid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Logisticstype");
+
+                    b.Navigation("PaymentType");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndWebsite", b =>
                 {
                     b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
@@ -729,30 +1734,129 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Order_Header", "Order_Header")
                         .WithMany("Order_Details")
-                        .HasForeignKey("FK_OrderId")
+                        .HasForeignKey("FK_OId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
+                    b.HasOne("EtheriT.Coker.Core.Models.ShoppingCart", "ShoppingCart")
                         .WithMany("Order_Details")
-                        .HasForeignKey("FK_ProductId")
+                        .HasForeignKey("FK_SCId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Order_Header");
 
-                    b.Navigation("Prod");
+                    b.Navigation("ShoppingCart");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
                 {
-                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
-                        .WithMany("Tokens")
-                        .HasForeignKey("UserID")
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("Prods")
+                        .HasForeignKey("FK_WebsiteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Log", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("FK_Pid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Token", "Token")
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("FK_Tid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
+                        .WithMany("Prod_Logs")
+                        .HasForeignKey("FK_Uid");
+
+                    b.Navigation("Prod");
+
+                    b.Navigation("Token");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod_Spec_Type", "Prod_Spec_Type")
+                        .WithMany("Prod_Specs")
+                        .HasForeignKey("FK_Tid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prod_Spec_Type");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec_Type", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("Prod_Spec_Types")
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Stock", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
+                        .WithMany("Prod_Stocks")
+                        .HasForeignKey("FK_Pid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prod");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod_Stock", "Prod_Stock")
+                        .WithMany("ShoppingCarts")
+                        .HasForeignKey("FK_PSid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Token", "Token")
+                        .WithMany("ShoppingCarts")
+                        .HasForeignKey("FK_Tid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Prod_Stock");
+
+                    b.Navigation("Token");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.TechnicalCertificate", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("TechnicalCertificates")
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypair", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.ThirdParty", "ThirdParty")
+                        .WithMany("ThirdPartyKeypair")
+                        .HasForeignKey("FK_TPid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ThirdParty");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -772,14 +1876,53 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Logisticstype", b =>
+                {
+                    b.Navigation("LogisticsType_Payments");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Header", b =>
                 {
                     b.Navigation("Order_Details");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentType", b =>
+                {
+                    b.Navigation("LogisticsType_Payments");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
                 {
+                    b.Navigation("Prod_Logs");
+
+                    b.Navigation("Prod_Stocks");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec_Type", b =>
+                {
+                    b.Navigation("Prod_Specs");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Stock", b =>
+                {
+                    b.Navigation("ShoppingCarts");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
+                {
                     b.Navigation("Order_Details");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdParty", b =>
+                {
+                    b.Navigation("ThirdPartyKeypair");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
+                {
+                    b.Navigation("Prod_Logs");
+
+                    b.Navigation("ShoppingCarts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -789,7 +1932,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Website", b =>
                 {
+                    b.Navigation("Html_Contents");
+
+                    b.Navigation("LogisticsSettings");
+
                     b.Navigation("Marquees");
+
+                    b.Navigation("Prod_Spec_Types");
+
+                    b.Navigation("Prods");
+
+                    b.Navigation("TechnicalCertificates");
 
                     b.Navigation("Users");
 
@@ -798,7 +1951,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>
                 {
-                    b.Navigation("Tokens");
+                    b.Navigation("Prod_Logs");
 
                     b.Navigation("Webs");
                 });

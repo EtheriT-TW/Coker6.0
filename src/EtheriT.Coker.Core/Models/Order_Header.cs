@@ -4,6 +4,7 @@ namespace EtheriT.Coker.Core.Models
 {
     public class Order_Header : FullAuditedEntity
     {
+        public long FK_WebsiteId { get; set; }
         public string Orderer { get; set; }
         public int OrdererSex { get; set; }
         public string OrdererEmail { get; set; }
@@ -24,7 +25,7 @@ namespace EtheriT.Coker.Core.Models
         public int Shipping { get; set; }
         public int Payment { get; set; }
         public int State { get; set; }
-        public int Total { get; set; }
+        public int Subtotal { get; set; }
         public int? Discount { get; set; }
         public int? Bonus { get; set; }
         public long? CouponId { get; set; }

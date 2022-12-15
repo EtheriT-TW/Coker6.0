@@ -1,13 +1,6 @@
 ﻿using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
 {
@@ -71,6 +64,159 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     UserId = 2,
                     WebsiteId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1458),
+                }
+            );
+            modelBuilder.Entity<Prod_Spec_Type>().HasData(
+                new Prod_Spec_Type()
+                {
+                    Id = 1,
+                    FK_WebsiteId = 2,
+                    Type = "color",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                },
+                new Prod_Spec_Type()
+                {
+                    Id = 2,
+                    FK_WebsiteId = 2,
+                    Type = "size",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+            modelBuilder.Entity<Prod_Spec>().HasData(
+                new Prod_Spec()
+                {
+                    Id = 1,
+                    FK_Tid = 1,
+                    Title = "white",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1461),
+                },
+                new Prod_Spec()
+                {
+                    Id = 2,
+                    FK_Tid = 1,
+                    Title = "gray",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1462),
+                },
+                new Prod_Spec()
+                {
+                    Id = 3,
+                    FK_Tid = 1,
+                    Title = "black",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1463),
+                },
+                new Prod_Spec()
+                {
+                    Id = 4,
+                    FK_Tid = 2,
+                    Title = "small",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1464),
+                },
+                new Prod_Spec()
+                {
+                    Id = 5,
+                    FK_Tid = 2,
+                    Title = "medium",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1465),
+                },
+                new Prod_Spec()
+                {
+                    Id = 6,
+                    FK_Tid = 2,
+                    Title = "large",
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
+                }
+            );
+            modelBuilder.Entity<Prod>().HasData(
+                new Prod()
+                {
+                    Id = 1,
+                    FK_WebsiteId = 2,
+                    Title = "商品一的名稱",
+                    Disp_Opt = true,
+                    Ser_No = 500,
+                    Introduction = "商品一的介紹",
+                    Description = "商品一的說明",
+                    CreatorUserId = 2,
+                    permanent = false,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                },
+                new Prod()
+                {
+                    Id = 2,
+                    FK_WebsiteId = 2,
+                    Title = "商品二的名稱",
+                    Disp_Opt = true,
+                    Ser_No = 500,
+                    Introduction = "商品二的介紹",
+                    Description = "商品二的說明",
+                    CreatorUserId = 2,
+                    permanent = false,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                },
+                new Prod()
+                {
+                    Id = 3,
+                    FK_WebsiteId = 2,
+                    Title = "商品三的名稱",
+                    Disp_Opt = true,
+                    Ser_No = 500,
+                    Introduction = "商品三的介紹",
+                    Description = "商品三的說明",
+                    CreatorUserId = 2,
+                    permanent = false,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+            modelBuilder.Entity<Prod_Stock>().HasData(
+                new Prod_Stock()
+                {
+                    Id = 1,
+                    FK_Pid = 1,
+                    FK_S1id = 0,
+                    FK_S2id = 0,
+                    Stock = 100,
+                    Safe_Qty = 5,
+                    Min_Qty = 1,
+                    Price = 28000,
+                    Ser_No = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                },
+                new Prod_Stock()
+                {
+                    Id = 2,
+                    FK_Pid = 2,
+                    FK_S1id = 0,
+                    FK_S2id = 0,
+                    Stock = 100,
+                    Safe_Qty = 5,
+                    Min_Qty = 1,
+                    Price = 9500,
+                    Ser_No = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                },
+                new Prod_Stock()
+                {
+                    Id = 3,
+                    FK_Pid = 3,
+                    FK_S1id = 0,
+                    FK_S2id = 0,
+                    Stock = 100,
+                    Safe_Qty = 5,
+                    Min_Qty = 1,
+                    Price = 13000,
+                    Ser_No = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                 }
             );
         }

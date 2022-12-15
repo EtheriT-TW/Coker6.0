@@ -1,0 +1,59 @@
+﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
+.icon_hint {
+    cursor: default;
+}
+
+/* RightSideAd List */
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
+/* RightSideAd Content */
+#AdForm > div > div > .btn_input_pic {
+    height: 3.5rem;
+    width: 3.5rem;
+    color: var(--bs-gray);
+    border: 1px solid #ced4da;
+    border: 1px solid var(--color-gray-bg-dark);
+}
+
+#RightSideAdContent > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#RightSideAdContent > form > .name > input {
+    padding-left: 7.25rem;
+    padding-right: 7.5rem;
+}
+
+#RightSideAdContent > form > .sort > input {
+    padding-left: 5.25rem;
+    padding-right: 7.5rem;
+}
+
+#RightSideAdContent > form > .link > input {
+    padding-left: 3.25rem;
+    padding-right: 7.5rem;
+}
+
+#RightSideAdContent > form > .date > input {
+    padding-left: 9rem;
+    padding-right: 7.5rem;
+}

@@ -26,8 +26,8 @@
 				Html.DevExtreme().DataGrid<MemberGetAllListDto>()
 				.DataSource(d => d.RemoteController().Key("Id")
 				.LoadUrl("/api/Member/GetAllList").LoadMethod("Get")
-				/*.UpdateUrl("/api/Order/Update").UpdateMethod("Post")*/
 				)
+				.RemoteOperations(true)
 				.ColumnHidingEnabled(true)
 				.ShowBorders(true)
 				.FilterRow(filterRow => filterRow
@@ -86,7 +86,7 @@
 					<div id="MemberData" class="card-body">
 						<div class="d-flex align-items-center justify-content-between pb-2">
 							<div class="fs-5 fw-bold">客戶基本資料</div>
-							<div class="member_number">200907730911</div>
+							<div class="member_number"></div>
 						</div>
 
 						<form class="row needs-validation" novalidate>
@@ -169,7 +169,7 @@
 							<div class="col-4 d-none d-lg-flex"></div>
 							<div class="input_newpass form-floating mb-3 col-6 col-lg-4 position-relative">
 								<input id="InputPasswordNew" class="new_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
-								<div id="PassFeedBack" class="invalid-feedback position-absolute"></div>
+								<div id="NewPassFeedBack" class="invalid-feedback position-absolute"></div>
 								<label class="px-4" for="InputPasswordNew">新密碼</label>
 								<button class="btn_newpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
 									<span class="material-symbols-outlined fs-5">visibility_off</span>
@@ -177,7 +177,7 @@
 							</div>
 							<div class="input_checkpass form-floating mb-3 col-6 col-lg-4 position-relative">
 								<input id="InputPasswordCheck" class="check_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
-								<div class="invalid-feedback position-absolute">密碼不相符</div>
+								<div id="CheckPassFeedBack" class="invalid-feedback position-absolute"></div>
 								<label class="px-4" for="InputPasswordCheck">密碼確認</label>
 								<button class="btn_checkpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
 									<span class="material-symbols-outlined fs-5">visibility_off</span>

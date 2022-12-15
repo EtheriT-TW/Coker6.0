@@ -7,11 +7,9 @@ namespace EtheriT.Coker.Application.Shared.Marquee
 {
     public interface IMarqueeAppService
     {
-
-        public Task<ResponseMessageDto> Add(MarqueeAddDto dto);
-        public Task<ResponseMessageDto> Update(MarqueeUpdateDto dto);
+        public Task<ResponseMessageDto> AddUp(MarqueeDto dto);
         public Task<MarqueeGetDto> Get(int id);
-        public Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<JsonResult> GetAll(long webid, string placement);
         public Task<ResponseMessageDto> Delete(int id);
     }

@@ -1,7 +1,21 @@
 ﻿function ready() {
+    Coker.Token = {
+        GetToken: function () {
+            return $.ajax({
+                url: "/api/Token/CreateToken",
+                type: "POST",
+            });
+        },
+        CheckToken: function (id) {
+            return $.ajax({
+                url: "/api/Token/CheckToken/",
+                type: "GET",
+                data: { id: id }
+            });
+        }
+    };
+
     $.cookie('Member_Name', "會員一", { path: '/' });
-    typeof $.cookie('Purchased_Type_Quantity') == "undefined" && $.cookie('Purchased_Type_Quantity', 0, { path: '/' })
-    typeof $.cookie('Purchased_Item_Quantity') == "undefined" && $.cookie('Purchased_Item_Quantity', 0, { path: '/' })
 
     typeof (PageReady) === "function" && PageReady();
     HeaderInit();
@@ -17,7 +31,10 @@
 
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         $("#Cookie").toggleClass("show");
+    } else {
+        CheckToken();
     }
+
     $(".btn_cookie_accept").on("click", cookie_accept);
     $(".btn_cookie_reject").on("click", cookie_reject);
 
@@ -55,13 +72,28 @@ function scrollFunction() {
 }
 
 function cookie_accept() {
-    $.cookie('cookie', 'accept', { expires: 7 });
+    $.cookie('cookie', 'accept', { expires: 7, path: '/' });
     $("#Cookie").toggleClass("show");
+    CreateToken();
 }
 
 function cookie_reject() {
     $.cookie('cookie', 'reject');
     $("#Cookie").toggleClass("show");
+}
+
+function CreateToken() {
+    Coker.Token.GetToken().done(function (result) {
+        $.cookie("Token", result.token, { expires: 30, path: "/" })
+    })
+}
+
+function CheckToken() {
+    Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
+        if (!result.success) {
+            CheckToken();
+        }
+    })
 }
 
 function AddFavorites() {
@@ -70,14 +102,14 @@ function AddFavorites() {
 
     if ($self.hasClass("fa-solid")) {
         Coker.sweet.confirm("確定將商品從收藏中移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
-            $self.toggleClass('fa-solid');
+            $self.removeClass('fa-solid');
             if ($self.hasClass('fav_item')) {
                 $self_parent.remove();
                 Coker.sweet.success("成功移除商品", null, true);
             }
         });
     } else {
-        $self.toggleClass('fa-solid');
+        $self.addClass('fa-solid');
         Coker.sweet.success("成功加入收藏", null, true);
     }
 }

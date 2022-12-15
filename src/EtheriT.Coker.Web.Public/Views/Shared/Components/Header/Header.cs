@@ -2,7 +2,6 @@
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 {

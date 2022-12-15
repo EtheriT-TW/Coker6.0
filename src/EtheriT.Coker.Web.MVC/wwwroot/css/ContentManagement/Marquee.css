@@ -35,16 +35,16 @@ input[type="number"] {
 }
 
 #MarqueeContent > form > .sort > input {
-    padding-left: 5rem;
+    padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
 
 #MarqueeContent > form > .link > input {
-    padding-left: 2.25rem;
+    padding-left: 3.25rem;
     padding-right: 7.5rem;
 }
 
 #MarqueeContent > form > .date > input {
-    padding-left: 8rem;
+    padding-left: 9rem;
     padding-right: 7.5rem;
 }

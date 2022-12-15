@@ -1,4 +1,6 @@
-﻿
+﻿@using EtheriT.Coker.Application.Shared.Dto.Freight
+@using EtheriT.Coker.Web.Public.Models
+@model PageViewModel
 
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
@@ -84,7 +86,7 @@
 					<div class="fs-5 my-2">購物明細</div>
 				</div>
 
-				<div class="card-body pt-5">
+				<div class="card-body pt-5 d-none">
 					<div class="list_title row d-none d-lg-flex">
 						<div class="col-6 text-start">商品資訊</div>
 						<div class="col-2">單價</div>
@@ -92,9 +94,9 @@
 						<div class="col-2">小計</div>
 					</div>
 
-					<ul class="purchase_list pb-4">
-						<template id="Template_Purchase_Details">
-							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+					<ul class="purchase_list pb-4 px-5">
+						<template id="Template_Cart_Details">
+							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
 								<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
 									<a class="pro_link col-lg-2 col-12" href="">
 										<img class="pro_image img-fluid" src="">
@@ -121,7 +123,7 @@
 										</div>
 									</a>
 
-									<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center" data-unitprice=""></div>
+									<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center"></div>
 
 									<div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
 										<button class="btn_count_minus bg-white border-end-0">
@@ -135,7 +137,7 @@
 										</button>
 									</div>
 
-									<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none"></div>
+									<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
 								</div>
 
 								<div class="btn_side_icon position-absolute d-flex flex-column top-0 end-0 p-2">
@@ -174,7 +176,7 @@
 					</div>
 				</div>
 
-				<div id="Purchase_Null" class="d-none align-items-center flex-column justify-content-center">
+				<div id="Purchase_Null" class="align-items-center flex-column justify-content-center">
 					<div class="mt-5">您的購物車是空的</div>
 					<a class="btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="/Toilet">點此返回選購</a>
 				</div>
@@ -187,14 +189,38 @@
 
 				<div class="card-body px-0">
 					<form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" novalidate>
-						<div class="d-flex">
-							<div class="form-check w-50 text-start">
-								<input id="FreeShip" class="form-check-input" type="radio" name="RadioShipping" value="1" required>
-								<label class="form-check-label" for="FreeShip">免運</label>
-								<div class="invalid-feedback">請選擇運送方式</div>
-							</div>
-							<div class="w-50">免運<span>(您已符合免運條件)</span></div>
+						<div class="row gx-0">
+							@if (Model.freightModels.Count > 0)
+							{
+								var has_invalid = false;
+								@foreach (var freight in Model.freightModels ?? new List<FreightDisplayDto>())
+								{
+									var check = freight.Set_Default ? "checked" : "";
+									<div class="form-check text-start col-12 col-sm-3 my-2">
+										<input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freight="@freight.Freight" @check required>
+										<label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
+										@{
+											if (!has_invalid)
+											{
+												<div class="invalid-feedback">請選擇運送方式</div>
+												has_invalid = true;
+											}
+										}
+									</div>
+									<div class="text-start col-12 col-sm-9 my-2">@freight.Describe</div>
+								}
+							}
+							else
+							{
+								<div class="form-check text-start col-12 col-sm-3">
+									<input id="FreeShip" class="form-check-input" type="radio" name="RadioShipping" value="0" data-freight="0" required>
+									<label class="form-check-label" for="FreeShip">免運</label>
+									<div class="invalid-feedback">請選擇運送方式</div>
+								</div>
+								<div class="text-start col-12 col-sm-9">免運(您已符合免運條件)</div>
+							}
 						</div>
+
 					</form>
 
 					<div class="title px-3 py-2 d-flex align-items-center justify-content-between">
@@ -224,7 +250,7 @@
 						</div>
 						<div class="py-2 d-flex justify-content-end text-end">
 							<div>運費</div>
-							<div class="shipping_fee price"></div>
+							<div class="shipping_fee price">0</div>
 						</div>
 						<div class="py-2 border-top d-flex justify-content-end text-end">
 							<div>小計</div>
@@ -517,46 +543,62 @@
 			<div id="Step4" class="card swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
 					<div class="fs-5 my-2">購物明細</div>
-					<div class="order_number fs-5 fw-bold">123456789</div>
+					<div class="order_number fs-5 fw-bold"></div>
 				</div>
 
 				<div class="card-body px-0">
-					<div id="Pruchase_Content">
+					<div class="pruchase_content">
 						<div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
 
-						<div class="row gx-0 border-bottom border-top py-2 align-items-lg-center position-relative">
-							<div class="product col-auto col-lg-6 px-sm-2 d-flex align-items-center">
-								<a href="/Toilet/01">
-									<img src="~/images/product/pro_pic_03.jpg">
-								</a>
-								<a href="/Toilet/01">
-									<div class="overflow-hidden pe-4">
-										<div class="pro_name fw-bold">C613NA 二段省水奈米高背單體馬桶</div>
-										<div class="pro_detail d-flex flex-wrap">
-											<div class="pe-3">白色</div>
-											<div class="specifications">規格說明文字</div>
+						<ul class="purchase_list px-5"></ul>
+
+						<ul id="CollapsePurchase" class="purchase_list pb-4 px-5 collapse"></ul>
+
+						<template id="Template_Purchase_Details">
+							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+								<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
+									<a class="pro_link col-lg-2 col-12" href="">
+										<img class="pro_image img-fluid" src="">
+									</a>
+									<a class="pro_link col text-start overflow-hidden" href="">
+										<div class="content d-lg-block d-none">
+											<div class="pro_name single_line fw-bold"></div>
+											<div class="pro_detail d-flex flex-wrap">
+												<div class="pro_specification pe-3"></div>
+												<div class="pro_instructions single_line"></div>
+											</div>
 										</div>
-									</div>
-								</a>
-							</div>
+									</a>
+								</div>
 
-							<div class="col col-lg-6 row">
-								<div class="pro_unit col-4 text-center">26,200</div>
+								<div class="content col-sm-6 col row gx-0 overflow-hidden">
+									<a class="pro_link" href="">
+										<div class="d-lg-none d-block text-start">
+											<div class="pro_name single_line fw-bold"></div>
+											<div class="pro_detail d-flex flex-wrap">
+												<div class="pro_specification pe-3"></div>
+												<div class="pro_instructions single_line"></div>
+											</div>
+										</div>
+									</a>
 
-								<div class="col-4 text-center">x1</div>
+									<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
 
-								<div class="pro_total_amount col-4 price text-center">26,200</div>
-							</div>
-						</div>
+									<div class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
+
+									<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
+								</div>
+							</li>
+						</template>
 
 						<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
 							<div class="py-2 d-flex justify-content-end text-end">
 								<div>總金額</div>
-								<div class="subtotal col-4 price">26,200</div>
+								<div class="subtotal col-4 price"></div>
 							</div>
 							<div class="py-2 d-flex justify-content-end text-end">
 								<div>運費</div>
-								<div class="delivery_fee col-4 price" data-freight="0">0</div>
+								<div class="shipping_fee col-4 price">0</div>
 							</div>
 							<div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
 								<div>本次消費總金額</div>
@@ -565,74 +607,86 @@
 						</div>
 
 						<div class="d-flex justify-content-center">
-							<button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2" type="button">
+							<button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2 d-none" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePurchase" aria-expanded="false" aria-controls="CollapsePurchase">
 								查看購物清單
 							</button>
 						</div>
 
 					</div>
 
-					<div id="OrdererData">
+					<div class="orderer_data">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">訂購人資料</div>
 
 						<div class="content">
 							<div class="row">
-								<div class="orderer_name col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start">姓○</div>
+								<div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="name col text-start"></div>
 							</div>
 							<div class="row">
-								<div class="orderer_phone col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start">098***321</div>
+								<div class="col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="cellphone col text-start"></div>
 							</div>
-							<div class="row">
+							<div class="row d-none">
 								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
-								<div class="col text-start"><span class="orderer_areacode">07</span>-<span class="orderer_cellphone">12***67</span> 分機 <span class="orderer_extension">******</span></div>
+								<div class="telphone col text-start"></div>
 							</div>
 						</div>
 					</div>
 
-					<div id="RecipientData">
+					<div class="recipient_data">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">收件人資料</div>
 
 						<div class="content">
 							<div class="row">
-								<div class="recipient_name col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start">姓○</div>
+								<div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+								<div class="name col text-start"></div>
 							</div>
 							<div class="row">
-								<div class="recipient_phone col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start">098***321</div>
+								<div class=" col-auto col-sm-2 text-end ps-4">手機電話：</div>
+								<div class="cellphone col text-start"></div>
 							</div>
-							<div class="row">
+							<div class="row d-none">
 								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
-								<div class="col text-start"><span class="recipient_areacode">07</span>-<span class="recipient_cellphone">12***67</span> 分機 <span class="recipient_extension">******</span></div>
+								<div class="telphone col text-start"></div>
 							</div>
 							<div class="row">
-								<div class="recipient_phone col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="col text-start">高雄市前鎮區***</div>
+								<div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+								<div class="address col text-start"></div>
 							</div>
 						</div>
 					</div>
 
-					<div id="InvoiceData">
+					<div class="invoice_data">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
 
 						<div class="content">
-							<div class="row">
-								<div class="bill_name col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start">姓○</div>
+							<div class="person d-none">
+								<div class="row">
+									<div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+									<div class="name col text-start"></div>
+								</div>
+								<div class="row">
+									<div class="col-auto col-sm-2 text-end ps-4">手機電話：</div>
+									<div class="cellphone col text-start"></div>
+								</div>
+								<div class="row">
+									<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+									<div class="telphone col text-start"></div>
+								</div>
+							</div>
+							<div class="company d-none">
+								<div class="row">
+									<div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
+									<div class="invoice col text-start"></div>
+								</div>
+								<div class="row">
+									<div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
+									<div class="unid col text-start"></div>
+								</div>
 							</div>
 							<div class="row">
-								<div class="bill_phone col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start">098***321</div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
-								<div class="col text-start"><span class="bill_areacode">07</span>-<span class="bill_cellphone">12***67</span> 分機 <span class="bill_extension">******</span></div>
-							</div>
-							<div class="row">
-								<div class="bill_phone col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="col text-start">高雄市前鎮區***</div>
+								<div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+								<div class="address col text-start"></div>
 							</div>
 						</div>
 					</div>
@@ -669,7 +723,7 @@
 
 								<div class="mb-2 row align-items-center">
 									<div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
-									<div class="col">新台幣<span class="paid_amount fs-5 fw-bold">26,200</span></div>
+									<div class="col">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
 								</div>
 
 								<div class="mb-2 row align-items-center">

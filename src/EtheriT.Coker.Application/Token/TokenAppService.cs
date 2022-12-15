@@ -1,24 +1,23 @@
-﻿using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+﻿using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Primitives;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Principal;
 
 namespace EtheriT.Coker.Application.Token
 {
-    public class TokenAppService: ITokenAppService
+    public class TokenAppService : ITokenAppService
     {
         private readonly JwtHelpers jwt;
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IDistributedCache cache;
         public TokenAppService(
-            JwtHelpers jwt, 
+            JwtHelpers jwt,
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             IDistributedCache cache)
@@ -28,17 +27,82 @@ namespace EtheriT.Coker.Application.Token
             this.httpContextAccessor = httpContextAccessor;
             this.cache = cache;
         }
-        public async Task<string> CreateToken(string account) {
-            var user = db.Users.Where(e => e.Account == account).First();
-            if (user == null) {
+        public async Task<TokenResponseDto> CreateToken()
+        {
+            TokenResponseDto output = new TokenResponseDto();
+            try
+            {
+                DateTime dateTime = DateTime.Now;
+                DateTime EndDateTime = dateTime.AddDays(30);
+                Core.Models.Token t = new Core.Models.Token
+                {
+                    ip = httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString(),
+                    UserID = null,
+                    StartTime = dateTime,
+                    EndTime = EndDateTime,
+                };
+                db.Tokens.Add(t);
+                db.SaveChanges();
+                output.Success = true;
+                output.Token = t.id.ToString();
             }
-            List<string> roles = new List<string> { 
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<TokenResponseDto> CheckToken(string id)
+        {
+            TokenResponseDto output = new TokenResponseDto();
+            try
+            {
+                var tokens = db.Tokens.Where(e => e.id == Guid.Parse(id)).First();
+                if (tokens == null)
+                {
+                    output.Success = false;
+                    output.Error = "Token doesn't exist";
+                }
+                else
+                {
+                    DateTime dateTime = DateTime.Now;
+                    if (tokens.UserID == null & DateTime.Compare(dateTime, (DateTime)tokens.EndTime) > 0)
+                    {
+                        output.Success = false;
+                        output.Error = "Token has expired";
+                        db.Tokens.Remove(tokens);
+                        db.SaveChanges();
+                    }
+                    else
+                    {
+                        output.Success = true;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<string> CreateToken(string account)
+        {
+            var user = db.Users.Where(e => e.Account == account).First();
+            if (user == null)
+            {
+            }
+            List<string> roles = new List<string> {
                 "Admin",
                 "Users"
             };
             return await jwt.GenerateToken(account, roles);
         }
-        public async Task<bool> DelToken() {
+        public async Task<bool> DelToken()
+        {
             string token = GetCurrentAsync();
             await cache.SetStringAsync(
                 GetKey(token),

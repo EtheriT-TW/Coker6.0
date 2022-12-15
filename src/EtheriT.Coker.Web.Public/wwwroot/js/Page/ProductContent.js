@@ -1,5 +1,12 @@
-﻿function PageReady() {
+﻿var $input_quantity
+var Pid
+
+function PageReady() {
+    ElementInit();
     window.CI360.init();
+
+    Pid = $(location).attr('href').substr($(location).attr('href').lastIndexOf("/") + 1);
+    PageDefaultSet(Pid);
 
     var preview_swiper = new Swiper(".PreviewSwiper", {
         slidesPerView: 4,
@@ -56,12 +63,12 @@
     });
 
     $(document).on('click', '.btn_count_plus', function () {
-        $('.input_pro_quantity').val(parseInt($('.input_pro_quantity').val()) + 1);
+        $input_quantity.val(parseInt($input_quantity.val()) + 1);
     });
     $(document).on('click', '.btn_count_minus', function () {
-        $('.input_pro_quantity').val(parseInt($('.input_pro_quantity').val()) - 1);
-        if ($('.input_pro_quantity').val() == 0) {
-            $('.input_pro_quantity').val(1);
+        $input_quantity.val(parseInt($input_quantity.val()) - 1);
+        if ($input_quantity.val() == 0) {
+            $input_quantity.val(1);
         }
     });
 
@@ -70,17 +77,82 @@
         $radio_btn.children('label').toggleClass('pe-none');
     }
 
-    $(".btn_addToCar").on("click", AddToCar);
+    $(".btn_addToCar").on("click", AddToCart);
+    $(".btn_certification").on("click", function () {
+        $("#ProductDescription").removeClass("active show")
+        $("#TechnicalDocuments").addClass("active show")
+        $("#pills-description-tab").removeClass("active")
+        $("#pills-documents-tab").addClass("active")
+        var btn_data = $(this).data("certification")
+        $(".badge_directions").each(function () {
+            var $self = $(this)
+            if ($self.data("certification") == btn_data) {
+                $('html, body').animate({ scrollTop: $self.offset().top - ($("header").height() * 2) }, 0);
+            }
+        })
+    })
 }
 
-function AddToCar() {
-    $.cookie('Purchased_Item_Quantity', parseInt($.cookie('Purchased_Item_Quantity')) + parseInt($('.input_pro_quantity').val()), { path: '/' });
-    Coker.sweet.success("成功加入購物車！", null, true);
-    if ($.cookie('Purchased_Type_Quantity') > 0) {
-        CarItemChange();
+function ElementInit() {
+    $input_quantity = $('.input_pro_quantity');
+
+    $prod_content = $("#Product > .content");
+    $pro_name = $prod_content.find('.title');
+    $pro_introduce = $prod_content.find('.introduce');
+    $pro_specification = $prod_content.find('.specification').children("ul");
+    $pro_price = $prod_content.find(".ori_price");
+    $pro_discount = $prod_content.find(".discount");
+}
+
+function PageDefaultSet() {
+    Product.GetOne.Prod(Pid).done(function (result) {
+        console.log(result)
+        $pro_name.text(result.title);
+        $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
+        $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
+        if (result.discount > 0) {
+            $pro_price.removeClass("d-none");
+            $pro_price.append("<span class='text-decoration-line-through'>" + result.price.toLocaleString('en-US') + "</span>&ensp;折扣&ensp;");
+            $pro_discount.text(result.discount.toLocaleString('en-US'));
+        } else {
+            $pro_discount.text(result.price.toLocaleString('en-US'));
+        }
+    });
+}
+
+function AddToCart() {
+    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
+        Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
-        $.cookie('Purchased_Type_Quantity', 1, { path: '/' });
-        CarDropdownReset();
+        Product.AddUp.Cart({
+            FK_Tid: $.cookie("Token"),
+            FK_PSid: Pid,
+            FK_S1id: 1,
+            FK_S2id: 4,
+            Quantity: $input_quantity.val(),
+            Discont: 0,
+            Bonus: 0,
+            PriceType: 0,
+            IsAdditional: false,
+            Ser_No: 500,
+        }).done(function (result) {
+            if (result.success) {
+                Coker.sweet.success("商品已成功加入購物車", null, true);
+                var type = (result.message).substr(0, 1);
+                var id = (result.message).substr(1);
+                Product.GetOne.Cart(id).done(function (result) {
+                    if (type == 'N') {
+                        CartDropAdd(result);
+                    } else {
+                        CartDropUpdate(result);
+                    }
+                });
+            } else {
+                Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+            }
+        }).fail(function () {
+            Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+        });
     }
 }
 

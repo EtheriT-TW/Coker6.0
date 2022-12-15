@@ -1,10 +1,8 @@
 ﻿using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {

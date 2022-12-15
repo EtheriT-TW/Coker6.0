@@ -1,4 +1,6 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Token;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,5 +12,7 @@ namespace EtheriT.Coker.Application.Token
     {
         public Task<string> CreateToken(string account);
         public Task<bool> DelToken();
+        public Task<TokenResponseDto> CreateToken();
+        public Task<TokenResponseDto> CheckToken(string id);
     }
 }

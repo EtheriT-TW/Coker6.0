@@ -55,6 +55,9 @@
 	<script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
 	<script src="~/js/CokerCore.min.js" asp-append-version="true"></script>
 	<script src="~/js/site.js" asp-append-version="true"></script>
+	<script>
+		DevExpress.localization.locale('zh-tw');
+	</script>
 	@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

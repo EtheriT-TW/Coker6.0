@@ -53,15 +53,29 @@
     border-color: gray !important;
 }
 
-.required_text::before {
+.required_sign::before {
     color: var(--colors-red-text);
     content: '*';
+    font-size: 1rem;
+    vertical-align: top;
+}
+
+.required_all::before {
+    color: var(--colors-red-text);
+    content: '*';
+}
+
+.required_all::after {
+    color: var(--colors-red-text);
+    content: '\5fc5\586b';
+    font-size: 0.5em;
 }
 
 .required_text::after {
     color: var(--colors-red-text);
     content: '\5fc5\586b';
     font-size: 0.5em;
+    align-self: end;
 }
 /*custom*/
 

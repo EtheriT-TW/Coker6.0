@@ -1,4 +1,7 @@
-﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+﻿@using EtheriT.Coker.Application.Shared.Dto.HtmlContent
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@using EtheriT.Coker.Web.Public.Models
+@model HomeViewModel
 @{
 	ViewData["Title"] = "Home Page";
 }
@@ -40,6 +43,36 @@
 	<div class="swiper_pagination_banner position-absolute text-center -2"></div>
 </div>
 
+<!-- EnterAdModal -->
+@if (Model.enterAd.Count > 0)
+{
+	@foreach (var enterAd in Model.enterAd ?? new List<HtmlContentDisplayDto>())
+	{
+		var target = enterAd.Target ? "_blank" : "_self";
+		<div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+				<div class="modal-content">
+					<div class="modal-body">
+						<button type="button" class="bg-white btn-close end-0 me-3 p-2 position-absolute rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+						<div class="d-flex justify-content-center">
+							@if (enterAd.Link != "")
+							{
+								<a href="@enterAd.Link" target="@target">
+									<img class="" src="@enterAd.Img" alt="@enterAd.Title" />
+								</a>
+							}
+							else
+							{
+								<img class="" src="@enterAd.Img" alt="@enterAd.Title" />
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+
 <!--One Full Container Swiper
 <div id="" class="container-fluid position-relative p-0">
 	<div class="swiper">
@@ -68,7 +101,9 @@
 </template>
 -->
 
-<div class="btn_gonews d-flex justify-content-center py-4"><i class="fa-solid fa-chevron-down p-1 rounded-circle border border-2"></i></div>
+<div class="d-flex justify-content-center my-3">
+	<button class="btn_gonews rounded-circle bg-transparent border border-2 p-0"><i class="fa-solid fa-chevron-down"></i></button>
+</div>
 
 <!-- Three Container
 <div class="container-fluid">

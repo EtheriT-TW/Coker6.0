@@ -1,0 +1,86 @@
+﻿#Floating_Center {
+    position: fixed;
+    right: 0rem;
+    z-index: 1001;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+    #Floating_Center > div img {
+        width: 75px;
+        height: auto;
+    }
+
+/* Hsitory */
+#History {
+    max-width: 80px;
+    margin-right: 1rem;
+}
+
+    #History > button {
+        width: 2rem;
+        font-size: 0.8rem;
+        background-color: var(--gray-middle);
+    }
+
+#CollapseHistory > .title {
+    background-color: var(--gray-middle);
+    font-size: 0.8rem;
+}
+
+#CollapseHistory > .collect {
+    background-color: var(--gray-middle);
+    font-size: 0.8rem;
+}
+
+#CollapseHistory > .checkout {
+    background-color: var(--red-main);
+    font-size: 0.8rem;
+}
+
+#CollapseHistory > .collect > .amount::before {
+    content: '(';
+}
+
+#CollapseHistory > .collect > .amount::after {
+    content: ')';
+}
+
+#Floating_Bottom {
+    z-index: 2;
+}
+
+/* Button Chat */
+#btn_chat {
+    width: 4.5rem;
+}
+
+#Chatbot_Frame {
+    transform: scale(0,0);
+    transform-origin: right bottom;
+    width: 250px;
+    right: 100px;
+    bottom: 0;
+    transition: ease-in-out all 0.25s;
+}
+
+    #Chatbot_Frame.show {
+        transform-origin: right top;
+        transform: scale(1,1);
+        transition: ease-in-out all 0.25s;
+    }
+
+    #Chatbot_Frame > .card-header, #Chatbot_Frame > .card-body > a > .btn_gochat {
+        color: white;
+        background-color: var(--green-LINE);
+    }
+
+/*RWD*/
+@media only screen and (max-width: 992px) {
+    #Floating_Center {
+        top: auto;
+        transform: initial;
+        bottom: 0;
+        right: 0rem;
+    }
+}

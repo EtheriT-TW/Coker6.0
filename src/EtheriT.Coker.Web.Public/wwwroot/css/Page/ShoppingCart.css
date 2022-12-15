@@ -171,9 +171,17 @@ input[type="number"] {
             color: var(--gray-text);
         }
 
+            #Step1 > .card-body > .purchase_list > .purchase_item > .image > a > .content > .pro_detail > .pro_instructions {
+                max-height: 4.5rem;
+            }
+
     #Step1 > .card-body > .purchase_list > .purchase_item > .content > a > div > .pro_detail {
         color: var(--gray-text);
     }
+
+        #Step1 > .card-body > .purchase_list > .purchase_item > .content > a > div > .pro_detail > .pro_instructions {
+            max-height: 4.5rem;
+        }
 
     #Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > button {
         color: var(--black-text);

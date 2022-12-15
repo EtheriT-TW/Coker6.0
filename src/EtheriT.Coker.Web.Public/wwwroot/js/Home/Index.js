@@ -1,6 +1,11 @@
 ﻿function PageReady() {
     ShoppingCarModalInit();
 
+    if ($("#EnterAdModal").length > 0) {
+        var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
+        enterAdModal.show();
+    }
+
     $(".btn_gonews").on("click", function () {
         $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top - ($("header").height() * 2) }, 0);
     });
@@ -103,7 +108,7 @@ function GuessLikeAdd(index, result) {
     item_name.text(result.title);
     item_tag.append("<li class='pe-2 align-self-center'><button class='bg-transparent border-0 gray_text text-decoration-underline ps-0'>" + "TAG" + "</button></li>");
     item_image.attr("src", "../images/product/pro_0" + result.id + ".png");
-    item_price.text((result.price).toLocaleString('en-US'));
+    item_price.text((result.discount > 0 ? result.discount : result.price).toLocaleString('en-US'));
 
     var item_list_ul = $("#Guess_Like > div > div > div");
     item_list_ul.eq(index).children("span").remove();

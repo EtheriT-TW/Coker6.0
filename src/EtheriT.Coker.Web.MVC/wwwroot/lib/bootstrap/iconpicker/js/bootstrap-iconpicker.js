@@ -486,6 +486,8 @@
                     data.setIconset(op.iconset);
                     $this.on('click', function(e) {
                         e.preventDefault();
+                        let $parent = $this.parents(".offcanvas,.modal,body").first();
+                        console.log($parent);
                         var popover = bootstrap.Popover.getInstance(this);
                         if (popover == null) {
                             popover = new bootstrap.Popover($this, {
@@ -493,7 +495,7 @@
                                 trigger: 'manual',
                                 html: true,
                                 content: op.table,
-                                container: '#offcanvasSite',
+                                container: $parent,
                                 sanitize: true,
                                 placement: op.placement
                             });

@@ -64,6 +64,7 @@
             });
         });
     }
+    const iconPickerOpt = { cols: 4, rows: 4, footer: false, iconset: "fontawesome5" };
     const getCss = (editor, id) => {
         const style = editor.CssComposer.getRule(`#${id}`);
         const hoverStyle = editor.CssComposer.getRule(`#${id}:hover`);
@@ -104,6 +105,7 @@
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `
         let finalHtml = first_partHtml + second_partHtml
+        let icon = $('#NewBlockicon').val();
         const blockCss = findComponentStyles(selected)
         const css = `<style>${blockCss}</style>`
         const elementHtmlCss = finalHtml + css
@@ -112,24 +114,58 @@
             category: '自訂區',
             attributes: { custom_block_template: true },
             label: `${name}`,
-            media: '<i class="fa fa-square"></i>',
+            media: `<i class="${icon} fa-5x"></i>`,
             content: elementHtmlCss,
         })
     }
     const createBlockTemplateConfirmation = function() {
         const selected = editor.getSelected();
         //let name = this.blockTemplateForm.get('name')!.value
-        let name = "新增";
+        let name = $("#NewBlockName").val() || "新增";
         let blockId = 'customBlockTemplate_' + name.split(' ').join('_')
         let name_blockId = {
             'name': name,
             'blockId': blockId
         }
-
+        console.log($("#NewBlockicon").val());
         createBlockTemplate(selected, name_blockId)
         //this.blockTemplateForm.reset();
         //this.modalService.getModal('createBlockTemplate').close();
     }
+    $(`<div id="setComponents" class="modal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Modal title</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-floating mb-3 input-group">
+                <input type="hidden" name="icon">
+                <input type="text" class="form-control" id="NewBlockName" placeholder="請輸入新元件的名稱">
+                <label for="floatingInput">元件名稱</label>
+                <div class="input-group-append">
+                    <button type="button" id="NewBlockicon" class="btn btn-outline-secondary"></button>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary btn-save">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>`).appendTo("body");
+    const myModal = new bootstrap.Modal('#setComponents');
+    const iconPicker = $('#NewBlockicon').iconpicker(iconPickerOpt);
+    $('#setComponents').find(".btn-save").on("click", function(){
+        createBlockTemplateConfirmation();
+        myModal.hide();
+        co.sweet.success("加入我的最愛");
+    });
+    iconPicker.on('change', function (e) {
+        $('#NewBlockicon').val(e.icon);
+    });
 
     panelManager.addButton('options', {
         id: 'panelSave',
@@ -179,8 +215,7 @@
     });
 
     var linkCommandId = function () {
-        createBlockTemplateConfirmation();
-        co.sweet.success("加入我的最愛");
+        myModal.show();
     }; // Id to use to create the button and anchor tag editor command
     var toolbarIcon = '<i class="fa fa-star"></i>'; // Icon used in the component toolbar
 

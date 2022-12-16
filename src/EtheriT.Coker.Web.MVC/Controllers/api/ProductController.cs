@@ -22,9 +22,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.productAppService = productAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> AddUp(ProductDto dto)
+        public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
         {
-            return await productAppService.AddUp(dto);
+            return await productAppService.ProductAddUp(dto);
         }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -32,14 +32,29 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<ProductDto> GetOne(long Id)
+        public async Task<ProductDto> ProdGetOne(long Id)
         {
-            return await productAppService.GetOne(Id);
+            return await productAppService.ProdGetOne(Id);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> Delete(long Id)
+        public async Task<List<ProductStockDto>> ProdStockGet(long PId)
         {
-            return await productAppService.Delete(Id);
+            return await productAppService.ProdStockGet(PId);
+        }
+        [HttpGet]
+        public async Task<List<ProdIdTitleDto>> GetSpecType(long webid)
+        {
+            return await productAppService.GetSpecType(webid);
+        }
+        [HttpGet]
+        public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
+        {
+            return await productAppService.GetSpecDetail(typeid);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ProdDelete(long Id)
+        {
+            return await productAppService.ProdDelete(Id);
         }
     }
 }

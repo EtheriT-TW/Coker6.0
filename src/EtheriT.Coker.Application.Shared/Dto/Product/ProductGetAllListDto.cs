@@ -7,8 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string Title { get; set; }
         public bool Disp_Opt { get; set; }
         public int Ser_No { get; set; }
-        public double Price { get; set; }
-        public double? Discount { get; set; }
+        public string Price { get; set; }
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }
         public bool Permanent { get; set; }

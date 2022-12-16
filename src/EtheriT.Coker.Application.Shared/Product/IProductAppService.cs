@@ -5,14 +5,17 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Shared.Product
 {
-	public interface IProductAppService
-	{
-        public Task<ResponseMessageDto> AddUp(ProductDto dto);
+    public interface IProductAppService
+    {
+        public Task<ResponseMessageDto> ProductAddUp(ProductDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<ProductDto> GetOne(long Id);
+        public Task<ProductDto> ProdGetOne(long Id);
+        public Task<List<ProductStockDto>> ProdStockGet(long PId);
         public Task<ProdGetOneDto> GetDisplayOne(long id);
         public Task<List<long>> GetRandomId(int num);
-        public Task<ResponseMessageDto> Delete(long Id);
+        public Task<List<ProdIdTitleDto>> GetSpecType(long webid);
+        public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
+        public Task<ResponseMessageDto> ProdDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }
 }

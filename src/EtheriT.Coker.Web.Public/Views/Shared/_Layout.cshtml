@@ -11,10 +11,111 @@
 	<link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
 	<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
 	<link rel="stylesheet" href="~/lib/sweetalert2/dist/sweetalert2.min.css" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 	<link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
 	<link rel="stylesheet" href="~/EtheriT.Coker.Web.Public.styles.css" asp-append-version="true" />
 </head>
 <body onload="ready()">
+	<div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered justify-content-center">
+			<div class="modal-content">
+				<div class="modal-header border-0">
+					<button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="text-center fs-4 fw-bold">會員登入</div>
+					<form id="LoginForm" class="card-body needs-validation">
+						<div class="login_mail input-group mb-3">
+							<div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+								<span class="material-symbols-outlined text-black-50">mail</span>
+							</div>
+							<input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="信箱" required>
+						</div>
+						<div class="login_pass input-group mb-3">
+							<div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+								<span class="material-symbols-outlined text-black-50">lock</span>
+							</div>
+							<input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3" type="password" aria-label="Input Login Password" placeholder="密碼" required>
+						</div>
+						<div class="login_vcode input-group">
+							<input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+							<div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+								<img id="LoginImgCaptcha" class="img-fluid" src="" />
+							</div>
+						</div>
+						<button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+						<div class="form-check">
+							<input id="CheckRemember" class="form-check-input" type="checkbox" value="">
+							<label class="form-check-label" for="CheckRemember">記住我的帳號</label>
+						</div>
+					</form>
+					<button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">登　入</button>
+					<div class="border-bottom pb-1 text-black-50 text-center">其他登入方式</div>
+				</div>
+				<div class="modal-footer d-flex justify-content-center border-0">
+					<div class="text-black-50">不是會員？</div>
+					<button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">立即註冊</button>
+					<button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">忘記密碼</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
+		<div class="modal-dialog modal-dialog-centered justify-content-center">
+			<div class="modal-content">
+				<div class="modal-header border-0">
+					<button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="text-center fs-4 fw-bold">加入會員</div>
+					<form id="RegisterForm" class="card-body needs-validation">
+						<div class="register_mail input-group mb-3">
+							<div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+								<span class="material-symbols-outlined text-black-50">mail</span>
+							</div>
+							<input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="信箱" required>
+						</div>
+						<div class="register_name input-group">
+							<div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+								<span class="material-symbols-outlined text-black-50">account_circle</span>
+							</div>
+							<input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="姓名/名稱" required>
+						</div>
+					</form>
+					<div class="px-3">
+						<div class="register_new_pass input-group">
+							<div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+								<span class="material-symbols-outlined text-black-50">lock</span>
+							</div>
+							<input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register New Password" placeholder="密碼" required>
+						</div>
+						<div id="NewPassFeedBack" class="lh-1 text-danger">　</div>
+						<div class="register_check_pass input-group">
+							<div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+								<span class="material-symbols-outlined text-black-50">lock</span>
+							</div>
+							<input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Check Password" placeholder="確認密碼" required>
+						</div>
+						<div id="CheckPassFeedBack" class="lh-1 text-danger">　</div>
+						<div class="register_vcode input-group">
+							<input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+							<div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+								<img id="RegisterImgCaptcha" class="img-fluid" src="" />
+							</div>
+						</div>
+						<button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+						<div class="form-check">
+							<input id="CheckRemember" class="form-check-input" type="checkbox" value="">
+							<label class="form-check-label" for="CheckRemember">我已詳細閱讀並同意會員條款</label>
+						</div>
+					</div>
+					<button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">註　冊</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<header class="fixed-top">
 		@await Component.InvokeAsync(nameof(Header))
 	</header>

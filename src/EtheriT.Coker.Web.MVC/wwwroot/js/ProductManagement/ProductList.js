@@ -66,13 +66,14 @@ function PageReady() {
             }
         },
         Delect: {
-            Prod: function (id) {
+            Prod: function (data) {
                 return $.ajax({
-                    url: "/api/Product/ProdDelete/",
-                    type: "GET",
+                    url: "/api/Product/ProdDelete",
+                    type: "POST",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { id: id },
+                    data: JSON.stringify(data),
+                    dataType: "json"
                 });
             }
         }
@@ -318,8 +319,16 @@ function FormDataSet(result) {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Product.Delect.Prod(e.row.key);
-        product_list.component.refresh();
+        console.log(e.row.key)
+        console.log($.cookie('token'))
+        co.Product.Delect.Prod({
+            Id: e.row.key,
+            TId: $.cookie('secret')
+        }).done(function () {
+            product_list.component.refresh();
+        }).fail(function () {
+            Coker.sweet.error("錯誤", "刪除資料發生錯誤", null, true);
+        });
     });
 }
 

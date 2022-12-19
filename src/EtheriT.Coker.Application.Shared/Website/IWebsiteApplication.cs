@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Website
+namespace EtheriT.Coker.Application
 {
 	public interface IWebsiteApplication
 	{

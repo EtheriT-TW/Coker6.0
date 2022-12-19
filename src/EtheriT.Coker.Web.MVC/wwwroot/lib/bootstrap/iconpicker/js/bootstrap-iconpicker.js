@@ -487,7 +487,6 @@
                     $this.on('click', function(e) {
                         e.preventDefault();
                         let $parent = $this.parents(".offcanvas,.modal,body").first();
-                        console.log($parent);
                         var popover = bootstrap.Popover.getInstance(this);
                         if (popover == null) {
                             popover = new bootstrap.Popover($this, {

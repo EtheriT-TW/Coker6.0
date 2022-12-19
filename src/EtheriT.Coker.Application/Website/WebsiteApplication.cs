@@ -1,4 +1,4 @@
-﻿using EtheriT.Coker.Application.Website;
+﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
@@ -10,7 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Website
+namespace EtheriT.Coker.Application
 {
 	public class WebsiteApplication : IWebsiteApplication
 	{

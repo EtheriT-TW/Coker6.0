@@ -1,5 +1,5 @@
 ﻿using EtheriT.Coker.Application.Authorization;
-using EtheriT.Coker.Application.Website;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Web.MVC.Models.Header;
 using EtheriT.Coker.Web.MVC.Models.Website;
 using Microsoft.AspNetCore.Mvc;

@@ -6,13 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.WebMenu
+namespace EtheriT.Coker.Application
 {
-    internal interface IWebMenuApplication
+    public interface IWebMenuApplication
     {
-        public Task<List<WebsDto>> GetAll();
-        public Task<ResponseMessageDto> AddMenu();
-        public Task<ResponseMessageDto> saveConten();
-        public Task<ResponseMessageDto> importConten();
+        public Task<SiteMapDto> GetAll();
+        public Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto);
+        public Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto);
+        public Task<ResponseMessageDto> importConten(MenuContenDto dto);
     }
 }

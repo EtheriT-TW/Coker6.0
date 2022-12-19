@@ -228,6 +228,48 @@ var Coker = {
                 dataType: "json"
             });
         },
+    },
+    WebMesnus: {
+        getAll: function () {
+            return $.ajax({
+                url: "/api/WebMenu/GetAll",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
+        createOrEdit: function (data) {
+            console.log(JSON.stringify(data));
+            return $.ajax({
+                url: "/api/WebMenu/CreateOrEdit",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        saveConten: function (data) {
+            return $.ajax({
+                url: "/api/WebMenu/saveConten",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        importConten: function (data) {
+            return $.ajax({
+                url: "/api/WebMenu/importConten",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        }
     }
 }
 var _c = Coker;

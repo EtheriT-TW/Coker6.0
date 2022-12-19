@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Dto
 {
-    public class SiteMapDto: ResponseMessageDto
+    public class MenuContenDto
     {
-        public List<MenuItemDto> Maps { get; set; }
+        public int Id { get; set; }
+        public string? Html { get; set; }
+        public string? Css { get; set; }
     }
 }

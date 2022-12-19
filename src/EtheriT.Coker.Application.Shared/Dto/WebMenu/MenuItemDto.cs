@@ -5,16 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Dto.WebMenu
+namespace EtheriT.Coker.Application.Dto
 {
     public class MenuItemDto
     {
+        public long Id { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? icone { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
-        public int Popular { get; set; }
         public bool PopularVisible { get; set; }
         public long? ImgId { get; set; }
         public long? OverImgId { get; set; }

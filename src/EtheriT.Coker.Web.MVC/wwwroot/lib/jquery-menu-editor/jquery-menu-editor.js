@@ -1119,7 +1119,7 @@ function MenuEditor(idSelector, options) {
 
     $main.on('click', '.btnRemove', function (e) {
         e.preventDefault();
-        var title = $(this).closest('li').data("text");
+        var title = $(this).closest('li').data("Title");
         co.sweet.confirm("即將刪除", settings.textConfirmDelete.replace("{0}", title), "確認", "取消", function () {
             var list = $(this).closest('ul');
             $(this).closest('li').remove();
@@ -1369,8 +1369,10 @@ function MenuEditor(idSelector, options) {
         $form.find('.item-menu').each(function() {
             data[$(this).attr('name')] = $(this).val();
         });
+        if (data.Id == "") data.Id = 0;
+        if (data.SerNO == "") data.SerNO = 500;
         var btnGroup = TButtonGroup();
-        var textItem = $('<span>').addClass('txt').text(data.text);
+        var textItem = $('<span>').addClass('txt').text(data.Title);
         var iconItem = $('<i>').addClass(data.icon);
         var div = $('<div>').css({"overflow": "auto"}).append(iconItem).append("&nbsp;").append(textItem).append(btnGroup);
         var $li = $("<li>").data(data);

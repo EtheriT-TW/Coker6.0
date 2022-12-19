@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Net.Http.Headers;
-using EtheriT.Coker.Application.Website;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
@@ -106,6 +106,9 @@ builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
+builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

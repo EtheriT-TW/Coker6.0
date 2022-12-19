@@ -9,11 +9,12 @@ namespace EtheriT.Coker.Core.Models
         public long? FK_S2id { get; set; }
         public double Price { get; set; }
         public int? Stock { get; set; }
-        public int? Safe_Qty { get; set; }
+        public int? Alert_Qty { get; set; }
         public int? Min_Qty { get; set; }
         public int Ser_No { get; set; }
         public Prod? Prod { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }
+        public List<Prod_Price> Prod_Prices { get; set; }
 
     }
 }

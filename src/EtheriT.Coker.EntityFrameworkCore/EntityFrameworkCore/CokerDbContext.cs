@@ -35,6 +35,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod_Log> Prod_Logs { get; set; }
         public DbSet<Html_Content> Html_Contents { get; set; }
         public DbSet<TechnicalCertificate> TechnicalCertificates { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Prod_Price> Prod_Prices { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)
@@ -113,6 +115,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<TechnicalCertificate>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.TechnicalCertificates).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<Prod_Price>(o =>
+            {
+                o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId);
+                o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

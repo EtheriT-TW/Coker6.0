@@ -1,40 +1,86 @@
-﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $number, $min_number, $date, $picker, $permanent
+﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true
-var product_list
+var product_list, spec_num = 0
+var list_price, list_min, list_stock, list_alert
 
 function PageReady() {
     co.Product = {
-        AddUp: function (data) {
-            return $.ajax({
-                url: "/api/Product/AddUp",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
+        AddUp: {
+            Product: function (data) {
+                return $.ajax({
+                    url: "/api/Product/ProductAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            Stock: function (data) {
+                return $.ajax({
+                    url: "/api/Product/ProductAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            }
         },
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/Product/GetOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
-            });
+        Get: {
+            ProdOne: function (id) {
+                return $.ajax({
+                    url: "/api/Product/ProdGetOne/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { id: id },
+                });
+            },
+            ProdStock: function (id) {
+                return $.ajax({
+                    url: "/api/Product/ProdStockGet/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { PId: id },
+                });
+            },
+            SpecType: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetSpecType/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { webid: id },
+                });
+            },
+            Spec: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetSpecDetail/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { typeid: id },
+                });
+            }
         },
-        Delete: function (id) {
-            return $.ajax({
-                url: "/api/Product/Delete/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
-            });
+        Delect: {
+            Prod: function (id) {
+                return $.ajax({
+                    url: "/api/Product/ProdDelete/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { id: id },
+                });
+            }
         }
     };
 
     ElementInit();
+
+    /*SelectInit();*/
 
     $picker = $("#InputDate");
 
@@ -70,7 +116,6 @@ function PageReady() {
         });
     })
     $(".btn_add").on("click", function () {
-        FormDataClear();
         window.location.hash = 0;
         HashDataEdit();
     });
@@ -92,15 +137,15 @@ function PageReady() {
             disp_opt = !disp_opt;
         }
     })
-    $(".btn_expand").on("click", function () {
+    $(".btn_expand_out").on("click", function () {
         var $self = $(this);
-        console.log($self)
         if ($self.children("span").text() == "expand_more") {
             $self.children("span").text("expand_less")
         } else {
             $self.children("span").text("expand_more")
         }
     })
+    $(".btn_spec_add").on("click", SpecAdd);
 
     $name.on('keyup', function () {
         $name_count.text($name.val().length);
@@ -143,14 +188,35 @@ function ElementInit() {
     $illustrate_count = $("#ProductForm > .illustrate .illustrate_count");
     $marks = $("#InputMarks");
     $tag = $("#InputTag");
-    $price = $("#InputPrice");
-    $number = $("#InputNumber");
-    $min_number = $("#InputMinNumber");
+    $price = $(".input_price");
+    $stock_number = $(".input_stock_number");
+    $min_number = $(".input_min_number");
+    $alert_number = $(".input_alert_number");
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
 }
 
+//function SelectInit() {
+
+//    co.Product.GetSpecType($.cookie('WebSiteId')).done(function (result) {
+//        if (result != null) {
+//            result.forEach(function (item) {
+//                co.Product.GetSpec(item.id).done(function (result) {
+//                    console.log(item)
+//                    console.log(result);
+
+//                });
+//            })
+//        }
+//    });
+
+//}
+
 function FormDataClear() {
+    $("#Spec_Frame > .frame").each(function () {
+        $(this).remove();
+    })
+    spec_num = 0;
     keyId = 0;
     $btn_display.children("span").text("visibility");
     disp_opt = true;
@@ -163,7 +229,8 @@ function FormDataClear() {
     $marks.val("");
     $tag.val("");
     $price.val("");
-    $number.val("");
+    $stock_number.val("");
+    $alert_number.val("");
     $min_number.val("");
     $permanent.prop("checked", false);
     $date.val("");
@@ -190,9 +257,10 @@ function HashDataEdit() {
             var hash = window.location.hash.replace("#", "");
             if (parseInt(hash) == 0) {
                 FormDataClear();
+                SpecAdd(null);
                 MoveToContent();
             } else {
-                co.Product.Get(parseInt(hash)).done(function (result) {
+                co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
                     if (result != null) {
                         console.log(result)
                         FormDataSet(result);
@@ -216,6 +284,12 @@ function editButtonClicked(e) {
 
 function FormDataSet(result) {
     FormDataClear();
+    co.Product.Get.ProdStock(result.id).done(function (all_result) {
+        all_result.forEach(function (result) {
+            console.log(result)
+            SpecAdd(result);
+        })
+    })
     startTime = result.startTime;
     endTime = result.endTime;
     keyId = result.id;
@@ -231,9 +305,6 @@ function FormDataSet(result) {
 
     $marks.val("");
     $tag.val("");
-    $price.val(result.price);
-    $number.val(result.stock);
-    $min_number.val(result.min_Qty);
     $date = $("#InputDate");
     if (result.permanent) {
         $date.val('');
@@ -247,13 +318,102 @@ function FormDataSet(result) {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Product.Delete(e.row.key);
-        e.component.refresh();
+        co.Product.Delect.Prod(e.row.key);
+        product_list.component.refresh();
     });
 }
 
+function SpecAdd(result) {
+    spec_num += 1;
+    var item = $($("#TemplateSpecification").html()).clone();
+    var item_select = item.find(".select"),
+        item_price = item.find(".input_price"),
+        item_min = item.find(".input_min_number"),
+        item_stock = item.find(".input_stock_number"),
+        item_alert = item.find(".input_alert_number"),
+        item_collapse = item.find(".collapse"),
+        item_btn_expand = item.find(".btn_expand"),
+        item_btn_delect = item.find(".btn_delect");
+
+    co.Product.Get.SpecType($.cookie('WebSiteId')).done(function (type_result) {
+        if (type_result != null) {
+            type_result.forEach(function (type) {
+                var spec = $($("#TemplateSpecSelect").html()).clone();
+                var spec_select = spec.find("select");
+                co.Product.Get.Spec(type.id).done(function (spec_result) {
+                    spec_select.attr("aria-label", type.title);
+                    if (result != null) {
+                        spec_select.append('<option value="" disabled="disabled">' + type.title + '</option>')
+                        spec_result.forEach(function (spec) {
+                            if (spec.id == result.fK_S1id || spec.id == result.fK_S2id) {
+                                spec_select.append('<option selected value="' + spec.id + '">' + spec.title + '</option>')
+                            } else {
+                                spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
+                            }
+                        })
+                    } else {
+                        spec_select.append('<option selected value="" disabled="disabled">' + type.title + '</option>')
+                        spec_result.forEach(function (spec) {
+                            spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
+                        })
+                    }
+                });
+                item_select.append(spec);
+            })
+        }
+    });
+
+    item.data("psid", result != null ? result.id : "")
+    item_price.val(result != null ? result.price : "");
+    item_min.val(result != null ? result.min_Qty : "");
+    item_stock.val(result != null ? result.stock : "");
+    item_alert.val("");
+    /*item_alert.val(result != null ? result.alert_Qty : "");*/
+    item_collapse.attr("id", "CollapseDetail" + spec_num);
+    item_btn_expand.attr("data-bs-target", "#CollapseDetail" + spec_num);
+    item_btn_expand.attr("aria-controls", "CollapseDetail" + spec_num);
+
+    item_btn_expand.on("click", function () {
+        var $self = $(this);
+        if ($self.children("span").text() == "expand_more") {
+            $self.children("span").text("expand_less")
+        } else {
+            $self.children("span").text("expand_more")
+        }
+    })
+    if (spec_num == 1) {
+        item_btn_delect.remove();
+    } else {
+        item_btn_delect.on("click", function () {
+            $self_p = $(this).parents(".frame").first();
+            co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
+                $self_p.remove();
+            })
+        })
+    }
+
+    $("#Spec_Frame").append(item);
+
+    $min_number = $(".input_min_number");
+}
+
 function AddUp(display, success_text, error_text) {
-    co.Product.AddUp({
+
+    var prod_stock = [];
+    var obj = {};
+    $("#Spec_Frame > .frame").each(function () {
+        $self = $(this);
+        obj.FK_S1id = 1;
+        obj.FK_S2id = 1;
+        obj.Price = $self.find(".input_price").val();
+        obj.Min_Qty = $self.find(".input_min_number").val
+        obj.Stock = $self.find(".input_stock_number").val();
+        obj.Alert_Qty = $self.find(".input_alert_number").val();
+        prod_stock.push(obj);
+        obj = {};
+    })
+
+    co.Product.AddUp.Product({
         Id: keyId,
         FK_WebsiteId: $.cookie('WebSiteId'),
         Title: $name.val(),
@@ -261,15 +421,9 @@ function AddUp(display, success_text, error_text) {
         Ser_No: 500,
         Introduction: $introduction.val(),
         Description: $illustrate.val(),
-        Price: $price.val(),
-        Discount: 0,
         StartTime: startDate,
         EndTime: endDate,
-        permanent: $permanent.is(":checked"),
-        FK_S1id: 1,
-        FK_S2id: 1,
-        Stock: $number.val(),
-        Min_Qty: $min_number.val(),
+        Permanent: $permanent.is(":checked"),
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () {

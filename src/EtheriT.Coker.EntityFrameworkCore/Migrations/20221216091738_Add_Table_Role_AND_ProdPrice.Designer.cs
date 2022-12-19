@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221216091738_Add_Table_Role_AND_ProdPrice")]
+    partial class Add_Table_Role_AND_ProdPrice
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1507,12 +1509,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("FK_RootNodeId")
-                        .HasColumnType("bigint");
-
                     b.Property<long?>("FK_TopNodeId")
                         .HasColumnType("bigint");
 
@@ -1574,8 +1570,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FK_RootNodeId");
 
                     b.HasIndex("FK_TopNodeId");
 
@@ -2010,10 +2004,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
                 {
-                    b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "FK_RootNode")
-                        .WithMany()
-                        .HasForeignKey("FK_RootNodeId");
-
                     b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "FK_TopNode")
                         .WithMany("FK_ChildNodes")
                         .HasForeignKey("FK_TopNodeId");
@@ -2023,8 +2013,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasForeignKey("FK_WebsiteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("FK_RootNode");
 
                     b.Navigation("FK_TopNode");
 

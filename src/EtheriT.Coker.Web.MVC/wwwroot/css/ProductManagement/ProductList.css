@@ -55,15 +55,11 @@ input[type="number"] {
     padding-left: 4.5rem;
 }
 
-#ProductForm > .price > input {
+#Spec_Frame > div > div > .price > input {
     padding-left: 5.5rem;
 }
 
-#ProductForm > .number > input {
-    padding-left: 6.5rem;
-}
-
-#ProductForm > .min_number > input {
+#Spec_Frame > .frame > div > div > div > input[class*="number"] {
     padding-left: 7.5rem;
 }
 

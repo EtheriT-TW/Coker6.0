@@ -42,7 +42,6 @@
 						c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
 						c.AddFor(e => e.Title).Caption("商品名稱");
 						c.AddFor(e => e.Price).Caption("價格");
-						c.AddFor(e => e.Discount).Caption("折扣");
 						c.AddFor(e => e.StartTime).Caption("起始日期");
 						c.AddFor(e => e.EndTime).Caption("結束日期");
 						c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
@@ -121,7 +120,7 @@
 						<textarea id="InputIntroduction" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入商品簡介" required></textarea>
 					</div>
 					<div class="d-flex justify-content-center">
-						<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIntroduction" aria-expanded="false" aria-controls="CollapseIntroduction">
+						<button class="btn_expand_out d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIntroduction" aria-expanded="false" aria-controls="CollapseIntroduction">
 							<span class="material-symbols-outlined fs-3">expand_more</span>
 						</button>
 					</div>
@@ -136,7 +135,7 @@
 						<textarea id="InputIllustrate" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明" required></textarea>
 					</div>
 					<div class="d-flex justify-content-center">
-						<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIllustrate" aria-expanded="false" aria-controls="CollapseIllustrate">
+						<button class="btn_expand_out d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIllustrate" aria-expanded="false" aria-controls="CollapseIllustrate">
 							<span class="material-symbols-outlined fs-3">expand_more</span>
 						</button>
 					</div>
@@ -156,26 +155,87 @@
 					<input id="InputTag" class="form-control rounded" type="text" aria-label="Input Tag of Product">
 				</div>
 
-				<div class="price input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
+				<div id="Spec_Frame"></div>
+
+				<template id="TemplateSpecSelect">
+					<div class="col-12 col-sm-6 col-xl-3 mb-3">
+						<select class="form-select" aria-label="" required="required"></select>
 					</div>
-					<input id="InputPrice" class=" form-control rounded" type="number" aria-label="Input Price of Product" required>
+				</template>
+
+				<template id="TemplateSpecification">
+					<div class="frame border mb-3 pt-3 px-3 rounded" data-psid="">
+						<div class="select row">
+						</div>
+						<div class="collapse show">
+							<div class="price input-group mb-3">
+								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+									<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
+								</div>
+								<input class="input_price form-control rounded" type="number" aria-label="Input Price of Product" required>
+							</div>
+
+							<div class="row">
+								<div class="min_number input-group mb-3 col-12 col-lg-4">
+									<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+										<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
+									</div>
+									<input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
+								</div>
+
+								<div class="number input-group mb-3 col-12 col-lg-4">
+									<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+										<span class="material-symbols-outlined me-1">inventory_2</span>商品庫存量
+									</div>
+									<input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
+								</div>
+
+								<div class="alert_number input-group mb-3 col-12 col-lg-4">
+									<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+										<span class="material-symbols-outlined me-1">warning</span>可銷售警示
+									</div>
+									<input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
+								</div>
+							</div>
+						</div>
+
+						<div class="d-flex justify-content-center">
+							<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="" aria-expanded="false" aria-controls="">
+								<span class="material-symbols-outlined fs-3">expand_more</span>
+							</button>
+							<button class="btn_delect d-flex border-0 bg-transparent" type="button">
+								<span class="material-symbols-outlined fs-3">delete</span>
+							</button>
+						</div>
+					</div>
+				</template>
+
+				<div class="d-flex justify-content-center mb-3">
+					<button class="btn_spec_add d-flex border-0 bg-transparent" type="button">
+						<span class="material-symbols-outlined fs-3">add</span>
+					</button>
+				</div>
+
+				@*<div class="price input-group mb-3">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
+				</div>
+				<input id="InputPrice" class=" form-control rounded" type="number" aria-label="Input Price of Product" required>
 				</div>
 
 				<div class="number input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">bubble_chart</span>商品數量
-					</div>
-					<input id="InputNumber" class="form-control rounded" type="number" aria-label="Input Number of Product">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1">bubble_chart</span>商品數量
+				</div>
+				<input id="InputNumber" class="form-control rounded" type="number" aria-label="Input Number of Product">
 				</div>
 
 				<div class="min_number input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
-					</div>
-					<input id="InputMinNumber" class="form-control rounded" type="number" aria-label="Input MinNumber of Product">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
 				</div>
+				<input id="InputMinNumber" class="form-control rounded" type="number" aria-label="Input MinNumber of Product">
+				</div>*@
 
 				<div class="date input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">

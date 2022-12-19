@@ -71,7 +71,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 1,
                     FK_WebsiteId = 2,
-                    Type = "color",
+                    Type = "顏色",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                 },
@@ -79,7 +79,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 2,
                     FK_WebsiteId = 2,
-                    Type = "size",
+                    Type = "尺寸",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                 }
@@ -89,7 +89,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 1,
                     FK_Tid = 1,
-                    Title = "white",
+                    Title = "白色",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1461),
                 },
@@ -97,7 +97,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 2,
                     FK_Tid = 1,
-                    Title = "gray",
+                    Title = "灰色",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1462),
                 },
@@ -105,7 +105,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 3,
                     FK_Tid = 1,
-                    Title = "black",
+                    Title = "黑色",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1463),
                 },
@@ -113,7 +113,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 4,
                     FK_Tid = 2,
-                    Title = "small",
+                    Title = "小",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1464),
                 },
@@ -121,7 +121,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 5,
                     FK_Tid = 2,
-                    Title = "medium",
+                    Title = "中",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1465),
                 },
@@ -129,7 +129,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 6,
                     FK_Tid = 2,
-                    Title = "large",
+                    Title = "大",
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
                 }
@@ -142,7 +142,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Title = "DE-R1073 德瑞克直熱式微電腦馬桶座／遙控型",
                     Disp_Opt = true,
                     Ser_No = 500,
-                    Discount = 28000,
                     Introduction = "從座圈到噴嘴給您雙重防護\n不用動手全自動科技最體貼\n雙漩洗技術為您實現真乾淨",
                     Description = "奈米單體馬桶 W384 x D685 x H470mm\n直熱式微電腦馬桶座\n噴嘴紫外線殺菌\n獨立水壓系統\n腳觸設計\nEasy Touch開閉蓋技術\n第二代微波感應技術",
                     CreatorUserId = 2,
@@ -181,10 +180,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 1,
                     FK_Pid = 1,
-                    FK_S1id = 0,
-                    FK_S2id = 0,
+                    FK_S1id = 1,
+                    FK_S2id = 4,
                     Stock = 100,
-                    Safe_Qty = 5,
+                    Alert_Qty = 5,
                     Min_Qty = 1,
                     Price = 30000,
                     Ser_No = 500,
@@ -194,11 +193,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 new Prod_Stock()
                 {
                     Id = 2,
-                    FK_Pid = 2,
-                    FK_S1id = 0,
-                    FK_S2id = 0,
+                    FK_Pid = 1,
+                    FK_S1id = 2,
+                    FK_S2id = 4,
                     Stock = 100,
-                    Safe_Qty = 5,
+                    Alert_Qty = 5,
+                    Min_Qty = 1,
+                    Price = 28000,
+                    Ser_No = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
+                },
+                new Prod_Stock()
+                {
+                    Id = 3,
+                    FK_Pid = 2,
+                    FK_S1id = 1,
+                    FK_S2id = 4,
+                    Stock = 100,
+                    Alert_Qty = 5,
                     Min_Qty = 1,
                     Price = 9500,
                     Ser_No = 500,
@@ -207,12 +220,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 },
                 new Prod_Stock()
                 {
-                    Id = 3,
+                    Id = 4,
                     FK_Pid = 3,
-                    FK_S1id = 0,
-                    FK_S2id = 0,
+                    FK_S1id = 1,
+                    FK_S2id = 4,
                     Stock = 100,
-                    Safe_Qty = 5,
+                    Alert_Qty = 5,
                     Min_Qty = 1,
                     Price = 13000,
                     Ser_No = 500,

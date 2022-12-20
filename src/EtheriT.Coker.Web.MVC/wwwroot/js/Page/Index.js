@@ -31,7 +31,7 @@
                     $("#myEditor + .emptyList").addClass("d-none");
                     co.WebMesnus.createOrEdit(data).done(function(result){
                         if (!result.success) co.sweet.error(result.error);
-                        else co.sweet.error("新增成功");
+                        else co.sweet.success("新增成功");
                     });
                 },
                 update: function (data) {
@@ -92,11 +92,12 @@
     ];
 
     co.WebMesnus.getAll().done(function (result) {
-        if (result.Success) {
-            menuEditor.setData(result.Maps);
+        if (result.success) {
+            menuEditor.setData(result.maps);
             $("#myEditor").removeClass("d-none");
+            if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
         } else {
-            menuEditor.setData({});
+            menuEditor.setData([]);
         }
     });
 }

@@ -183,25 +183,17 @@ input[type="number"] {
 }
 
 /* Badge */
-#Badge {
-    padding: 40px 10vw;
-    display: flex;
-    justify-content: space-between;
+#Badge > .vr {
+    height: 75%;
+    top: 50%;
 }
 
-    #Badge > .card {
-        border-color: transparent;
-        width: 19vw;
+    #Badge > .vr:nth-child(2) {
+        left: 25%;
     }
 
-        #Badge > .card > img {
-            width: 40%;
-            margin: auto;
-        }
-
-    #Badge > .vr {
-        height: 15vw;
-        align-self: center;
+    #Badge > .vr:nth-child(6) {
+        right: 25%;
     }
 
 #RelatedProductsSwiper {
@@ -247,40 +239,25 @@ input[type="number"] {
         margin: 10px 0 20px 0;
     }
 
-    #Badge {
-        flex-wrap: wrap;
-        justify-content: center;
+    #Badge > .vr:nth-child(2) {
+        height: 35%;
+        top: 25%;
+        left: 50%;
     }
 
-        #Badge > .card {
-            width: 29vw;
-        }
+    #Badge > .vr:nth-child(6) {
+        height: 35%;
+        top: 75%;
+        right: 50%;
+    }
 
-        #Badge > .vr {
-            height: 35vw;
-        }
-
-            #Badge > .vr:nth-child(3), #Badge > .vr:nth-child(4) {
-                display: none;
-            }
+    #Badge > .vr:nth-child(4) {
+        display: none;
+    }
 }
 
 @media only screen and (max-width: 576px) {
-}
-
-@media only screen and (max-width: 390px) {
-    #Badge {
-        flex-wrap: wrap;
+    #Badge > .vr {
+        display: none;
     }
-
-        #Badge > .card {
-            width: 69vw;
-        }
-
-        #Badge > .vr {
-            display: none;
-        }
-}
-
-@media only screen and (max-width: 368px) {
 }

@@ -281,6 +281,16 @@ var Coker = {
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        },
+        delete: function (id) {
+            return $.ajax({
+                url: "/api/WebMenu/Delete",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({id:id}),
+                dataType: "json"
+            });
         }
     }
 }

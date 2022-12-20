@@ -1,5 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -51,10 +52,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.GetSpecDetail(typeid);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> ProdDelete(long Id)
+        [HttpPost]
+        public async Task<ResponseMessageDto> ProdDelete(DataDelectDto dto)
         {
-            return await productAppService.ProdDelete(Id);
+            return await productAppService.ProdDelete(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ProdStockDelete(DataDelectDto dto)
+        {
+            return await productAppService.ProdStockDelete(dto);
         }
     }
 }

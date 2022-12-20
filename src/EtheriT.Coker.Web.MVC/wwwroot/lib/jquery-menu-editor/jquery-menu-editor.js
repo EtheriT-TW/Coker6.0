@@ -1119,7 +1119,7 @@ function MenuEditor(idSelector, options) {
 
     $main.on('click', '.btnRemove', function (e) {
         e.preventDefault();
-        var title = $(this).closest('li').data("Title");
+        var title = $(this).closest('li').data("title");
         co.sweet.confirm("即將刪除", settings.textConfirmDelete.replace("{0}", title), "確認", "取消", function () {
             var list = $(this).closest('ul');
             $(this).closest('li').remove();

@@ -18,33 +18,36 @@ namespace EtheriT.Coker.Application
 
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         private readonly IMapper mapper;
-        private readonly long WebsiteID;
         public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
+            ILoginUserDataApplication loginUserDataApplication,
             IMapper mapper)
         {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
+            this.loginUserDataApplication = loginUserDataApplication;
             this.mapper = mapper;
-            if (!long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["WebSiteId"], out WebsiteID)) WebsiteID = 0;
         }
         public async Task<SiteMapDto> GetAll()
         {
-            SiteMapDto response= new SiteMapDto(); ;
+            SiteMapDto response = new SiteMapDto { Success = false };
             try {
-                response.Maps = await GetChild(0);
-            }catch(Exception ex)
+                response.Maps = await GetChild(null);
+                response.Success = true;
+            }
+            catch(Exception ex)
             {
-                response.Success = false;
                 response.Error = ex.Message;
             }
             return response;
         }
 
-        private async Task<List<MenuItemDto>> GetChild(long id) {
+        private async Task<List<MenuItemDto>> GetChild(long? id) {
             try {
+                long WebsiteID = await loginUserDataApplication.GetWebsiteId();
                 var menus = await db.WebMenus
                             .Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
@@ -77,6 +80,7 @@ namespace EtheriT.Coker.Application
         }
         private async Task Create(MenuItemDto dto)
         {
+            long WebsiteID = await loginUserDataApplication.GetWebsiteId();
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             var theUser = await db.Users.FirstOrDefaultAsync(u => u.Account == name);

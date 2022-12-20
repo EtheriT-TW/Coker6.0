@@ -10,9 +10,7 @@ function PageReady() {
     NewCaptcha();
     const forms = $('#ContactForm');
 
-
     $('.btn_refresh').on('click', NewCaptcha);
-
 
     (() => {
         Array.from(forms).forEach(form => {
@@ -67,7 +65,7 @@ function CaptchaVerify() {
                         }, 1500);
                     }
                 } else {
-                    $captcha_input.addClass('is-invalid');
+                    console.log($captcha_input.siblings("div").children("img")
                     $captcha_input.val("");
                 }
             }

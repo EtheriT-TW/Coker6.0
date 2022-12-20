@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Dto
     {
         public long Id { get; set; }
         public string? Title { get; set; }
+        public string? text { get { return Title; } }
         public string? Description { get; set; }
         public string? icon { get; set; }
         public bool Visible { get; set; }

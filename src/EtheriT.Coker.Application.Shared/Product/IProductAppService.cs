@@ -1,5 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,8 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<List<long>> GetRandomId(int num);
         public Task<List<ProdIdTitleDto>> GetSpecType(long webid);
         public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
-        public Task<ResponseMessageDto> ProdDelete(long Id);
+        public Task<ResponseMessageDto> ProdDelete(DataDelectDto dto);
+        public Task<ResponseMessageDto> ProdStockDelete(DataDelectDto dto);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }
 }

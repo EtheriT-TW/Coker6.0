@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -332,18 +333,46 @@ namespace EtheriT.Coker.Application.Product
 
             return null;
         }
-        public async Task<ResponseMessageDto> ProdDelete(long Id)
+        public async Task<ResponseMessageDto> ProdDelete(DataDelectDto dto)
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                var db_ls = db.Prods.Where(e => e.Id == Id).FirstOrDefault();
-                if (db_ls != null)
+                var db_p = db.Prods.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                if (db_p != null)
                 {
-                    db_ls.IsDeleted = true;
-                    db_ls.DeletionTime = DateTime.Now;
+                    db_p.IsDeleted = true;
+                    db_p.DeletionTime = DateTime.Now;
+                    db_p.DeleterUserId = db_t.UserID;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> ProdStockDelete(DataDelectDto dto)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var db_ps = db.Prod_Stocks.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                if (db_ps != null)
+                {
+                    db_ps.IsDeleted = true;
+                    db_ps.DeletionTime = DateTime.Now;
+                    db_ps.DeleterUserId = db_t.UserID;
                     db.SaveChanges();
                     output.Success = true;
                 }

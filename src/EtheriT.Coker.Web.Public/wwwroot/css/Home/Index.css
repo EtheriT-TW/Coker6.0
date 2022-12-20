@@ -190,6 +190,22 @@
     -webkit-line-clamp: 2;
 }
 
+.template_swiper_two_graphics > figure > figcaption > .swiper_content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.template_swiper_two_graphics > figure > figcaption > a {
+    color: #3987B2;
+}
+
+.template_swiper_two_graphics > figure > figcaption > * {
+    font-family: Arial;
+}
+
 #NewsSwiper > .swiper_pagination_news {
     z-index: 1;
     left: auto;

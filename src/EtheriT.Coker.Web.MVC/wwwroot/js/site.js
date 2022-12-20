@@ -61,6 +61,18 @@ var PreLoader;
             b = a(".sidebar").detach()
         }
     });
+    $(".app-switcher .webitem").on("click", function (e) {
+        e.preventDefault();
+        $(".active-app").removeClass("active-app");
+        $(".app-selected").remove();
+        $(this).find(".card").addClass("active-app");
+        $(this).find(".card-body").append(`<span class="material-icons app-selected md-16">check</span>`);
+    });
+    $("#switchApp .switch").on("click",function(){
+        co.WebSite.exchange($(".active-app").first().data("id")).done(function () {
+            location.reload()
+        });
+    });
     a.fn.setAsideMode = function () {
         if (localStorage.getItem("asideMode") === null) {
         } else {

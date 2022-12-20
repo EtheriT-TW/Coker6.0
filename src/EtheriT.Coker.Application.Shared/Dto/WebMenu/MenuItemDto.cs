@@ -12,7 +12,7 @@ namespace EtheriT.Coker.Application.Dto
         public long Id { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
-        public string? icone { get; set; }
+        public string? icon { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
         public bool PopularVisible { get; set; }

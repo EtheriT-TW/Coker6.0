@@ -1,7 +1,10 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -15,15 +18,20 @@ namespace EtheriT.Coker.Application
 	public class WebsiteApplication : IWebsiteApplication
 	{
 		private readonly CokerDbContext db;
+		private readonly ILoginUserDataApplication loginUserDataApplication;
         private readonly IHttpContextAccessor httpContextAccessor;
         public WebsiteApplication(
 			CokerDbContext db,
+            ILoginUserDataApplication loginUserDataApplication,
             IHttpContextAccessor httpContextAccessor
         ) {
 			this.db = db;
 			this.httpContextAccessor = httpContextAccessor;
+			this.loginUserDataApplication = loginUserDataApplication;
 		}
-		public async Task<List<WebsDto>> GetAll()
+
+        [Authorize]
+        public async Task<List<WebsDto>> GetAll()
 		{
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
@@ -37,17 +45,44 @@ namespace EtheriT.Coker.Application
 							Description = w.Description??"",
 							Images = w.Icon??""
 					   };
-			if (string.IsNullOrEmpty(httpContextAccessor.HttpContext.Request.Cookies["WebSiteId"])) {
-				httpContextAccessor.HttpContext.Response.Cookies.Append("WebSiteId", (await date.FirstAsync()).Id.ToString());
+            if (date.Any())
+            {
+                long siteId = await loginUserDataApplication.GetWebsiteId();
+                var output = await date.ToListAsync();
+                if (siteId == 0 && output.Any()) {
+                    siteId = output.FirstOrDefault().Id;
+                    await Exchange(new WebExchangeDto { Id = siteId });
+                }
+                var item = output.Find(e => e.Id == siteId);
+                if (item != null) item.Check = true;
+                return output;
             }
-            long siteId = 0;
-			var output = await date.ToListAsync();
-			if(long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["WebSiteId"],out siteId)){
-				var item = output.Find(e => e.Id == siteId);
-				if(item!=null) item.Check=true;
-            }
-            return output;
-
+            else return new List<WebsDto>();
         }
-	}
+		public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto) {
+            ResponseMessageDto responseMessageDto= new ResponseMessageDto();
+			try
+			{
+				if ((await loginUserDataApplication.CheckedWebSiteId(dto.Id)))
+				{
+                    ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+                    string name = user.Identity?.Name;
+                    Guid secret = loginUserDataApplication.GetSecret();
+                    var token = await db.Tokens.Where(t => t.id == secret).FirstOrDefaultAsync();
+					if (token!=null)
+					{
+                        token.websiteId= dto.Id;
+						db.SaveChanges();
+                    }
+                    else throw new Exception("金鑰失效");
+                }
+				else throw new Exception("網站不存在");
+			} catch (Exception e) {
+                responseMessageDto.Success = false;
+                responseMessageDto.Error = e.Message;
+            }
+			return responseMessageDto;
+        }
+
+    }
 }

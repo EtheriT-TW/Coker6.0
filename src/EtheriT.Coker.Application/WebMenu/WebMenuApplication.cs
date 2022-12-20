@@ -82,6 +82,7 @@ namespace EtheriT.Coker.Application
             var theUser = await db.Users.FirstOrDefaultAsync(u => u.Account == name);
             WebMenu menu= mapper.Map<WebMenu>(dto);
             menu.CreatorUserId = theUser.Id;
+            menu.FK_WebsiteId = WebsiteID;
             db.WebMenus.Add(menu);
             db.SaveChanges();
         }

@@ -106,6 +106,7 @@ builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
+builder.Services.AddTransient<ILoginUserDataApplication, LoginUserDataApplication>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

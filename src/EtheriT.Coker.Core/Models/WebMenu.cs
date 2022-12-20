@@ -15,7 +15,7 @@ namespace EtheriT.Coker.Core.Models
         public string? Title { get; set; }
         public string? Description { get; set; }
         [StringLength(50)]
-        public string? icone { get; set; }
+        public string? icon { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; } = 500;
         public int Popular { get; set; } = 0;

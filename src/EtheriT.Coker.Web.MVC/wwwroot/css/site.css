@@ -10672,6 +10672,8 @@ div.card-header {
     .sidebar .navbar .brand-title {
         opacity: 1;
         transition: all 0.5s;
+        max-width: 75%;
+        overflow: hidden;
     }
 
 @media screen and (prefers-reduced-motion: reduce) { /* line 35, ../../scss/basestyle/components/_sidebar.scss */

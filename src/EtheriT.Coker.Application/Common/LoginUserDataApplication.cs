@@ -1,0 +1,122 @@
+﻿using EtheriT.Coker.Application.Webs.Dto;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Application
+{
+    public class LoginUserDataApplication: ILoginUserDataApplication
+    {
+
+        private readonly CokerDbContext db;
+        private readonly IHttpContextAccessor httpContextAccessor;
+        public LoginUserDataApplication(
+            CokerDbContext db,
+            IHttpContextAccessor httpContextAccessor) {
+            this.db = db;
+            this.httpContextAccessor = httpContextAccessor;
+        }
+
+        public string? GetClientIP()
+        {
+            if (httpContextAccessor.HttpContext == null) return StringValues.Empty;
+            return httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString();
+        }
+
+        public async Task<long> GetWebsiteId()
+        {
+            if (httpContextAccessor.HttpContext == null) return 0;
+
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            Guid secret = GetSecret();
+            var token = await db.Tokens.Where(t => t.id == secret).FirstOrDefaultAsync();
+            if (string.IsNullOrEmpty(name)) return 0;
+            else if (token == null || token.websiteId == 0)
+            {
+                var date = from w in db.Websites
+                           join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                           join u in db.Users on bind.UserId equals u.Id
+                           where u.Account == name
+                           select new WebsDto
+                           {
+                               Id = w.Id
+                           };
+                if (date.Any())
+                {
+                    var websiteId = (await date.FirstOrDefaultAsync()).Id;
+                    if (token != null && token.websiteId != websiteId) {
+                        token.websiteId = websiteId;
+                        db.SaveChanges();
+                    }
+                    return websiteId;
+                }
+                else return 0;
+            }
+            else
+            {
+                var userDetail = await db.Users.Where(u => u.Id == token.UserID).FirstOrDefaultAsync();
+                if (userDetail == null) return 0;
+                var check = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
+                if (check.Any()) return token.websiteId;
+                else return 0;
+            }
+        }
+        public async Task<string> GetWebsiteName() {
+            Guid s = GetSecret();
+            string name = "";
+            var t = from token in db.Tokens.Where(o => o.id == s)
+                    join web in db.Websites on token.websiteId equals web.Id
+                    select web;
+            var myWeb = await t.FirstOrDefaultAsync();
+            if (myWeb != null) name = myWeb.Title;
+            return name;
+        }
+        public string GetAuthorization() {
+            if (httpContextAccessor.HttpContext == null) return StringValues.Empty;
+            var authorizationHeader = httpContextAccessor
+                .HttpContext.Request.Headers["Authorization"];
+
+            if (authorizationHeader == StringValues.Empty) {
+                return StringValues.Empty;
+            } else {
+                return authorizationHeader.Single().Split(" ").Last();
+            }
+        }
+        [Authorize]
+        public Guid GetSecret()
+        {
+            if (httpContextAccessor.HttpContext == null) return new Guid();
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            string secret = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
+            if(string.IsNullOrEmpty(secret)) secret = httpContextAccessor.HttpContext.Request.Cookies["secret"];
+            return string.IsNullOrEmpty(secret) ? new Guid() : Guid.Parse(secret);
+        }
+        public async Task<bool> CheckedWebSiteId(long id) {
+            bool check = false;
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            Guid secret = GetSecret();
+            var token = await db.Tokens.Where(t => t.id == secret).FirstOrDefaultAsync();
+            var userDetail = await db.Users.Where(u => u.Id == token.UserID).FirstOrDefaultAsync();
+            if (userDetail != null)
+            {
+                var data = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
+                if (data.Any()) check = true;
+            }
+            return check;
+        }
+    }
+}

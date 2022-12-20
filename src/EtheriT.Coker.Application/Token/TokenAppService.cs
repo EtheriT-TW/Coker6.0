@@ -15,16 +15,19 @@ namespace EtheriT.Coker.Application.Token
         private readonly JwtHelpers jwt;
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         private readonly IDistributedCache cache;
         public TokenAppService(
             JwtHelpers jwt,
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
+            ILoginUserDataApplication loginUserDataApplication,
             IDistributedCache cache)
         {
             this.jwt = jwt;
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
+            this.loginUserDataApplication = loginUserDataApplication;
             this.cache = cache;
         }
         public async Task<TokenResponseDto> CreateToken()
@@ -36,7 +39,7 @@ namespace EtheriT.Coker.Application.Token
                 DateTime EndDateTime = dateTime.AddDays(30);
                 Core.Models.Token t = new Core.Models.Token
                 {
-                    ip = httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString(),
+                    ip = loginUserDataApplication.GetClientIP()??"",
                     UserID = null,
                     StartTime = dateTime,
                     EndTime = EndDateTime,
@@ -89,7 +92,7 @@ namespace EtheriT.Coker.Application.Token
 
             return output;
         }
-        public async Task<string> CreateToken(string account)
+        public async Task<string> CreateToken(string account,Guid secret)
         {
             var user = db.Users.Where(e => e.Account == account).First();
             if (user == null)
@@ -99,11 +102,11 @@ namespace EtheriT.Coker.Application.Token
                 "Admin",
                 "Users"
             };
-            return await jwt.GenerateToken(account, roles);
+            return await jwt.GenerateToken(account, roles, secret);
         }
         public async Task<bool> DelToken()
         {
-            string token = GetCurrentAsync();
+            string token = loginUserDataApplication.GetAuthorization();
             await cache.SetStringAsync(
                 GetKey(token),
                 " ",
@@ -114,15 +117,6 @@ namespace EtheriT.Coker.Application.Token
                 }
             );
             return true;
-        }
-        private string GetCurrentAsync()
-        {
-            var authorizationHeader = httpContextAccessor
-                .HttpContext.Request.Headers["Authorization"];
-
-            return authorizationHeader == StringValues.Empty
-                ? string.Empty
-                : authorizationHeader.Single().Split(" ").Last();
         }
         private static string GetKey(string token)
         {

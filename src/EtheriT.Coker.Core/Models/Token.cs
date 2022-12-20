@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime? EndTime { get; set; }
         public string ip { get; set; }
+        public long websiteId { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }
     }

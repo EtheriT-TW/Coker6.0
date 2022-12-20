@@ -28,17 +28,20 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly CokerDbContext db;
         private readonly IPasswordHasher passwordHasher;
         private readonly ITokenAppService tokenAppService;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         private readonly IHttpContextAccessor httpContextAccessor;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
+            ILoginUserDataApplication loginUserDataApplication,
             IHttpContextAccessor httpContextAccessor
         )
         {
             this.db = db;
             this.passwordHasher = passwordHasher;
             this.tokenAppService = tokenAppService;
+            this.loginUserDataApplication = loginUserDataApplication;
             this.httpContextAccessor = httpContextAccessor;
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -57,17 +60,21 @@ namespace EtheriT.Coker.Application.Authorization
                     {
                         DateTime dateTime = DateTime.Now;
                         DateTime EndDateTime = dateTime.AddMinutes(30);
+                        long bindID = 0;
+                        var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync(); 
+                        if(defaultWeb!= null) bindID = defaultWeb.UserId;
                         Core.Models.Token t = new Core.Models.Token
                         {
-                            ip = httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString(),
+                            ip = loginUserDataApplication.GetClientIP()??"",
                             UserID = user.Id,
                             StartTime = dateTime,
                             EndTime = EndDateTime,
+                            websiteId = bindID
                         };
                         db.Tokens.Add(t);
                         db.SaveChanges();
                         output.Success = true;
-                        output.Token = await tokenAppService.CreateToken(user.Account);
+                        output.Token = await tokenAppService.CreateToken(user.Account, t.id);
                         output.Secret = t.id;
                         output.EndDateTime = EndDateTime;
                     }
@@ -138,7 +145,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
                             }
                             response.Success = true;
-                            response.Token = await tokenAppService.CreateToken(users.Account);
+                            response.Token = await tokenAppService.CreateToken(users.Account,t.id);
                             response.Secret = t.id;
                             response.EndDateTime = t.EndTime.Value;
                         }

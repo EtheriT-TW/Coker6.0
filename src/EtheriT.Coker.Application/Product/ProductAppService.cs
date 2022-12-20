@@ -8,17 +8,22 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace EtheriT.Coker.Application.Product
 {
     public class ProductAppService : IProductAppService
     {
         private readonly CokerDbContext db;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         public ProductAppService(
-            CokerDbContext db
+            CokerDbContext db,
+            ILoginUserDataApplication loginUserDataApplication
         )
         {
             this.db = db;
+            this.loginUserDataApplication = loginUserDataApplication;
         }
 
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
@@ -125,6 +130,7 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
+                long webid = await loginUserDataApplication.GetWebsiteId();
                 var db_ps = db.Prod_Stocks;
                 var db_p = db.Prods;
 
@@ -133,7 +139,7 @@ namespace EtheriT.Coker.Application.Product
                     var dataQuery = from ps in db_ps
                                     where !ps.IsDeleted
                                     join p in db_p on ps.FK_Pid equals p.Id
-                                    where !p.IsDeleted
+                                    where !p.IsDeleted && p.FK_WebsiteId== webid
                                     group ps by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
                                     select new ProductGetAllListDto
                                     {

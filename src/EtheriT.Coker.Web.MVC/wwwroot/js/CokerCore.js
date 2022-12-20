@@ -41,6 +41,18 @@ var Coker = {
             typeof (PageReady) === "function" && PageReady();
         }
     },
+    WebSite: {
+        exchange: function (id) {
+            return $.ajax({
+                url: "/api/Website/Exchange",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id }),
+                dataType: "json"
+            })
+        }
+    },
     User: {
         Login: function (para) {
             var _dfr = $.Deferred();

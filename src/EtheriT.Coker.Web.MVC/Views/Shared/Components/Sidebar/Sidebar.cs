@@ -1,18 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 {
     public class Sidebar : ViewComponent
     {
-        public Sidebar()
+        private readonly ILoginUserDataApplication loginUserDataApplication;
+        public Sidebar(ILoginUserDataApplication loginUserDataApplication)
         {
-
+            this.loginUserDataApplication = loginUserDataApplication;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
             Site site = new Site
             {
-                Title = "德瑞克",
+                Title = await loginUserDataApplication.GetWebsiteName(),
                 Jobs = new List<JobMenu> {
                     new JobMenu{
                         PageName="Dashboard",

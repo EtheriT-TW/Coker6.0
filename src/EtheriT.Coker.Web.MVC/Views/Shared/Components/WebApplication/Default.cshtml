@@ -17,21 +17,21 @@
                     @foreach (var item in Model.webs)
                     {
                         <div class="col-lg-3 col-6 mb-4">
-                            <a href="index.html" class="text-dark">
+                            <a href="#" class="text-dark webitem">
                                 @if (item.Check)
                                 {
                                     action = "active-app";
                                 }else{
                                     action = "";
                                 }
-                                <div class="card h-100 @action">
+                                <div class="card h-100 @action" data-id="@item.Id">
                                     <div class="card-body text-center">
                                         <span class="material-icons md-48 " style="color:#21C3E0;">bubble_chart</span>
                                         <p class="weight-400 m-0">@item.Name</p>
                                         <small class="weight-300 text-muted">@item.Description</small>
                                         @if (item.Check)
                                         {
-                                            <span b-k5k3aldxno="" class="material-icons app-selected md-16">check</span>
+                                            <span class="material-icons app-selected md-16">check</span>
                                         }
                                     </div>
                                 </div>
@@ -42,7 +42,7 @@
             </div>
             <div class="modal-footer px-4">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Switch Application</button>
+                <button type="button" class="btn btn-primary switch" data-bs-dismiss="modal">Switch Application</button>
             </div>
         </div>
     </div>

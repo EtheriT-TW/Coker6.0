@@ -30,7 +30,8 @@
                     $("#myEditor").removeClass("d-none");
                     $("#myEditor + .emptyList").addClass("d-none");
                     co.WebMesnus.createOrEdit(data).done(function(result){
-                        if (!result.Success) co.sweet.error(result.Error);
+                        if (!result.success) co.sweet.error(result.error);
+                        else co.sweet.error("新增成功");
                     });
                 },
                 update: function (data) {

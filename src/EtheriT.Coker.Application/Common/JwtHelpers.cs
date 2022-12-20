@@ -28,7 +28,7 @@ namespace EtheriT.Coker.Web.MVC.Resources
             this.httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<string> GenerateToken(string Account, List<string> roles, int expireMinutes = 30)
+        public async Task<string> GenerateToken(string Account, List<string> roles, Guid secret, int expireMinutes = 30)
         {
             //var user = await db.Users.Where(e => e.Account == Account).FirstOrDefaultAsync();
             var issuer = Configuration.GetValue<string>("JwtSettings:Issuer");
@@ -51,6 +51,9 @@ namespace EtheriT.Coker.Web.MVC.Resources
 
             // This Claim can be replaced by JwtRegisteredClaimNames.Sub, so it's redundant.
             claims.Add(new Claim(ClaimTypes.Name, Account));
+
+            claims.Add(new Claim(ClaimTypes.Sid, secret.ToString()));
+            claims.Add(new Claim("secret", secret.ToString()));
             //claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Account));
 
             // TODO: You can define your "roles" to your Claims.

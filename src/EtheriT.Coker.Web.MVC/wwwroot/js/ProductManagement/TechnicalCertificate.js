@@ -245,7 +245,6 @@ function deleteButtonClicked(e) {
 function AddUp(display, success_text, error_text) {
     co.TechnicalCertificate.AddUp({
         Id: keyId,
-        FK_WebsiteId: $.cookie('WebSiteId'),
         TId: $.cookie('secret'),
         Disp_opt: display,
         Img: "~/images/product/pro_01.png",

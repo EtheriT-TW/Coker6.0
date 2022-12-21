@@ -22,9 +22,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplayOne(id);
         }
         [HttpGet]
-        public async Task<List<long>> GetRandomId(int num)
+        public async Task<List<ProductStockDto>> GetDisplayStock(long id)
         {
-            return await productAppService.GetRandomId(num);
+            return await productAppService.GetDisplayStock(id);
+        }
+        [HttpGet]
+        public async Task<ProdGetDisplayDto> GetDisplaySimple(long id)
+        {
+            return await productAppService.GetDisplaySimple(id);
         }
         [HttpPost]
         public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)

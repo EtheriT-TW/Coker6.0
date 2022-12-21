@@ -15,11 +15,14 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
     public class TechnicalCertificateAppService : ITechnicalCertificateAppService
     {
         private readonly CokerDbContext db;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         public TechnicalCertificateAppService(
-            CokerDbContext db
+            CokerDbContext db,
+            ILoginUserDataApplication loginUserDataApplication
         )
         {
             this.db = db;
+            this.loginUserDataApplication = loginUserDataApplication;
         }
         public async Task<ResponseMessageDto> AddUp(TechnicalCertificateDto dto)
         {
@@ -31,9 +34,10 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
                     if (db_t != null)
                     {
+                        long WebsiteID = await loginUserDataApplication.GetWebsiteId();
                         Core.Models.TechnicalCertificate tc = new Core.Models.TechnicalCertificate
                         {
-                            FK_WebsiteId = dto.FK_WebsiteId,
+                            FK_WebsiteId = WebsiteID,
                             Disp_opt = dto.Disp_opt,
                             Img = dto.Img,
                             Title = dto.Title,
@@ -54,8 +58,6 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
                     if (db_tc != null && db_t != null)
                     {
-
-                        db_tc.FK_WebsiteId = dto.FK_WebsiteId;
                         db_tc.Disp_opt = dto.Disp_opt;
                         db_tc.Img = dto.Img;
                         db_tc.Title = dto.Title;
@@ -125,7 +127,6 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     TechnicalCertificateDto output = new TechnicalCertificateDto()
                     {
                         Id = result.Id,
-                        FK_WebsiteId = result.FK_WebsiteId,
                         Disp_opt = result.Disp_opt,
                         Img = result.Img,
                         Title = result.Title,

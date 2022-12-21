@@ -4,24 +4,24 @@ using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
-using EtheriT.Coker.Application.Shared.Dto.Member;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Order;
-using EtheriT.Coker.Application.Shared.Dto.Marquee;
 
 namespace EtheriT.Coker.Application.Freight
 {
     public class FreightAppService : IFreightAppService
     {
         private readonly CokerDbContext db;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         public FreightAppService(
-            CokerDbContext db
+            CokerDbContext db,
+            ILoginUserDataApplication loginUserDataApplication
         )
         {
             this.db = db;
+            this.loginUserDataApplication = loginUserDataApplication;
         }
         public async Task<ResponseMessageDto> AddUp(FreightDto dto)
         {
@@ -35,9 +35,10 @@ namespace EtheriT.Coker.Application.Freight
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
                     if (db_t != null)
                     {
+                        long WebsiteID = await loginUserDataApplication.GetWebsiteId();
                         Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
                         {
-                            FK_WebsiteId = (long)dto.FK_WId,
+                            FK_WebsiteId = WebsiteID,
                             Title = dto.Title,
                             PreserveType = dto.PreserveType,
                             LogisticsType = dto.LogisticsType,
@@ -50,7 +51,7 @@ namespace EtheriT.Coker.Application.Freight
                         };
                         db.LogisticsSettings.Add(ls);
                     }
-                    else throw new Exception("查無會員資料");
+                    else throw new Exception("查無運費資料");
                 }
                 else
                 {
@@ -71,7 +72,7 @@ namespace EtheriT.Coker.Application.Freight
                         db_ls.LastModificationTime = DateTime.Now;
                         db_ls.LastModifierUserId = db_t.UserID;
                     }
-                    else throw new Exception("查無資料");
+                    else throw new Exception("查無運費資料");
                 }
                 db.SaveChanges();
                 output.Success = true;
@@ -161,7 +162,7 @@ namespace EtheriT.Coker.Application.Freight
                                      Title = e.Title,
                                      Freight = e.Freight == null ? 0 : e.Freight,
                                      Low_Con = e.Low_Con,
-                                     Dis_Freight= e.Dis_Freight,
+                                     Dis_Freight = e.Dis_Freight,
                                      Set_Default = e.Set_Default,
                                      Describe = ((PreserveTypeEnum)e.PreserveType) + " - " +
                                                 ((ShippingTypeEnum)e.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11") + "，" +

@@ -37,7 +37,7 @@ function ready() {
         CheckToken();
     }
 
-    ElementInit();
+    SiteElementInit();
 
     $('.btn_refresh').on('click', function (event) {
         event.preventDefault();
@@ -62,13 +62,13 @@ function ready() {
     })
 
     $(".btn_login").on("click", function () {
-        login_check = FormCheck(LoginForms, $InputLoginVCode)
+        login_check = SiteFormCheck(LoginForms, $InputLoginVCode)
         login_vcode_check = CaptchaVerify($LoginImgCaptcha, $InputLoginVCode)
     })
 
     $(".btn_register").on("click", function () {
         var passcheck = PassCheck()
-        var formcheck = FormCheck(RegisterForms, $InputRegisterVCode)
+        var formcheck = SiteFormCheck(RegisterForms, $InputRegisterVCode)
         $NewPass.keyup(PassCheck);
         $CheckPass.keyup(PassCheck);
         if (passcheck && formcheck) {
@@ -90,7 +90,7 @@ function ready() {
     };
 }
 
-function ElementInit() {
+function SiteElementInit() {
     $InputLoginVCode = $("#InputLoginVCode");
     $LoginImgCaptcha = $('#LoginImgCaptcha');
     LoginForms = $('#LoginForm');
@@ -156,7 +156,7 @@ function AddFavorites() {
     }
 }
 
-function FormCheck(Forms, $input) {
+function SiteFormCheck(Forms, $input) {
     $input.addClass('is-invalid');
     var Check = false;
     Array.from(Forms).forEach(form => {

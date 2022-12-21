@@ -202,7 +202,6 @@ function deleteButtonClicked(e) {
 function AddUp(display, success_text, error_text) {
     co.HtmlContent.AddUp({
         Id: keyId,
-        FK_WebsiteId: $.cookie('WebSiteId'),
         TId: $.cookie('secret'),
         Img: "/images/QRcode_linechatbot.png",
         Content: "",

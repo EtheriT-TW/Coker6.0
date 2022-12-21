@@ -8,7 +8,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
     {
         public long? Id { get; set; }
         public Guid TId { get; set; }
-        public long FK_WId { get; set; }
         public string Title { get; set; }
         public int PreserveType { get; set; }
         public int LogisticsType { get; set; }

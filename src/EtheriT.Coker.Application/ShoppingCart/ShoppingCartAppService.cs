@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop.Infrastructure;
 using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.ShoppingCart
@@ -23,22 +24,22 @@ namespace EtheriT.Coker.Application.ShoppingCart
             output.Success = true;
             try
             {
-                var db_prod_stock = db.Prod_Stocks.Where(e => e.Id == dto.FK_PSid).FirstOrDefault();
-                var db_shoppingcart = db.ShoppingCarts.Where(e => e.FK_Tid == dto.FK_Tid & e.FK_PSid == dto.FK_PSid & !e.IsDeleted).FirstOrDefault();
+                var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id).FirstOrDefault();
+                var db_shoppingcart = db.ShoppingCarts.Where(e => e.FK_Tid == dto.FK_Tid && e.FK_PSid == db_ps.Id && !e.IsDeleted).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
-                var db_prod = db.Prods.Where(e => e.Id == db_prod_stock.FK_Pid).FirstOrDefault();
-                if (db_prod_stock != null)
+                var db_prod = db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefault();
+                if (db_ps != null)
                 {
                     if (db_token != null && db_prod != null)
                     {
-                        var price = (db_prod != null) ? (int)(db_prod_stock.Price * dto.Quantity) : 0;
+                        var price = (db_prod != null) ? (int)(db_ps.Price * dto.Quantity) : 0;
                         if (db_shoppingcart == null)
                         {
                             Core.Models.ShoppingCart sc = new Core.Models.ShoppingCart
                             {
                                 FK_Tid = dto.FK_Tid,
                                 FK_Uid = db_token.UserID,
-                                FK_PSid = dto.FK_PSid,
+                                FK_PSid = db_ps.Id,
                                 FK_S1id = dto.FK_S1id,
                                 FK_S2id = dto.FK_S2id,
                                 Quantity = dto.Quantity,
@@ -131,7 +132,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     var output = await (from sc in db_shoppingcart
                                         where sc.FK_Tid == Guid.Parse(Tid) && !sc.IsDeleted
-                                        orderby sc.Ser_No
                                         from ps in db_prod_stock
                                         where ps.Id == sc.FK_PSid
                                         from p in db_prod
@@ -141,10 +141,21 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                             SCId = sc.Id,
                                             PId = p.Id,
                                             Title = p.Title,
+                                            S1Title = ps.FK_S1id.ToString(),
+                                            S2Title = ps.FK_S2id.ToString(),
                                             Description = p.Description,
                                             Price = ps.Price,
                                             Quantity = sc.Quantity,
                                         }).ToListAsync();
+
+
+                    var db_sp = db.Prod_Specs.ToList();
+                    foreach (var item in output)
+                    {
+                        item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp[int.Parse(item.S1Title) - 1].Title;
+                        item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp[int.Parse(item.S2Title) - 1].Title;
+                    }
+
                     return output;
                 }
                 else throw new Exception("查無購物車資料");
@@ -160,19 +171,19 @@ namespace EtheriT.Coker.Application.ShoppingCart
         {
             try
             {
-                var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == id).FirstOrDefault();
-                var db_prod_stock = db.Prod_Stocks.Where(e => e.Id == db_shoppingcart.FK_PSid).FirstOrDefault();
-                var db_prod = db.Prods.Where(e => e.Id == db_prod_stock.FK_Pid).FirstOrDefault();
+                var db_sc = db.ShoppingCarts.Where(e => e.Id == id).FirstOrDefault();
+                var db_ps = db.Prod_Stocks.Where(e => e.Id == db_sc.FK_PSid).FirstOrDefault();
+                var db_prod = db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefault();
 
-                if (db_shoppingcart != null)
+                if (db_sc != null)
                 {
                     ShoppingCartGetDrop output = new ShoppingCartGetDrop()
                     {
-                        SCId = db_shoppingcart.Id,
+                        SCId = db_sc.Id,
                         PId = db_prod.Id,
                         Title = db_prod.Title,
-                        Quantity = db_shoppingcart.Quantity,
-                        Price = db_prod_stock.Price
+                        Quantity = db_sc.Quantity,
+                        Price = db_ps.Price
                     };
 
                     return output;

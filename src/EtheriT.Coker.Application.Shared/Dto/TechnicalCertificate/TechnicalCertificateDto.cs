@@ -5,7 +5,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
     {
         public long Id { get; set; }
         public Guid TId { get; set; }
-        public long FK_WebsiteId { get; set; }
         public bool Disp_opt { get; set; }
         public string? Img { get; set; }
         public string? Title { get; set; }

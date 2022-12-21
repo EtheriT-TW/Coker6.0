@@ -178,30 +178,6 @@ function DetailsDataSet(result) {
     item_list_ul.append(item);
 }
 
-//function Update(display, success_text, error_text) {
-//    co.Marquees.Update({
-//        id: keyId,
-//        WebsiteId: $.cookie('WebSiteId'),
-//        placement: $placement.val(),
-//        title: $title.val(),
-//        disp_opt: display,
-//        ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-//        link: $link.val(),
-//        target: $target.is(":checked"),
-//        StartTime: startDate,
-//        EndTime: endDate,
-//        permanent: $permanent.is(":checked")
-//    }).done(function () {
-//        Coker.sweet.success(success_text, null, true);
-//        setTimeout(function () {
-//            BackToList();
-//            product_list.component.refresh();
-//        }, 1000);
-//    }).fail(function () {
-//        Coker.sweet.error("錯誤", error_text, null, true);
-//    });
-//}
-
 function MoveToContent() {
     $("#OrderList").addClass("d-none");
     $("#OrderContent").removeClass("d-none");

@@ -21,15 +21,6 @@
             });
         }
     },
-    Get: {
-        RandomProd: function (num) {
-            return $.ajax({
-                url: "/api/Product/GetRandomId/",
-                type: "GET",
-                data: { num: num }
-            });
-        }
-    },
     GetAll: {
         Cart: function (Tid) {
             return $.ajax({
@@ -54,6 +45,13 @@
                 data: { id: id }
             });
         },
+        Stock: function (id) {
+            return $.ajax({
+                url: "/api/Product/GetDisplayStock/",
+                type: "GET",
+                data: { id: id }
+            });
+        }
     },
     Delete: {
         Cart: function (id) {

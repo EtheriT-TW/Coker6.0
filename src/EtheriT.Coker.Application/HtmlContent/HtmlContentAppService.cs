@@ -16,11 +16,14 @@ namespace EtheriT.Coker.Application.HtmlContent
     public class HtmlContentAppService : IHtmlContentAppService
     {
         private readonly CokerDbContext db;
+        private readonly ILoginUserDataApplication loginUserDataApplication;
         public HtmlContentAppService(
-            CokerDbContext db
+            CokerDbContext db,
+            ILoginUserDataApplication loginUserDataApplication
         )
         {
             this.db = db;
+            this.loginUserDataApplication = loginUserDataApplication;
         }
         public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
         {
@@ -30,11 +33,12 @@ namespace EtheriT.Coker.Application.HtmlContent
                 if (dto.Id == 0)
                 {
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                    long WebsiteID = await loginUserDataApplication.GetWebsiteId();
                     if (db_t != null)
                     {
                         Core.Models.Html_Content hc = new Core.Models.Html_Content
                         {
-                            FK_WebsiteId = dto.FK_WebsiteId,
+                            FK_WebsiteId = WebsiteID,
                             Type = dto.Type,
                             Title = dto.Title,
                             Img = dto.Img,
@@ -59,7 +63,6 @@ namespace EtheriT.Coker.Application.HtmlContent
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
                     if (db_hc != null && db_t != null)
                     {
-                        db_hc.FK_WebsiteId = dto.FK_WebsiteId;
                         db_hc.Type = dto.Type;
                         db_hc.Title = dto.Title;
                         db_hc.Img = dto.Img;
@@ -137,7 +140,6 @@ namespace EtheriT.Coker.Application.HtmlContent
                     HtmlContentDto output = new HtmlContentDto()
                     {
                         Id = result.Id,
-                        FK_WebsiteId = result.FK_WebsiteId,
                         Type = result.Type,
                         Title = result.Title,
                         Img = result.Img,
@@ -174,6 +176,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                     var output = await (from e in result
                                         where !e.IsDeleted && e.Disp_opt && e.Type == type && e.FK_WebsiteId == webid
                                         where e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartDate) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndDate) < 0)
+                                        orderby e.Ser_no
                                         select new HtmlContentDisplayDto
                                         {
                                             Title = e.Title,

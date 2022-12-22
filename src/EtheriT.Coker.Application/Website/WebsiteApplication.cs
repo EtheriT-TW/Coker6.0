@@ -18,16 +18,16 @@ namespace EtheriT.Coker.Application
 	public class WebsiteApplication : IWebsiteApplication
 	{
 		private readonly CokerDbContext db;
-		private readonly ILoginUserDataApplication loginUserDataApplication;
+		private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
         public WebsiteApplication(
 			CokerDbContext db,
-            ILoginUserDataApplication loginUserDataApplication,
+            LoginUserData loginUserData,
             IHttpContextAccessor httpContextAccessor
         ) {
 			this.db = db;
 			this.httpContextAccessor = httpContextAccessor;
-			this.loginUserDataApplication = loginUserDataApplication;
+			this.loginUserData = loginUserData;
 		}
 
         [Authorize]
@@ -47,7 +47,7 @@ namespace EtheriT.Coker.Application
 					   };
             if (date.Any())
             {
-                long siteId = await loginUserDataApplication.GetWebsiteId();
+                long siteId = await loginUserData.GetWebsiteId();
                 var output = await date.ToListAsync();
                 if (siteId == 0 && output.Any()) {
                     siteId = output.FirstOrDefault().Id;
@@ -63,11 +63,11 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto responseMessageDto= new ResponseMessageDto();
 			try
 			{
-				if ((await loginUserDataApplication.CheckedWebSiteId(dto.Id)))
+				if ((await loginUserData.CheckedWebSiteId(dto.Id)))
 				{
                     ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
                     string name = user.Identity?.Name;
-                    Guid secret = loginUserDataApplication.GetSecret();
+                    Guid secret = loginUserData.GetSecret();
                     var token = await db.Tokens.Where(t => t.id == secret).FirstOrDefaultAsync();
 					if (token!=null)
 					{

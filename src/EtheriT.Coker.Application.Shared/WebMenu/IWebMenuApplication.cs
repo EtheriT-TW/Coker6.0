@@ -1,4 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Webs.Dto;
 using System;
 using System.Collections.Generic;
@@ -14,5 +16,8 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto);
         public Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto);
         public Task<ResponseMessageDto> importConten(MenuContenDto dto);
+        public Task<ResponseMessageDto> Delete(DataDelectDto dto);
+        public Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto);
+
     }
 }

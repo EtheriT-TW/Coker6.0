@@ -15,19 +15,19 @@ namespace EtheriT.Coker.Application.Token
         private readonly JwtHelpers jwt;
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private readonly ILoginUserDataApplication loginUserDataApplication;
+        private readonly LoginUserData loginUserData;
         private readonly IDistributedCache cache;
         public TokenAppService(
             JwtHelpers jwt,
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
-            ILoginUserDataApplication loginUserDataApplication,
+            LoginUserData loginUserData,
             IDistributedCache cache)
         {
             this.jwt = jwt;
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
             this.cache = cache;
         }
         public async Task<TokenResponseDto> CreateToken()
@@ -39,7 +39,7 @@ namespace EtheriT.Coker.Application.Token
                 DateTime EndDateTime = dateTime.AddDays(30);
                 Core.Models.Token t = new Core.Models.Token
                 {
-                    ip = loginUserDataApplication.GetClientIP()??"",
+                    ip = loginUserData.GetClientIP()??"",
                     UserID = null,
                     StartTime = dateTime,
                     EndTime = EndDateTime,
@@ -106,7 +106,7 @@ namespace EtheriT.Coker.Application.Token
         }
         public async Task<bool> DelToken()
         {
-            string token = loginUserDataApplication.GetAuthorization();
+            string token = loginUserData.GetAuthorization();
             await cache.SetStringAsync(
                 GetKey(token),
                 " ",

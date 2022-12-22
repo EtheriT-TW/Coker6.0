@@ -16,4 +16,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EtheriT.Coker.Core\EtheriT.Coker.Core.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -5,16 +5,16 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 {
     public class Sidebar : ViewComponent
     {
-        private readonly ILoginUserDataApplication loginUserDataApplication;
-        public Sidebar(ILoginUserDataApplication loginUserDataApplication)
+        private readonly LoginUserData loginUserData;
+        public Sidebar(LoginUserData loginUserData)
         {
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
             Site site = new Site
             {
-                Title = await loginUserDataApplication.GetWebsiteName(),
+                Title = await loginUserData.GetWebsiteName(),
                 Jobs = new List<JobMenu> {
                     new JobMenu{
                         PageName="Dashboard",

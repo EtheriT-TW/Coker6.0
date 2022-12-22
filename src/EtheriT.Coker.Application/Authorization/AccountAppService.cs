@@ -28,20 +28,20 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly CokerDbContext db;
         private readonly IPasswordHasher passwordHasher;
         private readonly ITokenAppService tokenAppService;
-        private readonly ILoginUserDataApplication loginUserDataApplication;
+        private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
-            ILoginUserDataApplication loginUserDataApplication,
+            LoginUserData loginUserData,
             IHttpContextAccessor httpContextAccessor
         )
         {
             this.db = db;
             this.passwordHasher = passwordHasher;
             this.tokenAppService = tokenAppService;
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
             this.httpContextAccessor = httpContextAccessor;
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -65,7 +65,7 @@ namespace EtheriT.Coker.Application.Authorization
                         if(defaultWeb!= null) bindID = defaultWeb.UserId;
                         Core.Models.Token t = new Core.Models.Token
                         {
-                            ip = loginUserDataApplication.GetClientIP()??"",
+                            ip = loginUserData.GetClientIP()??"",
                             UserID = user.Id,
                             StartTime = dateTime,
                             EndTime = EndDateTime,

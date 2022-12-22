@@ -17,14 +17,14 @@ namespace EtheriT.Coker.Application.Product
     public class ProductAppService : IProductAppService
     {
         private readonly CokerDbContext db;
-        private readonly ILoginUserDataApplication loginUserDataApplication;
+        private readonly LoginUserData loginUserData;
         public ProductAppService(
             CokerDbContext db,
-            ILoginUserDataApplication loginUserDataApplication
+            LoginUserData loginUserData
         )
         {
             this.db = db;
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
         }
 
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
@@ -131,7 +131,7 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
-                long webid = await loginUserDataApplication.GetWebsiteId();
+                long webid = await loginUserData.GetWebsiteId();
                 var db_ps = db.Prod_Stocks;
                 var db_p = db.Prods;
 

@@ -1,4 +1,7 @@
-﻿using EtheriT.Coker.Application.Webs.Dto;
+﻿using AutoMapper;
+using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Webs.Dto;
+using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -16,22 +19,56 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application
 {
-    public class LoginUserDataApplication: ILoginUserDataApplication
+    public class LoginUserData
     {
 
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
-        public LoginUserDataApplication(
+        private readonly IMapper mapper;
+        public LoginUserData(
             CokerDbContext db,
-            IHttpContextAccessor httpContextAccessor) {
+            IHttpContextAccessor httpContextAccessor,
+            IMapper mapper
+        ) {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
+            this.mapper = mapper;
         }
 
         public string? GetClientIP()
         {
             if (httpContextAccessor.HttpContext == null) return StringValues.Empty;
             return httpContextAccessor.HttpContext.Connection?.RemoteIpAddress?.ToString();
+        }
+        public async Task<long> GetUserId() {
+            long id;
+            try {
+                if (httpContextAccessor.HttpContext == null) throw new Exception();
+                ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+                string name = user.Identity?.Name;
+                id = (await db.Users.Where(e => e.Account == name).FirstOrDefaultAsync()).Id;
+            }
+            catch(Exception ex)
+            {
+                id = 0;
+            }
+            return id;
+        }
+        public async Task<UserDto> GetUser() {
+            UserDto user = new UserDto { Id = 0 };
+            try
+            {
+                if (httpContextAccessor.HttpContext == null) throw new Exception();
+                ClaimsPrincipal logUser = httpContextAccessor.HttpContext?.User;
+                string name = logUser.Identity?.Name;
+                var detail = await db.Users.Where(e => e.Account == name).FirstOrDefaultAsync();
+                mapper.Map(detail, user);
+            }
+            catch (Exception ex)
+            {
+                user.Id = 0;
+            }
+            return user;
         }
 
         public async Task<long> GetWebsiteId()
@@ -117,6 +154,47 @@ namespace EtheriT.Coker.Application
                 if (data.Any()) check = true;
             }
             return check;
+        }
+        public async Task SaveChanges(FullAuditedEntity entity) {
+            await setOptionParameter(entity);
+            db.SaveChanges();
+        }
+        public async Task SaveChanges(IQueryable<object> queryable) {
+            queryable.ToListAsync().Result.ForEach(x => {
+                setOptionParameter((FullAuditedEntity)x);
+                db.SaveChangesAsync();
+            });
+        }
+        private async Task setOptionParameter(FullAuditedEntity entity) {
+            var user = await GetUser();
+            if (entity.Id == 0)
+            {
+                entity.CreatorUserId = user.Id;
+                entity.CreationTime = DateTime.Now;
+            }
+            else if (entity.IsDeleted)
+            {
+                entity.DeleterUserId = user.Id;
+                entity.DeletionTime = DateTime.Now;
+            }
+            else
+            {
+                entity.LastModifierUserId = user.Id;
+                entity.LastModificationTime = DateTime.Now;
+            }
+        }
+        public async Task SetLogs(string Controller, string Action, string Paramater, string response) {
+            db.AuditLogs.Add(new AuditLog { 
+                ClientIpAddress = GetClientIP(),
+                BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
+                ExecutionTime = DateTime.Now,
+                MethodName= Action,
+                Parameters = Paramater,
+                ServiceName = Controller,
+                ReturnValue= response,
+                UserId = await GetUserId()
+            });
+            db.SaveChanges();
         }
     }
 }

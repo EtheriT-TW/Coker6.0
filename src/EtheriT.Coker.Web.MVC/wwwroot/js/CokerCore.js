@@ -291,6 +291,16 @@ var Coker = {
                 data: JSON.stringify({id:id}),
                 dataType: "json"
             });
+        },
+        updateLevelAndSerNo: function (list) {
+            return $.ajax({
+                url: "/api/WebMenu/updateLevelAndSerNo",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ list: list }),
+                dataType: "json"
+            });
         }
     }
 }

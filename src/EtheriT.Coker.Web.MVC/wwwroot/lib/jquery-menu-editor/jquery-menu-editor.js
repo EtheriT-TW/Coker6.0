@@ -1093,7 +1093,7 @@ function MenuEditor(idSelector, options) {
             complete: function (cEl) {
                 MenuEditor.updateButtons($main);
                 $main.updateLevels(0);
-                !!settings.on.drop && settings.on.drop();
+                !!settings.on.drop && settings.on.drop(cEl);
                 return true;
             },
             isAllowed: function(currEl, hint, target) {
@@ -1119,10 +1119,12 @@ function MenuEditor(idSelector, options) {
 
     $main.on('click', '.btnRemove', function (e) {
         e.preventDefault();
-        var title = $(this).closest('li').data("title");
+        var self = this;
+        var data = $(this).closest('li').data();
+        var title = data.text;
         co.sweet.confirm("即將刪除", settings.textConfirmDelete.replace("{0}", title), "確認", "取消", function () {
-            var list = $(this).closest('ul');
-            $(this).closest('li').remove();
+            var list = $(self).closest('ul');
+            $(self).closest('li').remove();
             var isMainContainer = false;
             if (typeof list.attr('id') !== 'undefined') {
                 isMainContainer = (list.attr('id').toString() === idSelector);
@@ -1131,7 +1133,7 @@ function MenuEditor(idSelector, options) {
                 list.prev('div').children('.sortableListsOpener').first().remove();
                 list.remove();
             }
-            !!settings.on.del && settings.on.del();
+            !!settings.on.del && settings.on.del(data);
             MenuEditor.updateButtons($main);
         });
     });
@@ -1154,14 +1156,14 @@ function MenuEditor(idSelector, options) {
         var $li = $(this).closest('li');
         $li.prev('li').before($li);
         MenuEditor.updateButtons($main);
-        !!settings.on.drop && settings.on.drop();
+        !!settings.on.drop && settings.on.drop($li);
     });
     $main.on('click', '.btnDown', function (e) {
         e.preventDefault();
         var $li = $(this).closest('li');
         $li.next('li').after($li);
         MenuEditor.updateButtons($main);
-        !!settings.on.drop && settings.on.drop();
+        !!settings.on.drop && settings.on.drop($li);
     });
     $main.on('click', '.btnOut', function (e) {
         e.preventDefault();
@@ -1175,7 +1177,7 @@ function MenuEditor(idSelector, options) {
         }
         MenuEditor.updateButtons($main);
         $main.updateLevels();
-        !!settings.on.drop && settings.on.drop();
+        !!settings.on.drop && settings.on.drop($li);
     });
     $main.on('click', '.btnIn', function (e) {
         e.preventDefault();
@@ -1198,14 +1200,30 @@ function MenuEditor(idSelector, options) {
         }
         MenuEditor.updateButtons($main);
         $main.updateLevels();
-        !!settings.on.drop && settings.on.drop();
+        !!settings.on.drop && settings.on.drop($li);
     });
 
     /* PRIVATE METHODS */
     function editItem($item) {
         var data = $item.data();
         $.each(data, function (p, v) {
-            $form.find("[name=" + p + "]").val(v);
+            let element = $form.find("[name=" + p + "]");
+            if (element.length <= 0) return;
+            switch (element[0].tagName) {
+                case "SELECT":
+                    element.find("[value=" + p + "]").prop("selected",true);
+                    break;
+                default:
+                    switch (element.attr("type").toUpperCase()) {
+                        case "RADIO":
+                            element.find("[value=" + p + "]").prop("checked", true);
+                            break;
+                        default:
+                            element.val(v);
+                            break;
+                    }
+                    break;
+            }
         });
         $form.find(".item-menu").first().focus();
         if (data.hasOwnProperty('icon')) {
@@ -1358,10 +1376,11 @@ function MenuEditor(idSelector, options) {
         $form.find('.item-menu').each(function() {
             $cEl.data($(this).attr('name'), $(this).val());
         });
+        $cEl.data('text', $cEl.data('title'));
         $cEl.children().children('i').removeClass(oldIcon).addClass($cEl.data('icon'));
         $cEl.find('span.txt').first().text($cEl.data('text'));
-        resetForm();
         !!settings.on.update && settings.on.update($cEl.data());
+        resetForm();
     };
    
     self.add = function(){
@@ -1371,8 +1390,9 @@ function MenuEditor(idSelector, options) {
         });
         if (data.Id == "") data.Id = 0;
         if (data.SerNO == "") data.SerNO = 500;
+        data.text = data.title;
         var btnGroup = TButtonGroup();
-        var textItem = $('<span>').addClass('txt').text(data.Title);
+        var textItem = $('<span>').addClass('txt font-weight-bold').text(data.title);
         var iconItem = $('<i>').addClass(data.icon);
         var div = $('<div>').css({"overflow": "auto"}).append(iconItem).append("&nbsp;").append(textItem).append(btnGroup);
         var $li = $("<li>").data(data);
@@ -1380,7 +1400,7 @@ function MenuEditor(idSelector, options) {
         $main.append($li);
         MenuEditor.updateButtons($main);
         resetForm();
-        !!settings.on.add && settings.on.add($li.data());
+        !!settings.on.add && settings.on.add($li);
     };
 
     self.refresh = function(){

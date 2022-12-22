@@ -3,7 +3,7 @@
 
     var menuEditor = new MenuEditor('myEditor',
         {
-            textConfirmDelete:"是否確認將<span class='ConfirmKeyWord'>{0}</span>選單刪除?",
+            textConfirmDelete: "是否確認將<span class='ConfirmKeyWord'>{0}</span>選單刪除?",
             listOptions: {
                 placeholderCss: { 'background-color': "#cccccc" }
             },
@@ -12,7 +12,7 @@
             },
             maxLevel: -1, // (Optional) Default is -1 (no level limit)
             element: {
-                Form:"#frmEdit",
+                Form: "#frmEdit",
                 Update: "#btnUpdate",
                 Add: '#btnAdd',
                 Refresh: '#btnRefresh',
@@ -23,28 +23,81 @@
                     $("#btnUpdate").removeClass("d-none");
                     $("#btnRefresh,#btnAdd").addClass("d-none");
                 },
-                del: function () {
-
+                del: function (data) {
+                    if ($("#myEditor>li").length == 0) {
+                        $("#myEditor").addClass("d-none");
+                        $("#myEditor + .emptyList").removeClass("d-none");
+                    }
+                    co.WebMesnus.delete(data.id).done(function (result) {
+                        if (result.success) co.sweet.success("已成功刪除");
+                        else co.sweet.error(result.error);
+                        console.log(data);
+                    });
                 },
-                add: function (data) {
+                add: function (cEl) {
+                    var data = cEl.data();
                     $("#myEditor").removeClass("d-none");
                     $("#myEditor + .emptyList").addClass("d-none");
-                    co.WebMesnus.createOrEdit(data).done(function(result){
+                    co.WebMesnus.createOrEdit(data).done(function (result) {
                         if (!result.success) co.sweet.error(result.error);
-                        else co.sweet.success("新增成功");
+                        else {
+                            data.id = parseInt(result.message);
+                            co.sweet.success("新增成功");
+                        }
                     });
                 },
                 update: function (data) {
-                    editor.setComponents("<span>Hi<span>");
-                    editor.setStyle("");
+                    co.WebMesnus.createOrEdit(data).done(function (result) {
+                        if (!result.success) co.sweet.error(result.error);
+                        else co.sweet.success("更新成功");
+                    });
+                    //editor.setComponents("<span>Hi<span>");
+                    //editor.setStyle("");
                     console.log(data);
                 },
                 save: function () {
 
                 },
-                drop: function () {
-                    var str = menuEditor.getString();
-                    console.log(str);
+                drop: function (cEl) {
+                    let saveList = [];
+                    let ps = cEl.parents('li');
+                    let root = ps.last();
+                    let fa = ps.first();
+                    let ul = cEl.parents('ul');
+                    let fK_TopNodeId, fK_RootNodeId;
+                    let isAdd = false;
+                    if (fa.length == 0) {
+                        fK_TopNodeId = null;
+                    } else {
+                        fK_TopNodeId = fa.data("id");
+                    }
+                    if (root.length == 0) {
+                        fK_RootNodeId = null;
+                    } else {
+                        fK_RootNodeId = root.data("id");
+                    }
+                    if (cEl.data("fK_TopNodeId") != fK_TopNodeId || cEl.data("fK_RootNodeId") != fK_RootNodeId) {
+                        cEl.data({
+                            "fK_TopNodeId": fK_TopNodeId,
+                            "fK_RootNodeId": fK_RootNodeId
+                        });
+                        isAdd = true;
+                        saveList.push($(cEl).data());
+                    }
+                    
+                    ul.children("li").each(function (index, element) {
+                        var s = $(element).data("serNO");
+                        if (s != (index + 1)) {
+                            console.log(element, s, (index + 1));
+                            s = index + 1;
+                            $(element).data("serNO", s);
+                            if ($(element).data("id") != cEl.data("id")) saveList.push($(element).data());
+                            else if (!isAdd) saveList.push($(element).data());
+                        }
+                    });
+                    co.WebMesnus.updateLevelAndSerNo(saveList).done(function (result) {
+                        if (!result.success) co.sweet.error(result.error);
+                    });
                 },
                 page: function (data) {
                     $("#gjs").data("id", data.id);
@@ -74,28 +127,12 @@
         $("#btnRefresh").trigger("click");
     });
 
-    var arrayjson = [
-        { id:1,"href": "http://home.com", "icon": "fas fa-home", "text": "Home", "target": "_top", "title": "My Home" },
-        { id: 2, "icon": "fas fa-chart-bar", "text": "Opcion2" }, { "icon": "fas fa-bell", "text": "Opcion3" },
-        { id: 3, "icon": "fas fa-crop", "text": "Opcion4" },
-        { id: 4, "icon": "fas fa-flask", "text": "Opcion5" },
-        { id: 5, "icon": "fas fa-map-marker", "text": "Opcion6" },
-        {
-            id: 6, "icon": "fas fa-search", "text": "Opcion7", "children": [
-                {
-                    id: 7, "icon": "fas fa-plug", "text": "Opcion7-1", "children": [
-                        { id: 8, "icon": "fas fa-filter", "text": "Opcion7-1-1" }
-                    ]
-                }
-            ]
-        }
-    ];
-
     co.WebMesnus.getAll().done(function (result) {
         if (result.success) {
             menuEditor.setData(result.maps);
             $("#myEditor").removeClass("d-none");
             if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+            else $("#myEditor").addClass("d-none");
         } else {
             menuEditor.setData([]);
         }

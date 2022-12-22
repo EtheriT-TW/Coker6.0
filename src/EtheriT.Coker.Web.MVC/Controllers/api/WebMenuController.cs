@@ -1,6 +1,8 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,6 +41,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> importConten(MenuContenDto dto)
         {
             return await webMenuApplication.importConten(dto);
+        }
+        [HttpPost]
+        [Authorize]
+        public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
+        {
+            return await webMenuApplication.Delete(dto);
+        }
+        [HttpPost]
+        [Authorize]
+        public async Task<ResponseMessageDto> updateLevelAndSerNo(UpdateSerNoListDto dto) {
+            return await webMenuApplication.updateSerNo(dto);
         }
     }
 }

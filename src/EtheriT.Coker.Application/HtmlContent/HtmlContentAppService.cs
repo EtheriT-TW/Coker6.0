@@ -16,14 +16,14 @@ namespace EtheriT.Coker.Application.HtmlContent
     public class HtmlContentAppService : IHtmlContentAppService
     {
         private readonly CokerDbContext db;
-        private readonly ILoginUserDataApplication loginUserDataApplication;
+        private readonly LoginUserData loginUserData;
         public HtmlContentAppService(
             CokerDbContext db,
-            ILoginUserDataApplication loginUserDataApplication
+            LoginUserData loginUserData
         )
         {
             this.db = db;
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
         }
         public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
         {
@@ -33,7 +33,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                 if (dto.Id == 0)
                 {
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-                    long WebsiteID = await loginUserDataApplication.GetWebsiteId();
+                    long WebsiteID = await loginUserData.GetWebsiteId();
                     if (db_t != null)
                     {
                         Core.Models.Html_Content hc = new Core.Models.Html_Content

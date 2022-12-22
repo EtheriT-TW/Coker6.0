@@ -47,7 +47,7 @@ builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>()
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
-builder.Services.AddTransient<ILoginUserDataApplication, LoginUserDataApplication>();
+builder.Services.AddTransient<LoginUserData>();
 
 var app = builder.Build();
 

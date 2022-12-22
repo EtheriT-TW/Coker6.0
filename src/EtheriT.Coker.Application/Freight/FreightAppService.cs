@@ -14,14 +14,14 @@ namespace EtheriT.Coker.Application.Freight
     public class FreightAppService : IFreightAppService
     {
         private readonly CokerDbContext db;
-        private readonly ILoginUserDataApplication loginUserDataApplication;
+        private readonly LoginUserData loginUserData;
         public FreightAppService(
             CokerDbContext db,
-            ILoginUserDataApplication loginUserDataApplication
+            LoginUserData loginUserData
         )
         {
             this.db = db;
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
         }
         public async Task<ResponseMessageDto> AddUp(FreightDto dto)
         {
@@ -35,7 +35,7 @@ namespace EtheriT.Coker.Application.Freight
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
                     if (db_t != null)
                     {
-                        long WebsiteID = await loginUserDataApplication.GetWebsiteId();
+                        long WebsiteID = await loginUserData.GetWebsiteId();
                         Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
                         {
                             FK_WebsiteId = WebsiteID,

@@ -14,14 +14,14 @@ namespace EtheriT.Coker.Application.Marquee
     public class MarqueeAppService : IMarqueeAppService
     {
         private readonly CokerDbContext db;
-        private readonly ILoginUserDataApplication loginUserDataApplication;
+        private readonly LoginUserData loginUserData;
         public MarqueeAppService(
             CokerDbContext db,
-            ILoginUserDataApplication loginUserDataApplication
+            LoginUserData loginUserData
         )
         {
             this.db = db;
-            this.loginUserDataApplication = loginUserDataApplication;
+            this.loginUserData = loginUserData;
         }
         public async Task<ResponseMessageDto> AddUp(MarqueeDto dto)
         {
@@ -30,7 +30,7 @@ namespace EtheriT.Coker.Application.Marquee
             {
                 if (dto.Id == 0)
                 {
-                    long WebsiteID = await loginUserDataApplication.GetWebsiteId();
+                    long WebsiteID = await loginUserData.GetWebsiteId();
                     Core.Models.Marquee m = new Core.Models.Marquee
                     {
                         FK_WebsiteId = WebsiteID,

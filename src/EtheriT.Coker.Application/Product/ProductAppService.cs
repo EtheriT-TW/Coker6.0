@@ -34,7 +34,7 @@ namespace EtheriT.Coker.Application.Product
                 if (dto.Id == 0)
                 {
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-                    long WebsiteID = await loginUserDataApplication.GetWebsiteId();
+                    long WebsiteID = await loginUserData.GetWebsiteId();
                     if (db_t != null)
                     {
                         Core.Models.Prod p = new Core.Models.Prod
@@ -370,7 +370,7 @@ namespace EtheriT.Coker.Application.Product
 
                 if (db_pst != null)
                 {
-                    long WebsiteID = await loginUserDataApplication.GetWebsiteId();
+                    long WebsiteID = await loginUserData.GetWebsiteId();
                     var output = await (from pst in db_pst
                                         where !pst.IsDeleted && pst.FK_WebsiteId == WebsiteID
                                         select new ProdIdTitleDto

@@ -158,7 +158,7 @@
 	</div>
 
 	<div class="content col-md-6 col-sm-12">
-		<div class="title fs-5"></div>
+		<div class="pro_title title fs-5"></div>
 
 		<div class="describe d-flex align-items-center justify-content-between">
 			<ul class="introduce my-2"></ul>
@@ -205,18 +205,15 @@
 
 		<hr class="m-1" />
 
-		<div class="options px-3">
+		<template id="Template_Spec_Radio">
 			<div class="radio d-flex align-items-center my-2">
-				<div class="title">顏色</div>
-				<div class="control d-flex flex-wrap">
-					<input id="color_01" type="radio" class="btn-check" name="choose_color" autocomplete="off">
-					<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="color_01">白色</label>
-
-					<input id="color_02" type="radio" class="btn-check" name="choose_color" autocomplete="off">
-					<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="color_02">灰色</label>
+				<div class="spec_title title"></div>
+				<div class="spec_control control d-flex flex-wrap">
 				</div>
 			</div>
+		</template>
 
+		<div class="options px-3">
 			<div class="counter d-flex align-items-center my-2">
 				<div class="title">數量</div>
 				<div class="counter_input d-flex">

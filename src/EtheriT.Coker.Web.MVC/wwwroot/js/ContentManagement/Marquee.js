@@ -229,7 +229,6 @@ function deleteButtonClicked(e) {
 function AddUp(display, success_text, error_text) {
     co.Marquees.AddUp({
         Id: keyId,
-        WebsiteId: $.cookie('WebSiteId'),
         placement: $placement.val(),
         title: $title.val(),
         disp_opt: display,

@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.HtmlContent
+@using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.Public.Models
 @model HomeViewModel
@@ -125,6 +126,39 @@
 <div id="Guess_Like" class="container-fluid">
 	<div class="container">
 		<div class="row row-cols-1 row-cols-sm-3 align-items-center placeholder-glow">
+			@if (Model.guessLike.Count > 0)
+			{
+				@foreach (var guessLike in Model.guessLike ?? new List<ProdGetDisplayDto>())
+				{
+					<div class="col py-3 placeholder-glow">
+						<div class="frame position-relative p-4" data-pid="@guessLike.Id">
+							<a class="pro_link" href="@guessLike.Link">
+								<div class="pro_name fw-bold overflow-hidden pe-4">@guessLike.Title</div>
+							</a>
+							<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
+								<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0">TAG</button></li>
+							</ul>
+							<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
+								<i class="fa-regular fa-heart"></i>
+							</button>
+							<div class="text-center">
+								<a class="pro_link" href="@guessLike.Link"><img class="pro_image w-75" src="@guessLike.Image" alt="" /></a>
+							</div>
+							<div class="bottom_line d-flex justify-content-center">
+								<div class="pro_price price pe-3 fw-bold">@guessLike.Price</div>
+								<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+							</div>
+						</div>
+					</div>
+				}
+			}
+		</div>
+	</div>
+</div>
+
+@*<div id="Guess_Like" class="container-fluid">
+	<div class="container">
+		<div class="row row-cols-1 row-cols-sm-3 align-items-center placeholder-glow">
 			<div class="col py-3 placeholder-glow">
 				<div class="frame position-relative p-4" data-pid="">
 					<a class="pro_link" href="">
@@ -189,26 +223,26 @@
 			</div>
 		</div>
 	</div>
-</div>
+</div>*@
 
 @*<template id="Template_Guess_Like">
 	<div class="frame position-relative p-4" data-pid="">
 		<a class="pro_link" href="">
-			<div class="pro_name fw-bold overflow-hidden pe-4"></div>
-		</a>
-		<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
-			<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0"></button></li>
-		</ul>
-		<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
-			<i class="fa-regular fa-heart"></i>
-		</button>
-		<div class="text-center">
-			<a class="pro_link" href=""><img class="pro_image w-75" src="" alt="" /></a>
-		</div>
-		<div class="bottom_line d-flex justify-content-center">
-			<div class="pro_price price pe-3 fw-bold"></div>
-			<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
-		</div>
+						<div class="pro_name fw-bold overflow-hidden pe-4"><span class="placeholder col-12"></span></div>
+					</a>
+					<ul class="pro_tag d-flex flex-wrap overflow-hidden text-decoration-underline">
+						<li class="pe-2 align-self-center"><button class="bg-transparent border-0 gray_text text-decoration-underline ps-0"><span class="placeholder col-12"></span></button></li>
+					</ul>
+					<button class="btn_favorites bg-transparent border-0 position-absolute top-0 end-0 p-4">
+						<i class="fa-regular fa-heart"></i>
+					</button>
+					<div class="text-center">
+						<a class="pro_link" href=""><img class="pro_image w-75" src="" alt="" /></a>
+					</div>
+					<div class="bottom_line d-flex justify-content-center">
+						<div class="pro_price price pe-3 fw-bold"><span class="placeholder col"></span></div>
+						<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
+					</div>
 	</div>
 </template>*@
 

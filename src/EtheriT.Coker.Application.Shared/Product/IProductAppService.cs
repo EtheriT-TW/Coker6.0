@@ -9,15 +9,18 @@ namespace EtheriT.Coker.Application.Shared.Product
     public interface IProductAppService
     {
         public Task<ResponseMessageDto> ProductAddUp(ProductDto dto);
+        public Task<ResponseMessageDto> StockAddUp(ProductStockDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<ProductDto> ProdGetOne(long Id);
-        public Task<List<ProductStockDto>> ProdStockGet(long PId);
+        public Task<ProductDto> GetProdDataOne(long Id);
+        public Task<List<ProductStockDto>> GetStockDataAll(long PId);
         public Task<ProdGetOneDto> GetDisplayOne(long id);
-        public Task<List<long>> GetRandomId(int num);
-        public Task<List<ProdIdTitleDto>> GetSpecType(long webid);
+        public Task<List<ProductStockDto>> GetDisplayStock(long id);
+        public Task<ProdGetDisplayDto> GetDisplaySimple(long id);
+        public Task<JsonResult> GetRandomDIsplay(long webid, int num);
+        public Task<List<ProdIdTitleDto>> GetSpecType();
         public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
         public Task<ResponseMessageDto> ProdDelete(DataDelectDto dto);
-        public Task<ResponseMessageDto> ProdStockDelete(DataDelectDto dto);
+        public Task<ResponseMessageDto> StockDelete(DataDelectDto dto);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }
 }

@@ -1,12 +1,11 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.Product;
-using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.Product;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Data.Common;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -27,25 +26,30 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.ProductAddUp(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> StockAddUp(ProductStockDto dto)
+        {
+            return await productAppService.StockAddUp(dto);
+        }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             return await productAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<ProductDto> ProdGetOne(long Id)
+        public async Task<ProductDto> GetProdDataOne(long Id)
         {
-            return await productAppService.ProdGetOne(Id);
+            return await productAppService.GetProdDataOne(Id);
         }
         [HttpGet]
-        public async Task<List<ProductStockDto>> ProdStockGet(long PId)
+        public async Task<List<ProductStockDto>> GetStockDataAll(long PId)
         {
-            return await productAppService.ProdStockGet(PId);
+            return await productAppService.GetStockDataAll(PId);
         }
         [HttpGet]
-        public async Task<List<ProdIdTitleDto>> GetSpecType(long webid)
+        public async Task<List<ProdIdTitleDto>> GetSpecType()
         {
-            return await productAppService.GetSpecType(webid);
+            return await productAppService.GetSpecType();
         }
         [HttpGet]
         public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
@@ -58,9 +62,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.ProdDelete(dto);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> ProdStockDelete(DataDelectDto dto)
+        public async Task<ResponseMessageDto> StockDelete(DataDelectDto dto)
         {
-            return await productAppService.ProdStockDelete(dto);
+            return await productAppService.StockDelete(dto);
         }
     }
 }

@@ -1,3 +1,4 @@
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Marquee;
@@ -46,6 +47,7 @@ builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>()
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
+builder.Services.AddTransient<ILoginUserDataApplication, LoginUserDataApplication>();
 
 var app = builder.Build();
 

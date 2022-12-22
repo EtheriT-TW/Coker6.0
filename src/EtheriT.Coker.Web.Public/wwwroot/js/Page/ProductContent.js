@@ -1,5 +1,6 @@
 ﻿var $input_quantity
-var Pid
+var Pid, hass1 = false, hass2 = false, s1, s2
+var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = []
 
 function PageReady() {
     ElementInit();
@@ -97,16 +98,19 @@ function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
 
     $prod_content = $("#Product > .content");
-    $pro_name = $prod_content.find('.title');
+    $pro_name = $prod_content.find('.pro_title');
     $pro_introduce = $prod_content.find('.introduce');
     $pro_specification = $prod_content.find('.specification').children("ul");
     $pro_price = $prod_content.find(".ori_price");
     $pro_discount = $prod_content.find(".discount");
     $btn_detailed = $prod_content.find(".btn_detailed");
+
+    $options = $prod_content.find(".options");
 }
 
 function PageDefaultSet() {
     Product.GetOne.Prod(Pid).done(function (result) {
+        console.log(result)
         $pro_name.text(result.title);
         $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
         $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
@@ -117,49 +121,144 @@ function PageDefaultSet() {
         if (spec_height > $pro_specification.height()) {
             $btn_detailed.removeClass("d-none")
         }
-        if (result.discount > 0) {
-            $pro_price.removeClass("d-none");
-            $pro_price.append("<span class='text-decoration-line-through'>" + result.price.toLocaleString('en-US') + "</span>&ensp;折扣&ensp;");
-            $pro_discount.text(result.discount.toLocaleString('en-US'));
-        } else {
-            $pro_discount.text(result.price.toLocaleString('en-US'));
-        }
     });
+
+    Product.GetOne.Stock(Pid).done(function (result) {
+        if (result.length > 1) {
+
+            var obj = {};
+
+            var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
+            var item1_control = item1.find(".spec_control"),
+                item1_title = item1.find(".spec_title"),
+                item2_control = item2.find(".spec_control"),
+                item2_title = item2.find(".spec_title");
+
+            item1.data("stype", 1)
+            item2.data("stype", 2)
+            result.forEach(function (spec) {
+                obj["s1id"] = spec.fK_S1id;
+                obj["s2id"] = spec.fK_S2id;
+                obj["price"] = spec.price;
+                price_list.push(obj);
+                obj = {}
+
+                if (spec.fK_S1id > 0) {
+                    if (!hass1) {
+                        item1_title.text(spec.s1_Title);
+                        hass1 = true;
+                    }
+                    if (s1_list.indexOf(spec.fK_S1id) < 0) {
+                        item1_control.append('<input id="s1_' + spec.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + spec.fK_S1id + '">');
+                        item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + spec.fK_S1id + '">' + spec.s1_Name + '</label>');
+                        s1_list.push(spec.fK_S1id);
+                    }
+                } else {
+                    if (!s1 >= 0) {
+                        s1 = 0;
+                    }
+                }
+
+                if (spec.fK_S2id > 0) {
+                    if (!hass2) {
+                        item2_title.text(spec.s2_Title);
+                        hass2 = true;
+                    }
+                    if (s2_list.indexOf(spec.fK_S2id) < 0) {
+                        item2_control.append('<input id="s2_' + spec.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + spec.fK_S2id + '">');
+                        item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + spec.fK_S2id + '">' + spec.s2_Name + '</label>');
+                        s2_list.push(spec.fK_S2id);
+                    }
+                } else {
+                    if (!s2 >= 0) {
+                        s2 = 0;
+                    }
+                }
+            })
+
+            $options.prepend(item2);
+            $options.prepend(item1);
+
+            $radio = $("#Product > .content > .options > .radio");
+            $radio.each(function () {
+                $input = $(this).children(".spec_control").children("input")
+                $input.each(function () {
+                    $(this).on("click", SpecRadio)
+                })
+            })
+
+            $pro_discount.text(result[0].price.toLocaleString('en-US') + " ~ " + result[result.length - 1].price.toLocaleString('en-US'));
+        } else {
+            s1 = result[0].fK_S1id;
+            s2 = result[0].fK_S2id;
+            $pro_discount.text(result[0].price.toLocaleString('en-US'));
+        }
+    })
+}
+
+function SpecRadio() {
+    $self = $(this);
+    $self_p = $self.parents(".radio").first();
+    switch ($self_p.data("stype")) {
+        case 1:
+            s1 = $self.val()
+            break;
+        case 2:
+            s2 = $self.val()
+            break;
+    }
+
+    if (s1 >= 0 && s2 >= 0) {
+        price_list.forEach(function (item) {
+            if (item.s1id == s1 && item.s2id == s2) {
+                $pro_discount.text(item.price.toLocaleString('en-US'));
+            }
+        })
+    }
 }
 
 function AddToCart() {
+
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
-        Product.AddUp.Cart({
-            FK_Tid: $.cookie("Token"),
-            FK_PSid: Pid,
-            FK_S1id: 1,
-            FK_S2id: 4,
-            Quantity: $input_quantity.val(),
-            Discont: 0,
-            Bonus: 0,
-            PriceType: 0,
-            IsAdditional: false,
-            Ser_No: 500,
-        }).done(function (result) {
-            if (result.success) {
-                Coker.sweet.success("商品已成功加入購物車", null, true);
-                var type = (result.message).substr(0, 1);
-                var id = (result.message).substr(1);
-                Product.GetOne.Cart(id).done(function (result) {
-                    if (type == 'N') {
-                        CartDropAdd(result);
-                    } else {
-                        CartDropUpdate(result);
-                    }
-                });
-            } else {
+        console.log("s1 = " + s1 + " s2 = " + s2)
+        if (s1 >= 0 && s2 >= 0) {
+            Product.AddUp.Cart({
+                FK_Tid: $.cookie("Token"),
+                FK_Pid: parseInt(Pid),
+                FK_S1id: s1,
+                FK_S2id: s2,
+                Quantity: $input_quantity.val(),
+                Discont: 0,
+                Bonus: 0,
+                PriceType: 0,
+                IsAdditional: false,
+                Ser_No: 500,
+            }).done(function (result) {
+                if (result.success) {
+                    console.log(result)
+                    Coker.sweet.success("商品已成功加入購物車", null, true);
+                    var type = (result.message).substr(0, 1);
+                    var id = (result.message).substr(1);
+                    Product.GetOne.Cart(id).done(function (result) {
+                        console.log(result)
+                        if (type == 'N') {
+                            CartDropAdd(result);
+                        } else {
+                            CartDropUpdate(result);
+                        }
+                    });
+                } else {
+                    Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+                }
+            }).fail(function () {
                 Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
-            }
-        }).fail(function () {
-            Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
-        });
+            });
+        } else {
+            Coker.sweet.error("錯誤", "請確實選擇規格", null, false);
+        }
+
     }
 }
 

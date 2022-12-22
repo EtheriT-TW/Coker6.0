@@ -7,6 +7,59 @@
 <link rel="stylesheet" href="~/css/ProductManagement/ProductList.min.css" asp-append-version="true" />
 <script src="~/js/ProductManagement/ProductList.min.js" asp-append-version="true"></script>
 
+<div id="PriceModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="PriceModalLabel" aria-hidden="true" data_psid="">
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+		<div class="modal-content">
+			<div class="modal-header px-4">
+				<h5 class="modal-title" id="exampleModalLabel">自訂規格價格</h5>
+				<button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+					<span class="material-icons ">close</span>
+				</button>
+			</div>
+
+			<template id="ModalTemplatePrice">
+				<div class="modal_price frame row align-items-center mb-3" data_ppid="">
+					<select class="col select_role form-select" aria-label="Role Select">
+						<option selected value="1">一般價</option>
+						<option value="2">會員等級一</option>
+						<option value="3">會員等級二</option>
+						<option value="4">會員等級三</option>
+					</select>
+
+					<div class="col cash input-group">
+						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
+						<input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9">
+					</div>
+
+					<div class="col bonus input-group">
+						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
+						<input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9">
+					</div>
+
+					<button class="col-auto btn_price_delect bg-transparent border-0 d-flex p-0">
+						<span class="material-symbols-outlined">delete</span>
+					</button>
+				</div>
+			</template>
+
+			<div class="modal-body p-4">
+				<div class="price_option"></div>
+				<div class="d-flex justify-content-center my-2">
+					<button class="btn btn_spec_price_add align-items-center d-flex">
+						<span class="material-symbols-outlined">add</span>
+						<div>新增其他付款方式</div>
+					</button>
+				</div>
+				<div class="text-center text-danger mb-3">*紅利及價格須輸入一億元(含)以下</div>
+			</div>
+			<div class="modal-footer px-4">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>
+				<button type="button" class="btn_price_save btn btn-primary switch">儲　存</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div class="">
 	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
 		<div class="title fw-bold fs-3">商品列表</div>
@@ -215,27 +268,6 @@
 						<span class="material-symbols-outlined fs-3">add</span>
 					</button>
 				</div>
-
-				@*<div class="price input-group mb-3">
-				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-				<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
-				</div>
-				<input id="InputPrice" class=" form-control rounded" type="number" aria-label="Input Price of Product" required>
-				</div>
-
-				<div class="number input-group mb-3">
-				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-				<span class="material-symbols-outlined me-1">bubble_chart</span>商品數量
-				</div>
-				<input id="InputNumber" class="form-control rounded" type="number" aria-label="Input Number of Product">
-				</div>
-
-				<div class="min_number input-group mb-3">
-				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-				<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
-				</div>
-				<input id="InputMinNumber" class="form-control rounded" type="number" aria-label="Input MinNumber of Product">
-				</div>*@
 
 				<div class="date input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">

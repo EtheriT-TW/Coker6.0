@@ -38,7 +38,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Role> Roles { get; set; }
         public DbSet<Prod_Price> Prod_Prices { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
-        
+        public DbSet<MappingUserAndRole> MappingUserAndRoles { get; set; }
+
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)
         {
@@ -121,6 +122,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId);
                 o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
+            });
+            modelBuilder.Entity<MappingUserAndRole>(o =>
+            {
+                o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
+                o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

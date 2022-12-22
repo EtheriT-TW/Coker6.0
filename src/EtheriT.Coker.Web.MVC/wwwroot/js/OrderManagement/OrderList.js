@@ -38,6 +38,9 @@ function PageReady() {
     } else {
         setInterval(hashChange, 1000);
     }
+
+    $(".status_select").on("change", function () {
+    })
 }
 
 function ElementInit() {
@@ -168,7 +171,7 @@ function DetailsDataSet(result) {
 
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
-    item_specification.text("白色");
+    item_specification.text(result.s1Title + " " + result.s2Title);
     item_instructions.text(result.description);
     item_unit.text(result.price.toLocaleString("en-US"))
     item_quantity.text(result.quantity);

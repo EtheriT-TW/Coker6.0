@@ -13,6 +13,20 @@ input[type="number"] {
 }
 
 /* Product List */
+#PriceModal > .modal-dialog {
+    min-width: 40vw;
+}
+
+.modal-open .wrapper {
+    transition: unset !important;
+    filter: unset !important;
+}
+
+.modal_price > div > input {
+    padding-left: 3rem;
+}
+
+/* Product List */
 .btn_back {
     color: #4E565A;
 }

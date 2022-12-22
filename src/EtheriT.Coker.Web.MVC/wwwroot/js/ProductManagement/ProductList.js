@@ -1,6 +1,7 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true
-var product_list, spec_num = 0, remove_list = []
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], spec_price_remove_list = [], modal_price_list = []
+var $price_modal, priceModal;
 
 function PageReady() {
     co.Product = {
@@ -88,8 +89,6 @@ function PageReady() {
 
     ElementInit();
 
-    /*SelectInit();*/
-
     $picker = $("#InputDate");
 
     co.Picker.Init($picker);
@@ -109,9 +108,13 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                        AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-                    });
+                    if (ISpecRepect()) {
+                        co.sweet.error("錯誤", "商品規格不可重複", null, false);
+                    } else {
+                        Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                            AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                        });
+                    }
                 }
                 form.classList.add('was-validated')
             }, false)
@@ -154,6 +157,8 @@ function PageReady() {
         }
     })
     $(".btn_spec_add").on("click", SpecAdd);
+    $(".btn_spec_price_add").on("click", SpecPriceAdd);
+    $(".btn_price_save").on("click", SpecPriceSave);
 
     $name.on('keyup', function () {
         $name_count.text($name.val().length);
@@ -200,6 +205,16 @@ function ElementInit() {
     $alert_number = $(".input_alert_number");
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
+
+    priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
+    $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
+    document.getElementById('PriceModal').addEventListener('hidden.bs.modal', function (event) {
+        $price_modal.children(".frame").each(function () {
+            $(this).remove();
+            modal_price_list = [];
+            spec_price_num = 0;
+        })
+    })
 }
 
 function FormDataClear() {
@@ -227,8 +242,7 @@ function FormDataClear() {
     $date.removeAttr("disabled");
     startDate = null;
     endDate = null;
-    remove_list = [];
-
+    spec_remove_list = [];
 }
 
 function contentReady(e) {
@@ -321,6 +335,115 @@ function deleteButtonClicked(e) {
     });
 }
 
+function SpecPriceAdd(result) {
+    spec_price_num += 1;
+    var item = $($("#ModalTemplatePrice").html()).clone();
+    var item_role = item.find(".select_role"),
+        item_cash = item.find(".input_cash"),
+        item_bonus = item.find(".input_bonus"),
+        item_btn_delect = item.find(".btn_price_delect");
+
+    //co.Product.Get.SpecType().done(function (type_result) {
+    //    if (type_result != null) {
+    //        type_result.forEach(function (type) {
+    //            var spec = $($("#TemplateSpecSelect").html()).clone();
+    //            var spec_select = spec.find("select");
+    //            co.Product.Get.Spec(type.id).done(function (spec_result) {
+    //                spec_select.attr("aria-label", type.title);
+    //                if (result != null) {
+    //                    spec_select.append('<option value="" disabled="disabled">' + type.title + '</option>')
+    //                    spec_select.append('<option value="0">無</option>')
+    //                    spec_result.forEach(function (spec) {
+    //                        if (spec.id == result.fK_S1id || spec.id == result.fK_S2id) {
+    //                            spec_select.append('<option selected value="' + spec.id + '">' + spec.title + '</option>')
+    //                        } else {
+    //                            spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
+    //                        }
+    //                    })
+    //                } else {
+    //                    spec_select.append('<option selected value="" disabled="disabled">' + type.title + '</option>')
+    //                    spec_select.append('<option value="0">無</option>')
+    //                    spec_result.forEach(function (spec) {
+    //                        spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
+    //                    })
+    //                }
+    //            });
+    //            item_select.append(spec);
+    //        })
+    //    }
+    //});
+
+    //item.data("psid", result != null ? result.id : "")
+    //item_price.val(result != null ? result.price : "");
+    //item_min.val(result != null ? result.min_Qty : "");
+    //item_stock.val(result != null ? result.stock : "");
+    //item_alert.val("");
+    //item_alert.val(result != null ? result.alert_Qty : "");
+
+    item_btn_delect.on("click", function () {
+        $self_p = $(this).parents(".frame").first();
+        if (spec_price_num == 1) {
+            co.sweet.error("商品至少需有一種價格", null, false);
+        } else {
+            co.sweet.confirm("移除價格", "確定要移除此項價格嗎?", "　是　", "　否　", function () {
+                spec_price_remove_list.push($self_p.data("ppid"));
+                spec_price_num -= 1;
+                $self_p.remove();
+            })
+        }
+    })
+
+    $("#PriceModal > .modal-dialog > .modal-content > .modal-body > .price_option").append(item);
+
+    //$spec_select = $(".spec_select")
+    //$price = $(".input_price");
+    //$stock_number = $(".input_stock_number");
+    //$min_number = $(".input_min_number");
+    //$alert_number = $(".input_alert_number");
+
+    $("input[type='number']").on("input", function () {
+        $(this).val($(this).val() < 0 ? 0 : $(this).val())
+    });
+}
+
+function SpecPriceSave() {
+    var save_success = true;
+    var obj = []
+    modal_price_list = []
+    $price_modal.children(".frame").each(function () {
+        $self = $(this);
+        obj["PSid"] = $self.find(".select_role").val()
+        obj["Rid"] = $self.find(".select_role").val()
+        obj["Price"] = $self.find(".input_cash").val()
+        obj["Bonus"] = $self.find(".input_bonus").val()
+        if (obj["Price"] == "" && obj["Bonus"] == "") {
+            co.sweet.error("錯誤", "商品現金與紅利不可同時為空", null, false);
+            save_success = false;
+            return false;
+        } else {
+            if (modal_price_list.find(item => item[0] == obj[0] && item[1] == obj[1] && item[2] == obj[2]) != null) {
+                co.sweet.error("錯誤", "價格不可重複", null, false);
+                save_success = false;
+                return false;
+            } else {
+                modal_price_list.push(obj);
+                obj = [];
+            }
+        }
+        //if (modal_price_list.find(item => item["Rid"] == obj["Rid"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
+        //    isRepect = true;
+        //} else {
+        //    modal_price_list.push(obj);
+        //    obj = [];
+        //}
+    })
+    if (save_success) {
+        priceModal.hide();
+        console.log(modal_price_list)
+        console.log($price_modal.data("psid"))
+    }
+}
+
 function SpecAdd(result) {
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
@@ -334,7 +457,6 @@ function SpecAdd(result) {
         item_btn_delect = item.find(".btn_delect");
 
     co.Product.Get.SpecType().done(function (type_result) {
-        console.log(type_result)
         if (type_result != null) {
             type_result.forEach(function (type) {
                 var spec = $($("#TemplateSpecSelect").html()).clone();
@@ -374,6 +496,13 @@ function SpecAdd(result) {
     item_btn_expand.attr("data-bs-target", "#CollapseDetail" + spec_num);
     item_btn_expand.attr("aria-controls", "CollapseDetail" + spec_num);
 
+    //item_price.on("click", function () {
+    //    SpecPriceAdd(null);
+    //    var psid = $(this).parents(".frame").data("psid")
+    //    $price_modal.data("psid", psid != null ? psid : "")
+    //    priceModal.show()
+    //})
+
     item_btn_expand.on("click", function () {
         var $self = $(this);
         if ($self.children("span").text() == "expand_more") {
@@ -389,13 +518,12 @@ function SpecAdd(result) {
             co.sweet.error("商品至少需有一種規格", null, false);
         } else {
             co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
-                remove_list.push($self_p.data("psid"));
+                spec_remove_list.push($self_p.data("psid"));
                 spec_num -= 1;
                 $self_p.remove();
             })
         }
     })
-
 
     $("#Spec_Frame").append(item);
 
@@ -410,10 +538,28 @@ function SpecAdd(result) {
     });
 }
 
-function AddUp(display, success_text, error_text) {
+function ISpecRepect() {
+    var obj = []
+    var temp_list = []
+    var isRepect = false;
+    $("#Spec_Frame > .frame").each(function () {
+        $self = $(this);
+        $self.find(".spec_select").each(function () {
+            obj.push($(this).val());
+        })
+        if (temp_list.find(item => item[0] == obj[0] && item[1] == obj[1]) != null) {
+            isRepect = true;
+        } else {
+            temp_list.push(obj);
+            obj = [];
+        }
+    })
+    return isRepect;
+}
 
-    if (remove_list.length > 0) {
-        remove_list.forEach(function (item) {
+function AddUp(display, success_text, error_text) {
+    if (spec_remove_list.length > 0) {
+        spec_remove_list.forEach(function (item) {
             co.Product.Delect.Stock({
                 Id: item,
                 TId: $.cookie('secret')

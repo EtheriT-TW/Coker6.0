@@ -199,16 +199,59 @@ function PageDefaultSet() {
 function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
+    $self_s = $self_p.siblings(".radio");
+
+    $self_p.find("input").each(function () {
+        $radio = $(this)
+        $radio.removeAttr("disabled");
+    })
+    $self_s.find("input").each(function () {
+        $radio = $(this)
+        $radio.removeAttr("disabled");
+    })
+
     switch ($self_p.data("stype")) {
         case 1:
             s1 = $self.val()
+            var temp_list = []
+            price_list.forEach(function (item) {
+                if (item.s1id == s1) {
+                    temp_list.push(item.s2id)
+                }
+            })
+            $self_s.find("input").attr("disabled", "disabled");
+            $self_s.find("input").each(function () {
+                $radio = $(this)
+                if (temp_list.indexOf(parseInt($radio.val())) > -1) {
+                    $radio.removeAttr("disabled");
+                }
+            })
+            if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
+                s2 = null;
+            }
             break;
         case 2:
             s2 = $self.val()
+            var temp_list = []
+            price_list.forEach(function (item) {
+                if (item.s2id == s2) {
+                    temp_list.push(item.s1id)
+                }
+            })
+            $self_s.find("input").attr("disabled", "disabled");
+            $self_s.find("input").each(function () {
+                $radio = $(this)
+                if (temp_list.indexOf(parseInt($radio.val())) > -1) {
+                    $radio.removeAttr("disabled");
+                }
+            })
+            if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
+                s1 = null;
+            }
             break;
     }
 
-    if (s1 >= 0 && s2 >= 0) {
+    if (s1 != null && s2 != null) {
         price_list.forEach(function (item) {
             if (item.s1id == s1 && item.s2id == s2) {
                 $pro_discount.text(item.price.toLocaleString('en-US'));
@@ -222,8 +265,7 @@ function AddToCart() {
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
-        console.log("s1 = " + s1 + " s2 = " + s2)
-        if (s1 >= 0 && s2 >= 0) {
+        if (s1 != null && s2 != null) {
             Product.AddUp.Cart({
                 FK_Tid: $.cookie("Token"),
                 FK_Pid: parseInt(Pid),

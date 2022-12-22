@@ -11,6 +11,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -183,6 +184,17 @@ namespace EtheriT.Coker.Application.Order
 
                 if (result != null)
                 {
+                    var ship_text = "";
+                    if (result.Shipping == 0)
+                    {
+                        ship_text = "郵寄掛號";
+                    }
+                    else
+                    {
+                        var ls = db.LogisticsSettings.Where(e => e.Id == result.Shipping).Select(e => e.LogisticsType).FirstOrDefault();
+                        ship_text = ((ShippingTypeEnum)ls).ToString().Replace("_", "/").Replace("Seven", "7-11");
+                    }
+
                     OrderHeaderGetOneDto output = new OrderHeaderGetOneDto()
                     {
                         Id = result.Id,
@@ -198,7 +210,7 @@ namespace EtheriT.Coker.Application.Order
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
                         Payment = ((PaymentTypeEnum)result.Payment).ToString(),
-                        Shipping = ((ShippingTypeEnum)result.Shipping).ToString(),
+                        Shipping = ship_text,
                         State = result.State,
                         Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
                         Subtotal = result.Subtotal,
@@ -228,24 +240,34 @@ namespace EtheriT.Coker.Application.Order
                 var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
                 if (db_oh != null)
                 {
-                    var output = from od in db.Order_Details
-                                 where od.FK_OId == db_oh.Id
-                                 from sc in db.ShoppingCarts
-                                 where sc.Id == od.FK_SCId
-                                 from ps in db.Prod_Stocks
-                                 where ps.Id == sc.FK_PSid
-                                 from p in db.Prods
-                                 where p.Id == ps.FK_Pid
-                                 select new OrderDetailsGetAllDto
-                                 {
-                                     PId = p.Id,
-                                     Title = p.Title,
-                                     Description = p.Description,
-                                     Price = ps.Price,
-                                     Quantity = sc.Quantity,
-                                     Subtotal = ps.Price * sc.Quantity
-                                 };
-                    return output.ToList();
+                    var output = await (from od in db.Order_Details
+                                        where od.FK_OId == db_oh.Id
+                                        from sc in db.ShoppingCarts
+                                        where sc.Id == od.FK_SCId
+                                        from ps in db.Prod_Stocks
+                                        where ps.Id == sc.FK_PSid
+                                        from p in db.Prods
+                                        where p.Id == ps.FK_Pid
+                                        select new OrderDetailsGetAllDto
+                                        {
+                                            PId = p.Id,
+                                            Title = p.Title,
+                                            S1Title = ps.FK_S1id.ToString(),
+                                            S2Title = ps.FK_S2id.ToString(),
+                                            Description = p.Description,
+                                            Price = ps.Price,
+                                            Quantity = sc.Quantity,
+                                            Subtotal = ps.Price * sc.Quantity
+                                        }).ToListAsync();
+
+                    var db_sp = db.Prod_Specs.ToList();
+                    foreach (var item in output)
+                    {
+                        item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp[int.Parse(item.S1Title) - 1].Title;
+                        item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp[int.Parse(item.S2Title) - 1].Title;
+                    }
+
+                    return output;
                 }
                 else throw new Exception("查無資料");
             }

@@ -6,6 +6,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public string Name { get; set; }
         public List<Prod_Price> Prod_Prices { get; set; }
+        public List<MappingUserAndRole> Users { get; set; }
 
     }
 }

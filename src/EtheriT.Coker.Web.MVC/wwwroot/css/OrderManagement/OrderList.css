@@ -35,6 +35,11 @@
     content: "\00d7";
 }
 
+/* Order Data */
+#OrderData {
+    max-width: 95vw;
+}
+
 /* ManagementData */
 #ManagementData {
     max-width: 90vw;

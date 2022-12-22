@@ -102,7 +102,7 @@ namespace EtheriT.Coker.Application.Product
                             FK_S2id = dto.FK_S2id,
                             Price = dto.Price,
                             Stock = dto.Stock,
-                            Min_Qty = dto.Stock,
+                            Min_Qty = dto.Min_Qty,
                             Alert_Qty = dto.Alert_Qty,
                             CreatorUserId = (long)db_t.UserID,
                         };
@@ -122,7 +122,7 @@ namespace EtheriT.Coker.Application.Product
                         db_ps.FK_S2id = dto.FK_S2id;
                         db_ps.Price = dto.Price;
                         db_ps.Stock = dto.Stock;
-                        db_ps.Min_Qty = dto.Stock;
+                        db_ps.Min_Qty = dto.Min_Qty;
                         db_ps.LastModificationTime = DateTime.Now;
                         db_ps.Alert_Qty = dto.Alert_Qty;
                         db_ps.LastModifierUserId = db_t.UserID;

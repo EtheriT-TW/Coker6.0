@@ -93,10 +93,10 @@ function PageReady() {
     buy_step_swiper.on('slideChange', function () {
         switch (buy_step_swiper.activeIndex) {
             case 2:
-                if (shipping == null) {
+                if (ShippingForms.find("input").length == 0) {
                     Coker.sweet.error("錯誤", "店家尚未設置運費方式，無法繼續", null, false);
                     buy_step_swiper.slideTo(1);
-                } else if (payment == null) {
+                } else if (PaymentForms.find("input").length == 0) {
                     Coker.sweet.error("錯誤", "店家尚未設置付款方式，無法繼續", null, false);
                     buy_step_swiper.slideTo(1);
                 } else {
@@ -227,6 +227,7 @@ function ElementInit() {
     $ship_method = $("input[name=RadioShipping]");
     $ship_method.each(function () {
         if ($(this).is(":checked")) {
+            shipping = $(this).val();
             ori_freight = $(this).data("freight");
             low_con = $(this).data("lowcon");
             disfreight = $(this).data("disfreight");
@@ -260,7 +261,6 @@ function CartInit() {
 }
 
 function CartAdd(result) {
-    console.log(result)
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
@@ -730,6 +730,7 @@ function OrderSuccess(oh_result) {
 }
 
 function PurchaseAdd(result, item_list_ul) {
+    console.log(result)
     var item = $($("#Template_Purchase_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),

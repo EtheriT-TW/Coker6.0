@@ -1,4 +1,13 @@
-﻿var grapesInit = function () {
+﻿/****************************************
+ * obj.save 內容儲存
+ * obj.import 內容發布
+ ****************************************/
+var grapesInit = function (options) {
+    var settings = {
+        save : function () { return false; },
+        import : function () { return false; }
+    };
+    $.extend(true, settings, options);
     var editor = grapesjs.init({
         showOffsets: 1,
         noticeOnUnload: 0,
@@ -172,9 +181,9 @@
         className: 'someClass',
         label: '<i title="儲存" class="fa fa-download"></i>',
         command: function (editor) {
-            console.log(editor.getHtml());
-            console.log(editor.getCss());
-            co.sweet.success("已儲存草稿");
+            settings.save(editor.getHtml(), editor.getCss()).done(function () {
+                co.sweet.success("已儲存草稿");
+            });
         },
         attributes: { title: 'save' },
         active: false,
@@ -185,7 +194,10 @@
         className: 'someClass',
         label: '<i title="發布" class="fa fa-cloud-arrow-up""></i>',
         command: function (editor) {
-            co.sweet.success("已發布");
+            console.log("in");
+            settings.import(editor.getHtml(), editor.getCss()).done(function () {
+                co.sweet.success("已儲存並發布");
+            });
         },
         attributes: { title: 'save' },
         active: false,

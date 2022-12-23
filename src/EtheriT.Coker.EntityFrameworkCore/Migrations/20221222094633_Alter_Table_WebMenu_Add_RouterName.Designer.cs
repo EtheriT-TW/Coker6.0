@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221222094633_Alter_Table_WebMenu_Add_RouterName")]
+    partial class Alter_Table_WebMenu_Add_RouterName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -826,7 +828,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Ser_No = 500,
                             Title = "DE-R1073 德瑞克直熱式微電腦馬桶座／遙控型",
-                            permanent = true
+                            permanent = false
                         },
                         new
                         {
@@ -840,7 +842,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Ser_No = 500,
                             Title = "C659NA 德瑞克Smart III淨未來智慧馬桶",
-                            permanent = true
+                            permanent = false
                         },
                         new
                         {
@@ -854,21 +856,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Ser_No = 500,
                             Title = "L602 檯上三角盆",
-                            permanent = true
-                        },
-                        new
-                        {
-                            Id = 4L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            Description = "L183NA檯上奈米方型盆W560 x D380 x H120mm\n1033PH四角型單孔單槍加高面盆龍頭歐洲省水二段Ø35短腳陶瓷心軸(附歐規按押無溢水排桿)",
-                            Disp_Opt = true,
-                            FK_WebsiteId = 2L,
-                            Introduction = "最大容水量：11公升\n適用水壓：1~5kgf/㎝²",
-                            IsDeleted = false,
-                            Ser_No = 500,
-                            Title = "L183NA 檯上奈米方型盆",
-                            permanent = true
+                            permanent = false
                         });
                 });
 
@@ -1073,33 +1061,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_Tid = 2L,
                             IsDeleted = false,
                             Title = "大"
-                        },
-                        new
-                        {
-                            Id = 7L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
-                            CreatorUserId = 2L,
-                            FK_Tid = 3L,
-                            IsDeleted = false,
-                            Title = "整組"
-                        },
-                        new
-                        {
-                            Id = 8L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
-                            CreatorUserId = 2L,
-                            FK_Tid = 3L,
-                            IsDeleted = false,
-                            Title = "L183NA 檯上奈米方型盆"
-                        },
-                        new
-                        {
-                            Id = 9L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1466),
-                            CreatorUserId = 2L,
-                            FK_Tid = 3L,
-                            IsDeleted = false,
-                            Title = "1033PH 四角型單孔單槍加高面盆龍頭"
                         });
                 });
 
@@ -1163,15 +1124,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
                             Type = "尺寸"
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_WebsiteId = 2L,
-                            IsDeleted = false,
-                            Type = "其他"
                         });
                 });
 
@@ -1271,21 +1223,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Alert_Qty = 5,
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
-                            FK_Pid = 1L,
-                            FK_S1id = 2L,
-                            FK_S2id = 5L,
-                            IsDeleted = false,
-                            Min_Qty = 1,
-                            Price = 28500.0,
-                            Ser_No = 500,
-                            Stock = 100
-                        },
-                        new
-                        {
-                            Id = 4L,
-                            Alert_Qty = 5,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
                             FK_Pid = 2L,
                             FK_S1id = 1L,
                             FK_S2id = 4L,
@@ -1297,7 +1234,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         },
                         new
                         {
-                            Id = 5L,
+                            Id = 4L,
                             Alert_Qty = 5,
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
@@ -1307,51 +1244,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Min_Qty = 1,
                             Price = 13000.0,
-                            Ser_No = 500,
-                            Stock = 100
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            Alert_Qty = 5,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_Pid = 4L,
-                            FK_S1id = 7L,
-                            FK_S2id = 0L,
-                            IsDeleted = false,
-                            Min_Qty = 1,
-                            Price = 24300.0,
-                            Ser_No = 500,
-                            Stock = 100
-                        },
-                        new
-                        {
-                            Id = 7L,
-                            Alert_Qty = 5,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_Pid = 4L,
-                            FK_S1id = 8L,
-                            FK_S2id = 0L,
-                            IsDeleted = false,
-                            Min_Qty = 1,
-                            Price = 9500.0,
-                            Ser_No = 500,
-                            Stock = 100
-                        },
-                        new
-                        {
-                            Id = 8L,
-                            Alert_Qty = 5,
-                            CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            FK_Pid = 4L,
-                            FK_S1id = 9L,
-                            FK_S2id = 0L,
-                            IsDeleted = false,
-                            Min_Qty = 1,
-                            Price = 14800.0,
                             Ser_No = 500,
                             Stock = 100
                         });

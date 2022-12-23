@@ -61,8 +61,14 @@ namespace EtheriT.Coker.Application.Authorization
                         DateTime dateTime = DateTime.Now;
                         DateTime EndDateTime = dateTime.AddMinutes(30);
                         long bindID = 0;
-                        var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync(); 
-                        if(defaultWeb!= null) bindID = defaultWeb.UserId;
+                        if (httpContextAccessor.HttpContext != null)
+                        {
+                            long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"], out bindID);
+                        }
+                        if (!await loginUserData.CheckedWebSiteId(user.Id, bindID)) {
+                            var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
+                            if (defaultWeb != null) bindID = defaultWeb.UserId;
+                        }
                         Core.Models.Token t = new Core.Models.Token
                         {
                             ip = loginUserData.GetClientIP()??"",

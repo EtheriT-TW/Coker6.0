@@ -1,4 +1,5 @@
 ﻿var MinutesSecond = 60 * 1000;
+var MonthSecond = 30 * 24 * 60 * 60 * 1000;
 var Coker = {
     Data: {
         DefauleUrl: "/Dashboard/index",
@@ -8,13 +9,15 @@ var Coker = {
         },
         Time: {
             DataRetentionTime: 30 * MinutesSecond,
+            DataRetentionLongTime: 3 * MonthSecond,
             ReCheckTime: 20 * MinutesSecond
         }
     },
     Cookie: {
+        EffectiveTime : 0,
         Add: function (key, value) {
             var expDate = new Date();
-            expDate.setTime(expDate.getTime() + _c.Data.Time.DataRetentionTime);
+            expDate.setTime(expDate.getTime() + co.Cookie.EffectiveTime);
             $.cookie(key, value, { path: "/", expires: expDate });
         },
         AddAll: function (obj) {
@@ -31,7 +34,7 @@ var Coker = {
         DelAll: function () {
             var cookies = $.cookie();
             for (var cookie in cookies) {
-                $.removeCookie(cookie, { path: "/" });
+                if (cookie != "LastWebSite") $.removeCookie(cookie, { path: "/" });
             }
         }
     },
@@ -43,14 +46,23 @@ var Coker = {
     },
     WebSite: {
         exchange: function (id) {
-            return $.ajax({
+            var _dfr = $.Deferred();
+            $.ajax({
                 url: "/api/Website/Exchange",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ Id: id }),
                 dataType: "json"
-            })
+            }).done(function (result) {
+                if (result.success) {
+                    co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
+                    co.Cookie.Add("LastWebSite", result.message);
+                    co.Cookie.EffectiveTime = co.Data.Time.D;
+                }
+                _dfr.resolve(result);
+            });
+            return _dfr.promise();
         }
     },
     User: {
@@ -103,6 +115,9 @@ var Coker = {
                     secret: result.secret,
                     endDateTime: (new Date(result.endDateTime)).getTime()
                 });
+                co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
+                co.Cookie.Add("LastWebSite", co.Cookie.Get("LastWebSite"));
+                co.Cookie.EffectiveTime = co.Data.Time.D;
                 _dfr.resolve(result);
             }).fail(function () {
                 _c.Cookie.DelAll();
@@ -135,7 +150,7 @@ var Coker = {
         },
         error: function (title, text, action, autoclose) {
             var closetime = false;
-            if (autoclose) { closetime = Coker.timeout.time }
+            if (autoclose) { closetime = Coker.sweet.config.timeout }
 
             Swal.fire({
                 icon: 'error',
@@ -252,13 +267,22 @@ var Coker = {
             });
         },
         createOrEdit: function (data) {
-            console.log(JSON.stringify(data));
             return $.ajax({
                 url: "/api/WebMenu/CreateOrEdit",
                 type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        getConten: function (id) {
+            return $.ajax({
+                url: "/api/WebMenu/GetConten",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ id: id }),
                 dataType: "json"
             });
         },
@@ -306,3 +330,4 @@ var Coker = {
 }
 var _c = Coker;
 var co = Coker;
+co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;

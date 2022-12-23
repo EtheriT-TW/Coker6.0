@@ -28,6 +28,10 @@ namespace EtheriT.Coker.Application
             CreateMap<MenuContenDto, WebMenu>().ReverseMap();
             CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();
             CreateMap<UpdateSerNoDto, WebMenu>().ReverseMap();
+            CreateMap<MenuSaveContenDto, MenuContenDto>()
+                .ForMember(e => e.Html, option => option.MapFrom(c => c.SaveHtml))
+                .ForMember(e => e.Css, option => option.MapFrom(c => c.SaveCss))
+                .ReverseMap();
         }
     }
 }

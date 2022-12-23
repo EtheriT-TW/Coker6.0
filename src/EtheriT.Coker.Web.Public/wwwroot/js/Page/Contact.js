@@ -65,7 +65,7 @@ function CaptchaVerify() {
                         }, 1500);
                     }
                 } else {
-                    console.log($captcha_input.siblings("div").children("img")
+                    console.log($captcha_input.siblings("div").children("img"));
                     $captcha_input.val("");
                 }
             }

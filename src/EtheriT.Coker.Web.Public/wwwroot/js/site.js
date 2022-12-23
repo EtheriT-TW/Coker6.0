@@ -62,8 +62,11 @@ function ready() {
     })
 
     $(".btn_login").on("click", function () {
-        login_check = SiteFormCheck(LoginForms, $InputLoginVCode)
-        login_vcode_check = CaptchaVerify($LoginImgCaptcha, $InputLoginVCode)
+        if (SiteFormCheck(LoginForms, $InputLoginVCode)) {
+            CaptchaVerify($LoginImgCaptcha, $InputLoginVCode, LoginAction)
+        } else {
+            Coker.sweet.error("錯誤", "請確實填寫登入資料", null, true);
+        }
     })
 
     $(".btn_register").on("click", function () {
@@ -72,7 +75,9 @@ function ready() {
         $NewPass.keyup(PassCheck);
         $CheckPass.keyup(PassCheck);
         if (passcheck && formcheck) {
-            CaptchaVerify($RegisterImgCaptcha, $InputRegisterVCode)
+            CaptchaVerify($RegisterImgCaptcha, $InputRegisterVCode, RegisterAction)
+        } else {
+            Coker.sweet.error("錯誤", "請確實填寫註冊資料", null, true);
         }
     })
 
@@ -94,10 +99,16 @@ function SiteElementInit() {
     $InputLoginVCode = $("#InputLoginVCode");
     $LoginImgCaptcha = $('#LoginImgCaptcha');
     LoginForms = $('#LoginForm');
+    $LoginMail = $("#InputLoginMail")
+    $LoginPass = $("#InputLoginPass")
+    $LoginRemember = $("#CheckRemember")
 
     $InputRegisterVCode = $("#InputRegisterVCode");
     $RegisterImgCaptcha = $('#RegisterImgCaptcha');
     RegisterForms = $('#RegisterForm');
+    $RegisterMail = $("#InputRegisterMail")
+    $RegisterName = $("#InputRegisterName")
+    $RegisterAccept = $("#CheckAccept")
 
     $NewPass = $("#InputRegisterNewPass");
     $NewPassFeedBack = $("#NewPassFeedBack");
@@ -168,32 +179,44 @@ function SiteFormCheck(Forms, $input) {
     return Check;
 }
 
-function CaptchaVerify($self, $input) {
+function CaptchaVerify($self, $input, SuccessAction) {
     var code = $input.val();
-    if (!code == "") {
+    if (code != "") {
         $.ajax('/api/Captcha/Validate?id=' + id + '&code=' + code, {
             dataType: "JSON",
             success: function (result) {
                 if (result.success) {
                     $input.removeClass('is-invalid');
                     $input.addClass('is-valid');
+                    SuccessAction();
                 } else {
                     $input.addClass('is-invalid');
                     $input.siblings("div").addClass("me-4 pe-2");
-                    console.log($input.siblings("div"))
                     NewCaptcha($self, $input)
                     $input.val("");
+                    Coker.sweet.error("錯誤", "驗證碼錯誤", null, true);
                 }
             }
         })
     } else {
         $input.addClass('is-invalid');
         $input.siblings("div").addClass("me-4 pe-2");
-        console.log($input.siblings("div"))
         NewCaptcha($self, $input)
         $input.val("");
+        Coker.sweet.error("錯誤", "請確實填寫驗證碼", null, true);
     }
-    return false;
+}
+
+function LoginAction() {
+    var loginModal = new bootstrap.Modal($("#LoginModal"))
+    loginModal.hide();
+    console.log("Login")
+}
+
+function RegisterAction() {
+    var registerModal = new bootstrap.Modal($("#RegisterModal"))
+    registerModal.hide();
+    console.log("Register")
 }
 
 function NewCaptcha($self, $input) {
@@ -206,6 +229,16 @@ function FormClear(form, $input) {
     form.removeClass('was-validated')
     $input.siblings("div").removeClass("me-4 pe-2")
     $input.removeClass('is-invalid');
+    $LoginMail.val("");
+    $LoginPass.val("");
+    $LoginRemember.prop('checked', false);
+    $RegisterMail.val("");
+    $RegisterName.val("");
+    $NewPass.val("");
+    $NewPassFeedBack.val("");
+    $CheckPass.val("");
+    $CheckPassFeedBack.val("");
+    $RegisterAccept.prop('checked', false);
     $input.val("");
 }
 

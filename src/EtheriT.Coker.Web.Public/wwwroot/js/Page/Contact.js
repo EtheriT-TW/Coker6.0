@@ -7,10 +7,10 @@ function PageReady() {
 
     $captcha_input = $("#InputCaptcha");
     $imgCaptcha = $('#imgCaptcha');
-    NewCaptcha();
+    NewCaptcha($imgCaptcha, $captcha_input);
     const forms = $('#ContactForm');
 
-    $('.btn_refresh').on('click', NewCaptcha);
+    $('.btn_refresh').on('click', NewCaptcha($imgCaptcha, $captcha_input));
 
     (() => {
         Array.from(forms).forEach(form => {
@@ -18,13 +18,12 @@ function PageReady() {
                 if (!form.checkValidity()) {
                     event.preventDefault()
                     event.stopPropagation()
-                    form_correct = false;
-                    CaptchaVerify();
-                    NewCaptcha();
+                    NewCaptcha($imgCaptcha, $captcha_input);
+                    Coker.sweet.error("錯誤", "須確實填寫表單資料才可送出", null, true);
                 } else {
                     event.preventDefault();
                     form_correct = true;
-                    CaptchaVerify();
+                    CaptchaVerify($imgCaptcha, $captcha_input, SuccessAction)
                 }
                 form.classList.add('was-validated')
             }, false)
@@ -49,33 +48,10 @@ function PageReady() {
     });
 }
 
-function CaptchaVerify() {
-    var code = $captcha_input.val();
-    if (!code == "") {
-        $.ajax('/api/Captcha/Validate?id=' + id + '&code=' + code, {
-            dataType: "JSON",
-            success: function (result) {
-                if (result.success) {
-                    $captcha_input.removeClass('is-invalid');
-                    if (form_correct) {
-                        Coker.sweet.success("成功送出表單！", null, true);
-                        verify_correct = false;
-                        setTimeout(function () {
-                            $("#ContactForm").submit();
-                        }, 1500);
-                    }
-                } else {
-                    console.log($captcha_input.siblings("div").children("img"));
-                    $captcha_input.val("");
-                }
-            }
-        })
-    }
-    return false;
-}
-
-function NewCaptcha() {
-    id = Math.floor(Math.random() * 10000);
-    $imgCaptcha.attr('src', '/api/Captcha/index?id=' + id);
-    $captcha_input.val("");
+function SuccessAction() {
+    Coker.sweet.success("成功送出表單！", null, true);
+    verify_correct = false;
+    setTimeout(function () {
+        $("#ContactForm").submit();
+    }, 1500);
 }

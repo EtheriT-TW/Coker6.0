@@ -130,9 +130,9 @@ function PageDefaultSet() {
 
             var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
             var item1_control = item1.find(".spec_control"),
-                item1_title = item1.find(".spec_title"),
-                item2_control = item2.find(".spec_control"),
-                item2_title = item2.find(".spec_title");
+                /*item1_title = item1.find(".spec_title"),*/
+                item2_control = item2.find(".spec_control");
+            /*item2_title = item2.find(".spec_title");*/
 
             item1.data("stype", 1)
             item2.data("stype", 2)
@@ -145,7 +145,7 @@ function PageDefaultSet() {
 
                 if (spec.fK_S1id > 0) {
                     if (!hass1) {
-                        item1_title.text(spec.s1_Title);
+                        /*item1_title.text(spec.s1_Title);*/
                         hass1 = true;
                     }
                     if (s1_list.indexOf(spec.fK_S1id) < 0) {
@@ -161,7 +161,7 @@ function PageDefaultSet() {
 
                 if (spec.fK_S2id > 0) {
                     if (!hass2) {
-                        item2_title.text(spec.s2_Title);
+                        /* item2_title.text(spec.s2_Title);*/
                         hass2 = true;
                     }
                     if (s2_list.indexOf(spec.fK_S2id) < 0) {

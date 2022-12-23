@@ -48,55 +48,29 @@ input[type="number"] {
     background-color: var(--gray-bg-light);
 }
 
-    .swiper_four_grid > .swiper {
-        padding-top: 15px;
+/* Prodcut Card Display */
+.prod_card {
+    border-radius: 25px;
+}
+
+    .prod_card > figcaption > .card-body > .top_line > button {
+        color: var(--gray-icon);
     }
 
-        .swiper_four_grid > .swiper > .swiper-wrapper > figure {
-            border-radius: 25px;
-        }
+    .prod_card > figcaption > .card-body > a > p {
+        overflow: hidden;
+        height: 4rem;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
 
-            .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .top_line {
-                top: 1rem;
-                right: 1rem;
-            }
+    .prod_card > figcaption > .card-footer > button {
+        color: var(--gray-icon);
+    }
 
-                .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .top_line > button > i {
-                    color: var(--gray-icon);
-                }
-
-            .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .card-body > p {
-                overflow: hidden;
-                height: 3rem;
-                text-overflow: ellipsis;
-                display: -webkit-box;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 2;
-                margin-bottom: 2.5rem;
-            }
-
-            .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line {
-                bottom: 1rem;
-                width: 100%;
-                padding: 0 1rem;
-            }
-
-                .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .pro_tag {
-                    height: 2rem;
-                }
-
-                    .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .pro_tag > li {
-                        font-size: 0.8rem;
-                        line-height: 1.5rem;
-                        background-color: var(--gray-bg-light);
-                        color: var(--gray-text);
-                        white-space: nowrap;
-                    }
-
-                .swiper_four_grid > .swiper > .swiper-wrapper > figure > figcaption > .bottom_line > .btn_cart > span > i:first-child {
-                    color: var(--gray-icon);
-                }
-
+/* Swiper Button */
 .swiper_button {
     z-index: 1;
     height: 3.75rem;
@@ -107,22 +81,41 @@ input[type="number"] {
     }
 
 .swiper_four_grid > .swiper_button > [class*=btn_swiper_next_] {
-    margin-right: -5rem;
+    pointer-events: fill;
     transform: scale(0);
+    transform-origin: right;
     transition: all 1s;
 }
 
 .swiper_four_grid > .swiper_button > [class*=btn_swiper_prev_] {
-    margin-left: -5rem;
+    pointer-events: fill;
     transform: scale(0);
+    transform-origin: left;
     transition: all 1s;
 }
 
-.swiper_four_grid:hover > .swiper_button > [class*=btn_swiper_] {
-    margin: 0;
+.swiper_four_grid:hover > .swiper_button > [class*=btn_swiper_next_] {
     transform: scale(1);
-    transition: all 0.5s;
+    transform-origin: right;
+    transition: all 1s;
 }
+
+.swiper_four_grid:hover > .swiper_button > [class*=btn_swiper_prev_] {
+    transform: scale(1);
+    transform-origin: left;
+    transition: all 1s;
+}
+
+/* Product Round Tag */
+.pro_round_tag {
+    height: 2rem;
+}
+
+    .pro_round_tag > li {
+        background-color: var(--gray-bg-light);
+        color: var(--gray-text);
+        white-space: nowrap;
+    }
 
 /* Filter */
 #Filter {
@@ -217,7 +210,6 @@ input[type="number"] {
 
 @media only screen and (max-width: 768px) {
     .swiper_four_grid > .swiper_button > [class*=btn_swiper_] {
-        margin: 0rem;
         transform: scale(1);
     }
 

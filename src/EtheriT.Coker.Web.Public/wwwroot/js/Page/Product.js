@@ -1,9 +1,11 @@
-﻿function PageReady() {
+﻿var guess_you_like_swiper
+
+function PageReady() {
     ShoppingCarModalInit();
 
     $(".btn_sort_price").on("click", SortByPrice);
 
-    var guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
+    guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -92,6 +94,8 @@
         ModalDefaultSet();
     });
 
+    $(".btn_view_type").on("click", GuessLikeTypeChange);
+
     $(".pro_link").on("click", function () {
         var $self = $(this);
         if ($self.parents("figure").first().data("pid") != null) {
@@ -119,6 +123,74 @@ function SortByPrice() {
 function ProShare() {
     var $self = $(this);
     $self.toggleClass('show');
+}
+
+function GuessLikeTypeChange() {
+    var $self = $(this);
+    $frame = $("#GuessYouLikeSwiper");
+    $frame_p = $frame.find(".swiper-wrapper");
+    $frame_btn = $frame.children(".swiper_button");
+
+    if (parseInt($self.data("type"))) {
+        $self.data("type", 0)
+        $self.children("span").text("view_carousel");
+        guess_you_like_swiper.destroy(true, true);
+
+        $frame.children("div").addClass("swiper-wrapper");
+        $frame.children("div").children("div").addClass("swiper-slide");
+        $frame_p.removeClass("swiper-wrapper")
+        $frame_p.addClass("row row-cols-1 row-cols-sm-3 row-cols-md-4 m-0");
+        $frame_p.children("div").each(function () {
+            $(this).addClass("col")
+            $(this).removeClass("swiper-slide")
+        })
+        $frame_btn.addClass("d-none")
+
+        guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper", {
+            direction: "vertical",
+            slidesPerView: "auto",
+            freeMode: true,
+            scrollbar: {
+                el: ".swiper-scrollbar",
+            },
+            mousewheel: true,
+        });
+    } else {
+        $self.data("type", 1)
+        $self.children("span").text("grid_view");
+        guess_you_like_swiper.destroy(true, true);
+
+        $frame.children("div").removeClass("swiper-wrapper");
+        $frame.children("div").children("div").removeClass("swiper-slide");
+        $frame_p.addClass("swiper-wrapper")
+        $frame_p.removeClass("row row-cols-1 row-cols-sm-3 row-cols-md-4 m-0");
+        $frame_p.children("div").each(function () {
+            $(this).removeClass("col")
+            $(this).addClass("swiper-slide")
+        })
+        $frame_btn.removeClass("d-none")
+
+        guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
+            slidesPerView: 1,
+            spaceBetween: 15,
+            loop: true,
+            navigation: {
+                nextEl: ".btn_swiper_next_guessyoulike",
+                prevEl: ".btn_swiper_prev_guessyoulike",
+            },
+            breakpoints: {
+                375: {
+                    slidesPerView: 2,
+                },
+                576: {
+                    slidesPerView: 3,
+                },
+                769: {
+                    slidesPerView: 4,
+                }
+            }
+        });
+    }
 }
 
 function ClickLog(Pid) {

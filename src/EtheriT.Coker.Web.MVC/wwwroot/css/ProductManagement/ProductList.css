@@ -72,11 +72,16 @@ input[type="number"] {
 #Spec_Frame > div > div > .price > input {
     padding-left: 5.5rem;
 }
-
+ㄙ
 #Spec_Frame > .frame > div > div > div > input[class*="number"] {
     padding-left: 7.5rem;
 }
 
 #ProductForm > .date > input {
     padding-left: 9.5rem;
+}
+
+.spec_title {
+    line-height: 1.5rem;
+    top: -0.75rem;
 }

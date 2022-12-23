@@ -136,9 +136,9 @@ function GuessLikeTypeChange() {
         $self.children("span").text("view_carousel");
         guess_you_like_swiper.destroy(true, true);
 
-        $frame.children("div").addClass("swiper-wrapper");
-        $frame.children("div").children("div").addClass("swiper-slide");
-        $frame_p.removeClass("swiper-wrapper")
+        //$frame.children("div").addClass("swiper-wrapper");
+        //$frame.children("div").children("div").addClass("swiper-slide");
+        /*$frame_p.removeClass("swiper-wrapper")*/
         $frame_p.addClass("row row-cols-1 row-cols-sm-3 row-cols-md-4 m-0");
         $frame_p.children("div").each(function () {
             $(this).addClass("col")
@@ -146,23 +146,23 @@ function GuessLikeTypeChange() {
         })
         $frame_btn.addClass("d-none")
 
-        guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper", {
-            direction: "vertical",
-            slidesPerView: "auto",
-            freeMode: true,
-            scrollbar: {
-                el: ".swiper-scrollbar",
-            },
-            mousewheel: true,
-        });
+        //guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper", {
+        //    direction: "vertical",
+        //    slidesPerView: "auto",
+        //    freeMode: true,
+        //    scrollbar: {
+        //        el: ".swiper-scrollbar",
+        //    },
+        //    mousewheel: true,
+        //});
     } else {
         $self.data("type", 1)
         $self.children("span").text("grid_view");
         guess_you_like_swiper.destroy(true, true);
 
-        $frame.children("div").removeClass("swiper-wrapper");
-        $frame.children("div").children("div").removeClass("swiper-slide");
-        $frame_p.addClass("swiper-wrapper")
+        //$frame.children("div").removeClass("swiper-wrapper");
+        //$frame.children("div").children("div").removeClass("swiper-slide");
+        /*$frame_p.addClass("swiper-wrapper")*/
         $frame_p.removeClass("row row-cols-1 row-cols-sm-3 row-cols-md-4 m-0");
         $frame_p.children("div").each(function () {
             $(this).removeClass("col")

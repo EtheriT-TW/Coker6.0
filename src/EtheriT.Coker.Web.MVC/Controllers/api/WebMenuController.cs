@@ -38,7 +38,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         [Authorize]
-        public async Task<ResponseMessageDto> importConten(MenuContenDto dto)
+        public async Task<ResponseMessageDto> importConten(MenuSaveContenDto dto)
         {
             return await webMenuApplication.importConten(dto);
         }
@@ -53,5 +53,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> updateLevelAndSerNo(UpdateSerNoListDto dto) {
             return await webMenuApplication.updateSerNo(dto);
         }
+        [HttpPost]
+        [Authorize]
+        public async Task<GetMenuContenDto> GetConten(SearchIDDto dto)
+        {
+            return await webMenuApplication.GetConten(dto);
+        }
+        
     }
 }

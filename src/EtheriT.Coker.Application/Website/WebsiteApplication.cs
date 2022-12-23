@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace EtheriT.Coker.Application
 		private readonly CokerDbContext db;
 		private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly string ApplicationName;
         public WebsiteApplication(
 			CokerDbContext db,
             LoginUserData loginUserData,
@@ -28,7 +30,9 @@ namespace EtheriT.Coker.Application
 			this.db = db;
 			this.httpContextAccessor = httpContextAccessor;
 			this.loginUserData = loginUserData;
-		}
+            ApplicationName = "Website";
+
+        }
 
         [Authorize]
         public async Task<List<WebsDto>> GetAll()
@@ -65,14 +69,18 @@ namespace EtheriT.Coker.Application
 			{
 				if ((await loginUserData.CheckedWebSiteId(dto.Id)))
 				{
-                    ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
-                    string name = user.Identity?.Name;
+                    long usetId = await loginUserData.GetUserId();
                     Guid secret = loginUserData.GetSecret();
-                    var token = await db.Tokens.Where(t => t.id == secret).FirstOrDefaultAsync();
+                    var token = await db.Tokens
+                                        .Where(t => t.id == secret)
+                                        .Where(t => t.UserID == usetId)
+                                        .FirstOrDefaultAsync();
+                    var user = await db.Users.Where(e => e.Id == usetId).FirstOrDefaultAsync();
 					if (token!=null)
 					{
                         token.websiteId= dto.Id;
-						db.SaveChanges();
+                        responseMessageDto.Message = dto.Id.ToString();
+                        db.SaveChanges();
                     }
                     else throw new Exception("金鑰失效");
                 }
@@ -81,7 +89,8 @@ namespace EtheriT.Coker.Application
                 responseMessageDto.Success = false;
                 responseMessageDto.Error = e.Message;
             }
-			return responseMessageDto;
+            await loginUserData.SetLogs(ApplicationName, "Exchange",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
+            return responseMessageDto;
         }
 
     }

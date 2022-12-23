@@ -1,5 +1,30 @@
 ﻿function PageReady() {
-    var editor = grapesInit();
+    var editor = grapesInit({
+        save: function (html, css) {
+            var _dfr = $.Deferred();
+            co.WebMesnus.saveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        import: function (html, css) {
+            var _dfr = $.Deferred();
+            co.WebMesnus.importConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        }
+    });
 
     var menuEditor = new MenuEditor('myEditor',
         {
@@ -101,8 +126,16 @@
                 },
                 page: function (data) {
                     $("#gjs").data("id", data.id);
-                    editor.setComponents("");
-                    editor.setStyle("");
+                    $("#gjs").removeClass("d-none");
+                    $("#gjs + .emptyList").addClass("d-none");
+                    co.WebMesnus.getConten(data.id).done(function (result) {
+                        if (result.success) {
+                            editor.setComponents(result.conten.saveHtml);
+                            editor.setStyle(result.conten.saveCss);
+                        } else {
+                            co.sweet.error(result.error);
+                        }
+                    });
                 }
             }
         });

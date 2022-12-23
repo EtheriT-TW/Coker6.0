@@ -14,8 +14,9 @@ namespace EtheriT.Coker.Application
     {
         public Task<SiteMapDto> GetAll();
         public Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto);
+        public Task<GetMenuContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto);
-        public Task<ResponseMessageDto> importConten(MenuContenDto dto);
+        public Task<ResponseMessageDto> importConten(MenuSaveContenDto dto);
         public Task<ResponseMessageDto> Delete(DataDelectDto dto);
         public Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto);
 

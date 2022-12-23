@@ -82,24 +82,41 @@ namespace EtheriT.Coker.Application
             if (string.IsNullOrEmpty(name)) return 0;
             else if (token == null || token.websiteId == 0)
             {
-                var date = from w in db.Websites
-                           join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
-                           join u in db.Users on bind.UserId equals u.Id
-                           where u.Account == name
-                           select new WebsDto
-                           {
-                               Id = w.Id
-                           };
-                if (date.Any())
+                long lastWebSite = 0;
+                if (httpContextAccessor.HttpContext != null)
                 {
-                    var websiteId = (await date.FirstOrDefaultAsync()).Id;
-                    if (token != null && token.websiteId != websiteId) {
-                        token.websiteId = websiteId;
+                    long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"], out lastWebSite);
+                }
+                if (await CheckedWebSiteId(lastWebSite))
+                {
+                    if (token != null && token.websiteId != lastWebSite)
+                    {
+                        token.websiteId = lastWebSite;
                         db.SaveChanges();
                     }
-                    return websiteId;
+                    return lastWebSite;
                 }
-                else return 0;
+                else {
+                    var date = from w in db.Websites
+                               join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                               join u in db.Users on bind.UserId equals u.Id
+                               where u.Account == name
+                               select new WebsDto
+                               {
+                                   Id = w.Id
+                               };
+                    if (date.Any())
+                    {
+                        var websiteId = (await date.FirstOrDefaultAsync()).Id;
+                        if (token != null && token.websiteId != websiteId)
+                        {
+                            token.websiteId = websiteId;
+                            db.SaveChanges();
+                        }
+                        return websiteId;
+                    }
+                    else return 0;
+                }
             }
             else
             {
@@ -152,6 +169,16 @@ namespace EtheriT.Coker.Application
             {
                 var data = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
                 if (data.Any()) check = true;
+            }
+            return check;
+        }
+        public async Task<bool> CheckedWebSiteId(long userId,long websiteId) {
+            bool check = false;
+            try {
+                var data = await db.MappingUserAndWebsites.Where(m => m.UserId == userId).Where(m => m.WebsiteId == websiteId).FirstOrDefaultAsync();
+                if (data != null) check = true;
+            }catch(Exception) {
+                check = false;
             }
             return check;
         }

@@ -28,29 +28,8 @@
         </a>
     </div>
 </div>
-<div id="gjs">
-    <div class="container-fluid">
-        <div class="row gjs-row">
-            <div class="col-md-4 gjs-cell">
-                One of three columns
-            </div>
-            <div class="col-md-4 gjs-cell">
-                One of three columns
-            </div>
-            <div class="col-md-4 gjs-cell">
-                One of three columns
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <label for="validationCustom01" class="form-label">First name</label>
-        <input type="text" class="form-control" id="validationCustom01" value="Mark" required>
-        <div class="valid-feedback">
-            Looks good!
-        </div>
-        <table class="table"></table>
-    </div>
-</div>
+<div id="gjs" class="d-none"></div>
+<div class="emptyList"></div>
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasSiteleLabel">網站地圖</h5>
@@ -69,50 +48,56 @@
             <div id="MenuEditorForm" class="card border-primary mb-3 item-menu">
                 <div class="card-header bg-primary text-white">選單資料</div>
                 <div class="card-body">
-                    <form id="frmEdit" class="form-horizontal">
+                    <form id="frmEdit" class="form-horizontal needs-validation" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
                         <input type="hidden" id="serNO" name="serNO" value="500" class="item-menu">
                         <input type="hidden" class="item-menu" id="text" name="text">
-                        <div class="form-group">
+                        <div class="form-group form-check">
                             <label for="Title">標題</label>
                             <div class="input-group">
-                                <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題">
+                                <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
                                 <div class="input-group-append">
                                     <button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>
                                 </div>
+                                <div class="invalid-feedback">標題為必填</div>
                             </div>
                             <input type="hidden" name="icon" class="item-menu">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-check">
+                            <label for="Title" class="form-label">路徑名稱</label>
+                            <input type="text" class="form-control item-menu" id="RouterName" name="RouterName" placeholder="請輸入路徑名稱" required>
+                            <div class="invalid-feedback">路徑名稱為必填</div>
+                        </div>
+                        <div class="form-group form-check">
                             <label for="LinkUrl">連結</label>
                             <input type="text" class="form-control item-menu" id="linkUrl" name="linkUrl" placeholder="請輸入連結">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-check">
                             <label for="Visible">是否顯示</label>
-                            <select name="visible" id="visible" class="form-control item-menu">
+                            <select name="visible" id="visible" class="form-select item-menu">
                                 <option value="true">是</option>
                                 <option value="false">否</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-check">
                             <label for="target">另開視窗</label>
-                            <select name="target" id="target" class="form-control item-menu">
+                            <select name="target" id="target" class="form-select item-menu">
                                 <option value="true">是</option>
                                 <option value="false">否</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-check">
                             <label for="PopularVisible">顯示人氣值</label>
-                            <select name="popularVisible" id="popularVisible" class="form-control item-menu">
+                            <select name="popularVisible" id="popularVisible" class="form-select item-menu">
                                 <option value="true">是</option>
                                 <option value="false">否</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-check">
                             <label for="Popular">人氣值</label>
                             <input type="text" id="popular" name="popular" class="form-control item-menu" readonly>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-check">
                             <label for="Description">描述</label>
                             <textarea type="text" id="description" name="description" class="form-control item-menu" placeholder="描述文字"></textarea>
                         </div>

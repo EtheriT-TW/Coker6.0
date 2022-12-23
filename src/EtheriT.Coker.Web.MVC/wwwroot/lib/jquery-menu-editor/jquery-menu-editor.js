@@ -1084,7 +1084,7 @@ function MenuEditor(idSelector, options) {
                 close: '<i class="fas fa-minus"></i>',
                 open: '<i class="fas fa-plus"></i>',
                 openerCss: {'margin-right': '10px', 'float': 'none'},
-                openerClass: 'btn btn-success btn-sm',
+                openerClass: 'btn btn-outline-success btn-sm',
             },
             placeholderCss: {'background-color': 'gray'},
             ignoreClass: 'clickable',
@@ -1264,7 +1264,7 @@ function MenuEditor(idSelector, options) {
         var $btnDown = TButton({classCss: 'btn btn-secondary btn-sm btnDown btnMove', text: '<i class="fas fa-angle-down clickable"></i>'});
         var $btnOut = TButton({classCss: 'btn btn-secondary btn-sm btnOut btnMove', text: '<i class="fas fa-level-down-alt clickable"></i>'});
         var $btnIn = TButton({ classCss: 'btn btn-secondary btn-sm btnIn btnMove', text: '<i class="fas fa-level-up-alt clickable"></i>' });
-        var $btnCont = TButton({ classCss: 'btn btn-info btn-sm btnPage', text: '<i class="fa fa-paint-roller clickable"></i>' });
+        var $btnCont = TButton({ classCss: 'btn btn-success btn-sm btnPage', text: '<i class="fa fa-paint-roller clickable"></i>' });
         $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut).append($btnEdit).append($btnRemv).append($btnCont);
         return $divbtn;
     }
@@ -1385,22 +1385,26 @@ function MenuEditor(idSelector, options) {
    
     self.add = function(){
         var data = {};
-        $form.find('.item-menu').each(function() {
-            data[$(this).attr('name')] = $(this).val();
-        });
-        if (data.Id == "") data.Id = 0;
-        if (data.SerNO == "") data.SerNO = 500;
-        data.text = data.title;
-        var btnGroup = TButtonGroup();
-        var textItem = $('<span>').addClass('txt font-weight-bold').text(data.title);
-        var iconItem = $('<i>').addClass(data.icon);
-        var div = $('<div>').css({"overflow": "auto"}).append(iconItem).append("&nbsp;").append(textItem).append(btnGroup);
-        var $li = $("<li>").data(data);
-        $li.addClass('list-group-item pr-0').append(div);
-        $main.append($li);
-        MenuEditor.updateButtons($main);
-        resetForm();
-        !!settings.on.add && settings.on.add($li);
+        if (!$form[0].checkValidity()) {
+            $form.addClass("was-validated");
+        } else {
+            $form.find('.item-menu').each(function () {
+                data[$(this).attr('name')] = $(this).val();
+            });
+            if (data.Id == "") data.Id = 0;
+            if (data.SerNO == "") data.SerNO = 500;
+            data.text = data.title;
+            var btnGroup = TButtonGroup();
+            var textItem = $('<span>').addClass('txt font-weight-bold').text(data.title);
+            var iconItem = $('<i>').addClass(data.icon);
+            var div = $('<div>').css({ "overflow": "auto" }).append(iconItem).append("&nbsp;").append(textItem).append(btnGroup);
+            var $li = $("<li>").data(data);
+            $li.addClass('list-group-item pr-0').append(div);
+            $main.append($li);
+            MenuEditor.updateButtons($main);
+            resetForm();
+            //!!settings.on.add && settings.on.add($li);
+        }
     };
 
     self.refresh = function(){

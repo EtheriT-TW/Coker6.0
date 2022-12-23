@@ -68,6 +68,7 @@ namespace EtheriT.Coker.Application
                 return result;
             }
             catch(Exception ex) {
+                //throw new Exception("資料錯誤");
                 throw new Exception("資料錯誤");
             }
         }
@@ -112,18 +113,45 @@ namespace EtheriT.Coker.Application
             menu.LastModifierUserId = user.Id;
             await loginUserData.SaveChanges(menu);
         }
-        public async Task<ResponseMessageDto> importConten(MenuContenDto dto)
+        public async Task<GetMenuContenDto> GetConten(SearchIDDto dto) {
+            GetMenuContenDto results = new GetMenuContenDto();
+            try
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var menu = await db.WebMenus.Where(e => e.FK_WebsiteId == siteId)
+                                    .Where(e => e.Id == dto.Id)
+                                    .Where(e => !e.IsDeleted)
+                                    .FirstOrDefaultAsync();
+                if (menu != null)
+                {
+                    results.Conten = mapper.Map<MenuSaveContenDto>(menu);
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch(Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+        public async Task<ResponseMessageDto> importConten(MenuSaveContenDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                MenuContenDto importDto = mapper.Map<MenuContenDto>(dto);
+                var s = await saveConten(dto);
                 var user = await loginUserData.GetUser();
                 var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
-                mapper.Map(dto, menu);
-                menu.LastModificationTime = DateTime.Now;
-                menu.LastModifierUserId = user.Id;
-                db.SaveChanges();
-                response.Success = true;
+                if (menu != null)
+                {
+                    mapper.Map(importDto, menu);
+                    await loginUserData.SaveChanges(menu);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
             }
             catch (Exception ex) {
                 response.Success = false;

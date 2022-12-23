@@ -439,8 +439,8 @@ function SpecPriceSave() {
     })
     if (save_success) {
         priceModal.hide();
-        console.log(modal_price_list)
-        console.log($price_modal.data("psid"))
+        //console.log(modal_price_list)
+        //console.log($price_modal.data("psid"))
     }
 }
 

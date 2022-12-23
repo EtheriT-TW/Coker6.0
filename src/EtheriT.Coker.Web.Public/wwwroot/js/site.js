@@ -210,13 +210,13 @@ function CaptchaVerify($self, $input, SuccessAction) {
 function LoginAction() {
     var loginModal = new bootstrap.Modal($("#LoginModal"))
     loginModal.hide();
-    console.log("Login")
+    /*console.log("Login")*/
 }
 
 function RegisterAction() {
     var registerModal = new bootstrap.Modal($("#RegisterModal"))
     registerModal.hide();
-    console.log("Register")
+    /*console.log("Register")*/
 }
 
 function NewCaptcha($self, $input) {

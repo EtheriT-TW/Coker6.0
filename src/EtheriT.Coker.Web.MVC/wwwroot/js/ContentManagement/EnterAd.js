@@ -140,7 +140,7 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result)
+    /*console.log(result)*/
     FormDataClear();
     keyId = result.id;
     startDate = result.startDate;

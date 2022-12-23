@@ -56,7 +56,7 @@
                     co.WebMesnus.delete(data.id).done(function (result) {
                         if (result.success) co.sweet.success("已成功刪除");
                         else co.sweet.error(result.error);
-                        console.log(data);
+                        /*console.log(data);*/
                     });
                 },
                 add: function (cEl) {
@@ -78,7 +78,7 @@
                     });
                     //editor.setComponents("<span>Hi<span>");
                     //editor.setStyle("");
-                    console.log(data);
+                    /*console.log(data);*/
                 },
                 save: function () {
 
@@ -113,7 +113,7 @@
                     ul.children("li").each(function (index, element) {
                         var s = $(element).data("serNO");
                         if (s != (index + 1)) {
-                            console.log(element, s, (index + 1));
+                            /*console.log(element, s, (index + 1));*/
                             s = index + 1;
                             $(element).data("serNO", s);
                             if ($(element).data("id") != cEl.data("id")) saveList.push($(element).data());

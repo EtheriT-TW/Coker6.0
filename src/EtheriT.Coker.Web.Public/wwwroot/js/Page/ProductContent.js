@@ -110,7 +110,7 @@ function ElementInit() {
 
 function PageDefaultSet() {
     Product.GetOne.Prod(Pid).done(function (result) {
-        console.log(result)
+        /*console.log(result)*/
         $pro_name.text(result.title);
         $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
         $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
@@ -279,12 +279,12 @@ function AddToCart() {
                 Ser_No: 500,
             }).done(function (result) {
                 if (result.success) {
-                    console.log(result)
+                    /*console.log(result)*/
                     Coker.sweet.success("商品已成功加入購物車", null, true);
                     var type = (result.message).substr(0, 1);
                     var id = (result.message).substr(1);
                     Product.GetOne.Cart(id).done(function (result) {
-                        console.log(result)
+                        /*console.log(result)*/
                         if (type == 'N') {
                             CartDropAdd(result);
                         } else {

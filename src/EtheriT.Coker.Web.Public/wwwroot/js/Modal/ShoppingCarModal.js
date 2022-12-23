@@ -9,7 +9,7 @@ function ShoppingCarModalInit() {
     const myModal = document.getElementById('ShoppingCarModal')
 
     myModal.addEventListener('shown.bs.modal', () => {
-        console.log($modal.data("pid"))
+        /*console.log($modal.data("pid"))*/
     })
 
     myModal.addEventListener('hidden.bs.modal', () => {
@@ -67,14 +67,14 @@ function DataClear() {
 
 function ModalDefaultSet() {
     Product.GetOne.Prod($modal.data("pid")).done(function (result) {
-        console.log(result)
+        /* console.log(result)*/
         $pro_image.attr("src", "../images/product/pro_0" + result.id + ".png");
         $pro_name.text(result.title);
         $pro_introduction.append("<div>．" + result.introduction.toString().replaceAll("\n", "<br />．") + "</div>")
     });
 
     Product.GetOne.Stock($modal.data("pid")).done(function (result) {
-        console.log(result)
+        /*console.log(result)*/
         if (result.length > 1) {
 
             var obj = {};

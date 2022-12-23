@@ -218,7 +218,7 @@ function Update(success_text, error_text) {
             sex = $(this).val();
         }
     })
-    console.log($level.val())
+    /*console.log($level.val())*/
     co.Member.Update({
         Id: keyId,
         Name: $name.val(),

@@ -730,7 +730,7 @@ function OrderSuccess(oh_result) {
 }
 
 function PurchaseAdd(result, item_list_ul) {
-    console.log(result)
+   /* console.log(result)*/
     var item = $($("#Template_Purchase_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),

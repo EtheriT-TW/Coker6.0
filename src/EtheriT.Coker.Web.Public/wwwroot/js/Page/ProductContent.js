@@ -183,6 +183,26 @@ function PageDefaultSet() {
             $pro_discount.text(result[0].price.toLocaleString('en-US'));
         }
     })
+
+    var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper")
+    if (Pid == 1) {
+        var demo_slide = $($("#TemplateDemoSlide").html()).clone();
+        var demo_pre_slide = $($("#TemplateDemoPreviewSlide").html()).clone();
+        $product_swiper.append(demo_slide);
+        $preview_swiper.append(demo_pre_slide);
+    } else {
+        var slide = $($("#TemplateImageSlide").html()).clone();
+        var slide_image = slide.find(".pro_display");
+        slide.data("pid", Pid);
+        slide_image.attr("src", "/images/product/pro_0" + Pid + ".png")
+        $product_swiper.append(slide);
+
+        var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
+        var pre_slide_image = pre_slide.find("img");
+        pre_slide.data("pid", Pid);
+        pre_slide_image.attr("src", "/images/product/pro_0" + Pid + ".png")
+        $preview_swiper.append(pre_slide);
+    }
 }
 
 function SpecRadio() {

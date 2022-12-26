@@ -39,6 +39,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod_Price> Prod_Prices { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<MappingUserAndRole> MappingUserAndRoles { get; set; }
+        public DbSet<Prod_TechCert> Prod_TechCerts { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)

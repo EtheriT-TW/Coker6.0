@@ -1,14 +1,13 @@
 ﻿using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.EnterAd;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using Microsoft.EntityFrameworkCore;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -115,6 +114,33 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
             }
             return new JsonResult(new List<TechnicalCertificateGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<List<TechnicalCertificateGetAllDto>> GetAll()
+        {
+            try
+            {
+                var result = db.TechnicalCertificates;
+
+                if (result != null)
+                {
+                    long WebsiteID = await loginUserData.GetWebsiteId();
+                    var output = await (from e in result
+                                        where !e.IsDeleted && e.Disp_opt && e.FK_WebsiteId == WebsiteID
+                                        select new TechnicalCertificateGetAllDto
+                                        {
+                                            Id = e.Id,
+                                            Img = e.Img,
+                                            Title = e.Title,
+                                        }).ToListAsync();
+                    return output;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+            return null;
         }
         public async Task<TechnicalCertificateDto> GetOne(int id)
         {

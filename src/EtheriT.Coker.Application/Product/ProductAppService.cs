@@ -9,6 +9,7 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -140,6 +141,50 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
+        public async Task<ResponseMessageDto> TechCertAddUp(ProductTechCertDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var user = await loginUserData.GetUser();
+                if (user != null)
+                {
+                    if (dto.Id == 0)
+                    {
+                        Core.Models.Prod_TechCert ptc = new Core.Models.Prod_TechCert
+                        {
+                            FK_PId = dto.FK_PId,
+                            FK_TCId = dto.FK_TCId,
+                            CreatorUserId = user.Id,
+                        };
+                        db.Prod_TechCerts.Add(ptc);
+                        db.SaveChanges();
+                    }
+                    else
+                    {
+                        var db_ptc = db.Prod_TechCerts.Where(e => e.Id == dto.Id).FirstOrDefault();
+
+                        if (db_ptc != null)
+                        {
+                            db_ptc.FK_PId = dto.FK_PId;
+                            db_ptc.FK_TCId = dto.FK_TCId;
+                            db_ptc.LastModifierUserId = user.Id;
+                        }
+                    }
+                }
+
+                db.SaveChanges();
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -222,6 +267,7 @@ namespace EtheriT.Coker.Application.Product
                                         where !ps.IsDeleted && ps.FK_Pid == PId
                                         select new ProductStockDto
                                         {
+                                            Pid = PId,
                                             Id = ps.Id,
                                             FK_S1id = ps.FK_S1id,
                                             FK_S2id = ps.FK_S2id,
@@ -237,6 +283,40 @@ namespace EtheriT.Coker.Application.Product
                     {
                         item.FK_ST1id = (int)item.FK_S1id > 0 ? db_sp[(int)item.FK_S1id - 1].FK_Tid : 0;
                         item.FK_ST2id = (int)item.FK_S2id > 0 ? db_sp[(int)item.FK_S2id - 1].FK_Tid : 0;
+                    }
+
+                    return output;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        {
+            try
+            {
+                var db_ptc = db.Prod_TechCerts;
+
+                if (db_ptc != null)
+                {
+                    var output = await (from ptc in db_ptc
+                                        where !ptc.IsDeleted && ptc.FK_PId == PId
+                                        select new TechnicalCertificateGetAllDto
+                                        {
+                                            Id = ptc.FK_TCId,
+                                            Title = "",
+                                        }).ToListAsync();
+
+                    var db_tc = db.TechnicalCertificates.ToList();
+
+                    foreach (var item in output)
+                    {
+                        item.Title = item.Id == 0 ? "" : db_tc[(int)item.Id - 1].Title;
                     }
 
                     return output;
@@ -432,13 +512,14 @@ namespace EtheriT.Coker.Application.Product
 
             try
             {
+                var user = await loginUserData.GetUser();
                 var db_p = db.Prods.Where(e => e.Id == dto.Id).FirstOrDefault();
-                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+
                 if (db_p != null)
                 {
                     db_p.IsDeleted = true;
                     db_p.DeletionTime = DateTime.Now;
-                    db_p.DeleterUserId = db_t.UserID;
+                    db_p.DeleterUserId = user.Id;
 
                     var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == dto.Id);
                     if (db_ps != null)
@@ -447,9 +528,21 @@ namespace EtheriT.Coker.Application.Product
                         {
                             ps.IsDeleted = true;
                             ps.DeletionTime = DateTime.Now;
-                            ps.DeleterUserId = db_t.UserID;
+                            ps.DeleterUserId = user.Id;
                         }
                     }
+
+                    var db_pst = db.Prod_Stocks.Where(e => e.FK_Pid == dto.Id);
+                    if (db_pst != null)
+                    {
+                        foreach (var pst in db_pst)
+                        {
+                            pst.IsDeleted = true;
+                            pst.DeletionTime = DateTime.Now;
+                            pst.DeleterUserId = user.Id;
+                        }
+                    }
+
                     db.SaveChanges();
 
                     output.Success = true;

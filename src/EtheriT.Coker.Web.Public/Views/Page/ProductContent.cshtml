@@ -35,65 +35,150 @@
 	</ol>
 </nav>
 
+<template id="Template3DSlide">
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="">
+		<img class="pro_display img-fluid" src="" alt="" data-display-protype="360view" data-filename-x="{index}.jpg" data-amount-x="15" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
+		<div class="schematic_360view position-absolute"><img src="~/images/icon_360.png" alt="" /></div>
+	</div>
+</template>
+
+<template id="TemplateImageSlide">
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="">
+		<img class="pro_display img-fluid" src="" alt="" data-display-protype="image" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+</template>
+
+<template id="TemplateYTVideoSlide">
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center position-relative" data-pid="">
+		<img class="pro_display img-fluid" src="" alt="" data-youtube-link="" data-display-protype="youtube" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>
+	</div>
+</template>
+
+<template id="TemplatePreviewSlide">
+	<div class="swiper-slide" data-pid="">
+		<img class="img-fluid" src="" alt="" />
+	</div>
+</template>
+
+<template id="TemplateDemoSlide">
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" data-display-protype="360view" data-filename-x="{index}.jpg" data-amount-x="15" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
+		<div class="schematic_360view position-absolute"><img src="~/images/icon_360.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_01.png" alt="" data-display-protype="image" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="2">
+		<img class="pro_display img-fluid" src="~/images/product/pro_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="3">
+		<img class="pro_display img-fluid" src="~/images/product/pro_03.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="4">
+		<img class="pro_display img-fluid" src="~/images/product/pro_04.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_content_01.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_content_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center position-relative" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_content_03.png" alt="" data-youtube-link="JGEj2nhPvDs" data-display-protype="youtube" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+
+	<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="1">
+		<img class="pro_display img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
+		<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
+	</div>
+</template>
+
+<template id="TemplateDemoPreviewSlide">
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_01.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="2">
+		<img class="img-fluid" src="~/images/product/pro_02.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="3">
+		<img class="img-fluid" src="~/images/product/pro_03.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="4">
+		<img class="img-fluid" src="~/images/product/pro_04.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_content_01.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_content_02.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_content_03.png" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" />
+	</div>
+
+	<div class="swiper-slide" data-pid="1">
+		<img class="img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" />
+	</div>
+</template>
+
 <div id="Product" class="container row m-auto my-3">
 	<div class="image col-md-6 col-sm-12">
 		<div class="container-fluid position-relative">
 			<div class="ProductSwiper swiper">
 				<div class="swiper-wrapper">
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" data-display-protype="360view" data-filename-x="{index}.jpg" data-amount-x="15" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
-						<div class="schematic_360view position-absolute"><img src="~/images/icon_360.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_01.png" alt="" data-display-protype="image" data-bs-target="#ProDisplayModal" data-bs-toggle="modal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_03.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_content_01.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_content_02.png" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center position-relative">
-						<img class="pro_display img-fluid" src="~/images/product/pro_content_03.png" alt="" data-youtube-link="JGEj2nhPvDs" data-display-protype="youtube" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
-
-					<div class="swiper-slide mb-0 d-flex align-items-center justify-content-center">
-						<img class="pro_display img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" data-display-protype="image" data-bs-toggle="modal" data-bs-target="#ProDisplayModal" />
-						<div class="schematic_image position-absolute"><img src="~/images/icon_zoombig.png" alt="" /></div>
-					</div>
 				</div>
 			</div>
 			<button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
@@ -102,49 +187,6 @@
 
 		<div thumbsSlider="" class="PreviewSwiper swiper my-3">
 			<div class="swiper-wrapper align-items-center">
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/3d_pro/1.jpg" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_01.png" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_02.png" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_03.png" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_content_01.png" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_content_02.png" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_content_03.png" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_pic_01.jpg" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_pic_02.jpg" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_pic_03.jpg" alt="" />
-				</div>
-
-				<div class="swiper-slide">
-					<img class="img-fluid" src="~/images/product/pro_pic_04.jpg" alt="" />
-				</div>
 			</div>
 			<div class="swiper-scrollbar"></div>
 		</div>
@@ -200,7 +242,7 @@
 				<div class="ori_price price me-2 d-none"></div>
 				<div class="discount d-flex align-items-center fs-4 fw-bold price text-danger"></div>
 			</div>
-			<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>
+			@*<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>*@
 		</div>
 
 		<hr class="m-1" />

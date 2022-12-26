@@ -121,6 +121,18 @@ function PageDefaultSet() {
         if (spec_height > ($pro_specification.height() + 1)) {
             $btn_detailed.removeClass("d-none")
         }
+
+        if (Pid == 1) {
+            var item = $($("#TemplateDemoDescription").html()).clone();
+            $("#ProductDescription").append(item);
+        } else {
+            $("#ProductDescription").append("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
+        }
+
+        if (Pid == 1 || Pid == 4) {
+            var item = $($("#TemplateDemoFile").html()).clone();
+            $("#TechnicalDocuments").prepend(item);
+        }
     });
 
     Product.GetOne.TechCert(Pid).done(function (result) {
@@ -132,18 +144,28 @@ function PageDefaultSet() {
             })
 
             $(".btn_certification").each(function () {
-                var $self = $(this)
-                if (techcert_list.indexOf($self.data("certification")) < 0) {
-                    $self.parents("li").first().remove();
+                var $btn_self = $(this)
+                if (techcert_list.indexOf($btn_self.data("certification")) < 0) {
+                    $btn_self.parents("li").first().remove();
                 }
             })
 
             $(".badge_directions").each(function () {
-                var $self = $(this)
-                if (techcert_list.indexOf($self.data("certification")) < 0) {
-                    $self.siblings("hr").first().remove();
-                    $self.remove();
+                var $img_self = $(this)
+                if (techcert_list.indexOf($img_self.data("certification")) < 0) {
+                    $img_self.next("hr").remove();
+                    $img_self.remove();
                 }
+            })
+        } else {
+            $(".btn_certification").each(function () {
+                $(this).parents("li").first().remove();
+            })
+
+            $(".badge_directions").each(function () {
+                var $img_self = $(this)
+                $img_self.next("hr").remove();
+                $img_self.remove();
             })
         }
     })

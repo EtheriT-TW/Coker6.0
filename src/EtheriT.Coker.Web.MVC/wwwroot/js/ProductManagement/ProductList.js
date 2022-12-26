@@ -1,6 +1,6 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], spec_price_remove_list = [], modal_price_list = []
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], spec_price_remove_list = [], modal_price_list = [], techcert_list = []
 var $price_modal, priceModal;
 
 function PageReady() {
@@ -25,6 +25,24 @@ function PageReady() {
                     data: JSON.stringify(data),
                     dataType: "json"
                 });
+            },
+            ProdTechCert: function (data) {
+                return $.ajax({
+                    url: "/api/Product/TechCertAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            }
+        },
+        GetAll: {
+            TechCert: function () {
+                return $.ajax({
+                    url: "/api/TechnicalCertificate/GetAll/",
+                    type: "GET",
+                });
             }
         },
         Get: {
@@ -46,14 +64,7 @@ function PageReady() {
                     data: { PId: id },
                 });
             },
-            SpecType: function () {
-                return $.ajax({
-                    url: "/api/Product/GetSpecType/",
-                    type: "GET",
-                    headers: _c.Data.Header,
-                });
-            },
-            Spec: function (id) {
+            ProdSpec: function (id) {
                 return $.ajax({
                     url: "/api/Product/GetSpecDetail/",
                     type: "GET",
@@ -61,7 +72,16 @@ function PageReady() {
                     headers: _c.Data.Header,
                     data: { typeid: id },
                 });
-            }
+            },
+            ProdTechCert: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetTechCertDataAll/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { PId: id },
+                });
+            },
         },
         Delect: {
             Prod: function (data) {
@@ -130,11 +150,6 @@ function PageReady() {
         window.location.hash = 0;
         HashDataEdit();
     });
-    $(".btn_save").on("click", function () {
-        disp_opt = false;
-        $btn_display.children("span").text("visibility_off");
-        AddUp(false, "已存為草稿", "儲存草稿發生未知錯誤");
-    });
     $(".btn_input_pic").on("click", function (event) {
         event.preventDefault();
         $(".input_pic").click();
@@ -186,6 +201,39 @@ function PageReady() {
     } else {
         setInterval(hashChange, 1000);
     }
+
+    $(".markstest > button > .mark_display").text("哈哈測試耶耶耶")
+    co.Product.GetAll.TechCert().done(function (result) {
+        if (result.length > 0) {
+            $techcert_body.children(".isnull").addClass("d-none");
+            result.forEach(function (self) {
+                var item = $($("#TemplateCheck").html()).clone();
+                var item_input = item.find("input"),
+                    item_label = item.find("label");
+                item_input.attr("id", "TechCertCheck" + self.id);
+                item_input.val(self.id);
+                item_label.attr("for", "TechCertCheck" + self.id);
+                item_label.text(self.title);
+
+                $techcert_body.append(item)
+            })
+        }
+    })
+
+    $(".btn_techcert_save").on("click", function () {
+        if ($techcert_body.children("div[class=form-check]").length > 0) {
+            var text = "";
+            $techcert_body.children("div[class=form-check]").each(function () {
+                var $self = $(this)
+                if ($self.children("input").prop('checked')) {
+                    techcert_list.push($self.children("input").val());
+                    text = text == "" ? $self.children("label").text() : text + "、" + $self.children("label").text();
+                    techcertModal.hide();
+                    $marks.val(text);
+                }
+            })
+        }
+    })
 }
 
 function ElementInit() {
@@ -206,6 +254,9 @@ function ElementInit() {
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
 
+    techcertModal = new bootstrap.Modal(document.getElementById('TechCertModal'))
+
+    $techcert_body = $("#TechCertModal > .modal-dialog > .modal-content > .modal-body");
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
     document.getElementById('PriceModal').addEventListener('hidden.bs.modal', function (event) {
@@ -243,6 +294,11 @@ function FormDataClear() {
     startDate = null;
     endDate = null;
     spec_remove_list = [];
+
+    techcert_list = []
+    $techcert_body.children("div[class=form-check]").each(function () {
+        $(this).children("input").prop("checked", false);
+    })
 }
 
 function contentReady(e) {
@@ -290,6 +346,7 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
+    console.log(result)
     FormDataClear();
     co.Product.Get.ProdStock(result.id).done(function (all_result) {
         all_result.forEach(function (result) {
@@ -309,7 +366,17 @@ function FormDataSet(result) {
     $illustrate.val(result.description);
     $illustrate_count.text($illustrate.val().length);
 
-    $marks.val("");
+    var text = ""
+    co.Product.Get.ProdTechCert(result.id).done(function (result) {
+        console.log(result);
+        if (result != null && result.length > 0) {
+            result.forEach(function (item) {
+                text = text == "" ? item.title : text + "、" + item.title;
+            })
+        }
+        $marks.val(text);
+    })
+
     $tag.val("");
     $date = $("#InputDate");
     if (result.permanent) {
@@ -447,7 +514,11 @@ function SpecPriceSave() {
 function SpecAdd(result) {
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
-    var item_select = item.find(".select"),
+    var item_topline = item.find(".topline"),
+        item_select_input_1 = item.find(".input_spec").first(),
+        item_select_input_2 = item.find(".input_spec").last(),
+        item_select_list_1 = item.find("datalist").first(),
+        item_select_list_2 = item.find("datalist").last(),
         item_price = item.find(".input_price"),
         item_min = item.find(".input_min_number"),
         item_stock = item.find(".input_stock_number"),
@@ -456,35 +527,65 @@ function SpecAdd(result) {
         item_btn_expand = item.find(".btn_expand"),
         item_btn_delect = item.find(".btn_delect");
 
-    co.Product.Get.SpecType().done(function (type_result) {
-        if (type_result != null) {
-            type_result.forEach(function (type) {
-                var spec = $($("#TemplateSpecSelect").html()).clone();
-                var spec_select = spec.find("select");
-                co.Product.Get.Spec(type.id).done(function (spec_result) {
-                    spec_select.attr("aria-label", type.title);
-                    if (result != null) {
-                        spec_select.append('<option value="" disabled="disabled">' + type.title + '</option>')
-                        spec_select.append('<option value="0">無</option>')
-                        spec_result.forEach(function (spec) {
-                            if (spec.id == result.fK_S1id || spec.id == result.fK_S2id) {
-                                spec_select.append('<option selected value="' + spec.id + '">' + spec.title + '</option>')
-                            } else {
-                                spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
-                            }
-                        })
-                    } else {
-                        spec_select.append('<option selected value="" disabled="disabled">' + type.title + '</option>')
-                        spec_select.append('<option value="0">無</option>')
-                        spec_result.forEach(function (spec) {
-                            spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
-                        })
-                    }
-                });
-                item_select.append(spec);
+    item_topline.children(".spec").each(function () {
+        var spectype = $($("#TemplateSpecType").html()).clone();
+        $(this).prepend(spectype);
+    })
+
+    var item_select_1 = item.find(".spec_select").first(),
+        item_select_2 = item.find(".spec_select").last();
+
+    if (result != null && result.fK_ST1id != null) {
+        item_select_1.val(result.fK_ST1id);
+        if (result.fK_ST1id > 0) {
+            var $spec1_bro = item_select_1.parents(".spec").first().siblings(".spec");
+
+            $spec1_bro.children(".spec_select").children("option").each(function () {
+                var child = $(this)
+                if (child.val() == item_select_1.val()) {
+                    child.attr("disabled", "disabled");
+                    child.addClass("bg-secondary-light25");
+                }
             })
+            item_select_input_1.removeAttr("disabled")
+            co.Product.Get.ProdSpec(item_select_1.val()).done(function (spec1_result) {
+                if (spec1_result != null) {
+                    spec1_result.forEach(function (spec1) {
+                        item_select_list_1.append('<option value="' + spec1.title + '" data-sid="' + spec1.id + '"></option>')
+                        if (spec1.id == result.fK_S1id) {
+                            item_select_input_1.val(spec1.title);
+                        }
+                    })
+                }
+            });
         }
-    });
+    }
+
+    if (result != null && result.fK_ST2id != null) {
+        item_select_2.val(result.fK_ST2id);
+        if (result.fK_ST2id > 0) {
+            var $spec2_bro = item_select_2.parents(".spec").first().siblings(".spec");
+
+            $spec2_bro.children(".spec_select").children("option").each(function () {
+                var child = $(this)
+                if (child.val() == item_select_2.val()) {
+                    child.attr("disabled", "disabled");
+                    child.addClass("bg-secondary-light25");
+                }
+            })
+            item_select_input_2.removeAttr("disabled")
+            co.Product.Get.ProdSpec(item_select_2.val()).done(function (spec2_result) {
+                if (spec2_result != null) {
+                    spec2_result.forEach(function (spec2) {
+                        item_select_list_2.append('<option value="' + spec2.title + '" data-sid="' + spec2.id + '"></option>')
+                        if (spec2.id == result.fK_S2id) {
+                            item_select_input_2.val(spec2.title);
+                        }
+                    })
+                }
+            });
+        }
+    }
 
     item.data("psid", result != null ? result.id : "")
     item_price.val(result != null ? result.price : "");
@@ -495,6 +596,10 @@ function SpecAdd(result) {
     item_collapse.attr("id", "CollapseDetail" + spec_num);
     item_btn_expand.attr("data-bs-target", "#CollapseDetail" + spec_num);
     item_btn_expand.attr("aria-controls", "CollapseDetail" + spec_num);
+    item_select_input_1.attr("list", "SpecListOpt" + spec_num + "-1");
+    item_select_input_2.attr("list", "SpecListOpt" + spec_num + "-2");
+    item_select_list_1.attr("id", "SpecListOpt" + spec_num + "-1");
+    item_select_list_2.attr("id", "SpecListOpt" + spec_num + "-2");
 
     //item_price.on("click", function () {
     //    SpecPriceAdd(null);
@@ -528,6 +633,45 @@ function SpecAdd(result) {
     $("#Spec_Frame").append(item);
 
     $spec_select = $(".spec_select")
+    $spec_select.each(function () {
+        $self = $(this);
+        $self.on("change", function () {
+            var $spec_type = $(this);
+            var $spec_bro = $spec_type.parents(".spec").first().siblings(".spec");
+            var $spec_input = $spec_type.siblings(".input_spec");
+            var $spec_list = $spec_type.siblings("datalist");
+
+            $spec_input.val("");
+            $spec_list.children("option").each(function () {
+                $(this).remove();
+            })
+            $spec_bro.children(".spec_select").children("option").each(function () {
+                var child = $(this)
+                child.removeAttr("disabled");
+                child.removeClass("bg-secondary-light25");
+            })
+
+            if ($spec_type.val() == 0) {
+                $spec_input.attr("disabled", "disabled")
+            } else {
+                $spec_bro.children(".spec_select").children("option").each(function () {
+                    var child = $(this)
+                    if (child.val() == $spec_type.val()) {
+                        child.attr("disabled", "disabled");
+                        child.addClass("bg-secondary-light25");
+                    }
+                })
+                $spec_input.removeAttr("disabled")
+                co.Product.Get.Spec($spec_type.val()).done(function (spec_result) {
+                    if (spec_result != null) {
+                        spec_result.forEach(function (spec) {
+                            $spec_list.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')
+                        })
+                    }
+                });
+            }
+        })
+    })
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
     $min_number = $(".input_min_number");
@@ -544,7 +688,7 @@ function ISpecRepect() {
     var isRepect = false;
     $("#Spec_Frame > .frame").each(function () {
         $self = $(this);
-        $self.find(".spec_select").each(function () {
+        $self.find(".input_spec").each(function () {
             obj.push($(this).val());
         })
         if (temp_list.find(item => item[0] == obj[0] && item[1] == obj[1]) != null) {
@@ -579,33 +723,57 @@ function AddUp(display, success_text, error_text) {
         EndTime: endDate,
         Permanent: $permanent.is(":checked"),
     }).done(function (result) {
-        keyId = result.message == null ? keyId : result.message;
-        $("#Spec_Frame > .frame").each(function () {
-            $self = $(this);
-            var fk_sid = []
-            $self.find(".spec_select").each(function () {
-                fk_sid.push($(this).val())
+        if (result.success) {
+            keyId = result.message == null ? keyId : result.message;
+
+            $("#Spec_Frame > .frame").each(function () {
+                var fk_sid = []
+                var $self = $(this);
+                var $spec_input = $self.find(".input_spec");
+                $spec_input.each(function () {
+                    var id = -1;
+                    $self_input = $(this);
+                    $self_input.siblings("datalist").children("option").each(function () {
+                        var $option = $(this);
+                        if ($option.val() == $self_input.val()) {
+                            id = $option.data("sid");
+                        }
+                    })
+                    fk_sid.push(id > -1 ? id : 0)
+                })
+
+                co.Product.AddUp.Stock({
+                    TId: $.cookie('secret'),
+                    Id: $self.data("psid") == "" ? 0 : $self.data("psid"),
+                    Pid: keyId,
+                    FK_S1id: fk_sid[0],
+                    FK_S2id: fk_sid[1],
+                    Price: $self.find(".input_price").val(),
+                    Stock: $self.find(".input_stock_number").val(),
+                    Min_Qty: $self.find(".input_min_number").val(),
+                    Alert_Qty: $self.find(".input_alert_number").val()
+                }).done(function () {
+                    if (techcert_list != null) {
+                        techcert_list.forEach(function (item) {
+                            co.Product.AddUp.ProdTechCert({
+                                Id: 0,
+                                FK_PId: keyId,
+                                FK_TCId: item,
+                            })
+                        })
+                    }
+                    Coker.sweet.success(success_text, null, true);
+                    setTimeout(function () {
+                        BackToList();
+                        product_list.component.refresh();
+                    }, 1000);
+                }).fail(function () {
+                    Coker.sweet.error("錯誤", error_text, null, true);
+                });
             })
-            co.Product.AddUp.Stock({
-                TId: $.cookie('secret'),
-                Id: $self.data("psid") == "" ? 0 : $self.data("psid"),
-                Pid: keyId,
-                FK_S1id: fk_sid[0],
-                FK_S2id: fk_sid[1],
-                Price: $self.find(".input_price").val(),
-                Stock: $self.find(".input_stock_number").val(),
-                Min_Qty: $self.find(".input_min_number").val(),
-                Alert_Qty: $self.find(".input_alert_number").val()
-            }).done(function () {
-                Coker.sweet.success(success_text, null, true);
-                setTimeout(function () {
-                    BackToList();
-                    product_list.component.refresh();
-                }, 1000);
-            }).fail(function () {
-                Coker.sweet.error("錯誤", error_text, null, true);
-            });
-        })
+        } else {
+            Coker.sweet.error("錯誤", error_text, null, true);
+        }
     }).fail(function () {
         Coker.sweet.error("錯誤", error_text, null, true);
     });

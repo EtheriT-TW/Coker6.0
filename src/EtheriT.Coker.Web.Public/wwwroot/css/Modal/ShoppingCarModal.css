@@ -30,7 +30,7 @@ input[type="number"] {
 }
 
     .pro_content > .describe > li::before {
-        content: '．';
+        content: '\ff0e';
     }
 
 .pro_content > .tag {

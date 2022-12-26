@@ -62,7 +62,7 @@ input[type="number"] {
 }
 
 #ProductForm > .marks > input {
-    padding-left: 6.5rem;
+    padding-left: 8.5rem;
 }
 
 #ProductForm > .tag > input {
@@ -72,8 +72,8 @@ input[type="number"] {
 #Spec_Frame > div > div > .price > input {
     padding-left: 5.5rem;
 }
-ㄙ
-#Spec_Frame > .frame > div > div > div > input[class*="number"] {
+
+#Spec_Frame > .frame > div > div > input[class*="number"] {
     padding-left: 7.5rem;
 }
 

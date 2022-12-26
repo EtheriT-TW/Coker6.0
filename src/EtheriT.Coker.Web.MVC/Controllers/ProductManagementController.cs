@@ -1,12 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Web.MVC.Models.ProductManagement;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class ProductManagementController : Controller
     {
-        public IActionResult ProductList()
+        private readonly IProductAppService productAppService;
+        public ProductManagementController(IProductAppService productAppService)
         {
-            return View("ProductList");
+            this.productAppService = productAppService;
+        }
+        public async Task<IActionResult> ProductListAsync()
+        {
+            var spec_type = new List<ProdIdTitleDto>(await productAppService.GetSpecType());
+            ProductManagementModel model = new ProductManagementModel
+            {
+                SpecType = spec_type,
+            };
+            return View("ProductList", model);
         }
         public IActionResult TechnicalCertificate()
         {

@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Product;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.StockAddUp(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> TechCertAddUp(ProductTechCertDto dto)
+        {
+            return await productAppService.TechCertAddUp(dto);
+        }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -45,6 +51,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<List<ProductStockDto>> GetStockDataAll(long PId)
         {
             return await productAppService.GetStockDataAll(PId);
+        }
+        [HttpGet]
+        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        {
+            return await productAppService.GetTechCertDataAll(PId);
         }
         [HttpGet]
         public async Task<List<ProdIdTitleDto>> GetSpecType()

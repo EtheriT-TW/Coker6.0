@@ -76,10 +76,6 @@ function PageReady() {
         window.location.hash = 0;
         HashDataEdit();
     });
-    $(".btn_save").on("click", function () {
-        disp_opt = false;
-        AddUp(disp_opt, "已存為草稿", "儲存草稿發生未知錯誤");
-    });
 
     $btn_display.on("click", function () {
         if (disp_opt) {

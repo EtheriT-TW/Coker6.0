@@ -288,7 +288,7 @@ input[type="number"] {
 }
 
     #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_quantity::before {
-        content: '×';
+        content: '\00d7';
     }
 
 #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .content > .pro_subtotal {
@@ -360,7 +360,7 @@ body > .popover.bs-popover-auto.fade {
 }
 
 #Step4 > .pruchase_content > .purchase_item > .content > .pro_quantity::before {
-    content: '×';
+    content: '\00d7';
 }
 
 /*RWD*/

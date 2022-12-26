@@ -182,9 +182,16 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         SCId = db_sc.Id,
                         PId = db_prod.Id,
                         Title = db_prod.Title,
+                        S1Title = db_ps.FK_S1id.ToString(),
+                        S2Title = db_ps.FK_S2id.ToString(),
                         Quantity = db_sc.Quantity,
                         Price = db_ps.Price
                     };
+
+                    var db_sp = db.Prod_Specs.ToList();
+
+                    output.S1Title = int.Parse(output.S1Title) == 0 ? "" : db_sp[int.Parse(output.S1Title) - 1].Title;
+                    output.S2Title = int.Parse(output.S2Title) == 0 ? "" : db_sp[int.Parse(output.S2Title) - 1].Title;
 
                     return output;
                 }

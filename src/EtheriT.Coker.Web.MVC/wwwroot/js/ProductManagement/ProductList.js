@@ -346,7 +346,6 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result)
     FormDataClear();
     co.Product.Get.ProdStock(result.id).done(function (all_result) {
         all_result.forEach(function (result) {
@@ -368,9 +367,15 @@ function FormDataSet(result) {
 
     var text = ""
     co.Product.Get.ProdTechCert(result.id).done(function (result) {
-        console.log(result);
         if (result != null && result.length > 0) {
             result.forEach(function (item) {
+                techcert_list.push(item.id)
+                $techcert_body.children("div[class=form-check]").each(function () {
+                    var $input = $(this).children("input")
+                    if ($input.val() == item.id) {
+                        $input.prop("checked", true);
+                    }
+                })
                 text = text == "" ? item.title : text + "、" + item.title;
             })
         }

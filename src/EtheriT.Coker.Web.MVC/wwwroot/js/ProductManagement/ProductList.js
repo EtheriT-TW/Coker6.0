@@ -46,13 +46,6 @@ function PageReady() {
                     data: { PId: id },
                 });
             },
-            SpecType: function () {
-                return $.ajax({
-                    url: "/api/Product/GetSpecType/",
-                    type: "GET",
-                    headers: _c.Data.Header,
-                });
-            },
             Spec: function (id) {
                 return $.ajax({
                     url: "/api/Product/GetSpecDetail/",
@@ -445,9 +438,17 @@ function SpecPriceSave() {
 }
 
 function SpecAdd(result) {
+    console.log(result);
+
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
-    var item_select = item.find(".select"),
+    var item_topline = item.find(".topline"),
+        item_select_1 = item.find(".spec_select").first(),
+        item_select_2 = item.find(".spec_select").last(),
+        item_select_input_1 = item.find(".input_spec").first(),
+        item_select_input_2 = item.find(".input_spec").last(),
+        item_select_list_1 = item.find("datalist").first(),
+        item_select_list_2 = item.find("datalist").last(),
         item_price = item.find(".input_price"),
         item_min = item.find(".input_min_number"),
         item_stock = item.find(".input_stock_number"),
@@ -456,35 +457,62 @@ function SpecAdd(result) {
         item_btn_expand = item.find(".btn_expand"),
         item_btn_delect = item.find(".btn_delect");
 
-    co.Product.Get.SpecType().done(function (type_result) {
-        if (type_result != null) {
-            type_result.forEach(function (type) {
-                var spec = $($("#TemplateSpecSelect").html()).clone();
-                var spec_select = spec.find("select");
-                co.Product.Get.Spec(type.id).done(function (spec_result) {
-                    spec_select.attr("aria-label", type.title);
-                    if (result != null) {
-                        spec_select.append('<option value="" disabled="disabled">' + type.title + '</option>')
-                        spec_select.append('<option value="0">無</option>')
-                        spec_result.forEach(function (spec) {
-                            if (spec.id == result.fK_S1id || spec.id == result.fK_S2id) {
-                                spec_select.append('<option selected value="' + spec.id + '">' + spec.title + '</option>')
-                            } else {
-                                spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
-                            }
-                        })
-                    } else {
-                        spec_select.append('<option selected value="" disabled="disabled">' + type.title + '</option>')
-                        spec_select.append('<option value="0">無</option>')
-                        spec_result.forEach(function (spec) {
-                            spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
-                        })
-                    }
-                });
-                item_select.append(spec);
+    item_topline.children(".spec").each(function () {
+        var spectype = $($("#TemplateSpecType").html()).clone();
+        $(this).prepend(spectype);
+    })
+
+    if (result != null && result.fK_ST1id != null) {
+        item_select_1.val(result.fK_ST1id);
+        if (result.fK_ST1id > 0) {
+            var $spec1_bro = item_select_1.parents(".spec").first().siblings(".spec");
+
+            $spec1_bro.children(".spec_select").children("option").each(function () {
+                var child = $(this)
+                if (child.val() == item_select_1.val()) {
+                    child.attr("disabled", "disabled");
+                    child.addClass("bg-secondary-light25");
+                }
             })
+            item_select_input_1.removeAttr("disabled")
+            co.Product.Get.Spec(item_select_1.val()).done(function (spec_result) {
+                if (spec_result != null) {
+                    spec_result.forEach(function (spec) {
+                        item_select_list_1.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')
+                        if (spec.id == result.fK_S1id) {
+                            item_select_input_1.val(spec.title);
+                        }
+                    })
+                }
+            });
         }
-    });
+    }
+
+    if (result != null && result.fK_ST2id != null) {
+        item_select_2.val(result.fK_ST2id);
+        if (result.fK_ST2id > 0) {
+            var $spec2_bro = item_select_2.parents(".spec").first().siblings(".spec");
+
+            $spec2_bro.children(".spec_select").children("option").each(function () {
+                var child = $(this)
+                if (child.val() == item_select_2.val()) {
+                    child.attr("disabled", "disabled");
+                    child.addClass("bg-secondary-light25");
+                }
+            })
+            item_select_input_2.removeAttr("disabled")
+            co.Product.Get.Spec(item_select_2.val()).done(function (spec_result) {
+                if (spec_result != null) {
+                    spec_result.forEach(function (spec) {
+                        item_select_list_2.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')
+                        if (spec.id == result.fK_S2id) {
+                            item_select_input_2.val(spec.title);
+                        }
+                    })
+                }
+            });
+        }
+    }
 
     item.data("psid", result != null ? result.id : "")
     item_price.val(result != null ? result.price : "");
@@ -495,6 +523,10 @@ function SpecAdd(result) {
     item_collapse.attr("id", "CollapseDetail" + spec_num);
     item_btn_expand.attr("data-bs-target", "#CollapseDetail" + spec_num);
     item_btn_expand.attr("aria-controls", "CollapseDetail" + spec_num);
+    item_select_input_1.attr("list", "SpecListOpt" + spec_num + "-1");
+    item_select_input_2.attr("list", "SpecListOpt" + spec_num + "-2");
+    item_select_list_1.attr("id", "SpecListOpt" + spec_num + "-1");
+    item_select_list_2.attr("id", "SpecListOpt" + spec_num + "-2");
 
     //item_price.on("click", function () {
     //    SpecPriceAdd(null);
@@ -528,6 +560,45 @@ function SpecAdd(result) {
     $("#Spec_Frame").append(item);
 
     $spec_select = $(".spec_select")
+    $spec_select.each(function () {
+        $self = $(this);
+        $self.on("change", function () {
+            var $spec_type = $(this);
+            var $spec_bro = $spec_type.parents(".spec").first().siblings(".spec");
+            var $spec_input = $spec_type.siblings(".input_spec");
+            var $spec_list = $spec_type.siblings("datalist");
+
+            $spec_input.val("");
+            $spec_list.children("option").each(function () {
+                $(this).remove();
+            })
+            $spec_bro.children(".spec_select").children("option").each(function () {
+                var child = $(this)
+                child.removeAttr("disabled");
+                child.removeClass("bg-secondary-light25");
+            })
+
+            if ($spec_type.val() == 0) {
+                $spec_input.attr("disabled", "disabled")
+            } else {
+                $spec_bro.children(".spec_select").children("option").each(function () {
+                    var child = $(this)
+                    if (child.val() == $spec_type.val()) {
+                        child.attr("disabled", "disabled");
+                        child.addClass("bg-secondary-light25");
+                    }
+                })
+                $spec_input.removeAttr("disabled")
+                co.Product.Get.Spec($spec_type.val()).done(function (spec_result) {
+                    if (spec_result != null) {
+                        spec_result.forEach(function (spec) {
+                            $spec_list.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')
+                        })
+                    }
+                });
+            }
+        })
+    })
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
     $min_number = $(".input_min_number");
@@ -580,12 +651,23 @@ function AddUp(display, success_text, error_text) {
         Permanent: $permanent.is(":checked"),
     }).done(function (result) {
         keyId = result.message == null ? keyId : result.message;
+
         $("#Spec_Frame > .frame").each(function () {
-            $self = $(this);
             var fk_sid = []
-            $self.find(".spec_select").each(function () {
-                fk_sid.push($(this).val())
+            var $self = $(this);
+            var $spec_input = $self.find(".input_spec");
+            $spec_input.each(function () {
+                var id = -1;
+                $self_input = $(this);
+                $self_input.siblings("datalist").children("option").each(function () {
+                    var $option = $(this);
+                    if ($option.val() == $self_input.val()) {
+                        id = $option.data("sid");
+                    }
+                })
+                fk_sid.push(id > -1 ? id : 0)
             })
+
             co.Product.AddUp.Stock({
                 TId: $.cookie('secret'),
                 Id: $self.data("psid") == "" ? 0 : $self.data("psid"),

@@ -282,7 +282,8 @@ function CartAdd(result) {
     });
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
-    item_specification.text(result.s1Title + " " + result.s2Title);
+    item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
+    item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
     item_instructions.append(result.description.replaceAll("\n", "<br/>"))
     item_unit.text((result.price).toLocaleString('en-US'))
     item_quantity.val(result.quantity);
@@ -730,7 +731,6 @@ function OrderSuccess(oh_result) {
 }
 
 function PurchaseAdd(result, item_list_ul) {
-   /* console.log(result)*/
     var item = $($("#Template_Purchase_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
@@ -747,7 +747,8 @@ function PurchaseAdd(result, item_list_ul) {
     });
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
-    item_specification.text(result.s1Title + " " + result.s2Title);
+    item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
+    item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
     item_instructions.text(result.description);
     item_unit.text((result.price).toLocaleString('en-US'))
     item_quantity.text(result.quantity);

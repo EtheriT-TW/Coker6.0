@@ -1,5 +1,5 @@
 ﻿var $input_quantity
-var Pid, hass1 = false, hass2 = false, s1, s2
+var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = []
 
 function PageReady() {
@@ -110,7 +110,6 @@ function ElementInit() {
 
 function PageDefaultSet() {
     Product.GetOne.Prod(Pid).done(function (result) {
-        /*console.log(result)*/
         $pro_name.text(result.title);
         $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
         $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
@@ -130,9 +129,7 @@ function PageDefaultSet() {
 
             var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
             var item1_control = item1.find(".spec_control"),
-                /*item1_title = item1.find(".spec_title"),*/
                 item2_control = item2.find(".spec_control");
-            /*item2_title = item2.find(".spec_title");*/
 
             item1.data("stype", 1)
             item2.data("stype", 2)
@@ -144,10 +141,6 @@ function PageDefaultSet() {
                 obj = {}
 
                 if (spec.fK_S1id > 0) {
-                    if (!hass1) {
-                        /*item1_title.text(spec.s1_Title);*/
-                        hass1 = true;
-                    }
                     if (s1_list.indexOf(spec.fK_S1id) < 0) {
                         item1_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + spec.fK_S1id + '">' + spec.s1_Name + '</label>');
                         item1_control.prepend('<input id="s1_' + spec.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + spec.fK_S1id + '">');
@@ -160,10 +153,6 @@ function PageDefaultSet() {
                 }
 
                 if (spec.fK_S2id > 0) {
-                    if (!hass2) {
-                        /* item2_title.text(spec.s2_Title);*/
-                        hass2 = true;
-                    }
                     if (s2_list.indexOf(spec.fK_S2id) < 0) {
                         item2_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + spec.fK_S2id + '">' + spec.s2_Name + '</label>');
                         item2_control.prepend('<input id="s2_' + spec.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + spec.fK_S2id + '">');
@@ -279,12 +268,10 @@ function AddToCart() {
                 Ser_No: 500,
             }).done(function (result) {
                 if (result.success) {
-                    /*console.log(result)*/
                     Coker.sweet.success("商品已成功加入購物車", null, true);
                     var type = (result.message).substr(0, 1);
                     var id = (result.message).substr(1);
                     Product.GetOne.Cart(id).done(function (result) {
-                        /*console.log(result)*/
                         if (type == 'N') {
                             CartDropAdd(result);
                         } else {

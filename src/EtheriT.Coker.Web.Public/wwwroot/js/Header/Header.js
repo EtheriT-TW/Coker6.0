@@ -82,6 +82,7 @@ function CartDropAdd(result) {
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
         item_name = item.find(".pro_name"),
+        item_spec = item.find(".pro_spec"),
         item_unit = item.find(".pro_unit"),
         item_quantity = item.find(".pro_quantity"),
         item_btn_delete = item.find(".btn_cart_delete");
@@ -90,6 +91,8 @@ function CartDropAdd(result) {
     item_link.attr("href", "/Toilet/" + result.pId);
     item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
+    item_spec.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
+    item_spec.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
     item_unit.text((result.price + "").toLocaleString('en-US'));
     item_quantity.text(result.quantity);
     item_btn_delete.on("click", function () {

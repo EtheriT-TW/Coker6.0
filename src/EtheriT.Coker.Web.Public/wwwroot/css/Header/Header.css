@@ -67,6 +67,17 @@
     #Car_Dropdown > ul > li > figure > a > figcaption > .pro_name {
         color: var(--black-text);
         height: 3rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #Car_Dropdown > ul > li > figure > a > figcaption > .pro_spec {
+        color: var(--black-text);
+        height: 3rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     #Car_Dropdown > ul > li > figure > a > figcaption > .number {
@@ -74,7 +85,7 @@
     }
 
         #Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_quantity::before {
-            content: '×';
+            content: '\00d7';
         }
 
     #Car_Dropdown > ul > li > figure > .btn_cart_delete {

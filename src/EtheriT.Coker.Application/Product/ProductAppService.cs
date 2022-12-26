@@ -104,6 +104,7 @@ namespace EtheriT.Coker.Application.Product
                             Stock = dto.Stock,
                             Min_Qty = dto.Min_Qty,
                             Alert_Qty = dto.Alert_Qty,
+                            Ser_No = 500,
                             CreatorUserId = (long)db_t.UserID,
                         };
                         db.Prod_Stocks.Add(ps);
@@ -229,6 +230,15 @@ namespace EtheriT.Coker.Application.Product
                                             Stock = ps.Stock,
                                             Alert_Qty = ps.Alert_Qty
                                         }).ToListAsync();
+
+                    var db_sp = db.Prod_Specs.ToList();
+
+                    foreach (var item in output)
+                    {
+                        item.FK_ST1id = (int)item.FK_S1id > 0 ? db_sp[(int)item.FK_S1id - 1].FK_Tid : 0;
+                        item.FK_ST2id = (int)item.FK_S2id > 0 ? db_sp[(int)item.FK_S2id - 1].FK_Tid : 0;
+                    }
+
                     return output;
                 }
                 else throw new Exception("查無資料");

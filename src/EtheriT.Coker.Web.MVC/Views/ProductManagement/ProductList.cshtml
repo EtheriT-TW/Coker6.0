@@ -1,5 +1,7 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Web.MVC.Models.ProductManagement
+@model ProductManagementModel
 @{
 	ViewData["Title"] = "ProductList";
 }
@@ -210,51 +212,129 @@
 
 				<div id="Spec_Frame"></div>
 
-				<template id="TemplateSpecSelect">
-					<div class="col-12 col-sm-6 col-xl-3 mb-3">
-						<select class="spec_select form-select" aria-label="" required="required"></select>
-					</div>
+				@*<template id="TemplateSpecSelect">
+				<div class="col-12 col-sm-6 col-xl-3 mb-3">
+				<select class="spec_select form-select" aria-label="" required="required"></select>
+				</div>
+				</template>
+
+				<template id="TemplateSpecification">
+				<div class="frame border mb-3 pt-3 px-3 rounded position-relative" data-psid="">
+				<div class="spec_title position-absolute bg-white px-2">規格設定</div>
+				<div class="select row">
+				</div>
+				<div class="collapse show">
+				<div class="price input-group mb-3">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
+				</div>
+				<input class="input_price form-control rounded" type="number" aria-label="Input Price of Product" required>
+				</div>
+
+				<div class="row">
+				<div class="min_number input-group mb-3 col-12 col-lg-4">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
+				</div>
+				<input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
+				</div>
+
+				<div class="number input-group mb-3 col-12 col-lg-4">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1">inventory_2</span>商品庫存量
+				</div>
+				<input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
+				</div>
+
+				<div class="alert_number input-group mb-3 col-12 col-lg-4">
+				<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+				<span class="material-symbols-outlined me-1">warning</span>可銷售警示
+				</div>
+				<input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
+				</div>
+				</div>
+				</div>
+
+				<div class="d-flex justify-content-center">
+				<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="" aria-expanded="false" aria-controls="">
+				<span class="material-symbols-outlined fs-3">expand_more</span>
+				</button>
+				<button class="btn_delect d-flex border-0 bg-transparent" type="button">
+				<span class="material-symbols-outlined fs-3">delete</span>
+				</button>
+				</div>
+				</div>
+				</template>*@
+
+				<div class="d-flex justify-content-center mb-3">
+					<button class="btn_spec_add d-flex border-0 bg-transparent" type="button">
+						<span class="material-symbols-outlined fs-3">add</span>
+					</button>
+				</div>
+
+				<template id="TemplateSpecType">
+					<select class="spec_select form-select rounded-left" aria-label="規格類型" required="required">
+						@if (Model.SpecType.Count > 0)
+						{
+							<option selected="" value="" disabled="disabled">規格類型</option>
+							<option value="0">無</option>
+							@foreach (var spectype in Model.SpecType ?? new List<ProdIdTitleDto>())
+							{
+								<option value="@spectype.Id">@spectype.Title</option>
+							}
+						}
+					</select>
 				</template>
 
 				<template id="TemplateSpecification">
 					<div class="frame border mb-3 pt-3 px-3 rounded position-relative" data-psid="">
 						<div class="spec_title position-absolute bg-white px-2">規格設定</div>
-						<div class="select row">
+						<div class="topline row">
+							<div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
+
+								<input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
+								<datalist id=""></datalist>
+							</div>
+
+							<div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
+
+								<input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
+								<datalist id=""></datalist>
+							</div>
+
+							<div class="number input-group mb-3 col-12 col-sm-6 col-xl-3 mb-3">
+								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+									<span class="material-symbols-outlined me-1">inventory_2</span>商品庫存量
+								</div>
+								<input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
+							</div>
 						</div>
-						<div class="collapse show">
-							<div class="price input-group mb-3">
+
+						<div id="CollapseDetail1" class="collapse show row">
+							<div class="price input-group mb-3 col-12 col-lg-4">
 								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 									<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
 								</div>
-								<input class="input_price form-control rounded" type="number" aria-label="Input Price of Product" required>
+								<input class="input_price form-control rounded" type="number" aria-label="Input Price of Product" required="">
 							</div>
 
-							<div class="row">
-								<div class="min_number input-group mb-3 col-12 col-lg-4">
-									<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-										<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
-									</div>
-									<input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
+							<div class="min_number input-group mb-3 col-12 col-lg-4">
+								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+									<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
 								</div>
+								<input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
+							</div>
 
-								<div class="number input-group mb-3 col-12 col-lg-4">
-									<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-										<span class="material-symbols-outlined me-1">inventory_2</span>商品庫存量
-									</div>
-									<input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
+							<div class="alert_number input-group mb-3 col-12 col-lg-4">
+								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+									<span class="material-symbols-outlined me-1">warning</span>可銷售警示
 								</div>
-
-								<div class="alert_number input-group mb-3 col-12 col-lg-4">
-									<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-										<span class="material-symbols-outlined me-1">warning</span>可銷售警示
-									</div>
-									<input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
-								</div>
+								<input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
 							</div>
 						</div>
 
 						<div class="d-flex justify-content-center">
-							<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="" aria-expanded="false" aria-controls="">
+							<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseDetail1" aria-expanded="false" aria-controls="CollapseDetail1">
 								<span class="material-symbols-outlined fs-3">expand_more</span>
 							</button>
 							<button class="btn_delect d-flex border-0 bg-transparent" type="button">
@@ -263,12 +343,6 @@
 						</div>
 					</div>
 				</template>
-
-				<div class="d-flex justify-content-center mb-3">
-					<button class="btn_spec_add d-flex border-0 bg-transparent" type="button">
-						<span class="material-symbols-outlined fs-3">add</span>
-					</button>
-				</div>
 
 				<div class="date input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">

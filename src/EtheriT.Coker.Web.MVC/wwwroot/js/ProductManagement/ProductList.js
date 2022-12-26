@@ -667,7 +667,7 @@ function SpecAdd(result) {
                     }
                 })
                 $spec_input.removeAttr("disabled")
-                co.Product.Get.Spec($spec_type.val()).done(function (spec_result) {
+                co.Product.Get.ProdSpec($spec_type.val()).done(function (spec_result) {
                     if (spec_result != null) {
                         spec_result.forEach(function (spec) {
                             $spec_list.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')

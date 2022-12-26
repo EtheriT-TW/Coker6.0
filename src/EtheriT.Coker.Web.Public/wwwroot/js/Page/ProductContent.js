@@ -118,7 +118,7 @@ function PageDefaultSet() {
         $pro_specification.children("li").each(function () {
             spec_height += $(this).height();
         })
-        if (spec_height > $pro_specification.height()) {
+        if (spec_height > ($pro_specification.height() + 1)) {
             $btn_detailed.removeClass("d-none")
         }
     });

@@ -51,7 +51,14 @@
                 type: "GET",
                 data: { id: id }
             });
-        }
+        },
+        TechCert: function (id) {
+            return $.ajax({
+                url: "/api/Product/GetTechCertDataAll/",
+                type: "GET",
+                data: { PId: id }
+            });
+        },
     },
     Delete: {
         Cart: function (id) {

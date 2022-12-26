@@ -79,7 +79,6 @@ function PageReady() {
     });
     $(".btn_expand").on("click", function () {
         var $self = $(this);
-        /*console.log($self)*/
         if ($self.children("span").text() == "expand_more") {
             $self.children("span").text("expand_less")
         } else {
@@ -179,7 +178,6 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    /*console.log(result)*/
     FormDataClear();
     keyId = result.id;
     startDate = result.startDate;

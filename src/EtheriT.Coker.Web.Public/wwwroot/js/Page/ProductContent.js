@@ -3,6 +3,7 @@ var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = []
 
 function PageReady() {
+
     ElementInit();
     window.CI360.init();
 
@@ -122,6 +123,28 @@ function PageDefaultSet() {
         }
     });
 
+    Product.GetOne.TechCert(Pid).done(function (result) {
+        var techcert_list = []
+        result.forEach(function (item) {
+            techcert_list.push(item.id);
+        })
+
+        $(".btn_certification").each(function () {
+            var $self = $(this)
+            if (techcert_list.indexOf($self.data("certification")) < 0) {
+                $self.parents("li").first().remove();
+            }
+        })
+
+        $(".badge_directions").each(function () {
+            var $self = $(this)
+            if (techcert_list.indexOf($self.data("certification")) < 0) {
+                $self.siblings("hr").first().remove();
+                $self.remove();
+            }
+        })
+    })
+
     Product.GetOne.Stock(Pid).done(function (result) {
         if (result.length > 1) {
 
@@ -223,6 +246,8 @@ function SpecRadio() {
         case 1:
             s1 = $self.val()
             var temp_list = []
+            //console.log(price_list)
+            //console.log(s1)
             price_list.forEach(function (item) {
                 if (item.s1id == s1) {
                     temp_list.push(item.s2id)
@@ -270,7 +295,6 @@ function SpecRadio() {
 }
 
 function AddToCart() {
-
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {

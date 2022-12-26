@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Product;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +26,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<List<ProductStockDto>> GetDisplayStock(long id)
         {
             return await productAppService.GetDisplayStock(id);
+        }
+        [HttpGet]
+        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        {
+            return await productAppService.GetTechCertDataAll(PId);
         }
         [HttpGet]
         public async Task<ProdGetDisplayDto> GetDisplaySimple(long id)

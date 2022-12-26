@@ -10,6 +10,9 @@ using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto;
+using AutoMapper;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.HtmlContent
 {
@@ -17,71 +20,47 @@ namespace EtheriT.Coker.Application.HtmlContent
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly IMapper mapper;
+        private readonly string ApplicationName;
         public HtmlContentAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            IMapper mapper
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.mapper = mapper;
+            ApplicationName = "HtmlContent";
         }
         public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
             {
+                long userid = await loginUserData.GetUserId();
                 if (dto.Id == 0)
                 {
-                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-                    long WebsiteID = await loginUserData.GetWebsiteId();
-                    if (db_t != null)
+                    if (userid != 0)
                     {
-                        Core.Models.Html_Content hc = new Core.Models.Html_Content
-                        {
-                            FK_WebsiteId = WebsiteID,
-                            Type = dto.Type,
-                            Title = dto.Title,
-                            Img = dto.Img,
-                            Html = dto.Html,
-                            Ser_no = dto.Ser_no,
-                            Disp_opt = dto.Disp_opt,
-                            ObjectType = dto.ObjectType,
-                            Link = dto.Link,
-                            Target = dto.Target,
-                            StartDate = dto.StartDate,
-                            EndDate = dto.EndDate,
-                            permanent = dto.permanent,
-                            CreatorUserId = (long)db_t.UserID
-                        };
-                        db.Html_Contents.Add(hc);
+                        long WebsiteID = await loginUserData.GetWebsiteId();
+                        Html_Content newItem = mapper.Map<Html_Content>(dto);
+                        newItem.FK_WebsiteId = WebsiteID;
+                        db.Html_Contents.Add(newItem);
+                        await loginUserData.SaveChanges(newItem);
                     }
                     else throw new Exception("查無資料");
                 }
                 else
                 {
                     var db_hc = db.Html_Contents.Where(e => e.Id == dto.Id).FirstOrDefault();
-                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-                    if (db_hc != null && db_t != null)
+                    if (db_hc != null && userid != 0)
                     {
-                        db_hc.Type = dto.Type;
-                        db_hc.Title = dto.Title;
-                        db_hc.Img = dto.Img;
-                        db_hc.Html = dto.Html;
-                        db_hc.Ser_no = dto.Ser_no;
-                        db_hc.Disp_opt = dto.Disp_opt;
-                        db_hc.ObjectType = dto.ObjectType;
-                        db_hc.Link = dto.Link;
-                        db_hc.Target = dto.Target;
-                        db_hc.StartDate = dto.StartDate;
-                        db_hc.EndDate = dto.EndDate;
-                        db_hc.permanent = dto.permanent;
-
-                        db_hc.LastModificationTime = DateTime.Now;
-                        db_hc.LastModifierUserId = db_t.UserID;
+                        mapper.Map(dto, db_hc);
+                        await loginUserData.SaveChanges(db_hc);
                     }
                     else throw new Exception("查無資料");
                 }
-                db.SaveChanges();
                 output.Success = true;
             }
             catch (Exception e)
@@ -89,6 +68,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                 output.Success = false;
                 output.Error = e.Message;
             }
+            await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<JsonResult> GetAllList(int type, DataSourceLoadOptions loadOptions)
@@ -222,6 +202,32 @@ namespace EtheriT.Coker.Application.HtmlContent
             }
 
             return output;
+        }
+        public async Task<HtmlContentTypeDto> GetTypeList() {
+            HtmlContentTypeDto response = new HtmlContentTypeDto { Success = true };
+            try
+            {
+                long userId = await loginUserData.GetUserId();
+                if (userId == 1)
+                {
+                    response.Type = Enum.GetValues(typeof(ObjectTypeEnum))
+                   .Cast<ObjectTypeEnum>().Select(e => {
+                       return new EnumDictionaryDto { Key = e.ToString(),Value = (int)e };
+                   }).ToList();
+                }
+                else {
+                    response.Type = new List<EnumDictionaryDto>
+                    {
+                        new EnumDictionaryDto{ Key = ObjectTypeEnum.自訂.ToString(), Value = (int)ObjectTypeEnum.自訂 }
+                    };
+                }
+            }
+            catch(Exception e)
+            {
+                response.Success = false;
+                response.Error = e.Message;
+            }
+            return response;
         }
     }
 }

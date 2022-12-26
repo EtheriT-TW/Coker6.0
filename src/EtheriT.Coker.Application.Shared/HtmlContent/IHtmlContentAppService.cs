@@ -14,5 +14,6 @@ namespace EtheriT.Coker.Application.Shared.HtmlContent
         public Task<HtmlContentDto> GetOne(int id);
         public Task<JsonResult> GetDisplay(long webid, int type, int number);
         public Task<ResponseMessageDto> Delete(DataDelectDto dto);
+        public Task<HtmlContentTypeDto> GetTypeList();
     }
 }

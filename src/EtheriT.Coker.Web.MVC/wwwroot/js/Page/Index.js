@@ -23,6 +23,9 @@
                 else co.sweet.error(resutlt.error);
             });
             return _dfr.promise();
+        },
+        saveComponer: function () {
+
         }
     });
 

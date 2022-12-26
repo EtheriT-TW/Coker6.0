@@ -105,27 +105,31 @@ var grapesInit = function (options) {
         }
     }
     const createBlockTemplate = function (selected, name_blockId) {
-        const bm = editor.BlockManager
         const blockId = name_blockId.blockId;
         const name = name_blockId.name;
 
         let elementHTML = selected.getEl().outerHTML;
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
-        first_partHtml += ` custom_block_template=true block_id="${blockId}" `
-        let finalHtml = first_partHtml + second_partHtml
+        first_partHtml += ` custom_block_template=true block_id="${blockId}" `;
+        let finalHtml = first_partHtml + second_partHtml;
         let icon = $('#NewBlockicon').val();
-        const blockCss = findComponentStyles(selected)
-        const css = `<style>${blockCss}</style>`
-        const elementHtmlCss = finalHtml + css
-
-        bm.add(`customBlockTemplate_${blockId}`, {
-            category: '自訂區',
+        const blockCss = findComponentStyles(selected);
+        const css = `<style>${blockCss}</style>`;
+        const elementHtmlCss = finalHtml + css;
+        const category = $('#ComponerTypeList>option:selected').text();
+        console.log(category);
+        appendBlock(blockId, {
+            category: category,
             attributes: { custom_block_template: true },
             label: `${name}`,
             media: `<i class="${icon} fa-5x"></i>`,
             content: elementHtmlCss,
         })
+    }
+    const appendBlock = function (id, obj) {
+        const bm = editor.BlockManager
+        bm.add(`customBlockTemplate_${id}`, obj);
     }
     const createBlockTemplateConfirmation = function() {
         const selected = editor.getSelected();
@@ -136,7 +140,7 @@ var grapesInit = function (options) {
             'name': name,
             'blockId': blockId
         }
-        console.log($("#NewBlockicon").val());
+        console.log(blockId);
         createBlockTemplate(selected, name_blockId)
         //this.blockTemplateForm.reset();
         //this.modalService.getModal('createBlockTemplate').close();
@@ -149,14 +153,22 @@ var grapesInit = function (options) {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <div class="form-floating mb-3 input-group">
-                <input type="hidden" name="icon">
-                <input type="text" class="form-control" id="NewBlockName" placeholder="請輸入新元件的名稱">
-                <label for="floatingInput">元件名稱</label>
-                <div class="input-group-append">
-                    <button type="button" id="NewBlockicon" class="btn btn-outline-secondary"></button>
+            <form id="ComFrm" class="form-horizontal needs-validation" novalidate>
+                <div class="form-floating mb-3 input-group">
+                    <input type="hidden" name="icon">
+                    <input type="text" class="form-control" id="NewBlockName" placeholder="請輸入新元件的名稱">
+                    <label for="floatingInput">元件名稱</label>
+                    <div class="input-group-append">
+                        <button type="button" id="NewBlockicon" class="btn btn-outline-secondary"></button>
+                    </div>
                 </div>
-            </div>
+                <div class="d-none">
+                    <select name="ComponerTypeList" id="ComponerTypeList" class="form-select item-menu" aria-label="類別">
+                        <option value="" disabled="disabled">類別</option>
+                    </select>
+                    <div class="invalid-feedback">類別必填</div>
+                </div>
+            </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -167,6 +179,15 @@ var grapesInit = function (options) {
     </div>`).appendTo("body");
     const myModal = new bootstrap.Modal('#setComponents');
     const iconPicker = $('#NewBlockicon').iconpicker(iconPickerOpt);
+    co.HtmlContent.GetTypeList().done(function (result) {
+        if (result.success) { 
+            var $s = $("#ComponerTypeList");
+            $(result.type).each(function () {
+                $s.append(`<option value="${this.value}">${this.key}</option>`);
+            });
+            if (result.type.length > 1) $s.parents(".d-none").removeClass("d-none");
+        }
+    });
     $('#setComponents').find(".btn-save").on("click", function(){
         createBlockTemplateConfirmation();
         myModal.hide();

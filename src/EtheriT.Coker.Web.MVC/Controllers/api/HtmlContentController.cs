@@ -49,5 +49,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await htmlContentAppService.Delete(dto);
         }
+        [HttpGet]
+        public async Task<HtmlContentTypeDto> GetTypeList() {
+            return await htmlContentAppService.GetTypeList();
+        }
     }
 }

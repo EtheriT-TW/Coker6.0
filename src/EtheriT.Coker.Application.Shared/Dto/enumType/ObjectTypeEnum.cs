@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Dto
         目錄 = 1,
         廣告 = 2,
         編排 = 3,
-        更多 = 99
+        更多 = 99,
+        自訂 = 999
     }
 }

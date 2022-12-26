@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.EnterAd;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
@@ -32,6 +33,9 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Html, option => option.MapFrom(c => c.SaveHtml))
                 .ForMember(e => e.Css, option => option.MapFrom(c => c.SaveCss))
                 .ReverseMap();
+
+            //Html_Content
+            CreateMap<HtmlContentDto, Html_Content>().ReverseMap();
         }
     }
 }

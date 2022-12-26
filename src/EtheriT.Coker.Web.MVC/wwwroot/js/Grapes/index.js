@@ -118,14 +118,23 @@ var grapesInit = function (options) {
         const css = `<style>${blockCss}</style>`;
         const elementHtmlCss = finalHtml + css;
         const category = $('#ComponerTypeList>option:selected').text();
-        console.log(category);
-        appendBlock(blockId, {
-            category: category,
-            attributes: { custom_block_template: true },
-            label: `${name}`,
-            media: `<i class="${icon} fa-5x"></i>`,
-            content: elementHtmlCss,
-        })
+        const object = {
+            Title: name,
+            icon: icon,
+            type: $('#ComponerTypeList>option:selected').val(),
+            Html: finalHtml,
+            css: css
+        }
+        //co.HtmlContent.AddUp(object).done(function () {
+            appendBlock(blockId, {
+                category: category,
+                attributes: { custom_block_template: true },
+                label: `${name}`,
+                media: `<i class="${icon} fa-5x"></i>`,
+                content: elementHtmlCss,
+            })
+        //});
+        
     }
     const appendBlock = function (id, obj) {
         const bm = editor.BlockManager

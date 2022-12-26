@@ -124,25 +124,28 @@ function PageDefaultSet() {
     });
 
     Product.GetOne.TechCert(Pid).done(function (result) {
-        var techcert_list = []
-        result.forEach(function (item) {
-            techcert_list.push(item.id);
-        })
+        if (result.length > 0) {
+            $("#Product > .content > .certification").removeClass("d-none")
+            var techcert_list = []
+            result.forEach(function (item) {
+                techcert_list.push(item.id);
+            })
 
-        $(".btn_certification").each(function () {
-            var $self = $(this)
-            if (techcert_list.indexOf($self.data("certification")) < 0) {
-                $self.parents("li").first().remove();
-            }
-        })
+            $(".btn_certification").each(function () {
+                var $self = $(this)
+                if (techcert_list.indexOf($self.data("certification")) < 0) {
+                    $self.parents("li").first().remove();
+                }
+            })
 
-        $(".badge_directions").each(function () {
-            var $self = $(this)
-            if (techcert_list.indexOf($self.data("certification")) < 0) {
-                $self.siblings("hr").first().remove();
-                $self.remove();
-            }
-        })
+            $(".badge_directions").each(function () {
+                var $self = $(this)
+                if (techcert_list.indexOf($self.data("certification")) < 0) {
+                    $self.siblings("hr").first().remove();
+                    $self.remove();
+                }
+            })
+        }
     })
 
     Product.GetOne.Stock(Pid).done(function (result) {
@@ -199,7 +202,11 @@ function PageDefaultSet() {
                 })
             })
 
-            $pro_discount.text(result[0].price.toLocaleString('en-US') + " ~ " + result[result.length - 1].price.toLocaleString('en-US'));
+            if (result[0].price == result[result.length - 1].price) {
+                $pro_discount.text(result[0].price.toLocaleString('en-US'));
+            } else {
+                $pro_discount.text(result[0].price.toLocaleString('en-US') + " ~ " + result[result.length - 1].price.toLocaleString('en-US'));
+            }
         } else {
             s1 = result[0].fK_S1id;
             s2 = result[0].fK_S2id;

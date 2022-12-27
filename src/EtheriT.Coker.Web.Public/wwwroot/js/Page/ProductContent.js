@@ -118,7 +118,7 @@ function PageDefaultSet() {
         $pro_specification.children("li").each(function () {
             spec_height += $(this).height();
         })
-        if (spec_height > ($pro_specification.height() + 1)) {
+        if (spec_height > $pro_specification.height()) {
             $btn_detailed.removeClass("d-none")
         }
 
@@ -275,8 +275,6 @@ function SpecRadio() {
         case 1:
             s1 = $self.val()
             var temp_list = []
-            //console.log(price_list)
-            //console.log(s1)
             price_list.forEach(function (item) {
                 if (item.s1id == s1) {
                     temp_list.push(item.s2id)
@@ -360,7 +358,6 @@ function AddToCart() {
         } else {
             Coker.sweet.error("錯誤", "請確實選擇規格", null, false);
         }
-
     }
 }
 

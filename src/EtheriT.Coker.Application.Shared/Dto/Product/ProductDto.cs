@@ -6,7 +6,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 	public class ProductDto
     {
         public long Id { get; set; }
-        public Guid TId { get; set; }
         public string Title { get; set; }
         public bool Disp_Opt { get; set; }
         public int Ser_No { get; set; }

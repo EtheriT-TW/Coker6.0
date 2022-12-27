@@ -118,12 +118,16 @@ input[type="number"] {
 
     #Product > .content > .specification > .collapse:not(.show) {
         display: block;
-        height: 2.5rem;
+        height: 3rem;
         overflow: hidden;
     }
 
     #Product > .content > .specification > .collapsing {
-        height: 2.5rem;
+        height: 3rem;
+    }
+
+    #Product > .content > .specification > ul > li {
+        line-height: 1.5rem;
     }
 
     #Product > .content > .specification > .btn_detailed {

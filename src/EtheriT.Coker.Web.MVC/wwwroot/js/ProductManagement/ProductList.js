@@ -1,7 +1,7 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], spec_price_remove_list = [], modal_price_list = [], techcert_list = []
-var $price_modal, priceModal;
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], modal_price_remove_list = [], techcert_list = []
+var $price_modal, priceModal, $techcert_body, techcertModal;
 
 function PageReady() {
     co.Product = {
@@ -84,24 +84,22 @@ function PageReady() {
             },
         },
         Delect: {
-            Prod: function (data) {
+            Prod: function (id) {
                 return $.ajax({
-                    url: "/api/Product/ProdDelete",
-                    type: "POST",
+                    url: "/api/Product/ProdDelete/",
+                    type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
+                    data: { Id: id },
                 });
             },
-            Stock: function (data) {
+            Stock: function (id) {
                 return $.ajax({
-                    url: "/api/Product/StockDelete",
-                    type: "POST",
+                    url: "/api/Product/StockDelete/",
+                    type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
+                    data: { Id: id },
                 });
             }
         }
@@ -165,13 +163,15 @@ function PageReady() {
     })
     $(".btn_expand_out").on("click", function () {
         var $self = $(this);
-        if ($self.children("span").text() == "expand_more") {
-            $self.children("span").text("expand_less")
-        } else {
+        if ($self.children("span").text() == "expand_less") {
             $self.children("span").text("expand_more")
+        } else {
+            $self.children("span").text("expand_less")
         }
     })
-    $(".btn_spec_add").on("click", SpecAdd);
+    $(".btn_spec_add").on("click", function () {
+        SpecAdd(null);
+    });
     $(".btn_spec_price_add").on("click", SpecPriceAdd);
     $(".btn_price_save").on("click", SpecPriceSave);
 
@@ -202,7 +202,6 @@ function PageReady() {
         setInterval(hashChange, 1000);
     }
 
-    $(".markstest > button > .mark_display").text("哈哈測試耶耶耶")
     co.Product.GetAll.TechCert().done(function (result) {
         if (result.length > 0) {
             $techcert_body.children(".isnull").addClass("d-none");
@@ -225,11 +224,26 @@ function PageReady() {
             var text = "";
             $techcert_body.children("div[class=form-check]").each(function () {
                 var $self = $(this)
+                var ptcid = $self.children("input").data("ptcid");
+                var obj = {};
                 if ($self.children("input").prop('checked')) {
-                    techcert_list.push($self.children("input").val());
+                    if (ptcid == 0) {
+                        obj["Id"] = ptcid;
+                        obj["FK_TCId"] = $self.children("input").val();
+                        obj["Checked"] = true;
+                        techcert_list.push(obj);
+                    } else {
+                        var index = techcert_list.findIndex(item => item["Id"] == ptcid)
+                        techcert_list[index]["Checked"] = true
+                    }
                     text = text == "" ? $self.children("label").text() : text + "、" + $self.children("label").text();
                     techcertModal.hide();
                     $marks.val(text);
+                } else {
+                    if (ptcid != 0) {
+                        var index = techcert_list.findIndex(item => item["Id"] == ptcid)
+                        techcert_list[index]["Checked"] = false
+                    }
                 }
             })
         }
@@ -297,7 +311,9 @@ function FormDataClear() {
 
     techcert_list = []
     $techcert_body.children("div[class=form-check]").each(function () {
-        $(this).children("input").prop("checked", false);
+        var $input = $(this).children("input");
+        $input.prop("checked", false);
+        $input.data("ptcid", 0);
     })
 }
 
@@ -368,15 +384,21 @@ function FormDataSet(result) {
     var text = ""
     co.Product.Get.ProdTechCert(result.id).done(function (result) {
         if (result != null && result.length > 0) {
+            var $input = $techcert_body.children("div[class=form-check]").children("input");
             result.forEach(function (item) {
-                techcert_list.push(item.id)
-                $techcert_body.children("div[class=form-check]").each(function () {
-                    var $input = $(this).children("input")
-                    if ($input.val() == item.id) {
-                        $input.prop("checked", true);
+                var obj = {};
+                obj["Id"] = item.id;
+                obj["FK_TCId"] = item.fK_TCId;
+                obj["Checked"] = item.isChecked;
+                $input.each(function () {
+                    var $self = $(this);
+                    if (item.isChecked && $self.val() == item.fK_TCId) {
+                        $self.prop("checked", true);
+                        $self.data("ptcid", item.id);
+                        text = text == "" ? item.title : text + "、" + item.title;
                     }
                 })
-                text = text == "" ? item.title : text + "、" + item.title;
+                techcert_list.push(obj)
             })
         }
         $marks.val(text);
@@ -396,10 +418,7 @@ function FormDataSet(result) {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Product.Delect.Prod({
-            Id: e.row.key,
-            TId: $.cookie('secret')
-        }).done(function () {
+        co.Product.Delect.Prod(e.row.key).done(function () {
             product_list.component.refresh();
         }).fail(function () {
             Coker.sweet.error("錯誤", "刪除資料發生錯誤", null, true);
@@ -491,23 +510,16 @@ function SpecPriceSave() {
         if (obj["Price"] == "" && obj["Bonus"] == "") {
             co.sweet.error("錯誤", "商品現金與紅利不可同時為空", null, false);
             save_success = false;
-            return false;
         } else {
-            if (modal_price_list.find(item => item[0] == obj[0] && item[1] == obj[1] && item[2] == obj[2]) != null) {
+            if (modal_price_list.find(item => item["Rid"] == obj["Rid"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
                 co.sweet.error("錯誤", "價格不可重複", null, false);
                 save_success = false;
-                return false;
             } else {
                 modal_price_list.push(obj);
                 obj = [];
             }
         }
-        //if (modal_price_list.find(item => item["Rid"] == obj["Rid"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
-        //    isRepect = true;
-        //} else {
-        //    modal_price_list.push(obj);
-        //    obj = [];
-        //}
+        console.log(modal_price_list)
     })
     if (save_success) {
         priceModal.hide();
@@ -613,12 +625,18 @@ function SpecAdd(result) {
     //    priceModal.show()
     //})
 
+    if (result != null) {
+        item_btn_expand.children("span").text("expand_more");
+        item_btn_expand.parents("div").first().prev().removeClass("show")
+
+    }
+
     item_btn_expand.on("click", function () {
         var $self = $(this);
-        if ($self.children("span").text() == "expand_more") {
-            $self.children("span").text("expand_less")
-        } else {
+        if ($self.children("span").text() == "expand_less") {
             $self.children("span").text("expand_more")
+        } else {
+            $self.children("span").text("expand_less")
         }
     })
 
@@ -709,15 +727,11 @@ function ISpecRepect() {
 function AddUp(display, success_text, error_text) {
     if (spec_remove_list.length > 0) {
         spec_remove_list.forEach(function (item) {
-            co.Product.Delect.Stock({
-                Id: item,
-                TId: $.cookie('secret')
-            });
+            co.Product.Delect.Stock(item);
         })
     }
 
     co.Product.AddUp.Product({
-        TId: $.cookie('secret'),
         Id: keyId,
         Title: $name.val(),
         Disp_Opt: display,
@@ -731,11 +745,13 @@ function AddUp(display, success_text, error_text) {
         if (result.success) {
             keyId = result.message == null ? keyId : result.message;
 
+            var stock_addup_list = []
             $("#Spec_Frame > .frame").each(function () {
-                var fk_sid = []
                 var $self = $(this);
-                var $spec_input = $self.find(".input_spec");
-                $spec_input.each(function () {
+
+                var obj = {};
+                var fk_sid = [];
+                $self.find(".input_spec").each(function () {
                     var id = -1;
                     $self_input = $(this);
                     $self_input.siblings("datalist").children("option").each(function () {
@@ -747,34 +763,49 @@ function AddUp(display, success_text, error_text) {
                     fk_sid.push(id > -1 ? id : 0)
                 })
 
-                co.Product.AddUp.Stock({
-                    TId: $.cookie('secret'),
-                    Id: $self.data("psid") == "" ? 0 : $self.data("psid"),
-                    Pid: keyId,
-                    FK_S1id: fk_sid[0],
-                    FK_S2id: fk_sid[1],
-                    Price: $self.find(".input_price").val(),
-                    Stock: $self.find(".input_stock_number").val(),
-                    Min_Qty: $self.find(".input_min_number").val(),
-                    Alert_Qty: $self.find(".input_alert_number").val()
-                }).done(function () {
+                obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
+                obj["Pid"] = keyId;
+                obj["FK_S1id"] = fk_sid[0];
+                obj["FK_S2id"] = fk_sid[1];
+                obj["Price"] = $self.find(".input_price").val();
+                obj["Stock"] = $self.find(".input_stock_number").val();
+                obj["Min_Qty"] = $self.find(".input_min_number").val();
+                obj["Alert_Qty"] = $self.find(".input_alert_number").val();
+
+                stock_addup_list.push(obj);
+            })
+
+            co.Product.AddUp.Stock(stock_addup_list).done(function (result) {
+                if (result.success) {
+                    var techcert_addup_list = [];
                     if (techcert_list != null) {
                         techcert_list.forEach(function (item) {
-                            co.Product.AddUp.ProdTechCert({
-                                Id: 0,
-                                FK_PId: keyId,
-                                FK_TCId: item,
-                            })
+                            var obj = {};
+                            obj["Id"] = item.Id;
+                            obj["FK_PId"] = keyId;
+                            obj["FK_TCId"] = item.FK_TCId;
+                            obj["IsChecked"] = item.Checked;
+                            techcert_addup_list.push(obj);
                         })
                     }
-                    Coker.sweet.success(success_text, null, true);
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                }).fail(function () {
+                    co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
+                        if (result.success) {
+                            Coker.sweet.success(success_text, null, true);
+                            setTimeout(function () {
+                                BackToList();
+                                product_list.component.refresh();
+                            }, 1000);
+                        } else {
+                            Coker.sweet.error("錯誤", error_text, null, true);
+                        }
+                    }).fail(function () {
+                        Coker.sweet.error("錯誤", error_text, null, true);
+                    })
+                } else {
                     Coker.sweet.error("錯誤", error_text, null, true);
-                });
+                }
+            }).fail(function () {
+                Coker.sweet.error("錯誤", error_text, null, true);
             })
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);

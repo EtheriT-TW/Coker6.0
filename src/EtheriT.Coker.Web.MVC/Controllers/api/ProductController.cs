@@ -28,12 +28,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.ProductAddUp(dto);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> StockAddUp(ProductStockDto dto)
+        public async Task<ResponseMessageDto> StockAddUp(List<ProductStockDto> dto)
         {
             return await productAppService.StockAddUp(dto);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> TechCertAddUp(ProductTechCertDto dto)
+        public async Task<ResponseMessageDto> TechCertAddUp(List<ProductTechCertDto> dto)
         {
             return await productAppService.TechCertAddUp(dto);
         }
@@ -67,15 +67,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.GetSpecDetail(typeid);
         }
-        [HttpPost]
-        public async Task<ResponseMessageDto> ProdDelete(DataDelectDto dto)
+        [HttpGet]
+        public async Task<ResponseMessageDto> ProdDelete(long Id)
         {
-            return await productAppService.ProdDelete(dto);
+            return await productAppService.ProdDelete(Id);
         }
-        [HttpPost]
-        public async Task<ResponseMessageDto> StockDelete(DataDelectDto dto)
+        [HttpGet]
+        public async Task<ResponseMessageDto> StockDelete(long Id)
         {
-            return await productAppService.StockDelete(dto);
+            return await productAppService.StockDelete(Id);
         }
     }
 }

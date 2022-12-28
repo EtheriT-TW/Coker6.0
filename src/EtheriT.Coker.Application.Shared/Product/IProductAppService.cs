@@ -12,10 +12,13 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> ProductAddUp(ProductDto dto);
         public Task<ResponseMessageDto> StockAddUp(List<ProductStockDto> dto);
         public Task<ResponseMessageDto> TechCertAddUp(List<ProductTechCertDto> dto);
+        public Task<ResponseMessageDto> ProdPriceAddUp(List<ProductPriceDto> dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions);
         public Task<ProductDto> GetProdDataOne(long Id);
         public Task<List<ProductStockDto>> GetStockDataAll(long PId);
         public Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId);
+        public Task<List<ProductPriceDto>> GetPriceDataAll(long PSId);
         public Task<ProdGetOneDto> GetDisplayOne(long id);
         public Task<List<ProductStockDto>> GetDisplayStock(long id);
         public Task<ProdGetDisplayDto> GetDisplaySimple(long id);
@@ -24,6 +27,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
         public Task<ResponseMessageDto> ProdDelete(long Id);
         public Task<ResponseMessageDto> StockDelete(long Id);
+        public Task<ResponseMessageDto> PriceDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }
 }

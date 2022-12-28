@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 
 namespace EtheriT.Coker.Application.Product
@@ -89,6 +88,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long usetId = await loginUserData.GetUserId();
+                output.Message = "";
                 foreach (var item in dto)
                 {
                     if (item.Id == 0)
@@ -98,7 +98,6 @@ namespace EtheriT.Coker.Application.Product
                             FK_Pid = item.Pid,
                             FK_S1id = item.FK_S1id,
                             FK_S2id = item.FK_S2id,
-                            Price = item.Price,
                             Stock = item.Stock,
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
@@ -107,6 +106,7 @@ namespace EtheriT.Coker.Application.Product
                         };
                         db.Prod_Stocks.Add(ps);
                         db.SaveChanges();
+                        output.Message += ps.Id + ",";
                     }
                     else
                     {
@@ -116,7 +116,6 @@ namespace EtheriT.Coker.Application.Product
                         {
                             db_ps.FK_S1id = item.FK_S1id;
                             db_ps.FK_S2id = item.FK_S2id;
-                            db_ps.Price = item.Price;
                             db_ps.Stock = item.Stock;
                             db_ps.Min_Qty = item.Min_Qty;
                             db_ps.Alert_Qty = item.Alert_Qty;
@@ -142,8 +141,8 @@ namespace EtheriT.Coker.Application.Product
 
             try
             {
-                var user = await loginUserData.GetUser();
-                if (user != null)
+                long usetId = await loginUserData.GetUserId();
+                if (usetId != null)
                 {
                     foreach (var item in dto)
                     {
@@ -154,7 +153,7 @@ namespace EtheriT.Coker.Application.Product
                                 FK_PId = item.FK_PId,
                                 FK_TCId = item.FK_TCId,
                                 IsChecked = item.IsChecked,
-                                CreatorUserId = user.Id,
+                                CreatorUserId = usetId,
                             };
                             db.Prod_TechCerts.Add(ptc);
                             db.SaveChanges();
@@ -166,7 +165,58 @@ namespace EtheriT.Coker.Application.Product
                             if (db_ptc != null)
                             {
                                 db_ptc.IsChecked = item.IsChecked;
-                                db_ptc.LastModifierUserId = user.Id;
+                                db_ptc.LastModifierUserId = usetId;
+                                db_ptc.LastModificationTime = DateTime.Now;
+                            }
+                        }
+                    }
+                }
+
+                db.SaveChanges();
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> ProdPriceAddUp(List<ProductPriceDto> dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                if (usetId != null)
+                {
+                    foreach (var item in dto)
+                    {
+                        if (item.Id == 0)
+                        {
+                            Core.Models.Prod_Price pp = new Core.Models.Prod_Price
+                            {
+                                FK_PSId = item.FK_PSId,
+                                FK_RId = item.FK_RId,
+                                Price = item.Price,
+                                Bonus = item.Bonus,
+                                CreatorUserId = usetId,
+                            };
+                            db.Prod_Prices.Add(pp);
+                            db.SaveChanges();
+                        }
+                        else
+                        {
+                            var db_pp = db.Prod_Prices.Where(e => e.Id == item.Id).FirstOrDefault();
+
+                            if (db_pp != null)
+                            {
+                                db_pp.FK_RId = item.FK_RId;
+                                db_pp.Price = item.Price;
+                                db_pp.Bonus = item.Bonus;
+                                db_pp.LastModifierUserId = usetId;
+                                db_pp.LastModificationTime = DateTime.Now;
                             }
                         }
                     }
@@ -188,32 +238,28 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long webid = await loginUserData.GetWebsiteId();
-                var db_ps = db.Prod_Stocks;
-                var db_p = db.Prods;
 
-                if (db_ps != null && db_p != null)
-                {
-                    var dataQuery = from ps in db_ps
-                                    where !ps.IsDeleted
-                                    join p in db_p on ps.FK_Pid equals p.Id
-                                    where !p.IsDeleted && p.FK_WebsiteId == webid
-                                    group ps by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
-                                    select new ProductGetAllListDto
-                                    {
-                                        Id = s.Key.Id,
-                                        Title = s.Key.Title,
-                                        Disp_Opt = s.Key.Disp_Opt,
-                                        Ser_No = s.Key.Ser_No,
-                                        Price = s.Min(e => e.Price) == s.Max(e => e.Price) ? s.Min(e => e.Price).ToString() : s.Min(e => e.Price) + " ~ " + s.Max(e => e.Price),
-                                        StartTime = s.Key.StartTime,
-                                        EndTime = s.Key.EndTime,
-                                        Permanent = s.Key.permanent
-                                    };
+                var dataQuery = from ps in db.Prod_Stocks
+                                where !ps.IsDeleted
+                                from pp in db.Prod_Prices
+                                where !pp.IsDeleted && pp.FK_PSId == ps.Id
+                                join p in db.Prods on ps.FK_Pid equals p.Id
+                                where !p.IsDeleted && p.FK_WebsiteId == webid
+                                group pp by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
+                                select new ProductGetAllListDto
+                                {
+                                    Id = s.Key.Id,
+                                    Title = s.Key.Title,
+                                    Disp_Opt = s.Key.Disp_Opt,
+                                    Ser_No = s.Key.Ser_No,
+                                    Price = s.Min(e => e.Price) == s.Max(e => e.Price) ? s.Min(e => e.Price).ToString() : s.Min(e => e.Price) + " ~ " + s.Max(e => e.Price),
+                                    StartTime = s.Key.StartTime,
+                                    EndTime = s.Key.EndTime,
+                                    Permanent = s.Key.permanent
+                                };
 
-                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-                }
-                else throw new Exception("查無商品資料");
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
             {
@@ -221,6 +267,33 @@ namespace EtheriT.Coker.Application.Product
             }
 
             return new JsonResult(new List<ProductGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                long webid = await loginUserData.GetWebsiteId();
+
+                var dataQuery = from pst in db.Prod_Spec_Types
+                                where !pst.IsDeleted && pst.FK_WebsiteId == webid
+                                from ps in db.Prod_Specs
+                                where !ps.IsDeleted && ps.FK_Tid == pst.Id
+                                select new ProductGetAllSpecListDto
+                                {
+                                    Id = ps.Id,
+                                    Type = pst.Type,
+                                    Title = ps.Title
+                                };
+
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<ProductGetAllSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ProductDto> GetProdDataOne(long Id)
         {
@@ -258,6 +331,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 var output = await (from ps in db.Prod_Stocks
                                     where !ps.IsDeleted && ps.FK_Pid == PId
+                                    orderby ps.Id
                                     select new ProductStockDto
                                     {
                                         Pid = PId,
@@ -293,7 +367,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 var output = await (from ptc in db.Prod_TechCerts
                                     where !ptc.IsDeleted && ptc.FK_PId == PId
-                                    orderby ptc.FK_TCId
+                                    orderby ptc.Id
                                     select new TechnicalCertificateGetAllDto
                                     {
                                         Id = ptc.Id,
@@ -309,6 +383,31 @@ namespace EtheriT.Coker.Application.Product
                     var tc_title = db.TechnicalCertificates.Where(e => e.Id == item.FK_TCId && !e.IsDeleted).FirstOrDefault().Title;
                     item.Title = tc_title == null ? "" : tc_title;
                 }
+
+                return output;
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)
+        {
+            try
+            {
+                var output = await (from pp in db.Prod_Prices
+                                    where !pp.IsDeleted && pp.FK_PSId == PSId
+                                    orderby pp.FK_PSId
+                                    select new ProductPriceDto
+                                    {
+                                        Id = pp.Id,
+                                        FK_PSId = pp.FK_PSId,
+                                        FK_RId = pp.FK_RId,
+                                        Price = pp.Price,
+                                        Bonus = pp.Bonus,
+                                    }).ToListAsync();
 
                 return output;
             }
@@ -518,6 +617,14 @@ namespace EtheriT.Coker.Application.Product
                             ps.IsDeleted = true;
                             ps.DeletionTime = DateTime.Now;
                             ps.DeleterUserId = usetId;
+
+                            var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == ps.Id);
+                            foreach (var item in db_pp)
+                            {
+                                item.IsDeleted = true;
+                                item.DeleterUserId = usetId;
+                                item.DeletionTime = DateTime.Now;
+                            }
                         }
                     }
 
@@ -559,6 +666,40 @@ namespace EtheriT.Coker.Application.Product
                     db_ps.IsDeleted = true;
                     db_ps.DeletionTime = DateTime.Now;
                     db_ps.DeleterUserId = usetId;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+
+                var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == Id);
+                foreach (var item in db_pp)
+                {
+                    item.IsDeleted = true;
+                    item.DeleterUserId = usetId;
+                    item.DeletionTime = DateTime.Now;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> PriceDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_pp = db.Prod_Prices.Where(e => e.Id == Id).FirstOrDefault();
+                if (db_pp != null)
+                {
+                    db_pp.IsDeleted = true;
+                    db_pp.DeletionTime = DateTime.Now;
+                    db_pp.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

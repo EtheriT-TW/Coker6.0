@@ -1,6 +1,6 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
-var startDate, endDate, keyId, disp_opt = true
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], modal_price_remove_list = [], techcert_list = []
+var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], techcert_list = []
 var $price_modal, priceModal, $techcert_body, techcertModal;
 
 function PageReady() {
@@ -35,7 +35,17 @@ function PageReady() {
                     data: JSON.stringify(data),
                     dataType: "json"
                 });
-            }
+            },
+            ProdPrice: function (data) {
+                return $.ajax({
+                    url: "/api/Product/ProdPriceAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
         },
         GetAll: {
             TechCert: function () {
@@ -82,6 +92,15 @@ function PageReady() {
                     data: { PId: id },
                 });
             },
+            ProdPrice: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetPriceDataAll/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { PSId: id },
+                });
+            },
         },
         Delect: {
             Prod: function (id) {
@@ -96,6 +115,15 @@ function PageReady() {
             Stock: function (id) {
                 return $.ajax({
                     url: "/api/Product/StockDelete/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { Id: id },
+                });
+            },
+            Price: function (id) {
+                return $.ajax({
+                    url: "/api/Product/PriceDelete/",
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
@@ -129,9 +157,26 @@ function PageReady() {
                     if (ISpecRepect()) {
                         co.sweet.error("錯誤", "商品規格不可重複", null, false);
                     } else {
-                        Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                            AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-                        });
+                        var price_null = false;
+                        var $null_input;
+                        $(".input_price").each(function () {
+                            if ($(this).val() == "") {
+                                price_null = true;
+                                $null_input = $(this);
+                                return false;
+                            }
+                        })
+                        if (price_null) {
+                            co.sweet.error("錯誤", "請確實填寫價格", function () {
+                                setTimeout(function () {
+                                    $('html, body').animate({ scrollTop: $null_input.offset().top - ($("header").height() * 2) }, 0);
+                                }, 500)
+                            }, false);
+                        } else {
+                            Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                                AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                            });
+                        }
                     }
                 }
                 form.classList.add('was-validated')
@@ -172,7 +217,9 @@ function PageReady() {
     $(".btn_spec_add").on("click", function () {
         SpecAdd(null);
     });
-    $(".btn_spec_price_add").on("click", SpecPriceAdd);
+    $(".btn_spec_price_add").on("click", function () {
+        SpecPriceAdd(null)
+    });
     $(".btn_price_save").on("click", SpecPriceSave);
 
     $name.on('keyup', function () {
@@ -276,9 +323,23 @@ function ElementInit() {
     document.getElementById('PriceModal').addEventListener('hidden.bs.modal', function (event) {
         $price_modal.children(".frame").each(function () {
             $(this).remove();
-            modal_price_list = [];
             spec_price_num = 0;
         })
+
+        $(".input_price").each(function () {
+            var $self = $(this)
+            var psid = $self.parents(".frame").data("psid")
+            var temppsid = $self.parents(".frame").data("temppsid")
+            var index = modal_price_list.findIndex(item => item["PSid"] == psid || (item["TempPSid"] != null && item["TempPSid"] == temppsid))
+            if (index > -1) {
+                text = "現金：" + modal_price_list[index]["Price"] + " 紅利：" + modal_price_list[index]["Bonus"]
+                $self.val(text);
+            } else {
+                $self.val("");
+            }
+        })
+
+        $(".alert_text").addClass("d-none");
     })
 }
 
@@ -315,6 +376,9 @@ function FormDataClear() {
         $input.prop("checked", false);
         $input.data("ptcid", 0);
     })
+    modal_price_list = []
+    price_tid = 0;
+    temp_psid = 0;
 }
 
 function contentReady(e) {
@@ -365,7 +429,22 @@ function FormDataSet(result) {
     FormDataClear();
     co.Product.Get.ProdStock(result.id).done(function (all_result) {
         all_result.forEach(function (result) {
-            SpecAdd(result);
+            co.Product.Get.ProdPrice(result.id).done(function (all_result) {
+                all_result.forEach(function (result) {
+                    var obj = {};
+                    obj["Id"] = result.id;
+                    obj["Tempid"] = price_tid;
+                    obj["PSid"] = result.fK_PSId;
+                    obj["TempPSid"] = 0;
+                    obj["Rid"] = result.fK_RId
+                    obj["Price"] = result.price
+                    obj["Bonus"] = result.bonus
+                    obj["IsDelect"] = false;
+                    price_tid += 1;
+                    modal_price_list.push(obj);
+                })
+                SpecAdd(result);
+            })
         })
     })
     startDate = result.startTime;
@@ -434,50 +513,29 @@ function SpecPriceAdd(result) {
         item_bonus = item.find(".input_bonus"),
         item_btn_delect = item.find(".btn_price_delect");
 
-    //co.Product.Get.SpecType().done(function (type_result) {
-    //    if (type_result != null) {
-    //        type_result.forEach(function (type) {
-    //            var spec = $($("#TemplateSpecSelect").html()).clone();
-    //            var spec_select = spec.find("select");
-    //            co.Product.Get.Spec(type.id).done(function (spec_result) {
-    //                spec_select.attr("aria-label", type.title);
-    //                if (result != null) {
-    //                    spec_select.append('<option value="" disabled="disabled">' + type.title + '</option>')
-    //                    spec_select.append('<option value="0">無</option>')
-    //                    spec_result.forEach(function (spec) {
-    //                        if (spec.id == result.fK_S1id || spec.id == result.fK_S2id) {
-    //                            spec_select.append('<option selected value="' + spec.id + '">' + spec.title + '</option>')
-    //                        } else {
-    //                            spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
-    //                        }
-    //                    })
-    //                } else {
-    //                    spec_select.append('<option selected value="" disabled="disabled">' + type.title + '</option>')
-    //                    spec_select.append('<option value="0">無</option>')
-    //                    spec_result.forEach(function (spec) {
-    //                        spec_select.append('<option value="' + spec.id + '">' + spec.title + '</option>')
-    //                    })
-    //                }
-    //            });
-    //            item_select.append(spec);
-    //        })
-    //    }
-    //});
-
-    //item.data("psid", result != null ? result.id : "")
-    //item_price.val(result != null ? result.price : "");
-    //item_min.val(result != null ? result.min_Qty : "");
-    //item_stock.val(result != null ? result.stock : "");
-    //item_alert.val("");
-    //item_alert.val(result != null ? result.alert_Qty : "");
+    item.data("ppid", result == null ? 0 : result.Id);
+    item.data("tempid", result == null ? -1 : result.Tempid);
+    if (result != null) {
+        item_role.val(result.Rid);
+        item_cash.val(result.Price);
+        item_bonus.val(result.Bonus);
+    }
 
     item_btn_delect.on("click", function () {
-        $self_p = $(this).parents(".frame").first();
+        var $self_p = $(this).parents(".frame").first();
         if (spec_price_num == 1) {
             co.sweet.error("商品至少需有一種價格", null, false);
         } else {
             co.sweet.confirm("移除價格", "確定要移除此項價格嗎?", "　是　", "　否　", function () {
-                spec_price_remove_list.push($self_p.data("ppid"));
+                if ($self_p.data("ppid") == 0) {
+                    if ($self_p.data("tempid") > -1) {
+                        var index = modal_price_list.findIndex(item => item["Tempid"] == $self_p.data("tempid"))
+                        modal_price_list[index]["IsDelect"] = true;
+                    }
+                } else {
+                    var index = modal_price_list.findIndex(item => item["Id"] == $self_p.data("ppid"))
+                    modal_price_list[index]["IsDelect"] = true;
+                }
                 spec_price_num -= 1;
                 $self_p.remove();
             })
@@ -486,45 +544,51 @@ function SpecPriceAdd(result) {
 
     $("#PriceModal > .modal-dialog > .modal-content > .modal-body > .price_option").append(item);
 
-    //$spec_select = $(".spec_select")
-    //$price = $(".input_price");
-    //$stock_number = $(".input_stock_number");
-    //$min_number = $(".input_min_number");
-    //$alert_number = $(".input_alert_number");
-
     $("input[type='number']").on("input", function () {
         $(this).val($(this).val() < 0 ? 0 : $(this).val())
     });
 }
 
 function SpecPriceSave() {
-    var save_success = true;
-    var obj = []
-    modal_price_list = []
+    var temp_list = []
+    var save_success = true
     $price_modal.children(".frame").each(function () {
         $self = $(this);
-        obj["PSid"] = $self.find(".select_role").val()
-        obj["Rid"] = $self.find(".select_role").val()
-        obj["Price"] = $self.find(".input_cash").val()
-        obj["Bonus"] = $self.find(".input_bonus").val()
-        if (obj["Price"] == "" && obj["Bonus"] == "") {
-            co.sweet.error("錯誤", "商品現金與紅利不可同時為空", null, false);
-            save_success = false;
+        var obj = {};
+        obj["Id"] = $self.data("ppid");
+        obj["Tempid"] = price_tid;
+        obj["PSid"] = $self.parents(".modal-body").first().data("psid");
+        obj["TempPSid"] = $self.parents(".modal-body").first().data("temppsid");
+        obj["Rid"] = $self.find(".select_role").val();
+        obj["Price"] = $self.find(".input_cash").val();
+        obj["Bonus"] = $self.find(".input_bonus").val();
+        obj["IsDelect"] = false;
+        if (obj["Price"] == 0 && obj["Bonus"] == 0) {
+            $(".alert_text").text("商品現金與紅利不可同時為空")
+            $(".alert_text").removeClass("d-none");
+            save_success = false
         } else {
-            if (modal_price_list.find(item => item["Rid"] == obj["Rid"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
-                co.sweet.error("錯誤", "價格不可重複", null, false);
-                save_success = false;
+            if (temp_list.find(item => item["Rid"] == obj["Rid"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
+                $(".alert_text").removeClass("d-none");
+                $(".alert_text").text("價格不可重複");
+                save_success = false
             } else {
-                modal_price_list.push(obj);
-                obj = [];
+                temp_list.push(obj)
+                $(".alert_text").addClass("d-none");
+                if ($self.data("tempid") < 0) {
+                    modal_price_list.push(obj)
+                    price_tid += 1;
+                } else {
+                    var index = modal_price_list.findIndex(item => item["Tempid"] == $self.data("tempid"))
+                    modal_price_list[index]["Rid"] = $self.find(".select_role").val();
+                    modal_price_list[index]["Price"] = $self.find(".input_cash").val();
+                    modal_price_list[index]["Bonus"] = $self.find(".input_bonus").val();
+                }
             }
         }
-        console.log(modal_price_list)
     })
     if (save_success) {
         priceModal.hide();
-        //console.log(modal_price_list)
-        //console.log($price_modal.data("psid"))
     }
 }
 
@@ -604,8 +668,20 @@ function SpecAdd(result) {
         }
     }
 
-    item.data("psid", result != null ? result.id : "")
-    item_price.val(result != null ? result.price : "");
+    if (result != null) {
+        item.data("psid", result.id);
+    } else {
+        temp_psid += 1;
+        item.data("temppsid", temp_psid);
+    }
+
+    var index = modal_price_list.findIndex(mitem => mitem["PSid"] == item.data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.data("temppsid")))
+    if (index > -1) {
+        text = "現金：" + modal_price_list[index]["Price"] + " 紅利：" + modal_price_list[index]["Bonus"]
+        item_price.val(text);
+    } else {
+        item_price.val("");
+    }
     item_min.val(result != null ? result.min_Qty : "");
     item_stock.val(result != null ? result.stock : "");
     item_alert.val("");
@@ -618,12 +694,24 @@ function SpecAdd(result) {
     item_select_list_1.attr("id", "SpecListOpt" + spec_num + "-1");
     item_select_list_2.attr("id", "SpecListOpt" + spec_num + "-2");
 
-    //item_price.on("click", function () {
-    //    SpecPriceAdd(null);
-    //    var psid = $(this).parents(".frame").data("psid")
-    //    $price_modal.data("psid", psid != null ? psid : "")
-    //    priceModal.show()
-    //})
+    item_price.on("click", function () {
+        var isnull = true;
+        var $self = $(this)
+        var psid = $self.parents(".frame").data("psid")
+        var temppsid = $self.parents(".frame").data("temppsid")
+        $price_modal.parents(".modal-body").first().data("psid", psid != null ? psid : "")
+        $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
+        modal_price_list.forEach(function (item) {
+            if (item.PSid == psid || (item.TempPsid != null && item.TempPsid == temppsid)) {
+                SpecPriceAdd(item)
+                isnull = false;
+            }
+        })
+        if (isnull) {
+            SpecPriceAdd(null)
+        }
+        priceModal.show();
+    })
 
     if (result != null) {
         item_btn_expand.children("span").text("expand_more");
@@ -725,6 +813,7 @@ function ISpecRepect() {
 }
 
 function AddUp(display, success_text, error_text) {
+
     if (spec_remove_list.length > 0) {
         spec_remove_list.forEach(function (item) {
             co.Product.Delect.Stock(item);
@@ -767,7 +856,6 @@ function AddUp(display, success_text, error_text) {
                 obj["Pid"] = keyId;
                 obj["FK_S1id"] = fk_sid[0];
                 obj["FK_S2id"] = fk_sid[1];
-                obj["Price"] = $self.find(".input_price").val();
                 obj["Stock"] = $self.find(".input_stock_number").val();
                 obj["Min_Qty"] = $self.find(".input_min_number").val();
                 obj["Alert_Qty"] = $self.find(".input_alert_number").val();
@@ -777,24 +865,54 @@ function AddUp(display, success_text, error_text) {
 
             co.Product.AddUp.Stock(stock_addup_list).done(function (result) {
                 if (result.success) {
-                    var techcert_addup_list = [];
-                    if (techcert_list != null) {
-                        techcert_list.forEach(function (item) {
+                    var new_index = result.message.split(",");
+                    var price_addup_list = [];
+                    modal_price_list.forEach(function (item) {
+                        if (!item.IsDelect) {
                             var obj = {};
                             obj["Id"] = item.Id;
-                            obj["FK_PId"] = keyId;
-                            obj["FK_TCId"] = item.FK_TCId;
-                            obj["IsChecked"] = item.Checked;
-                            techcert_addup_list.push(obj);
-                        })
-                    }
-                    co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
+                            if (item.PSid != null) {
+                                obj["FK_PSId"] = item.PSid;
+                            } else {
+                                obj["FK_PSId"] = new_index[item.TempPSid - 1];
+                            }
+                            obj["FK_RId"] = item.Rid;
+                            obj["Price"] = item.Price;
+                            obj["Bonus"] = item.Bonus;
+                            price_addup_list.push(obj)
+                        } else {
+                            if (item.PSid != null && item.Id != null) {
+                                co.Product.Delect.Price(item.Id);
+                            }
+                        }
+                    })
+
+                    co.Product.AddUp.ProdPrice(price_addup_list).done(function () {
                         if (result.success) {
-                            Coker.sweet.success(success_text, null, true);
-                            setTimeout(function () {
-                                BackToList();
-                                product_list.component.refresh();
-                            }, 1000);
+                            var techcert_addup_list = [];
+                            if (techcert_list != null) {
+                                techcert_list.forEach(function (item) {
+                                    var obj = {};
+                                    obj["Id"] = item.Id;
+                                    obj["FK_PId"] = keyId;
+                                    obj["FK_TCId"] = item.FK_TCId;
+                                    obj["IsChecked"] = item.Checked;
+                                    techcert_addup_list.push(obj);
+                                })
+                            }
+                            co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
+                                if (result.success) {
+                                    Coker.sweet.success(success_text, null, true);
+                                    setTimeout(function () {
+                                        BackToList();
+                                        product_list.component.refresh();
+                                    }, 1000);
+                                } else {
+                                    Coker.sweet.error("錯誤", error_text, null, true);
+                                }
+                            }).fail(function () {
+                                Coker.sweet.error("錯誤", error_text, null, true);
+                            })
                         } else {
                             Coker.sweet.error("錯誤", error_text, null, true);
                         }

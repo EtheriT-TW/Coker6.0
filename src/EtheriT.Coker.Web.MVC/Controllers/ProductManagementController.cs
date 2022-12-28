@@ -2,7 +2,6 @@
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Web.MVC.Models.ProductManagement;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
@@ -25,6 +24,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         public IActionResult TechnicalCertificate()
         {
             return View("TechnicalCertificate");
+        }
+        public IActionResult SpecSetting()
+        {
+            return View("SpecSetting");
         }
     }
 }

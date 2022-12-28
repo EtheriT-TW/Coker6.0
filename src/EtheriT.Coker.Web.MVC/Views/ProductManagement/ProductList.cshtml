@@ -28,12 +28,12 @@
 
 					<div class="col cash input-group">
 						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
-						<input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9">
+						<input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0">
 					</div>
 
 					<div class="col bonus input-group">
 						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
-						<input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9">
+						<input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0">
 					</div>
 
 					<button class="col-auto btn_price_delect bg-transparent border-0 d-flex p-0">
@@ -50,11 +50,12 @@
 						<div>新增其他付款方式</div>
 					</button>
 				</div>
+				<div class="alert_text text-center text-danger d-none"></div>
 				<div class="text-center text-danger mb-3">*紅利及價格須輸入一億元(含)以下</div>
 			</div>
 			<div class="modal-footer px-4">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>
-				<button type="button" class="btn_price_save btn btn-primary switch">儲　存</button>
+				<button type="button" class="btn_price_save btn btn-primary">儲　存</button>
 			</div>
 		</div>
 	</div>
@@ -283,7 +284,7 @@
 								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
 									<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
 								</div>
-								<input class="input_price form-control rounded" type="number" aria-label="Input Price of Product" required="">
+								<input class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required>
 							</div>
 
 							<div class="min_number input-group mb-3 col-12 col-lg-4">

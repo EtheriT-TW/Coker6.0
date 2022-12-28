@@ -69,6 +69,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Controller="ProductManagement",
                                 Action="TechnicalCertificate",
                                 Icon="",
+                            },
+                            new JobMenu{
+                                PageName="SpecSetting",
+                                Title="規格設定",
+                                Controller="ProductManagement",
+                                Action="SpecSetting",
+                                Icon="",
                             }
                         }
                     },

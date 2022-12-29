@@ -42,6 +42,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.ProdPriceAddUp(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ProdSpecAddUp(ProductSpecListDto dto)
+        {
+            return await productAppService.ProdSpecAddUp(dto);
+        }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -96,6 +101,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> PriceDelete(long Id)
         {
             return await productAppService.PriceDelete(Id);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> SpecDelete(long key)
+        {
+            return await productAppService.SpecDelete(key);
         }
     }
 }

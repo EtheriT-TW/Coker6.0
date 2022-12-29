@@ -404,14 +404,18 @@ function HashDataEdit() {
                 SpecAdd(null);
                 MoveToContent();
             } else {
-                co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
-                    if (result != null) {
-                        FormDataSet(result);
-                        MoveToContent();
-                    } else {
-                        window.location.hash = ""
-                    }
-                })
+                if (hash.includes('-')) {
+                    MoveToCanvas();
+                } else {
+                    co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
+                        if (result != null) {
+                            FormDataSet(result);
+                            MoveToContent();
+                        } else {
+                            window.location.hash = ""
+                        }
+                    })
+                }
             }
         }
     } else {
@@ -422,6 +426,12 @@ function HashDataEdit() {
 function editButtonClicked(e) {
     MoveToContent();
     keyId = e.row.key;
+    window.location.hash = keyId
+}
+
+function paletteButtonClicked(e) {
+    MoveToCanvas();
+    keyId = e.row.key + "-1";
     window.location.hash = keyId
 }
 
@@ -937,6 +947,11 @@ function MoveToContent() {
     $("#ProductForm").removeClass("was-validated");
     $("#ProductList").addClass("d-none");
     $("#ProductContent").removeClass("d-none");
+}
+
+function MoveToCanvas() {
+    $("#ProductList").addClass("d-none");
+    $("#ProductCanvas").removeClass("d-none");
 }
 
 function BackToList() {

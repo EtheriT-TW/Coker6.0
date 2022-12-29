@@ -233,6 +233,56 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
+        public async Task<ResponseMessageDto> ProdSpecAddUp(ProductSpecListDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            //try
+            //{
+            //    long usetId = await loginUserData.GetUserId();
+            //    if (usetId != null)
+            //    {
+            //        foreach (var item in dto)
+            //        {
+            //            if (item.Id == 0)
+            //            {
+            //                Core.Models.Prod_Price pp = new Core.Models.Prod_Price
+            //                {
+            //                    FK_PSId = item.FK_PSId,
+            //                    FK_RId = item.FK_RId,
+            //                    Price = item.Price,
+            //                    Bonus = item.Bonus,
+            //                    CreatorUserId = usetId,
+            //                };
+            //                db.Prod_Prices.Add(pp);
+            //                db.SaveChanges();
+            //            }
+            //            else
+            //            {
+            //                var db_pp = db.Prod_Prices.Where(e => e.Id == item.Id).FirstOrDefault();
+
+            //                if (db_pp != null)
+            //                {
+            //                    db_pp.FK_RId = item.FK_RId;
+            //                    db_pp.Price = item.Price;
+            //                    db_pp.Bonus = item.Bonus;
+            //                    db_pp.LastModifierUserId = usetId;
+            //                    db_pp.LastModificationTime = DateTime.Now;
+            //                }
+            //            }
+            //        }
+            //    }
+
+            //    db.SaveChanges();
+            //    output.Success = true;
+            //}
+            //catch (Exception e)
+            //{
+            //    output.Success = false;
+            //    output.Error = e.Message;
+            //}
+
+            return output;
+        }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -278,7 +328,7 @@ namespace EtheriT.Coker.Application.Product
                                 where !pst.IsDeleted && pst.FK_WebsiteId == webid
                                 from ps in db.Prod_Specs
                                 where !ps.IsDeleted && ps.FK_Tid == pst.Id
-                                select new ProductGetAllSpecListDto
+                                select new ProductSpecListDto
                                 {
                                     Id = ps.Id,
                                     Type = pst.Type,
@@ -293,7 +343,7 @@ namespace EtheriT.Coker.Application.Product
 
             }
 
-            return new JsonResult(new List<ProductGetAllSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<ProductSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ProductDto> GetProdDataOne(long Id)
         {
@@ -700,6 +750,32 @@ namespace EtheriT.Coker.Application.Product
                     db_pp.IsDeleted = true;
                     db_pp.DeletionTime = DateTime.Now;
                     db_pp.DeleterUserId = usetId;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> SpecDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_ps = db.Prod_Specs.Where(e => e.Id == Id).FirstOrDefault();
+                if (db_ps != null)
+                {
+                    db_ps.IsDeleted = true;
+                    db_ps.DeletionTime = DateTime.Now;
+                    db_ps.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

@@ -15,13 +15,13 @@
 	<div id="" class="py-2">
 		<div id="SpecSettingList" class="card border-0">
 			<div class="card-body position-relative">
-				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-					<span class="material-symbols-outlined">add</span>
-				</button>
 				@(
-					Html.DevExtreme().DataGrid<ProductGetAllSpecListDto>()
+					Html.DevExtreme().DataGrid<ProductSpecListDto>()
 					.DataSource(d => d.RemoteController().Key("Id")
 					.LoadUrl("/api/Product/GetAllSpecList").LoadMethod("Get")
+					.InsertUrl("/api/Product/ProdSpecAddUp").InsertMethod("Post")
+					.UpdateUrl("/api/Product/ProdSpecAddUp").UpdateMethod("Post")
+					.DeleteUrl("/api/Product/SpecDelete").DeleteMethod("Get")
 					)
 					.RemoteOperations(true)
 					.ColumnHidingEnabled(true)
@@ -38,15 +38,17 @@
 					.ShowRowLines(true)
 					.Columns(c =>
 					{
-						c.AddFor(e => e.Id).Caption("編號").Width(50);
+						c.AddFor(e => e.Id).Caption("編號").Width(50).AllowEditing(false); ;
 						c.AddFor(e => e.Type).Caption("規格類型");
 						c.AddFor(e => e.Title).Caption("規格名稱");
 						c.Add()
 						.Type(GridCommandColumnType.Buttons)
 						.Buttons(b =>
 						{
-							b.Add().Name("edit").OnClick("editButtonClicked");
-							b.Add().Name("delete").OnClick("deleteButtonClicked");
+							b.Add().Icon("add").OnClick("addButtonClicked").Visible(new JS("addButtonVisible"));
+							b.Add().Name("delete");
+							b.Add().Name("save");
+							b.Add().Name("cancel");
 						});
 					})
 					.ColumnAutoWidth(true)
@@ -60,53 +62,26 @@
 					})
 					.Editing(editing =>
 					{
+						editing.Mode(GridEditMode.Row);
+						editing.AllowAdding(true);
 						editing.AllowDeleting(true);
 						editing.AllowUpdating(true);
+						editing.ConfirmDelete(false);
 						editing.UseIcons(true);
+						editing.NewRowPosition(GridNewRowPosition.ViewportTop);
 					})
-					.OnContentReady("contentReady")
+					.Toolbar(toolbar =>
+					{
+						toolbar.Items(i =>
+						{
+							i.Add()
+						.Name(DataGridToolbarItem.AddRowButton)
+						.ShowText(ToolbarItemShowTextMode.Always);
+						});
+					})
+					.OnRowInserted("onRowInserted")
 					)
 			</div>
-		</div>
-
-		<div id="SpecSettingContent" class="card border-0 d-none">
-			<div class="card-header d-flex justify-content-between">
-				<div class="fw-bold fs-5 d-flex align-items-center">
-					<button class="btn_back d-flex bg-transparent border-0 align-items-center">
-						<span class="material-symbols-outlined">
-							keyboard_backspace
-						</span>
-					</button>
-					<div class="lh-lg">規格設置</div>
-				</div>
-				<div class="d-flex">
-					<button class="btn_done btn-primary border-0 rounded px-sm-4 px-2 py-1 text-white" form="SpecSettingForm">發布</button>
-				</div>
-			</div>
-
-			<form id="SpecSettingForm" class="card-body needs-validation">
-				<div class="title input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up required_text">
-						<span class="material-symbols-outlined me-1 required_sign">image</span>規格類型
-					</div>
-					<input id="InputType " class="form-control rounded-right" list="TypeList" placeholder="規格選項" required>
-					<datalist id="TypeList">
-						<option value="顏色" data-tid="1"></option>
-						<option value="尺寸" data-tid="1"></option>
-						<option value="其他" data-tid="1"></option>
-					</datalist>
-				</div>
-
-				<div class="title input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up required_text">
-						<span class="material-symbols-outlined me-1 required_sign">image</span>規格名稱
-					</div>
-					<input id="InputTitle" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
-					<div class="icon_hint position-absolute ps-2 top-50 end-0 d-flex translate-middle-y z-index-up" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="建議輸入正確圖片說明，可以增加搜尋度">
-						<span class="material-icons me-1">help</span>
-					</div>
-				</div>
-			</form>
 		</div>
 	</div>
 </div>

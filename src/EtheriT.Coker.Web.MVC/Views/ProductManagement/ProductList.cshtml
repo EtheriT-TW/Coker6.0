@@ -104,6 +104,7 @@
 						.Buttons(b =>
 						{
 							b.Add().Name("edit").OnClick("editButtonClicked");
+							b.Add().Icon("palette").Name("edit").OnClick("paletteButtonClicked");
 							b.Add().Name("delete").OnClick("deleteButtonClicked");
 						});
 					})
@@ -324,6 +325,12 @@
 					</div>
 				</div>
 			</form>
+		</div>
+
+		<div id="ProductCanvas" class="card border-0 d-none">
+			<div class="card-body position-relative pb-5">
+				這裡是Canvas頁面
+			</div>
 		</div>
 	</div>
 </div>

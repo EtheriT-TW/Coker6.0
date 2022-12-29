@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockAddUp(List<ProductStockDto> dto);
         public Task<ResponseMessageDto> TechCertAddUp(List<ProductTechCertDto> dto);
         public Task<ResponseMessageDto> ProdPriceAddUp(List<ProductPriceDto> dto);
-        public Task<ResponseMessageDto> ProdSpecAddUp(ProductSpecListDto dto);
+        public Task<ResponseMessageDto> ProdSpecAddUp(DevExpressDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions);
         public Task<ProductDto> GetProdDataOne(long Id);

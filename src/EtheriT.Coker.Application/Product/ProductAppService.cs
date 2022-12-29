@@ -9,6 +9,7 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -233,7 +234,7 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
-        public async Task<ResponseMessageDto> ProdSpecAddUp(ProductSpecListDto dto)
+        public async Task<ResponseMessageDto> ProdSpecAddUp(DevExpressDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             //try

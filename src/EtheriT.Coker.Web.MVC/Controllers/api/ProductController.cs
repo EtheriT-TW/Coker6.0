@@ -43,7 +43,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.ProdPriceAddUp(dto);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> ProdSpecAddUp(ProductSpecListDto dto)
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<ResponseMessageDto> ProdSpecAddUp([FromForm] DevExpressDto dto)
         {
             return await productAppService.ProdSpecAddUp(dto);
         }

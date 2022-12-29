@@ -3,6 +3,9 @@ var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], techcert_list = []
 var $price_modal, priceModal, $techcert_body, techcertModal;
 
+var changedBySelectBox, clearSelectionButton;
+var techcert_check_list = [], techcert_text
+
 function PageReady() {
     co.Product = {
         AddUp: {
@@ -267,6 +270,27 @@ function PageReady() {
     })
 
     $(".btn_techcert_save").on("click", function () {
+        console.log(techcert_check_list)
+        if (techcert_check_list.length > 0) {
+            /*$marks.val(techcert_text);*/
+            console.log(techcert_text)
+            techcert_list.forEach(function (item) {
+                var index = techcert_check_list.indexOf(item.FK_TCId)
+                if (index > -1) {
+                    console.log("更新 Check")
+                    techcert_check_list.splice(index, 1)
+                } else {
+                    console.log("更新 NoCheck")
+                }
+            })
+            console.log(techcert_check_list)
+            if (techcert_check_list.length > 0) {
+                techcert_check_list.forEach(function (item) {
+                    console.log("新增 Check")
+                })
+            }
+        }
+
         if ($techcert_body.children("div[class=form-check]").length > 0) {
             var text = "";
             $techcert_body.children("div[class=form-check]").each(function () {
@@ -343,6 +367,36 @@ function ElementInit() {
     })
 }
 
+function TechCertList_SelectChange(selectedItems) {
+    var data = selectedItems.selectedRowsData;
+
+    techcert_check_list = [];
+    if (data.length > 0) {
+        techcert_text = data.map((value) => `${value.Title}`).join("、");
+
+        data.forEach(function (item) {
+            techcert_check_list.push(item.Id)
+        })
+    } else {
+        techcert_text = "無";
+    }
+
+    changedBySelectBox = false;
+    clearSelectionButton.option('disabled', !data.length);
+}
+
+function TechCertList_ClearBtnInit(e) {
+    clearSelectionButton = e.component;
+}
+
+function TechCertList_ClearBtnClick() {
+    getDataGridInstance().clearSelection();
+}
+
+function getDataGridInstance() {
+    return $("#TechCertList").dxDataGrid("instance");
+}
+
 function FormDataClear() {
     $("#Spec_Frame > .frame").each(function () {
         $(this).remove();
@@ -379,6 +433,9 @@ function FormDataClear() {
     modal_price_list = []
     price_tid = 0;
     temp_psid = 0;
+
+    techcert_text = "";
+    TechCertList_ClearBtnClick();
 }
 
 function contentReady(e) {

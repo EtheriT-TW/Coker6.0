@@ -15,43 +15,20 @@
 	<div id="" class="py-2">
 		<div id="SpecSettingList" class="card border-0">
 			<div class="card-body position-relative">
-				@(
-					Html.DevExtreme().DataGrid<ProductSpecListDto>()
+				@(Html.DevExtreme().DataGrid<ProductSpecListDto>()
 					.DataSource(d => d.RemoteController().Key("Id")
-					.LoadUrl("/api/Product/GetAllSpecList").LoadMethod("Get")
-					.InsertUrl("/api/Product/ProdSpecAddUp").InsertMethod("Post")
-					.UpdateUrl("/api/Product/ProdSpecAddUp").UpdateMethod("Post")
-					.DeleteUrl("/api/Product/SpecDelete").DeleteMethod("Get")
+					.LoadUrl("/api/Specification/GetAllList").LoadMethod("Get")
+					.InsertUrl("/api/Specification/AddUp").InsertMethod("Post")
+					.UpdateUrl("/api/Specification/AddUp").UpdateMethod("Post")
 					)
+					.ID("gridContainer")
 					.RemoteOperations(true)
-					.ColumnHidingEnabled(true)
 					.ShowBorders(true)
 					.FilterRow(filterRow => filterRow
 					.Visible(true)
 					.ApplyFilter(GridApplyFilterMode.Auto)
 					)
-					.SearchPanel(searchPanel => searchPanel
-					.Visible(true)
-					.Width(480)
-					.Placeholder("請輸入要搜尋的資料")
-					)
 					.ShowRowLines(true)
-					.Columns(c =>
-					{
-						c.AddFor(e => e.Id).Caption("編號").Width(50).AllowEditing(false); ;
-						c.AddFor(e => e.Type).Caption("規格類型");
-						c.AddFor(e => e.Title).Caption("規格名稱");
-						c.Add()
-						.Type(GridCommandColumnType.Buttons)
-						.Buttons(b =>
-						{
-							b.Add().Icon("add").OnClick("addButtonClicked").Visible(new JS("addButtonVisible"));
-							b.Add().Name("delete");
-							b.Add().Name("save");
-							b.Add().Name("cancel");
-						});
-					})
-					.ColumnAutoWidth(true)
 					.Paging(paging => paging.PageSize(30))
 					.Pager(pager =>
 					{
@@ -66,9 +43,23 @@
 						editing.AllowAdding(true);
 						editing.AllowDeleting(true);
 						editing.AllowUpdating(true);
-						editing.ConfirmDelete(false);
-						editing.UseIcons(true);
 						editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+						editing.UseIcons(true);
+					})
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號").Width(50).AllowEditing(false);
+						c.AddFor(e => e.Type).Caption("規格類型");
+						c.AddFor(e => e.Title).Caption("規格名稱");
+						c.Add()
+						.Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
+						{
+							b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
+							b.Add().Name("save");
+							b.Add().Name("cancel");
+							b.Add().Name("delete").OnClick("delectButtonClicked");
+						});
 					})
 					.Toolbar(toolbar =>
 					{
@@ -78,9 +69,7 @@
 						.Name(DataGridToolbarItem.AddRowButton)
 						.ShowText(ToolbarItemShowTextMode.Always);
 						});
-					})
-					.OnRowInserted("onRowInserted")
-					)
+					}))
 			</div>
 		</div>
 	</div>

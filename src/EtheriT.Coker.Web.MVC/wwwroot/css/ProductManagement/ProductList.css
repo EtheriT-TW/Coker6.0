@@ -85,3 +85,10 @@ input[type="number"] {
     line-height: 1.5rem;
     top: -0.75rem;
 }
+
+/* TechCert Modal */
+
+#TechCertModal > .modal-dialog {
+    max-width: 90vw;
+    width: 600px;
+}

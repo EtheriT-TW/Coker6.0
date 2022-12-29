@@ -210,13 +210,49 @@
 				</template>
 
 				<div id="TechCertModal" class="modal fade" tabindex="-1" aria-labelledby="Technical Certificate Modal Label" aria-hidden="true">
-					<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
 						<div class="modal-content">
 							<div class="modal-header">
 								<h5 class="modal-title" id="exampleModalLabel">選擇技術證照</h5>
 								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 							</div>
 							<div class="modal-body">
+								@(Html.DevExtreme().DataGrid<ProductTechCertListDto>()
+									.DataSource(d => d.RemoteController().Key("Id")
+									.LoadUrl("/api/Product/GetAllTechCertList").LoadMethod("Get")
+									)
+									.ID("TechCertList")
+									.Selection(s => s.Mode(SelectionMode.Multiple))
+									.RemoteOperations(true)
+									.ColumnHidingEnabled(true)
+									.ShowBorders(true)
+									.FilterRow(filterRow => filterRow
+									.Visible(true)
+									.ApplyFilter(GridApplyFilterMode.Auto)
+									)
+									.Columns(c =>
+									{
+										c.AddFor(e => e.Id).Caption("編號").Width(50).Visible(false);
+										c.AddFor(e => e.Title).Caption("技術證照").AllowHiding(false);
+										c.AddFor(e => e.Img).Caption(" ").AllowHiding(false);
+									})
+									.OnSelectionChanged("TechCertList_SelectChange")
+									.Toolbar(toolbar =>
+									{
+										toolbar.Items(items =>
+										{
+											items.Add()
+										.Location(ToolbarItemLocation.Before)
+										.Widget(w =>
+										w.Button()
+										.Text("選項清除")
+										.Disabled(true)
+										.OnClick("TechCertList_ClearBtnClick")
+										.OnInitialized("TechCertList_ClearBtnInit")
+										);
+										});
+									})
+									)
 								<div class="isnull text-center">尚未設定技術證照</div>
 							</div>
 							<div class="modal-footer">

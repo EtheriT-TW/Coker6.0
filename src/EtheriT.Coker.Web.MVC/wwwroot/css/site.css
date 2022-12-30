@@ -11836,7 +11836,7 @@ a.bg-dark-light25:hover, a.bg-dark-light25:focus, button.bg-dark-light25:hover, 
 }
 
     .emptyList:before {
-        content: "暫無資料";
+        content: "\66ab\7121\8cc7\6599";
         background: #FBB357;
         display: flex;
         flex-direction: column;
@@ -11852,6 +11852,7 @@ a.bg-dark-light25:hover, a.bg-dark-light25:focus, button.bg-dark-light25:hover, 
 .input-group > .form-control:focus + label, .input-group > .form-select:focus + label {
     z-index: 4;
 }
+
 .input-group .btn {
     height: 100%;
     border-radius: 0 3px 3px 0;

@@ -21,7 +21,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.technicalCertificateAppService = technicalCertificateAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> AddUp(TechnicalCertificateDto dto)
+        public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
         {
             return await technicalCertificateAppService.AddUp(dto);
         }
@@ -31,19 +31,19 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await technicalCertificateAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<List<TechnicalCertificateGetAllDto>> GetAll()
+        public async Task<JsonResult> GetChoseList(DataSourceLoadOptions loadOptions)
         {
-            return await technicalCertificateAppService.GetAll();
+            return await technicalCertificateAppService.GetChoseList(loadOptions);
         }
         [HttpGet]
-        public async Task<TechnicalCertificateDto> GetOne(int id)
+        public async Task<TechCertDto> GetOne(int id)
         {
             return await technicalCertificateAppService.GetOne(id);
         }
-        [HttpPost]
-        public async Task<ResponseMessageDto> Delete(TechnicalCertificateDelectDto dto)
+        [HttpGet]
+        public async Task<ResponseMessageDto> Delete(long Id)
         {
-            return await technicalCertificateAppService.Delete(dto);
+            return await technicalCertificateAppService.Delete(Id);
         }
     }
 }

@@ -179,10 +179,7 @@ function FormDataClear() {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.HtmlContent.Delete({
-            Id: e.row.key,
-            TId: $.cookie('secret')
-        }).done(function (result) {
+        co.HtmlContent.Delete(e.row.key).done(function (result) {
             if (result.success) {
                 e.component.refresh();
             } else {

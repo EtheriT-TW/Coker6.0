@@ -1,7 +1,7 @@
 ﻿
 function PageReady() {
     co.Spec = {
-        Delect: function (id) {
+        Delete: function (id) {
             return $.ajax({
                 url: "/api/Specification/Delete/",
                 type: "GET",
@@ -22,9 +22,9 @@ function editButtonVisible(e) {
     return !e.row.isEditing;
 }
 
-function delectButtonClicked(e) {
+function deleteButtonClicked(e) {
     co.sweet.confirm("刪除規格", "確定刪除？規格刪除後不可復原", "確　定", "取　消", function () {
-        co.Spec.Delect(e.row.key).done(function () {
+        co.Spec.Delete(e.row.key).done(function () {
             e.component.refresh();
         })
     })

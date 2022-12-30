@@ -603,18 +603,18 @@ function OrderHeaderAdd() {
         OrdererEmail: $orderer_email.val(),
         OrdererTelephone: orderer_telephone,
         OrdererCellPhone: $orderer_cellphone.val(),
-        OrdererAddress: $orderer_address_city.val() + $orderer_address_town.val() + $orderer_address.val(),
+        OrdererAddress: $orderer_address_city.val() + $orderer_address_town.val() + " " + $orderer_address.val(),
         Recipient: $recipient_name.val(),
         RecipientSex: recipient_sex,
         RecipientEmail: $recipient_email.val(),
         RecipientTelephone: recipient_telephone,
         RecipientCellPhone: $recipient_cellphone.val(),
-        RecipientAddress: $recipient_address_city.val() + $recipient_address_town.val() + $recipient_address.val(),
+        RecipientAddress: $recipient_address_city.val() + $recipient_address_town.val() + " " + $recipient_address.val(),
         Remark: $remark.val(),
         InvoiceRecipient: invoice_recipient,
         InvoiceTitle: $invoice_title.val(),
         UniformId: $invoice_uniformid.val(),
-        InvoiceAddress: $invoice_address_city.val() + $invoice_address_town.val() + $invoice_address.val(),
+        InvoiceAddress: $invoice_address_city.val() + $invoice_address_town.val() + " " + $invoice_address.val(),
         Shipping: shipping,
         Payment: payment,
         State: 1,
@@ -777,7 +777,7 @@ function HiddenCode(type, data) {
             return new_data + ext;
             break;
         case 4:
-            return (data.substr(0, data.length - 6) + "○○○○○○");
+            return (data.substr(0, data.indexOf(" ")) + "***");
             break;
     }
 }
@@ -883,14 +883,4 @@ function TWZipCodeInit() {
     var $district_first_option = $district.children('select').children('option').first();
     $district_first_option.text("請選擇鄉鎮");
     $district_first_option.attr('disabled', 'disabled');
-}
-
-function ClickLog(Pid) {
-    if ($.cookie("Token") != null) {
-        Product.Log.Click({
-            FK_Pid: Pid,
-            FK_Tid: $.cookie("Token"),
-            Action: 2,
-        });
-    }
 }

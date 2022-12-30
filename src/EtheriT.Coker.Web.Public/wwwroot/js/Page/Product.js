@@ -192,13 +192,3 @@ function GuessLikeTypeChange() {
         });
     }
 }
-
-function ClickLog(Pid) {
-    if ($.cookie("Token") != null) {
-        Product.Log.Click({
-            FK_Pid: Pid,
-            FK_Tid: $.cookie("Token"),
-            Action: 2,
-        });
-    }
-}

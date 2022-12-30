@@ -1,13 +1,9 @@
 ﻿
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.Eventing.Reader;
-
 namespace EtheriT.Coker.Application.Shared.Dto.Freight
 {
     public class FreightDto
     {
         public long? Id { get; set; }
-        public Guid TId { get; set; }
         public string Title { get; set; }
         public int PreserveType { get; set; }
         public int LogisticsType { get; set; }

@@ -183,6 +183,7 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
+    console.log(result)
     $member_number.text(result.id)
     $name.val(result.name);
     $sex.each(function () {
@@ -193,7 +194,7 @@ function FormDataSet(result) {
     $status.val(result.status);
     $level.val(result.level)
     $email_basic.val(result.email);
-    $cellphone.val(result.cellphone);
+    $cellphone.val(result.cellPhone);
     if (result.telphone != null) {
         var telphone_split = result.telphone.split("-");
         $telphone_area.val(telphone_split[0]);
@@ -226,7 +227,7 @@ function Update(success_text, error_text) {
         Level: $level.val(),
         Email: $email_basic.val(),
         CellPhone: $cellphone.val(),
-        TelPhone: $telphone_area.val() + "-" + $telphone.val() + "-" + $telphone_ext.val(),
+        TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + "-" + $telphone_ext.val(),
         Address: $address_city.val() + " " + $address_town.val() + " " + $address.val(),
         /*Password: $newpass*/
     }).done(function () {
@@ -344,6 +345,7 @@ function BackToList() {
     $(".btn_save").addClass("d-none");
     $("#MemberList").removeClass("d-none");
     $("#MemberContent").addClass("d-none");
+    $("#MemberForm").removeClass("was-validated");
     window.location.hash = ""
 }
 

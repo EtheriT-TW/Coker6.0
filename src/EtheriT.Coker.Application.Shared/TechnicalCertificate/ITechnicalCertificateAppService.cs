@@ -7,10 +7,10 @@ namespace EtheriT.Coker.Application.Shared.TechnicalCertificate
 {
     public interface ITechnicalCertificateAppService
     {
-        public Task<ResponseMessageDto> AddUp(TechnicalCertificateDto dto);
+        public Task<ResponseMessageDto> AddUp(TechCertDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<List<TechnicalCertificateGetAllDto>> GetAll();
-        public Task<TechnicalCertificateDto> GetOne(int id);
-        public Task<ResponseMessageDto> Delete(TechnicalCertificateDelectDto dto);
+        public Task<JsonResult> GetChoseList(DataSourceLoadOptions loadOptions);
+        public Task<TechCertDto> GetOne(int id);
+        public Task<ResponseMessageDto> Delete(long Id);
     }
 }

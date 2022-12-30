@@ -31,7 +31,6 @@ namespace EtheriT.Coker.Application.Specification
             try
             {
                 long usetId = await loginUserData.GetUserId();
-
                 long webid = await loginUserData.GetWebsiteId();
 
                 long tid = 0;

@@ -1,7 +1,7 @@
 ﻿
 namespace EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 {
-	public class TechnicalCertificateDelectDto
+	public class TechCertDeleteDto
     {
         public long Id { get; set; }
         public Guid TId { get; set; }

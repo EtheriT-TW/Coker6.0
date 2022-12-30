@@ -11,17 +11,21 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class OrderController : Controller
     {
         private readonly IOrderAppService orderAppService;
+        private readonly IConfiguration Configuration;
         public OrderController(
-            IOrderAppService orderAppService
+            IOrderAppService orderAppService,
+            IConfiguration Configuration
             )
         {
             this.orderAppService = orderAppService;
+            this.Configuration = Configuration;
         }
 
         [HttpPost]
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
-            return await orderAppService.AddHeader(dto);
+            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            return await orderAppService.AddHeader(dto, siteId);
         }
 
         [HttpPost]

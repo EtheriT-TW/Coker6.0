@@ -245,14 +245,13 @@ var Coker = {
                 data: { id: id },
             });
         },
-        Delete: function (data) {
+        Delete: function (id) {
             return $.ajax({
                 url: "/api/HtmlContent/Delete",
-                type: "POST",
+                type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
+                data: { Id: id },
             });
         },
         GetTypeList: function () {

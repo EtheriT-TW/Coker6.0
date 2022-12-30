@@ -75,12 +75,13 @@ namespace EtheriT.Coker.Application.HtmlContent
         {
             try
             {
+                long WebsiteID = await loginUserData.GetWebsiteId();
                 var result = db.Html_Contents;
 
                 if (result != null)
                 {
                     var dataQuery = from e in result
-                                    where !e.IsDeleted && e.Type == type
+                                    where !e.IsDeleted && e.Type == type && e.FK_WebsiteId == WebsiteID
                                     orderby e.Ser_no
                                     select new HtmlContentGetAllListDto
                                     {
@@ -113,7 +114,9 @@ namespace EtheriT.Coker.Application.HtmlContent
         {
             try
             {
-                var result = db.Html_Contents.Where(e => e.Id == id && !e.IsDeleted).FirstOrDefault();
+
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var result = db.Html_Contents.Where(e => e.Id == id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefault();
 
                 if (result != null)
                 {
@@ -176,20 +179,20 @@ namespace EtheriT.Coker.Application.HtmlContent
 
             return new JsonResult(new List<HtmlContentDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
+        public async Task<ResponseMessageDto> Delete(long Id)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                var db_hc = db.Html_Contents.Where(e => e.Id == dto.Id).FirstOrDefault();
-                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                var db_hc = db.Html_Contents.Where(e => e.Id == Id).FirstOrDefault();
+                long usetId = await loginUserData.GetUserId();
 
-                if (db_hc != null && db_t != null)
+                if (db_hc != null)
                 {
                     db_hc.IsDeleted = true;
                     db_hc.DeletionTime = DateTime.Now;
-                    db_hc.DeleterUserId = db_t.UserID;
+                    db_hc.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

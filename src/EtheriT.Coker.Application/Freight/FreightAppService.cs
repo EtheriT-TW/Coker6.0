@@ -30,34 +30,30 @@ namespace EtheriT.Coker.Application.Freight
 
             try
             {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                long usetId = await loginUserData.GetUserId();
                 if (dto.Id == 0)
                 {
-                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-                    if (db_t != null)
+                    Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
                     {
-                        long WebsiteID = await loginUserData.GetWebsiteId();
-                        Core.Models.LogisticsSetting ls = new Core.Models.LogisticsSetting
-                        {
-                            FK_WebsiteId = WebsiteID,
-                            Title = dto.Title,
-                            PreserveType = dto.PreserveType,
-                            LogisticsType = dto.LogisticsType,
-                            FreigntType = dto.FreigntType,
-                            Freight = dto.Freight,
-                            Low_Con = dto.Low_Con,
-                            Dis_Freight = dto.Dis_Freight,
-                            Set_Default = dto.Set_Default,
-                            CreatorUserId = (long)db_t.UserID,
-                        };
-                        db.LogisticsSettings.Add(ls);
-                    }
-                    else throw new Exception("查無運費資料");
+                        FK_WebsiteId = WebsiteID,
+                        Title = dto.Title,
+                        PreserveType = dto.PreserveType,
+                        LogisticsType = dto.LogisticsType,
+                        FreigntType = dto.FreigntType,
+                        Freight = dto.Freight,
+                        Low_Con = dto.Low_Con,
+                        Dis_Freight = dto.Dis_Freight,
+                        Set_Default = dto.Set_Default,
+                        CreatorUserId = usetId,
+                    };
+                    db.LogisticsSettings.Add(ls);
+                    db.SaveChanges();
                 }
                 else
                 {
                     var db_ls = db.LogisticsSettings.Where(e => e.Id == dto.Id).FirstOrDefault();
-                    var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
-                    if (db_ls != null && db_t != null)
+                    if (db_ls != null)
                     {
                         db_ls.Title = dto.Title;
                         db_ls.PreserveType = dto.PreserveType;
@@ -67,14 +63,12 @@ namespace EtheriT.Coker.Application.Freight
                         db_ls.Low_Con = dto.Low_Con;
                         db_ls.Dis_Freight = dto.Dis_Freight;
                         db_ls.Set_Default = dto.Set_Default;
-                        db_ls.Set_Default = dto.Set_Default;
-
                         db_ls.LastModificationTime = DateTime.Now;
-                        db_ls.LastModifierUserId = db_t.UserID;
+                        db_ls.LastModifierUserId = usetId;
+                        db.SaveChanges();
                     }
                     else throw new Exception("查無運費資料");
                 }
-                db.SaveChanges();
                 output.Success = true;
             }
             catch (Exception e)
@@ -89,12 +83,13 @@ namespace EtheriT.Coker.Application.Freight
         {
             try
             {
+                long WebsiteID = await loginUserData.GetWebsiteId();
                 var result = db.LogisticsSettings;
 
                 if (result != null)
                 {
                     var dataQuery = from e in result
-                                    where !e.IsDeleted
+                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
                                     select new FreightGetAllListDto
                                     {
                                         Id = e.Id,
@@ -183,6 +178,7 @@ namespace EtheriT.Coker.Application.Freight
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            long usetId = await loginUserData.GetUserId();
 
             try
             {
@@ -191,6 +187,7 @@ namespace EtheriT.Coker.Application.Freight
                 {
                     db_ls.IsDeleted = true;
                     db_ls.DeletionTime = DateTime.Now;
+                    db_ls.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

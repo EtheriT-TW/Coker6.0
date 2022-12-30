@@ -1,7 +1,7 @@
 ﻿
-namespace EtheriT.Coker.Application.Shared.Dto.Product
+namespace EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 {
-	public class ProductTechCertListDto
+	public class TechCertGetAllChoseListDto
     {
         public long Id { get; set; }
         public string? Img { get; set; }

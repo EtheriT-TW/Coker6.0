@@ -48,11 +48,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<JsonResult> GetAllTechCertList(DataSourceLoadOptions loadOptions)
-        {
-            return await productAppService.GetAllTechCertList(loadOptions);
-        }
-        [HttpGet]
         public async Task<ProductDto> GetProdDataOne(long Id)
         {
             return await productAppService.GetProdDataOne(Id);
@@ -63,7 +58,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetStockDataAll(PId);
         }
         [HttpGet]
-        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
         {
             return await productAppService.GetTechCertDataAll(PId);
         }

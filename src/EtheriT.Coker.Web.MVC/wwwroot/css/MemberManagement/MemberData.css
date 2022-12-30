@@ -23,13 +23,13 @@
 
 .required::after {
     color: var(--colors-red);
-    content: '必填';
+    content: '\5fc5\586b';
     font-size: 0.5rem;
 }
 
 /* MemberData */
 #MemberData > div > .member_number::before {
-    content: "會員編號："
+    content: "\6703\54e1\7de8\865f\ff1a"
 }
 
 #CommunityLoginBinding > .account > .frame > div > img {

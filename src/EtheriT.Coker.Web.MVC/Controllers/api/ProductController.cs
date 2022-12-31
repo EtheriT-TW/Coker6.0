@@ -42,21 +42,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.ProdPriceAddUp(dto);
         }
-        [HttpPost]
-        [Consumes("application/x-www-form-urlencoded")]
-        public async Task<ResponseMessageDto> ProdSpecAddUp([FromForm] DevExpressDto dto)
-        {
-            return await productAppService.ProdSpecAddUp(dto);
-        }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             return await productAppService.GetAllList(loadOptions);
-        }
-        [HttpGet]
-        public async Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions)
-        {
-            return await productAppService.GetAllSpecList(loadOptions);
         }
         [HttpGet]
         public async Task<ProductDto> GetProdDataOne(long Id)
@@ -69,7 +58,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetStockDataAll(PId);
         }
         [HttpGet]
-        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
         {
             return await productAppService.GetTechCertDataAll(PId);
         }
@@ -102,11 +91,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> PriceDelete(long Id)
         {
             return await productAppService.PriceDelete(Id);
-        }
-        [HttpGet]
-        public async Task<ResponseMessageDto> SpecDelete(long key)
-        {
-            return await productAppService.SpecDelete(key);
         }
     }
 }

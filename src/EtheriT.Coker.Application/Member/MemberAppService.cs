@@ -16,11 +16,14 @@ namespace EtheriT.Coker.Application.Member
     public class MemberAppService : IMemberAppService
     {
         private readonly CokerDbContext db;
+        private readonly LoginUserData loginUserData;
         public MemberAppService(
-            CokerDbContext db
+            CokerDbContext db,
+            LoginUserData loginUserData
         )
         {
             this.db = db;
+            this.loginUserData = loginUserData;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -37,9 +40,9 @@ namespace EtheriT.Coker.Application.Member
                                         Id = e.Id,
                                         Name = e.Name.Substring(0, 1) + "○" + e.Name.Substring(e.Name.Length - 1),
                                         CellPhone = e.CellPhone.Substring(0, 3) + "****" + e.CellPhone.Substring(7),
-                                        TelPhone = e.TelPhone != null ? e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6) : "-",
-                                        Address = e.Address.Replace(" ", ""),
-                                        Email = e.Email,
+                                        TelPhone = e.TelPhone == "" ? "" : e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6),
+                                        Address = e.Address.Substring(0, e.Address.LastIndexOf(" ")).Replace(" ", "") + "***",
+                                        Email = e.Email.Substring(0, 2) + "***" + e.Email.Substring(e.Email.IndexOf("@") - 1),
                                         Total = e.Total,
                                         Level = e.Level,
                                         CreationTime = e.CreationTime,
@@ -91,7 +94,7 @@ namespace EtheriT.Coker.Application.Member
         }
         public async Task<ResponseMessageDto> Update(MemberUpdateDto dto)
         {
-
+            long usetId = await loginUserData.GetUserId();
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
@@ -108,6 +111,7 @@ namespace EtheriT.Coker.Application.Member
                     result.CellPhone = dto.CellPhone;
                     result.TelPhone = dto.TelPhone;
                     result.Address = dto.Address;
+                    result.LastModifierUserId = usetId;
                     result.LastModificationTime = DateTime.Now;
                     //if (dto.Password != null)
                     //{

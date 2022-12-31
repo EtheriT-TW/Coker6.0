@@ -3,6 +3,9 @@ var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], techcert_list = []
 var $price_modal, priceModal, $techcert_body, techcertModal;
 
+var changedBySelectBox, clearSelectionButton;
+var techcert_check_list = [], techcert_text
+
 function PageReady() {
     co.Product = {
         AddUp: {
@@ -46,14 +49,6 @@ function PageReady() {
                     dataType: "json"
                 });
             },
-        },
-        GetAll: {
-            TechCert: function () {
-                return $.ajax({
-                    url: "/api/TechnicalCertificate/GetAll/",
-                    type: "GET",
-                });
-            }
         },
         Get: {
             ProdOne: function (id) {
@@ -102,7 +97,7 @@ function PageReady() {
                 });
             },
         },
-        Delect: {
+        Delete: {
             Prod: function (id) {
                 return $.ajax({
                     url: "/api/Product/ProdDelete/",
@@ -249,51 +244,29 @@ function PageReady() {
         setInterval(hashChange, 1000);
     }
 
-    co.Product.GetAll.TechCert().done(function (result) {
-        if (result.length > 0) {
-            $techcert_body.children(".isnull").addClass("d-none");
-            result.forEach(function (self) {
-                var item = $($("#TemplateCheck").html()).clone();
-                var item_input = item.find("input"),
-                    item_label = item.find("label");
-                item_input.attr("id", "TechCertCheck" + self.id);
-                item_input.val(self.id);
-                item_label.attr("for", "TechCertCheck" + self.id);
-                item_label.text(self.title);
-
-                $techcert_body.append(item)
-            })
-        }
-    })
-
     $(".btn_techcert_save").on("click", function () {
-        if ($techcert_body.children("div[class=form-check]").length > 0) {
-            var text = "";
-            $techcert_body.children("div[class=form-check]").each(function () {
-                var $self = $(this)
-                var ptcid = $self.children("input").data("ptcid");
-                var obj = {};
-                if ($self.children("input").prop('checked')) {
-                    if (ptcid == 0) {
-                        obj["Id"] = ptcid;
-                        obj["FK_TCId"] = $self.children("input").val();
-                        obj["Checked"] = true;
-                        techcert_list.push(obj);
-                    } else {
-                        var index = techcert_list.findIndex(item => item["Id"] == ptcid)
-                        techcert_list[index]["Checked"] = true
-                    }
-                    text = text == "" ? $self.children("label").text() : text + "、" + $self.children("label").text();
-                    techcertModal.hide();
-                    $marks.val(text);
+        if (techcert_check_list.length > 0) {
+            techcert_list.forEach(function (item) {
+                var index = techcert_check_list.indexOf(item.FK_TCId)
+                if (index > -1) {
+                    item.Checked = true;
+                    techcert_check_list.splice(index, 1)
                 } else {
-                    if (ptcid != 0) {
-                        var index = techcert_list.findIndex(item => item["Id"] == ptcid)
-                        techcert_list[index]["Checked"] = false
-                    }
+                    item.Checked = false;
                 }
             })
+            if (techcert_check_list.length > 0) {
+                techcert_check_list.forEach(function (item) {
+                    var obj = {};
+                    obj["Id"] = 0;
+                    obj["FK_TCId"] = item;
+                    obj["Checked"] = true;
+                    techcert_list.push(obj);
+                })
+            }
         }
+        $marks.val(techcert_text);
+        techcertModal.hide();
     })
 }
 
@@ -316,6 +289,15 @@ function ElementInit() {
     $permanent = $("#PermanentCheck");
 
     techcertModal = new bootstrap.Modal(document.getElementById('TechCertModal'))
+    $("#TechCertModal").on("hidden.bs.modal", function () {
+        var temp_list = [];
+        techcert_list.forEach(function (item) {
+            if (item.Checked) {
+                temp_list.push(item.FK_TCId);
+            }
+        })
+        getDataGridInstance().selectRows(temp_list);
+    })
 
     $techcert_body = $("#TechCertModal > .modal-dialog > .modal-content > .modal-body");
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
@@ -341,6 +323,41 @@ function ElementInit() {
 
         $(".alert_text").addClass("d-none");
     })
+}
+
+function getDataGridInstance() {
+    return $("#TechCertList").dxDataGrid("instance");
+}
+
+function TechCertList_ClearBtnInit(e) {
+    clearSelectionButton = e.component;
+}
+
+function TechCertList_ClearBtnClick() {
+    if (techcert_list.length > 0) {
+        techcert_list.forEach(function (item) {
+            item.Checked = false;
+        })
+    }
+    getDataGridInstance().clearSelection();
+}
+
+function TechCertList_SelectChange(selectedItems) {
+    var data = selectedItems.selectedRowsData;
+
+    techcert_check_list = [];
+    if (data.length > 0) {
+        techcert_text = data.map((value) => `${value.Title}`).join("、");
+
+        data.forEach(function (item) {
+            techcert_check_list.push(item.Id)
+        })
+    } else {
+        techcert_text = "無";
+    }
+
+    changedBySelectBox = false;
+    clearSelectionButton.option('disabled', !data.length);
 }
 
 function FormDataClear() {
@@ -379,6 +396,9 @@ function FormDataClear() {
     modal_price_list = []
     price_tid = 0;
     temp_psid = 0;
+
+    techcert_text = "";
+    TechCertList_ClearBtnClick();
 }
 
 function contentReady(e) {
@@ -449,7 +469,7 @@ function FormDataSet(result) {
                     obj["Rid"] = result.fK_RId
                     obj["Price"] = result.price
                     obj["Bonus"] = result.bonus
-                    obj["IsDelect"] = false;
+                    obj["IsDelete"] = false;
                     price_tid += 1;
                     modal_price_list.push(obj);
                 })
@@ -473,24 +493,21 @@ function FormDataSet(result) {
     var text = ""
     co.Product.Get.ProdTechCert(result.id).done(function (result) {
         if (result != null && result.length > 0) {
-            var $input = $techcert_body.children("div[class=form-check]").children("input");
+            var temp_list = [];
             result.forEach(function (item) {
                 var obj = {};
                 obj["Id"] = item.id;
                 obj["FK_TCId"] = item.fK_TCId;
                 obj["Checked"] = item.isChecked;
-                $input.each(function () {
-                    var $self = $(this);
-                    if (item.isChecked && $self.val() == item.fK_TCId) {
-                        $self.prop("checked", true);
-                        $self.data("ptcid", item.id);
-                        text = text == "" ? item.title : text + "、" + item.title;
-                    }
-                })
+                if (item.isChecked) {
+                    temp_list.push(item.fK_TCId);
+                    text = text == "" ? item.title : text + "、" + item.title;
+                }
                 techcert_list.push(obj)
             })
+            getDataGridInstance().selectRows(temp_list);
         }
-        $marks.val(text);
+        $marks.val(text == "" ? "無" : text);
     })
 
     $tag.val("");
@@ -507,7 +524,7 @@ function FormDataSet(result) {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Product.Delect.Prod(e.row.key).done(function () {
+        co.Product.Delete.Prod(e.row.key).done(function () {
             product_list.component.refresh();
         }).fail(function () {
             Coker.sweet.error("錯誤", "刪除資料發生錯誤", null, true);
@@ -521,7 +538,7 @@ function SpecPriceAdd(result) {
     var item_role = item.find(".select_role"),
         item_cash = item.find(".input_cash"),
         item_bonus = item.find(".input_bonus"),
-        item_btn_delect = item.find(".btn_price_delect");
+        item_btn_delete = item.find(".btn_price_delete");
 
     item.data("ppid", result == null ? 0 : result.Id);
     item.data("tempid", result == null ? -1 : result.Tempid);
@@ -531,7 +548,7 @@ function SpecPriceAdd(result) {
         item_bonus.val(result.Bonus);
     }
 
-    item_btn_delect.on("click", function () {
+    item_btn_delete.on("click", function () {
         var $self_p = $(this).parents(".frame").first();
         if (spec_price_num == 1) {
             co.sweet.error("商品至少需有一種價格", null, false);
@@ -540,11 +557,11 @@ function SpecPriceAdd(result) {
                 if ($self_p.data("ppid") == 0) {
                     if ($self_p.data("tempid") > -1) {
                         var index = modal_price_list.findIndex(item => item["Tempid"] == $self_p.data("tempid"))
-                        modal_price_list[index]["IsDelect"] = true;
+                        modal_price_list[index]["IsDelete"] = true;
                     }
                 } else {
                     var index = modal_price_list.findIndex(item => item["Id"] == $self_p.data("ppid"))
-                    modal_price_list[index]["IsDelect"] = true;
+                    modal_price_list[index]["IsDelete"] = true;
                 }
                 spec_price_num -= 1;
                 $self_p.remove();
@@ -572,7 +589,7 @@ function SpecPriceSave() {
         obj["Rid"] = $self.find(".select_role").val();
         obj["Price"] = $self.find(".input_cash").val();
         obj["Bonus"] = $self.find(".input_bonus").val();
-        obj["IsDelect"] = false;
+        obj["IsDelete"] = false;
         if (obj["Price"] == 0 && obj["Bonus"] == 0) {
             $(".alert_text").text("商品現金與紅利不可同時為空")
             $(".alert_text").removeClass("d-none");
@@ -616,7 +633,7 @@ function SpecAdd(result) {
         item_alert = item.find(".input_alert_number"),
         item_collapse = item.find(".collapse"),
         item_btn_expand = item.find(".btn_expand"),
-        item_btn_delect = item.find(".btn_delect");
+        item_btn_delete = item.find(".btn_delete");
 
     item_topline.children(".spec").each(function () {
         var spectype = $($("#TemplateSpecType").html()).clone();
@@ -738,7 +755,7 @@ function SpecAdd(result) {
         }
     })
 
-    item_btn_delect.on("click", function () {
+    item_btn_delete.on("click", function () {
         $self_p = $(this).parents(".frame").first();
         if (spec_num == 1) {
             co.sweet.error("商品至少需有一種規格", null, false);
@@ -826,7 +843,7 @@ function AddUp(display, success_text, error_text) {
 
     if (spec_remove_list.length > 0) {
         spec_remove_list.forEach(function (item) {
-            co.Product.Delect.Stock(item);
+            co.Product.Delete.Stock(item);
         })
     }
 
@@ -878,7 +895,7 @@ function AddUp(display, success_text, error_text) {
                     var new_index = result.message.split(",");
                     var price_addup_list = [];
                     modal_price_list.forEach(function (item) {
-                        if (!item.IsDelect) {
+                        if (!item.IsDelete) {
                             var obj = {};
                             obj["Id"] = item.Id;
                             if (item.PSid != null) {
@@ -892,7 +909,7 @@ function AddUp(display, success_text, error_text) {
                             price_addup_list.push(obj)
                         } else {
                             if (item.PSid != null && item.Id != null) {
-                                co.Product.Delect.Price(item.Id);
+                                co.Product.Delete.Price(item.Id);
                             }
                         }
                     })

@@ -5,11 +5,11 @@
 }
 
     #CompanyInfo > .website_deadline > .deadline_date > .start_date::before {
-        content: '網站起始日：';
+        content: '\7db2\7ad9\8d77\59cb\65e5\ff1a';
     }
 
     #CompanyInfo > .website_deadline > .deadline_date > .end_date::before {
-        content: '網站到期日：';
+        content: '\7db2\7ad9\5230\671f\65e5\ff1a';
     }
 
 #WebsiteInfo > form > div > textarea {

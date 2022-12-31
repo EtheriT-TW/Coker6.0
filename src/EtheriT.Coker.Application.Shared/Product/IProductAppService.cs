@@ -13,23 +13,21 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockAddUp(List<ProductStockDto> dto);
         public Task<ResponseMessageDto> TechCertAddUp(List<ProductTechCertDto> dto);
         public Task<ResponseMessageDto> ProdPriceAddUp(List<ProductPriceDto> dto);
-        public Task<ResponseMessageDto> ProdSpecAddUp(DevExpressDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions);
         public Task<ProductDto> GetProdDataOne(long Id);
         public Task<List<ProductStockDto>> GetStockDataAll(long PId);
-        public Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId);
+        public Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId);
         public Task<List<ProductPriceDto>> GetPriceDataAll(long PSId);
+        public Task<List<ProdIdTitleDto>> GetSpecType();
+        public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
         public Task<ProdGetOneDto> GetDisplayOne(long id);
         public Task<List<ProductStockDto>> GetDisplayStock(long id);
         public Task<ProdGetDisplayDto> GetDisplaySimple(long id);
         public Task<JsonResult> GetRandomDIsplay(long webid, int num);
-        public Task<List<ProdIdTitleDto>> GetSpecType();
-        public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
+        public Task<List<ProdDisImgDto>> GetHistoryDisplay(Guid TId);
         public Task<ResponseMessageDto> ProdDelete(long Id);
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);
-        public Task<ResponseMessageDto> SpecDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
     }
 }

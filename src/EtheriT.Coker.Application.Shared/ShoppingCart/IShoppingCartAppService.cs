@@ -9,8 +9,8 @@ namespace EtheriT.Coker.Application.Shared.ShoppingCart
     {
         public Task<ResponseMessageDto> AddUp(ShoppingCartAddUpDto dto);
         public Task<ResponseMessageDto> QuantityUpdate(ShoppingQuantityUpdateDto dto);
-        public Task<List<ShoppingCartGetAllDto>> GetAll(String Tid);
-        public Task<ShoppingCartGetDrop> GetDropOne(long id);
+        public Task<List<ShoppingCartGetAllDto>> GetAll(String Tid, long siteId);
+        public Task<ShoppingCartGetDrop> GetDropOne(long id, long siteId);
         public Task<ResponseMessageDto> DeleteDrop(long id);
 
     }

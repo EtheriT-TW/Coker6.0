@@ -94,13 +94,3 @@ function ProShare() {
     var $self = $(this);
     $self.toggleClass('show');
 }
-
-function ClickLog(Pid) {
-    if ($.cookie("Token") != null) {
-        Product.Log.Click({
-            FK_Pid: Pid,
-            FK_Tid: $.cookie("Token"),
-            Action: 2,
-        });
-    }
-}

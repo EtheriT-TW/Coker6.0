@@ -28,7 +28,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplayStock(id);
         }
         [HttpGet]
-        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
         {
             return await productAppService.GetTechCertDataAll(PId);
         }
@@ -36,6 +36,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<ProdGetDisplayDto> GetDisplaySimple(long id)
         {
             return await productAppService.GetDisplaySimple(id);
+        }
+        [HttpGet]
+        public async Task<List<ProdDisImgDto>> GetHistoryDisplay(Guid TId)
+        {
+            return await productAppService.GetHistoryDisplay(TId);
         }
         [HttpPost]
         public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)

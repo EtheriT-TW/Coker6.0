@@ -13,11 +13,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     {
 
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IConfiguration Configuration;
         public ShoppingCartController(
-            IShoppingCartAppService shoppingCartAppService
+            IShoppingCartAppService shoppingCartAppService,
+            IConfiguration Configuration
             )
         {
             this.shoppingCartAppService = shoppingCartAppService;
+            this.Configuration = Configuration;
         }
 
         [HttpPost]
@@ -35,13 +38,15 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpGet]
         public async Task<List<ShoppingCartGetAllDto>> GetAll(String Tid)
         {
-            return await shoppingCartAppService.GetAll(Tid);
+            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            return await shoppingCartAppService.GetAll(Tid, siteId);
         }
 
         [HttpGet]
         public async Task<ShoppingCartGetDrop> GetDropOne(long id)
         {
-            return await shoppingCartAppService.GetDropOne(id);
+            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            return await shoppingCartAppService.GetDropOne(id, siteId);
         }
 
         [HttpGet]

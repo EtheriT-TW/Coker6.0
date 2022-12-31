@@ -1,44 +1,31 @@
-﻿var $btn_display, $title, $illustrate, $illustrate_count, $input_sort, $check_sort, $date, $permanent
-var startDate, endDate, keyId, disp_opt = true
-var SpecSetting_list
-
+﻿
 function PageReady() {
-
-    ElementInit();
+    co.Spec = {
+        Delete: function (id) {
+            return $.ajax({
+                url: "/api/Specification/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id },
+            });
+        }
+    }
 }
 
-function ElementInit() {
-
-}
-
-function addButtonClicked(e) {
+function editButtonClicked(e) {
     var dataGrid = e.component;
-    var key = new DevExpress.data.Guid().toString();
-    dataGrid.option('editing.changes', [{
-        key,
-        type: 'insert',
-        insertAfterKey: e.row.key,
-    }]);
-    dataGrid.option('editing.editRowKey', key);
+    dataGrid.option('editing.editRowKey', e.row.key);
 }
 
-function addButtonVisible(e) {
+function editButtonVisible(e) {
     return !e.row.isEditing;
 }
 
-function newRowPositionChanged(e) {
-    console.log("newRowPositionChanged");
-    var dataGrid = $("#gridContainer").dxDataGrid("instance");
-    dataGrid.option('editing.newRowPosition', e.value);
-}
-
-function scrollingModeChanged(e) {
-    console.log("scrollingModeChanged");
-    var dataGrid = $("#gridContainer").dxDataGrid("instance");
-    dataGrid.option('scrolling.mode', e.value);
-}
-
-function onRowInserted(e) {
-    console.log("onRowInserted");
-    e.component.navigateToRow(e.key);
+function deleteButtonClicked(e) {
+    co.sweet.confirm("刪除規格", "確定刪除？規格刪除後不可復原", "確　定", "取　消", function () {
+        co.Spec.Delete(e.row.key).done(function () {
+            e.component.refresh();
+        })
+    })
 }

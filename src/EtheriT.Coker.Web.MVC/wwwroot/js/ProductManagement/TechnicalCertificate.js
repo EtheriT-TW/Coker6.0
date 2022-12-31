@@ -23,14 +23,13 @@ function PageReady() {
                 data: { id: id },
             });
         },
-        Delete: function (data) {
+        Delete: function (id) {
             return $.ajax({
-                url: "/api/TechnicalCertificate/Delete",
-                type: "POST",
+                url: "/api/TechnicalCertificate/Delete/",
+                type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
+                data: { Id: id },
             });
         },
     };
@@ -221,10 +220,7 @@ function FormDataClear() {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.TechnicalCertificate.Delete({
-            Id: e.row.key,
-            TId: $.cookie('secret')
-        }).done(function (result) {
+        co.TechnicalCertificate.Delete(e.row.key).done(function (result) {
             if (result.success) {
                 e.component.refresh();
             } else {

@@ -25,7 +25,7 @@ namespace EtheriT.Coker.Application.Product
             this.db = db;
             this.loginUserData = loginUserData;
         }
-
+        /* Add & Update */
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -234,56 +234,7 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
-        public async Task<ResponseMessageDto> ProdSpecAddUp(DevExpressDto dto)
-        {
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            //try
-            //{
-            //    long usetId = await loginUserData.GetUserId();
-            //    if (usetId != null)
-            //    {
-            //        foreach (var item in dto)
-            //        {
-            //            if (item.Id == 0)
-            //            {
-            //                Core.Models.Prod_Price pp = new Core.Models.Prod_Price
-            //                {
-            //                    FK_PSId = item.FK_PSId,
-            //                    FK_RId = item.FK_RId,
-            //                    Price = item.Price,
-            //                    Bonus = item.Bonus,
-            //                    CreatorUserId = usetId,
-            //                };
-            //                db.Prod_Prices.Add(pp);
-            //                db.SaveChanges();
-            //            }
-            //            else
-            //            {
-            //                var db_pp = db.Prod_Prices.Where(e => e.Id == item.Id).FirstOrDefault();
-
-            //                if (db_pp != null)
-            //                {
-            //                    db_pp.FK_RId = item.FK_RId;
-            //                    db_pp.Price = item.Price;
-            //                    db_pp.Bonus = item.Bonus;
-            //                    db_pp.LastModifierUserId = usetId;
-            //                    db_pp.LastModificationTime = DateTime.Now;
-            //                }
-            //            }
-            //        }
-            //    }
-
-            //    db.SaveChanges();
-            //    output.Success = true;
-            //}
-            //catch (Exception e)
-            //{
-            //    output.Success = false;
-            //    output.Error = e.Message;
-            //}
-
-            return output;
-        }
+        /* Get Data */
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -318,33 +269,6 @@ namespace EtheriT.Coker.Application.Product
             }
 
             return new JsonResult(new List<ProductGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-        }
-        public async Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions)
-        {
-            try
-            {
-                long webid = await loginUserData.GetWebsiteId();
-
-                var dataQuery = from pst in db.Prod_Spec_Types
-                                where !pst.IsDeleted && pst.FK_WebsiteId == webid
-                                from ps in db.Prod_Specs
-                                where !ps.IsDeleted && ps.FK_Tid == pst.Id
-                                select new ProductSpecListDto
-                                {
-                                    Id = ps.Id,
-                                    Type = pst.Type,
-                                    Title = ps.Title
-                                };
-
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return new JsonResult(new List<ProductSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ProductDto> GetProdDataOne(long Id)
         {
@@ -412,14 +336,14 @@ namespace EtheriT.Coker.Application.Product
 
             return null;
         }
-        public async Task<List<TechnicalCertificateGetAllDto>> GetTechCertDataAll(long PId)
+        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
         {
             try
             {
                 var output = await (from ptc in db.Prod_TechCerts
                                     where !ptc.IsDeleted && ptc.FK_PId == PId
                                     orderby ptc.Id
-                                    select new TechnicalCertificateGetAllDto
+                                    select new TechCertGetAllDto
                                     {
                                         Id = ptc.Id,
                                         FK_PId = ptc.FK_PId,
@@ -469,6 +393,60 @@ namespace EtheriT.Coker.Application.Product
 
             return null;
         }
+        public async Task<List<ProdIdTitleDto>> GetSpecType()
+        {
+            try
+            {
+                var db_pst = db.Prod_Spec_Types;
+
+                if (db_pst != null)
+                {
+                    long WebsiteID = await loginUserData.GetWebsiteId();
+                    var output = await (from pst in db_pst
+                                        where !pst.IsDeleted && pst.FK_WebsiteId == WebsiteID
+                                        select new ProdIdTitleDto
+                                        {
+                                            Id = pst.Id,
+                                            Title = pst.Type
+                                        }).ToListAsync();
+                    return output;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
+        {
+            try
+            {
+                var db_ps = db.Prod_Specs;
+
+                if (db_ps != null)
+                {
+                    var output = await (from ps in db_ps
+                                        where !ps.IsDeleted && ps.FK_Tid == typeid
+                                        select new ProdIdTitleDto
+                                        {
+                                            Id = ps.Id,
+                                            Title = ps.Title
+                                        }).ToListAsync();
+                    return output;
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        /* Get Display */
         public async Task<ProdGetOneDto> GetDisplayOne(long id)
         {
             try
@@ -571,6 +549,7 @@ namespace EtheriT.Coker.Application.Product
                                     orderby p.Ser_No
                                     join ps in db.Prod_Stocks.Where(e => !e.IsDeleted) on p.Id equals ps.FK_Pid
                                     group ps by new { p.Id, p.Title, p.Introduction, p.Description } into r
+                                    orderby Guid.NewGuid()
                                     select new ProdGetDisplayDto
                                     {
                                         Id = r.Key.Id,
@@ -591,59 +570,27 @@ namespace EtheriT.Coker.Application.Product
 
             return new JsonResult(new List<ProdGetDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<List<ProdIdTitleDto>> GetSpecType()
+        public async Task<List<ProdDisImgDto>> GetHistoryDisplay(Guid TId)
         {
             try
             {
-                var db_pst = db.Prod_Spec_Types;
+                var output = await (from pl in db.Prod_Logs
+                                    where pl.FK_Tid == TId && pl.Action == 2
+                                    orderby pl.Id descending
+                                    select new ProdDisImgDto
+                                    {
+                                        Id = pl.FK_Pid,
+                                    }).Take(4).ToListAsync();
 
-                if (db_pst != null)
-                {
-                    long WebsiteID = await loginUserData.GetWebsiteId();
-                    var output = await (from pst in db_pst
-                                        where !pst.IsDeleted && pst.FK_WebsiteId == WebsiteID
-                                        select new ProdIdTitleDto
-                                        {
-                                            Id = pst.Id,
-                                            Title = pst.Type
-                                        }).ToListAsync();
-                    return output;
-                }
-                else throw new Exception("查無資料");
+                return output;
             }
             catch (Exception e)
             {
 
             }
-
             return null;
         }
-        public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
-        {
-            try
-            {
-                var db_ps = db.Prod_Specs;
-
-                if (db_ps != null)
-                {
-                    var output = await (from ps in db_ps
-                                        where !ps.IsDeleted && ps.FK_Tid == typeid
-                                        select new ProdIdTitleDto
-                                        {
-                                            Id = ps.Id,
-                                            Title = ps.Title
-                                        }).ToListAsync();
-                    return output;
-                }
-                else throw new Exception("查無資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
-        }
+        /* Delete */
         public async Task<ResponseMessageDto> ProdDelete(long Id)
         {
 
@@ -763,32 +710,7 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
-        public async Task<ResponseMessageDto> SpecDelete(long Id)
-        {
-
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
-            try
-            {
-                long usetId = await loginUserData.GetUserId();
-                var db_ps = db.Prod_Specs.Where(e => e.Id == Id).FirstOrDefault();
-                if (db_ps != null)
-                {
-                    db_ps.IsDeleted = true;
-                    db_ps.DeletionTime = DateTime.Now;
-                    db_ps.DeleterUserId = usetId;
-                    db.SaveChanges();
-                    output.Success = true;
-                }
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
-            }
-
-            return output;
-        }
+        /* Product Log */
         public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -796,12 +718,11 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
-                long usetId = await loginUserData.GetUserId();
 
                 Core.Models.Prod_Log pl = new Core.Models.Prod_Log
                 {
                     FK_Pid = dto.FK_Pid,
-                    FK_Uid = usetId,
+                    FK_Uid = db_t.UserID,
                     FK_Tid = dto.FK_Tid,
                     Action = dto.Action,
                 };

@@ -40,12 +40,12 @@
             disableOnInteraction: false,
         },
         pagination: {
-            el: ".swiper_pagination_banner",
+            el: "#BannerSwiper > .swiper_pagination_banner",
             clickable: true,
         },
         navigation: {
-            nextEl: ".btn_swiper_next_banner",
-            prevEl: ".btn_swiper_prev_banner",
+            nextEl: "#BannerSwiper > .swiper_button >.btn_swiper_next_banner",
+            prevEl: "#BannerSwiper > .swiper_button >.btn_swiper_prev_banner",
         }
     });
 
@@ -58,7 +58,7 @@
             disableOnInteraction: false,
         },
         pagination: {
-            el: ".swiper_pagination_news",
+            el: "#NewsSwiper > .swiper_pagination_news",
             clickable: true,
         },
         breakpoints: {
@@ -67,14 +67,4 @@
             }
         }
     });
-}
-
-function ClickLog(Pid) {
-    if ($.cookie("Token") != null) {
-        Product.Log.Click({
-            FK_Pid: Pid,
-            FK_Tid: $.cookie("Token"),
-            Action: 2,
-        });
-    }
 }

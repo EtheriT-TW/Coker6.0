@@ -111,7 +111,7 @@ function CartDropAdd(result) {
 
     if (!$("#Car_Dropdown_Null").hasClass("d-none")) {
         $("#Car_Dropdown_Null").addClass("d-none");
-        $(".btn_car_buy").removeAttr("disabled");
+        $("#Car_Dropdown > .btn_car_buy").removeAttr("disabled");
     }
 }
 
@@ -156,5 +156,5 @@ function CartClear() {
     $("#Car_Dropdown > ul > li").remove();
     $("#Car_Badge").text("");
     $("#Car_Dropdown_Null").removeClass("d-none");
-    $(".btn_car_buy").attr("disabled", "");
+    $("#Car_Dropdown > .btn_car_buy").attr("disabled", "");
 }

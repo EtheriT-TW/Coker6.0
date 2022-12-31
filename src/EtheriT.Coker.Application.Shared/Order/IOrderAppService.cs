@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Order
 {
     public interface IOrderAppService
     {
-        public Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto);
+        public Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto, long siteId);
         public Task<ResponseMessageDto> AddDetails(OrderDetailsAddDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<OrderHeaderGetOneDto> GetHeaderOne(long id);

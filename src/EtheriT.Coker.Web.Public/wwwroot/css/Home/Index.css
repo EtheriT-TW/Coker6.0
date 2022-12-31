@@ -247,7 +247,7 @@
     transform: translateY(-50%);
 }
 
-    #Inquiry > .content > .search > input {
+    #Inquiry > .content > .search_box > input {
         outline: none;
     }
 

@@ -7,7 +7,6 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
-using Microsoft.EntityFrameworkCore;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -23,7 +22,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             this.db = db;
             this.loginUserData = loginUserData;
         }
-        public async Task<ResponseMessageDto> AddUp(TechnicalCertificateDto dto)
+        public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
@@ -86,63 +85,57 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
         {
             try
             {
-                var result = db.TechnicalCertificates;
+                long webid = await loginUserData.GetWebsiteId();
 
-                if (result != null)
-                {
-                    var dataQuery = from e in result
-                                    where !e.IsDeleted
-                                    select new TechnicalCertificateGetAllListDto
-                                    {
-                                        Id = e.Id,
-                                        Disp_opt = e.Disp_opt,
-                                        Img = e.Img,
-                                        Title = e.Title,
-                                        Description = e.Description,
-                                        Ser_no = e.Ser_no,
-                                        StartDate = e.StartDate,
-                                        EndDate = e.EndDate,
-                                        Permanent = e.Permanent,
-                                    };
-                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-                }
-                else throw new Exception("查無資料");
+                var dataQuery = from e in db.TechnicalCertificates
+                                where !e.IsDeleted && e.FK_WebsiteId == webid
+                                select new TechCertGetAllListDto
+                                {
+                                    Id = e.Id,
+                                    Disp_opt = e.Disp_opt,
+                                    Img = e.Img,
+                                    Title = e.Title,
+                                    Description = e.Description,
+                                    Ser_no = e.Ser_no,
+                                    StartDate = e.StartDate,
+                                    EndDate = e.EndDate,
+                                    Permanent = e.Permanent,
+                                };
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
             {
 
             }
-            return new JsonResult(new List<TechnicalCertificateGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<List<TechnicalCertificateGetAllDto>> GetAll()
+        public async Task<JsonResult> GetChoseList(DataSourceLoadOptions loadOptions)
         {
             try
             {
-                var result = db.TechnicalCertificates;
+                long webid = await loginUserData.GetWebsiteId();
 
-                if (result != null)
-                {
-                    long WebsiteID = await loginUserData.GetWebsiteId();
-                    var output = await (from e in result
-                                        where !e.IsDeleted && e.Disp_opt && e.FK_WebsiteId == WebsiteID
-                                        select new TechnicalCertificateGetAllDto
-                                        {
-                                            Id = e.Id,
-                                            Img = e.Img,
-                                            Title = e.Title,
-                                        }).ToListAsync();
-                    return output;
-                }
-                else throw new Exception("查無資料");
+                var dataQuery = from tc in db.TechnicalCertificates
+                                where !tc.IsDeleted && tc.FK_WebsiteId == webid
+                                select new TechCertGetAllChoseListDto
+                                {
+                                    Id = tc.Id,
+                                    Img = tc.Img,
+                                    Title = tc.Title
+                                };
+
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
             {
 
             }
-            return null;
+
+            return new JsonResult(new List<TechCertGetAllChoseListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<TechnicalCertificateDto> GetOne(int id)
+        public async Task<TechCertDto> GetOne(int id)
         {
             try
             {
@@ -150,7 +143,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
                 if (result != null)
                 {
-                    TechnicalCertificateDto output = new TechnicalCertificateDto()
+                    TechCertDto output = new TechCertDto()
                     {
                         Id = result.Id,
                         Disp_opt = result.Disp_opt,
@@ -174,20 +167,20 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
             return null;
         }
-        public async Task<ResponseMessageDto> Delete(TechnicalCertificateDelectDto dto)
+        public async Task<ResponseMessageDto> Delete(long Id)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                var db_hc = db.TechnicalCertificates.Where(e => e.Id == dto.Id).FirstOrDefault();
-                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
+                var db_hc = db.TechnicalCertificates.Where(e => e.Id == Id).FirstOrDefault();
+                long usetId = await loginUserData.GetUserId();
 
-                if (db_hc != null && db_t != null)
+                if (db_hc != null)
                 {
                     db_hc.IsDeleted = true;
                     db_hc.DeletionTime = DateTime.Now;
-                    db_hc.DeleterUserId = db_t.UserID;
+                    db_hc.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

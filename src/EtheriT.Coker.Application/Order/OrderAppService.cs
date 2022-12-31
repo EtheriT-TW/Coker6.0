@@ -8,31 +8,31 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Application.Shared.Dto.Product;
 
 namespace EtheriT.Coker.Application.Order
 {
     public class OrderAppService : IOrderAppService
     {
         private readonly CokerDbContext db;
+        private readonly LoginUserData loginUserData;
         public OrderAppService(
-            CokerDbContext db
+            CokerDbContext db,
+            LoginUserData loginUserData
         )
         {
             this.db = db;
+            this.loginUserData = loginUserData;
         }
-        public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
+        public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto, long siteId)
         {
-
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
                 Core.Models.Order_Header oh = new Core.Models.Order_Header
                 {
+                    FK_WebsiteId = siteId,
                     Orderer = dto.Orderer,
                     OrdererSex = dto.OrdererSex,
                     OrdererEmail = dto.OrdererEmail,
@@ -144,30 +144,25 @@ namespace EtheriT.Coker.Application.Order
         {
             try
             {
-                var db_oh = db.Order_Headers;
-                var db_ls = db.LogisticsSettings;
+                long WebsiteID = await loginUserData.GetWebsiteId();
 
-                if (db_oh != null)
-                {
-                    var dataQuery = from oh in db_oh
-                                    where !oh.IsDeleted
-                                    join ls in db_ls on oh.Shipping equals ls.Id
-                                    select new OrderHeaderGetAllListDto
-                                    {
-                                        Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
-                                        Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
-                                        RecipientAddress = oh.RecipientAddress,
-                                        Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
-                                        Payment = ((PaymentTypeEnum)oh.Payment).ToString(),
-                                        State = ((OrderStatusEnum)oh.State).ToString(),
-                                        Total = oh.Subtotal + oh.Freight,
-                                        CreationTime = oh.CreationTime,
-                                    };
+                var dataQuery = from oh in db.Order_Headers
+                                where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
+                                join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
+                                select new OrderHeaderGetAllListDto
+                                {
+                                    Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
+                                    Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
+                                    RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
+                                    Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
+                                    Payment = ((PaymentTypeEnum)oh.Payment).ToString(),
+                                    State = ((OrderStatusEnum)oh.State).ToString(),
+                                    Total = oh.Subtotal + oh.Freight,
+                                    CreationTime = oh.CreationTime,
+                                };
 
-                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-                }
-                else throw new Exception("查無跑馬燈資料");
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
             {
@@ -204,7 +199,7 @@ namespace EtheriT.Coker.Application.Order
                         Recipient = result.Recipient,
                         RecipientTelephone = result.RecipientTelephone == null ? "-" : result.RecipientTelephone,
                         RecipientCellPhone = result.RecipientCellPhone,
-                        RecipientAddress = result.RecipientAddress,
+                        RecipientAddress = result.RecipientAddress.Replace(" ", ""),
                         InvoiceRecipient = result.InvoiceRecipient,
                         InvoiceTitle = result.InvoiceTitle,
                         UniformId = result.UniformId,
@@ -224,7 +219,7 @@ namespace EtheriT.Coker.Application.Order
                     };
                     return output;
                 }
-                else throw new Exception("查無跑馬燈資料");
+                else throw new Exception("查無訂單資料");
             }
             catch (Exception e)
             {
@@ -269,7 +264,7 @@ namespace EtheriT.Coker.Application.Order
 
                     return output;
                 }
-                else throw new Exception("查無資料");
+                else throw new Exception("查無訂單資料");
             }
             catch (Exception e)
             {
@@ -284,12 +279,14 @@ namespace EtheriT.Coker.Application.Order
 
             try
             {
+                long usetId = await loginUserData.GetUserId();
                 var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
 
                 if (result != null)
                 {
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;
+                    result.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

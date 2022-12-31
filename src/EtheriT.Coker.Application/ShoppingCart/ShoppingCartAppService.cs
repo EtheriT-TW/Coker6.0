@@ -69,7 +69,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         {
                             db_shoppingcart.Quantity += dto.Quantity;
                             db_shoppingcart.LastModificationTime = DateTime.Now;
-                            db_shoppingcart.LastModifierUserId = db_token.UserID;
+                            db_shoppingcart.LastModifierUserId = db_shoppingcart.CreatorUserId;
                             output.Message = "U" + db_shoppingcart.Id.ToString();
                             db.SaveChanges();
                         }
@@ -101,10 +101,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 if (db_shoppingcart != null && db_token != null)
                 {
-                    var user_id = (db_token != null && db_token.UserID != null) ? db_token.UserID : null;
                     db_shoppingcart.Quantity = dto.Quantity;
                     db_shoppingcart.LastModificationTime = DateTime.Now;
-                    db_shoppingcart.LastModifierUserId = user_id;
+                    db_shoppingcart.LastModifierUserId = db_shoppingcart.CreatorUserId;
                     output.Message = db_shoppingcart.Id.ToString();
                     db.SaveChanges();
                     output.Success = true;
@@ -120,7 +119,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return output;
         }
-        public async Task<List<ShoppingCartGetAllDto>> GetAll(String Tid)
+        public async Task<List<ShoppingCartGetAllDto>> GetAll(String Tid, long siteId)
         {
             try
             {
@@ -133,9 +132,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var output = await (from sc in db_shoppingcart
                                         where sc.FK_Tid == Guid.Parse(Tid) && !sc.IsDeleted
                                         from ps in db_prod_stock
-                                        where ps.Id == sc.FK_PSid
+                                        where !ps.IsDeleted && ps.Id == sc.FK_PSid
                                         from p in db_prod
-                                        where p.Id == ps.FK_Pid
+                                        where !p.IsDeleted && p.FK_WebsiteId == siteId && p.Id == ps.FK_Pid
                                         select new ShoppingCartGetAllDto
                                         {
                                             SCId = sc.Id,
@@ -167,13 +166,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return null;
         }
-        public async Task<ShoppingCartGetDrop> GetDropOne(long id)
+        public async Task<ShoppingCartGetDrop> GetDropOne(long id, long siteId)
         {
             try
             {
-                var db_sc = db.ShoppingCarts.Where(e => e.Id == id).FirstOrDefault();
-                var db_ps = db.Prod_Stocks.Where(e => e.Id == db_sc.FK_PSid).FirstOrDefault();
-                var db_prod = db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefault();
+                var db_sc = db.ShoppingCarts.Where(e => !e.IsDeleted && e.Id == id).FirstOrDefault();
+                var db_ps = db.Prod_Stocks.Where(e => !e.IsDeleted && e.Id == db_sc.FK_PSid).FirstOrDefault();
+                var db_prod = db.Prods.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && e.Id == db_ps.FK_Pid).FirstOrDefault();
 
                 if (db_sc != null)
                 {
@@ -216,6 +215,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;
+                    result.DeleterUserId = result.CreatorUserId;
                     db.SaveChanges();
                     output.Success = true;
                 }

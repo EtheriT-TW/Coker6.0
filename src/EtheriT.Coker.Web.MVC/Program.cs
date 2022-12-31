@@ -24,6 +24,8 @@ using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Specification;
+using EtheriT.Coker.Application.Specification;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -108,6 +110,7 @@ builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<LoginUserData>();
+builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

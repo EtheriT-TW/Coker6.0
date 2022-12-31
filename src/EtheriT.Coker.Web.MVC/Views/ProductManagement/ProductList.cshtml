@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
 @model ProductManagementModel
 @{
@@ -36,7 +37,7 @@
 						<input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0">
 					</div>
 
-					<button class="col-auto btn_price_delect bg-transparent border-0 d-flex p-0">
+					<button class="col-auto btn_price_delete bg-transparent border-0 d-flex p-0">
 						<span class="material-symbols-outlined">delete</span>
 					</button>
 				</div>
@@ -210,14 +211,64 @@
 				</template>
 
 				<div id="TechCertModal" class="modal fade" tabindex="-1" aria-labelledby="Technical Certificate Modal Label" aria-hidden="true">
-					<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
 						<div class="modal-content">
 							<div class="modal-header">
 								<h5 class="modal-title" id="exampleModalLabel">選擇技術證照</h5>
 								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 							</div>
 							<div class="modal-body">
-								<div class="isnull text-center">尚未設定技術證照</div>
+								<div class="bg-white p-3">
+									@(Html.DevExtreme().DataGrid<TechCertGetAllChoseListDto>()
+										.DataSource(d => d.RemoteController().Key("Id")
+										.LoadUrl("/api/TechnicalCertificate/GetChoseList").LoadMethod("Get")
+										)
+										.ID("TechCertList")
+										.Selection(s => s.Mode(SelectionMode.Multiple))
+										.RemoteOperations(true)
+										.ColumnHidingEnabled(false)
+										.ShowBorders(true)
+										.FilterRow(filterRow => filterRow
+										.Visible(true)
+										.ApplyFilter(GridApplyFilterMode.Auto)
+										)
+										.SearchPanel(searchPanel => searchPanel
+										.Visible(true)
+										.Width(480)
+										.Placeholder("請輸入要搜尋的資料")
+										)
+										.Columns(c =>
+										{
+											c.AddFor(e => e.Id).Caption("編號").Visible(false);
+											c.AddFor(e => e.Title).Caption("技術證照").Width(150);
+											c.AddFor(e => e.Img).Caption("圖片");
+										})
+										.OnSelectionChanged("TechCertList_SelectChange")
+										.Toolbar(toolbar =>
+										{
+											toolbar.Items(items =>
+											{
+												items.Add()
+											.Location(ToolbarItemLocation.Before)
+											.Widget(w =>
+											w.Button()
+											.Text("選項清除")
+											.Disabled(true)
+											.OnClick("TechCertList_ClearBtnClick")
+											.OnInitialized("TechCertList_ClearBtnInit")
+											);
+											});
+
+											toolbar.Items(i =>
+											{
+												i.Add()
+											.Name(DataGridToolbarItem.SearchPanel)
+											.ShowText(ToolbarItemShowTextMode.Always)
+											.Location(ToolbarItemLocation.After);
+											});
+										})
+										)
+								</div>
 							</div>
 							<div class="modal-footer">
 								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -274,7 +325,7 @@
 
 							<div class="number input-group mb-3 col-12 col-sm-6 col-xl-3 mb-3">
 								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-									<span class="material-symbols-outlined me-1">inventory_2</span>商品庫存量
+									<span class="material-symbols-outlined me-1">inventory_2</span>商品可銷售量
 								</div>
 								<input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
 							</div>
@@ -297,7 +348,7 @@
 
 							<div class="alert_number input-group mb-3 col-12 col-lg-4">
 								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-									<span class="material-symbols-outlined me-1">warning</span>可銷售警示
+									<span class="material-symbols-outlined me-1">warning</span>可銷售警示量
 								</div>
 								<input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
 							</div>
@@ -307,7 +358,7 @@
 							<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseDetail1" aria-expanded="false" aria-controls="CollapseDetail1">
 								<span class="material-symbols-outlined fs-3">expand_less</span>
 							</button>
-							<button class="btn_delect d-flex border-0 bg-transparent" type="button">
+							<button class="btn_delete d-flex border-0 bg-transparent" type="button">
 								<span class="material-symbols-outlined fs-3">delete</span>
 							</button>
 						</div>

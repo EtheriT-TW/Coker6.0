@@ -28,9 +28,10 @@ namespace EtheriT.Coker.Application.Marquee
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
             {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                long usetId = await loginUserData.GetUserId();
                 if (dto.Id == 0)
                 {
-                    long WebsiteID = await loginUserData.GetWebsiteId();
                     Core.Models.Marquee m = new Core.Models.Marquee
                     {
                         FK_WebsiteId = WebsiteID,
@@ -61,6 +62,7 @@ namespace EtheriT.Coker.Application.Marquee
                         result.StartTime = dto.StartTime;
                         result.EndTime = dto.EndTime;
                         result.permanent = dto.permanent;
+                        result.LastModifierUserId = usetId;
                         result.LastModificationTime = DateTime.Now;
                     }
                     else throw new Exception("查無跑馬燈資料");
@@ -79,7 +81,8 @@ namespace EtheriT.Coker.Application.Marquee
         {
             try
             {
-                var result = db.Marquees.Where(e => e.Id == id && !e.IsDeleted).FirstOrDefault();
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var result = db.Marquees.Where(e => e.Id == id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefault();
 
                 if (result != null)
                 {
@@ -112,12 +115,13 @@ namespace EtheriT.Coker.Application.Marquee
         {
             try
             {
+                long WebsiteID = await loginUserData.GetWebsiteId();
                 var result = db.Marquees;
 
                 if (result != null)
                 {
                     var dataQuery = from e in result
-                                    where !e.IsDeleted
+                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
                                     select new MarqueeGetDto
                                     {
                                         Id = e.Id,
@@ -178,12 +182,14 @@ namespace EtheriT.Coker.Application.Marquee
 
             try
             {
+                long usetId = await loginUserData.GetUserId();
                 var result = db.Marquees.Where(e => e.Id == id).FirstOrDefault();
 
                 if (result != null)
                 {
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;
+                    result.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

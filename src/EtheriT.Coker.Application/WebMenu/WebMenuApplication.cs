@@ -13,6 +13,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace EtheriT.Coker.Application
 {
@@ -125,6 +126,7 @@ namespace EtheriT.Coker.Application
                 if (menu != null)
                 {
                     results.Conten = mapper.Map<MenuSaveContenDto>(menu);
+                    results.Conten.SaveHtml = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.SaveHtml));
                     results.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -141,6 +143,7 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
                 MenuContenDto importDto = mapper.Map<MenuContenDto>(dto);
                 var s = await saveConten(dto);
                 var user = await loginUserData.GetUser();
@@ -164,6 +167,7 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
                 var user = await loginUserData.GetUser();
                 var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 mapper.Map(dto, menu);

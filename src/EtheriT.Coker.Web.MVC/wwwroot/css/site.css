@@ -11856,3 +11856,22 @@ a.bg-dark-light25:hover, a.bg-dark-light25:focus, button.bg-dark-light25:hover, 
     height: 100%;
     border-radius: 0 3px 3px 0;
 }
+
+.custom-context-menu {
+    position: fixed;
+    z-index: 1024;
+    background-color: #14213d;
+    color: #FFF;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0;
+    list-style: none;
+    cursor: pointer;
+}
+    .custom-context-menu > li {
+        border: #fff solid 1px;
+        padding: 0.5rem;
+    }
+        .custom-context-menu > li:not(:first-child) {
+            border-top:none;
+        }

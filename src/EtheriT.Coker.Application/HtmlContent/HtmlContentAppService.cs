@@ -13,6 +13,8 @@ using EtheriT.Coker.Application.Shared.Dto;
 using AutoMapper;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Web;
 
 namespace EtheriT.Coker.Application.HtmlContent
 {
@@ -39,6 +41,7 @@ namespace EtheriT.Coker.Application.HtmlContent
             try
             {
                 long userid = await loginUserData.GetUserId();
+                dto.Html = HttpUtility.HtmlEncode(dto.Html);
                 if (dto.Id == 0)
                 {
                     if (userid != 0)
@@ -48,6 +51,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                         newItem.FK_WebsiteId = WebsiteID;
                         db.Html_Contents.Add(newItem);
                         await loginUserData.SaveChanges(newItem);
+                        output.Message = newItem.Id.ToString();
                     }
                     else throw new Exception("查無資料");
                 }
@@ -70,6 +74,40 @@ namespace EtheriT.Coker.Application.HtmlContent
             }
             await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
+        }
+        public async Task<HtmlContentListOutpotDto> GetAllComponent() {
+            HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();
+            try {
+                List<long> t = Enum.GetValues(typeof(ObjectTypeEnum)).Cast<ObjectTypeEnum>()
+                   .Select(e => { return (long)e; })
+                   .ToList();
+                var result = await db.Html_Contents
+                        .Where(e => t.Contains(e.Type))
+                        .Where(e => !e.IsDeleted)
+                        .ToListAsync();
+                respose.List = mapper.Map<List<HtmlContentDto>>(result);
+                respose.Success = true;
+            }
+            catch(Exception e)
+            {
+                respose.Error = e.Message;
+            }
+           
+            return respose;
+        }
+        public async Task<HtmlContentListOutpotDto> GetComponent(ObjectTypeEnum type) {
+            HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();
+            try
+            {
+                var result = await db.Html_Contents.Where(e => e.Id == (long)type).ToListAsync();
+                respose.List = mapper.Map<List<HtmlContentDto>>(result);
+                respose.Success = true;
+            }
+            catch (Exception e)
+            {
+                respose.Error = e.Message;
+            }
+            return respose;
         }
         public async Task<JsonResult> GetAllList(int type, DataSourceLoadOptions loadOptions)
         {
@@ -182,15 +220,13 @@ namespace EtheriT.Coker.Application.HtmlContent
 
             try
             {
+                long userid = await loginUserData.GetUserId();
                 var db_hc = db.Html_Contents.Where(e => e.Id == dto.Id).FirstOrDefault();
-                var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
 
-                if (db_hc != null && db_t != null)
+                if (db_hc != null && userid != 0)
                 {
                     db_hc.IsDeleted = true;
-                    db_hc.DeletionTime = DateTime.Now;
-                    db_hc.DeleterUserId = db_t.UserID;
-                    db.SaveChanges();
+                    await loginUserData.SaveChanges(db_hc);
                     output.Success = true;
                 }
                 else throw new Exception("查無資料");

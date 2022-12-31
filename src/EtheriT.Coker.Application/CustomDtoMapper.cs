@@ -35,7 +35,9 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
 
             //Html_Content
-            CreateMap<HtmlContentDto, Html_Content>().ReverseMap();
+            CreateMap<HtmlContentDto, Html_Content>()
+                .ReverseMap()
+                .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
         }
     }
 }

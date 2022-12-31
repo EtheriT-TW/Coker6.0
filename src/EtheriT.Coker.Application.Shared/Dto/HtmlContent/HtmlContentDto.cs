@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace EtheriT.Coker.Application.Shared.Dto.EnterAd
+namespace EtheriT.Coker.Application.Dto
 {
     public class HtmlContentDto
     {
         public long Id { get; set; }
         public Guid? TId { get; set; }
         public int Type { get; set; }
+        public string? TypeName { get; set; }
         public string? Img { get; set; }
         public string? Icon { get; set; }
         public string? Html { get; set; }

@@ -20,7 +20,7 @@ namespace EtheriT.Coker.Core.Models
         public int ImpersonatorTenantId { get; set; }
         public long ImpersonatorUserId { get; set; }
         [StringLength(256)] public string? MethodName { get; set; }
-        [StringLength(1024)] public string? Parameters { get; set; }
+        public string? Parameters { get; set; }
         [StringLength(256)] public string? ServiceName { get; set; }
         public int WebId { get; set; }
         public long UserId { get; set; }

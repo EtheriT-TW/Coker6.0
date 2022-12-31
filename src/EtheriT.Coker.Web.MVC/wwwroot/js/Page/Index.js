@@ -24,8 +24,13 @@
             });
             return _dfr.promise();
         },
-        saveComponer: function () {
-
+        getComponer: function () {
+            var _dfr = $.Deferred();
+            co.HtmlContent.GetAllComponent().done(function (result) {
+                if (result.success) _dfr.resolve(result.list);
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
         }
     });
 
@@ -133,7 +138,7 @@
                     $("#gjs + .emptyList").addClass("d-none");
                     co.WebMesnus.getConten(data.id).done(function (result) {
                         if (result.success) {
-                            editor.setComponents(result.conten.saveHtml);
+                            editor.setComponents(co.Data.HtmlDecode(result.conten.saveHtml));
                             editor.setStyle(result.conten.saveCss);
                         } else {
                             co.sweet.error(result.error);

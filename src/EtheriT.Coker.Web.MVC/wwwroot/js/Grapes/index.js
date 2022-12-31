@@ -4,8 +4,9 @@
  ****************************************/
 var grapesInit = function (options) {
     var settings = {
-        save : function () { return false; },
-        import : function () { return false; }
+        save: function () { return false; },
+        import: function () { return false; },
+        getComponer: function () { return false; },
     };
     $.extend(true, settings, options);
     var editor = grapesjs.init({
@@ -61,6 +62,7 @@ var grapesInit = function (options) {
         storageManager: { autoload: 0 }
     });
     var panelManager = editor.Panels;
+    const BlockManager = editor.BlockManager;
     var categories = editor.BlockManager.getCategories();
     var blockControl = function () {
         $(categories.models).each(function (index, category) {
@@ -74,22 +76,36 @@ var grapesInit = function (options) {
         });
     }
     const iconPickerOpt = { cols: 4, rows: 4, footer: false, iconset: "fontawesome5" };
-    const getCss = (editor, id) => {
+    const getCss = (selected) => {
+        const el = selected.getEl();
+        const id = selected.getId();
+        const itemClass = el.classList;
         const style = editor.CssComposer.getRule(`#${id}`);
         const hoverStyle = editor.CssComposer.getRule(`#${id}:hover`);
-
+        let classCssStr = "";
+        $(itemClass).each(function () {
+            if (!!this) {
+                const myClass = this.toString();
+                const cStyle = editor.CssComposer.getRule(`.${myClass}`);
+                const cHoverStyle = editor.CssComposer.getRule(`.${myClass}:hover`);
+                if (cStyle) {
+                    classCssStr = `${classCssStr} ${cStyle.toCSS()}`;
+                }
+                if (cHoverStyle) classCssStr = `${classCssStr} ${cHoverStyle.toCSS()}`;
+            }
+        });
         if (style) {
             if (hoverStyle) {
-                return style.toCSS() + ' ' + hoverStyle.toCSS()
+                classCssStr = `${style.toCSS()} ${hoverStyle.toCSS()} ${classCssStr}`;
             }
-            return style.toCSS()
+            return classCssStr = `${style.toCSS()} ${classCssStr}`;
         }
         else {
-            return ''
+            return classCssStr;
         }
     }
 
-    const findComponentStyles = function(selected){
+    const findComponentStyles = function (selected) {
         let css = ''
         if (selected) {
             const childModel = selected.components().models
@@ -97,10 +113,10 @@ var grapesInit = function (options) {
                 for (const model of childModel) {
                     css = css + findComponentStyles(model)
                 }
-                return css + getCss(editor, selected.getId());
+                return css + getCss(selected);
             }
             else {
-                return getCss(editor, selected.getId());
+                return getCss(selected);
             }
         }
     }
@@ -108,7 +124,7 @@ var grapesInit = function (options) {
         const blockId = name_blockId.blockId;
         const name = name_blockId.name;
 
-        let elementHTML = selected.getEl().outerHTML;
+        let elementHTML = $(selected.getEl().outerHTML).removeClass("gjs-selected")[0].outerHTML;
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `;
@@ -119,40 +135,140 @@ var grapesInit = function (options) {
         const elementHtmlCss = finalHtml + css;
         const category = $('#ComponerTypeList>option:selected').text();
         const object = {
+            id: name_blockId.id,
             Title: name,
             icon: icon,
             type: $('#ComponerTypeList>option:selected').val(),
-            Html: finalHtml,
-            css: css
+            Html: $('<div/>').text(finalHtml).html(),
+            css: blockCss
         }
-        //co.HtmlContent.AddUp(object).done(function () {
-            appendBlock(blockId, {
-                category: category,
-                attributes: { custom_block_template: true },
-                label: `${name}`,
-                media: `<i class="${icon} fa-5x"></i>`,
-                content: elementHtmlCss,
-            })
-        //});
-        
+        co.HtmlContent.AddUp(object).done(function (result) {
+            console.log(result);
+            if (result.success) {
+                appendBlock(blockId, {
+                    category: category,
+                    attributes: { custom_block_template: true },
+                    label: `${name}`,
+                    media: `<i class="${icon} fa-5x"></i>`,
+                    content: elementHtmlCss,
+                })
+            } else co.sweet.error(result.error);
+        });
+
     }
+    let actionBlockId = null;
+    const ContextMenu = function (options) {
+        // 唯一实例
+        let instance;
+
+        // 创建实例方法
+        function createMenu() {
+            // todo
+            const ul = document.createElement("ul");
+            ul.classList.add("custom-context-menu");
+            const { menus } = options;
+            if (menus && menus.length > 0) {
+                for (let menu of menus) {
+                    const li = document.createElement("li");
+                    li.textContent = menu.name;
+                    li.onclick = menu.onClick;
+                    ul.appendChild(li);
+                }
+            }
+            const body = document.querySelector("body");
+            body.appendChild(ul);
+            return ul;
+        }
+
+        return {
+            // 获取实例的唯一方式
+            getInstance: function () {
+                if (!instance) {
+                    instance = createMenu();
+                }
+                return instance;
+            },
+        };
+    };
+    const menuSinglton = ContextMenu({
+        menus: [
+            {
+                name: "加入至頁面",
+                onClick: function (e) {
+                    const block = BlockManager.get(actionBlockId);
+                    editor.addComponents(block.attributes.content);
+                },
+            },
+            {
+                name: "刪除元件",
+                onClick: function (e) {
+                    removeBlock();
+                },
+            }
+        ],
+    });
+    function showMenu(e) {
+        const menus = menuSinglton.getInstance();
+        menus.style.top = `${e.clientY}px`;
+        menus.style.left = `${e.clientX}px`;
+        menus.style.display = "block";
+    }
+    function hideMenu(e) {
+        const menus = menuSinglton.getInstance();
+        menus.style.display = "none";
+    }
+    function removeBlock() {
+        const l = actionBlockId.split("_");
+        const id = l[l.length - 1];
+        console.log(id);
+        co.HtmlContent.Delete({ id: id }).done(function (result) {
+            if (result.success) {
+                BlockManager.remove(actionBlockId);
+                co.sweet.success("成功", null, true);
+            } else co.sweet.error(result.error);
+        });
+    }
+
+    document.addEventListener("click", hideMenu);
     const appendBlock = function (id, obj) {
-        const bm = editor.BlockManager
-        bm.add(`customBlockTemplate_${id}`, obj);
-    }
-    const createBlockTemplateConfirmation = function() {
-        const selected = editor.getSelected();
-        //let name = this.blockTemplateForm.get('name')!.value
-        let name = $("#NewBlockName").val() || "新增";
-        let blockId = 'customBlockTemplate_' + name.split(' ').join('_')
-        let name_blockId = {
-            'name': name,
-            'blockId': blockId
+        const blockId = `customBlockTemplate_${id}`;
+        var mySetting = {
+            render: ({ model, el }) => {
+                el.addEventListener('dblclick', () => {
+                    co.sweet.confirm('即將刪除', co.sweet.TitleHilight(`是否要確認將{0}刪除?`, obj.label), '確認', "取消", function () {
+                        actionBlockId = blockId;
+                        removeBlock();
+                    });
+                }), el.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    actionBlockId = blockId;
+                    showMenu(e);
+                })
+            }
         }
-        console.log(blockId);
-        createBlockTemplate(selected, name_blockId)
-        //this.blockTemplateForm.reset();
-        //this.modalService.getModal('createBlockTemplate').close();
+        $.extend(true, mySetting, obj);
+        BlockManager.add(blockId, mySetting);
+    }
+    const createBlockTemplateConfirmation = function () {
+        const selected = editor.getSelected();
+        const self = this;
+        let name = $("#NewBlockName").val() || "新增";
+
+        co.HtmlContent.AddUp({
+            Title: name,
+            Type: $('#ComponerTypeList>option:selected').val()
+        }).done(function (result) {
+            if (result.success) {
+                let blockId = 'customBlockTemplate_' + result.message.split(' ').join('_')
+                let name_blockId = {
+                    'id': result.message,
+                    'name': name,
+                    'blockId': blockId
+                }
+                createBlockTemplate(selected, name_blockId);
+                document.getElementById("ComFrm").reset();
+            } else co.sweet.error(result.error);
+        });
     }
     $(`<div id="setComponents" class="modal" tabindex="-1">
       <div class="modal-dialog">
@@ -189,7 +305,7 @@ var grapesInit = function (options) {
     const myModal = new bootstrap.Modal('#setComponents');
     const iconPicker = $('#NewBlockicon').iconpicker(iconPickerOpt);
     co.HtmlContent.GetTypeList().done(function (result) {
-        if (result.success) { 
+        if (result.success) {
             var $s = $("#ComponerTypeList");
             $(result.type).each(function () {
                 $s.append(`<option value="${this.value}">${this.key}</option>`);
@@ -197,13 +313,28 @@ var grapesInit = function (options) {
             if (result.type.length > 1) $s.parents(".d-none").removeClass("d-none");
         }
     });
-    $('#setComponents').find(".btn-save").on("click", function(){
+    $('#setComponents').find(".btn-save").on("click", function () {
         createBlockTemplateConfirmation();
         myModal.hide();
         co.sweet.success("加入我的最愛");
     });
     iconPicker.on('change', function (e) {
         $('#NewBlockicon').val(e.icon);
+    });
+
+    settings.getComponer().done(function (result) {
+        $(result).each(function () {
+            const html = $("<div/>").html(this.html).text();
+            const elementHtmlCss = `${html}<style>${this.css}</style>`;
+            let blockId = 'customBlockTemplate_' + this.id;
+            appendBlock(blockId, {
+                category: this.typeName,
+                attributes: { custom_block_template: true },
+                label: `${this.title}`,
+                media: `<i class="${this.icon} fa-5x"></i>`,
+                content: elementHtmlCss,
+            });
+        });
     });
 
     panelManager.addButton('options', {
@@ -233,14 +364,7 @@ var grapesInit = function (options) {
         active: false,
     });
 
-    editor.BlockManager.add('testBlock', {
-        category: "自訂區",
-        label: '歡迎區',
-        attributes: { class: 'gjs-fonts gjs-f-b1', title: 'hello' },
-        content: '<div class="welecom" style="text-align:center"><span>Hello World</span></div>'
-    });
-
-    editor.addComponents('<div id="yui" class="cls">New component</div>');
+    //editor.addComponents('<div id="yui" class="cls">New component</div>');
 
     var checkLoadTimer = setInterval(function () {
         if (categories.models.length > 1) clearInterval(checkLoadTimer);
@@ -248,7 +372,7 @@ var grapesInit = function (options) {
     }, 500);
 
     $.fn.extend({
-        removeAllElemntId : function () {
+        removeAllElemntId: function () {
             $(this).removeAttr("id").removeClass("gjs-selected");
             $(this).children().each(function (index, element) {
                 $(element).removeAllElemntId();
@@ -292,6 +416,6 @@ var grapesInit = function (options) {
             }
         })
     });
-    
+
     return editor;
 }

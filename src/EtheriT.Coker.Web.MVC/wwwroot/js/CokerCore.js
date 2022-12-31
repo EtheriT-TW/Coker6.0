@@ -11,6 +11,11 @@ var Coker = {
             DataRetentionTime: 30 * MinutesSecond,
             DataRetentionLongTime: 3 * MonthSecond,
             ReCheckTime: 20 * MinutesSecond
+        },
+        HtmlDecode: function (str) {
+            var _h = $("<div />").html(str).text();
+            if (/[&].*[;]/.test(_h)) return _c.Data.HtmlDecode(_h);
+            else return _h;
         }
     },
     Cookie: {
@@ -202,6 +207,9 @@ var Coker = {
                     draft_action();
                 }
             })
+        },
+        TitleHilight: function (string,title) {
+            return string.replace("{0}", `<span class='ConfirmKeyWord'>${title}</span>`);
         }
     },
     Picker: {
@@ -261,6 +269,25 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
+        GetAllComponent: function () {
+            return $.ajax({
+                url: "/api/HtmlContent/GetAllComponent",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
+        GetComponent: function (type) {
+            return $.ajax({
+                url: "/api/HtmlContent/GetComponent",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ type: type }),
                 dataType: "json"
             });
         }

@@ -168,6 +168,8 @@ else
     });
 }
 
+app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

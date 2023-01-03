@@ -224,7 +224,7 @@ namespace EtheriT.Coker.Application.HtmlContent
             try
             {
                 long userid = await loginUserData.GetUserId();
-                var db_hc = db.Html_Contents.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var db_hc = db.Html_Contents.Where(e => e.Id == Id).FirstOrDefault();
 
                 if (db_hc != null && userid != 0)
                 {

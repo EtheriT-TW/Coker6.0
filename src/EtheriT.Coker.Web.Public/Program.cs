@@ -61,6 +61,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseVirtualDirectory("images", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

@@ -73,8 +73,16 @@ input[type="number"] {
     padding-left: 5.5rem;
 }
 
-#Spec_Frame > .frame > div > div > input[class*="number"] {
+#Spec_Frame > .frame > div > div > .input_stock_number {
+    padding-left: 8.5rem;
+}
+
+#Spec_Frame > .frame > div > div > .input_min_number {
     padding-left: 7.5rem;
+}
+
+#Spec_Frame > .frame > div > div > .input_alert_number {
+    padding-left: 8.5rem;
 }
 
 #ProductForm > .date > input {
@@ -88,7 +96,7 @@ input[type="number"] {
 
 /* TechCert Modal */
 
-#TechCertModal > .modal-dialog {
+#TechCertModal > .modal-dialog, #TagModal > .modal-dialog {
     max-width: 90vw;
     width: 800px;
 }

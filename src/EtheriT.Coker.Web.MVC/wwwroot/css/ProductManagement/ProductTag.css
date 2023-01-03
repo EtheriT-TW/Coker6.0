@@ -1,0 +1,62 @@
+﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
+.icon_hint {
+    cursor: default;
+}
+
+/* Tag List */
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
+/* Tag Content */
+#TagForm > div > div > .btn_input_pic {
+    height: 3.5rem;
+    width: 3.5rem;
+    color: var(--bs-gray);
+    border: 1px solid #ced4da;
+    border: 1px solid var(--color-gray-bg-dark);
+}
+
+#TagContent > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#TagForm > .title > input {
+    padding-left: 8.5rem;
+    padding-right: 4rem;
+}
+
+#TagForm > .illustrate .illustrate_count::after {
+    content: '/250';
+}
+
+#TagForm > .illustrate textarea {
+    height: 6.5rem;
+}
+
+#TagForm > .sort > input {
+    padding-left: 6.5rem;
+    padding-right: 7.5rem;
+}
+
+#TagForm > .date > input {
+    padding-left: 10.5rem;
+    padding-right: 7.5rem;
+}

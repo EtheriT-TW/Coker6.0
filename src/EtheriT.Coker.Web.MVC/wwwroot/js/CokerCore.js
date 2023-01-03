@@ -190,24 +190,6 @@ var Coker = {
                 }
             })
         },
-        draft_or_publish: function (action_name, draft_action, action) {
-            Swal.fire({
-                icon: 'info',
-                title: "儲成草稿或" + action_name + "？",
-                showCancelButton: true,
-                confirmButtonColor: '#4B89FC',
-                cancelButtonColor: '#FBB357',
-                confirmButtonText: action_name,
-                cancelButtonText: "存成草稿",
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    action();
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    draft_action();
-                }
-            })
-        },
         TitleHilight: function (string,title) {
             return string.replace("{0}", `<span class='ConfirmKeyWord'>${title}</span>`);
         }

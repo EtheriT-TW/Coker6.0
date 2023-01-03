@@ -30,5 +30,6 @@ namespace EtheriT.Coker.Core.Models
         public List<Html_Content> Html_Contents { get; set; }
         public List<LogisticsSetting> LogisticsSettings { get; set; }
         public List<TechnicalCertificate> TechnicalCertificates { get; set; }
+        public List<Tag> Tags { get; set; }
     }
 }

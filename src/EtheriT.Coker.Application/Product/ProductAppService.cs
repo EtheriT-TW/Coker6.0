@@ -9,7 +9,6 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
-using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Product
 {

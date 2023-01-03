@@ -40,6 +40,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<MappingUserAndRole> MappingUserAndRoles { get; set; }
         public DbSet<Prod_TechCert> Prod_TechCerts { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<Tag_Associate> Tag_Associates { get; set; }
+        public DbSet<Tag_Group> Tag_Groups { get; set; }
+        public DbSet<Tag_TagGroup> Tag_TagGroups { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)
@@ -128,6 +132,19 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
+            });
+            modelBuilder.Entity<Tag>(o =>
+            {
+                o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<Tag_Associate>(o =>
+            {
+                o.HasOne(u => u.Tag).WithMany(u => u.Tag_Associates).HasForeignKey(f => f.FK_TId);
+            });
+            modelBuilder.Entity<Tag_TagGroup>(o =>
+            {
+                o.HasOne(u => u.Tag).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TId);
+                o.HasOne(u => u.Tag_Group).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TGId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

@@ -59,8 +59,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                             new JobMenu{
                                 PageName="ProductTag",
                                 Title="商品標籤",
-                                Controller="Dashboard",
-                                Action="Index",
+                                Controller="ProductManagement",
+                                Action="ProductTag",
                                 Icon="",
                             },
                             new JobMenu{

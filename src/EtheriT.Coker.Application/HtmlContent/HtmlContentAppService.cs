@@ -242,7 +242,8 @@ namespace EtheriT.Coker.Application.HtmlContent
 
             return output;
         }
-        public async Task<HtmlContentTypeDto> GetTypeList() {
+        public async Task<HtmlContentTypeDto> GetTypeList()
+        {
             HtmlContentTypeDto response = new HtmlContentTypeDto { Success = true };
             try
             {
@@ -250,18 +251,20 @@ namespace EtheriT.Coker.Application.HtmlContent
                 if (userId == 1)
                 {
                     response.Type = Enum.GetValues(typeof(ObjectTypeEnum))
-                   .Cast<ObjectTypeEnum>().Select(e => {
-                       return new EnumDictionaryDto { Key = e.ToString(),Value = (int)e };
+                   .Cast<ObjectTypeEnum>().Select(e =>
+                   {
+                       return new EnumDictionaryDto { Key = e.ToString(), Value = (int)e };
                    }).ToList();
                 }
-                else {
+                else
+                {
                     response.Type = new List<EnumDictionaryDto>
                     {
                         new EnumDictionaryDto{ Key = ObjectTypeEnum.自訂.ToString(), Value = (int)ObjectTypeEnum.自訂 }
                     };
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 response.Success = false;
                 response.Error = e.Message;

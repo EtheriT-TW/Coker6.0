@@ -21,6 +21,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             };
             return View("ProductList", model);
         }
+        public IActionResult ProductTag()
+        {
+            return View("ProductTag");
+        }
         public IActionResult TechnicalCertificate()
         {
             return View("TechnicalCertificate");

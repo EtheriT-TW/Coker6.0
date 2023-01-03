@@ -1,0 +1,92 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.Tag
+@{
+	ViewData["Title"] = "ProductTag";
+}
+
+<link rel="stylesheet" href="~/css/ProductManagement/ProductTag.min.css" asp-append-version="true" />
+<script src="~/js/ProductManagement/ProductTag.min.js" asp-append-version="true"></script>
+
+<div class="">
+	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+		<div class="title fw-bold fs-3">標籤設定</div>
+	</div>
+
+	<div id="" class="py-2">
+		<div id="ProductTagList" class="card border-0">
+			<div class="card-body position-relative">
+				@(Html.DevExtreme().DataGrid<TagGetAllListDto>()
+					.DataSource(d => d.RemoteController().Key("Id")
+					.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
+					.InsertUrl("/api/Tag/AddUp").InsertMethod("Post")
+					.UpdateUrl("/api/Tag/AddUp").UpdateMethod("Post")
+					)
+					.ID("gridContainer")
+					.RemoteOperations(true)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.HeaderFilter(headerFilter => headerFilter.Visible(true))
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Width(480)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.ShowRowLines(true)
+					.Paging(paging => paging.PageSize(30))
+					.Pager(pager =>
+					{
+						pager.Visible(true);
+						pager.ShowPageSizeSelector(true);
+						pager.AllowedPageSizes(new[] { 10, 20, 30 });
+						pager.ShowInfo(true);
+					})
+					.Editing(editing =>
+					{
+						editing.Mode(GridEditMode.Row);
+						editing.AllowAdding(true);
+						editing.AllowDeleting(true);
+						editing.AllowUpdating(true);
+						editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+						editing.UseIcons(true);
+					})
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號").AllowEditing(false);
+						c.AddFor(e => e.Title).Caption("標籤名稱");
+						c.Add()
+						.Type(GridCommandColumnType.Buttons)
+						.Buttons(b =>
+						{
+							b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
+							b.Add().Name("save");
+							b.Add().Name("cancel");
+							b.Add().Name("delete").OnClick("deleteButtonClicked");
+						});
+					})
+					.Toolbar(toolbar =>
+					{
+						toolbar.Items(i =>
+						{
+							i.Add()
+						.Name(DataGridToolbarItem.AddRowButton)
+						.ShowText(ToolbarItemShowTextMode.Always)
+						.Location(ToolbarItemLocation.Before);
+						});
+
+						toolbar.Items(i =>
+						{
+							i.Add()
+						.Name(DataGridToolbarItem.SearchPanel)
+						.ShowText(ToolbarItemShowTextMode.Always)
+						.Location(ToolbarItemLocation.After);
+						});
+					}))
+			</div>
+		</div>
+	</div>
+</div>
+

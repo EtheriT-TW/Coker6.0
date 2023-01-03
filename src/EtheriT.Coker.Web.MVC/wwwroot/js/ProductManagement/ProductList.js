@@ -1,10 +1,10 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], techcert_list = []
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], techcert_list = [], tag_list = []
 var $price_modal, priceModal, $techcert_body, techcertModal;
 
-var changedBySelectBox, clearSelectionButton;
-var techcert_check_list = [], techcert_text
+var techcert_changedBySelectBox, techcert_clearSelectionButton, tag_changedBySelectBox, tag_clearSelectionButton;
+var techcert_check_list = [], techcert_text, tag_check_list = [], tag_text
 
 function PageReady() {
     co.Product = {
@@ -128,6 +128,37 @@ function PageReady() {
         }
     };
 
+    co.Tag = {
+        //AddUp: function (data) {
+        //    return $.ajax({
+        //        url: "/api/Product/ProductAddUp",
+        //        type: "POST",
+        //        contentType: 'application/json; charset=utf-8',
+        //        headers: _c.Data.Header,
+        //        data: JSON.stringify(data),
+        //        dataType: "json"
+        //    });
+        //},
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Tag/GetProductDataAll/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { PId: id },
+            });
+        },
+        //Delete: function (id) {
+        //    return $.ajax({
+        //        url: "/api/Product/StockDelete/",
+        //        type: "GET",
+        //        contentType: 'application/json; charset=utf-8',
+        //        headers: _c.Data.Header,
+        //        data: { Id: id },
+        //    });
+        //}
+    };
+
     ElementInit();
 
     $picker = $("#InputDate");
@@ -169,7 +200,7 @@ function PageReady() {
                             }, false);
                         } else {
                             Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                                AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                                AddUp("已成功發布", "發布發生未知錯誤", "List");
                             });
                         }
                     }
@@ -268,6 +299,54 @@ function PageReady() {
         $marks.val(techcert_text);
         techcertModal.hide();
     })
+
+    $(".btn_tag_save").on("click", function () {
+        if (tag_check_list.length > 0) {
+            tag_list.forEach(function (item) {
+                var index = tag_check_list.indexOf(item.FK_TCId)
+                if (index > -1) {
+                    item.Checked = true;
+                    tag_check_list.splice(index, 1)
+                } else {
+                    item.Checked = false;
+                }
+            })
+            if (tag_check_list.length > 0) {
+                tag_check_list.forEach(function (item) {
+                    var obj = {};
+                    obj["Id"] = 0;
+                    obj["FK_TCId"] = item;
+                    obj["Checked"] = true;
+                    tag_list.push(obj);
+                })
+            }
+        }
+        $tag.val(tag_text);
+        tagModal.hide();
+    })
+
+    $(".btn_to_canvas").on("click", function (event) {
+        event.preventDefault()
+
+        Swal.fire({
+            icon: 'info',
+            title: "前往內容編輯頁",
+            html: "是否保存資料?",
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "　是　",
+            cancelButtonText: "　否　",
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                AddUp("已成功發布", "發布發生未知錯誤", "Canvas");
+            } else {
+                var hash = window.location.hash.replace("#", "") + "-1";
+                window.location.hash = hash;
+            }
+        })
+    })
 }
 
 function ElementInit() {
@@ -296,7 +375,18 @@ function ElementInit() {
                 temp_list.push(item.FK_TCId);
             }
         })
-        getDataGridInstance().selectRows(temp_list);
+        getTechCertListDataGridInstance().selectRows(temp_list);
+    })
+
+    tagModal = new bootstrap.Modal(document.getElementById('TagModal'))
+    $("#TagModal").on("hidden.bs.modal", function () {
+        var temp_list = [];
+        techcert_list.forEach(function (item) {
+            if (item.Checked) {
+                temp_list.push(item.FK_TCId);
+            }
+        })
+        getTagListDataGridInstance().selectRows(temp_list);
     })
 
     $techcert_body = $("#TechCertModal > .modal-dialog > .modal-content > .modal-body");
@@ -325,12 +415,12 @@ function ElementInit() {
     })
 }
 
-function getDataGridInstance() {
+function getTechCertListDataGridInstance() {
     return $("#TechCertList").dxDataGrid("instance");
 }
 
 function TechCertList_ClearBtnInit(e) {
-    clearSelectionButton = e.component;
+    techcert_clearSelectionButton = e.component;
 }
 
 function TechCertList_ClearBtnClick() {
@@ -339,7 +429,7 @@ function TechCertList_ClearBtnClick() {
             item.Checked = false;
         })
     }
-    getDataGridInstance().clearSelection();
+    getTechCertListDataGridInstance().clearSelection();
 }
 
 function TechCertList_SelectChange(selectedItems) {
@@ -356,8 +446,43 @@ function TechCertList_SelectChange(selectedItems) {
         techcert_text = "無";
     }
 
-    changedBySelectBox = false;
-    clearSelectionButton.option('disabled', !data.length);
+    techcert_changedBySelectBox = false;
+    techcert_clearSelectionButton.option('disabled', !data.length);
+}
+
+function getTagListDataGridInstance() {
+    return $("#TagList").dxDataGrid("instance");
+}
+
+function TagList_ClearBtnInit(e) {
+    tag_clearSelectionButton = e.component;
+}
+
+function TagList_ClearBtnClick() {
+    if (tag_list.length > 0) {
+        tag_list.forEach(function (item) {
+            item.Checked = false;
+        })
+    }
+    getTagListDataGridInstance().clearSelection();
+}
+
+function TagList_SelectChange(selectedItems) {
+    var data = selectedItems.selectedRowsData;
+
+    tag_check_list = [];
+    if (data.length > 0) {
+        tag_text = data.map((value) => `${value.Title}`).join("、");
+
+        data.forEach(function (item) {
+            tag_check_list.push(item.Id)
+        })
+    } else {
+        tag_text = "無";
+    }
+
+    tag_changedBySelectBox = false;
+    tag_clearSelectionButton.option('disabled', !data.length);
 }
 
 function FormDataClear() {
@@ -420,11 +545,15 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
             if (parseInt(hash) == 0) {
-                FormDataClear();
-                SpecAdd(null);
-                MoveToContent();
+                if (hash.includes('-1')) {
+                    MoveToCanvas();
+                } else {
+                    FormDataClear();
+                    SpecAdd(null);
+                    MoveToContent();
+                }
             } else {
-                if (hash.includes('-')) {
+                if (hash.includes('-1')) {
                     MoveToCanvas();
                 } else {
                     co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
@@ -450,9 +579,8 @@ function editButtonClicked(e) {
 }
 
 function paletteButtonClicked(e) {
-    MoveToCanvas();
     keyId = e.row.key + "-1";
-    window.location.hash = keyId
+    window.location.hash = keyId;
 }
 
 function FormDataSet(result) {
@@ -505,12 +633,32 @@ function FormDataSet(result) {
                 }
                 techcert_list.push(obj)
             })
-            getDataGridInstance().selectRows(temp_list);
+            getTechCertListDataGridInstance().selectRows(temp_list);
         }
         $marks.val(text == "" ? "無" : text);
     })
 
-    $tag.val("");
+    text = ""
+    co.Tag.Get(result.id).done(function (result) {
+        console.log(result)
+        //if (result != null && result.length > 0) {
+        //    var temp_list = [];
+        //    result.forEach(function (item) {
+        //        var obj = {};
+        //        obj["Id"] = item.id;
+        //        obj["FK_TCId"] = item.fK_TCId;
+        //        obj["Checked"] = item.isChecked;
+        //        if (item.isChecked) {
+        //            temp_list.push(item.fK_TCId);
+        //            text = text == "" ? item.title : text + "、" + item.title;
+        //        }
+        //        tag_list.push(obj)
+        //    })
+        //    getTagListDataGridInstance().selectRows(temp_list);
+        //}
+        $tag.val(text == "" ? "無" : text);
+    })
+
     $date = $("#InputDate");
     if (result.permanent) {
         $date.val('');
@@ -839,8 +987,7 @@ function ISpecRepect() {
     return isRepect;
 }
 
-function AddUp(display, success_text, error_text) {
-
+function AddUp(success_text, error_text, target) {
     if (spec_remove_list.length > 0) {
         spec_remove_list.forEach(function (item) {
             co.Product.Delete.Stock(item);
@@ -850,7 +997,7 @@ function AddUp(display, success_text, error_text) {
     co.Product.AddUp.Product({
         Id: keyId,
         Title: $name.val(),
-        Disp_Opt: display,
+        Disp_Opt: disp_opt,
         Ser_No: 500,
         Introduction: $introduction.val(),
         Description: $illustrate.val(),
@@ -929,11 +1076,19 @@ function AddUp(display, success_text, error_text) {
                             }
                             co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
                                 if (result.success) {
-                                    Coker.sweet.success(success_text, null, true);
-                                    setTimeout(function () {
-                                        BackToList();
-                                        product_list.component.refresh();
-                                    }, 1000);
+                                    if (target == "List") {
+                                        Coker.sweet.success(success_text, null, true);
+                                        setTimeout(function () {
+                                            BackToList();
+                                            product_list.component.refresh();
+                                        }, 1000);
+                                    } else if (target == "Canvas") {
+                                        Coker.sweet.success(success_text, null, true);
+                                        setTimeout(function () {
+                                            var hash = window.location.hash.replace("#", "") + "-1";
+                                            window.location.hash = hash;
+                                        }, 1000);
+                                    }
                                 } else {
                                     Coker.sweet.error("錯誤", error_text, null, true);
                                 }
@@ -963,16 +1118,19 @@ function AddUp(display, success_text, error_text) {
 function MoveToContent() {
     $("#ProductForm").removeClass("was-validated");
     $("#ProductList").addClass("d-none");
+    $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").removeClass("d-none");
 }
 
 function MoveToCanvas() {
     $("#ProductList").addClass("d-none");
+    $("#ProductContent").addClass("d-none");
     $("#ProductCanvas").removeClass("d-none");
 }
 
 function BackToList() {
     $("#ProductList").removeClass("d-none");
+    $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");
     window.location.hash = ""
 }

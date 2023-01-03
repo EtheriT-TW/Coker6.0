@@ -9,6 +9,8 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using EtheriT.Coker.Application.Tag;
+using EtheriT.Coker.Application.Shared.Tag;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -16,13 +18,16 @@ namespace EtheriT.Coker.Application.Product
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly ITagAppService tagAppService;
         public ProductAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            ITagAppService tagAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.tagAppService = tagAppService;
         }
         /* Add & Update */
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
@@ -635,6 +640,8 @@ namespace EtheriT.Coker.Application.Product
                             pst.DeleterUserId = usetId;
                         }
                     }
+
+                    await tagAppService.TagAssociateDelete(Id);
 
                     db.SaveChanges();
 

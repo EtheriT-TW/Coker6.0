@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -24,7 +25,7 @@ namespace EtheriT.Coker.Application.Tag
             this.db = db;
             this.loginUserData = loginUserData;
         }
-        public async Task<ResponseMessageDto> AddUp(DevExpressDto dto)
+        public async Task<ResponseMessageDto> TagAddUp(DevExpressDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             var data = JsonConvert.DeserializeObject<TagGetAllListDto>(dto.Values);
@@ -54,6 +55,44 @@ namespace EtheriT.Coker.Application.Tag
                         db_t.LastModifierUserId = usetId;
                         db_t.LastModificationTime = DateTime.Now;
                         db.SaveChanges();
+                    }
+                }
+
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> TagAssociateAddDelect(List<TagAssociateDto> dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                foreach (var item in dto)
+                {
+                    if (item.Id == 0 && item.IsChecked)
+                    {
+                        long usetId = await loginUserData.GetUserId();
+
+                        Core.Models.Tag_Associate ta = new Core.Models.Tag_Associate
+                        {
+                            FK_TId = item.FK_TId,
+                            FK_AId = item.FK_AId,
+                            Type = item.Type,
+                            CreatorUserId = usetId,
+                        };
+                        db.Tag_Associates.Add(ta);
+                        db.SaveChanges();
+                    }
+                    else if (item.Id != null && item.Id != 0 && !item.IsChecked)
+                    {
+                        await this.TagAssociateDelete((long)item.Id);
                     }
                 }
 
@@ -115,7 +154,7 @@ namespace EtheriT.Coker.Application.Tag
 
             return null;
         }
-        public async Task<ResponseMessageDto> Delete(long Id)
+        public async Task<ResponseMessageDto> TagDelete(long Id)
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -131,6 +170,36 @@ namespace EtheriT.Coker.Application.Tag
                     db_t.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> TagAssociateDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_ta = await db.Tag_Associates.Where(e => e.FK_AId == Id).ToListAsync();
+
+                if (db_ta != null)
+                {
+                    foreach (var item in db_ta)
+                    {
+                        item.IsDeleted = true;
+                        item.DeletionTime = DateTime.Now;
+                        item.DeleterUserId = usetId;
+                        db.SaveChanges();
+                        output.Success = true;
+                    }
                 }
             }
             catch (Exception e)

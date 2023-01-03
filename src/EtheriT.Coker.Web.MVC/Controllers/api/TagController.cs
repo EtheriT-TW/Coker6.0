@@ -23,9 +23,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<ResponseMessageDto> AddUp([FromForm] DevExpressDto dto)
+        public async Task<ResponseMessageDto> TagAddUp([FromForm] DevExpressDto dto)
         {
-            return await tagAppService.AddUp(dto);
+            return await tagAppService.TagAddUp(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> TagAssociateAddDelect(List<TagAssociateDto> dto)
+        {
+            return await tagAppService.TagAssociateAddDelect(dto);
         }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -38,9 +43,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await tagAppService.GetProductDataAll(PId);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> Delete(long Id)
+        public async Task<ResponseMessageDto> TagDelete(long Id)
         {
-            return await tagAppService.Delete(Id);
+            return await tagAppService.TagDelete(Id);
         }
     }
 }

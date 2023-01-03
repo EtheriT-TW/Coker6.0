@@ -129,16 +129,16 @@ function PageReady() {
     };
 
     co.Tag = {
-        //AddUp: function (data) {
-        //    return $.ajax({
-        //        url: "/api/Product/ProductAddUp",
-        //        type: "POST",
-        //        contentType: 'application/json; charset=utf-8',
-        //        headers: _c.Data.Header,
-        //        data: JSON.stringify(data),
-        //        dataType: "json"
-        //    });
-        //},
+        AddDelect: function (data) {
+            return $.ajax({
+                url: "/api/Tag/TagAssociateAddDelect",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         Get: function (id) {
             return $.ajax({
                 url: "/api/Tag/GetProductDataAll/",
@@ -147,16 +147,7 @@ function PageReady() {
                 headers: _c.Data.Header,
                 data: { PId: id },
             });
-        },
-        //Delete: function (id) {
-        //    return $.ajax({
-        //        url: "/api/Product/StockDelete/",
-        //        type: "GET",
-        //        contentType: 'application/json; charset=utf-8',
-        //        headers: _c.Data.Header,
-        //        data: { Id: id },
-        //    });
-        //}
+        }
     };
 
     ElementInit();
@@ -303,7 +294,7 @@ function PageReady() {
     $(".btn_tag_save").on("click", function () {
         if (tag_check_list.length > 0) {
             tag_list.forEach(function (item) {
-                var index = tag_check_list.indexOf(item.FK_TCId)
+                var index = tag_check_list.indexOf(item.FK_TId)
                 if (index > -1) {
                     item.Checked = true;
                     tag_check_list.splice(index, 1)
@@ -315,7 +306,7 @@ function PageReady() {
                 tag_check_list.forEach(function (item) {
                     var obj = {};
                     obj["Id"] = 0;
-                    obj["FK_TCId"] = item;
+                    obj["FK_TId"] = item;
                     obj["Checked"] = true;
                     tag_list.push(obj);
                 })
@@ -381,15 +372,14 @@ function ElementInit() {
     tagModal = new bootstrap.Modal(document.getElementById('TagModal'))
     $("#TagModal").on("hidden.bs.modal", function () {
         var temp_list = [];
-        techcert_list.forEach(function (item) {
+        tag_list.forEach(function (item) {
             if (item.Checked) {
-                temp_list.push(item.FK_TCId);
+                temp_list.push(item.FK_TId);
             }
         })
         getTagListDataGridInstance().selectRows(temp_list);
     })
 
-    $techcert_body = $("#TechCertModal > .modal-dialog > .modal-content > .modal-body");
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
     document.getElementById('PriceModal').addEventListener('hidden.bs.modal', function (event) {
@@ -513,11 +503,7 @@ function FormDataClear() {
     spec_remove_list = [];
 
     techcert_list = []
-    $techcert_body.children("div[class=form-check]").each(function () {
-        var $input = $(this).children("input");
-        $input.prop("checked", false);
-        $input.data("ptcid", 0);
-    })
+    tag_list = []
     modal_price_list = []
     price_tid = 0;
     temp_psid = 0;
@@ -618,8 +604,8 @@ function FormDataSet(result) {
     $illustrate.val(result.description);
     $illustrate_count.text($illustrate.val().length);
 
-    var text = ""
     co.Product.Get.ProdTechCert(result.id).done(function (result) {
+        var text = ""
         if (result != null && result.length > 0) {
             var temp_list = [];
             result.forEach(function (item) {
@@ -638,24 +624,21 @@ function FormDataSet(result) {
         $marks.val(text == "" ? "無" : text);
     })
 
-    text = ""
     co.Tag.Get(result.id).done(function (result) {
-        console.log(result)
-        //if (result != null && result.length > 0) {
-        //    var temp_list = [];
-        //    result.forEach(function (item) {
-        //        var obj = {};
-        //        obj["Id"] = item.id;
-        //        obj["FK_TCId"] = item.fK_TCId;
-        //        obj["Checked"] = item.isChecked;
-        //        if (item.isChecked) {
-        //            temp_list.push(item.fK_TCId);
-        //            text = text == "" ? item.title : text + "、" + item.title;
-        //        }
-        //        tag_list.push(obj)
-        //    })
-        //    getTagListDataGridInstance().selectRows(temp_list);
-        //}
+        var text = ""
+        if (result != null && result.length > 0) {
+            var temp_list = [];
+            result.forEach(function (item) {
+                var obj = {};
+                obj["Id"] = item.id;
+                obj["FK_TId"] = item.fK_TId;
+                obj["Checked"] = true;
+                temp_list.push(item.fK_TId);
+                text = text == "" ? item.title : text + "、" + item.title;
+                tag_list.push(obj)
+            })
+            getTagListDataGridInstance().selectRows(temp_list);
+        }
         $tag.val(text == "" ? "無" : text);
     })
 
@@ -1008,87 +991,109 @@ function AddUp(success_text, error_text, target) {
         if (result.success) {
             keyId = result.message == null ? keyId : result.message;
 
-            var stock_addup_list = []
-            $("#Spec_Frame > .frame").each(function () {
-                var $self = $(this);
-
-                var obj = {};
-                var fk_sid = [];
-                $self.find(".input_spec").each(function () {
-                    var id = -1;
-                    $self_input = $(this);
-                    $self_input.siblings("datalist").children("option").each(function () {
-                        var $option = $(this);
-                        if ($option.val() == $self_input.val()) {
-                            id = $option.data("sid");
-                        }
-                    })
-                    fk_sid.push(id > -1 ? id : 0)
+            var techcert_addup_list = [];
+            if (techcert_list != null) {
+                techcert_list.forEach(function (item) {
+                    var obj = {};
+                    obj["Id"] = item.Id;
+                    obj["FK_PId"] = keyId;
+                    obj["FK_TCId"] = item.FK_TCId;
+                    obj["IsChecked"] = item.Checked;
+                    techcert_addup_list.push(obj);
                 })
-
-                obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
-                obj["Pid"] = keyId;
-                obj["FK_S1id"] = fk_sid[0];
-                obj["FK_S2id"] = fk_sid[1];
-                obj["Stock"] = $self.find(".input_stock_number").val();
-                obj["Min_Qty"] = $self.find(".input_min_number").val();
-                obj["Alert_Qty"] = $self.find(".input_alert_number").val();
-
-                stock_addup_list.push(obj);
-            })
-
-            co.Product.AddUp.Stock(stock_addup_list).done(function (result) {
+            }
+            co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
                 if (result.success) {
-                    var new_index = result.message.split(",");
-                    var price_addup_list = [];
-                    modal_price_list.forEach(function (item) {
-                        if (!item.IsDelete) {
+                    var tag_adddelect_list = [];
+                    if (tag_list != null) {
+                        tag_list.forEach(function (item) {
                             var obj = {};
                             obj["Id"] = item.Id;
-                            if (item.PSid != null) {
-                                obj["FK_PSId"] = item.PSid;
-                            } else {
-                                obj["FK_PSId"] = new_index[item.TempPSid - 1];
-                            }
-                            obj["FK_RId"] = item.Rid;
-                            obj["Price"] = item.Price;
-                            obj["Bonus"] = item.Bonus;
-                            price_addup_list.push(obj)
-                        } else {
-                            if (item.PSid != null && item.Id != null) {
-                                co.Product.Delete.Price(item.Id);
-                            }
-                        }
-                    })
-
-                    co.Product.AddUp.ProdPrice(price_addup_list).done(function () {
+                            obj["FK_TId"] = item.FK_TId;
+                            obj["FK_AId"] = keyId;
+                            obj["IsChecked"] = item.Checked;
+                            obj["Type"] = 1;
+                            tag_adddelect_list.push(obj);
+                        })
+                    }
+                    co.Tag.AddDelect(tag_adddelect_list).done(function (result) {
                         if (result.success) {
-                            var techcert_addup_list = [];
-                            if (techcert_list != null) {
-                                techcert_list.forEach(function (item) {
-                                    var obj = {};
-                                    obj["Id"] = item.Id;
-                                    obj["FK_PId"] = keyId;
-                                    obj["FK_TCId"] = item.FK_TCId;
-                                    obj["IsChecked"] = item.Checked;
-                                    techcert_addup_list.push(obj);
+                            var stock_addup_list = []
+                            $("#Spec_Frame > .frame").each(function () {
+                                var $self = $(this);
+
+                                var obj = {};
+                                var fk_sid = [];
+                                $self.find(".input_spec").each(function () {
+                                    var id = -1;
+                                    $self_input = $(this);
+                                    $self_input.siblings("datalist").children("option").each(function () {
+                                        var $option = $(this);
+                                        if ($option.val() == $self_input.val()) {
+                                            id = $option.data("sid");
+                                        }
+                                    })
+                                    fk_sid.push(id > -1 ? id : 0)
                                 })
-                            }
-                            co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
+
+                                obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
+                                obj["Pid"] = keyId;
+                                obj["FK_S1id"] = fk_sid[0];
+                                obj["FK_S2id"] = fk_sid[1];
+                                obj["Stock"] = $self.find(".input_stock_number").val();
+                                obj["Min_Qty"] = $self.find(".input_min_number").val();
+                                obj["Alert_Qty"] = $self.find(".input_alert_number").val();
+
+                                stock_addup_list.push(obj);
+                            })
+
+                            co.Product.AddUp.Stock(stock_addup_list).done(function (result) {
                                 if (result.success) {
-                                    if (target == "List") {
-                                        Coker.sweet.success(success_text, null, true);
-                                        setTimeout(function () {
-                                            BackToList();
-                                            product_list.component.refresh();
-                                        }, 1000);
-                                    } else if (target == "Canvas") {
-                                        Coker.sweet.success(success_text, null, true);
-                                        setTimeout(function () {
-                                            var hash = window.location.hash.replace("#", "") + "-1";
-                                            window.location.hash = hash;
-                                        }, 1000);
-                                    }
+                                    console.log(result)
+                                    var new_index = result.message.split(",");
+                                    var price_addup_list = [];
+                                    modal_price_list.forEach(function (item) {
+                                        console.log(item)
+                                        if (!item.IsDelete) {
+                                            var obj = {};
+                                            obj["Id"] = item.Id;
+                                            if (item.PSid != null && item.PSid != "") {
+                                                obj["FK_PSId"] = item.PSid;
+                                            } else {
+                                                obj["FK_PSId"] = new_index[item.TempPSid - 1];
+                                            }
+                                            obj["FK_RId"] = item.Rid;
+                                            obj["Price"] = item.Price;
+                                            obj["Bonus"] = item.Bonus;
+                                            price_addup_list.push(obj)
+                                        } else {
+                                            if (item.PSid != null && item.Id != null) {
+                                                co.Product.Delete.Price(item.Id);
+                                            }
+                                        }
+                                    })
+
+                                    co.Product.AddUp.ProdPrice(price_addup_list).done(function () {
+                                        if (result.success) {
+                                            if (target == "List") {
+                                                Coker.sweet.success(success_text, null, true);
+                                                setTimeout(function () {
+                                                    BackToList();
+                                                    product_list.component.refresh();
+                                                }, 1000);
+                                            } else if (target == "Canvas") {
+                                                Coker.sweet.success(success_text, null, true);
+                                                setTimeout(function () {
+                                                    var hash = window.location.hash.replace("#", "") + "-1";
+                                                    window.location.hash = hash;
+                                                }, 1000);
+                                            }
+                                        } else {
+                                            Coker.sweet.error("錯誤", error_text, null, true);
+                                        }
+                                    }).fail(function () {
+                                        Coker.sweet.error("錯誤", error_text, null, true);
+                                    })
                                 } else {
                                     Coker.sweet.error("錯誤", error_text, null, true);
                                 }

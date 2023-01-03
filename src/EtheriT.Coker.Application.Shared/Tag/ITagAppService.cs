@@ -9,9 +9,11 @@ namespace EtheriT.Coker.Application.Shared.Tag
     public interface ITagAppService
     {
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<ResponseMessageDto> AddUp(DevExpressDto dto);
+        public Task<ResponseMessageDto> TagAddUp(DevExpressDto dto);
+        public Task<ResponseMessageDto> TagAssociateAddDelect(List<TagAssociateDto> dto);
         public Task<List<TagGetAllDataDto>> GetProductDataAll(long PId);
-        public Task<ResponseMessageDto> Delete(long Id);
+        public Task<ResponseMessageDto> TagDelete(long Id);
+        public Task<ResponseMessageDto> TagAssociateDelete(long Id);
 
     }
 }

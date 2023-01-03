@@ -2,7 +2,7 @@
     co.Tag = {
         Delete: function (id) {
             return $.ajax({
-                url: "/api/Tag/Delete/",
+                url: "/api/Tag/TagDelete/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,

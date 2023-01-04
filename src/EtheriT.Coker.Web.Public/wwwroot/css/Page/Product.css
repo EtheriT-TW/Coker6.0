@@ -157,7 +157,7 @@ input[type="number"] {
 /* Catalog */
 #Catalog {
     font-family: sans-serif;
-    background-image: url("/images/probook_bg.jpg");
+    background-image: url("/upload/probook_bg.jpg");
     background-size: cover;
     background-position: center;
 }

@@ -86,7 +86,7 @@
 /* Favorite */
 #Favorite > .title {
     height: 200px;
-    background-image: url(../../images/favorite_bg.png);
+    background-image: url(/upload/favorite_bg.png);
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -178,7 +178,7 @@
 
 /* Tiles */
 #Tiles {
-    background-image: url("../../images/tiles_bg.jpg");
+    background-image: url("/upload/tiles_bg.jpg");
 }
 
 /* News */
@@ -284,7 +284,7 @@
 }
 
     #Reserve > figcaption {
-        background-image: url("../../images/reserve_bg.jpg");
+        background-image: url("/upload/reserve_bg.jpg");
         background-size: auto 300px;
         background-position: center;
         transition: all 0.5s;

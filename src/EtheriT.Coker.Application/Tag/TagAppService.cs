@@ -180,7 +180,7 @@ namespace EtheriT.Coker.Application.Tag
 
             return output;
         }
-        public async Task<ResponseMessageDto> TagAssociateDelete(long Id)
+        public async Task<ResponseMessageDto> TagAssociateDelete(long AId)
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -188,7 +188,7 @@ namespace EtheriT.Coker.Application.Tag
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var db_ta = await db.Tag_Associates.Where(e => e.FK_AId == Id).ToListAsync();
+                var db_ta = await db.Tag_Associates.Where(e => e.FK_AId == AId).ToListAsync();
 
                 if (db_ta != null)
                 {

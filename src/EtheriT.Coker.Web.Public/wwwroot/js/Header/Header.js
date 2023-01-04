@@ -89,7 +89,7 @@ function CartDropAdd(result) {
 
     item.data("scid", result.scId);
     item_link.attr("href", "/Toilet/" + result.pId);
-    item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
+    item_image.attr("src", "../upload/product/pro_0" + result.pId + ".png");
     item_name.text(result.title);
     item_spec.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
     item_spec.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')

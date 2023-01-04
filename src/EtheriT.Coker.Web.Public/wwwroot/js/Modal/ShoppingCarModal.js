@@ -67,7 +67,7 @@ function DataClear() {
 
 function ModalDefaultSet() {
     Product.GetOne.Prod($modal.data("pid")).done(function (result) {
-        $pro_image.attr("src", "../images/product/pro_0" + result.id + ".png");
+        $pro_image.attr("src", "../upload/product/pro_0" + result.id + ".png");
         $pro_name.text(result.title);
         $pro_introduction.append("<div>．" + result.introduction.toString().replaceAll("\n", "<br />．") + "</div>")
     });

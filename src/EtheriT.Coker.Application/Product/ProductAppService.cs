@@ -530,7 +530,7 @@ namespace EtheriT.Coker.Application.Product
                         Introduction = db_p.Introduction,
                         Description = db_p.Description,
                         Link = "/Toilet/" + db_p.Id,
-                        Image = "/images/product/pro_0" + db_p.Id + ".png",
+                        Image = "/upload/product/pro_0" + db_p.Id + ".png",
                         Price = db_ps.Price.ToString(),
                     };
                     return output;
@@ -561,7 +561,7 @@ namespace EtheriT.Coker.Application.Product
                                         Introduction = r.Key.Introduction,
                                         Description = r.Key.Description,
                                         Link = "/Toilet/" + r.Key.Id,
-                                        Image = "/images/product/pro_0" + r.Key.Id + ".png",
+                                        Image = "/upload/product/pro_0" + r.Key.Id + ".png",
                                         Price = r.Min(e => e.Price) == r.Max(e => e.Price) ? r.Min(e => e.Price).ToString() : r.Min(e => e.Price) + " ~ " + r.Max(e => e.Price),
                                     }).Take(num).ToArrayAsync();
 
@@ -712,6 +712,35 @@ namespace EtheriT.Coker.Application.Product
             {
                 output.Success = false;
                 output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> TechCertDelete(long PSId)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_pp = await db.Prod_Prices.Where(e => e.FK_PSId == PSId).ToListAsync();
+
+                foreach (var item in db_pp)
+                {
+                    item.IsDeleted = true;
+                    item.DeletionTime = DateTime.Now;
+                    item.DeleterUserId = usetId;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+                if (db_pp != null)
+                {
+                }
+            }
+            catch
+            {
+
             }
 
             return output;

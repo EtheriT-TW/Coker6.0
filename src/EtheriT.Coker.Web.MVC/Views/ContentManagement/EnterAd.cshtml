@@ -23,6 +23,7 @@
 					.DataSource(d => d.RemoteController().Key("Id")
 					.LoadUrl("/api/HtmlContent/GetEnterAdAllList").LoadMethod("Get")
 					)
+					.ID("TagGrid")
 					.RemoteOperations(true)
 					.ColumnHidingEnabled(true)
 					.ShowBorders(true)

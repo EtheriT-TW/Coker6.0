@@ -10,7 +10,9 @@ using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.ShoppingCart;
+using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
@@ -48,6 +50,7 @@ builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
+builder.Services.AddTransient<ITagAppService, TagAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -61,7 +64,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseVirtualDirectory("images", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

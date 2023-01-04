@@ -32,4 +32,6 @@
     <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>

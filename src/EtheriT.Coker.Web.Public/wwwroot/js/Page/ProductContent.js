@@ -246,13 +246,13 @@ function PageDefaultSet() {
         var slide = $($("#TemplateImageSlide").html()).clone();
         var slide_image = slide.find(".pro_display");
         slide.data("pid", Pid);
-        slide_image.attr("src", "/images/product/pro_0" + Pid + ".png")
+        slide_image.attr("src", "/upload/product/pro_0" + Pid + ".png")
         $product_swiper.append(slide);
 
         var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
         var pre_slide_image = pre_slide.find("img");
         pre_slide.data("pid", Pid);
-        pre_slide_image.attr("src", "/images/product/pro_0" + Pid + ".png")
+        pre_slide_image.attr("src", "/upload/product/pro_0" + Pid + ".png")
         $preview_swiper.append(pre_slide);
     }
 }

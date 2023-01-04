@@ -51,7 +51,8 @@ var grapesInit = function (options) {
         canvas: {
             styles: [
                 '/lib/bootstrap/dist/css/bootstrap.min.css',
-                '/lib/swiper/swiper-bundle.min.css'
+                '/lib/swiper/swiper-bundle.min.css',
+                '/css/Grapes/GrapesCss.min.css'
             ],
             scripts: [
                 '/lib/bootstrap/dist/js/bootstrap.bundle.min.js',
@@ -143,7 +144,6 @@ var grapesInit = function (options) {
             css: blockCss
         }
         co.HtmlContent.AddUp(object).done(function (result) {
-            console.log(result);
             if (result.success) {
                 appendBlock(blockId, {
                     category: category,
@@ -221,7 +221,7 @@ var grapesInit = function (options) {
         const l = actionBlockId.split("_");
         const id = l[l.length - 1];
         console.log(id);
-        co.HtmlContent.Delete({ id: id }).done(function (result) {
+        co.HtmlContent.Delete(id).done(function (result) {
             if (result.success) {
                 BlockManager.remove(actionBlockId);
                 co.sweet.success("成功", null, true);
@@ -324,7 +324,7 @@ var grapesInit = function (options) {
 
     settings.getComponer().done(function (result) {
         $(result).each(function () {
-            const html = $("<div/>").html(this.html).text();
+            const html = co.Data.HtmlDecode(this.html);
             const elementHtmlCss = `${html}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
             appendBlock(blockId, {

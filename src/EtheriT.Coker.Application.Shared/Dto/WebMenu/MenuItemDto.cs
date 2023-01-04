@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Dto
         public string? Title { get; set; }
         public string? text { get { return Title; } }
         public string RouterName { get; set; }
+        public int PageType { get; set; }
         public string? Description { get; set; }
         public string? icon { get; set; }
         public bool Visible { get; set; }

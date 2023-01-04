@@ -1403,7 +1403,7 @@ function MenuEditor(idSelector, options) {
             $main.append($li);
             MenuEditor.updateButtons($main);
             resetForm();
-            //!!settings.on.add && settings.on.add($li);
+            !!settings.on.add && settings.on.add($li);
         }
     };
 
@@ -1447,6 +1447,7 @@ function MenuEditor(idSelector, options) {
         $(e.Add).click(self.add);
         $(e.Refresh).click(self.refresh);
     }
+    !!settings.on.ready && settings.on.ready();
 };
 /* STATIC METHOD */
 /**

@@ -44,10 +44,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await htmlContentAppService.GetOne(id);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> Delete(long Id)
+        [HttpDelete]
+        public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
         {
-            return await htmlContentAppService.Delete(Id);
+            return await htmlContentAppService.Delete(dto.Id);
         }
         [HttpGet]
         public async Task<HtmlContentTypeDto> GetTypeList()

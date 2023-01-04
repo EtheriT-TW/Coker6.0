@@ -28,6 +28,8 @@ using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Tag;
+using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -116,7 +118,7 @@ builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+builder.Services.Configure<FileAllow>(builder.Configuration.GetSection("FileAllow"));
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 

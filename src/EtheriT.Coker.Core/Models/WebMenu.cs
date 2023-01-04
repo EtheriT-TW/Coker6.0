@@ -34,6 +34,7 @@ namespace EtheriT.Coker.Core.Models
         public string? Html { get; set; }
         [MaxLength]
         public string? Css { get; set; }
+        public int PageType { get; set; }
         [StringLength(50)]
         public string RouterName { get; set; }
         public long? FK_TopNodeId { get; set; }

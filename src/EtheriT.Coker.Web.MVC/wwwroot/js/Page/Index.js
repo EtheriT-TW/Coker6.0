@@ -51,6 +51,24 @@
                 Refresh: '#btnRefresh',
             },
             on: {
+                ready: function () {
+                    co.WebMesnus.GetPageTypeList().done(function (result) {
+                        if (result.success) {
+                            const $s = $("#PageType");
+                            $(result.type).each(function () {
+                                $s.append(`<option value="${this.value}">${this.key}</option>`);
+                            });
+                            $s.on("change", function () {
+                                const $self = $(this);
+                                if ($self.val() == 2) {
+                                    $("#RouterNameBlock").addClass("d-none").val("Home");
+                                } else {
+                                    $("#RouterNameBlock").removeClass("d-none").val("");
+                                }
+                            })
+                        }
+                    });
+                },
                 edit: function () {
                     openEditForm();
                     $("#btnUpdate").removeClass("d-none");
@@ -120,6 +138,7 @@
                     
                     ul.children("li").each(function (index, element) {
                         var s = $(element).data("serNO");
+                        console.log(s,index+1, element);
                         if (s != (index + 1)) {
                             /*console.log(element, s, (index + 1));*/
                             s = index + 1;

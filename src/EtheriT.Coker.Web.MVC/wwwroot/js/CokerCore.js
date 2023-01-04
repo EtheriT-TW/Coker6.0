@@ -236,12 +236,13 @@ var Coker = {
             });
         },
         Delete: function (id) {
+            const myId = parseInt(id);
             return $.ajax({
                 url: "/api/HtmlContent/Delete",
-                type: "GET",
+                type: "Delete",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: { Id: id },
+                data: JSON.stringify({ Id: myId }),
             });
         },
         GetTypeList: function () {
@@ -342,7 +343,16 @@ var Coker = {
                 data: JSON.stringify({ list: list }),
                 dataType: "json"
             });
-        }
+        },
+        GetPageTypeList: function () {
+            return $.ajax({
+                url: "/api/WebMenu/GetPageTypeList",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
     }
 }
 var _c = Coker;

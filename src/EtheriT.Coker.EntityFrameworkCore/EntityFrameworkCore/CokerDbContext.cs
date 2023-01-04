@@ -44,6 +44,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Tag_Associate> Tag_Associates { get; set; }
         public DbSet<Tag_Group> Tag_Groups { get; set; }
         public DbSet<Tag_TagGroup> Tag_TagGroups { get; set; }
+        public DbSet<FileUpload> FileUploads { get; set; }
+        
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options)
             : base(options)
@@ -145,6 +147,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Tag).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TId);
                 o.HasOne(u => u.Tag_Group).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TGId);
+            });
+            modelBuilder.Entity<FileUpload>(o => {
+                o.HasOne(f => f.Website).WithMany(u => u.Files).HasForeignKey(f => f.FK_WebsiteId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

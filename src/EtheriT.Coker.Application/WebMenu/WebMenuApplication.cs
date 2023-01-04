@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
@@ -208,17 +211,37 @@ namespace EtheriT.Coker.Application
             try {
                 var o = (from s in dto.list select s.Id).ToList();
                 var result = db.WebMenus.Where(e => o.Contains(e.Id));
-                await result.ForEachAsync(e => {
-                    var item = dto.list.Find( o => o.Id == e.Id);
-                    mapper.Map(item, e);
-                });
-                await loginUserData.SaveChanges(result);
+                foreach (var e in dto.list) {
+                    var item = await result.Where(m => m.Id == e.Id).FirstOrDefaultAsync();
+                    if (item != null)
+                    {
+                        mapper.Map(e, item);
+                        await loginUserData.SaveChanges(item);
+                    }
+                }
             }
             catch (Exception ex) {
                 response.Success = false;
                 response.Error = ex.ToString();
             }
-            
+            await loginUserData.SetLogs(ApplicationName, "updateSerNo", JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<PageTypeDto> GetPageTypeList() {
+            PageTypeDto response = new PageTypeDto { Success = true };
+            try
+            {
+                response.Type = Enum.GetValues(typeof(PageTypeEnum))
+                .Cast<PageTypeEnum>().Select(e =>
+                {
+                    return new EnumDictionaryDto { Key = e.ToString(), Value = (int)e };
+                }).ToList();
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Error = e.Message;
+            }
             return response;
         }
     }

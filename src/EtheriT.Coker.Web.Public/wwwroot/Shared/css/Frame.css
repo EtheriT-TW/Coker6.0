@@ -1,0 +1,37 @@
+﻿li {
+    list-style: none;
+}
+
+.masonry > .grid > .grid-item {
+    float: left;
+    width: calc(100%/3);
+    height: auto;
+}
+
+.two_three_block > .two {
+    width: 40%;
+}
+
+.two_three_block > .three {
+    width: 60%;
+}
+
+@media only screen and (max-width: 768px) {
+    .masonry > .grid > .grid-item {
+        width: calc(100%/2);
+    }
+}
+
+@media only screen and (max-width: 576px) {
+    .masonry > .grid > .grid-item {
+        width: 100%;
+    }
+
+    .two_three_block > .two {
+        width: 100%;
+    }
+
+    .two_three_block > .three {
+        width: 100%;
+    }
+}

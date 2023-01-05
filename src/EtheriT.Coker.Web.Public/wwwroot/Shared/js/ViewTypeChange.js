@@ -2,9 +2,9 @@
     $(".frame").each(function () {
         var $self = $(this)
         if ($self.data("action") == "TypeChange") {
-            var $btn_grid = $self.find(".btn_grid");
-            var $btn_list = $self.find(".btn_list");
-            var $content = $self.find(".row").first();
+            const $btn_grid = $self.find(".btn_grid");
+            const $btn_list = $self.find(".btn_list");
+            const $content = $self.find(".row").first();
 
             $btn_grid.on("click", function () {
                 if (!$btn_grid.data("activate")) {

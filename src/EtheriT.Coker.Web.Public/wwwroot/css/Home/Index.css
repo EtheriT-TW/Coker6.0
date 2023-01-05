@@ -304,6 +304,7 @@
         transition: all 0.5s;
     }
 
+
 /*RWD*/
 @media (max-width: 1366px) {
     .template_full_swiper > figcaption > h3 {

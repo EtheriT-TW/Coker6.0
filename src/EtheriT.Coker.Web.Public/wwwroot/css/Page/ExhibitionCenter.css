@@ -1,5 +1,5 @@
 ﻿
-.grid-item {
+.masonry > .grid > .grid-item {
     float: left;
     width: calc(100%/3);
     height: auto;
@@ -8,23 +8,27 @@
     border-radius: 15px;
 }
 
-    .grid-item > .content {
+    .masonry > .grid > .grid-item > .content {
         border: 1px solid var(--gray-icon);
         border-radius: 15px;
         cursor: pointer;
     }
 
-        .grid-item > .content > div > img {
-            transform: scale(1);
-            filter: saturate(100%);
-            transition: all 0.5s;
-        }
+.hover_inside_scale {
+    overflow: hidden;
+}
 
-        .grid-item > .content:hover > div > img {
-            transform: scale(1.05);
-            filter: saturate(150%);
-            transition: all 0.5s;
-        }
+    .hover_inside_scale > img {
+        transform: scale(1);
+        filter: saturate(100%);
+        transition: 0.5s all;
+    }
+
+    .hover_inside_scale:hover > img {
+        transform: scale(1.25);
+        filter: saturate(200%);
+        transition: 0.5s all;
+    }
 
 .update_time::before {
     content: "\66f4\65b0\65e5\671f："
@@ -32,13 +36,13 @@
 
 /*RWD*/
 @media only screen and (max-width: 768px) {
-    .grid-item {
+    .masonry > .grid > .grid-item {
         width: calc(100%/2);
     }
 }
 
 @media only screen and (max-width: 576px) {
-    .grid-item {
+    .masonry > .grid > .grid-item {
         width: 100%;
     }
 }

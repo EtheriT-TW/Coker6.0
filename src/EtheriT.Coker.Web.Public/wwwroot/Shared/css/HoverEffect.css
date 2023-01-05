@@ -1,34 +1,34 @@
-﻿div[class*="hover_inside_scale"] {
+﻿.hover_inside_scale {
     overflow: hidden;
 }
 
-.hover_inside_scale > img {
-    transform: scale(1);
-    filter: saturate(100%);
-    transition: 0.5s all;
-}
+    .hover_inside_scale > img {
+        transform: scale(1);
+        filter: saturate(100%);
+        transition: 0.5s all;
+    }
 
-.hover_inside_scale:hover > img {
-    transform: scale(1.25);
-    filter: saturate(200%);
-    transition: 0.5s all;
-}
+    .hover_inside_scale:hover > img {
+        transform: scale(1.25);
+        filter: saturate(200%);
+        transition: 0.5s all;
+    }
 
-div[class*="hover_inside_scale"] {
+.hover_inside_scale {
     overflow: hidden;
 }
 
-.hover_inside_scale > .hoverbody {
-    transform: scale(1);
-    filter: saturate(100%);
-    transition: 0.5s all;
-}
+    .hover_inside_scale > .hoverbody {
+        transform: scale(1);
+        filter: saturate(100%);
+        transition: 0.5s all;
+    }
 
-.hover_inside_scale:hover > .hoverbody {
-    transform: scale(1.25);
-    filter: saturate(200%);
-    transition: 0.5s all;
-}
+    .hover_inside_scale:hover > .hoverbody {
+        transform: scale(1.25);
+        filter: saturate(200%);
+        transition: 0.5s all;
+    }
 
 
 .hover_protrude_scale {

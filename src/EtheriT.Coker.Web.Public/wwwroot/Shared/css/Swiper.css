@@ -1,0 +1,59 @@
+﻿[class*="swiper_button"] {
+    width: fit-content;
+    z-index: 1;
+}
+
+.swiper_btn_circle {
+    width: 3.75rem;
+    height: 3.75rem;
+}
+
+.swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_prev > .swiper_btn_circle_hide_left {
+    transform: scale(1);
+    transform-origin: left;
+    transition: all 1s;
+}
+
+.swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_next > .swiper_btn_circle_hide_right {
+    transform: scale(1);
+    transform-origin: right;
+    transition: all 1s;
+}
+
+.swiper_btn_circle_hide_left {
+    transform: scale(0);
+    transform-origin: left;
+    transition: all 1s;
+    width: 3.75rem;
+    height: 3.75rem;
+}
+
+.swiper_btn_circle_hide_right {
+    transform: scale(0);
+    transform-origin: right;
+    transition: all 1s;
+    width: 3.75rem;
+    height: 3.75rem;
+}
+
+@media only screen and (max-width: 576px) {
+    .swiper_pagination_line > .swiper-pagination-bullet {
+        width: 2rem;
+    }
+
+    .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_prev > .swiper_btn_circle_hide_left {
+        transform: scale(1);
+    }
+
+    .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_next > .swiper_btn_circle_hide_right {
+        transform: scale(1);
+    }
+
+    .swiper_btn_circle_hide_left {
+        transform: scale(1);
+    }
+
+    .swiper_btn_circle_hide_right {
+        transform: scale(1);
+    }
+}

@@ -8,20 +8,19 @@
 * ========================================================================
 */
 
-;(function($){ "use strict";
+; (function ($) {
+    "use strict";
 
     // ICONPICKER PUBLIC CLASS DEFINITION
     // ==============================
     var Iconpicker = function (element, options) {
-
         if (typeof bootstrap.Popover === 'undefined') {
-        throw new TypeError('Bootstrap iconpicker require Bootstrap popover');
-      }
+            throw new TypeError('Bootstrap iconpicker require Bootstrap popover');
+        }
 
-      this.$element = $(element);
-      this.options  = $.extend({}, Iconpicker.DEFAULTS, this.$element.data());
-      this.options  = $.extend({}, this.options, options);
-
+        this.$element = $(element);
+        this.options = $.extend({}, Iconpicker.DEFAULTS, this.$element.data());
+        this.options = $.extend({}, this.options, options);
     };
 
     // ICONPICKER VERSION
@@ -44,13 +43,15 @@
         flagicon: $.iconset_flagicon || Iconpicker.ICONSET_EMPTY,
         fontawesome4: $.iconset_fontawesome_4 || Iconpicker.ICONSET_EMPTY,
         fontawesome5: $.iconset_fontawesome_5 || Iconpicker.ICONSET_EMPTY,
+        fontawesome6: $.iconset_fontawesome_6 || Iconpicker.ICONSET_EMPTY,
         glyphicon: $.iconset_glyphicon || Iconpicker.ICONSET_EMPTY,
         ionicon: $.iconset_ionicon || Iconpicker.ICONSET_EMPTY,
         mapicon: $.iconset_mapicon || Iconpicker.ICONSET_EMPTY,
         materialdesign: $.iconset_materialdesign || Iconpicker.ICONSET_EMPTY,
         octicon: $.iconset_octicon || Iconpicker.ICONSET_EMPTY,
         typicon: $.iconset_typicon || Iconpicker.ICONSET_EMPTY,
-        weathericon: $.iconset_weathericon || Iconpicker.ICONSET_EMPTY
+        weathericon: $.iconset_weathericon || Iconpicker.ICONSET_EMPTY,
+        GoogleMaterialSymbolsOutlined: $.iconset_GoogleMaterialSymbolsOutlined || Iconpicker.ICONSET_EMPTY
     };
 
     // ICONPICKER DEFAULTS
@@ -62,7 +63,7 @@
         arrowPrevIconClass: 'fas fa-arrow-left',
         cols: 4,
         icon: '',
-        iconset: 'fontawesome5',
+        iconset: 'fontawesome6',
         iconsetVersion: 'lastest',
         header: true,
         labelHeader: '{0} / {1}',
@@ -81,25 +82,25 @@
     Iconpicker.prototype.bindEvents = function () {
         var op = this.options;
         var el = this;
-        op.table.find('.btn-previous, .btn-next').off('click').on('click', function(e) {
+        op.table.find('.btn-previous, .btn-next').off('click').on('click', function (e) {
             e.preventDefault();
-            if(!$(this).hasClass('disabled')){
+            if (!$(this).hasClass('disabled')) {
                 var inc = parseInt($(this).val(), 10);
                 el.changeList(op.page + inc);
             }
         });
-        op.table.find('.btn-icon').off('click').on('click', function(e) {
+        op.table.find('.btn-icon').off('click').on('click', function (e) {
             e.preventDefault();
             el.select($(this).val());
             if (op.inline === false) {
                 var popover = bootstrap.Popover.getInstance(el.$element);
                 popover.dispose();
             }
-            else{
+            else {
                 op.table.find("i[class$='" + $(this).val() + "']").parent().addClass(op.selectedClass);
             }
         });
-        op.table.find('.search-control').off('keyup').on('keyup', function() {
+        op.table.find('.search-control').off('keyup').on('keyup', function () {
             el.changeList(1);
         });
     };
@@ -116,9 +117,9 @@
         var op = this.options;
         var search = op.table.find('.search-control').val();
         var icons = [];
-        if(op.iconsetVersion != 'lastest' && typeof Iconpicker.ICONSET[op.iconset].allVersions != 'undefined'){
-            $.each(Iconpicker.ICONSET[op.iconset].allVersions, function(i, v){
-                if(op.iconsetVersion == v.version){
+        if (op.iconsetVersion != 'lastest' && typeof Iconpicker.ICONSET[op.iconset].allVersions != 'undefined') {
+            $.each(Iconpicker.ICONSET[op.iconset].allVersions, function (i, v) {
+                if (op.iconsetVersion == v.version) {
                     icons = v.icons;
                 }
             });
@@ -131,10 +132,10 @@
         }
         else {
             var result = [];
-            $.each(icons, function(i, v) {
-               if (v.toLowerCase().indexOf(search) > -1) {
-                   result.push(v);
-               }
+            $.each(icons, function (i, v) {
+                if (v.toLowerCase().indexOf(search) > -1) {
+                    result.push(v);
+                }
             });
             op.icons = result;
         }
@@ -159,12 +160,15 @@
             icon = op.iconClassFix + op.icons[op.selected];
         }
         if (icon !== '' && op.selected >= 0) {
+            var s = "";
             op.icon = icon;
-            if(op.inline === false){
+            if (op.inline === false) {
+                var t = "";
+                if (op.iconset == "GoogleMaterialSymbolsOutlined") t = icon.replace("material-symbols-outlined", "").trim();
                 el.find('input').val(icon);
-                el.find('i').attr('class', '').addClass(op.iconClass).addClass(icon);
+                el.find('i').attr('class', '').addClass(op.iconClass).addClass(icon).text(t);
             }
-            if(icon === op.iconClassFix){
+            if (icon === op.iconClassFix) {
                 el.trigger({ type: "change", icon: 'empty' });
             }
             else {
@@ -179,16 +183,16 @@
         var op = this.options;
         op.selected = $.inArray(icon.replace(op.iconClassFix, ''), op.icons);
 
-        if(op.selected >= 0) {
+        if (op.selected >= 0) {
             var page = Math.ceil((op.selected + 1) / this.totalIconsPerPage());
             this.changeList(page);
         }
-        if(icon === ''){
-            //if(op.iconClassFix !== '')
-                op.table.find('i.' + op.iconClassFix).parent().addClass(op.selectedClass);
-            //else
+        if (icon === '') {
+            let cl = "";
+            if (op.iconClassFix !== '') cl = "." + op.iconClassFix;
+            op.table.find('i' + cl).first().parent().addClass(op.selectedClass);
         }
-        else{
+        else {
             op.table.find('i.' + icon).parent().addClass(op.selectedClass);
         }
     };
@@ -202,10 +206,10 @@
     };
 
     Iconpicker.prototype.totalIconsPerPage = function () {
-        if(this.options.rows === 0){
+        if (this.options.rows === 0) {
             return this.options.icons.length;
         }
-        else{
+        else {
             return this.options.cols * this.options.rows;
         }
     };
@@ -232,7 +236,7 @@
         var tbody = op.table.find('tbody').empty();
         var offset = (page - 1) * this.totalIconsPerPage();
         var length = op.rows;
-        if(op.rows === 0){
+        if (op.rows === 0) {
             length = op.icons.length;
         }
         for (var i = 0; i < length; i++) {
@@ -242,7 +246,12 @@
                 var btn = $('<button class="btn ' + op.unselectedClass + ' btn-icon"></button>').hide();
                 if (pos < op.icons.length) {
                     var v = op.iconClassFix + op.icons[pos];
-                    btn.val(v).attr('title', v).append('<i class="' + op.iconClass + ' ' + v + '"></i>').show();
+                    if (op.iconset == "GoogleMaterialSymbolsOutlined") {
+                        var s = v.replace("material-symbols-outlined", "").trim();
+                        btn.val(v).attr('title', v).append(`<i class="${op.iconClass} ${v}">${s}</i>`).show();
+                    } else {
+                        btn.val(v).attr('title', v).append('<i class="' + op.iconClass + ' ' + v + '"></i>').show();
+                    }
                     if (op.icon === v) {
                         btn.addClass(op.selectedClass).addClass('btn-icon-selected');
                     }
@@ -255,7 +264,7 @@
 
     Iconpicker.prototype.updateIconsCount = function () {
         var op = this.options;
-        if(op.footer === true){
+        if (op.footer === true) {
             var icons_count = [
                 '<tr>',
                 '   <td colspan="' + op.cols + '" class="text-center">',
@@ -271,23 +280,23 @@
         var op = this.options;
         var total_icons = this.totalIcons();
         var total_pages = this.totalPages();
-        op.table.find('.page-count').html(op.labelHeader.replace('{0}', (total_pages === 0 ) ? 0 : page).replace('{1}', total_pages));
+        op.table.find('.page-count').html(op.labelHeader.replace('{0}', (total_pages === 0) ? 0 : page).replace('{1}', total_pages));
         var offset = (page - 1) * this.totalIconsPerPage();
         var total = page * this.totalIconsPerPage();
-        op.table.find('.icons-count').html(op.labelFooter.replace('{0}', total_icons ? offset + 1 : 0).replace('{1}', (total < total_icons) ? total: total_icons).replace('{2}', total_icons));
+        op.table.find('.icons-count').html(op.labelFooter.replace('{0}', total_icons ? offset + 1 : 0).replace('{1}', (total < total_icons) ? total : total_icons).replace('{2}', total_icons));
         this.updateArrows(page);
     };
 
     Iconpicker.prototype.updatePagesCount = function () {
         var op = this.options;
-        if(op.header === true){
+        if (op.header === true) {
             var tr = $('<tr></tr>');
             for (var i = 0; i < op.cols; i++) {
                 var td = $('<td class="text-center"></td>');
                 if (i === 0 || i === op.cols - 1) {
                     var arrow = [
                         '<button class="btn btn-arrow ' + ((i === 0) ? 'btn-previous' : 'btn-next') + ' ' + op.arrowClass + '" value="' + ((i === 0) ? -1 : 1) + '">',
-                            '<span class="' + ((i === 0) ? op.arrowPrevIconClass : op.arrowNextIconClass) + '"></span>',
+                        '<span class="' + ((i === 0) ? op.arrowPrevIconClass : op.arrowNextIconClass) + '"></span>',
                         '</button>'
                     ];
                     td.append(arrow.join(''));
@@ -467,7 +476,7 @@
                     data[option](params);
                 }
             }
-            else{
+            else {
                 var op = data.options;
                 op = $.extend(op, {
                     inline: false,
@@ -477,14 +486,14 @@
                 });
                 var name = (typeof $this.attr('name') !== 'undefined') ? 'name="' + $this.attr('name') + '"' : '';
 
-                if($this.prop('tagName') === 'BUTTON'){
+                if ($this.prop('tagName') === 'BUTTON') {
                     $this.empty()
                         .append('<i></i>')
                         .append('<input type="hidden" ' + name + '></input>')
                         .append('<span class="caret"></span>')
                         .addClass('iconpicker ' + (($.fn.bsVersion() === '3.x') ? '' : 'dropdown-toggle'));
                     data.setIconset(op.iconset);
-                    $this.on('click', function(e) {
+                    $this.on('click', function (e) {
                         e.preventDefault();
                         let $parent = $this.parents(".offcanvas,.modal,body").first();
                         var popover = bootstrap.Popover.getInstance(this);
@@ -506,7 +515,7 @@
                         popover.show();
                     });
                 }
-                else{
+                else {
                     op.inline = true;
                     data.setIconset(op.iconset);
                     $this.empty()
@@ -531,8 +540,8 @@
         return this;
     };
 
-    $.fn.bsVersion = function() {
-        return '6.x';
+    $.fn.bsVersion = function () {
+        return '5.x';
     };
 
     // ICONPICKER DATA-API
@@ -541,7 +550,7 @@
         $('.iconpicker').each(function () {
             if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
                 var popover = bootstrap.Popover.getInstance(this);
-                !!popover&&popover.dispose();
+                !!popover && popover.dispose();
             }
         });
     });

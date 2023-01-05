@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Configuration
 {
-    public class FileAllow
+    public class VirtualDirectory
     {
-        public int MaxSize { get; set; }
-        public List<string> Ext { get; set;}
+        public string upload { get; set; }
+        public FileAllow FileAllow { get; set; }
     }
 }

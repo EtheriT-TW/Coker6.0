@@ -137,6 +137,22 @@ namespace EtheriT.Coker.Application
             if (myWeb != null) name = myWeb.Title;
             return name;
         }
+        public async Task<string> GetWebsiteOrgName()
+        {
+            long id = await GetWebsiteId();
+            string name = "";
+            try
+            {
+                if (id != 0)
+                {
+                    var website = await db.Websites.Where(w => w.Id == id).FirstOrDefaultAsync();
+                    if(website != null) name = website.OrgName;
+                }
+                else throw new Exception();
+            }
+            catch {}
+            return name;
+        }
         public string GetAuthorization() {
             if (httpContextAccessor.HttpContext == null) return StringValues.Empty;
             var authorizationHeader = httpContextAccessor
@@ -160,15 +176,14 @@ namespace EtheriT.Coker.Application
         }
         public async Task<bool> CheckedWebSiteId(long id) {
             bool check = false;
-            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
-            string name = user.Identity?.Name;
-            Guid secret = GetSecret();
-            var token = await db.Tokens.Where(t => t.id == secret).FirstOrDefaultAsync();
-            var userDetail = await db.Users.Where(u => u.Id == token.UserID).FirstOrDefaultAsync();
-            if (userDetail != null)
-            {
-                var data = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
-                if (data.Any()) check = true;
+            long userId = await GetUserId();
+            if (userId != 0) {
+                var userDetail = db.Users.Where(u => u.Id == userId).Where(u => !u.IsDeleted);
+                if (userDetail.Any())
+                {
+                    var data = db.MappingUserAndWebsites.Where(m => m.UserId == userId).Where(m => m.WebsiteId == id);
+                    if (data.Any()) check = true;
+                }
             }
             return check;
         }

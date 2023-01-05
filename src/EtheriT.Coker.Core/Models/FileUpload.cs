@@ -15,8 +15,9 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(50)] public string ContentType { get; set; }
         [StringLength(200)] public string OriginalFileName { get; set; }
         [StringLength(200)] public string? DownloadFileName { get; set; }
-        public int Size { get; set; }
+        public long Size { get; set; }
         public Guid? FileGuid { get; set; }
         public Website Website { get; set; }
+        public List<FileBind>? fileBinds { get; set; }
     }
 }

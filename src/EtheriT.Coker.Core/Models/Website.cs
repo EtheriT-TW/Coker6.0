@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public string? DefaultUrl { get; set; }
         public string Title { get; set; }
+        public string OrgName { get; set; }
         public string? Description { get; set; }
         public string? Contact { get; set; }
         public string? Icon { get; set; }

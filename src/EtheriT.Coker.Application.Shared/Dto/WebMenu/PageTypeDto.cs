@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
+namespace EtheriT.Coker.Application.Dto
 {
     public class PageTypeDto: ResponseMessageDto
     {

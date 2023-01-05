@@ -366,6 +366,7 @@ FodyWeavers.xsd
 *.min.js
 *.min.js.map
 *.min.css
+upload/**/*.*
 !bootstrap.min.js
 !bootstrap.min.css
 !**/wwwroot/lib/bootstrap/**/*.min.js.map

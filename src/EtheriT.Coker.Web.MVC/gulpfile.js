@@ -20,6 +20,8 @@ var scriptEntries = {};
 
 var viewScripts = globby.sync([
 	'./wwwroot/js/**/*.js',
+	'./wwwroot/lib/bootstrap/iconpicker/js/iconset/fontawesome6-2-1.js',
+	'./wwwroot/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.js',
 	'!./wwwroot/js/**/*.min.js',
 ]);
 

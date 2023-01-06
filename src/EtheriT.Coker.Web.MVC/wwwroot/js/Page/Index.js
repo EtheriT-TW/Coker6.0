@@ -157,7 +157,8 @@
                     $("#gjs + .emptyList").addClass("d-none");
                     co.WebMesnus.getConten(data.id).done(function (result) {
                         if (result.success) {
-                            editor.setComponents(co.Data.HtmlDecode(result.conten.saveHtml));
+                            var html = co.Data.HtmlDecode(result.conten.saveHtml);
+                            editor.setComponents(html);
                             editor.setStyle(result.conten.saveCss);
                         } else {
                             co.sweet.error(result.error);
@@ -197,4 +198,10 @@
             menuEditor.setData([]);
         }
     });
+    /*$(".material-symbols-outlined").each(function () {
+        console.log(`"${$(this).text().trim()}"`);
+    });*/
+    /*$($.iconset_fontawesome_6.icons).each(function () {
+        console.log(`"${this.replace(/[-]{3}[\w]{2,4}$/g,"")}"`);
+    });*/
 }

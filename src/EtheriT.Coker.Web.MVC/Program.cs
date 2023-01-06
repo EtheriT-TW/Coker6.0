@@ -28,7 +28,6 @@ using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Tag;
-using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -116,9 +115,10 @@ builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
+builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.Configure<FileAllow>(builder.Configuration.GetSection("FileAllow"));
+builder.Services.Configure<VirtualDirectory>(builder.Configuration.GetSection("VirtualDirectory"));
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -173,7 +173,9 @@ else
     });
 }
 
+//³]©wµêÀÀ¥Ø¿ý
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+app.UseVirtualDirectory("shared", builder.Configuration.GetValue<string>("VirtualDirectory:Shared"));
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

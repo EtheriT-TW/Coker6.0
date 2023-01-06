@@ -39,6 +39,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 1,
                     Title = "Coker雲端開店大師",
+                    OrgName = "coker6",
                     Locale = "zh-tw",
                     Type = "website",
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1441),
@@ -46,6 +47,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 2,
                     Title = "｜Derek｜德瑞克．隆昌窯業",
+                    OrgName = "lcb",
                     Locale = "zh-tw",
                     Type = "website",
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1443),

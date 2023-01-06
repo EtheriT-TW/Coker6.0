@@ -970,7 +970,7 @@
     $.fn.iconOpen = function(setting){
         this.removeClass('sortableListsClosed').addClass('sortableListsOpen');
         this.children('ul').css('display', 'block');
-        var opener = this.children('div').children('.sortableListsOpener').first();
+        var opener = this.find('.float-left').children('.sortableListsOpener').first();
         if (setting.opener.as === 'html'){
             opener.html(setting.opener.close);
         } else if (setting.opener.as === 'class') {
@@ -984,7 +984,7 @@
     $.fn.iconClose = function(setting) {
         this.removeClass('sortableListsOpen').addClass('sortableListsClosed');
         this.children('ul').css('display', 'none');
-        var opener = this.children('div').children('.sortableListsOpener').first();
+        var opener = this.find('.float-left').children('.sortableListsOpener').first();
         if (setting.opener.as === 'html') {
             opener.html(setting.opener.open);
         } else if (setting.opener.as === 'class') {
@@ -1075,7 +1075,7 @@ function MenuEditor(idSelector, options) {
         labelEdit: '<i class="fas fa-edit clickable"></i>',
         labelRemove: '<i class="fas fa-trash-alt clickable"></i>',
         textConfirmDelete: 'This item {0} will be deleted. Are you sure?',
-        iconPicker: { cols: 4, rows: 4, footer: false, iconset: "fontawesome5" },
+        iconPicker: { cols: 4, rows: 4, footer: false, iconset: "GoogleMaterialSymbolsOutlined" },
         maxLevel: -1,
         listOptions: { 
             hintCss: { border: '1px dashed #13981D'}, 
@@ -1290,8 +1290,11 @@ function MenuEditor(idSelector, options) {
             var $div = $('<div>').css('overflow', 'auto');
             var $i = $('<i>').addClass(v.icon);
             var $span = $('<span>').addClass('txt font-weight-bold').append(v.text).css('margin-right', '5px');
-            var $divbtn =  TButtonGroup();
-            $div.append($i).append("&nbsp;").append($span).append($divbtn);
+            var $divTitle = $("<div class='d-flex align-items-center float-left' />");
+            var $divbtn = TButtonGroup();
+            if ($i.hasClass("material-symbols-outlined")) $i.text(v.icon.replace("material-symbols-outlined", "").trim());
+            $divTitle.append($i).append("&nbsp;").append($span);
+            $div.append($divTitle).append($divbtn);
             $li.append($div);
             if (isParent) {
                 $li.append(createMenu(v.children, level + 1));
@@ -1312,7 +1315,7 @@ function MenuEditor(idSelector, options) {
                     }
                     return false; // Prevent default
                 });
-        opener.prependTo(li.children('div').first());
+        opener.prependTo(li.find('div.float-left').first());
         if ( !li.hasClass('sortableListsOpen') ) {
             li.iconClose(options);
         } else {
@@ -1397,8 +1400,10 @@ function MenuEditor(idSelector, options) {
             var btnGroup = TButtonGroup();
             var textItem = $('<span>').addClass('txt font-weight-bold').text(data.title);
             var iconItem = $('<i>').addClass(data.icon);
-            var div = $('<div>').css({ "overflow": "auto" }).append(iconItem).append("&nbsp;").append(textItem).append(btnGroup);
+            var title = $("<div class='d-flex align-items-center float-left'>").append(iconItem).append("&nbsp;").append(textItem);
+            var div = $('<div>').css({ "overflow": "auto" }).append(title).append(btnGroup);
             var $li = $("<li>").data(data);
+            if (iconItem.hasClass("material-symbols-outlined")) iconItem.text(data.icon.replace("material-symbols-outlined", "").trim());
             $li.addClass('list-group-item pr-0').append(div);
             $main.append($li);
             MenuEditor.updateButtons($main);

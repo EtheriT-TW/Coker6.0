@@ -7,12 +7,33 @@ var grapesInit = function (options) {
         save: function () { return false; },
         import: function () { return false; },
         getComponer: function () { return false; },
+        asset:[]
     };
     $.extend(true, settings, options);
     var editor = grapesjs.init({
         showOffsets: 1,
         noticeOnUnload: 0,
         container: '#gjs',
+        assetManager: {
+            uploadFile: function (e) {
+                var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+                var formData = new FormData();
+                for (var i in files) {
+                    formData.append('files', files[i]) //containing all the selected images from local
+                }
+                formData.append("type", 0);
+                co.File.Upload(formData).done(function (result) {
+                    if (result.success) {
+                        var myJSON = [];
+                        $(result.files).each(function (index) {
+                            myJSON.push(this.path);
+                        });
+                        var images = myJSON;
+                        editor.AssetManager.add(images);
+                    }
+                });
+            }
+        },
         plugins: [
             'gjs-blocks-basic',
             'grapesjs-preset-webpage',
@@ -36,7 +57,7 @@ var grapesInit = function (options) {
             },
             'grapesjs-tui-image-editor': {
                 script: [
-                    // 'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.6.7/fabric.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.6.7/fabric.min.js',
                     'https://uicdn.toast.com/tui.code-snippet/v1.5.2/tui-code-snippet.min.js',
                     'https://uicdn.toast.com/tui-color-picker/v2.2.7/tui-color-picker.min.js',
                     'https://uicdn.toast.com/tui-image-editor/v3.15.2/tui-image-editor.min.js'
@@ -44,7 +65,7 @@ var grapesInit = function (options) {
                 style: [
                     'https://uicdn.toast.com/tui-color-picker/v2.2.7/tui-color-picker.min.css',
                     'https://uicdn.toast.com/tui-image-editor/v3.15.2/tui-image-editor.min.css',
-                ],
+                ]
             },
             'grapesjs-blocks-table': { containerId: '#gjs' }
         },
@@ -52,15 +73,35 @@ var grapesInit = function (options) {
             styles: [
                 '/lib/bootstrap/dist/css/bootstrap.min.css',
                 '/lib/swiper/swiper-bundle.min.css',
-                '/css/Grapes/GrapesCss.min.css'
+                '/css/Grapes/GrapesCss.min.css',
+                'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+                '/shared/css/Frame.min.css',
+                '/shared/css/HoverEffect.min.css',
+                '/shared/css/Swiper.min.css'
             ],
             scripts: [
                 '/lib/bootstrap/dist/js/bootstrap.bundle.min.js',
-                '/lib/swiper/swiper-bundle.min.js'
+                '/lib/swiper/swiper-bundle.min.js',
+                '/shared/js/Frame.min.js',
+                '/shared/js/Swiper.min.js',
+                '/shared/js/ViewTypeChange.min.js'
             ],
         },
         fromElement: true,
         storageManager: { autoload: 0 }
+    });
+    editor.on("asset:remove", (asset) => {
+        let guid;
+        var filename = asset.get('src').split('/').reverse()[0].split('.')[0];
+        settings.asset.every(function (item,index) {
+            if (item.path.indexOf(filename) > 0) {
+                guid = item.guid
+                return false;
+            } else return true;
+        });
+        co.File.Delete(guid).done(function (result) {
+            console.log(result);
+        });
     });
     var panelManager = editor.Panels;
     const BlockManager = editor.BlockManager;
@@ -76,7 +117,7 @@ var grapesInit = function (options) {
             });
         });
     }
-    const iconPickerOpt = { cols: 4, rows: 4, footer: false, iconset: "fontawesome5" };
+    const iconPickerOpt = { cols: 4, rows: 4, footer: false, iconset: "GoogleMaterialSymbolsOutlined" };
     const getCss = (selected) => {
         const el = selected.getEl();
         const id = selected.getId();
@@ -145,11 +186,13 @@ var grapesInit = function (options) {
         }
         co.HtmlContent.AddUp(object).done(function (result) {
             if (result.success) {
+                let iconText = "";
+                if (/material-symbols-outlined/.test(icon)) iconText = icon.replace("material-symbols-outlined", "").trim();
                 appendBlock(blockId, {
                     category: category,
                     attributes: { custom_block_template: true },
                     label: `${name}`,
-                    media: `<i class="${icon} fa-5x"></i>`,
+                    media: `<i class="${icon} fa-5x">${iconText}</i>`,
                     content: elementHtmlCss,
                 })
             } else co.sweet.error(result.error);
@@ -327,11 +370,18 @@ var grapesInit = function (options) {
             const html = co.Data.HtmlDecode(this.html);
             const elementHtmlCss = `${html}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
+            let iconText = "";
+            if (/^fa/.test(this.icon)) {
+                media = `<i class="${this.icon} fa-5x"></i>`;
+            } else {
+                media = `<i class="material-icons material-symbols-outlined fa-5x">${this.icon}</i>`;
+            }
+            if (/material-symbols-outlined/.test(this.icon)) iconText = this.icon.replace("material-symbols-outlined", "").trim();
             appendBlock(blockId, {
                 category: this.typeName,
                 attributes: { custom_block_template: true },
                 label: `${this.title}`,
-                media: `<i class="${this.icon} fa-5x"></i>`,
+                media: `<i class="${this.icon} fa-5x">${iconText}</i>`,
                 content: elementHtmlCss,
             });
         });
@@ -415,6 +465,18 @@ var grapesInit = function (options) {
                 editor.runCommand(linkCommandId, {});
             }
         })
+    });
+
+    co.File.getFileList(0).done(function (result) {
+        if (result.success) {
+            var myJSON = [];
+            settings.asset = result.files;
+            $(result.files).each(function (index) {
+                myJSON.push(this.path);
+            });
+            var images = myJSON;
+            editor.AssetManager.add(images);
+        }
     });
 
     return editor;

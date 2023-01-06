@@ -34,7 +34,7 @@ var viewStyles = globby.sync([
 	'./wwwroot/view-resources/**/*.less',
 	'!./wwwroot/view-resources/**/*.min.css',
 	'!./wwwroot/css/**/*.min.css',
-	'./wwwroot/Shared/css/**/*.min.css'
+	'!./wwwroot/Shared/css/**/*.min.css'
 ]);
 
 function processInputDefinition(input) {

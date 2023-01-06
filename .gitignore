@@ -373,6 +373,7 @@ upload/**/*.*
 !**/wwwroot/lib/jquery/**/*.min.js.map
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
+!**/wwwroot/lib/tui-code/**/*.*
 */*/wwwroot/dist/
 **/package-lock.json
 *.lock

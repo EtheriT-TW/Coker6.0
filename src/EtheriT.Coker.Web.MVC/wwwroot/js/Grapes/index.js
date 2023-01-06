@@ -109,7 +109,7 @@ var grapesInit = function (options) {
                             case "two_swiper":
                             case "four_swiper":
                                 setConfig(0, s);
-                                parameter.autoplay = false;
+                                checkClass[0].parameter.autoplay = false;
                                 break;
                             case "masonry":
                                 setConfig(1, s);

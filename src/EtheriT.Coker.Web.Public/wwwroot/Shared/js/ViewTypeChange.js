@@ -1,23 +1,26 @@
 ﻿function ViewTypeChangeInit() {
     $(".frame").each(function () {
-        var $self = $(this)
-        if ($self.data("action") == "TypeChange") {
-            const $btn_grid = $self.find(".btn_grid");
-            const $btn_list = $self.find(".btn_list");
-            const $content = $self.find(".row").first();
+        if (!!!$self.data("isInit")) {
+            var $self = $(this)
+            if ($self.data("action") == "TypeChange") {
+                const $btn_grid = $self.find(".btn_grid");
+                const $btn_list = $self.find(".btn_list");
+                const $content = $self.find(".row").first();
 
-            $btn_grid.on("click", function () {
-                if (!$btn_grid.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $content, "Grid");
-                }
-            })
+                $btn_grid.on("click", function () {
+                    if (!$btn_grid.data("activate")) {
+                        typeChange($btn_grid, $btn_list, $content, "Grid");
+                    }
+                })
 
-            $btn_list.on("click", function () {
-                if (!$btn_list.data("activate")) {
-                    typeChange($btn_list, $btn_grid, $content, "List");
-                }
-            })
+                $btn_list.on("click", function () {
+                    if (!$btn_list.data("activate")) {
+                        typeChange($btn_list, $btn_grid, $content, "List");
+                    }
+                })
+            }
         }
+        $self.data("isInit", true);
     })
 }
 

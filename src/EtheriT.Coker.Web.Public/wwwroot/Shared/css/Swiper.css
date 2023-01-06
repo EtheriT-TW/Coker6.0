@@ -1,4 +1,13 @@
-﻿[class*="swiper_button"] {
+﻿.swiper_pagination_line > .swiper-pagination-bullet {
+    width: 4rem;
+    height: 0.3rem;
+}
+
+.swiper_pagination {
+    z-index: 2;
+}
+
+[class*="swiper_button"] {
     width: fit-content;
     z-index: 1;
 }

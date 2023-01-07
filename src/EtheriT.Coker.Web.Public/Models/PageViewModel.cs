@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
 namespace EtheriT.Coker.Web.Public.Models
 {
@@ -9,6 +10,7 @@ namespace EtheriT.Coker.Web.Public.Models
 	{
 		public long? id { get; set; }
 		public string? search { get; set; }
+		public GetFrontContenOutputDto? PageData { get; set; }
         public List<FreightDisplayDto>? freightModels { get; set; }
     }
 }

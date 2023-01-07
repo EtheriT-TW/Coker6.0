@@ -9,6 +9,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -27,16 +28,19 @@ namespace EtheriT.Coker.Application
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
+        private readonly IConfiguration Configuration;
         public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             LoginUserData loginUserData,
-            IMapper mapper)
+            IMapper mapper,
+            IConfiguration Configuration)
         {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
+            this.Configuration = Configuration;
             this.ApplicationName = "WebMenu";
         }
         public async Task<SiteMapDto> GetAll()
@@ -140,6 +144,27 @@ namespace EtheriT.Coker.Application
                 results.Error = ex.Message;
             }
             return results;
+        }
+        public async Task<GetFrontContenOutputDto> GetFrontConten(GetFrontContenInputDto dto) {
+            long siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
+            try
+            {
+                var side = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
+                var menu = await db.WebMenus.Where(e => e.FK_WebsiteId == siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
+                if (menu != null && side != null)
+                {
+                    mapper.Map(menu, result);
+                    result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                    result.SiteName = side.Title;
+                    result.CurrentUrl = $"/{menu.RouterName}";
+                }
+                else {
+                    result.SiteName = "德瑞克";
+                }
+            }
+            catch { }
+            return result;
         }
         public async Task<ResponseMessageDto> importConten(MenuSaveContenDto dto)
         {

@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Freight;
+﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Dto.Freight;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,38 +13,41 @@ namespace EtheriT.Coker.Web.Public.Controllers
     {
         private readonly ILogger<PageController> _logger;
         private readonly IFreightAppService freightAppService;
-        private readonly IConfiguration Configuration;
+        private readonly IWebMenuApplication webMenuApplication;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
-            IConfiguration Configuration
-            )
-        {
+            IWebMenuApplication webMenuApplication
+        ){
             this._logger = logger;
             this.freightAppService = freightAppService;
-            this.Configuration = Configuration;
+            this.webMenuApplication = webMenuApplication;
         }
         public async Task<IActionResult> IndexAsync(string key, int id, string search)
         {
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay(siteId)).Value));
+            var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             PageViewModel model = new PageViewModel
             {
                 id = id,
                 search = search ?? "".Trim(),
                 freightModels = freight
             };
-            string view = string.Empty;
+            string view;
             if (!string.IsNullOrEmpty(key))
             {
                 if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms")
                 {
                     view = key;
                 }
-                else
+                else if (key == "Toilet")
                 {
                     view = "Product";
                     if (id != 0) view = "ProductContent";
+                }
+                else
+                {
+                    model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key });
+                    view = "Index";
                 }
             }
             else

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.Freight
 {
@@ -15,13 +16,16 @@ namespace EtheriT.Coker.Application.Freight
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly IConfiguration Configuration;
         public FreightAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            IConfiguration Configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.Configuration = Configuration;
         }
         public async Task<ResponseMessageDto> AddUp(FreightDto dto)
         {
@@ -141,10 +145,11 @@ namespace EtheriT.Coker.Application.Freight
 
             return null;
         }
-        public async Task<JsonResult> GetDisplay(long webid)
+        public async Task<JsonResult> GetDisplay()
         {
             try
             {
+                var webid = Configuration.GetValue<long>("WebConfig:SiteId");
                 var result = db.LogisticsSettings;
 
                 if (result != null)

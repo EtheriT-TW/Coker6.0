@@ -1,5 +1,10 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@using EtheriT.Coker.Web.Public.Models;
+@model PageViewModel
 @{
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = Model.PageData.Title;
+    ViewData["Description"] = Model.PageData.Description;
+    ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["css"] = Model.PageData.Css;
 }
+<Content class="d-none">@Model.PageData.Html</Content>

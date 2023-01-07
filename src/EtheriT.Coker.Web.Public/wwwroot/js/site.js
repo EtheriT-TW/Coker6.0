@@ -1,5 +1,6 @@
 ﻿
 function ready() {
+    const $conten = $("Content");
     Coker.Token = {
         GetToken: function () {
             return $.ajax({
@@ -15,6 +16,13 @@ function ready() {
             });
         }
     };
+
+    if ($conten.length > 0) {
+        let s = Coker.stringManager.ReplaceAndSinge($conten.text());
+        let ele = document.createElement('span');
+        ele.innerHTML = s;
+        $conten.html(ele.textContent || ele.innerText).removeClass("d-none");
+    }
 
     $.cookie('Member_Name', "會員一", { path: '/' });
 
@@ -340,6 +348,13 @@ var Coker = {
                     typeof (action) === "function" && action();
                 }
             })
+        }
+    },
+    stringManager: {
+        ReplaceAndSinge: function (str) {
+            var s = str.replace(/&amp;/g, "&");
+            if (s.indexOf("&amp;") > 0) return _c.Data.ReplaceAndSinge(s);
+            else return s
         }
     }
 }

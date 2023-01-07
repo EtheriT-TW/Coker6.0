@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Core.Models
         public long? Menu_id { get; set; }
         public int Type { get; set; }
         [StringLength(100)] public string? Img { get; set; }
-        [StringLength(50)] public string? Icon { get; set; }
+        [StringLength(100)] public string? Icon { get; set; }
         [MaxLength] public string? Html { get; set; }
         [MaxLength] public string? Css { get; set; }
         public int Ser_no { get; set; }

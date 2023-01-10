@@ -10,7 +10,7 @@ function SwiperInit() {
         loop: true,
     };
 
-    $(".one_swiper").each(function (obj) {
+    $(".one_swiper").prop("draggable",true).each(function (obj) {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
@@ -35,7 +35,7 @@ function SwiperInit() {
         }
     });
 
-    $(".two_swiper").each(function (obj) {
+    $(".two_swiper").prop("draggable", true).each(function (obj) {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
@@ -64,7 +64,7 @@ function SwiperInit() {
         }
     });
 
-    $(".four_swiper").each(function (obj) {
+    $(".four_swiper").prop("draggable", true).each(function (obj) {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {

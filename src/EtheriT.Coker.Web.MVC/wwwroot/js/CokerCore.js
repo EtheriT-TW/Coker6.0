@@ -13,9 +13,11 @@ var Coker = {
             ReCheckTime: 20 * MinutesSecond
         },
         ReplaceAndSinge: function (str) {
-            var s = str.replace(/&amp;/g, "&");   
-            if (s.indexOf("&amp;") > 0) return _c.Data.ReplaceAndSinge(s);
-            else return s
+            if (!!str) {
+                var s = str.replace(/&amp;/g, "&");
+                if (s.indexOf("&amp;") > 0) return _c.Data.ReplaceAndSinge(s);
+                else return s
+            } else return "";
         },
         HtmlDecode: function (str) {
             var ele = document.createElement('span');

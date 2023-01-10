@@ -156,6 +156,12 @@
       "input": [
         "node_modules/grapesjs-blocks-table/dist/*"
       ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-parser-postcss",
+      "input": [
+        "node_modules/grapesjs-parser-postcss/dist/*"
+      ]
     }
   ]
 }

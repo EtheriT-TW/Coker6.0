@@ -178,6 +178,9 @@ namespace EtheriT.Coker.Application
                 var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 if (menu != null)
                 {
+                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    importDto.Html = (importDto.Html??"").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     mapper.Map(importDto, menu);
                     await loginUserData.SaveChanges(menu);
                     response.Success = true;

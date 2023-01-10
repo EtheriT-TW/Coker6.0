@@ -2,6 +2,8 @@
     list-style: none;
 }
 
+iframe{width:100%;}
+
 .masonry > .grid > .grid-item {
     float: left;
     width: calc(100%/3);
@@ -14,6 +16,10 @@
 
 .two_three_block > .three {
     width: 60%;
+}
+
+.textlabel {
+    padding: 1rem 0 1rem 2rem;
 }
 
 @media only screen and (max-width: 768px) {

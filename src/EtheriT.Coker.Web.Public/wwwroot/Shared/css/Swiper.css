@@ -1,11 +1,21 @@
-﻿.swiper_pagination_line > .swiper-pagination-bullet {
-    width: 4rem;
-    height: 0.3rem;
-}
-
-.swiper_pagination {
+﻿.swiper_pagination {
     z-index: 2;
 }
+
+.swiper_pagination_line > .swiper-pagination-bullet {
+    width: 4rem;
+    height: 0.3rem;
+    border-radius: 50rem;
+}
+
+.swiper_pagination_water > .swiper-pagination-bullet {
+    width: 0;
+    height: 0;
+}
+
+    .swiper_pagination_water > .swiper-pagination-bullet.swiper-pagination-bullet-active {
+        color: #007AEA;
+    }
 
 [class*="swiper_button"] {
     width: fit-content;
@@ -18,31 +28,55 @@
 }
 
 .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_prev > .swiper_btn_circle_hide_left {
-    transform: scale(1);
-    transform-origin: left;
-    transition: all 1s;
+    transition: all 0.5s;
+    left: 0rem;
 }
 
 .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_next > .swiper_btn_circle_hide_right {
-    transform: scale(1);
-    transform-origin: right;
-    transition: all 1s;
+    transition: all 0.5s;
+    right: 0rem;
 }
 
 .swiper_btn_circle_hide_left {
-    transform: scale(0);
-    transform-origin: left;
     transition: all 1s;
+    left: -4rem;
     width: 3.75rem;
     height: 3.75rem;
 }
 
 .swiper_btn_circle_hide_right {
-    transform: scale(0);
-    transform-origin: right;
     transition: all 1s;
+    right: -4rem;
     width: 3.75rem;
     height: 3.75rem;
+}
+
+.one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
+    font-size: 2.5rem;
+}
+
+.swiper_link {
+    cursor: pointer;
+    color: #3987B2;
+    text-decoration: none;
+}
+
+@media only screen and (max-width: 768px) {
+    .swiper_btn_circle_hide_left {
+        left: 0rem;
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+
+    .swiper_btn_circle_hide_right {
+        right: 0rem;
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+
+    .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
+        font-size: 1.5rem;
+    }
 }
 
 @media only screen and (max-width: 576px) {
@@ -50,19 +84,17 @@
         width: 2rem;
     }
 
-    .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_prev > .swiper_btn_circle_hide_left {
-        transform: scale(1);
-    }
-
-    .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_next > .swiper_btn_circle_hide_right {
-        transform: scale(1);
-    }
-
     .swiper_btn_circle_hide_left {
-        transform: scale(1);
+        width: 1.75rem;
+        height: 1.75rem;
     }
 
     .swiper_btn_circle_hide_right {
-        transform: scale(1);
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+
+    .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
+        font-size: 1rem;
     }
 }

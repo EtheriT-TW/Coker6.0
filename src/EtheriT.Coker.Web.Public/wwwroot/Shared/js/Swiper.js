@@ -7,10 +7,9 @@ function SwiperInit() {
     var config = {
         slidesPerView: 1,
         spaceBetween: 15,
-        loop: true,
     };
 
-    $(".one_swiper").prop("draggable",true).each(function (obj) {
+    $(".one_swiper").prop("draggable", true).each(function (obj) {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
@@ -24,12 +23,13 @@ function SwiperInit() {
                     nextEl: Id + " > .swiper_button_prev > button",
                     prevEl: Id + " > .swiper_button_next > button",
                 }
-            }, obj.autoplay ? {} : {
+            }, obj.autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
-                }
-            });
+                },
+                loop: true
+            } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
         }
@@ -44,6 +44,13 @@ function SwiperInit() {
                 pagination: {
                     el: Id + " > .swiper_pagination > *",
                     clickable: true,
+                    renderBullet: function (index, className) {
+                        if ($self.has(".swiper_pagination_water").length) {
+                            return '<span class="' + className + ' material-symbols-outlined ms-3">water_drop</span>';
+                        } else {
+                            return '<span class="' + className + '"></span>';
+                        }
+                    },
                 },
                 navigation: {
                     nextEl: Id + " > .swiper_button_prev > button",
@@ -53,12 +60,13 @@ function SwiperInit() {
                         slidesPerView: 2,
                     }
                 }
-            }, obj.autoplay ? {} : {
+            }, true ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
-                }
-            });
+                },
+                loop: true
+            } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
         }
@@ -88,12 +96,13 @@ function SwiperInit() {
                         slidesPerView: 4,
                     }
                 }
-            }, obj.autoplay ? {} : {
+            }, obj.autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
-                }
-            });
+                },
+                loop: true
+            } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
         }

@@ -33,6 +33,12 @@
     --font-family-sans-serif: "GTWalsheim";
     --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
 /* line 21, ../../scss/bootstrap/_reboot.scss */
 .ConfirmKeyWord {
     color: #933;

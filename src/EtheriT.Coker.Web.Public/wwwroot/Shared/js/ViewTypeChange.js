@@ -1,7 +1,7 @@
 ﻿function ViewTypeChangeInit() {
     $(".frame").each(function () {
+        var $self = $(this)
         if (!!!$self.data("isInit")) {
-            var $self = $(this)
             if ($self.data("action") == "TypeChange") {
                 const $btn_grid = $self.find(".btn_grid");
                 const $btn_list = $self.find(".btn_list");
@@ -34,6 +34,7 @@ function typeChange($self, $brother, $content, type) {
             var $self = $(this)
             $self.removeClass("row row-cols-2 row-cols-sm-4");
             $self.find("figure").removeClass("flex-column");
+            $self.find("img").addClass("col-4 px-0");
             $self.find("figcaption").addClass("flex-grow-1 p-3");
             $self.find(".title").removeClass("text-center");
             $self.find(".text").removeClass("d-none");
@@ -43,6 +44,7 @@ function typeChange($self, $brother, $content, type) {
             var $self = $(this)
             $self.addClass("row row-cols-2 row-cols-sm-4");
             $self.find("figure").addClass("flex-column");
+            $self.find("img").removeClass("col-4 px-0");
             $self.find("figcaption").removeClass("flex-grow-1 p-3");
             $self.find(".title").addClass("text-center");
             $self.find(".text").addClass("d-none");

@@ -2,43 +2,26 @@
     overflow: hidden;
 }
 
-    .hover_inside_scale > img {
+    .hover_inside_scale > img, .hover_inside_scale > .hoverbody {
         transform: scale(1);
         filter: saturate(100%);
         transition: 0.5s all;
     }
 
-    .hover_inside_scale:hover > img {
+    .hover_inside_scale:hover > img, .hover_inside_scale:hover > .hoverbody {
         transform: scale(1.25);
         filter: saturate(200%);
         transition: 0.5s all;
     }
-
-.hover_inside_scale {
-    overflow: hidden;
-}
-
-    .hover_inside_scale > .hoverbody {
-        transform: scale(1);
-        filter: saturate(100%);
-        transition: 0.5s all;
-    }
-
-    .hover_inside_scale:hover > .hoverbody {
-        transform: scale(1.25);
-        filter: saturate(200%);
-        transition: 0.5s all;
-    }
-
 
 .hover_protrude_scale {
     transition: all 0.5s;
 }
 
     .hover_protrude_scale:hover {
-        transform: scale(1.25);
+        transform: scale(1.15);
         z-index: 1;
-        box-shadow: 0px 5px 8px var(--black-text-trans);
+        box-shadow: 0px 5px 8px #0008;
         transition: all 0.5s;
     }
 

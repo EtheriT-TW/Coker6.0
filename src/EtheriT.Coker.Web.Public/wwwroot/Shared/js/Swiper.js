@@ -3,13 +3,13 @@
     autoplay:boolen 是否輪播
  }
  ***************/
-function SwiperInit() {
+function SwiperInit(obj) {
     var config = {
         slidesPerView: 1,
         spaceBetween: 15,
     };
 
-    $(".one_swiper").prop("draggable", true).each(function (obj) {
+    $(".one_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
@@ -20,8 +20,8 @@ function SwiperInit() {
                     clickable: true,
                 },
                 navigation: {
-                    nextEl: Id + " > .swiper_button_prev > button",
-                    prevEl: Id + " > .swiper_button_next > button",
+                    nextEl: Id + " > .swiper_button_next > button",
+                    prevEl: Id + " > .swiper_button_prev > button",
                 }
             }, obj.autoplay ? {
                 autoplay: {
@@ -35,7 +35,7 @@ function SwiperInit() {
         }
     });
 
-    $(".two_swiper").prop("draggable", true).each(function (obj) {
+    $(".two_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
@@ -53,14 +53,14 @@ function SwiperInit() {
                     },
                 },
                 navigation: {
-                    nextEl: Id + " > .swiper_button_prev > button",
-                    prevEl: Id + " > .swiper_button_next > button",
+                    nextEl: Id + " > .swiper_button_next > button",
+                    prevEl: Id + " > .swiper_button_prev > button",
                 }, breakpoints: {
                     375: {
                         slidesPerView: 2,
                     }
                 }
-            }, true ? {
+            }, obj.autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
@@ -72,7 +72,7 @@ function SwiperInit() {
         }
     });
 
-    $(".four_swiper").prop("draggable", true).each(function (obj) {
+    $(".four_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
@@ -83,8 +83,8 @@ function SwiperInit() {
                     clickable: true,
                 },
                 navigation: {
-                    nextEl: Id + " > .swiper_button_prev > button",
-                    prevEl: Id + " > .swiper_button_next > button",
+                    nextEl: Id + " > .swiper_button_next > button",
+                    prevEl: Id + " > .swiper_button_prev > button",
                 }, breakpoints: {
                     375: {
                         slidesPerView: 2,

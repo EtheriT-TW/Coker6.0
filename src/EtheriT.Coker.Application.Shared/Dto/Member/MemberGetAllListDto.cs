@@ -16,7 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public string Email { get; set; }
         public int? Total { get; set; }
         public int? Level { get; set; }
-        public virtual DateTime CreationTime { get; set; } = DateTime.Now;
+        public DateTime CreationTime { get; set; }
 
     }
 }

@@ -33,7 +33,6 @@ function typeChange($self, $brother, $content, type) {
         $content.each(function () {
             var $self = $(this)
             $self.removeClass("row row-cols-2 row-cols-sm-4");
-            $self.find(".template").removeClass("col-3");
             $self.find("figure").removeClass("flex-column");
             $self.find(".image").addClass("px-0");
             $self.find("figcaption").addClass("flex-grow-1 p-3");
@@ -44,7 +43,6 @@ function typeChange($self, $brother, $content, type) {
         $content.each(function () {
             var $self = $(this)
             $self.addClass("row row-cols-2 row-cols-sm-4");
-            $self.find(".template").addClass("col-3");
             $self.find("figure").addClass("flex-column");
             $self.find(".image").removeClass("px-0");
             $self.find("figcaption").removeClass("flex-grow-1 p-3");

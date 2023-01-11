@@ -324,15 +324,18 @@ function PageReady() {
             title: "前往內容編輯頁",
             html: "是否保存資料?",
             showCancelButton: true,
+            showDenyButton: true,
             confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
+            cancelButtonColor: '#888888',
+            denyButtonColor: '#d33',
             confirmButtonText: "　是　",
-            cancelButtonText: "　否　",
+            cancelButtonText: "　取消　",
+            denyButtonText: "　否　",
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
                 AddUp("已成功發布", "發布發生未知錯誤", "Canvas");
-            } else {
+            } else if (result.isDenied) {
                 var hash = window.location.hash.replace("#", "") + "-1";
                 window.location.hash = hash;
             }

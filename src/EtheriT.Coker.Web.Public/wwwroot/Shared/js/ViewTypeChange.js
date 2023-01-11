@@ -5,7 +5,7 @@
             if ($self.data("action") == "TypeChange") {
                 const $btn_grid = $self.find(".btn_grid");
                 const $btn_list = $self.find(".btn_list");
-                const $content = $self.find(".row").first();
+                const $content = $self.find(".content").first();
 
                 $btn_grid.on("click", function () {
                     if (!$btn_grid.data("activate")) {
@@ -33,21 +33,23 @@ function typeChange($self, $brother, $content, type) {
         $content.each(function () {
             var $self = $(this)
             $self.removeClass("row row-cols-2 row-cols-sm-4");
+            $self.find(".template").removeClass("col-3");
             $self.find("figure").removeClass("flex-column");
-            $self.find("img").addClass("col-4 px-0");
+            $self.find(".image").addClass("px-0");
             $self.find("figcaption").addClass("flex-grow-1 p-3");
             $self.find(".title").removeClass("text-center");
-            $self.find(".text").removeClass("d-none");
+            $self.find(".describe").removeClass("d-none");
         })
     } else if (type == "Grid") {
         $content.each(function () {
             var $self = $(this)
             $self.addClass("row row-cols-2 row-cols-sm-4");
+            $self.find(".template").addClass("col-3");
             $self.find("figure").addClass("flex-column");
-            $self.find("img").removeClass("col-4 px-0");
+            $self.find(".image").removeClass("px-0");
             $self.find("figcaption").removeClass("flex-grow-1 p-3");
             $self.find(".title").addClass("text-center");
-            $self.find(".text").addClass("d-none");
+            $self.find(".describe").addClass("d-none");
 
         })
     }

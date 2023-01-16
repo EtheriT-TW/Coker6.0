@@ -148,18 +148,24 @@
 			</div>
 
 			<form id="ProductForm" class="card-body needs-validation">
-				<div class="d-flex align-self-center justify-content-between mb-3">
-					<div class="d-flex flex-column align-items-center mb-1">
-						<input class="input_pic d-none" type="file" accept="image/*" />
-						<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent rounded-circle">
-							<span class="material-symbols-outlined">add_photo_alternate</span>
-						</button>
-						<div class="px-2 fw-bold">加入照片</div>
+				<div class="row">
+					@*<div class="custom-file-container col-12 col-sm-6 col-lg-4" data-upload-id="ImageUpload"></div>
+					<div class="custom-file-container col-12 col-sm-6 col-lg-4" data-upload-id="360Upload"></div>*@
+					<div class="custom-file-container col-12 col-sm-6" data-upload-id="ImageUpload"></div>
+					<div class="custom-file-container col-12 col-sm-6" data-upload-id="360Upload"></div>
+					@*<div class="d-flex flex-column align-items-center mb-1">
+					<input class="input_pic d-none" type="file" accept="image/*" />
+					<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent rounded-circle">
+					<span class="material-symbols-outlined">add_photo_alternate</span>
+					</button>
+					<div class="px-2 fw-bold">加入照片</div>
 					</div>
 					<button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
-						<span class="material-symbols-outlined fs-2">visibility</span>
-					</button>
+					<span class="material-symbols-outlined fs-2">visibility</span>
+					</button>*@
 				</div>
+
+				<button class="btn_test">測試用按鈕</button>
 
 				<div class="name border mb-3 p-2 rounded">
 					<div class="d-flex justify-content-between w-100">
@@ -358,7 +364,7 @@
 				<div id="Spec_Frame"></div>
 
 				<div class="d-flex justify-content-center mb-3">
-					<button class="btn_spec_add d-flex border-0 bg-transparent" type="button">
+					<button class="btn_spec_add d-flex border-0 bg-transparent" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="新增規格">
 						<span class="material-symbols-outlined fs-3">add</span>
 					</button>
 				</div>

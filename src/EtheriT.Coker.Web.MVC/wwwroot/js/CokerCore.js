@@ -228,6 +228,20 @@ var Coker = {
             });
         },
     },
+    FileUpload: {
+        ImageInit: function (elementId, label_text) {
+            const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                multiple: true,
+                text: {
+                    browse: "　瀏 覽　",
+                    chooseFile: "選擇檔案",
+                    label: label_text,
+                    selectedCount: "張圖片已選擇",
+                },
+            });
+            return upload;
+        }
+    },
     HtmlContent: {
         AddUp: function (data) {
             return $.ajax({

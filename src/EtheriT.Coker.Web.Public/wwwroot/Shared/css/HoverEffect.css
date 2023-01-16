@@ -25,7 +25,26 @@
         transition: all 0.5s;
     }
 
+        .hover_protrude_scale:hover > .btn_more {
+            transition: all 0.5s;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+    .hover_protrude_scale > .btn_more {
+        transform: translate(-50%, -50%) scale(0);
+        background-color: #fff9;
+        transition: all 0.5s;
+        width: 4.5rem;
+        height: 4.5rem;
+    }
+
 .hover_link_bold > a:hover {
     color: black;
     font-weight: bold;
+}
+
+@media only screen and (max-width: 768px) {
+    .hover_protrude_scale > .btn_more {
+        transform: translate(-50%, -50%) scale(1);
+    }
 }

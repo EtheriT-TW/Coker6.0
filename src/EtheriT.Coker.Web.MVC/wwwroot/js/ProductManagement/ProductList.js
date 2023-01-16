@@ -150,6 +150,8 @@ function PageReady() {
         }
     };
 
+    const upload_image = co.FileUpload.ImageInit("ImageUpload", "單張圖片上傳");
+    const upload_360 = co.FileUpload.ImageInit("360Upload", "3D檢視圖片上傳");
     ElementInit();
 
     $picker = $("#InputDate");

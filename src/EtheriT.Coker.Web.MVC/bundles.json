@@ -62,6 +62,12 @@
       "input": [
         "node_modules/masonry-layout/dist/masonry.pkgd.js"
       ]
+    },
+    {
+      "output": "lib/file-upload-with-preview/file-upload-with-preview.min.js",
+      "input": [
+        "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
+      ]
     }
   ],
   "styles": [
@@ -87,6 +93,12 @@
       "output": "lib/daterangepicker/daterangepicker.min.css",
       "input": [
         "node_modules/daterangepicker/daterangepicker.css"
+      ]
+    },
+    {
+      "output": "lib/file-upload-with-preview/file-upload-with-preview.min.css",
+      "input": [
+        "node_modules/file-upload-with-preview/dist/file-upload-with-preview.min.css"
       ]
     }
   ],

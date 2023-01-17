@@ -149,10 +149,19 @@
 
 			<form id="ProductForm" class="card-body needs-validation">
 				<div class="row">
-					@*<div class="custom-file-container col-12 col-sm-6 col-lg-4" data-upload-id="ImageUpload"></div>
-					<div class="custom-file-container col-12 col-sm-6 col-lg-4" data-upload-id="360Upload"></div>*@
-					<div class="custom-file-container col-12 col-sm-6" data-upload-id="ImageUpload"></div>
-					<div class="custom-file-container col-12 col-sm-6" data-upload-id="360Upload"></div>
+					<div class="custom-file-container col-12 col-sm-6 mb-3" data-upload-id="ImageUpload"></div>
+					<div class="custom-file-container col-12 col-sm-6 mb-3" data-upload-id="360Upload"></div>
+					<div class="ytlink input-group mb-3">
+						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up align-items-center">
+							<span class="material-symbols-outlined me-1">youtube_activity</span>Youtube影片連結
+						</div>
+						<input id="InputYTLink" class="form-control rounded text-start" type="text" aria-label="Input Youtube Link">
+					</div>
+
+					<div class="yt_preview mb-3"></div>
+
+					@*<iframe class="yt_preview" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>*@
+
 					@*<div class="d-flex flex-column align-items-center mb-1">
 					<input class="input_pic d-none" type="file" accept="image/*" />
 					<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent rounded-circle">
@@ -165,7 +174,7 @@
 					</button>*@
 				</div>
 
-				<button class="btn_test">測試用按鈕</button>
+				@*<button class="btn_test">順序調換測試用按鈕</button>*@
 
 				<div class="name border mb-3 p-2 rounded">
 					<div class="d-flex justify-content-between w-100">
@@ -452,6 +461,10 @@
 					</div>
 				</div>
 			</form>
+
+			<div class="mb-3 me-3 text-end">
+				<button class="btn_gotop bg-transparent border-0 text-black-50 text-decoration-underline">返回頁面頂端</button>
+			</div>
 		</div>
 
 		<div id="ProductCanvas" class="card border-0 d-none">

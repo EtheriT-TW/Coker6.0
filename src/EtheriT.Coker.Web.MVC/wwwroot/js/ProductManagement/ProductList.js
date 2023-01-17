@@ -5,6 +5,8 @@ var $price_modal, priceModal, $techcert_body, techcertModal;
 
 var techcert_changedBySelectBox, techcert_clearSelectionButton, tag_changedBySelectBox, tag_clearSelectionButton;
 var techcert_check_list = [], techcert_text, tag_check_list = [], tag_text
+var upload_image, upload_360;
+var upload_image_list = [], upload_360image_list = [];
 
 function PageReady() {
     co.Product = {
@@ -150,10 +152,19 @@ function PageReady() {
         }
     };
 
-    const upload_image = co.FileUpload.ImageInit("ImageUpload", "單張圖片上傳");
-    const upload_360 = co.FileUpload.ImageInit("360Upload", "3D檢視圖片上傳");
     ElementInit();
 
+    upload_image = co.File.UploadInit("ImageUpload", "單張圖片上傳");
+    upload_360 = co.File.UploadInit("360Upload", "360圖片上傳");
+    $(window).on("fileUploadWithPreview:imagesAdded", function (event) {
+        upload_image_list = upload_image.cachedFileArray;
+        upload_360image_list = upload_360.cachedFileArray;
+    })
+
+    $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
+        upload_image_list = upload_image.cachedFileArray;
+        upload_360image_list = upload_360.cachedFileArray;
+    })
     $picker = $("#InputDate");
 
     co.Picker.Init($picker);
@@ -316,6 +327,14 @@ function PageReady() {
         }
         $tag.val(tag_text);
         tagModal.hide();
+    })
+
+    $("#InputYTLink").blur(function () {
+        var value = $("#InputYTLink").val();
+        var index = value.indexOf("watch?v=") + 8;
+        var url = "https://www.youtube.com/embed/" + value.substring(index)
+        var iframe_html = `<iframe class="yt_preview" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+        $(".yt_preview").append(iframe_html);
     })
 
     $(".btn_to_canvas").on("click", function (event) {
@@ -515,6 +534,11 @@ function FormDataClear() {
 
     techcert_text = "";
     TechCertList_ClearBtnClick();
+
+    upload_image_list = [];
+    upload_360image_list = [];
+    upload_image.resetPreviewPanel();
+    upload_360.resetPreviewPanel();
 }
 
 function contentReady(e) {
@@ -982,6 +1006,22 @@ function AddUp(success_text, error_text, target) {
         })
     }
 
+    var formData = new FormData();
+    for (var i in upload_image_list) {
+        var file_name = upload_image_list[i].name.substring(0, upload_image_list[i].name.indexOf(":"));
+        var file_type = upload_image_list[i].type;
+        var tempFile = new File([upload_image_list[i]], file_name, { type: file_type });
+        formData.append('files', tempFile)
+    }
+    formData.append("type", 1);
+    co.File.Upload(formData).done(function (result) {
+        if (result.success) {
+            console.log(result)
+        } else {
+            console.log("Error")
+            console.log(result)
+        }
+    });
     co.Product.AddUp.Product({
         Id: keyId,
         Title: $name.val(),

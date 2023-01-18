@@ -40,6 +40,23 @@ input[type="number"] {
     background-color: var(--color-gray-bg-dark);
 }
 
+.data_upload > .btn_upload_add {
+    width: 2.25rem;
+    height: 2.25rem;
+}
+
+.data_upload > ul > .upload_list {
+    cursor: default;
+}
+
+    .data_upload > ul > .upload_list > .ser_no {
+        width: 2.5rem;
+    }
+
+.data_upload > .preview_frame {
+    min-height: 350px;
+}
+
 /* Product Form */
 #ProductForm > div > div > .btn_input_pic {
     height: 3.5rem;
@@ -98,7 +115,8 @@ input[type="number"] {
     padding-left: 9.5rem;
 }
 
-.spec_title {
+.spec_title, .upload_title {
+    width: fit-content;
     line-height: 1.5rem;
     top: -0.75rem;
 }
@@ -108,4 +126,11 @@ input[type="number"] {
 #TechCertModal > .modal-dialog, #TagModal > .modal-dialog {
     max-width: 90vw;
     width: 800px;
+}
+
+
+@media only screen and (max-width: 576px) {
+    .data_upload > ul {
+        max-height: 100px;
+    }
 }

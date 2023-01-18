@@ -401,14 +401,34 @@ var Coker = {
                 dataType: "json"
             });
         },
-        UploadInit: function (elementId, label_text) {
+        UploadImageInit: function (elementId, label_text) {
+            const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                text: {
+                    browse: "　瀏 覽　",
+                    chooseFile: "選擇圖片...",
+                    label: "圖片上傳",
+                },
+            });
+            return upload;
+        },
+        Upload360Init: function (elementId, label_text) {
             const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
                 multiple: true,
                 text: {
                     browse: "　瀏 覽　",
-                    chooseFile: "選擇檔案...",
-                    label: label_text,
+                    chooseFile: "選擇多張圖片...",
+                    label: "360圖片上傳(檔名請按編號排序 ex: image-1.jpg、image-2.jpg...)",
                     selectedCount: "張圖片已選擇",
+                },
+            });
+            return upload;
+        },
+        UploadVideoInit: function (elementId, label_text) {
+            const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                text: {
+                    browse: "　瀏 覽　",
+                    chooseFile: "選擇檔案...",
+                    label: "影片上傳",
                 },
             });
             return upload;

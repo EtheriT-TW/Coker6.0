@@ -148,30 +148,73 @@
 			</div>
 
 			<form id="ProductForm" class="card-body needs-validation">
-				<div class="row">
-					<div class="custom-file-container col-12 col-sm-6 mb-3" data-upload-id="ImageUpload"></div>
-					<div class="custom-file-container col-12 col-sm-6 mb-3" data-upload-id="360Upload"></div>
-					<div class="ytlink input-group mb-3">
-						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up align-items-center">
-							<span class="material-symbols-outlined me-1">youtube_activity</span>Youtube影片連結
-						</div>
-						<input id="InputYTLink" class="form-control rounded text-start" type="text" aria-label="Input Youtube Link">
-					</div>
-
-					<div class="yt_preview mb-3"></div>
-
-					@*<iframe class="yt_preview" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>*@
-
-					@*<div class="d-flex flex-column align-items-center mb-1">
-					<input class="input_pic d-none" type="file" accept="image/*" />
-					<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent rounded-circle">
-					<span class="material-symbols-outlined">add_photo_alternate</span>
+				<div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
+					<ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
+						<li class="upload_list d-flex align-items-center border p-1 shadow-sm mb-1" data-uploadtype="1" data-edit="false">
+							<input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="1">
+							<span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+							<span class="title flex-grow-1">圖片 - xxxx.jpg</span>
+							<button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+								<span class="material-symbols-outlined">delete</span>
+							</button>
+						</li>
+						<li class="upload_list d-flex align-items-center border p-1 shadow-sm mb-1" data-uploadtype="2" data-edit="false">
+							<input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="2">
+							<span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+							<span class="title flex-grow-1">360 - xxxx-n.jpg</span>
+							<button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+								<span class="material-symbols-outlined">delete</span>
+							</button>
+						</li>
+						<li class="upload_list d-flex align-items-center border p-1 shadow-sm mb-1" data-uploadtype="3" data-edit="false">
+							<input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="3">
+							<span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+							<span class="title flex-grow-1">影片 - xxxx-n.mp4</span>
+							<button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+								<span class="material-symbols-outlined">delete</span>
+							</button>
+						</li>
+						<li class="upload_list d-flex align-items-center border p-1 shadow-sm mb-1" data-uploadtype="4" data-edit="false">
+							<input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="4">
+							<span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+							<span class="title flex-grow-1">Youtube - 名稱</span>
+							<button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+								<span class="material-symbols-outlined">delete</span>
+							</button>
+						</li>
+						<template id="TemplateUploadList">
+							<li class="upload_list d-flex align-items-center border p-1 shadow-sm mb-1" data-uploadtype="" data-edit="">
+								<input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
+								<span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+								<span class="title flex-grow-1"></span>
+								<button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+									<span class="material-symbols-outlined">delete</span>
+								</button>
+							</li>
+						</template>
+					</ul>
+					<button class="btn_upload_add position-absolute border rounded-circle bg-white shadow-sm d-flex justify-content-center align-items-center bottom-0 mb-4 end-50 me-2">
+						<span class="material-symbols-outlined">add</span>
 					</button>
-					<div class="px-2 fw-bold">加入照片</div>
+					<div class="col-12 col-sm-6 border p-2 preview_frame">
+						<div class="default_frame h-100 d-flex d-none justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+
+						<div class="select_frame flex-column d-none">
+							<button class="bg-transparent border mb-1 py-1" data-uploadtype="1">圖片</button>
+							<button class="bg-transparent border mb-1 py-1" data-uploadtype="2">360</button>
+							<button class="bg-transparent border mb-1 py-1" data-uploadtype="3">影片</button>
+							<button class="bg-transparent border mb-1 py-1" data-uploadtype="4">Youtube</button>
+						</div>
+
+						<div class="upload_frame custom-file-container d-none" data-upload-id="FileUpload"></div>
+
+						<div class="youtube_frame d-none flex-column h-100">
+							<div>Youtube連結網址</div>
+							<input class="rounded border text-black-50 w-100 lh-lg" type="text" aria-label="Youtube link" value="">
+							<div class="youtube_preview flex-grow-1"></div>
+						</div>
 					</div>
-					<button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
-					<span class="material-symbols-outlined fs-2">visibility</span>
-					</button>*@
+					<div class="position-absolute upload_title bg-white">檔案上傳</div>
 				</div>
 
 				@*<button class="btn_test">順序調換測試用按鈕</button>*@

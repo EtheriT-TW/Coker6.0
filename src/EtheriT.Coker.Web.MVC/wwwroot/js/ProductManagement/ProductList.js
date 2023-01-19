@@ -5,8 +5,7 @@ var $price_modal, priceModal, $techcert_body, techcertModal;
 
 var techcert_changedBySelectBox, techcert_clearSelectionButton, tag_changedBySelectBox, tag_clearSelectionButton;
 var techcert_check_list = [], techcert_text, tag_check_list = [], tag_text
-var upload_image, upload_360, upload_video, file_num = 4;
-var upload_image_list = [], upload_360image_list = [], upload_video_list = [];
+var file_num = 0;
 
 function PageReady() {
     co.Product = {
@@ -154,25 +153,110 @@ function PageReady() {
 
     ElementInit();
 
+    /* File Upload */
     $(".upload_list").on("click", function () {
         UploadFile($(this));
     })
-    $(".btn_upload_add").on("click", function (e) {
+    $(".upload_list > .btn_remove").on("click", function () {
+        $(this).parents("li").first().remove();
+        file_num -= 1;
+    })
+    $(".btn_upload_add > button").on("click", function (e) {
         e.preventDefault();
-        UploadListAdd();
+        UploadListAdd(true);
     })
 
-    //$("#InputYTLink").blur(function () {
-    //    var value = $("#InputYTLink").val();
-    //    var index = value.indexOf("watch?v=") + 8;
-    //    if (value != "" && index > -1 && url.length > value.substring(index)) {
-    //        var url = "https://www.youtube.com/embed/" + value.substring(index)
-    //        var iframe_html = `<iframe class="yt_preview" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-    //        $(".yt_preview").append(iframe_html);
-    //    } else if (value != "") {
-    //        /*$(".yt_preview").text("請輸入正確的Youtube連結");*/
-    //    }
-    //})
+    $(window).on("fileUploadWithPreview:imagesAdded", function (event) {
+        var cachedFile = upload_file.cachedFileArray;
+
+        $("#ProductForm > .data_upload > ul > li").each(function () {
+            var $self = $(this);
+            if ($self.data("edit")) {
+                if ($self.data("uploadtype") == 1 || $self.data("uploadtype") == 3) {
+                    var file_name = cachedFile[0].name.substring(0, cachedFile[0].name.indexOf(":"));
+                    var file_type = cachedFile[0].type;
+                    $self.data("file", new File(cachedFile, file_name, { type: file_type }));
+                    $self.find(".title").text(file_name);
+                } else if ($self.data("uploadtype") == 2) {
+                    var new_file_list = [];
+                    var file_name, file_type;
+                    cachedFile.forEach(function (file, index) {
+                        file_name = file.name.substring(0, file.name.indexOf(":"));
+                        file_type = file.type;
+                        new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
+                    })
+                    $self.data("file", new_file_list);
+                    var display_filename = file_name.substring(0, cachedFile[0].name.lastIndexOf("-")) + "-n" + file_name.substring(cachedFile[0].name.lastIndexOf("."));
+                    $self.find(".title").text(display_filename);
+                }
+            }
+        })
+    })
+
+    $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
+        $("#ProductForm > .data_upload > ul > li").each(function () {
+            var $self = $(this);
+            if ($self.data("edit")) {
+                var cachedFile = upload_file.cachedFileArray;
+                if (cachedFile.length < 1) {
+                    $self.data("file", "");
+                    $self.find(".title").text("");
+                } else {
+                    var new_file_list = [];
+                    cachedFile.forEach(function (file, index) {
+                        var file_name = file.name.substring(0, file.name.indexOf(":"));
+                        var file_type = file.type;
+                        new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
+                    })
+                    $self.data("file", new_file_list);
+                }
+            }
+        })
+    })
+
+    $(window).on("fileUploadWithPreview:clearButtonClicked", function (event) {
+        $("#ProductForm > .data_upload > ul > li").each(function () {
+            var $self = $(this);
+            if ($self.data("edit")) {
+                $self.data("file", "");
+                $self.find(".title").text("");
+            }
+        })
+    })
+
+    $("#BtnConnect").on("click", function (e) {
+        e.preventDefault();
+        var $self_list;
+        $("#ProductForm > .data_upload > ul > .upload_list").each(function () {
+            var $temp_self = $(this);
+            if ($temp_self.data("edit")) { $self_list = $temp_self; }
+        })
+        var value = $(this).prev().val();
+        var index = value.indexOf("watch?v=") + 8;
+        $(".youtube_preview").children("*").remove();
+        if (value != "" && index > -1 && value.substring(index) != "") {
+            var url = "https://www.youtube.com/embed/" + value.substring(index);
+            var iframe_html = `<iframe class="yt_preview w-100 h-100" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+            $(".youtube_preview").append(iframe_html);
+            $self_list.find(".title").text(value);
+            $self_list.data("file", value.substring(index));
+        } else {
+            var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
+            $(".youtube_preview").append(error_html);
+            $self_list.find(".title").text("");
+            $self_list.data("file", "");
+        }
+    })
+
+    $(function () {
+        $("#ProductForm > .data_upload > ul").sortable({
+            items: "> .upload_list",
+            axis: "y",
+            cursor: "move",
+            dropOnEmpty: false
+        });
+    });
+
     $picker = $("#InputDate");
 
     co.Picker.Init($picker);
@@ -534,13 +618,6 @@ function FormDataClear() {
 
     techcert_text = "";
     TechCertList_ClearBtnClick();
-
-    //upload_image_list = [];
-    //upload_360image_list = [];
-    //upload_video_list = [];
-    //upload_image.resetPreviewPanel();
-    //upload_360.resetPreviewPanel();
-    //upload_video.resetPreviewPanel();
 }
 
 function contentReady(e) {
@@ -1009,25 +1086,32 @@ function ISpecRepect() {
     4 = Youtube;
 ***************/
 function UploadFile($self) {
+    UploadPreviewFrameClear();
     var $parent = $self.parents(".data_upload").first();
-    $parent.find(".default_frame").addClass("d-flex");
-    $parent.find(".upload_frame").addClass("d-none");
-    $parent.find(".youtube_frame").removeClass("d-flex");
-    $parent.find(".select_frame").removeClass("d-flex");
     if ($self.data("edit")) {
         console.log("停止編輯");
-        if ($self.find(".title").text() == "") {
+        $self.data("edit", false)
+        if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
             $self.remove();
             file_num -= 1;
         }
-        $self.data("edit", false)
     } else {
         console.log("開始編輯");
+        if ($self.hasClass("upload_list") && $self.find(".title").text() != "") {
+            $(".upload_list").each(function () {
+                var $li_self = $(this);
+                if ($li_self.hasClass("upload_list") && $li_self.find(".title").text() == "") {
+                    $li_self.remove();
+                    file_num -= 1;
+                }
+            })
+        }
         upload_file = null;
         $parent.find(".upload_frame").children("*").remove();
         $(".upload_list").each(function () {
             $(this).data("edit", false);
         })
+        $self.data("edit", true)
         $parent.find(".default_frame").removeClass("d-flex");
 
         switch ($self.data("uploadtype")) {
@@ -1038,59 +1122,146 @@ function UploadFile($self) {
                 $select_frame.find("button").each(function () {
                     $(this).on("click", function (e) {
                         e.preventDefault();
-                        $self.data("uploadtype", $self.data("uploadtype") == 0 ? $(this).data("uploadtype") : $self.data("uploadtype"));
-                        $self.data("edit", false);
-                        UploadFile($self);
+                        if ($self.data("uploadtype") == 0) {
+                            $self.data("uploadtype", $(this).data("uploadtype"));
+                            $self.data("edit", false);
+                            UploadFile($self);
+                        }
                     })
                 })
                 break;
             case 1:
                 console.log("上傳圖片");
                 upload_file = co.File.UploadImageInit("FileUpload");
+                if ($self.data("file")) {
+                    upload_file.addFileToPreviewPanel($self.data("file"));
+                    $parent.find(".upload_frame").find("span").text($self.data("file").name);
+                }
                 $parent.find(".upload_frame").removeClass("d-none");
                 break;
             case 2:
                 console.log("上傳360");
                 upload_file = co.File.Upload360Init("FileUpload");
+                if ($self.data("file")) {
+                    upload_file.addFiles($self.data("file"));
+                    $parent.find(".upload_frame").find("span").text($self.data("file").length + " 張圖片已選擇");
+                }
                 $parent.find(".upload_frame").removeClass("d-none");
                 break;
             case 3:
                 console.log("上傳影片");
                 upload_file = co.File.UploadVideoInit("FileUpload");
+                if ($self.data("file")) {
+                    upload_file.addFileToPreviewPanel($self.data("file"));
+                    $parent.find(".upload_frame").find("span").text($self.data("file").name);
+                }
                 $parent.find(".upload_frame").removeClass("d-none");
                 break;
             case 4:
-                console.log("上傳Youtube")
+                if ($self.data("file")) {
+                    var url = "https://www.youtube.com/watch?v=" + $self.data("file");
+                    $parent.find(".youtube_frame").find("input").val(url);
+                    $("#BtnConnect").click();
+                } else {
+                    $parent.find(".youtube_frame").find("input").val("https://www.youtube.com/watch?v=");
+                    var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
+                    $(".youtube_preview").children("*").remove();
+                    $(".youtube_preview").append(error_html);
+                }
                 $parent.find(".youtube_frame").addClass("d-flex");
                 break;
         }
-        $self.data("edit", true)
     }
 }
 
-function UploadListAdd() {
+function UploadListAdd(IsNew) {
+    var item = $($("#TemplateUploadList").html()).clone();
+    var item_serno = item.find(".ser_no"),
+        item_btn_remove = item.find(".btn_remove");
 
-    $("#ProductForm > .data_upload > ul > li").each(function () {
+    if (IsNew) {
+        $("#ProductForm > .data_upload > ul > li").each(function () {
+            var $self = $(this);
+            if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
+                $self.remove();
+                file_num -= 1;
+            }
+        })
+
+        file_num += 1;
+        item.data("tempid", file_num);
+        item.data("serno", file_num);
+        item_serno.val(file_num);
+        item.data("uploadtype", 0);
+        item.data("edit", false);
+        item.on("click", function () {
+            UploadFile($(this));
+        })
+    } else {
+
+    }
+
+    item_serno.blur(function () {
         var $self = $(this);
-        if ($self.find(".title").text() == "") {
-            $self.remove();
-            file_num -= 1;
+        if ($self.val() < 1) {
+            $self.val(1);
+        } else if ($self.val() > $(".upload_list").length) {
+            $self.val($(".upload_list").length);
+        }
+        if ($self.val() != item.data("serno")) {
+            if ($self.val() > item.data("serno")) {
+                console.log("大於")
+                SortChange("bigger", item.data("serno"), $self.val())
+            } else if ($self.val() < item.data("serno")) {
+                console.log("小於")
+                SortChange("smaller", $self.val(), item.data("serno"))
+            }
+        } else {
+            console.log("等於")
+        }
+        item.data("serno", $self.val());
+    })
+
+    item_btn_remove.on("click", function (e) {
+        e.preventDefault();
+        if (item.data("serno") < file_num) {
+            SortChange("bigger", item.data("serno"), file_num);
+        }
+        item.data("edit") && UploadPreviewFrameClear();
+        item.remove();
+        file_num -= 1;
+    })
+
+    $("#ProductForm > .data_upload > ul > .btn_upload_add").before(item);
+    UploadFile(item);
+}
+
+function UploadPreviewFrameClear($self) {
+    var $self = $("#ProductForm > .data_upload > .preview_frame");
+    $self.find(".default_frame").addClass("d-flex");
+    $self.find(".upload_frame").addClass("d-none");
+    $self.find(".youtube_frame").removeClass("d-flex");
+    $self.find(".select_frame").removeClass("d-flex");
+}
+
+function SortChange(change, minindex, maxindex) {
+    $(".upload_list").each(function () {
+        var $li_self = $(this)
+        if (change == "bigger") {
+            if ($li_self.data("serno") > minindex && $li_self.data("serno") <= maxindex) {
+                console.log(` ${minindex} < ${$li_self.data("serno")} <= ${maxindex}`)
+                $li_self.find(".ser_no").val(parseInt($li_self.data("serno")) - 1);
+                $li_self.data("serno", $li_self.find(".ser_no").val());
+            }
+        } else if (change == "smaller") {
+            if ($li_self.data("serno") >= minindex && $li_self.data("serno") < maxindex) {
+                console.log(` ${minindex} <= ${$li_self.data("serno")} < ${maxindex}`)
+                $li_self.find(".ser_no").val(parseInt($li_self.data("serno")) + 1);
+                $li_self.data("serno", $li_self.find(".ser_no").val());
+            }
         }
     })
 
-    var item = $($("#TemplateUploadList").html()).clone();
-    var item_serno = item.find(".ser_no");
-
-    file_num += 1;
-    item_serno.val(file_num);
-    item.data("uploadtype", 0);
-    item.data("edit", false);
-    item.on("click", function () {
-        UploadFile($(this));
-    })
-
-    $("#ProductForm > .data_upload > ul").append(item);
-    UploadFile(item);
 }
 
 function AddUp(success_text, error_text, target) {
@@ -1100,22 +1271,36 @@ function AddUp(success_text, error_text, target) {
         })
     }
 
-    var formData = new FormData();
-    for (var i in upload_image_list) {
-        var file_name = upload_image_list[i].name.substring(0, upload_image_list[i].name.indexOf(":"));
-        var file_type = upload_image_list[i].type;
-        var tempFile = new File([upload_image_list[i]], file_name, { type: file_type });
-        formData.append('files', tempFile)
-    }
-    formData.append("type", 1);
-    co.File.Upload(formData).done(function (result) {
-        if (result.success) {
-            console.log(result)
+    var upload_addup_list = [];
+    $("#ProductForm > .data_upload > ul > .upload_list").each(function () {
+        var $li_self = $(this);
+        if ($li_self.data("file")) {
+            var obj = {}
+            obj["Files"] = $li_self.data("file");
+            obj["Guid"] = $li_self.data("id") ? $li_self.data("id") : "";
+            obj["TempId"] = $li_self.data("tempid") ? $li_self.data("tempid") : "";
+            obj["Sid"] = 1;
+            var number;
+            if ($li_self.data("uploadtype") == 1 || $li_self.data("uploadtype") == 3) {
+                number = 0;
+            } else if ($li_self.data("uploadtype") == 2) {
+                number = $li_self.data("file").length;
+            } else {
+                number = -1;
+            }
+            obj["Num"] = number;
+            obj["SerNo"] = $li_self.data("serno");
+            upload_addup_list.push(obj);
         } else {
-            console.log("Error")
-            console.log(result)
+            if ($li_self.hasClass("upload_list") && $li_self.find(".title").text() == "") {
+                $li_self.remove();
+                file_num -= 1;
+            }
         }
-    });
+    })
+    console.log(upload_addup_list)
+
+
     co.Product.AddUp.Product({
         Id: keyId,
         Title: $name.val(),

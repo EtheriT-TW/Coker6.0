@@ -16,29 +16,34 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     {
         private readonly IFileUploadAppService fileUploadAppService;
 
-        public FileUploadController(IFileUploadAppService fileUploadAppService) { 
+        public FileUploadController(IFileUploadAppService fileUploadAppService)
+        {
             this.fileUploadAppService = fileUploadAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files,int type,long? id)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, int type, long? id)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
-            switch (s) {
+            switch (s)
+            {
                 case FileBindTypeEnum.產品:
-                    return await fileUploadAppService.uploadProdtFiles(files, id??0);
+                    return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> getFileList(GetFileListDto dto) {
-            switch ((FileBindTypeEnum)dto.type) {
+        public async Task<ResponseMessageDto> getFileList(GetFileListDto dto)
+        {
+            switch ((FileBindTypeEnum)dto.type)
+            {
                 default:
                     return await fileUploadAppService.getHtmlContentFiles();
             }
         }
         [HttpDelete]
-        public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto) {
+        public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto)
+        {
             return await fileUploadAppService.deleteFile(dto.key);
         }
     }

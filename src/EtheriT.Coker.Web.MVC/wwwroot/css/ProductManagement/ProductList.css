@@ -131,6 +131,6 @@ input[type="number"] {
 
 @media only screen and (max-width: 576px) {
     .data_upload > ul {
-        max-height: 100px;
+        max-height: 150px;
     }
 }

@@ -249,11 +249,30 @@ function PageReady() {
     })
 
     $(function () {
+        var drap_sy, drap_ey, drap_itemh;
         $("#ProductForm > .data_upload > ul").sortable({
             items: "> .upload_list",
             axis: "y",
             cursor: "move",
-            dropOnEmpty: false
+            dropOnEmpty: false,
+            start: function (event, ui) {
+                drap_sy = ui.item.offset().top;
+                drap_itemh = ui.item.height() * 1.5
+            },
+            stop: function (event, ui) {
+                drap_ey = ui.item.offset().top;
+                var move = Math.trunc((drap_ey - drap_sy) / drap_itemh);
+                var $ser_no = ui.item.find(".ser_no");
+                if (move > 0) {
+                    $ser_no.val(parseInt($ser_no.val()) + move)
+                    SortChange("bigger", ui.item.data("serno"), $ser_no.val())
+                    ui.item.data("serno", $ser_no.val())
+                } else if (move < 0) {
+                    $ser_no.val(parseInt($ser_no.val()) + move)
+                    SortChange("smaller", $ser_no.val(), ui.item.data("serno"))
+                    ui.item.data("serno", $ser_no.val())
+                }
+            }
         });
     });
 
@@ -308,12 +327,11 @@ function PageReady() {
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回商品列表", "資料將不被保存", "確定", "取消", function () {
-            history.back();
+            window.location.hash = "";
         });
     })
     $(".btn_add").on("click", function () {
         window.location.hash = 0;
-        HashDataEdit();
     });
     $(".btn_input_pic").on("click", function (event) {
         event.preventDefault();
@@ -618,6 +636,10 @@ function FormDataClear() {
 
     techcert_text = "";
     TechCertList_ClearBtnClick();
+
+    UploadPreviewFrameClear();
+    $("#ProductForm > .data_upload > ul").children(".upload_list").remove();
+    file_num = 0;
 }
 
 function contentReady(e) {
@@ -635,6 +657,7 @@ function hashChange(e) {
 }
 
 function HashDataEdit() {
+    FormDataClear();
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
@@ -642,7 +665,6 @@ function HashDataEdit() {
                 if (hash.includes('-1')) {
                     MoveToCanvas();
                 } else {
-                    FormDataClear();
                     SpecAdd(null);
                     MoveToContent();
                 }
@@ -678,7 +700,6 @@ function paletteButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    FormDataClear();
     co.Product.Get.ProdStock(result.id).done(function (all_result) {
         all_result.forEach(function (result) {
             co.Product.Get.ProdPrice(result.id).done(function (all_result) {
@@ -1089,14 +1110,12 @@ function UploadFile($self) {
     UploadPreviewFrameClear();
     var $parent = $self.parents(".data_upload").first();
     if ($self.data("edit")) {
-        console.log("停止編輯");
         $self.data("edit", false)
         if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
             $self.remove();
             file_num -= 1;
         }
     } else {
-        console.log("開始編輯");
         if ($self.hasClass("upload_list") && $self.find(".title").text() != "") {
             $(".upload_list").each(function () {
                 var $li_self = $(this);
@@ -1116,7 +1135,6 @@ function UploadFile($self) {
 
         switch ($self.data("uploadtype")) {
             case 0:
-                console.log("新");
                 var $select_frame = $parent.find(".select_frame")
                 $select_frame.addClass("d-flex");
                 $select_frame.find("button").each(function () {
@@ -1131,7 +1149,6 @@ function UploadFile($self) {
                 })
                 break;
             case 1:
-                console.log("上傳圖片");
                 upload_file = co.File.UploadImageInit("FileUpload");
                 if ($self.data("file")) {
                     upload_file.addFileToPreviewPanel($self.data("file"));
@@ -1140,7 +1157,6 @@ function UploadFile($self) {
                 $parent.find(".upload_frame").removeClass("d-none");
                 break;
             case 2:
-                console.log("上傳360");
                 upload_file = co.File.Upload360Init("FileUpload");
                 if ($self.data("file")) {
                     upload_file.addFiles($self.data("file"));
@@ -1149,7 +1165,6 @@ function UploadFile($self) {
                 $parent.find(".upload_frame").removeClass("d-none");
                 break;
             case 3:
-                console.log("上傳影片");
                 upload_file = co.File.UploadVideoInit("FileUpload");
                 if ($self.data("file")) {
                     upload_file.addFileToPreviewPanel($self.data("file"));
@@ -1210,14 +1225,12 @@ function UploadListAdd(IsNew) {
         }
         if ($self.val() != item.data("serno")) {
             if ($self.val() > item.data("serno")) {
-                console.log("大於")
                 SortChange("bigger", item.data("serno"), $self.val())
+                $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).after(item);
             } else if ($self.val() < item.data("serno")) {
-                console.log("小於")
                 SortChange("smaller", $self.val(), item.data("serno"))
+                $("#ProductForm > .data_upload > ul").children("li").eq(parseInt($self.val()) - 1).before(item);
             }
-        } else {
-            console.log("等於")
         }
         item.data("serno", $self.val());
     })
@@ -1236,7 +1249,7 @@ function UploadListAdd(IsNew) {
     UploadFile(item);
 }
 
-function UploadPreviewFrameClear($self) {
+function UploadPreviewFrameClear() {
     var $self = $("#ProductForm > .data_upload > .preview_frame");
     $self.find(".default_frame").addClass("d-flex");
     $self.find(".upload_frame").addClass("d-none");
@@ -1249,13 +1262,11 @@ function SortChange(change, minindex, maxindex) {
         var $li_self = $(this)
         if (change == "bigger") {
             if ($li_self.data("serno") > minindex && $li_self.data("serno") <= maxindex) {
-                console.log(` ${minindex} < ${$li_self.data("serno")} <= ${maxindex}`)
                 $li_self.find(".ser_no").val(parseInt($li_self.data("serno")) - 1);
                 $li_self.data("serno", $li_self.find(".ser_no").val());
             }
         } else if (change == "smaller") {
             if ($li_self.data("serno") >= minindex && $li_self.data("serno") < maxindex) {
-                console.log(` ${minindex} <= ${$li_self.data("serno")} < ${maxindex}`)
                 $li_self.find(".ser_no").val(parseInt($li_self.data("serno")) + 1);
                 $li_self.data("serno", $li_self.find(".ser_no").val());
             }

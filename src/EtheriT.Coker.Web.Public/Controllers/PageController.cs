@@ -6,6 +6,8 @@ using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -23,7 +25,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.freightAppService = freightAppService;
             this.webMenuApplication = webMenuApplication;
         }
-        public async Task<IActionResult> IndexAsync(string key, int id, string search)
+        public async Task<IActionResult> IndexAsync(string key,string option, int id, string search)
         {
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             PageViewModel model = new PageViewModel
@@ -32,6 +34,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 search = search ?? "".Trim(),
                 freightModels = freight
             };
+            switch (option) {
+                case "":
+                    break;
+                case "prod":
+                    break;
+            }
             string view;
             if (!string.IsNullOrEmpty(key))
             {
@@ -47,7 +55,20 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 else
                 {
                     model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key });
-                    view = "Index";
+                    
+                    if (string.IsNullOrEmpty(model.PageData.Html))
+                    {
+                        Response.StatusCode = 404;
+                        view = "Error/404";
+                    }
+                    else {
+                        if (string.IsNullOrEmpty(model.PageData.Description))
+                        {
+                            string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                            model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                        }
+                        view = "Index";
+                    }
                 }
             }
             else

@@ -8,5 +8,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View();
         }
+        public IActionResult ComponerManager()
+        {
+            return View("ComponerManager");
+        }
     }
 }

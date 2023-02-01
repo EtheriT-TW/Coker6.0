@@ -336,6 +336,57 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                 }
             );
+            modelBuilder.Entity<ObjectType>().HasData(
+                new ObjectType { 
+                    Id=1,
+                    Title = "目錄",
+                    SerNo= 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 2,
+                    Title = "廣告",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 3,
+                    Title = "編排",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 8,
+                    Title = "進入廣告",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 12,
+                    Title = "浮動廣告",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 99,
+                    Title = "更多",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ObjectType
+                {
+                    Id = 999,
+                    Title = "自訂",
+                    SerNo = 500,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
         }
     }
 }

@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230201101356_Added_ObjectType_Seed")]
+    partial class Added_ObjectType_Seed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -288,8 +290,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
-
-                    b.HasIndex("Type");
 
                     b.ToTable("Html_Contents");
                 });
@@ -2500,14 +2500,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EtheriT.Coker.Core.Models.ObjectType", "ObjectClassify")
-                        .WithMany("html_Contents")
-                        .HasForeignKey("Type")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ObjectClassify");
-
                     b.Navigation("Website");
                 });
 
@@ -2810,11 +2802,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Logisticstype", b =>
                 {
                     b.Navigation("LogisticsType_Payments");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.ObjectType", b =>
-                {
-                    b.Navigation("html_Contents");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Header", b =>

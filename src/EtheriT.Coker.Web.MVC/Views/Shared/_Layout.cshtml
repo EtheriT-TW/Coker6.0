@@ -2,8 +2,11 @@
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 <!DOCTYPE html>
 <html lang="zh-tw">
-<head>
-	<meta charset="utf-8" />
+<head>@{
+		string PageName = "";
+		if (ViewData["PageName"] != null) PageName = ViewData["PageName"].ToString();
+		else PageName = ViewData["Title"].ToString();
+	}<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>@ViewData["Title"] - EtheriT.Coker.Web.MVC</title>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />

@@ -6,7 +6,7 @@ namespace EtheriT.Coker.Application.Dto
     {
         public long Id { get; set; }
         public Guid? TId { get; set; }
-        public int Type { get; set; }
+        public long Type { get; set; }
         public string? TypeName { get; set; }
         public string? Img { get; set; }
         public string? Icon { get; set; }

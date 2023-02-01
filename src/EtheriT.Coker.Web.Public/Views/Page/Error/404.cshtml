@@ -1,0 +1,20 @@
+﻿@using EtheriT.Coker.Web.Public.Models;
+@model PageViewModel
+@{
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = "頁面不存在";
+}
+<style>
+    .container{ 
+        padding:10rem 0;
+        text-align:center;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>頁面尚未公開</h1>
+            <p>敬請期待</p>
+        </div>
+    </div>
+</div>

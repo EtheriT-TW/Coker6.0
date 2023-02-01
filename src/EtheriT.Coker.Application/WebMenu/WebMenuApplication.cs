@@ -152,15 +152,14 @@ namespace EtheriT.Coker.Application
             {
                 var side = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
                 var menu = await db.WebMenus.Where(e => e.FK_WebsiteId == siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
-                if (menu != null && side != null)
-                {
-                    mapper.Map(menu, result);
-                    result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                if (side != null) {
                     result.SiteName = side.Title;
-                    result.CurrentUrl = $"/{menu.RouterName}";
-                }
-                else {
-                    result.SiteName = "德瑞克";
+                    if (menu != null)
+                    {
+                        mapper.Map(menu, result);
+                        result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                        result.CurrentUrl = $"/{menu.RouterName}";
+                    }
                 }
             }
             catch { }

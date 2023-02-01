@@ -7,7 +7,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public long FK_WebsiteId { get; set; }
         public long? Menu_id { get; set; }
-        public int Type { get; set; }
+        public long Type { get; set; }
         [StringLength(100)] public string? Img { get; set; }
         [StringLength(100)] public string? Icon { get; set; }
         [MaxLength] public string? Html { get; set; }
@@ -22,5 +22,6 @@ namespace EtheriT.Coker.Core.Models
         public virtual DateTime? EndDate { get; set; }
         public bool permanent { get; set; }
         public Website? Website { get; set; }
+        public ObjectType ObjectClassify { get; set; }
     }
 }

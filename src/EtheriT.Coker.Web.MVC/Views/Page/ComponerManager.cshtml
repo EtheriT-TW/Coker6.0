@@ -1,9 +1,11 @@
 ﻿@{
-    ViewData["Title"] = "CustomPage";
+    ViewData["Title"] = "ComponerManager";
+    ViewData["PageName"] = "元件管理";
 }
 <!--導入grapesjs-->
 <link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
 <script src="/lib/grapesjs/grapes.min.js"></script>
+<script src="~/js/Grapes/grapesjs-Coker6.min.js" type="module" asp-append-version="true"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
@@ -11,10 +13,8 @@
 <script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js"></script>
-<script src="~/js/Grapes/locale/tw.js" asp-append-version="true"></script>
-<script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
+<script src="~/js/Grapes/locale/tw.js" type="module" asp-append-version="true"></script>
 
 <!--導入menuEditor-->
 <script type="text/javascript" src="/lib/jquery-menu-editor/jquery-menu-editor.min.js" asp-append-version="true"></script>
@@ -27,7 +27,7 @@
 
 <div class="py-2 px-4 position-relative">
     <div id="TopLine" class="d-flex justify-content-between mb-4">
-        <div class="title fw-bold fs-4">自訂頁面</div>
+        <div class="title fw-bold fs-4">@ViewData["PageName"]<span id="ComponerName"></span></div>
         <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
             網站地圖
         </a>

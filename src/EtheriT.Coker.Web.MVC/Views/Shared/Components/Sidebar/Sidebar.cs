@@ -110,6 +110,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Controller="Page",
                                 Action="Index",
                                 Icon="",
+                            },
+                            new JobMenu{ 
+                                PageName="ComponerManager",
+                                Title="元件管理",
+                                Controller="Page",
+                                Action="ComponerManager",
+                                Icon="",
                             }
                         }
                     },

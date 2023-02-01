@@ -47,6 +47,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileUpload> FileUploads { get; set; }
         public DbSet<FileBind> FileBinds { get; set; }
         public DbSet<FileBindMore> FileBindMores { get; set; }
+        public DbSet<ObjectType> ObjectTypes { get; set; }
 
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options): base(options)
@@ -120,7 +121,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Html_Content>(o =>
             {
-                o.HasOne(u => u.Website).WithMany(u => u.Html_Contents).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasOne(c => c.Website).WithMany(u => u.Html_Contents).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasOne(c => c.ObjectClassify).WithMany(o => o.html_Contents).HasForeignKey(c => c.Type);
             });
             modelBuilder.Entity<TechnicalCertificate>(o =>
             {

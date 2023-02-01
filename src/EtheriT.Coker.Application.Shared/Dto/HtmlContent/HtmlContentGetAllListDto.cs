@@ -5,7 +5,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.EnterAd
     public class HtmlContentGetAllListDto
     {
         public long Id { get; set; }
-        public int Type { get; set; }
+        public long Type { get; set; }
         public string? Title { get; set; }
         public string? Img { get; set; }
         public string? Html { get; set; }

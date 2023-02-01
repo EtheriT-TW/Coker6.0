@@ -12,6 +12,7 @@ var grapesInit = function (options) {
             localeFallback: 'tw',
         },
         assetManager: {
+            custom: false,
             uploadFile: function (e) {
                 var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
                 var formData = new FormData();
@@ -39,6 +40,7 @@ var grapesInit = function (options) {
             'grapesjs-custom-code',
             'grapesjs-tui-image-editor',
             'grapesjs-blocks-table',
+            'grapesjs-parser-postcss',
             'grapesjs-Coker6'
         ],
         pluginsOpts: {
@@ -142,7 +144,7 @@ var grapesInit = function (options) {
             }
         },
         fromElement: true,
-        storageManager: { autoload: 0 }
+        storageManager: { autoload: false }
     });
 
     return editor;

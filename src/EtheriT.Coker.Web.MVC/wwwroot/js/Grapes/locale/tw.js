@@ -1,6 +1,6 @@
 ﻿const traitInputAttr = { placeholder: '例子. 输入文字' };
 
-export let tw = {
+let tw = {
     assetManager: {
         addButton: '添加图片',
         inputPlh: 'http://path/to/the/image.jpg',

@@ -29,6 +29,7 @@ using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Configuration;
+using Microsoft.AspNetCore.Mvc.Razor;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -116,6 +117,11 @@ builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
+
+//多語系
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddMvc()
+        .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix);//要使用View多國語系的話就加這行程式碼
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<VirtualDirectory>(builder.Configuration.GetSection("VirtualDirectory"));

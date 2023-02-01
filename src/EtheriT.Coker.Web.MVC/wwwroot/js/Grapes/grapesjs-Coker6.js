@@ -1,6 +1,4 @@
-﻿import { tw } from '/js/Grapes/locale/tw.js';
-
-grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
+﻿grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     let settings = {
         save: function () { return false; },
         import: function () { return false; },
@@ -18,35 +16,77 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
     editor.I18n.setMessages({tw: tw});
 
     /*檔案管理*/
+    AssetManager.addType('image', {
+        view: {
+            attributes: { 'Guid': 'custom-value' }
+        }
+    });
+
+    editor.on('asset:add', (option) => {
+
+        console.log(option);
+    });
+    
+    editor.on('run:open-assets', () => {
+        const modal = editor.Modal;
+        const modalBody = modal.getContentEl();
+        const uploader = modalBody.querySelector('.gjs-am-file-uploader');
+        const assetsHeader = modalBody.querySelector('.gjs-am-assets-header');
+        const assetsBody = modalBody.querySelector('.gjs-am-assets-cont');
+        const assetsFilter = modalBody.querySelector('.gjs-am-assets-filter');
+        if (!!!assetsFilter) { 
+            const filter = $(`
+                <div class="input-group mb-3 gjs-am-assets-filter">
+                    <input type="text" class="form-control" placeholder="搜尋檔案名稱" aria-label="搜尋檔案名稱" aria-describedby="button-addon2">
+                    <button class="btn btn-outline-secondary" type="button" id="button-addon2">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                </div>
+            `);
+            filter.find(".btn").on("click", () => {
+                const search = filter.children('[type="text"]').val();
+                if (search == "") $(".gjs-am-asset-image").removeClass("d-none");
+                else {
+                    $(".gjs-am-asset-image").each(function () {
+                        const $image = $(this);
+                        const imageName = $image.find(".gjs-am-dimensions").text();
+                        if (imageName.indexOf(search) < 0) $image.addClass("d-none");
+                        else $image.removeClass("d-none");
+                    });
+                }
+            });
+            assetsHeader.style.display = 'none'
+            assetsBody.insertBefore(filter[0], assetsHeader);
+        }
+    });
+
+    //檔案刪除
+    editor.on("asset:remove", (asset) => {
+        const guid = asset.get('guid');
+        co.File.Delete(guid).done(function (result) {
+            console.log(result);
+        });
+    });
+
     //載入所有檔案
     co.File.getFileList(0).done(function (result) {
         if (result.success) {
             var myJSON = [];
             settings.asset = result.files;
             $(result.files).each(function (index) {
-                myJSON.push(this.path);
+                myJSON.push({
+                    src: this.path,
+                    name: `${this.name}`,
+                    guid: this.guid
+                });
             });
             var images = myJSON;
             editor.AssetManager.add(images);
         }
     });
-    //檔案刪除
-    editor.on("asset:remove", (asset) => {
-        let guid;
-        var filename = asset.get('src').split('/').reverse()[0].split('.')[0];
-        settings.asset.every(function (item, index) {
-            if (item.path.indexOf(filename) > 0) {
-                guid = item.guid
-                return false;
-            } else return true;
-        });
-        co.File.Delete(guid).done(function (result) {
-            console.log(result);
-        });
-    });
 
     //元件參數設定
-    editor.DomComponents.addType('超連結', {
+    editor.DomComponents.addType('link', {
         isComponent: el => el.tagName == 'A',
         model: {
             defaults: {
@@ -58,7 +98,6 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         name: 'file', type: 'button',
                         text: "選擇檔案",
                         command: editor => {
-                            console.log(AssetManager);
                             AssetManager.open();
                             AssetManager.onSelect((resule) => {
                                 editor.getSelected().set("attributes", { "href": resule.id });
@@ -74,12 +113,6 @@ grapesjs.plugins.add('grapesjs-Coker6', (editor, options) => {
                         ]
                     }
                 ]
-            },
-            init() {
-                this.on('change:attributes:href', this.handleHrefChange);
-            },
-            handleHrefChange() {
-                //console.log('Input file changed to: ', this.getAttributes().file);
             }
         },
     });

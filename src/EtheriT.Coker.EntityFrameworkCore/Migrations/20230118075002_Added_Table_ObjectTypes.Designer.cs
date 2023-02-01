@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230118075002_Added_Table_ObjectTypes")]
+    partial class Added_Table_ObjectTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -288,8 +290,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
-
-                    b.HasIndex("Type");
 
                     b.ToTable("Html_Contents");
                 });
@@ -674,71 +674,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ObjectTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "目錄"
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "廣告"
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "編排"
-                        },
-                        new
-                        {
-                            Id = 8L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "進入廣告"
-                        },
-                        new
-                        {
-                            Id = 12L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "浮動廣告"
-                        },
-                        new
-                        {
-                            Id = 99L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "更多"
-                        },
-                        new
-                        {
-                            Id = 999L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            SerNo = 500,
-                            Title = "自訂"
-                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Details", b =>
@@ -2500,14 +2435,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EtheriT.Coker.Core.Models.ObjectType", "ObjectClassify")
-                        .WithMany("html_Contents")
-                        .HasForeignKey("Type")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ObjectClassify");
-
                     b.Navigation("Website");
                 });
 
@@ -2810,11 +2737,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Logisticstype", b =>
                 {
                     b.Navigation("LogisticsType_Payments");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.ObjectType", b =>
-                {
-                    b.Navigation("html_Contents");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Header", b =>

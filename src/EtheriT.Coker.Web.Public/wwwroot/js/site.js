@@ -1,6 +1,6 @@
-﻿
-function ready() {
+﻿function ready() {
     const $conten = $("Content");
+    const $PostCSS = $("#PostCSS");
     Coker.Token = {
         GetToken: function () {
             return $.ajax({
@@ -16,7 +16,6 @@ function ready() {
             });
         }
     };
-
     if ($conten.length > 0) {
         let s = Coker.stringManager.ReplaceAndSinge($conten.text());
         let ele = document.createElement('span');
@@ -27,6 +26,14 @@ function ready() {
         if ($(".one_swiper,.two_swiper,.four_swiper").length > 0) SwiperInit({ autoplay:true});
         if ($(".masonry").length > 0) FrameInit();
         if ($(".frame").length > 0) ViewTypeChangeInit();
+    }
+    if ($PostCSS.length > 0) {
+        const $mainCss = $("#frameCss")
+        let s = Coker.stringManager.ReplaceAndSinge($PostCSS.text());
+        let ele = document.createElement('span');
+        ele.innerHTML = s;
+        $mainCss.text(ele.textContent || ele.innerText);
+        $PostCSS.remove();
     }
 
     $.cookie('Member_Name', "會員一", { path: '/' });
@@ -357,9 +364,13 @@ var Coker = {
     },
     stringManager: {
         ReplaceAndSinge: function (str) {
-            var s = str.replace(/&amp;/g, "&");
-            if (s.indexOf("&amp;") > 0) return _c.Data.ReplaceAndSinge(s);
-            else return s
+            if (!!!str) return "";
+            else {
+                var s = str.replace(/&amp;/g, "&");
+                if (s.indexOf("&amp;") > 0) return _c.stringManager.ReplaceAndSinge(s);
+                else return s
+            }
         }
     }
 }
+let _c = Coker;

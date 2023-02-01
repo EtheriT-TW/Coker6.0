@@ -6,7 +6,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>@ViewData["PageName"]|@ViewData["SideName"]</title>
+	<title>@ViewData["PageName"] 【@ViewData["SideName"]】</title>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
 	<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
@@ -27,7 +27,7 @@
 	<meta property="og:site_name" content="@ViewData["SideName"]"/>
 	<meta property="og:description" content="@ViewData["Description"]" />
 	<meta property="og:locale" content="zh-tw" />
-	<style>@ViewData["css"]</style>
+	<style id="frameCss"></style>
 </head>
 <body onload="ready()">
 	<div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">

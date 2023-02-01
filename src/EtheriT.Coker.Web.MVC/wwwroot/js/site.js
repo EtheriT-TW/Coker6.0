@@ -68,7 +68,7 @@ var PreLoader;
         $(this).find(".card").addClass("active-app");
         $(this).find(".card-body").append(`<span class="material-icons app-selected md-16">check</span>`);
     });
-    $("#switchApp .switch").on("click",function(){
+    $("#switchApp .switch").on("click", function () {
         co.WebSite.exchange($(".active-app").first().data("id")).done(function () {
             location.reload()
         });
@@ -168,6 +168,10 @@ var PreLoader;
         }
     };
     a.fn.setThemeTone()
+
+    $(".btn_gotop").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
+    })
 })(jQuery);
 
 function toggleFullScreen() {

@@ -16,6 +16,7 @@
     "chosen-js": "^1.8.7",
     "daterangepicker": "^3.1.0",
     "devextreme": "21.2.10",
+    "file-upload-with-preview": "^5.0.8",
     "globby": "^9.2.0",
     "grapesjs": "^0.20.1",
     "grapesjs-blocks-basic": "^1.0.1",

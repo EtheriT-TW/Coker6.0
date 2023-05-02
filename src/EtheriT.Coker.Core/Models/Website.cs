@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Core.Models
         public string? Logo { get; set; }
         public string Locale { get; set; }
         public string Type { get; set; }
+        public int? LayoutType { get; set; }
         public string? Keywords { get; set; }
         public virtual DateTime? StartDate { get; set; }
         public virtual DateTime? EndDate { get; set; }

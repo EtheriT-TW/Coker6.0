@@ -52,6 +52,7 @@ builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
+builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

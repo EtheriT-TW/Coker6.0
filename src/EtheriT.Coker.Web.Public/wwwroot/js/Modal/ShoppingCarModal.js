@@ -9,7 +9,6 @@ function ShoppingCarModalInit() {
     const myModal = document.getElementById('ShoppingCarModal')
 
     myModal.addEventListener('shown.bs.modal', () => {
-        /*console.log($modal.data("pid"))*/
     })
 
     myModal.addEventListener('hidden.bs.modal', () => {

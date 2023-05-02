@@ -1,6 +1,8 @@
 ﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
+
 <!DOCTYPE html>
 <html lang="zh-tw">
 <head>
@@ -12,19 +14,19 @@
 	<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
 	<link rel="stylesheet" href="~/lib/sweetalert2/dist/sweetalert2.min.css" />
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-	<link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+	@await Component.InvokeAsync(nameof(LayoutType))
 	<link rel="stylesheet" href="~/EtheriT.Coker.Web.Public.styles.css" asp-append-version="true" />
-	
-    <meta name="author" content="易碩網際科技股份有限公司" />
+
+	<meta name="author" content="易碩網際科技股份有限公司" />
 	<meta name="copyright" content="易碩網際科技股份有限公司" />
 	<meta itemprop="name" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
 	<meta itemprop="description" content="@ViewData["Description"]" />
 	<meta name="twitter:title" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
 	<meta name="twitter:description" content="@ViewData["Description"]" />
-	<meta property="og:title" content="@ViewData["PageName"]｜@ViewData["SideName"]"/>
-	<meta property="og:type" content="website"/>
-	<meta property="og:url" content="@ViewData["CurrentUrl"]"/>
-	<meta property="og:site_name" content="@ViewData["SideName"]"/>
+	<meta property="og:title" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="@ViewData["CurrentUrl"]" />
+	<meta property="og:site_name" content="@ViewData["SideName"]" />
 	<meta property="og:description" content="@ViewData["Description"]" />
 	<meta property="og:locale" content="zh-tw" />
 	<style id="frameCss"></style>
@@ -159,6 +161,9 @@
 	<script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
 	<script src="https://scaleflex.cloudimg.io/v7/plugins/js-cloudimage-360-view/latest/js-cloudimage-360-view.min.js?func=proxy"></script>
 	<script src="~/js/site.min.js" asp-append-version="true"></script>
+	<script>
+		orgname = "lcb"
+	</script>
 	@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

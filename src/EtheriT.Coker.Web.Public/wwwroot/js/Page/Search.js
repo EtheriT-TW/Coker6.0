@@ -32,7 +32,6 @@
     $(".btn_share").hover(ProShare);
 
     $(".btn_cart").on("click", function () {
-        //$frame = $(this).parents(".frame").first();
         $("#ShoppingCarModal > .Modal").data("pid", 1);
         ModalDefaultSet();
     });

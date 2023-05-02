@@ -48,6 +48,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileBind> FileBinds { get; set; }
         public DbSet<FileBindMore> FileBindMores { get; set; }
         public DbSet<ObjectType> ObjectTypes { get; set; }
+        public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
 
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options): base(options)
@@ -158,7 +159,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(b => b.fileUpload).WithMany(f => f.fileBinds).HasForeignKey(f => f.FK_FileUploadId);
                 o.HasKey(b => b.Guid);
             });
-            
+
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }

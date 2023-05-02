@@ -5,7 +5,5 @@
     });
 
     $(".grid-item > .content").on("click", function () {
-        //console.log($(this))
-        //console.log("Be Click")
     })
 }

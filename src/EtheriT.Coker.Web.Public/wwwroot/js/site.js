@@ -1,6 +1,16 @@
-﻿function ready() {
+﻿var OrgName = "Page";
+
+function ready() {
     const $conten = $("Content");
     const $PostCSS = $("#PostCSS");
+
+    $("link").each(function () {
+        var $self = $(this);
+        if ($self.data("orgname") != undefined) {
+            OrgName = $self.data("orgname");
+        }
+    });
+
     Coker.Token = {
         GetToken: function () {
             return $.ajax({
@@ -23,7 +33,7 @@
         $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");
-        if ($(".one_swiper,.two_swiper,.four_swiper").length > 0) SwiperInit({ autoplay:true});
+        if ($(".one_swiper,.two_swiper,.four_swiper").length > 0) SwiperInit({ autoplay: true });
         if ($(".masonry").length > 0) FrameInit();
         if ($(".frame").length > 0) ViewTypeChangeInit();
     }

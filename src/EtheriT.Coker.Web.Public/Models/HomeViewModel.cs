@@ -7,5 +7,6 @@ namespace EtheriT.Coker.Web.Public.Models
     {
         public List<HtmlContentDisplayDto>? enterAd { get; set; }
         public List<ProdGetDisplayDto>? guessLike { get; set; }
+        public String site_name { get; set; }
     }
 }

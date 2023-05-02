@@ -37,7 +37,7 @@ function ProdHistorySet() {
             if (result.length > 0) {
                 $CollapseHistory.removeClass("d-none");
                 result.forEach(function (item) {
-                    var history_prod = `<li class='history_prod mb-1 border bg-white' data-pid='${item.id}'><a class='pro_link' href='/Toilet/${item.id}'><img class='img-fluid' src='/upload/product/pro_0${item.id}.png' alt='' /></a></li>`;
+                    var history_prod = `<li class='history_prod mb-1 border bg-white' data-pid='${item.id}'><a class='pro_link' href='${OrgName}/Toilet/${item.id}'><img class='img-fluid' src='/upload/product/pro_0${item.id}.png' alt='' /></a></li>`;
                     $CollapseHistory.children(".history_list").append(history_prod);
                     console.log(history_prod)
                     console.log(item)

@@ -75,7 +75,7 @@ function PageReady() {
             el: ".swiper_pagination > .swiper_pagination_buystep",
             clickable: true,
             renderBullet: function (index, className) {
-                return '<span class="' + className + '">' + (index + 1) + "</span>";
+                return `<span class="${className}">${index + 1}</span>`;
             },
         },
         navigation: {
@@ -276,7 +276,7 @@ function CartAdd(result) {
         item_btn_move_to_favorites = item.find(".btn_move_to_favorites");
 
     item.data("scid", result.scId);
-    item_link.attr("href", "/Toilet/" + result.pId);
+    item_link.attr("href", `${OrgName}/Toilet/` + result.pId);
     item_link.on("click", function () {
         ClickLog(result.pId);
     });
@@ -741,7 +741,7 @@ function PurchaseAdd(result, item_list_ul) {
         item_quantity = item.find(".pro_quantity"),
         item_subtotal = item.find(".pro_subtotal");
 
-    item_link.attr("href", "/Toilet/" + result.pId);
+    item_link.attr("href", "${OrgName}/Toilet/" + result.pId);
     item_link.on("click", function () {
         ClickLog(result.pId);
     });

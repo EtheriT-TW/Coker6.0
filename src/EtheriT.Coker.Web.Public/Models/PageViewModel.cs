@@ -1,7 +1,4 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.Freight;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
-using EtheriT.Coker.Application.Shared.Dto.Marquee;
-using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
 namespace EtheriT.Coker.Web.Public.Models

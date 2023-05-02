@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Marquee;
+﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -9,18 +10,25 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
     {
 
         private readonly IMarqueeAppService marqueeAppService;
+        private readonly IWebsiteApplication websiteApplication;
         private readonly IConfiguration Configuration;
         public Header(
             IMarqueeAppService marqueeAppService,
+            IWebsiteApplication websiteApplication,
             IConfiguration Configuration
             )
         {
             this.marqueeAppService = marqueeAppService;
+            this.websiteApplication = websiteApplication;
             this.Configuration = Configuration;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var Layout_Type = await websiteApplication.GetLayoutType(siteId);
+            var view = Layout_Type == 0 ? "Default" : $"Layout_{Layout_Type}";
+            var orgname = await websiteApplication.GetOrgName(siteId);
+            var website = (orgname == null || orgname == "") ? "Page" : orgname;
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel
             {
@@ -60,7 +68,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         menuItemModels = new List<MenuItem.MenuItemModel>{
                             new MenuItem.MenuItemModel {Title="商品分類", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="微電腦馬桶座", Link=""},
-                                    new MenuItem.MenuItemModel {Title="馬桶", Link="Toilet"},
+                                    new MenuItem.MenuItemModel {Title="馬桶", Link=$"{website}/Toilet"},
                                     new MenuItem.MenuItemModel {Title="面盆", Link=""},
                                     new MenuItem.MenuItemModel {Title="便斗", Link=""},
                                     new MenuItem.MenuItemModel {Title="龍頭", Link=""},
@@ -68,7 +76,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="浴缸", Link=""},
                                     new MenuItem.MenuItemModel {Title="三機", Link=""},
                                     new MenuItem.MenuItemModel {Title="無障礙設施", Link=""},
-                                    new MenuItem.MenuItemModel {Title="線上型錄", Link="Catalog"},
+                                    new MenuItem.MenuItemModel {Title="線上型錄", Link=$"{website}/Catalog"},
                                     new MenuItem.MenuItemModel {Title="清倉品", Link=""},
                                 }
                             },
@@ -99,7 +107,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="經銷據點", Link=""},
                                 }
                             },
-                            new MenuItem.MenuItemModel {Title="展示中心", Link="ExhibitionCenter", menuItemModels = new List<MenuItem.MenuItemModel>{
+                            new MenuItem.MenuItemModel {Title="展示中心", Link=$"{website}/ExhibitionCenter", menuItemModels = new List<MenuItem.MenuItemModel>{
                                     new MenuItem.MenuItemModel {Title="台北", Link=""},
                                     new MenuItem.MenuItemModel {Title="新竹", Link=""},
                                     new MenuItem.MenuItemModel {Title="台中", Link=""},
@@ -123,7 +131,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     new MenuItem.MenuItemModel {Title="維修服務", Link=""},
                                     new MenuItem.MenuItemModel {Title="常見問題", Link=""},
                                     new MenuItem.MenuItemModel {Title="使用須知", Link=""},
-                                    new MenuItem.MenuItemModel {Title="聯絡我們", Link="Contact"},
+                                    new MenuItem.MenuItemModel {Title="聯絡我們", Link=$"{website}/Contact"},
                                 }
                             },
                         }
@@ -131,7 +139,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 },
                 marqueeModels = marquee
             };
-            return View(headerViewModel);
+            return View(view, headerViewModel);
         }
     }
 }

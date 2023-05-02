@@ -38,15 +38,18 @@
 .grp-handler-cp-wrap {
     border-color: transparent;
 }
+
 #offcanvasSite {
     &.offcanvas-lg {
         #EditBlock > .item-menu {
             width: 49%;
+            max-height: calc(100vh - 6rem);
+            overflow-y: auto;
         }
     }
 
-    #btnExtend{
-        margin-bottom:1rem;
+    #btnExtend {
+        margin-bottom: 1rem;
     }
 }
 
@@ -54,6 +57,7 @@
 .offcanvas-lg {
     width: 80%;
 }
+
 .input-group {
     .btn {
         border-color: #ccc;

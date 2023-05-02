@@ -117,6 +117,7 @@ builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
+builder.Services.AddTransient<IObjectTypeAppService, ObjectTypeAppService>();
 
 //¦h»y¨t
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

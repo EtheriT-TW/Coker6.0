@@ -80,7 +80,7 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "Page",
-    pattern: "{key}/{option?}/{id?}/{search?}",
+    pattern: "{website}/{key}/{option?}/{id?}/{search?}",
     defaults: new { controller = "Page", action = "Index" }
 );
 

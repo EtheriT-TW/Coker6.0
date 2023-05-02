@@ -25,9 +25,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.freightAppService = freightAppService;
             this.webMenuApplication = webMenuApplication;
         }
-        public async Task<IActionResult> IndexAsync(string key,string option, int id, string search)
+        public async Task<IActionResult> IndexAsync(string website, string key,string option, int id, string search)
         {
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
+            string orgName = website;
             PageViewModel model = new PageViewModel
             {
                 id = id,

@@ -5,7 +5,6 @@
 <!--導入grapesjs-->
 <link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
 <script src="/lib/grapesjs/grapes.min.js"></script>
-<script src="~/js/Grapes/grapesjs-Coker6.min.js" type="module" asp-append-version="true"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
@@ -13,9 +12,10 @@
 <script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js"></script>
+<script src="~/js/Grapes/locale/tw.js" asp-append-version="true"></script>
+<script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
-<script src="~/js/Grapes/locale/tw.js" type="module" asp-append-version="true"></script>
-
 <!--導入menuEditor-->
 <script type="text/javascript" src="/lib/jquery-menu-editor/jquery-menu-editor.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/fontawesome6-2-1.min.js" asp-append-version="true"></script>
@@ -23,13 +23,13 @@
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
 <!--導入頁面配置-->
 <link rel="stylesheet" href="~/css/Page/index.min.css" asp-append-version="true" />
-<script src="~/js/Page/index.min.js" asp-append-version="true"></script>
+<script src="~/js/Page/ComponerEdit.min.js" asp-append-version="true"></script>
 
 <div class="py-2 px-4 position-relative">
     <div id="TopLine" class="d-flex justify-content-between mb-4">
         <div class="title fw-bold fs-4">@ViewData["PageName"]<span id="ComponerName"></span></div>
         <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
-            網站地圖
+            元件目錄
         </a>
     </div>
 </div>
@@ -37,16 +37,10 @@
 <div class="emptyList"></div>
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasSiteleLabel">網站地圖</h5>
+        <h5 class="offcanvas-title" id="offcanvasSiteleLabel">元件目錄</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <div class="row">
-            <button type="button" id="btnExtend" class="btn btn-primary d-flex justify-content-center">
-                <span class="material-symbols-outlined">arrow_forward_ios</span>
-                <span>新增選單</span>
-            </button>
-        </div>
         <div id="EditBlock" class="row">
             <ul id="myEditor" class="sortableLists list-group item-menu d-none"></ul>
             <div class="emptyList"></div>
@@ -56,7 +50,6 @@
                     <form id="frmEdit" class="form-horizontal needs-validation" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
                         <input type="hidden" id="serNO" name="serNO" value="500" class="item-menu">
-                        <input type="hidden" class="item-menu" id="text" name="text">
                         <div class="form-group form-check">
                             <label for="Title">標題</label>
                             <div class="input-group">
@@ -67,48 +60,6 @@
                                 <div class="invalid-feedback">標題為必填</div>
                             </div>
                             <input type="hidden" name="icon" class="item-menu">
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="PageType" class="form-label">頁面類型</label>
-                            <select name="PageType" id="PageType" class="form-select item-menu"></select>
-                        </div>
-                        <div id="RouterNameBlock" class="form-group form-check">
-                            <label for="RouterName" class="form-label">路徑名稱</label>
-                            <input type="text" class="form-control item-menu" id="routerName" name="routerName" placeholder="請輸入路徑名稱" required>
-                            <div class="invalid-feedback">路徑名稱為必填</div>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="linkUrl">連結</label>
-                            <input type="text" class="form-control item-menu" id="linkUrl" name="linkUrl" placeholder="請輸入連結">
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="Visible">是否顯示</label>
-                            <select name="visible" id="visible" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="target">另開視窗</label>
-                            <select name="target" id="target" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="PopularVisible">顯示人氣值</label>
-                            <select name="popularVisible" id="popularVisible" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="Popular">人氣值</label>
-                            <input type="text" id="popular" name="popular" class="form-control item-menu" readonly>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="Description">描述</label>
-                            <textarea type="text" id="description" name="description" class="form-control item-menu" placeholder="描述文字"></textarea>
                         </div>
                     </form>
                 </div>

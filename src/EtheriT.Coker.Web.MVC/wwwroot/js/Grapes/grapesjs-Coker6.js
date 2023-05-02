@@ -23,8 +23,7 @@
     });
 
     editor.on('asset:add', (option) => {
-
-        console.log(option);
+        //console.log(option);
     });
     
     editor.on('run:open-assets', () => {
@@ -447,32 +446,35 @@
 
 
     //畫布內容儲存及發布
-    panelManager.addButton('options', {
-        id: 'panelSave',
-        className: 'someClass',
-        label: '<i title="儲存" class="fa fa-download"></i>',
-        command: function (editor) {
-            settings.save(editor.getHtml(), editor.getCss()).done(function () {
-                co.sweet.success("已儲存草稿");
-            });
-        },
-        attributes: { title: 'save' },
-        active: false,
-    });
+    if (settings.save != null) {
+        panelManager.addButton('options', {
+            id: 'panelSave',
+            className: 'someClass',
+            label: '<i title="儲存" class="fa fa-download"></i>',
+            command: function (editor) {
+                settings.save(editor.getHtml(), editor.getCss()).done(function () {
+                    co.sweet.success("已儲存草稿");
+                });
+            },
+            attributes: { title: 'save' },
+            active: false,
+        });
+    }
 
-    panelManager.addButton('options', {
-        id: 'panelImport',
-        className: 'someClass',
-        label: '<i title="發布" class="fa fa-cloud-arrow-up""></i>',
-        command: function (editor) {
-            settings.import(editor.getHtml(), editor.getCss()).done(function () {
-                co.sweet.success("已儲存並發布");
-            });
-        },
-        attributes: { title: 'save' },
-        active: false,
-    });
-
+    if (settings.import != null) {
+        panelManager.addButton('options', {
+            id: 'panelImport',
+            className: 'someClass',
+            label: '<i title="發布" class="fa fa-cloud-arrow-up""></i>',
+            command: function (editor) {
+                settings.import(editor.getHtml(), editor.getCss()).done(function () {
+                    co.sweet.success("已儲存並發布");
+                });
+            },
+            attributes: { title: 'save' },
+            active: false,
+        });
+    }
     /**************
      * 指令參考
      * ***********/

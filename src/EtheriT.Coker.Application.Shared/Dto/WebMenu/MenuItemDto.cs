@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Dto
 {
-    public class MenuItemDto
+    public class MenuItemDto: PowerOptionDto
     {
         public long Id { get; set; }
         public string? Title { get; set; }

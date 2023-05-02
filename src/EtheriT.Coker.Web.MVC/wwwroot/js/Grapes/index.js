@@ -84,6 +84,7 @@ var grapesInit = function (options) {
                 '/lib/jquery/dist/jquery.min.js',
                 '/lib/bootstrap/dist/js/bootstrap.bundle.min.js',
                 '/lib/swiper/swiper-bundle.min.js',
+                '/lib/masonry-layout/dist/masonry.pkgd.min.js',
                 '/shared/js/Frame.min.js',
                 '/shared/js/Swiper.min.js',
                 '/shared/js/ViewTypeChange.min.js'

@@ -42,7 +42,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await webMenuApplication.importConten(dto);
         }
-        [HttpPost]
+        [HttpDelete]
         [Authorize]
         public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
         {

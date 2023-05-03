@@ -24,8 +24,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
             var orgname = await websiteApplication.GetOrgName(siteId);
             LayoutTypeViewModel layoutTypeViewModel = new LayoutTypeViewModel
             {
-                SiteName = Layout_Type == 0 ? "~/css/Site/Default_Site.min.css" : $"~/css/Site/Layout_{Layout_Type}_Site.min.css",
+                SiteName = Layout_Type == 0 ? "Default_Site" : $"~/css/Site/Layout_{Layout_Type}_Site.min.css",
                 OrgName = orgname,
+                LayoutType = Layout_Type,
             };
 
             return View(layoutTypeViewModel);

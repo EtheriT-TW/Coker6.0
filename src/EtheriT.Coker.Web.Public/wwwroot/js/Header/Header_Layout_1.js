@@ -1,5 +1,5 @@
 ﻿function HeaderInit() {
-
+    console.log("Layout1")
     if ($.cookie("Token") != null) {
         CartDropInit();
     }

@@ -1,4 +1,4 @@
-﻿var OrgName = "Page";
+﻿var OrgName = "Page", LayoutType = 0;
 
 function ready() {
     const $conten = $("Content");
@@ -8,6 +8,9 @@ function ready() {
         var $self = $(this);
         if ($self.data("orgname") != undefined) {
             OrgName = $self.data("orgname");
+        }
+        if ($self.data("layouttype") != undefined) {
+            LayoutType = $self.data("layouttype");
         }
     });
 

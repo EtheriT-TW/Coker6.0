@@ -1,8 +1,13 @@
 ﻿/* Color */
 :root {
+    --cyan-blue: #0D7F87;
 }
 
 /* Default */
 html {
     font-size: 100%;
+}
+
+.bg_cyan_blue {
+    background-color: var(--cyan-blue);
 }

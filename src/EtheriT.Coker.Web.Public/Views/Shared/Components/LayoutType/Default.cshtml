@@ -1,4 +1,7 @@
 ﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
 @model LayoutTypeViewModel
 
-<link rel="stylesheet" href="@Model.SiteName" asp-append-version="true" data-orgname="@Model.OrgName" data-layouttype="@Model.LayoutType" />
+<link rel="stylesheet" href="~/css/Site/Default_Site.min.css" asp-append-version="true" data-orgname="@Model.OrgName" data-layouttype="@Model.LayoutType" />
+@if (!Model.LayoutType.Equals("Default_Site")){
+	<link rel="stylesheet" href="@Model.SiteName" asp-append-version="true" />
+}

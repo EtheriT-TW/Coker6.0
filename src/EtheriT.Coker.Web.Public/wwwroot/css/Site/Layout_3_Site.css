@@ -1,8 +1,20 @@
 ﻿/* Color */
 :root {
+    --blue-light: #CEEAEF;
+    --blue-middle: #1E709E;
+    --blue-dark: #212F39;
 }
 
 /* Default */
 html {
     font-size: 100%;
 }
+
+.bg_blue_middle {
+    background-color: var(--blue-middle);
+}
+
+.text_blue_middle {
+    color: var(--blue-middle);
+}
+

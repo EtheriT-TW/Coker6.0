@@ -2,4 +2,83 @@
 <link rel="stylesheet" href="~/css/Header/Header_Layout_3.min.css" asp-append-version="true" />
 <script src="~/js/Header/Header_Layout_3.min.js" asp-append-version="true"></script>
 
-<div>KSP</div>
+<div class="modal sear_modal fade" tabindex="-1">
+	<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">搜尋</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+			</div>
+			<div class="modal-footer d-flex justify-content-center">
+				<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">關閉</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="bg-white">
+	<div class="d-flex flex-column p-3 container">
+		<nav class="navbar navbar-expand-lg bg-body-tertiary">
+			<div class="container-fluid nowrap">
+				<div class="d-flex align-items-center w-auto justify-content-between">
+					<a class="d-flex navbar-brand me-0 me-sm-3" href="/epza/ksp">
+						<img class="logo" src="~/upload/logo.png" alt="高雄軟體園區資訊服務網">
+					</a>
+					<button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="material-symbols-outlined">expand_more</span>
+					</button>
+				</div>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<li class="nav-item px-2">
+							<a class="nav-link" aria-current="page" href="/epza/ksp">網站導覽</a>
+						</li>
+						<li class="nav-item dropdown px-2">
+							<a class="nav-link dropdown-toggle nocontent" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+								最新消息
+							</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#">園區公告</a></li>
+								<li><a class="dropdown-item" href="#">活動列表</a></li>
+								<li><a class="dropdown-item" href="#">影音專區</a></li>
+								<li><a class="dropdown-item" href="#">防疫紓困專區</a></li>
+							</ul>
+						</li>
+						<li class="nav-item dropdown px-2">
+							<a class="nav-link dropdown-toggle nocontent" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+								園區資訊
+							</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#">園區介紹</a></li>
+								<li><a class="dropdown-item" href="#">交通資訊</a></li>
+								<li><a class="dropdown-item" href="#">休閒設施</a></li>
+								<li><a class="dropdown-item" href="#">會議室租借</a></li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<div class="menu_line w-100 bg_blue_middle mb-3"> </div>
+		<div class="d-flex lh-lg">
+			<button class="btn_sear_text text_blue_middle fw-bold d-none d-md-flex text-nowrap fs-4 me-3 bg-transparent border-0">我想搜尋</button>
+			<div class="d-flex border border-2  border-end-0 flex-grow-1">
+				<div class="dropdown">
+					<a class="sear_target dropdown-toggle text-black text-nowrap fw-bold fs_change ms-1 ms-md-3 pe-1 pe-md-3 border-end border-2" href="/epza/ksp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+						找廠商
+					</a>
+					<ul class="dropdown-menu">
+						<li><button class="btn_sear_firm dropdown-item text-nowrap">找廠商</button></li>
+						<li><button class="btn_sear_all dropdown-item text-nowrap">找全部</button></li>
+					</ul>
+				</div>
+				<input class="input_sear form-control border-0 fs_change px-1 px-md-3" type="search" placeholder="請輸入廠商名稱或技術..." aria-label="Search">
+			</div>
+			<button class="btn btn_sear rounded-0 text-nowrap fs_change d-flex align-items-center bg_blue_middle text-white" type="submit">
+				<span class="material-symbols-outlined">search</span>搜尋
+			</button>
+		</div>
+	</div>
+</div>

@@ -1,4 +1,7 @@
-﻿
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@model HeaderViewModel
+
 <link rel="stylesheet" href="~/css/Header/Header_Layout_3.min.css" asp-append-version="true" />
 <script src="~/js/Header/Header_Layout_3.min.js" asp-append-version="true"></script>
 
@@ -23,40 +26,38 @@
 		<nav class="navbar navbar-expand-lg bg-body-tertiary">
 			<div class="container-fluid nowrap">
 				<div class="d-flex align-items-center w-auto justify-content-between">
-					<a class="d-flex navbar-brand me-0 me-sm-3" href="/epza/ksp">
-						<img class="logo" src="~/upload/logo.png" alt="高雄軟體園區資訊服務網">
+					<a class="d-flex navbar-brand me-0 me-sm-3" href="">
+						<img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
 					</a>
-					<button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="material-symbols-outlined">expand_more</span>
 					</button>
 				</div>
-				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<div class="collapse navbar-collapse" id="NavbarContent">
 					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-						<li class="nav-item px-2">
-							<a class="nav-link" aria-current="page" href="/epza/ksp">網站導覽</a>
-						</li>
-						<li class="nav-item dropdown px-2">
-							<a class="nav-link dropdown-toggle nocontent" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-								最新消息
-							</a>
-							<ul class="dropdown-menu">
-								<li><a class="dropdown-item" href="#">園區公告</a></li>
-								<li><a class="dropdown-item" href="#">活動列表</a></li>
-								<li><a class="dropdown-item" href="#">影音專區</a></li>
-								<li><a class="dropdown-item" href="#">防疫紓困專區</a></li>
-							</ul>
-						</li>
-						<li class="nav-item dropdown px-2">
-							<a class="nav-link dropdown-toggle nocontent" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-								園區資訊
-							</a>
-							<ul class="dropdown-menu">
-								<li><a class="dropdown-item" href="#">園區介紹</a></li>
-								<li><a class="dropdown-item" href="#">交通資訊</a></li>
-								<li><a class="dropdown-item" href="#">休閒設施</a></li>
-								<li><a class="dropdown-item" href="#">會議室租借</a></li>
-							</ul>
-						</li>
+						@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+						{
+							@if (menu.menuItemModels != null)
+							{
+								<li class="nav-item dropdown px-2">
+									<a class="nav-link dropdown-toggle nocontent" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										@menu.Title
+									</a>
+									<ul class="dropdown-menu">
+										@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+										{
+											<li><a class="dropdown-item" href="@subMenu.Link">@subMenu.Title</a></li>
+										}
+									</ul>
+								</li>
+							}
+							else
+							{
+								<li class="nav-item px-2">
+									<a class="nav-link" aria-current="page" href="@menu.Link">@menu.Title</a>
+								</li>
+							}
+						}
 					</ul>
 				</div>
 			</div>

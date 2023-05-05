@@ -75,6 +75,23 @@ namespace EtheriT.Coker.Application
 
             return data == null ? "Page" : data.ToString();
         }
+        public async Task<long> GetSiteId(long father_id, string key)
+        {
+            var childId = await (from w in db.MappingWebsiteRelationship
+                                 where w.FatherId == father_id
+                                 select w.WebsiteId).ToListAsync();
+            if (childId != null)
+            {
+                var id = await (from w in db.Websites
+                                where w.OrgName == key
+                                select w.Id).FirstOrDefaultAsync();
+                if (childId.Contains(id))
+                {
+                    return id;
+                }
+            }
+            return 0;
+        }
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {
             ResponseMessageDto responseMessageDto = new ResponseMessageDto();
@@ -107,6 +124,5 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(ApplicationName, "Exchange", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
         }
-
     }
 }

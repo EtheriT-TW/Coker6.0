@@ -1,6 +1,7 @@
 ﻿/* Color */
 :root {
-    --cyan-blue: #0D7F87;
+    --blue-cyan: #0D7F87;
+    --blue-dark: #172844;
 }
 
 /* Default */
@@ -9,5 +10,5 @@ html {
 }
 
 .bg_cyan_blue {
-    background-color: var(--cyan-blue);
+    background-color: var(--blue-cyan);
 }

@@ -1,21 +1,24 @@
-﻿var $btn_sear_text, $btn_sear_firm, $btn_sear_all, $btn_sear;
+﻿var $btn_expand, $btn_sear_text, $btn_sear_firm, $btn_sear_all, $btn_sear;
 
 var $modal_title, sear_text = "", $modal_body;
 
-var $sear_modal, $sear_target;
-
-var $input_sear;
+var $sear_modal, $sear_target, $input_sear;
 
 function HeaderInit() {
     console.log("Layout3")
     ElementInit();
 
-    console.log($(window).width());
-
-
     $(window).resize(function () {
         console.log(`Resize window = ${$(window).width()}`);
     });
+
+    $btn_expand.on("click", function () {
+        if ($btn_expand.hasClass("collapsed")) {
+            $btn_expand.children("span").text("expand_more");
+        } else {
+            $btn_expand.children("span").text("close");
+        }
+    })
 
     $(".navbar-nav > .dropdown").hover(
         function () {
@@ -59,9 +62,8 @@ function HeaderInit() {
     })
 }
 
-
-
 function ElementInit() {
+    $btn_expand = $(".btn_expand");
     $btn_sear_text = $(".btn_sear_text");
     $btn_sear_firm = $(".btn_sear_firm");
     $btn_sear_all = $(".btn_sear_all");

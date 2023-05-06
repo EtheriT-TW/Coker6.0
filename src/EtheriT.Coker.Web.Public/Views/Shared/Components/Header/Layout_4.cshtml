@@ -21,11 +21,11 @@
 	</div>
 </div>
 
-<div class="bg_cyan_blue">
+<div class="header bg_cyan_blue">
 	<div class="d-flex flex-column p-3 container">
 		<nav class="navbar navbar-expand-lg bg-body-tertiary">
-			<div class="container-fluid nowrap">
-				<div class="d-flex align-items-center w-auto justify-content-between">
+			<div class="container-fluid nowrap d-flex flex-column flex-lg-row">
+				<div class="d-flex align-items-center w-100 justify-content-between">
 					<a class="d-flex navbar-brand me-0 me-sm-3" href="">
 						<img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
 					</a>
@@ -34,11 +34,11 @@
 					</button>
 				</div>
 				<div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
-					<a class="text-nowrap text-white px-3 mt-3 mb-2" aria-current="page" href="/epza/eplus">網站導覽</a>
+					<a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto" aria-current="page" href="/epza/eplus">網站導覽</a>
 					<div class="align-items-center bg-white d-flex rounded">
-						<input class="form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
+						<input class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
 						<div class="dropdown">
-							<a class="sear_target dropdown-toggle px-2 text-nowrap text-black" href="/epza/eplus" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+							<a class="dropdown-toggle px-2 text-nowrap text-black" href="/epza/eplus" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 								搜尋
 							</a>
 							<ul class="dropdown-menu">

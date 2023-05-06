@@ -6,7 +6,7 @@
 }
 
 .modal-body {
-    min-height: 500px;
+    min-height: 60vh;
 }
 
 .btn_expand {
@@ -22,18 +22,24 @@
 }
 
     .img_ul > li {
-        min-width: 80px;
+        min-width: 90px;
     }
+
+.input_sear {
+    min-width: 120px;
+}
 
 @media only screen and (max-width: 768px) {
-    .img_ul {
-        width: 100%;
-        right: unset;
-        left: 50%;
-        transform: translateX(-50%);
+    .img_ul > li {
+        height: 0;
+        transition: 0.35s ease;
+        overflow: hidden;
     }
+}
 
-        .img_ul > li {
-            min-width: unset;
-        }
+
+@media only screen and (max-width: 576px) {
+    .img_ul > li {
+        min-width: 70px;
+    }
 }

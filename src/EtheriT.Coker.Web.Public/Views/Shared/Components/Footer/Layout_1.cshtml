@@ -1,0 +1,116 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@model FooterViewModel
+
+<link rel="stylesheet" href="~/css/Footer/Footer_Layout_1.min.css" asp-append-version="true" />
+<script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>
+
+<div id="Collapse_Button" class="center">
+	<i class="fa-solid fa-chevron-down text-black"></i>
+</div>
+<div id="Footer_Menu" class="abreast">
+	<div class="paging_frame_big">
+		<p style="font-weight:bold;font-size:1.1rem;">商品分類</p>
+		<div class="abreast">
+			<ul class="paging_frame_big_left">
+				<li><a href="" class="text-white">微電腦馬桶座</a></li>
+				<li><a href="" class="text-white">馬桶</a></li>
+				<li><a href="" class="text-white">面盆</a></li>
+				<li><a href="" class="text-white">便斗</a></li>
+				<li><a href="" class="text-white">龍頭</a></li>
+			</ul>
+			<ul class="paging_frame_big_right">
+				<li><a href="" class="text-white">配件</a></li>
+				<li><a href="" class="text-white">浴缸</a></li>
+				<li><a href="" class="text-white">三機</a></li>
+				<li><a href="" class="text-white">無障礙設施　</a></li>
+				<li><a href="/Catalog" class="text-white">線上型錄</a></li>
+				<li><a href="" class="text-white">清倉品</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="paging_frame_small_1">
+		<p style="font-weight:bold;font-size:1.1rem;">關於Derek</p>
+		<ul>
+			<li><a href="" class="text-white">企業理念</a></li>
+			<li><a href="" class="text-white">企業沿革</a></li>
+			<li><a href="" class="text-white">企業設備</a></li>
+			<li><a href="" class="text-white">媒體專區</a></li>
+			<li><a href="" class="text-white">品牌故事</a></li>
+			<li><a href="/ExhibitionCenter" class="text-white">展示中心</a></li>
+			<li><a href="" class="text-white">實績列舉</a></li>
+		</ul>
+	</div>
+	<div class="paging_frame_small_2">
+		<p style="font-weight:bold;font-size:1.1rem;">標章認證</p>
+		<ul>
+			<li><a href="" class="text-white">省水標章</a></li>
+			<li><a href="" class="text-white">環保標章</a></li>
+			<li><a href="" class="text-white">能源分級</a></li>
+			<li><a href="" class="text-white">ISO/CNS</a></li>
+			<li><a href="" class="text-white">其他</a></li>
+		</ul>
+	</div>
+	<div class="paging_frame_small_3">
+		<p style="font-weight:bold;font-size:1.1rem;">銷售據點</p>
+		<ul>
+			<li><a href="" class="text-white">分公司</a></li>
+			<li><a href="" class="text-white">花東總經銷</a></li>
+			<li><a href="" class="text-white">-百健行</a></li>
+			<li><a href="" class="text-white">經銷據點</a></li>
+			<li><a href="" class="text-white">公共專案經銷</a></li>
+		</ul>
+	</div>
+	<div class="paging_frame_small_4">
+		<p style="font-weight:bold;font-size:1.1rem;">我們的服務</p>
+		<ul>
+			<li><a href="" class="text-white">清潔小幫手</a></li>
+			<li><a href="" class="text-white">維修服務</a></li>
+			<li><a href="" class="text-white">常見問題</a></li>
+			<li><a href="" class="text-white">使用須知</a></li>
+			<li><a href="/Contact" class="text-white">聯絡我們</a></li>
+		</ul>
+	</div>
+</div>
+
+@*<div id="Footer_Menu" class="container">
+	<ul class="d-flex flex-wrap w-100">
+		@foreach (var menu in Model.footerViewModels ?? new List<FooterViewModel>())
+		{
+			<li class="title my-2 col-auto">
+				<a class="fs-6 fw-bold text-white" href="@menu.Link">@menu.Title</a>
+				<ul class="d-flex flex-column flex-wrap">
+					@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+					{
+						<li class=""><a class="text-white" href="@sub_menu.Link">@sub_menu.Title</a></li>
+					}
+				</ul>
+			</li>
+		}
+	</ul>
+</div>*@
+
+
+<div id="Footer_Bottom" class="center">
+	<div id="Logo_Bottom">
+		<div></div>
+		<span><img src="~/upload/derek_logo.png" width="150" alt="Derek" /></span>
+	</div>
+	<div id="Other_Web_Button" class=" center">
+		<i class="fa-brands fa-facebook-f"></i>
+		<i class="fa-brands fa-youtube"></i>
+		<i class="fa-brands fa-instagram"></i>
+	</div>
+	<div id="Copyright" class="abreast">
+		<p>Copyright © 2022</p>
+		<p>隆昌窯業股份有限公司</p>
+		<p>版權所有</p>
+	</div>
+</div>
+
+<div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
+	<p class="cookie_text my-3 pe-3">本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見&ensp;<span style="cursor:pointer">隱私權政策</span>。</p>
+	<div id="Cookie_button">
+		<div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">接受</div>
+		<div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">拒絕</div>
+	</div>
+</div>

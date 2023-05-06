@@ -91,6 +91,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     {
                         Title = "經濟部加工出口區管理處",
                         LogoImageUrl = "/upload/eplus/logo.png",
+                        Sitemap_Link = "#",
                         menuItemModels = new List<MenuItem.MenuItemModel> {
                             new MenuItem.MenuItemModel {
                                 Title = "關於平台",

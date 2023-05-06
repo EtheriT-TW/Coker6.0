@@ -3,6 +3,7 @@
     --blue-light: #CEEAEF;
     --blue-middle: #1E709E;
     --blue-dark: #212F39;
+    --gray-dark: #303030;
 }
 
 /* Default */
@@ -14,7 +15,11 @@ html {
     background-color: var(--blue-middle);
 }
 
+.bg_gray_dark {
+    background-color: var(--gray-dark);
+}
+
+
 .text_blue_middle {
     color: var(--blue-middle);
 }
-

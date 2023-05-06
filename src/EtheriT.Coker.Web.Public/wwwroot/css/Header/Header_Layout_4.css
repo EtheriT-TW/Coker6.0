@@ -1,4 +1,8 @@
 ﻿
+.font_small {
+    font-size: 0.8rem;
+}
+
 .logo {
     max-width: 80%;
     width: 100%;

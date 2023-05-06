@@ -1,0 +1,69 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@model FooterViewModel
+
+<link rel="stylesheet" href="~/css/Footer/Footer_Layout_3.min.css" asp-append-version="true" />
+<script src="~/js/Footer/Footer_Layout_3.min.js" asp-append-version="true"></script>
+
+<div class="footer_menu">
+	<div class=" d-flex flex-column flex-xl-row justify-content-center container py-5">
+		<div class="flex-grow-1 d-flex flex-wrap mb-3">
+			@foreach (var menu in Model.footerViewModels ?? new List<FooterViewModel>())
+			{
+				<div class="menu_item text-start my-2 flex-grow-1">
+					<div class="border-bottom pb-1 mb-1 border-dark fs-5 fw-bold">@menu.Title</div>
+					<ul>
+						@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+						{
+							<li class="font_small">
+								<a class="text-black" href="@sub_menu.Link">@sub_menu.Title</a>
+							</li>
+						}
+					</ul>
+				</div>
+			}
+		</div>
+		<div class="footer_right d-flex flex-column flex-sm-row  justify-content-center line_break">
+			@if (Model.line_qr != null)
+			{
+				<div class=""><img class="pb-3 qr_img" src="@Model.line_qr" /></div>
+				<div class="d-flex flex-column mx-4">
+					<div class="fs-3 fw-bold text-center text-md-start">@Model.line_title</div>
+					<div class="lh-lg text-center text-md-start">@Model.line_describe</div>
+				</div>
+			}
+		</div>
+	</div>
+</div>
+
+<script>
+	var footer_menu = document.querySelector(".footer_menu");
+	footer_menu.style = "background-image: url(/upload/ksp/footer-bg.jpg)";
+</script>
+
+<div class="bg_gray_dark d-flex justify-content-center align-items-center py-3 text-white font_small">
+	<div class="px-4">
+		@for (int i = 0; i < Model.Content.Count; i++)
+		{
+			@if (i == Model.Content.Count - 1)
+			{
+				<div class="text-center text-md-start">
+					@Model.Content[i]
+					@if (Model.Privacy_Link != null)
+					{
+						<a class="text-white text-decoration-underline" href="@Model.Privacy_Link">隱私權聲明</a>
+					}
+					@if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
+					{
+						<a href="@Model.Accessibility_Link">
+							<img class="px-3 my-3" src="@Model.Accessibility_Badge" />
+						</a>
+					}
+				</div>
+			}
+			else
+			{
+				<div class="">@Model.Content[i]</div>
+			}
+		}
+	</div>
+</div>

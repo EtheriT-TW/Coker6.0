@@ -1,0 +1,38 @@
+﻿.font_small {
+    font-size: 0.8rem;
+}
+
+.footer_right {
+    min-width: 40%;
+}
+
+.menu_item {
+    min-width: 20%;
+    padding: 0 2rem;
+}
+
+.line_break {
+    white-space: pre-line;
+}
+
+.qr_img {
+    max-width: 100px;
+}
+
+@media only screen and (max-width: 1200px) {
+    .footer_right {
+        min-width: 100%;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .menu_item {
+        min-width: calc(100%/3);
+    }
+}
+
+@media only screen and (max-width: 576px) {
+    .menu_item {
+        min-width: 50%;
+    }
+}

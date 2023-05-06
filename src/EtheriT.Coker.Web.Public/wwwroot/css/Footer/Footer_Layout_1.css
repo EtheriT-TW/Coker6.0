@@ -1,0 +1,301 @@
+﻿
+/* Footer */
+footer {
+    background-color: var(--green-main);
+    color: white;
+    font-family: Microsoft JhengHei;
+    font-size: 0.85rem;
+    cursor: default;
+    padding-bottom: 10px;
+}
+
+/* Footer Collapse */
+#Collapse_Button {
+    font-size: 0px;
+    background: #DBDBDB;
+    width: 40px;
+    height: 20px;
+    border-radius: 0 0 100px 100px;
+    margin: auto;
+}
+
+    #Collapse_Button > i {
+        cursor: pointer;
+        transform: rotate(180deg);
+        font-size: 18px;
+        transition: all 1s;
+    }
+
+        #Collapse_Button > i:hover {
+            animation-iteration-count: infinite;
+            animation-delay: 0.5s;
+            animation-name: Bounce_up;
+            animation-duration: 1s;
+        }
+
+.footer_pack_up > #Collapse_Button > i {
+    transform: rotate(360deg);
+    transition: all 1s;
+}
+
+    .footer_pack_up > #Collapse_Button > i:hover {
+        animation-iteration-count: infinite;
+        animation-delay: 0.5s;
+        animation-name: Bounce_down;
+        animation-duration: 1s;
+    }
+
+.footer_pack_up > #Footer_Menu {
+    height: 0px;
+    transition: all 1s;
+}
+
+
+/* Footer Menu */
+/*#Footer_Menu > ul {
+    justify-content: space-evenly;
+}
+
+    #Footer_Menu > ul > li > ul {
+        height: 9rem;
+    }
+
+        #Footer_Menu > ul > li > ul > li {
+            width: fit-content;
+        }*/
+
+#Footer_Menu {
+    height: 210px;
+    padding-top: 20px;
+    transition: all 1s;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.paging_frame_big {
+    width: calc(200px + 3%);
+    margin-top: 1%;
+    margin-left: 1.5%;
+    margin-right: 100px;
+}
+
+    .paging_frame_big > div {
+        justify-content: space-between;
+    }
+
+[class*=paging_frame_big_] {
+    width: 100px;
+}
+
+[class*=paging_frame_small] {
+    width: 100px;
+    margin-top: 1%;
+    margin-left: 1.5%;
+    margin-right: 1.5%;
+}
+/* Footer Bottom */
+#Footer_Bottom {
+    margin-top: 100px;
+}
+
+#Logo_Line {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: -45px;
+    width: 90%;
+    height: 0.5px;
+    background: white;
+}
+
+#Logo_Bottom > div {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: -45px;
+    width: 90%;
+    height: 1px;
+    background: white;
+}
+
+#Logo_Bottom > span {
+    width: 200px;
+    height: 50px;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--green-main);
+    z-index: 1;
+    margin-top: -45px;
+}
+
+#Other_Web_Button > i {
+    cursor: pointer;
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    line-height: 30px;
+    border: 1px white solid;
+    border-radius: 50%;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 20px;
+}
+
+/* Copyright */
+#Copyright {
+    font-size: 12px;
+    background-color: var(--black-bottom-line);
+    justify-content: center;
+    padding: 10px 0;
+}
+
+    #Copyright > p {
+        margin-right: 5px;
+        margin-left: 5px;
+    }
+
+/* Floating Objects */
+#Floating_Objects {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+    #Floating_Objects > i {
+        font-size: 36px;
+        width: 50px;
+        height: 50px;
+        padding-top: 7.5px;
+        background: #FF8C49;
+        border-radius: 50%;
+        margin-bottom: 20px;
+    }
+
+/* Animations */
+@keyframes Bounce_up {
+    0%, 40%, 80% {
+        margin-top: 0px;
+    }
+
+    20%, 60% {
+        margin-top: -5px;
+    }
+}
+
+@keyframes Bounce_down {
+    0%, 40%, 80% {
+        margin-top: 0px;
+    }
+
+    20%, 60% {
+        margin-top: 5px;
+    }
+}
+
+@media only screen and (max-width: 992px) {
+
+    #Footer_Menu {
+        height: 400px;
+    }
+
+    .paging_frame_big {
+        width: calc(10% + 200px);
+        margin-left: 22.5%;
+        margin-right: 5%;
+    }
+
+    .paging_frame_small_1, .paging_frame_small_4 {
+        margin-left: 5%;
+        margin-right: 20%;
+    }
+
+    .paging_frame_small_2 {
+        margin-left: 22.5%;
+        margin-right: 5%;
+    }
+
+    .paging_frame_small_3 {
+        margin-left: 5%;
+        margin-right: 5%;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    /*#Footer_Menu > ul {
+        justify-content: center;
+    }*/
+
+    .paging_frame_big {
+        width: calc(10% + 200px);
+        margin-left: 15%;
+        margin-right: 5%;
+    }
+
+    .paging_frame_small_1, .paging_frame_small_4 {
+        margin-left: 5%;
+        margin-right: 10%;
+    }
+
+    .paging_frame_small_2 {
+        margin-left: 15%;
+        margin-right: 5%;
+    }
+
+    .paging_frame_small_3 {
+        margin-left: 5%;
+        margin-right: 5%;
+    }
+
+    #Logo_Bottom::before, #Logo_Bottom::after {
+        width: 25%;
+    }
+}
+
+@media only screen and (max-width: 576px) {
+
+    #Footer_Menu {
+        height: 600px;
+    }
+
+    .paging_frame_big {
+        width: calc(10% + 200px);
+        margin-left: 20%;
+        margin-right: 15%;
+    }
+
+    .paging_frame_small_1, .paging_frame_small_3 {
+        margin-left: 20%;
+        margin-right: 5%;
+    }
+
+    .paging_frame_small_2, .paging_frame_small_4 {
+        margin-left: 5%;
+        margin-right: 15%;
+    }
+
+    #Logo_Bottom::before, #Logo_Bottom::after {
+        width: 12.5%;
+    }
+}
+
+@media only screen and (max-width: 368px) {
+
+    .paging_frame_big {
+        width: calc(5% + 200px);
+        margin-left: 18%;
+        margin-right: 2.5%;
+    }
+
+    .paging_frame_small_1, .paging_frame_small_3 {
+        margin-left: 18%;
+        margin-right: 2.5%;
+    }
+
+    .paging_frame_small_2, .paging_frame_small_4 {
+        margin-left: 2.5%;
+        margin-right: 5%;
+    }
+}

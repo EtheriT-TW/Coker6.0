@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -27,37 +28,30 @@ namespace EtheriT.Coker.Application
             ApplicationName = "Website";
 
         }
-
-        [Authorize]
-        public async Task<List<WebsDto>> GetAll()
+        public async Task<DefaultDataDto> GetDefaultData(long siteId, string? website)
         {
-            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
-            string name = user.Identity?.Name;
-            var date = from w in db.Websites
-                       join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
-                       join u in db.Users on bind.UserId equals u.Id
-                       where u.Account == name
-                       select new WebsDto
-                       {
-                           Id = w.Id,
-                           Name = w.Title,
-                           Description = w.Description ?? "",
-                           Images = w.Icon ?? ""
-                       };
-            if (date.Any())
+            if (website != null && !website.Equals("upload"))
             {
-                long siteId = await loginUserData.GetWebsiteId();
-                var output = await date.ToListAsync();
-                if (siteId == 0 && output.Any())
+                var tempid = await GetSiteId(siteId, website.ToString());
+                if (tempid != 0)
                 {
-                    siteId = output.FirstOrDefault().Id;
-                    await Exchange(new WebExchangeDto { Id = siteId });
+                    siteId = await GetSiteId(siteId, website.ToString());
                 }
-                var item = output.Find(e => e.Id == siteId);
-                if (item != null) item.Check = true;
-                return output;
             }
-            else return new List<WebsDto>();
+            var orgname = await GetOrgName(siteId);
+            orgname = (orgname == null || orgname == "") ? "Page" : orgname;
+            var Layout_Type = await GetLayoutType(siteId);
+            var view = Layout_Type == 0 ? "Default" : $"Layout_{Layout_Type}";
+
+            DefaultDataDto defaultData = new DefaultDataDto
+            {
+                Id = siteId,
+                OrgName = orgname,
+                Layout_Type = Layout_Type,
+                View = view,
+            };
+
+            return defaultData;
         }
         public async Task<int> GetLayoutType(long Id)
         {
@@ -91,6 +85,52 @@ namespace EtheriT.Coker.Application
                 }
             }
             return 0;
+        }
+
+        [Authorize]
+        public async Task<List<WebsDto>> GetAll()
+        {
+            ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
+            string name = user.Identity?.Name;
+            var date = from w in db.Websites
+                       join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                       join u in db.Users on bind.UserId equals u.Id
+                       where u.Account == name
+                       select new WebsDto
+                       {
+                           Id = w.Id,
+                           Name = w.Title,
+                           Description = w.Description ?? "",
+                           Images = w.Icon ?? ""
+                       };
+            if (date.Any())
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var output = await date.ToListAsync();
+                if (siteId == 0 && output.Any())
+                {
+                    siteId = output.FirstOrDefault().Id;
+                    await Exchange(new WebExchangeDto { Id = siteId });
+                }
+                var item = output.Find(e => e.Id == siteId);
+                if (item != null) item.Check = true;
+                return output;
+            }
+            else return new List<WebsDto>();
+        }
+
+        public async Task<List<WebsiteDataDto>> GetAllData(long SiteId)
+        {
+            var date = from w in db.Websites
+                       where w.Id == SiteId
+                       select new WebsDto
+                       {
+                           Id = w.Id,
+                           Name = w.Title,
+                           Description = w.Description ?? "",
+                           Images = w.Icon ?? ""
+                       };
+            return null;
         }
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {

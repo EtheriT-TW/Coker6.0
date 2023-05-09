@@ -37,7 +37,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                long usetId = await loginUserData.GetUserId();
+                long userId = await loginUserData.GetUserId();
 
                 if (dto.Id == 0)
                 {
@@ -52,7 +52,7 @@ namespace EtheriT.Coker.Application.Product
                         StartTime = dto.StartTime,
                         EndTime = dto.EndTime,
                         permanent = dto.Permanent,
-                        CreatorUserId = usetId
+                        CreatorUserId = userId
                     };
                     db.Prods.Add(p);
                     db.SaveChanges();
@@ -72,7 +72,7 @@ namespace EtheriT.Coker.Application.Product
                         db_p.EndTime = dto.EndTime;
                         db_p.permanent = dto.Permanent;
                         db_p.LastModificationTime = DateTime.Now;
-                        db_p.LastModifierUserId = usetId;
+                        db_p.LastModifierUserId = userId;
                     }
                 }
                 db.SaveChanges();

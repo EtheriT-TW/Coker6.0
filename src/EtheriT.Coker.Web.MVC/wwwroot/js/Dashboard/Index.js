@@ -1,4 +1,5 @@
-﻿var PageReady = function() {
+﻿var PageReady = function () {
+
     var ctx = document.getElementById("chart-bars").getContext("2d");
 
     new Chart(ctx, {

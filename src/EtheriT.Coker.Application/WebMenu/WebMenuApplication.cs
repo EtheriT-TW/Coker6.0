@@ -46,21 +46,41 @@ namespace EtheriT.Coker.Application
         public async Task<SiteMapDto> GetAll()
         {
             SiteMapDto response = new SiteMapDto { Success = false };
-            try {
-                response.Maps = await GetChild(null);
+            try
+            {
+                response.Maps = await GetChild(null, null);
                 response.Success = true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Error = ex.Message;
             }
             await loginUserData.SetLogs(ApplicationName, "GetAll", "", JsonConvert.SerializeObject(response));
             return response;
         }
+        public async Task<SiteMapDto> GetAll(long? WebsiteID)
+        {
+            SiteMapDto response = new SiteMapDto { Success = false };
+            try
+            {
+                response.Maps = await GetChild(null, WebsiteID);
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
 
-        private async Task<List<MenuItemDto>> GetChild(long? id) {
-            try {
-                long WebsiteID = await loginUserData.GetWebsiteId();
+        private async Task<List<MenuItemDto>> GetChild(long? id, long? WebsiteID)
+        {
+            try
+            {
+                if (WebsiteID == null)
+                {
+                    WebsiteID = await loginUserData.GetWebsiteId();
+                }
                 var menus = await db.WebMenus
                             .Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
@@ -69,14 +89,15 @@ namespace EtheriT.Coker.Application
                             .ThenBy(m => m.Id)
                             .ToListAsync();
                 List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
-                foreach (var m in result) {
-                    m.Children = await GetChild(m.Id);
+                foreach (var m in result)
+                {
+                    m.Children = await GetChild(m.Id, WebsiteID);
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;
             }
-            catch(Exception ex) {
-                //throw new Exception("資料錯誤");
+            catch (Exception ex)
+            {
                 throw new Exception("資料錯誤");
             }
         }
@@ -84,7 +105,8 @@ namespace EtheriT.Coker.Application
         public async Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 if (dto.Id == 0)
                 {
                     long newId = await Create(dto);
@@ -93,26 +115,27 @@ namespace EtheriT.Coker.Application
                 else await Update(dto);
                 response.Success = true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Success = false;
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "CreateOrEdit",JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(ApplicationName, "CreateOrEdit", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         private async Task<long> Create(MenuItemDto dto)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
             var user = await loginUserData.GetUser();
-            WebMenu menu= mapper.Map<WebMenu>(dto);
+            WebMenu menu = mapper.Map<WebMenu>(dto);
             menu.CreatorUserId = user.Id;
             menu.FK_WebsiteId = WebsiteID;
             db.WebMenus.Add(menu);
             await loginUserData.SaveChanges(menu);
             return menu.Id;
         }
-        private async Task Update(MenuItemDto dto) {
+        private async Task Update(MenuItemDto dto)
+        {
             var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
             var user = await loginUserData.GetUser();
             if (menu == null) throw new Exception("查無資料");
@@ -121,7 +144,8 @@ namespace EtheriT.Coker.Application
             menu.LastModifierUserId = user.Id;
             await loginUserData.SaveChanges(menu);
         }
-        public async Task<GetMenuContenDto> GetConten(SearchIDDto dto) {
+        public async Task<GetMenuContenDto> GetConten(SearchIDDto dto)
+        {
             GetMenuContenDto results = new GetMenuContenDto();
             try
             {
@@ -138,21 +162,26 @@ namespace EtheriT.Coker.Application
                 }
                 else throw new Exception("資料不存在");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 results.Success = false;
                 results.Error = ex.Message;
             }
             return results;
         }
-        public async Task<GetFrontContenOutputDto> GetFrontConten(GetFrontContenInputDto dto) {
-            long siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+        public async Task<GetFrontContenOutputDto> GetFrontConten(GetFrontContenInputDto dto)
+        {
+            if (dto.siteId == null)
+            {
+                dto.siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            }
             GetFrontContenOutputDto result = new GetFrontContenOutputDto();
             try
             {
-                var side = await db.Websites.Where(e => e.Id == siteId).FirstOrDefaultAsync();
-                var menu = await db.WebMenus.Where(e => e.FK_WebsiteId == siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
-                if (side != null) {
+                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
+                var menu = await db.WebMenus.Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
+                if (side != null)
+                {
                     result.SiteName = side.Title;
                     if (menu != null)
                     {
@@ -178,7 +207,7 @@ namespace EtheriT.Coker.Application
                 if (menu != null)
                 {
                     string Orgname = await loginUserData.GetWebsiteOrgName();
-                    importDto.Html = (importDto.Html??"").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     mapper.Map(importDto, menu);
                     await loginUserData.SaveChanges(menu);
@@ -186,7 +215,8 @@ namespace EtheriT.Coker.Application
                 }
                 else throw new Exception("資料不存在");
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 response.Success = false;
                 response.Error = ex.Message;
             }
@@ -213,9 +243,11 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<ResponseMessageDto> Delete(DataDelectDto dto) {
+        public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto { Success = true };
-            try {
+            try
+            {
                 var user = await loginUserData.GetUser();
                 long siteID = await loginUserData.GetWebsiteId();
                 var item = await db.WebMenus
@@ -223,22 +255,27 @@ namespace EtheriT.Coker.Application
                         .Where(e => e.FK_WebsiteId == siteID)
                         .FirstOrDefaultAsync();
                 if (item == null) throw new Exception("資料不存在");
-                else { 
+                else
+                {
                     item.IsDeleted = true;
                     await loginUserData.SaveChanges(item);
                 }
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 response.Success = false;
             }
             return response;
         }
-        public async Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto) {
+        public async Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto { Success = true };
-            try {
+            try
+            {
                 var o = (from s in dto.list select s.Id).ToList();
                 var result = db.WebMenus.Where(e => o.Contains(e.Id));
-                foreach (var e in dto.list) {
+                foreach (var e in dto.list)
+                {
                     var item = await result.Where(m => m.Id == e.Id).FirstOrDefaultAsync();
                     if (item != null)
                     {
@@ -247,14 +284,16 @@ namespace EtheriT.Coker.Application
                     }
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 response.Success = false;
                 response.Error = ex.ToString();
             }
-            await loginUserData.SetLogs(ApplicationName, "updateSerNo", JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(ApplicationName, "updateSerNo", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<PageTypeDto> GetPageTypeList() {
+        public async Task<PageTypeDto> GetPageTypeList()
+        {
             PageTypeDto response = new PageTypeDto { Success = true };
             try
             {

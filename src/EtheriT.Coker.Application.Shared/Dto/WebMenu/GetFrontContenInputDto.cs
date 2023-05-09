@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
     public class GetFrontContenInputDto
     {
         public string key { get; set; }
+        public long siteId { get; set; }
     }
 }

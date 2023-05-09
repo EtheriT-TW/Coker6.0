@@ -1,6 +1,7 @@
-﻿var OrgName = "Page", LayoutType = 0;
+﻿var OrgName = "Page", LayoutType = 0, SiteId = 0;
 
 function ready() {
+
     const $conten = $("Content");
     const $PostCSS = $("#PostCSS");
 
@@ -11,6 +12,9 @@ function ready() {
         }
         if ($self.data("layouttype") != undefined) {
             LayoutType = $self.data("layouttype");
+        }
+        if ($self.data("siteid") != undefined) {
+            SiteId = $self.data("siteid");
         }
     });
 
@@ -39,6 +43,7 @@ function ready() {
         if ($(".one_swiper,.two_swiper,.four_swiper").length > 0) SwiperInit({ autoplay: true });
         if ($(".masonry").length > 0) FrameInit();
         if ($(".frame").length > 0) ViewTypeChangeInit();
+        if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
     }
     if ($PostCSS.length > 0) {
         const $mainCss = $("#frameCss")

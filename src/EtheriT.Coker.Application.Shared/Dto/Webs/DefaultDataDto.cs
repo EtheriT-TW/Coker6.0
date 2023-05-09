@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Application.Shared.Dto.Webs
+{
+	public class DefaultDataDto
+    {
+        public long Id { get; set; }
+        public string OrgName { get; set; }
+        public int Layout_Type { get; set; }
+        public string View { get; set; }
+    }
+}

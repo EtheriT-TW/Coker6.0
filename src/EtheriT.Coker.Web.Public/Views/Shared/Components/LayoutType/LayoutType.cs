@@ -35,6 +35,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
             var view = Layout_Type == 0 ? "Default" : $"Layout_{Layout_Type}";
             LayoutTypeViewModel layoutTypeViewModel = new LayoutTypeViewModel
             {
+                SiteId = siteId,
                 SiteName = Layout_Type == 0 ? "Default_Site" : $"~/css/Site/Layout_{Layout_Type}_Site.min.css",
                 OrgName = orgname,
                 LayoutType = Layout_Type,

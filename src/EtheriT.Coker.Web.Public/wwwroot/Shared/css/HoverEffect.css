@@ -43,6 +43,10 @@
     font-weight: bold;
 }
 
+.hover_dark a:hover {
+    background-color: lightgray;
+}
+
 @media only screen and (max-width: 768px) {
     .hover_protrude_scale > .btn_more {
         transform: translate(-50%, -50%) scale(1);

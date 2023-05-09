@@ -26,22 +26,12 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var website = HttpContext.GetRouteData().Values["website"];
-            if (website != null && !website.ToString().Equals("upload"))
-            {
-                var tempid = await websiteApplication.GetSiteId(siteId, website.ToString());
-                if (tempid != 0)
-                {
-                    siteId = await websiteApplication.GetSiteId(siteId, website.ToString());
-                }
-            }
-            var orgname = await websiteApplication.GetOrgName(siteId);
-            orgname = (orgname == null || orgname == "") ? "Page" : orgname;
-            var Layout_Type = await websiteApplication.GetLayoutType(siteId);
-            var view = Layout_Type == 0 ? "Default" : $"Layout_{Layout_Type}";
+            var website_str = website == null ? "" : website.ToString();
+            var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
 
             FooterViewModel footerViewModel = new FooterViewModel();
 
-            switch (siteId)
+            switch (defaultData.Id)
             {
                 case 4:
 
@@ -118,7 +108,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         footerViewModels = new List<FooterViewModel>{
                             new FooterViewModel {Title="商品分類",Link="", footerViewModels = new List<FooterViewModel>{
                                     new FooterViewModel {Title="微電腦馬桶座", Link=""},
-                                    new FooterViewModel {Title="馬桶", Link=$"{orgname}/Toilet"},
+                                    new FooterViewModel {Title="馬桶", Link=$"{defaultData.OrgName}/Toilet"},
                                     new FooterViewModel {Title="面盆", Link=""},
                                     new FooterViewModel {Title="便斗", Link=""},
                                     new FooterViewModel {Title="龍頭", Link=""},
@@ -126,7 +116,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     new FooterViewModel {Title="浴缸", Link=""},
                                     new FooterViewModel {Title="三機", Link=""},
                                     new FooterViewModel {Title="無障礙設備", Link=""},
-                                    new FooterViewModel {Title="線上型錄", Link=$"{orgname}/Catalog"},
+                                    new FooterViewModel {Title="線上型錄", Link=$"{defaultData.OrgName}/Catalog"},
                                     new FooterViewModel {Title="清倉品", Link=""},
                                 },
                             },
@@ -136,7 +126,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     new FooterViewModel {Title="企業設備", Link=""},
                                     new FooterViewModel {Title="媒體專區", Link=""},
                                     new FooterViewModel {Title="品牌故事", Link=""},
-                                    new FooterViewModel {Title="展示中心", Link=$"{orgname}/ExhibitionCenter"},
+                                    new FooterViewModel {Title="展示中心", Link=$"{defaultData.OrgName}/ExhibitionCenter"},
                                     new FooterViewModel {Title="實績列舉", Link=""},
                                 }
                             },
@@ -160,7 +150,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     new FooterViewModel {Title="維修服務", Link=""},
                                     new FooterViewModel {Title="常見問題", Link=""},
                                     new FooterViewModel {Title="使用須知", Link=""},
-                                    new FooterViewModel {Title="聯絡我們", Link="${orgname}/Contact"},
+                                    new FooterViewModel {Title="聯絡我們", Link=$"{defaultData.OrgName}/Contact"},
                                 }
                             }
                         }
@@ -168,7 +158,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     break;
             }
 
-            return View(view, footerViewModel);
+            return View(defaultData.View, footerViewModel);
         }
     }
 }

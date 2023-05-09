@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application
     public interface IWebMenuApplication
     {
         public Task<SiteMapDto> GetAll();
+        public Task<SiteMapDto> GetAll(long? WebsiteID);
         public Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto);
         public Task<GetMenuContenDto> GetConten(SearchIDDto dto);
         public Task<GetFrontContenOutputDto> GetFrontConten(GetFrontContenInputDto dto);

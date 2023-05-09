@@ -136,10 +136,10 @@
                         isAdd = true;
                         saveList.push($(cEl).data());
                     }
-                    
+
                     ul.children("li").each(function (index, element) {
                         var s = $(element).data("serNO");
-                        console.log(s,index+1, element);
+                        console.log(s, index + 1, element);
                         if (s != (index + 1)) {
                             /*console.log(element, s, (index + 1));*/
                             s = index + 1;
@@ -171,7 +171,7 @@
         });
 
     var openEditForm = function () {
-        if ($('#frmEdit [name="id"]').val()==0) $("#btnClear").addClass("d-none");
+        if ($('#frmEdit [name="id"]').val() == 0) $("#btnClear").addClass("d-none");
         $("#offcanvasSite").addClass("offcanvas-lg");
         $("#MenuEditorForm").removeClass("d-none");
     }

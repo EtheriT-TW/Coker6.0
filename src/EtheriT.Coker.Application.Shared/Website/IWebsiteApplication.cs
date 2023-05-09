@@ -1,10 +1,12 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
 
 namespace EtheriT.Coker.Application
 {
     public interface IWebsiteApplication
     {
+        public Task<DefaultDataDto> GetDefaultData(long siteId, string? website);
         public Task<List<WebsDto>> GetAll();
         public Task<int> GetLayoutType(long Id);
         public Task<string> GetOrgName(long Id);

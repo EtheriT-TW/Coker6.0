@@ -18,37 +18,30 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 
         private readonly IMarqueeAppService marqueeAppService;
         private readonly IWebsiteApplication websiteApplication;
+        private readonly IWebMenuApplication webMenuApplication;
         private readonly IConfiguration Configuration;
         public Header(
             IMarqueeAppService marqueeAppService,
             IWebsiteApplication websiteApplication,
+            IWebMenuApplication webMenuApplication,
             IConfiguration Configuration
             )
         {
             this.marqueeAppService = marqueeAppService;
             this.websiteApplication = websiteApplication;
+            this.webMenuApplication = webMenuApplication;
             this.Configuration = Configuration;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var website = HttpContext.GetRouteData().Values["website"];
-            if (website != null && !website.ToString().Equals("upload"))
-            {
-                var tempid = await websiteApplication.GetSiteId(siteId, website.ToString());
-                if (tempid != 0)
-                {
-                    siteId = await websiteApplication.GetSiteId(siteId, website.ToString());
-                }
-            }
-            var orgname = await websiteApplication.GetOrgName(siteId);
-            orgname = (orgname == null || orgname == "") ? "Page" : orgname;
-            var Layout_Type = await websiteApplication.GetLayoutType(siteId);
-            var view = Layout_Type == 0 ? "Default" : $"Layout_{Layout_Type}";
+            var website_str = website == null ? "" : website.ToString();
+            var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
 
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
-            switch (siteId)
+            switch (defaultData.Id)
             {
                 case 4:
                     headerViewModel = new HeaderViewModel
@@ -61,6 +54,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     };
                     break;
                 case 5:
+                    //var website_data = await websiteApplication.GetAll();
+                    //var webmenus_data = await webMenuApplication.GetAll(siteId);
                     headerViewModel = new HeaderViewModel
                     {
                         Title = "高雄軟體園區資訊服務網",
@@ -162,7 +157,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                               menuItemModels = new List<MenuItem.MenuItemModel>{
                                 new MenuItem.MenuItemModel {Title="商品分類", menuItemModels = new List<MenuItem.MenuItemModel>{
                                         new MenuItem.MenuItemModel {Title="微電腦馬桶座", Link=""},
-                                        new MenuItem.MenuItemModel {Title="馬桶", Link=$"{orgname}/Toilet"},
+                                        new MenuItem.MenuItemModel {Title="馬桶", Link=$"{defaultData.OrgName}/Toilet"},
                                         new MenuItem.MenuItemModel {Title="面盆", Link=""},
                                         new MenuItem.MenuItemModel {Title="便斗", Link=""},
                                         new MenuItem.MenuItemModel {Title="龍頭", Link=""},
@@ -170,7 +165,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         new MenuItem.MenuItemModel {Title="浴缸", Link=""},
                                         new MenuItem.MenuItemModel {Title="三機", Link=""},
                                         new MenuItem.MenuItemModel {Title="無障礙設施", Link=""},
-                                        new MenuItem.MenuItemModel {Title="線上型錄", Link=$"{orgname}/Catalog"},
+                                        new MenuItem.MenuItemModel {Title="線上型錄", Link=$"{defaultData.OrgName}/Catalog"},
                                         new MenuItem.MenuItemModel {Title="清倉品", Link=""},
                                     }
                                 },
@@ -202,7 +197,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         new MenuItem.MenuItemModel {Title="經銷據點", Link=""},
                                     }
                                 },
-                                new MenuItem.MenuItemModel {Title="展示中心", Link=$"{orgname}/ExhibitionCenter", menuItemModels = new List<MenuItem.MenuItemModel>{
+                                new MenuItem.MenuItemModel {Title="展示中心", Link=$"{defaultData.OrgName}/ExhibitionCenter", menuItemModels = new List<MenuItem.MenuItemModel>{
                                         new MenuItem.MenuItemModel {Title="台北", Link=""},
                                         new MenuItem.MenuItemModel {Title="新竹", Link=""},
                                         new MenuItem.MenuItemModel {Title="台中", Link=""},
@@ -226,7 +221,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         new MenuItem.MenuItemModel {Title="維修服務", Link=""},
                                         new MenuItem.MenuItemModel {Title="常見問題", Link=""},
                                         new MenuItem.MenuItemModel {Title="使用須知", Link=""},
-                                        new MenuItem.MenuItemModel {Title="聯絡我們", Link=$"{orgname}/Contact"},
+                                        new MenuItem.MenuItemModel {Title="聯絡我們", Link=$"{defaultData.OrgName}/Contact"},
                                     }
                                 },
                             }
@@ -237,7 +232,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     break;
             }
 
-            return View(view, headerViewModel);
+            return View(defaultData.View, headerViewModel);
         }
     }
 }

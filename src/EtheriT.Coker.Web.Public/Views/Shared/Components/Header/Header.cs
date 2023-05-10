@@ -1,15 +1,10 @@
 ﻿using EtheriT.Coker.Application;
-using EtheriT.Coker.Application.Freight;
-using EtheriT.Coker.Application.Shared.Dto.Freight;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
-using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Marquee;
-using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Web.Public.Models;
+using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Text.RegularExpressions;
-using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 {
@@ -20,17 +15,20 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         private readonly IWebsiteApplication websiteApplication;
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IConfiguration Configuration;
+        private readonly IFileUploadAppService fileUploadAppService;
         public Header(
             IMarqueeAppService marqueeAppService,
             IWebsiteApplication websiteApplication,
             IWebMenuApplication webMenuApplication,
-            IConfiguration Configuration
+            IConfiguration Configuration,
+            IFileUploadAppService fileUploadAppService
             )
         {
             this.marqueeAppService = marqueeAppService;
             this.websiteApplication = websiteApplication;
             this.webMenuApplication = webMenuApplication;
             this.Configuration = Configuration;
+            this.fileUploadAppService = fileUploadAppService;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
@@ -38,80 +36,14 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website = HttpContext.GetRouteData().Values["website"];
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
+            var website_data = await websiteApplication.GetAllData(defaultData.Id);
+            var webmenus_data = (await webMenuApplication.GetAll(defaultData.Id)).Maps.Take(9).ToList();
 
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
-            switch (defaultData.Id)
+            switch (defaultData.Layout_Type)
             {
-                case 4:
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = "入口網站",
-                        menuItemModels = new List<MenuItem.MenuItemModel> {
-                            new MenuItem.MenuItemModel {Title="高雄軟體園區資訊服務網", Link="/ksp/home"},
-                            new MenuItem.MenuItemModel {Title="經濟部加工出口區管理處", Link="/eplus/home"},
-                        },
-                    };
-                    break;
-                case 5:
-                    //var website_data = await websiteApplication.GetAll();
-                    //var webmenus_data = await webMenuApplication.GetAll(siteId);
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = "高雄軟體園區資訊服務網",
-                        LogoImageUrl = "/upload/ksp/logo.png",
-                        menuItemModels = new List<MenuItem.MenuItemModel> {
-                            new MenuItem.MenuItemModel {Title="網站導覽", Link="/ksp/home"},
-                            new MenuItem.MenuItemModel {
-                                Title="最新消息", menuItemModels = new List<MenuItem.MenuItemModel>{
-                                        new MenuItem.MenuItemModel {Title="園區公告", Link="/ksp/home"},
-                                        new MenuItem.MenuItemModel {Title="活動列表", Link="/ksp/home"},
-                                        new MenuItem.MenuItemModel { Title = "影音專區", Link = "/ksp/home" },
-                                        new MenuItem.MenuItemModel { Title = "防疫紓困專區", Link = "/ksp/home" },
-                                }
-                            },
-                            new MenuItem.MenuItemModel {
-                                Title="園區資訊", menuItemModels = new List<MenuItem.MenuItemModel>{
-                                        new MenuItem.MenuItemModel {Title="園區介紹", Link="/ksp/home"},
-                                        new MenuItem.MenuItemModel {Title="交通資訊", Link="/ksp/home"},
-                                        new MenuItem.MenuItemModel { Title = "休閒設施", Link = "/ksp/home" },
-                                        new MenuItem.MenuItemModel { Title = "會議室租借", Link = "/ksp/home" },
-                                }
-                            },
-                        },
-                    };
-                    break;
-                case 6:
-                    headerViewModel = new HeaderViewModel
-                    {
-                        Title = "經濟部加工出口區管理處",
-                        LogoImageUrl = "/upload/eplus/logo.png",
-                        Sitemap_Link = "#",
-                        menuItemModels = new List<MenuItem.MenuItemModel> {
-                            new MenuItem.MenuItemModel {
-                                Title = "關於平台",
-                                imageUrl = "/upload/eplus/btn_about.png",
-                                imageLink = "/eplus/home",
-                            },
-                            new MenuItem.MenuItemModel{
-                                Title = "最新消息",
-                                imageUrl = "/upload/eplus/btn_news.png",
-                                imageLink = "/eplus/home",
-                            },
-                            new MenuItem.MenuItemModel{
-                                Title = "資源手冊",
-                                imageUrl = "/upload/eplus/btn_manual.png",
-                                imageLink = "/eplus/home",
-                            },
-                            new MenuItem.MenuItemModel{
-                                Title = "電子報",
-                                imageUrl = "/upload/eplus/btn_newsletter.png",
-                                imageLink = "/eplus/home",
-                            },
-                        },
-                    };
-                    break;
-                default:
+                case 1:
                     headerViewModel = new HeaderViewModel
                     {
                         Title = "德瑞克",
@@ -229,6 +161,86 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     },
                         marqueeModels = marquee
                     };
+                    break;
+                case 2:
+                    headerViewModel = new HeaderViewModel
+                    {
+                        Title = "入口網站",
+                        menuItemModels = new List<MenuItem.MenuItemModel> {
+                            new MenuItem.MenuItemModel {Title="高雄軟體園區資訊服務網", Link="/ksp/home"},
+                            new MenuItem.MenuItemModel {Title="經濟部加工出口區管理處", Link="/eplus/home"},
+                        },
+                    };
+                    break;
+                case 3:
+                    headerViewModel = new HeaderViewModel
+                    {
+                        Title = website_data[0].Title,
+                        LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
+                        menuItemModels = new List<MenuItem.MenuItemModel> { },
+                    };
+                    webmenus_data.ForEach(data_f =>
+                    {
+                        if (data_f.Children != null)
+                        {
+                            var tempmenuItemModels = new List<MenuItem.MenuItemModel> { };
+                            data_f.Children.ForEach(data_s =>
+                            {
+                                tempmenuItemModels.Add(new MenuItem.MenuItemModel
+                                {
+                                    Title = data_s.Title,
+                                    Link = $"/{website_data[0].OrgName}/{data_s.RouterName}",
+                                    Target = data_s.Target,
+                                });
+                            });
+                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                            {
+                                Title = data_f.Title,
+                                menuItemModels = tempmenuItemModels,
+                            });
+                        }
+                        else
+                        {
+                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                            {
+                                Title = data_f.Title,
+                                Target = data_f.Target,
+                                Link = $"/{website_data[0].OrgName}/{data_f.RouterName}"
+                            });
+                        }
+                    });
+                    break;
+                case 4:
+                    headerViewModel = new HeaderViewModel
+                    {
+                        Title = "經濟部加工出口區管理處",
+                        LogoImageUrl = "/upload/eplus/logo.png",
+                        Sitemap_Link = "#",
+                        menuItemModels = new List<MenuItem.MenuItemModel> {
+                            new MenuItem.MenuItemModel {
+                                Title = "關於平台",
+                                imageUrl = "/upload/eplus/btn_about.png",
+                                imageLink = "/eplus/home",
+                            },
+                            new MenuItem.MenuItemModel{
+                                Title = "最新消息",
+                                imageUrl = "/upload/eplus/btn_news.png",
+                                imageLink = "/eplus/home",
+                            },
+                            new MenuItem.MenuItemModel{
+                                Title = "資源手冊",
+                                imageUrl = "/upload/eplus/btn_manual.png",
+                                imageLink = "/eplus/home",
+                            },
+                            new MenuItem.MenuItemModel{
+                                Title = "電子報",
+                                imageUrl = "/upload/eplus/btn_newsletter.png",
+                                imageLink = "/eplus/home",
+                            },
+                        },
+                    };
+                    break;
+                default:
                     break;
             }
 

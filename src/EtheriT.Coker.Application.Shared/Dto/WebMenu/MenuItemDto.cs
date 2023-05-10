@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Dto
 {
-    public class MenuItemDto: PowerOptionDto
+    public class MenuItemDto : PowerOptionDto
     {
         public long Id { get; set; }
         public string? Title { get; set; }
         public string? text { get { return Title; } }
         public string RouterName { get; set; }
         public int PageType { get; set; }
+        public int PagePlace { get; set; }
         public string? Description { get; set; }
         public string? icon { get; set; }
         public bool Visible { get; set; }
@@ -26,6 +27,6 @@ namespace EtheriT.Coker.Application.Dto
         public bool LanBar { get; set; }
         public long? FK_TopNodeId { get; set; }
         public long? FK_RootNodeId { get; set; }
-        public List<MenuItemDto>? Children { get; set;}
+        public List<MenuItemDto>? Children { get; set; }
     }
 }

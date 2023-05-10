@@ -8,10 +8,6 @@ function HeaderInit() {
     console.log("Layout3")
     ElementInit();
 
-    $(window).resize(function () {
-        console.log(`Resize window = ${$(window).width()}`);
-    });
-
     $btn_expand.on("click", function () {
         if ($btn_expand.hasClass("collapsed")) {
             $btn_expand.children("span").text("expand_more");
@@ -20,19 +16,20 @@ function HeaderInit() {
         }
     })
 
-    $(".navbar-nav > .dropdown").hover(
-        function () {
-            var $selfa = $(this).children("a");
-            if ($(window).width() > 768) {
+    if ($(window).width() > 768) {
+        $(".navbar-nav > .dropdown").hover(
+            function () {
+                var $selfa = $(this).children("a");
                 $selfa.dropdown("show");
-            }
-        },
-        function () {
-            var $selfa = $(this).children("a");
-            if ($(window).width() > 768) {
+                console.log("In");
+            },
+            function () {
+                var $selfa = $(this).children("a");
                 $selfa.dropdown("hide");
-            }
-        });
+                console.log("Out");
+            });
+    }
+
 
     $btn_sear_text.on("click", function () {
         $input_sear.focus();

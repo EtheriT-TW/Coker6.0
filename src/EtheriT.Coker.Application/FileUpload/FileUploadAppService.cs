@@ -81,36 +81,41 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> getHtmlContentFiles() {
+        public async Task<UploadFileOutputDto> getHtmlContentFiles()
+        {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
                 Files = new List<FileItemDto>()
             };
-            try { 
+            try
+            {
                 long websiteId = await loginUserData.GetWebsiteId();
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 var files = db.FileUploads
                             .Where(e => e.FK_WebsiteId == websiteId)
                             .Where(e => !e.IsDeleted)
-                            .Where(e => (e.DownloadFileName??"").Contains("htmlConten"));
+                            .Where(e => (e.DownloadFileName ?? "").Contains("htmlConten"));
                 var result = from file in files
                              select new FileItemDto
                              {
                                  Guid = file.GuidKey,
                                  Name = file.OriginalFileName,
-                                 Path = (file.DownloadFileName??"").Replace(@"\","/").Replace("/upload/", $"/upload/{orgName}/"),
+                                 Path = (file.DownloadFileName ?? "").Replace(@"\", "/").Replace("/upload/", $"/upload/{orgName}/"),
                              };
                 response.Files = await result.ToListAsync();
                 response.Success = true;
             }
-            catch(Exception ex) {
+            catch (Exception ex)
+            {
                 response.Error = ex.Message;
             }
             return response;
         }
-        public async Task<ResponseMessageDto> deleteFile(Guid key) {
+        public async Task<ResponseMessageDto> deleteFile(Guid key)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 long websiteId = await loginUserData.GetWebsiteId();
                 string s = "";
@@ -125,14 +130,34 @@ namespace EtheriT.Coker.Application
                     await loginUserData.SaveChanges(files);
                 }
                 else throw new Exception("檔案不存在");
-            } catch (Exception ex) { 
+            }
+            catch (Exception ex)
+            {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(),JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
             return response;
         }
-
-        private async Task<FileItemDto> SaveFile(IFormFile file,string directory) {
+        public async Task<string> getImgUrl(long id)
+        {
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                string orgName = await loginUserData.GetWebsiteOrgName();
+                var files = await (db.FileUploads
+                            .Where(e => e.FK_WebsiteId == websiteId)
+                            .Where(e => e.Id == id)
+                            .Where(e => !e.IsDeleted)
+                            .Select(e => e.DownloadFileName)).Take(1).ToListAsync();
+                return files.ToString();
+            }
+            catch (Exception ex)
+            {
+            }
+            return "";
+        }
+        private async Task<FileItemDto> SaveFile(IFormFile file, string directory)
+        {
             if (file.Length > 0)
             {
                 string orgName = await loginUserData.GetWebsiteOrgName();
@@ -162,11 +187,12 @@ namespace EtheriT.Coker.Application
                     return new FileItemDto
                     {
                         Name = fileUpload.OriginalFileName,
-                        Path = fileUpload.DownloadFileName.Replace("/upload/",$"/upload/{orgName}/"),
+                        Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
                         Guid = fileUpload.GuidKey,
                     };
                 }
-            }else throw new Exception("上傳失敗");
+            }
+            else throw new Exception("上傳失敗");
         }
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application
 {
@@ -121,16 +122,22 @@ namespace EtheriT.Coker.Application
 
         public async Task<List<WebsiteDataDto>> GetAllData(long SiteId)
         {
-            var date = from w in db.Websites
-                       where w.Id == SiteId
-                       select new WebsDto
-                       {
-                           Id = w.Id,
-                           Name = w.Title,
-                           Description = w.Description ?? "",
-                           Images = w.Icon ?? ""
-                       };
-            return null;
+            var issubsite = await (from w in db.MappingWebsiteRelationship
+                                   where w.WebsiteId == SiteId
+                                   where w.IsDeleted != true
+                                   select w.Id).ToListAsync();
+            var date = await (from w in db.Websites
+                              where w.Id == SiteId
+                              where w.IsDeleted != true
+                              select new WebsiteDataDto
+                              {
+                                  Id = w.Id,
+                                  Title = w.Title ?? "",
+                                  OrgName = w.OrgName ?? "",
+                                  Logo = w.Logo ?? "",
+                                  isSubsite = issubsite == null ? false : true,
+                              }).ToListAsync();
+            return date;
         }
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {

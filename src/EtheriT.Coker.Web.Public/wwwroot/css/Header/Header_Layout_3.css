@@ -6,12 +6,6 @@
     flex-wrap: nowrap;
 }
 
-.logo {
-    max-width: 80%;
-    width: 100%;
-    height: auto;
-}
-
 .modal-body {
     min-height: 60vh;
 }
@@ -22,10 +16,6 @@
     color: white;
 }
 
-.menu_line {
-    height: 5px;
-}
-
 .fs_change {
     font-size: 1.5rem;
 }
@@ -33,6 +23,7 @@
 .navbar-nav > .nav-item > .nav-link {
     color: unset;
 }
+
 
 @media only screen and (min-width: 769px) {
     .navbar-nav > .nav-item:hover {
@@ -57,6 +48,10 @@
 }
 
 @media only screen and (max-width: 768px) {
+    .logo {
+        max-width: 230px;
+    }
+
     .nav-link, .dropdown-item {
         font-weight: bold;
     }

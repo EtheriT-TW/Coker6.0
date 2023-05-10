@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application
     {
         public Task<DefaultDataDto> GetDefaultData(long siteId, string? website);
         public Task<List<WebsDto>> GetAll();
+        public Task<List<WebsiteDataDto>> GetAllData(long SiteId);
         public Task<int> GetLayoutType(long Id);
         public Task<string> GetOrgName(long Id);
         public Task<long> GetSiteId(long father_id, string key);

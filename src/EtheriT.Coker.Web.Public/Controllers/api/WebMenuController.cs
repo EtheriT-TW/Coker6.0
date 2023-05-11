@@ -14,9 +14,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         private readonly IWebMenuApplication webMenuApplication;
         public WebMenuController(IWebMenuApplication webMenuApplication) { this.webMenuApplication = webMenuApplication; }
         [HttpGet]
-        public async Task<SiteMapDto> GetAll(long? WebsiteID)
+        public async Task<SiteMapDto> GetAll(long WebsiteID)
         {
-            return await webMenuApplication.GetAll(WebsiteID);
+            return await webMenuApplication.GetDisplayAll(WebsiteID);
         }
     }
 }

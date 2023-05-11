@@ -7,52 +7,96 @@
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
-<nav class="navbar navbar-expand-lg flex-column p-0 fixed-top">
-	<!-- Top Line -->
-	<div id="Header_Top" class="d-flex justify-content-end justify-content-lg-between p-2 w-100 ">
+<nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow-lg">
 
-		<!-- News Marquee -->
-
-		<div id="News_Marquee" class="d-lg-flex d-none">
-			@if (Model.marqueeModels.Count > 0)
-			{
-				<div class="news_text">New&ensp;</div>
-				<div class="news_box">
-					<ul class="clearfix">
-						@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
-						{
-							@if (@marquee.target)
-							{
-								<li class="overflow-hidden text-white"><a class="text-white overflow-hidden" href="@marquee.link" target="_blank">@marquee.title</a></li>
-							}
-							else
-							{
-								<li class="overflow-hidden text-white"><a class="text-white overflow-hidden" href="@marquee.link">@marquee.title</a></li>
-							}
-						}
-					</ul>
-				</div>
-			}
+	<!-- Mega Menu -->
+	<div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
+		<!-- Logo -->
+		<div class="d-none d-lg-flex logo col-2 text-center py-lg-0 py-1">
+			<a href="/">
+				@if (string.IsNullOrEmpty(Model.Title))
+				{
+					<h1>@Model.Title</h1>
+				}
+				else
+				{
+					<img class="position-absolute translate-middle-y" src="@Model.LogoImageUrl" alt="@Model.Title" />
+					<h1 class="d-none">@Model.Title</h1>
+				}
+			</a>
 		</div>
 
-		<!-- Right Control -->
-		<div class="d-flex">
+		<!-- Menu Canvas -->
+		<div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-lg-8 col visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+			<!-- Menu Canvas Search Block -->
+			<div class="offcanvas-header pt-2 ps-5">
+				<h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+				@*<div class="d-lg-none d-flex justify-content-center align-items-center mt-4">
+				<input class="border-1 rounded-pill" type="text">
+				<button class="bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
+				<button class="bg-transparent border-0 d-none d-sm-flex">智慧搜尋</button>
+				</div>*@
+			</div>
 
+			<!-- Menu Canvas Menu -->
+			<ul class="navbar-nav offcanvas-body w-100 m-0">
+				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+				{
+					<li class="title nav-item flex-lg-grow-1 flex-grow-0">
+						<a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-center text-nowrap">@menu.Title</a>
+						<div class="content w-100 start-50 translate-middle-x">
+							<ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100 justify-content-evenly">
+								@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+								{
+									<li class="subtitle nav-item my-0">
+										<a class="nav-link text-black m-auto py-1 text-nowrap" href="@subMenu.Link">@subMenu.Title</a>
+									</li>
+								}
+							</ul>
+						</div>
+
+					</li>
+				}
+			</ul>
+		</div>
+
+		<div class="btn_menu navbar-toggler collapsed px-0 col-1 mt-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
+			<div class="bar"></div>
+			<div class="bar"></div>
+			<div class="bar"></div>
+		</div>
+
+		<!-- Logo -->
+		<div class="logo d-lg-none col-7 text-center py-lg-0 py-1">
+			<a href="/">
+				@if (string.IsNullOrEmpty(Model.Title))
+				{
+					<h1>@Model.Title</h1>
+				}
+				else
+				{
+					<img class="" src="@Model.LogoImageUrl" alt="Derek" />
+					<h1 class="d-none">@Model.Title</h1>
+				}
+			</a>
+		</div>
+
+		<!-- Tool Bar -->
+		<div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2">
 			<!-- Search Block -->
-			<form action="/Search" class="searchblock bg-white rounded-pill d-lg-flex d-none pe-1 ps-3">
-				<input type="hidden" name="id" />
-				<input type="text" name="search" class="bg-transparent border-0">
-				<button type="submit" class="align-self-center align-self-center bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
-			</form>
-
-			<a class="fs-6 text-white d-lg-flex d-none ms-2 align-items-center" href="/Search">智慧搜尋</a>
-			<div id="Cart_Dropdown_Parent" class="btn-group px-3">
-				<button id="btn_car_dropdown" class="bg-transparent border-0 text-white ms-1 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+			<button class="d-flex bg-transparent border-0">
+				<span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
+			</button>
+			<button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
+				<div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
+			</button>
+			<div id="Cart_Dropdown_Parent" class="d-flex px-1">
+				<button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
 					<span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
 					<span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
 				</button>
 
-				<div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto" aria-labelledby="btn_car_dropdown">
+				<div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
 					<ul class="m-0">
 						<template id="Template_Car_Dropdown">
 							<li class="border-bottom me-4" data-scid="">
@@ -78,105 +122,16 @@
 
 					<div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
 
-					<button onclick="location.href='/ShoppingCar';" class="btn_car_buy text-white border-0 rounded-1 w-100 py-1 mt-2" disabled>購買</button>
+					<button onclick="location.href='/ShoppingCar';" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</button>
 				</div>
 			</div>
 
 			<!-- Login Button -->
-			<button class="bg-transparent border-0 text-white mx-1 pe-3 d-flex" data-bs-target="#LoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">
-				<span class="material-symbols-outlined">person</span>
-			</button>
-		</div>
-	</div>
-
-	<!-- Mega Menu -->
-	<div id="Mega_Menu" class="navbar navbar-expand-lg w-100">
-
-		<!-- Logo -->
-		<div class="logo col-lg-4 col text-center">
-			<a href="/">
-				@if (string.IsNullOrEmpty(Model.Title))
-				{
-					<h1>@Model.Title</h1>
-				}
-				else
-				{
-					<img class="" src="@Model.LogoImageUrl" alt="Derek" />
-					<h1 class="d-none">@Model.Title</h1>
-				}
-			</a>
-		</div>
-
-		<!-- Menu Canvas -->
-		<div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-8 mt-lg-2 visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
-			<!-- Menu Canvas Search Block -->
-			<div class="offcanvas-header d-flex flex-column justify-content-center p-2 d-lg-none">
-				<h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
-				<div class="d-lg-none d-flex justify-content-center align-items-center mt-4">
-					<input class="border-1 rounded-pill" type="text">
-					<button class="bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
-					<button class="bg-transparent border-0 d-none d-sm-flex">智慧搜尋</button>
-				</div>
+			<div class="d-flex">
+				<button class="bg-transparent border-0 d-flex align-items-center" type="button">
+					<span class="material-symbols-outlined">person</span>
+				</button>
 			</div>
-
-			<!-- Menu Canvas Menu -->
-			<ul class="navbar-nav offcanvas-body w-100 m-0">
-				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
-				{
-					<li class="title nav-item col-lg pb-2 ">
-						<a class="nav-link text-center">@menu.Title</a>
-						<div class="content w-100 start-50 translate-middle-x">
-							@if (string.IsNullOrEmpty(menu.imageUrl))
-							{
-								<ul class="d-flex flex-column flex-wrap w-100 h-100">
-									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
-									{
-										<li class="nav-item">
-											<a class="sub_title nav-link fw-bold mb-1 p-0 text-black">@subMenu.Title</a>
-											<ul class="sub_content d-flex flex-column flex-wrap h-100 fw-normal fs-6">
-												@foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
-												{
-													<li><a class="text-black" href="/@thirdMenu.Link">@thirdMenu.Title</a></li>
-												}
-											</ul>
-										</li>
-									}
-								</ul>
-							}
-							else
-							{
-								<ul class="d-flex flex-column flex-wrap w-100 h-100 ">
-									@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
-									{
-										<li class="nav-item">
-											<a class="sub_title nav-link fw-bold mb-1 p-0 text-black">@subMenu.Title</a>
-											<ul class="sub_content d-flex flex-column flex-wrap h-100 fw-normal fs-6">
-												@foreach (var thirdMenu in subMenu.menuItemModels ?? new List<MenuItemModel>())
-												{
-													<li><a class="text-black" href="/@thirdMenu.Link">@thirdMenu.Title</a></li>
-												}
-											</ul>
-										</li>
-									}
-									<li class="nav-item image d-flex justify-content-center text-center">
-										<a class="h-100 d-flex flex-column justify-content-center align-items-center" href="@menu.imageLink">
-											<img class="border border-white border-4 rounded shadow" src="@menu.imageUrl" alt="Photo" />
-											<div class="mt-3 text-black">@menu.Description</div>
-										</a>
-									</li>
-								</ul>
-							}
-						</div>
-
-					</li>
-				}
-			</ul>
-		</div>
-
-		<div class="btn_menu navbar-toggler collapsed position-fixed top-0 start-0 px-2 py-0 row-cols-lg-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
-			<div class="bar"></div>
-			<div class="bar"></div>
-			<div class="bar"></div>
 		</div>
 	</div>
 </nav>

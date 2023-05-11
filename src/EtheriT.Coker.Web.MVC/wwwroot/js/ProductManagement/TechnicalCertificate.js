@@ -67,7 +67,7 @@ function PageReady() {
 
 
     $(".btn_back").on("click", function () {
-        Coker.sweet.confirm("返回廣告列表", "資料將不被保存", "確定", "取消", function () {
+        Coker.sweet.confirm("返回技術證照列表", "資料將不被保存", "確定", "取消", function () {
             history.back();
         });
     })

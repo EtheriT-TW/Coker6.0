@@ -29,12 +29,15 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly IConfiguration Configuration;
+        private readonly IFileUploadAppService fileUploadAppService;
         public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             LoginUserData loginUserData,
             IMapper mapper,
-            IConfiguration Configuration)
+            IConfiguration Configuration,
+            IFileUploadAppService fileUploadAppService
+            )
         {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
@@ -42,13 +45,14 @@ namespace EtheriT.Coker.Application
             this.mapper = mapper;
             this.Configuration = Configuration;
             this.ApplicationName = "WebMenu";
+            this.fileUploadAppService = fileUploadAppService;
         }
         public async Task<SiteMapDto> GetAll()
         {
             SiteMapDto response = new SiteMapDto { Success = false };
             try
             {
-                response.Maps = await GetChild(null, null);
+                response.Maps = await GetChild(null);
                 response.Success = true;
             }
             catch (Exception ex)
@@ -58,12 +62,17 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(ApplicationName, "GetAll", "", JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<SiteMapDto> GetAll(long? WebsiteID)
+        public async Task<SiteMapDto> GetDisplayAll(long WebsiteID)
         {
             SiteMapDto response = new SiteMapDto { Success = false };
             try
             {
-                response.Maps = await GetChild(null, WebsiteID);
+                response.Maps = await GetDisplayChild(null, WebsiteID);
+                foreach (var map in response.Maps)
+                {
+                    var imgurl = await fileUploadAppService.getImgUrl(map.ImgId, (long)WebsiteID);
+                    map.ImgUrl = imgurl;
+                }
                 response.Success = true;
             }
             catch (Exception ex)
@@ -73,14 +82,11 @@ namespace EtheriT.Coker.Application
             return response;
         }
 
-        private async Task<List<MenuItemDto>> GetChild(long? id, long? WebsiteID)
+        private async Task<List<MenuItemDto>> GetChild(long? id)
         {
             try
             {
-                if (WebsiteID == null)
-                {
-                    WebsiteID = await loginUserData.GetWebsiteId();
-                }
+                var WebsiteID = await loginUserData.GetWebsiteId();
                 var menus = await db.WebMenus
                             .Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
@@ -91,7 +97,32 @@ namespace EtheriT.Coker.Application
                 List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
                 foreach (var m in result)
                 {
-                    m.Children = await GetChild(m.Id, WebsiteID);
+                    m.Children = await GetChild(m.Id);
+                    if (m.Children.Count == 0) m.Children = null;
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("資料錯誤");
+            }
+        }
+        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID)
+        {
+            try
+            {
+                var menus = await db.WebMenus
+                            .Where(m => m.FK_TopNodeId == id)
+                            .Where(m => m.FK_WebsiteId == WebsiteID)
+                            .Where(m => !m.IsDeleted)
+                            .Where(m => m.Visible)
+                            .OrderBy(m => m.SerNO)
+                            .ThenBy(m => m.Id)
+                            .ToListAsync();
+                List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
+                foreach (var m in result)
+                {
+                    m.Children = await GetDisplayChild(m.Id, WebsiteID);
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;

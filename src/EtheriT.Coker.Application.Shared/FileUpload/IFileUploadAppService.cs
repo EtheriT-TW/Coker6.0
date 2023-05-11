@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application
         public Task<UploadFileOutputDto> uploadHtmlContentFiles(IList<IFormFile> files);
         public Task<UploadFileOutputDto> uploadProdtFiles(IList<IFormFile> files, long id);
         public Task<UploadFileOutputDto> getHtmlContentFiles();
-        public Task<string> getImgUrl(long id);
+        public Task<string> getImgUrl(long? imgid, long websiteid);
         public Task<ResponseMessageDto> deleteFile(Guid key);
     }
 }

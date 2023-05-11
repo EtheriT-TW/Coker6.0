@@ -138,23 +138,21 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<string> getImgUrl(long id)
+        public async Task<string> getImgUrl(long? imgid, long websiteid)
         {
             try
             {
-                long websiteId = await loginUserData.GetWebsiteId();
-                string orgName = await loginUserData.GetWebsiteOrgName();
                 var files = await (db.FileUploads
-                            .Where(e => e.FK_WebsiteId == websiteId)
-                            .Where(e => e.Id == id)
+                            .Where(e => e.FK_WebsiteId == websiteid)
+                            .Where(e => e.Id == imgid)
                             .Where(e => !e.IsDeleted)
-                            .Select(e => e.DownloadFileName)).Take(1).ToListAsync();
-                return files.ToString();
+                            .Select(e => e.DownloadFileName).FirstOrDefaultAsync());
+                return files;
             }
             catch (Exception ex)
             {
+                return "";
             }
-            return "";
         }
         private async Task<FileItemDto> SaveFile(IFormFile file, string directory)
         {

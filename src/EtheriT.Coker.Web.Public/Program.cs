@@ -53,6 +53,7 @@ builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
+builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -67,6 +68,19 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+List<string> childOrgNames = new List<string>();
+builder.Configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgNames);
+
+List<string> childFilePath = new List<string>();
+builder.Configuration.GetSection("WebConfig:childPath").Bind(childFilePath);
+
+if (childOrgNames != null) {
+    for (int i = 0; i < childOrgNames.Count; i++) {
+        app.UseVirtualDirectory(
+            $"upload/{childOrgNames[i]}",
+            childFilePath[i]);
+    }
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

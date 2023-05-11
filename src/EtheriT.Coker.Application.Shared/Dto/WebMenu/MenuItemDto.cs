@@ -21,6 +21,7 @@ namespace EtheriT.Coker.Application.Dto
         public int SerNO { get; set; }
         public bool PopularVisible { get; set; }
         public long? ImgId { get; set; }
+        public string? ImgUrl { get; set; }
         public long? OverImgId { get; set; }
         public string? LinkUrl { get; set; }
         public bool? Target { get; set; }

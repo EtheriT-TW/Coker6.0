@@ -21,15 +21,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.fileUploadAppService = fileUploadAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, int type, long? id)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] int type, [FromForm] long? id)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
             {
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
-                case FileBindTypeEnum.技術證照:
-                    return await fileUploadAppService.uploadTechnicalCertificateFiles(files, id ?? 0);
+                //case FileBindTypeEnum.技術證照:
+                //    return await fileUploadAppService.uploadTechnicalCertificateFiles(files, id ?? 0);
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }

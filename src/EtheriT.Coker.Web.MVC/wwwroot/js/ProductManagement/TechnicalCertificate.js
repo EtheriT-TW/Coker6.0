@@ -1,5 +1,7 @@
-﻿var $btn_display, $title, $illustrate, $illustrate_count, $input_sort, $check_sort, $date, $permanent
-var startDate, endDate, keyId, disp_opt = true
+﻿var $btn_input_pic, $btn_display, $title, $illustrate, $illustrate_count, $input_sort, $check_sort, $date, $permanent
+var $input_pic, $img_preview;
+var startDate, endDate, keyId, disp_opt = true;
+var img_file = [], img_mid, img, min;
 var technicalCertificate_list
 
 function PageReady() {
@@ -36,8 +38,6 @@ function PageReady() {
 
     ElementInit();
 
-    $picker = $("#InputDate");
-
     co.Picker.Init($picker);
 
     $picker.on('apply.daterangepicker', function (ev, picker) {
@@ -53,6 +53,8 @@ function PageReady() {
                 if (!form.checkValidity()) {
                     event.preventDefault()
                     event.stopPropagation()
+                } else if (img_file == undefined) {
+                    Coker.sweet.error("尚未上傳證照圖片", "請上傳一張圖片");
                 } else {
                     event.preventDefault();
                     Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
@@ -84,6 +86,42 @@ function PageReady() {
             $self.children("span").text("expand_more")
         }
     })
+
+    $btn_input_pic.on("click", function (even) {
+        even.preventDefault();
+        $input_pic.click();
+    })
+    $input_pic.change(function () {
+        img_file.push(this.files[0]);
+
+        var htmlImageCompress;
+        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7 })
+        htmlImageCompress.then(function (result) {
+            img_file.push(new File([result.file], img_file[0].name));
+        }).catch(function (err) {
+            console.log("Faild");
+        })
+        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3 })
+        htmlImageCompress.then(function (result) {
+            img_file.push(new File([result.file], img_file[0].name));
+
+            var reader = new FileReader();
+            reader.readAsDataURL(img_file[2]);
+            reader.onload = (function (e) {
+                $img_preview.children("img").attr("src", e.target.result);
+            });
+        }).catch(function (err) {
+            console.log("Faild");
+        })
+
+        $img_preview.removeClass("d-none");
+        $btn_input_pic.addClass("border-0");
+        $btn_input_pic.css("width", "unset");
+        $btn_input_pic.css("height", "unset");
+        $btn_input_pic.children("span").addClass("d-none");
+        $btn_input_pic.next("div").text(img_file[0].name);
+    })
+
     $btn_display.on("click", function () {
         if (disp_opt) {
             $btn_display.children("span").text("visibility_off");
@@ -123,6 +161,10 @@ function PageReady() {
 }
 
 function ElementInit() {
+    $picker = $("#InputDate");
+    $btn_input_pic = $(".btn_input_pic");
+    $input_pic = $(".input_pic");
+    $img_preview = $(".img_preview");
     $btn_display = $("#Btn_Display");
     $title = $("#InputTitle");
     $illustrate = $("#InputIllustrate");
@@ -233,30 +275,44 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
-    co.TechnicalCertificate.AddUp({
-        Id: keyId,
-        TId: $.cookie('secret'),
-        Disp_opt: display,
-        Img: "~/images/product/pro_01.png",
-        Title: $title.val(),
-        Description: $illustrate.val(),
-        Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-        StartDate: startDate,
-        EndDate: endDate,
-        permanent: $permanent.is(":checked")
-    }).done(function (result) {
+    console.log(img_file);
+    var formData = new FormData();
+    for (var file in img_file) {
+        formData.append('file', file) //containing all the selected images from local
+    }
+    formData.append("type", 4);
+    console.log(formData.get('file'))
+
+    co.File.Upload(formData).done(function (result) {
         if (result.success) {
-            Coker.sweet.success(success_text, null, true);
-            setTimeout(function () {
-                BackToList();
-                technicalCertificate_list.component.refresh();
-            }, 1000);
-        } else {
-            Coker.sweet.error("錯誤", error_text, null, true);
+            console.log(result);
         }
-    }).fail(function () {
-        Coker.sweet.error("錯誤", error_text, null, true);
-    })
+    });
+
+    //co.TechnicalCertificate.AddUp({
+    //    Id: keyId,
+    //    TId: $.cookie('secret'),
+    //    Disp_opt: display,
+    //    Img: "~/images/product/pro_01.png",
+    //    Title: $title.val(),
+    //    Description: $illustrate.val(),
+    //    Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
+    //    StartDate: startDate,
+    //    EndDate: endDate,
+    //    permanent: $permanent.is(":checked")
+    //}).done(function (result) {
+    //    if (result.success) {
+    //        Coker.sweet.success(success_text, null, true);
+    //        setTimeout(function () {
+    //            BackToList();
+    //            technicalCertificate_list.component.refresh();
+    //        }, 1000);
+    //    } else {
+    //        Coker.sweet.error("錯誤", error_text, null, true);
+    //    }
+    //}).fail(function () {
+    //    Coker.sweet.error("錯誤", error_text, null, true);
+    //})
 }
 
 function MoveToContent() {

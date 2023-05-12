@@ -34,6 +34,11 @@ input[type="number"] {
     border: 1px solid var(--color-gray-bg-dark);
 }
 
+.img_preview > img {
+    max-width: 200px;
+    max-height: 200px;
+}
+
 #TechnicalCertificateContent > .card-header {
     background-color: var(--color-gray-bg-dark);
 }

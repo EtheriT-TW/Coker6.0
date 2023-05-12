@@ -28,9 +28,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             {
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
+                case FileBindTypeEnum.技術證照:
+                    return await fileUploadAppService.uploadTechnicalCertificateFiles(files, id ?? 0);
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
+            return null;
         }
         [HttpPost]
         public async Task<ResponseMessageDto> getFileList(GetFileListDto dto)

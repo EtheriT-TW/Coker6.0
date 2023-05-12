@@ -488,7 +488,7 @@ var Coker = {
                 },
             });
             return upload;
-        }
+        },
     }
 }
 var _c = Coker;

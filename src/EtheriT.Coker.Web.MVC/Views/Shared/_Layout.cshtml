@@ -2,11 +2,13 @@
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
 <!DOCTYPE html>
 <html lang="zh-tw">
-<head>@{
+<head>
+	@{
 		string PageName = "";
 		if (ViewData["PageName"] != null) PageName = ViewData["PageName"].ToString();
 		else PageName = ViewData["Title"].ToString();
-	}<meta charset="utf-8" />
+	}
+	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>@ViewData["Title"] - EtheriT.Coker.Web.MVC</title>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -58,6 +60,7 @@
 	<script src="~/lib/devextreme/localization/dx.messages.zh-tw.js"></script>
 	<script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
 	<script src="~/lib/file-upload-with-preview/file-upload-with-preview.min.js"></script>
+	<script src="~/lib/html-image-compress/imageCompress.min.js"></script>
 	<script src="~/js/CokerCore.min.js" asp-append-version="true"></script>
 	<script src="~/js/site.js" asp-append-version="true"></script>
 	<script>

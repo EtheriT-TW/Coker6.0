@@ -68,6 +68,18 @@
       "input": [
         "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
       ]
+    },
+    {
+      "output": "lib/file-upload-with-preview/file-upload-with-preview.min.js",
+      "input": [
+        "node_modules/file-upload-with-preview/dist/file-upload-with-preview.iife.js"
+      ]
+    },
+    {
+      "output": "lib/html-image-compress/imageCompress.min.js",
+      "input": [
+        "node_modules/html-image-compress/dist/imageCompress.main.js"
+      ]
     }
   ],
   "styles": [

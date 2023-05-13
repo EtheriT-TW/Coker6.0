@@ -1,7 +1,7 @@
 ﻿var $btn_input_pic, $btn_display, $title, $illustrate, $illustrate_count, $input_sort, $check_sort, $date, $permanent
 var $input_pic, $img_preview;
 var startDate, endDate, keyId, disp_opt = true;
-var img_file = [], img_mid, img, min;
+var img_file = [], img_start_index = null, img_delete_list = [];
 var technicalCertificate_list
 
 function PageReady() {
@@ -89,37 +89,21 @@ function PageReady() {
 
     $btn_input_pic.on("click", function (even) {
         even.preventDefault();
-        $input_pic.click();
+        var $self = $(this);
+        if ($self.data("index") != undefined) {
+            img_start_index = (parseInt($self.data("index")) - 1) * 3;
+        } else {
+            img_start_index = null;
+        }
+        $self.prev(".input_pic").click();
     })
+
     $input_pic.change(function () {
-        img_file.push(this.files[0]);
-
-        var htmlImageCompress;
-        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7 })
-        htmlImageCompress.then(function (result) {
-            img_file.push(new File([result.file], img_file[0].name));
-        }).catch(function (err) {
-            console.log("Faild");
-        })
-        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3 })
-        htmlImageCompress.then(function (result) {
-            img_file.push(new File([result.file], img_file[0].name));
-
-            var reader = new FileReader();
-            reader.readAsDataURL(img_file[2]);
-            reader.onload = (function (e) {
-                $img_preview.children("img").attr("src", e.target.result);
-            });
-        }).catch(function (err) {
-            console.log("Faild");
-        })
-
-        $img_preview.removeClass("d-none");
-        $btn_input_pic.addClass("border-0");
-        $btn_input_pic.css("width", "unset");
-        $btn_input_pic.css("height", "unset");
-        $btn_input_pic.children("span").addClass("d-none");
-        $btn_input_pic.next("div").text(img_file[0].name);
+        if (img_start_index == null) {
+            uploadImage(this.files[0]);
+        } else {
+            reuploadImage(this.files[0]);
+        }
     })
 
     $btn_display.on("click", function () {
@@ -200,7 +184,13 @@ function HashDataEdit() {
                 co.TechnicalCertificate.Get(parseInt(hash)).done(function (result) {
                     if (result != null) {
                         MoveToContent();
-                        FormDataSet(result);
+                        if (result.img != 0) {
+                            co.File.getImgThumbnail(result.img).done(function (img_result) {
+                                FormDataSet(result, img_result);
+                            });
+                        } else {
+                            FormDataSet(result, null);
+                        }
                     } else {
                         window.location.hash = ""
                     }
@@ -218,7 +208,7 @@ function editButtonClicked(e) {
     window.location.hash = keyId;
 }
 
-function FormDataSet(result) {
+function FormDataSet(result, img_result) {
     FormDataClear();
     keyId = result.id;
     startDate = result.startDate;
@@ -241,6 +231,43 @@ function FormDataSet(result) {
         startDate != null && $picker.data('daterangepicker').setStartDate(startDate);
         endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
     }
+
+    if (img_result != null) {
+        var item = $($("#Template_Image_Preview").html()).clone();
+        var item_btn = item.find("button"),
+            item_input = item.find(".input_pic"),
+            item_img = item.find("img"),
+            item_name = item.find(".img_name");
+
+        item_btn.data("id", result.img);
+        item_name.text(img_result[0].name);
+        item_img.attr("src", img_result[0].link);
+
+        $("#TechnicalCertificateForm > div > .img_input_frame").prepend(item);
+
+        item_btn.on("click", function (even) {
+            even.preventDefault();
+            var $self = $(this);
+            if ($self.data("id") != 0) {
+                img_delete_list.push(parseInt($self.data("id")));
+                $self.data("id", 0);
+            }
+            if ($self.data("index") != undefined) {
+                img_start_index = (parseInt($self.data("index")) - 1) * 3;
+            } else {
+                img_start_index = null;
+            }
+            $self.prev(".input_pic").click();
+        })
+
+        item_input.change(function () {
+            if (img_start_index == null) {
+                uploadImage(this.files[0]);
+            } else {
+                reuploadImage(this.files[0], $(this));
+            }
+        })
+    }
 }
 
 function FormDataClear() {
@@ -258,6 +285,97 @@ function FormDataClear() {
     $date.attr("disabled", "disabled");
     startDate = null;
     endDate = null;
+
+    $("#TechnicalCertificateForm > div > .img_input_frame").children("div").each(function () {
+        if ($(this).siblings().length > 1) {
+            $(this).remove();
+        }
+    });
+    img_file = [];
+    img_start_index = null;
+
+}
+
+function uploadImage(this_file) {
+    img_file.push(this_file);
+
+    var item = $($("#Template_Image_Preview").html()).clone();
+    var item_btn = item.find("button"),
+        item_input = item.find(".input_pic"),
+        item_img = item.find("img"),
+        item_name = item.find(".img_name");
+    img_start_index = img_file.length - 1;
+    item_name.text(img_file[img_start_index].name);
+    item_btn.data("index", img_start_index / 3 + 1);
+
+    var htmlImageCompress;
+    htmlImageCompress = new HtmlImageCompress(img_file[img_start_index], { quality: 0.7 })
+    htmlImageCompress.then(function (result) {
+        img_file.push(new File([result.file], img_file[img_start_index].name));
+    }).catch(function (err) {
+        console.log($`發生錯誤：${err}`);
+    })
+    htmlImageCompress = new HtmlImageCompress(img_file[img_start_index], { quality: 0.3 })
+    htmlImageCompress.then(function (result) {
+        img_file.push(new File([result.file], img_file[img_start_index].name));
+        var reader = new FileReader();
+        reader.readAsDataURL(img_file[img_start_index + 2]);
+        reader.onload = (function (e) {
+            item_img.attr("src", e.target.result);
+        });
+    }).catch(function (err) {
+        console.log($`發生錯誤：${err}`);
+    })
+
+    $("#TechnicalCertificateForm > div > .img_input_frame").prepend(item);
+
+    item_btn.on("click", function (even) {
+        even.preventDefault();
+        var $self = $(this);
+        if ($self.data("index") != undefined) {
+            img_start_index = (parseInt($self.data("index")) - 1) * 3;
+        } else {
+            img_start_index = null;
+        }
+        $self.prev(".input_pic").click();
+    })
+
+    item_input.change(function () {
+        if (img_start_index == null) {
+            uploadImage(this.files[0]);
+        } else {
+            reuploadImage(this.files[0], $(this));
+        }
+    })
+}
+
+function reuploadImage(this_file, this_input) {
+    img_file[img_start_index] = this_file;
+    this_input.siblings(".img_name").text(img_file[img_start_index].name);
+
+    var htmlImageCompress;
+    htmlImageCompress = new HtmlImageCompress(img_file[img_start_index], { quality: 0.7 })
+    htmlImageCompress.then(function (result) {
+        img_file[img_start_index + 1] = new File([result.file], img_file[img_start_index].name);
+    }).catch(function (err) {
+        console.log($`發生錯誤：${err}`);
+    })
+    htmlImageCompress = new HtmlImageCompress(img_file[img_start_index], { quality: 0.3 })
+    htmlImageCompress.then(function (result) {
+        img_file[img_start_index + 2] = new File([result.file], img_file[img_start_index].name);
+        var reader = new FileReader();
+        reader.readAsDataURL(img_file[img_start_index + 2]);
+        reader.onload = (function (e) {
+            this_input.next("button").children("img").attr("src", e.target.result);
+        });
+    }).catch(function (err) {
+        console.log($`發生錯誤：${err}`);
+    })
+
+}
+
+function DeleteImage() {
+
 }
 
 function deleteButtonClicked(e) {
@@ -275,44 +393,55 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
-    console.log(img_file);
+    console.log(img_delete_list);
+    if (img_delete_list.length > 0) {
+
+        if (img_delete_list.length > 0) {
+            img_delete_list.forEach(function (imgid) {
+                console.log(imgid)
+                co.File.DeleteImg(imgid).done(function (result) {
+                    console.log(result.success);
+                })
+            })
+        }
+    }
+
     var formData = new FormData();
-    for (var file in img_file) {
-        formData.append('file', file) //containing all the selected images from local
+    for (var i = 0; i < img_file.length; i++) {
+        formData.append('files', img_file[i]);
     }
     formData.append("type", 4);
-    console.log(formData.get('file'))
 
     co.File.Upload(formData).done(function (result) {
         if (result.success) {
-            console.log(result);
+            co.TechnicalCertificate.AddUp({
+                Id: keyId,
+                TId: $.cookie('secret'),
+                Disp_opt: display,
+                Img: result.files[0].id,
+                Title: $title.val(),
+                Description: $illustrate.val(),
+                Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
+                StartDate: startDate,
+                EndDate: endDate,
+                permanent: $permanent.is(":checked")
+            }).done(function (result) {
+                if (result.success) {
+                    Coker.sweet.success(success_text, null, true);
+                    setTimeout(function () {
+                        BackToList();
+                        FormDataClear();
+                        technicalCertificate_list.component.refresh();
+                    }, 1000);
+                } else {
+                    Coker.sweet.error("錯誤", error_text, null, true);
+                }
+            }).fail(function () {
+                Coker.sweet.error("錯誤", error_text, null, true);
+            })
         }
     });
 
-    //co.TechnicalCertificate.AddUp({
-    //    Id: keyId,
-    //    TId: $.cookie('secret'),
-    //    Disp_opt: display,
-    //    Img: "~/images/product/pro_01.png",
-    //    Title: $title.val(),
-    //    Description: $illustrate.val(),
-    //    Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-    //    StartDate: startDate,
-    //    EndDate: endDate,
-    //    permanent: $permanent.is(":checked")
-    //}).done(function (result) {
-    //    if (result.success) {
-    //        Coker.sweet.success(success_text, null, true);
-    //        setTimeout(function () {
-    //            BackToList();
-    //            technicalCertificate_list.component.refresh();
-    //        }, 1000);
-    //    } else {
-    //        Coker.sweet.error("錯誤", error_text, null, true);
-    //    }
-    //}).fail(function () {
-    //    Coker.sweet.error("錯誤", error_text, null, true);
-    //})
 }
 
 function MoveToContent() {

@@ -49,9 +49,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileBindMore> FileBindMores { get; set; }
         public DbSet<ObjectType> ObjectTypes { get; set; }
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
+        public DbSet<Article> Article { get; set; }
 
 
-        public CokerDbContext(DbContextOptions<CokerDbContext> options): base(options)
+        public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
         }
@@ -152,12 +153,18 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(u => u.Tag).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TId);
                 o.HasOne(u => u.Tag_Group).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TGId);
             });
-            modelBuilder.Entity<FileUpload>(o => {
+            modelBuilder.Entity<FileUpload>(o =>
+            {
                 o.HasOne(f => f.Website).WithMany(u => u.Files).HasForeignKey(f => f.FK_WebsiteId);
             });
-            modelBuilder.Entity<FileBind>(o => {
+            modelBuilder.Entity<FileBind>(o =>
+            {
                 o.HasOne(b => b.fileUpload).WithMany(f => f.fileBinds).HasForeignKey(f => f.FK_FileUploadId);
                 o.HasKey(b => b.Guid);
+            });
+            modelBuilder.Entity<Article>(o =>
+            {
+                o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
             });
 
             base.OnModelCreating(modelBuilder);

@@ -447,6 +447,26 @@ var Coker = {
                 dataType: "json"
             });
         },
+        getImgThumbnail: function (imgid) {
+            return $.ajax({
+                url: "/api/FileUpload/getImgThumbnail",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                data: { imgid: imgid },
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
+        DeleteImg: function (imgid) {
+            return $.ajax({
+                url: "/api/FileUpload/DeleteImage",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                data: { imgid: imgid },
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
         Delete: function (key) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFile",

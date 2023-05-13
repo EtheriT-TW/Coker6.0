@@ -14,7 +14,6 @@ namespace EtheriT.Coker.Application.Dto
         public string? text { get { return Title; } }
         public string RouterName { get; set; }
         public int PageType { get; set; }
-        public int PagePlace { get; set; }
         public string? Description { get; set; }
         public string? icon { get; set; }
         public bool Visible { get; set; }

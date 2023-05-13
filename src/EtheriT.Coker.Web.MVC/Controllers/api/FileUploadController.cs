@@ -28,8 +28,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             {
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
-                //case FileBindTypeEnum.技術證照:
-                //    return await fileUploadAppService.uploadTechnicalCertificateFiles(files, id ?? 0);
+                case FileBindTypeEnum.技術證照:
+                    return await fileUploadAppService.uploadTechnicalCertificateFiles(files, type);
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
@@ -44,10 +44,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.getHtmlContentFiles();
             }
         }
+        [HttpGet]
+        public async Task<List<ImgGetDto>> getImgThumbnail(long? imgid)
+        {
+            return await fileUploadAppService.getImgThumbnail(imgid);
+        }
         [HttpDelete]
         public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto)
         {
             return await fileUploadAppService.deleteFile(dto.key);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> DeleteImage(long? imgid)
+        {
+            return await fileUploadAppService.deleteImg(imgid);
         }
     }
 }

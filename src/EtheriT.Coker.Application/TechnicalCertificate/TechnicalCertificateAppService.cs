@@ -14,13 +14,16 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly IFileUploadAppService fileUploadAppService;
         public TechnicalCertificateAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            IFileUploadAppService fileUploadAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.fileUploadAppService = fileUploadAppService;
         }
         public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
         {
@@ -173,14 +176,19 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
             try
             {
-                var db_hc = db.TechnicalCertificates.Where(e => e.Id == Id).FirstOrDefault();
+                var db_tc = db.TechnicalCertificates.Where(e => e.Id == Id).FirstOrDefault();
                 long usetId = await loginUserData.GetUserId();
 
-                if (db_hc != null)
+                if (db_tc != null)
                 {
-                    db_hc.IsDeleted = true;
-                    db_hc.DeletionTime = DateTime.Now;
-                    db_hc.DeleterUserId = usetId;
+                    if (db_tc.Img != "")
+                    {
+                        var delete_img = await fileUploadAppService.deleteImg(long.Parse(db_tc.Img));
+                    }
+
+                    db_tc.IsDeleted = true;
+                    db_tc.DeletionTime = DateTime.Now;
+                    db_tc.DeleterUserId = usetId;
                     db.SaveChanges();
                     output.Success = true;
                 }

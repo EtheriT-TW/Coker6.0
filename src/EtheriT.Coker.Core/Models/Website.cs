@@ -1,9 +1,4 @@
 ﻿using EtheriT.Coker.Core.Entity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Core.Models
 {
@@ -34,5 +29,6 @@ namespace EtheriT.Coker.Core.Models
         public List<TechnicalCertificate> TechnicalCertificates { get; set; }
         public List<Tag> Tags { get; set; }
         public List<FileUpload> Files { get; set; }
+        public List<Article> Articles { get; set; }
     }
 }

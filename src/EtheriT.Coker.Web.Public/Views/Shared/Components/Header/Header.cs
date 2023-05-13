@@ -141,7 +141,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     };
                     webmenus_data.ForEach(data =>
                     {
-                        if (data.PagePlace == (int)PagePlaceEnum.工具列)
+                        if (data.LanBar)
                         {
                             headerViewModel.Sitemap_Link = $"/{website_data[0].OrgName}/{data.RouterName}";
                             headerViewModel.Sitemap_Target = data.Target;

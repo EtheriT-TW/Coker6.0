@@ -1,0 +1,31 @@
+﻿using EtheriT.Coker.Core.Entity;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Core.Models
+{
+	public class Article : FullAuditedEntity
+    {
+        public long FK_WebsiteId { get; set; }
+        [StringLength(100)]
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        [StringLength(50)]
+        public bool Visible { get; set; }
+        public int SerNO { get; set; } = 500;
+        public int Popular { get; set; } = 0;
+        public bool PopularVisible { get; set; } = true;
+        public string? SaveHtml { get; set; }
+        [MaxLength]
+        public string? SaveCss { get; set; }
+        [MaxLength]
+        public string? Html { get; set; }
+        [MaxLength]
+        public string? Css { get; set; }
+        public Website? Website { get; set; }
+    }
+}

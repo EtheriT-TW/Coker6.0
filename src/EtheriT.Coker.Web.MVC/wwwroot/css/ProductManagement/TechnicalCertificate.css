@@ -26,7 +26,7 @@ input[type="number"] {
 }
 
 /* TechnicalCertificate Content */
-#TechnicalCertificateForm > div > div > .btn_input_pic {
+.btn_input_pic:has(span) {
     height: 3.5rem;
     width: 3.5rem;
     color: var(--bs-gray);
@@ -35,8 +35,7 @@ input[type="number"] {
 }
 
 .img_preview > img {
-    max-width: 200px;
-    max-height: 200px;
+    height: 100px;
 }
 
 #TechnicalCertificateContent > .card-header {

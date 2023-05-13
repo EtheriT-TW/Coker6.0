@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -81,6 +83,28 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+        public async Task<UploadFileOutputDto> uploadTechnicalCertificateFiles(IList<IFormFile> files, int type)
+        {
+            UploadFileOutputDto response = new UploadFileOutputDto
+            {
+                Files = new List<FileItemDto>(),
+                ErrorFiles = new List<string>()
+            };
+            try
+            {
+                List<FileItemDto> items = await SaveImage(files, type, "TechnicalCertificate");
+                foreach (var item in items)
+                {
+                    response.Files.Add(item);
+                }
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.ErrorFiles.Add(ex.Message);
+            }
+            return response;
+        }
         public async Task<UploadFileOutputDto> getHtmlContentFiles()
         {
             UploadFileOutputDto response = new UploadFileOutputDto
@@ -138,6 +162,55 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
             return response;
         }
+        public async Task<ResponseMessageDto> deleteImg(long? imgid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                long usetId = await loginUserData.GetUserId();
+
+                var faimg = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == imgid).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+                if (faimg != null)
+                {
+                    faimg.IsDeleted = true;
+                    faimg.DeletionTime = DateTime.Now;
+                    faimg.DeleterUserId = usetId;
+
+                    var chimg_binds = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == faimg.GuidKey).Where(e => !e.IsDeleted).ToListAsync());
+                    if (chimg_binds != null)
+                    {
+                        foreach (var chimg_bind in chimg_binds)
+                        {
+                            var chimg = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == chimg_bind.FK_FileUploadId).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+                            if (chimg != null)
+                            {
+                                chimg.IsDeleted = true;
+                                chimg.DeletionTime = DateTime.Now;
+                                chimg.DeleterUserId = usetId;
+                                db.SaveChanges();
+                            }
+                            chimg_bind.IsDeleted = true;
+                            chimg_bind.DeletionTime = DateTime.Now;
+                            chimg_bind.DeleterUserId = usetId;
+                        }
+                        db.SaveChanges();
+                    }
+                }
+
+                db.SaveChanges();
+                response.Success = true;
+
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+
+            await loginUserData.SetLogs(AppName, "deleteImgFile", imgid.ToString(), JsonConvert.SerializeObject(response));
+            return response;
+        }
         public async Task<string> getImgUrl(long? imgid, long websiteid)
         {
             try
@@ -152,6 +225,49 @@ namespace EtheriT.Coker.Application
             catch (Exception ex)
             {
                 return "";
+            }
+        }
+        public async Task<List<ImgGetDto>> getImgThumbnail(long? imgid)
+        {
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                string orgName = await loginUserData.GetWebsiteOrgName();
+                var faimg = await (db.FileUploads
+                            .Where(e => e.FK_WebsiteId == websiteId)
+                            .Where(e => e.Id == imgid)
+                            .Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+                var chimg_ids = await (db.FileBindMores
+                            .Where(e => e.FK_FileBindGuid == faimg.GuidKey)
+                            .Where(e => !e.IsDeleted)
+                            .Select(e => e.FK_FileUploadId).ToListAsync());
+                var result = new List<ImgGetDto>();
+                result.Add(new ImgGetDto
+                {
+                    Id = (long)imgid,
+                    Name = faimg.OriginalFileName,
+                    Link = faimg.DownloadFileName.Replace("upload", $"upload/{orgName}")
+                });
+                foreach (var chimg_id in chimg_ids)
+                {
+                    var chimg = await (db.FileUploads
+                            .Where(e => e.FK_WebsiteId == websiteId)
+                            .Where(e => e.Id == chimg_id)
+                            .Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+
+                    result.Add(new ImgGetDto
+                    {
+                        Id = chimg.Id,
+                        Name = chimg.OriginalFileName,
+                        Link = chimg.DownloadFileName.Replace("upload", $"upload/{orgName}")
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
             }
         }
         private async Task<FileItemDto> SaveFile(IFormFile file, string directory)
@@ -189,6 +305,67 @@ namespace EtheriT.Coker.Application
                         Guid = fileUpload.GuidKey,
                     };
                 }
+            }
+            else throw new Exception("上傳失敗");
+        }
+
+        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, string directory)
+        {
+            if (files.Count() > 0)
+            {
+                Guid faimg_id = new Guid();
+                string orgName = await loginUserData.GetWebsiteOrgName();
+                var return_item = new List<FileItemDto>();
+                foreach (var file in files)
+                {
+                    Guid key = Guid.NewGuid();
+                    string[] sp = file.FileName.Split('.');
+                    string ext = sp[sp.Length - 1];
+                    var rootPath = $"{_folder}/{orgName}";
+                    var directoryPath = $"{rootPath}/{directory}";
+                    var path = $"/{directory}/{key}.{ext}";
+                    if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
+                    if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
+                    using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                    {
+                        FileUpload fileUpload = new FileUpload
+                        {
+                            FK_WebsiteId = await loginUserData.GetWebsiteId(),
+                            FileGuid = key,
+                            GuidKey = Guid.NewGuid(),
+                            DownloadFileName = $@"/upload{path}",
+                            OriginalFileName = file.FileName,
+                            ContentType = file.ContentType,
+                            Size = file.Length
+                        };
+                        await file.CopyToAsync(stream);
+                        db.FileUploads.Add(fileUpload);
+                        await loginUserData.SaveChanges(fileUpload);
+                        if (faimg_id != Guid.Empty)
+                        {
+                            FileBindMore fileBindMore = new FileBindMore
+                            {
+                                type = type,
+                                FK_FileBindGuid = faimg_id,
+                                FK_FileUploadId = fileUpload.Id
+                            };
+                            db.FileBindMores.Add(fileBindMore);
+                            await loginUserData.SaveChanges(fileBindMore);
+                        }
+                        else
+                        {
+                            faimg_id = fileUpload.GuidKey;
+                        }
+                        return_item.Add(new FileItemDto
+                        {
+                            Id = fileUpload.Id,
+                            Name = fileUpload.OriginalFileName,
+                            Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
+                            Guid = fileUpload.GuidKey,
+                        });
+                    }
+                }
+                return return_item;
             }
             else throw new Exception("上傳失敗");
         }

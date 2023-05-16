@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Article
 {
-    public class ArticleDataGetDto
-    {
-        public long Id { get; set; }
+	public class ArticleDto
+	{
+        public long? Id { get; set; }
+        public long FK_WebsiteId { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
         public bool Visible { get; set; }

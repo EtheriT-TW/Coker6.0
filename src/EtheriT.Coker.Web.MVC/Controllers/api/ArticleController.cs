@@ -1,5 +1,7 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,11 +18,25 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             this.articleAppService = articleAppService;
         }
-
+        [HttpPost]
+        public async Task<ResponseMessageDto> AddUp_Simple(ArticleDto dto)
+        {
+            return await articleAppService.AddUp_Simple(dto);
+        }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             return await articleAppService.GetAllList(loadOptions);
+        }
+        [HttpGet]
+        public async Task<ArticleDataGetDto> GetSimple(long Id)
+        {
+            return await articleAppService.GetSimple(Id);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> Delete(long Id)
+        {
+            return await articleAppService.Delete(Id);
         }
     }
 }

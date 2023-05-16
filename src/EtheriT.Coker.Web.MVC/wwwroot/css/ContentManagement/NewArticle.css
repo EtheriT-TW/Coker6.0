@@ -26,25 +26,11 @@ input[type="number"] {
     background-color: var(--color-gray-bg-dark);
 }
 
-#ArticleContent > form .placement > select {
-    width: 8rem;
-}
-
-#ArticleContent > form > .title .title_count::after {
-    content: '/60';
+#ArticleContent > form .count::after {
+    content: '/50';
 }
 
 #ArticleContent > form > .sort > input {
     padding-left: 5.25rem;
-    padding-right: 7.5rem;
-}
-
-#ArticleContent > form > .link > input {
-    padding-left: 3.25rem;
-    padding-right: 7.5rem;
-}
-
-#ArticleContent > form > .date > input {
-    padding-left: 9rem;
     padding-right: 7.5rem;
 }

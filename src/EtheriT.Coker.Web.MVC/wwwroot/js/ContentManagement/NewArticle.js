@@ -1,64 +1,63 @@
-﻿var $placement, $btn_display, $title, $title_count, $input_sort, $check_sort, $link, $target, $date, $picker, $permanent
-var startDate, endDate, keyId, disp_opt = true
+﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox
+var keyId, disp_opt = true, pop_visible = true;
 var article_list
 
 function PageReady() {
-    //co.Articles = {
-    //    AddUp: function (data) {
-    //        return $.ajax({
-    //            url: "/api/Article/AddUp",
-    //            type: "POST",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: JSON.stringify(data),
-    //            dataType: "json"
-    //        });
-    //    },
-    //    Get: function (id) {
-    //        return $.ajax({
-    //            url: "/api/Article/Get/",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: { id: id },
-    //        });
-    //    },
-    //    Delete: function (id) {
-    //        return $.ajax({
-    //            url: "/api/Article/Delete/",
-    //            type: "GET",
-    //            contentType: 'application/json; charset=utf-8',
-    //            headers: _c.Data.Header,
-    //            data: { id: id },
-    //        });
-    //    }
-    //};
+    co.Articles = {
+        AddUp: function (data) {
+            return $.ajax({
+                url: "/api/Article/AddUp_Simple",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        GetSimple: function (Id) {
+            return $.ajax({
+                url: "/api/Article/GetSimple/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: Id },
+            });
+        },
+        Delete: function (Id) {
+            return $.ajax({
+                url: "/api/Article/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: Id },
+            });
+        }
+    };
 
     ElementInit();
 
-    //const forms = $('#PostForm');
-    //(() => {
-    //    Array.from(forms).forEach(form => {
-    //        form.addEventListener('submit', event => {
-    //            if (!form.checkValidity()) {
-    //                event.preventDefault()
-    //                event.stopPropagation()
-    //            } else {
-    //                event.preventDefault();
-    //                Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-    //                    AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-    //                });
-    //            }
-    //            form.classList.add('was-validated')
-    //            WasValidated();
-    //        }, false)
-    //    })
-    //})()
-
+    const forms = $('#ArticletForm');
+    (() => {
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                        AddUp("已成功發布", "發布發生未知錯誤");
+                    });
+                }
+                form.classList.add('was-validated')
+                WasValidated();
+            }, false)
+        })
+    })()
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回文章列表", "資料將不被保存", "確定", "取消", function () {
-            history.back();
+            BackToList();
         });
     })
 
@@ -86,44 +85,54 @@ function PageReady() {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                /*AddUp("已成功發布", "發布發生未知錯誤", "Canvas");*/
+                AddUp("已成功發布", "發布發生未知錯誤", "canvas");
             } else if (result.isDenied) {
                 var hash = window.location.hash.replace("#", "") + "-1";
                 window.location.hash = hash;
+                MoveToCanvas();
             }
         })
     });
 
-    //$btn_display.on("click", function () {
-    //    if (disp_opt) {
-    //        $btn_display.children("span").text("visibility_off");
-    //        disp_opt = !disp_opt;
-    //    } else {
-    //        $btn_display.children("span").text("visibility");
-    //        disp_opt = !disp_opt;
-    //    }
-    //})
-    //$title.on('keyup', function () {
-    //    $title_count.text($title.val().length);
-    //});
-    //$check_sort.on("click", function () {
-    //    if ($check_sort.is(":checked")) {
-    //        $input_sort.removeAttr("disabled");
-    //    } else {
-    //        $input_sort.val('');
-    //        $input_sort.attr("disabled", "disabled");
-    //    }
-    //})
-    //$permanent.on("click", function () {
-    //    if ($permanent.is(":checked")) {
-    //        $date.val('');
-    //        $date.attr("disabled", "disabled");
-    //        startDate = null;
-    //        endDate = null;
-    //    } else {
-    //        $date.removeAttr("disabled");
-    //    }
-    //})
+    $btn_display.on("click", function () {
+        if (disp_opt) {
+            $btn_display.children("span").text("visibility_off");
+            disp_opt = !disp_opt;
+        } else {
+            $btn_display.children("span").text("visibility");
+            disp_opt = !disp_opt;
+        }
+    })
+
+    $btn_pop_visible.on("click", function () {
+        if (pop_visible) {
+            $btn_pop_visible.children("span").text("group_off");
+            pop_visible = !pop_visible;
+        } else {
+            $btn_pop_visible.children("span").text("group");
+            pop_visible = !pop_visible;
+        }
+    })
+
+    $title_text.on('keyup', function () {
+        var $self = $(this);
+        $title.children("div").children(".count").text($self.val().length)
+    });
+
+    $describe_text.on('keyup', function () {
+        var $self = $(this);
+        $describe.children("div").children(".count").text($self.val().length)
+    });
+
+    $sort_checkbox.on("click", function () {
+        var $self = $(this);
+        if ($self.is(":checked")) {
+            $sort_input.removeAttr("disabled");
+        } else {
+            $sort_input.val('');
+            $sort_input.attr("disabled", "disabled");
+        }
+    })
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -133,16 +142,15 @@ function PageReady() {
 }
 
 function ElementInit() {
-    //$placement = $("#Placement");
-    //$btn_display = $("#Btn_Display");
-    //$title = $("#InputTitle");
-    //$title_count = $("#PostForm > .title .title_count");
-    //$input_sort = $("#InputSort");
-    //$check_sort = $("#SortCheck");
-    //$link = $("#InputLink");
-    //$target = $("#TargetCheck");
-    //$date = $("#InputDate");
-    //$permanent = $("#PermanentCheck");
+    $btn_display = $(".btn_display");
+    $btn_pop_visible = $(".btn_pop_visible");
+    $title = $(".title");
+    $title_text = $title.children("textarea");
+    $describe = $(".describe");
+    $describe_text = $describe.children("textarea");
+    $sort = $(".sort");
+    $sort_input = $sort.children("input");
+    $sort_checkbox = $sort.children(".checkbox").children("input");
 }
 
 function contentReady(e) {
@@ -163,18 +171,23 @@ function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
-            if (parseInt(hash) == 0) {
-                FormDataClear();
-                MoveToContent();
+            console.log(hash.indexOf("-"))
+            if (hash.indexOf("-") == 1) {
+                MoveToCanvas();
             } else {
-                co.Articles.Get(parseInt(hash)).done(function (result) {
-                    if (result != null) {
-                        MoveToContent();
-                        FormDataSet(result);
-                    } else {
-                        window.location.hash = ""
-                    }
-                })
+                if (parseInt(hash) == 0) {
+                    FormDataClear();
+                    MoveToContent();
+                } else {
+                    co.Articles.GetSimple(parseInt(hash)).done(function (result) {
+                        if (result != null) {
+                            MoveToContent();
+                            FormDataSet(result);
+                        } else {
+                            window.location.hash = ""
+                        }
+                    })
+                }
             }
         }
     } else {
@@ -189,105 +202,121 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
+    console.log(result);
     FormDataClear();
     keyId = result.id;
-    //startTime = result.startTime;
-    //endTime = result.endTime;
-    //$placement.val(result.placement);
-    //$btn_display.children("span").text(result.disp_opt ? "visibility" : "visibility_off");
-    //disp_opt = result.disp_opt;
-    //$title.val(result.title);
-    //$title_count.text($title.val().length);
-    //if (result.ser_no != 500) {
-    //    $check_sort.prop("checked", true);
-    //    $input_sort.removeAttr("disabled", "disabled");
-    //    $input_sort.val(result.ser_no)
-    //}
-    //$link.val(result.link);
-    //$target.prop("checked", result.target);
-    //if (result.permanent) {
-    //    $date.val('');
-    //    $date.attr("disabled", "disabled");
-    //    $permanent.prop("checked", true);
-    //} else {
-    //    startTime != null && $picker.data('daterangepicker').setStartDate(startTime);
-    //    endTime != null && $picker.data('daterangepicker').setEndDate(endTime);
-    //}
+
+    if (!result.visible) {
+        $btn_display.children("span").text("visibility_off");
+    }
+
+    if (!result.popularVisible) {
+        $btn_pop_visible.children("span").text("group_off");
+    }
+
+    $title_text.val(result.title);
+    $title.children("div").children(".count").text(result.title.length);
+    $describe_text.val(result.description);
+    $describe.children("div").children(".count").text(result.description.length);
+
+    if (result.serNO != 500) {
+        $sort_input.val(result.serNO);
+        $sort_input.removeAttr("disabled");
+        $sort_checkbox.prop("checked", true);
+    }
+
 }
 
 function FormDataClear() {
     keyId = 0;
-    //$placement.val("Top");
-    //$btn_display.children("span").text("visibility");
-    //disp_opt = true;
-    //$title.val("");
-    //$title_count.text(0);
-    //$input_sort.val("")
-    //$input_sort.attr("disabled", "disabled");
-    //$check_sort.prop("checked", false);
-    //$link.val("https://");
-    //$target.prop("checked", false);
-    //$permanent.prop("checked", false);
-    //$date.val("");
-    //$date.removeAttr("disabled");
+    $btn_display.children("span").text("visibility");
+    $btn_pop_visible.children("span").text("group");
+    $title_text.val("");
+    $title.children("div").children(".count").text(0);
+    $describe_text.val("");
+    $describe.children("div").children(".count").text(0);
+    $sort_input.val("");
+    $sort_input.attr("disabled", "disabled");
+    $sort_checkbox.prop("checked", false);
 }
 
 function paletteButtonClicked(e) {
+    console.log("JajA")
     keyId = e.row.key + "-1";
     window.location.hash = keyId;
+    MoveToCanvas();
 }
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        /*co.Article.Delete(e.row.key);*/
-        e.component.refresh();
+        co.Articles.Delete(e.row.key).done(function (result) {
+            if (result.success) {
+                e.component.refresh();
+            }
+        });
     });
 }
 
-function AddUp(display, success_text, error_text) {
-    //co.Articles.AddUp({
-    //    Id: keyId,
-    //    placement: $placement.val(),
-    //    title: $title.val(),
-    //    disp_opt: display,
-    //    ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-    //    link: $link.val(),
-    //    target: $target.is(":checked"),
-    //    StartTime: startDate,
-    //    EndTime: endDate,
-    //    permanent: $permanent.is(":checked")
-    //}).done(function () {
-    //    Coker.sweet.success(success_text, null, true);
-    //    setTimeout(function () {
-    //        BackToList();
-    //        article_list.component.refresh();
-    //    }, 1000);
-    //}).fail(function () {
-    //    Coker.sweet.error("錯誤", error_text, null, true);
-    //});
+function AddUp(success_text, error_text, place) {
+    co.Articles.AddUp({
+        Id: keyId,
+        Title: $title_text.val(),
+        Description: $describe_text.val(),
+        Visible: disp_opt,
+        SerNO: $sort_checkbox.is(":checked") ? $sort_input.val() : 500,
+        PopularVisible: pop_visible,
+    }).done(function () {
+        Coker.sweet.success(success_text, null, true);
+        console.log(place)
+        if (place == "canvas") {
+            setTimeout(function () {
+                window.location.hash += "-1";
+                MoveToCanvas();
+            }, 1000);
+        } else {
+            setTimeout(function () {
+                BackToList();
+                article_list.component.refresh();
+            }, 1000);
+        }
+    }).fail(function () {
+        Coker.sweet.error("錯誤", error_text, null, true);
+    });
 }
 
 function MoveToContent() {
     UnValidated();
+    if (keyId == 0) {
+        $(".btn_to_canvas").addClass("text-dark");
+        $(".btn_to_canvas").attr('disabled', '');
+    } else {
+        $(".btn_to_canvas").removeClass("text-dark");
+        $(".btn_to_canvas").removeAttr('disabled');
+    }
     $("#ArticleList").addClass("d-none");
     $("#ArticleContent").removeClass("d-none");
+    $("#ArticleCanvas").addClass("d-none");
+}
+
+function MoveToCanvas() {
+    UnValidated();
+    $("#ArticleList").addClass("d-none");
+    $("#ArticleContent").addClass("d-none");
+    $("#ArticleCanvas").removeClass("d-none");
 }
 
 function BackToList() {
     $("#ArticleList").removeClass("d-none");
     $("#ArticleContent").addClass("d-none");
+    $("#ArticleCanvas").addClass("d-none");
     window.location.hash = ""
 }
 
 function WasValidated() {
-    //$check_sort.parents(".checkbox").first().addClass("pe-4");
-    //$target.parents(".checkbox").first().addClass("pe-4");
-    //$permanent.parents(".checkbox").first().addClass("pe-4");
+    $sort.children(".checkbox").addClass("pe-4");
 }
 
 function UnValidated() {
-    //$("#PostForm").removeClass("was-validated");
-    //$check_sort.parents(".checkbox").first().removeClass("pe-4");
-    //$target.parents(".checkbox").first().removeClass("pe-4");
-    //$permanent.parents(".checkbox").first().removeClass("pe-4");
+    $("#ArticletForm").removeClass("was-validated");
+    $sort.children(".checkbox").removeClass("pe-4");
 }

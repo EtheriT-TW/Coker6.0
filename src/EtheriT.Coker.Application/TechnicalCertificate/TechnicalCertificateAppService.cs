@@ -50,6 +50,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                             CreatorUserId = (long)db_t.UserID
                         };
                         db.TechnicalCertificates.Add(tc);
+                        db.SaveChanges();
+                        output.Message = tc.Id.ToString();
                     }
                     else throw new Exception("查無資料");
                 }
@@ -71,10 +73,11 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
                         db_tc.LastModificationTime = DateTime.Now;
                         db_tc.LastModifierUserId = db_t.UserID;
+                        db.SaveChanges();
+                        output.Message = db_tc.Id.ToString();
                     }
                     else throw new Exception("查無資料");
                 }
-                db.SaveChanges();
                 output.Success = true;
             }
             catch (Exception e)

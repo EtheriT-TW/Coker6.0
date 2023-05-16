@@ -1,4 +1,4 @@
-﻿var $btn_input_pic, $btn_display, $title, $illustrate, $illustrate_count, $input_sort, $check_sort, $date, $permanent
+﻿var $btn_input_pic, $btn_img_delete, $btn_display, $title, $illustrate, $illustrate_count, $input_sort, $check_sort, $date, $permanent
 var $input_pic, $img_preview;
 var startDate, endDate, keyId, disp_opt = true;
 var img_file = [], img_start_index = null, img_delete_list = [];
@@ -147,6 +147,7 @@ function PageReady() {
 function ElementInit() {
     $picker = $("#InputDate");
     $btn_input_pic = $(".btn_input_pic");
+    $btn_img_delete = $(".btn_img_delete");
     $input_pic = $(".input_pic");
     $img_preview = $(".img_preview");
     $btn_display = $("#Btn_Display");
@@ -182,15 +183,11 @@ function HashDataEdit() {
                 MoveToContent();
             } else {
                 co.TechnicalCertificate.Get(parseInt(hash)).done(function (result) {
+                    MoveToContent();
                     if (result != null) {
-                        MoveToContent();
-                        if (result.img != 0) {
-                            co.File.getImgThumbnail(result.img).done(function (img_result) {
-                                FormDataSet(result, img_result);
-                            });
-                        } else {
-                            FormDataSet(result, null);
-                        }
+                        co.File.getImgThumbnail(result.id).done(function (img_result) {
+                            FormDataSet(result, img_result);
+                        });
                     } else {
                         window.location.hash = ""
                     }
@@ -233,40 +230,52 @@ function FormDataSet(result, img_result) {
     }
 
     if (img_result != null) {
-        var item = $($("#Template_Image_Preview").html()).clone();
-        var item_btn = item.find("button"),
-            item_input = item.find(".input_pic"),
-            item_img = item.find("img"),
-            item_name = item.find(".img_name");
+        for (var i = 0; i < img_result.length; i++) {
+            var item = $($("#Template_Image_Preview").html()).clone();
+            var item_btn_add = item.find(".btn_input_pic"),
+                item_btn_del = item.find(".btn_img_delete"),
+                item_input = item.find(".input_pic"),
+                item_img = item.find("img"),
+                item_name = item.find(".img_name");
 
-        item_btn.data("id", result.img);
-        item_name.text(img_result[0].name);
-        item_img.attr("src", img_result[0].link);
+            item_btn_add.data("id", img_result[i].id);
+            item_name.text(img_result[i].name);
+            item_img.attr("src", img_result[i].link);
 
-        $("#TechnicalCertificateForm > div > .img_input_frame").prepend(item);
+            $("#TechnicalCertificateForm > div > .img_input_frame").prepend(item);
 
-        item_btn.on("click", function (even) {
-            even.preventDefault();
-            var $self = $(this);
-            if ($self.data("id") != 0) {
-                img_delete_list.push(parseInt($self.data("id")));
-                $self.data("id", 0);
-            }
-            if ($self.data("index") != undefined) {
-                img_start_index = (parseInt($self.data("index")) - 1) * 3;
-            } else {
-                img_start_index = null;
-            }
-            $self.prev(".input_pic").click();
-        })
+            item_btn_add.on("click", function (even) {
+                even.preventDefault();
+                var $self = $(this);
+                if ($self.data("id") != 0) {
+                    img_delete_list.push(parseInt($self.data("id")));
+                    $self.data("id", 0);
+                }
+                if ($self.data("index") != undefined && $self.data("index") != "") {
+                    img_start_index = (parseInt($self.data("index")) - 1) * 3;
+                } else {
+                    $self.data("index", img_file.length / 3 + 1)
+                    img_start_index = (parseInt($self.data("index")) - 1) * 3;
+                }
+                $self.parents("div").first().siblings(".input_pic").click();
+            })
 
-        item_input.change(function () {
-            if (img_start_index == null) {
-                uploadImage(this.files[0]);
-            } else {
-                reuploadImage(this.files[0], $(this));
-            }
-        })
+            item_btn_del.on("click", function (even) {
+                even.preventDefault();
+                var $self_bro = $(this).siblings(".btn_input_pic");
+                img_delete_list.push(parseInt($self_bro.data("id")));
+                $(this).parents("div").first().parents("div").first().remove();
+            })
+
+            item_input.change(function () {
+                console.log(img_start_index)
+                if (img_start_index == null) {
+                    uploadImage(this.files[0]);
+                } else {
+                    reuploadImage(this.files[0], $(this));
+                }
+            })
+        }
     }
 }
 
@@ -300,13 +309,14 @@ function uploadImage(this_file) {
     img_file.push(this_file);
 
     var item = $($("#Template_Image_Preview").html()).clone();
-    var item_btn = item.find("button"),
+    var item_btn_add = item.find(".btn_input_pic"),
+        item_btn_del = item.find(".btn_img_delete"),
         item_input = item.find(".input_pic"),
         item_img = item.find("img"),
         item_name = item.find(".img_name");
     img_start_index = img_file.length - 1;
     item_name.text(img_file[img_start_index].name);
-    item_btn.data("index", img_start_index / 3 + 1);
+    item_btn_add.data("index", img_start_index / 3 + 1);
 
     var htmlImageCompress;
     htmlImageCompress = new HtmlImageCompress(img_file[img_start_index], { quality: 0.7 })
@@ -329,7 +339,7 @@ function uploadImage(this_file) {
 
     $("#TechnicalCertificateForm > div > .img_input_frame").prepend(item);
 
-    item_btn.on("click", function (even) {
+    item_btn_add.on("click", function (even) {
         even.preventDefault();
         var $self = $(this);
         if ($self.data("index") != undefined) {
@@ -340,7 +350,15 @@ function uploadImage(this_file) {
         $self.prev(".input_pic").click();
     })
 
+    item_btn_del.on("click", function (even) {
+        even.preventDefault();
+        var $self_bro = $(this).siblings(".btn_input_pic");
+        img_delete_list.push(parseInt($self_bro.data("id")));
+        $(this).parents("div").first().parents("div").first().remove();
+    })
+
     item_input.change(function () {
+        console.log(img_start_index)
         if (img_start_index == null) {
             uploadImage(this.files[0]);
         } else {
@@ -366,7 +384,8 @@ function reuploadImage(this_file, this_input) {
         var reader = new FileReader();
         reader.readAsDataURL(img_file[img_start_index + 2]);
         reader.onload = (function (e) {
-            this_input.next("button").children("img").attr("src", e.target.result);
+            console.log()
+            this_input.next("div").children(".btn_input_pic").children("img").attr("src", e.target.result);
         });
     }).catch(function (err) {
         console.log($`發生錯誤：${err}`);
@@ -393,54 +412,63 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
-    console.log(img_delete_list);
-    if (img_delete_list.length > 0) {
-
-        if (img_delete_list.length > 0) {
-            img_delete_list.forEach(function (imgid) {
-                console.log(imgid)
-                co.File.DeleteImg(imgid).done(function (result) {
-                    console.log(result.success);
-                })
-            })
-        }
-    }
-
-    var formData = new FormData();
-    for (var i = 0; i < img_file.length; i++) {
-        formData.append('files', img_file[i]);
-    }
-    formData.append("type", 4);
-
-    co.File.Upload(formData).done(function (result) {
+    co.TechnicalCertificate.AddUp({
+        Id: keyId,
+        TId: $.cookie('secret'),
+        Disp_opt: display,
+        Img: "",
+        Title: $title.val(),
+        Description: $illustrate.val(),
+        Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
+        StartDate: startDate,
+        EndDate: endDate,
+        permanent: $permanent.is(":checked")
+    }).done(function (result) {
         if (result.success) {
-            co.TechnicalCertificate.AddUp({
-                Id: keyId,
-                TId: $.cookie('secret'),
-                Disp_opt: display,
-                Img: result.files[0].id,
-                Title: $title.val(),
-                Description: $illustrate.val(),
-                Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-                StartDate: startDate,
-                EndDate: endDate,
-                permanent: $permanent.is(":checked")
-            }).done(function (result) {
-                if (result.success) {
-                    Coker.sweet.success(success_text, null, true);
-                    setTimeout(function () {
-                        BackToList();
-                        FormDataClear();
-                        technicalCertificate_list.component.refresh();
-                    }, 1000);
-                } else {
-                    Coker.sweet.error("錯誤", error_text, null, true);
+
+            if (img_delete_list.length > 0) {
+                img_delete_list.forEach(function (imgid) {
+                    co.File.DeleteImg(imgid).done(function (result) {
+                    });
+                })
+            }
+
+            if (img_file.length > 0) {
+                var formData = new FormData();
+                formData.append("type", 4);
+                formData.append("sid", result.message);
+                for (var i = 0; i < img_file.length; i += 3) {
+                    for (var j = i; j < i + 3; j++) {
+                        formData.append('files', img_file[j]);
+                    }
+                    co.File.Upload(formData).done(function (result) {
+                        if (result.success) {
+                            Coker.sweet.success(success_text, null, true);
+                            setTimeout(function () {
+                                BackToList();
+                                FormDataClear();
+                                technicalCertificate_list.component.refresh();
+                            }, 1000);
+                        } else {
+                            Coker.sweet.error("錯誤", error_text, null, true);
+                        }
+                    });
+                    formData.delete('files');
                 }
-            }).fail(function () {
-                Coker.sweet.error("錯誤", error_text, null, true);
-            })
+            } else {
+                Coker.sweet.success(success_text, null, true);
+                setTimeout(function () {
+                    BackToList();
+                    FormDataClear();
+                    technicalCertificate_list.component.refresh();
+                }, 1000);
+            }
+        } else {
+            Coker.sweet.error("錯誤", error_text, null, true);
         }
-    });
+    }).fail(function () {
+        Coker.sweet.error("錯誤", error_text, null, true);
+    })
 
 }
 

@@ -104,9 +104,14 @@
 						<template id="Template_Image_Preview">
 							<div class="d-flex flex-column align-items-center me-2">
 								<input class="input_pic d-none" type="file" accept="image/*" />
-								<button class="btn_input_pic img_preview bg-transparent border-0" data-index="">
-									<img src="" />
-								</button>
+								<div class="position-relative">
+									<button class="btn_input_pic img_preview bg-transparent border-0" data-index="">
+										<img src="" />
+									</button>
+									<button class="btn_img_delete top-0 end-0 rounded-circle bg-transparent border-0 position-absolute">
+										<span class="material-symbols-outlined bg-white rounded-circle">cancel</span>
+									</button>
+								</div>
 								<div class="img_name px-2 fw-bold"></div>
 							</div>
 						</template>

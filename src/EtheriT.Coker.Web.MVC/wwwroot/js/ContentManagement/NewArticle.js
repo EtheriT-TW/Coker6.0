@@ -57,6 +57,7 @@ function PageReady() {
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回文章列表", "資料將不被保存", "確定", "取消", function () {
+            article_list.component.refresh();
             BackToList();
         });
     })
@@ -171,7 +172,6 @@ function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
-            console.log(hash.indexOf("-"))
             if (hash.indexOf("-") == 1) {
                 MoveToCanvas();
             } else {
@@ -202,7 +202,6 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result);
     FormDataClear();
     keyId = result.id;
 
@@ -241,7 +240,6 @@ function FormDataClear() {
 }
 
 function paletteButtonClicked(e) {
-    console.log("JajA")
     keyId = e.row.key + "-1";
     window.location.hash = keyId;
     MoveToCanvas();
@@ -267,7 +265,6 @@ function AddUp(success_text, error_text, place) {
         PopularVisible: pop_visible,
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
-        console.log(place)
         if (place == "canvas") {
             setTimeout(function () {
                 window.location.hash += "-1";
@@ -275,8 +272,8 @@ function AddUp(success_text, error_text, place) {
             }, 1000);
         } else {
             setTimeout(function () {
-                BackToList();
                 article_list.component.refresh();
+                BackToList();
             }, 1000);
         }
     }).fail(function () {

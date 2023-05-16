@@ -40,13 +40,12 @@
         order: 'asc'
     });
 
-    var $menu_content = $("#Offcanvas_Mega_Menu > ul > .title > .content > ul");
-
-    $menu_content.each(function () {
-        if ($(this).children('li').length < 4) {
-            $(this).css("align-content", "center");
+    $("#Offcanvas_Mega_Menu > ul > .title > .content > ul").each(function () {
+        var $self = $(this);
+        if ($self.children("li").length > 4) {
+            $self.css("justify-content", "start")
         } else {
-            $(this).css("align-content", "start");
+            $self.css("justify-content", "space-evenly")
         }
     });
 }

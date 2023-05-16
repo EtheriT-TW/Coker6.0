@@ -45,10 +45,10 @@
 					<li class="title nav-item flex-lg-grow-1 flex-grow-0">
 						<a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-center text-nowrap">@menu.Title</a>
 						<div class="content w-100 start-50 translate-middle-x">
-							<ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100 justify-content-evenly">
+							<ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100">
 								@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
 								{
-									<li class="subtitle nav-item my-0">
+									<li class="subtitle nav-item my-0 my-md-2">
 										<a class="nav-link text-black m-auto py-1 text-nowrap" href="@subMenu.Link">@subMenu.Title</a>
 									</li>
 								}

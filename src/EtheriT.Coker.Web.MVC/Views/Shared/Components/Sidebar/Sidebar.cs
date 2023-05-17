@@ -130,7 +130,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="NewArticle",
-                                Title="新增文章",
+                                Title="文章管理",
                                 Controller="ContentManagement",
                                 Action="NewArticle",
                                 Icon="",

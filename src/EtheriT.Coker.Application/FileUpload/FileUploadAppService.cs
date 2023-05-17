@@ -310,7 +310,6 @@ namespace EtheriT.Coker.Application
             }
             else throw new Exception("上傳失敗");
         }
-
         private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, string directory, long sid)
         {
             if (files.Count() > 0)

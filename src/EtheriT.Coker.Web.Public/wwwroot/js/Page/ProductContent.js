@@ -125,6 +125,8 @@ function PageDefaultSet() {
         if (Pid == 1) {
             var item = $($("#TemplateDemoDescription").html()).clone();
             $("#ProductDescription").append(item);
+            var icon = $($("#TemplateIcon").html()).clone();
+            $("#Product > .content > .certification > ul").append(icon);
         } else {
             $("#ProductDescription").append("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
         }
@@ -141,12 +143,11 @@ function PageDefaultSet() {
             var techcert_list = []
             result.forEach(function (item) {
                 techcert_list.push(item.id);
-            })
-
-            $(".btn_certification").each(function () {
-                var $btn_self = $(this)
-                if (techcert_list.indexOf($btn_self.data("certification")) < 0) {
-                    $btn_self.parents("li").first().remove();
+                if (item.img.length > 0) {
+                    item.img.forEach(function (img) {
+                        console.log($("#Product > .content > .certification > ul"));
+                        $("#Product > .content > .certification > ul").append(`<li><button class="btn_certification bg-transparent border-0" data-certification="1"><img src="${img}" alt="" /></button></li>`);
+                    })
                 }
             })
 

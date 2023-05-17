@@ -1,57 +1,9 @@
 ﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox
 var keyId, disp_opt = true, pop_visible = true;
-var article_list
+var article_list;
+var setPage;
 
 function PageReady() {
-    // 啟動
-    const editor = grapesInit({
-        save: function (html, css) {
-            var _dfr = $.Deferred();
-            co.WebMesnus.saveConten({
-                Id: $("#gjs").data("id"),
-                SaveHtml: html,
-                SaveCss: css
-            }).done(function (resutlt) {
-                if (resutlt.success) _dfr.resolve();
-                else co.sweet.error(resutlt.error);
-            });
-            return _dfr.promise();
-        },
-        import: function (html, css) {
-            var _dfr = $.Deferred();
-            co.WebMesnus.importConten({
-                Id: $("#gjs").data("id"),
-                SaveHtml: html,
-                SaveCss: css
-            }).done(function (resutlt) {
-                if (resutlt.success) _dfr.resolve();
-                else co.sweet.error(resutlt.error);
-            });
-            return _dfr.promise();
-        },
-        getComponer: function () {
-            var _dfr = $.Deferred();
-            co.HtmlContent.GetAllComponent().done(function (result) {
-                if (result.success) _dfr.resolve(result.list);
-                else co.sweet.error(resutlt.error);
-            });
-            return _dfr.promise();
-        }
-    });
-
-    //設定html資料
-    let setPage = function (id) {
-        co.WebMesnus.getConten(id).done(function (result) {
-            if (result.success) {
-                var html = co.Data.HtmlDecode(result.conten.saveHtml);
-                editor.setComponents(html);
-                editor.setStyle(result.conten.saveCss);
-            } else {
-                co.sweet.error(result.error);
-            }
-        });
-    }
-
     co.Articles = {
         AddUp: function (data) {
             return $.ajax({
@@ -80,8 +32,86 @@ function PageReady() {
                 headers: _c.Data.Header,
                 data: { Id: Id },
             });
+        },
+        GetConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/GetConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        SaveConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/SaveConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        ImportConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/ImportConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
         }
     };
+    // 啟動
+    const editor = grapesInit({
+        save: function (html, css) {
+            var _dfr = $.Deferred();
+            co.Articles.SaveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        import: function (html, css) {
+            var _dfr = $.Deferred();
+            co.Articles.ImportConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        getComponer: function () {
+            var _dfr = $.Deferred();
+            co.HtmlContent.GetAllComponent().done(function (result) {
+                if (result.success) _dfr.resolve(result.list);
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        }
+    });
+
+    //設定html資料
+    setPage = function (id) {
+        co.Articles.GetConten({ Id: id }).done(function (result) {
+            if (result.success) {
+                var html = co.Data.HtmlDecode(result.conten.saveHtml);
+                editor.setComponents(html);
+                editor.setStyle(result.conten.saveCss);
+            } else {
+                co.sweet.error(result.error);
+            }
+        });
+    }
 
     ElementInit();
 
@@ -94,8 +124,8 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                        AddUp("已成功發布", "發布發生未知錯誤");
+                    Coker.sweet.confirm("即將儲存", "儲存後將顯示於安排的位置", "儲存", "取消", function () {
+                        AddUp("已成功儲存", "儲存發生未知錯誤");
                     });
                 }
                 form.classList.add('was-validated')
@@ -135,7 +165,7 @@ function PageReady() {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                AddUp("已成功發布", "發布發生未知錯誤", "canvas");
+                AddUp("資料已儲存", "儲存發生未知錯誤", "canvas");
             } else if (result.isDenied) {
                 var hash = window.location.hash.replace("#", "") + "-1";
                 window.location.hash = hash;
@@ -221,22 +251,26 @@ function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
-            if (hash.indexOf("-") == 1) {
-                MoveToCanvas();
+            if (parseInt(hash) == 0) {
+                window.location.hash = 0;
+                keyId = 0;
+                FormDataClear();
+                MoveToContent();
             } else {
-                if (parseInt(hash) == 0) {
-                    FormDataClear();
-                    MoveToContent();
-                } else {
-                    co.Articles.GetSimple(parseInt(hash)).done(function (result) {
-                        if (result != null) {
+                co.Articles.GetSimple(parseInt(hash)).done(function (result) {
+                    if (result != null) {
+                        keyId = parseInt(hash);
+                        if (hash.indexOf("-") > 0) {
+                            MoveToCanvas();
+                        } else {
                             MoveToContent();
                             FormDataSet(result);
-                        } else {
-                            window.location.hash = ""
                         }
-                    })
-                }
+                    } else {
+                        window.location.hash = ""
+                        keyId = "";
+                    }
+                })
             }
         }
     } else {
@@ -289,8 +323,8 @@ function FormDataClear() {
 }
 
 function paletteButtonClicked(e) {
-    keyId = e.row.key + "-1";
-    window.location.hash = keyId;
+    keyId = e.row.key;
+    window.location.hash = keyId + "-1";
     MoveToCanvas();
 }
 
@@ -346,12 +380,16 @@ function MoveToContent() {
 
 function MoveToCanvas() {
     UnValidated();
+    $("#gjs").data("id", keyId);
+    setPage(keyId);
+    $("#TopLine > a").removeClass("d-none");
     $("#ArticleList").addClass("d-none");
     $("#ArticleContent").addClass("d-none");
     $("#ArticleCanvas").removeClass("d-none");
 }
 
 function BackToList() {
+    $("#TopLine > a").addClass("d-none");
     $("#ArticleList").removeClass("d-none");
     $("#ArticleContent").addClass("d-none");
     $("#ArticleCanvas").addClass("d-none");

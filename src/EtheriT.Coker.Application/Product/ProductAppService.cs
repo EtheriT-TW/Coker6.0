@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -19,15 +20,18 @@ namespace EtheriT.Coker.Application.Product
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly ITagAppService tagAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            ITagAppService tagAppService
+            ITagAppService tagAppService,
+            IFileUploadAppService fileUploadAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.tagAppService = tagAppService;
+            this.fileUploadAppService = fileUploadAppService;
         }
         /* Add & Update */
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
@@ -352,6 +356,7 @@ namespace EtheriT.Coker.Application.Product
                                         Id = ptc.Id,
                                         FK_PId = ptc.FK_PId,
                                         FK_TCId = ptc.FK_TCId,
+                                        Img = new List<string>(),
                                         IsChecked = ptc.IsChecked,
                                         Title = "",
                                     }).ToListAsync();
@@ -359,8 +364,22 @@ namespace EtheriT.Coker.Application.Product
 
                 foreach (var item in output)
                 {
-                    var tc_title = db.TechnicalCertificates.Where(e => e.Id == item.FK_TCId && !e.IsDeleted).FirstOrDefault().Title;
-                    item.Title = tc_title == null ? "" : tc_title;
+                    var tc = db.TechnicalCertificates.Where(e => e.Id == item.FK_TCId && !e.IsDeleted).FirstOrDefault();
+                    if (tc != null)
+                    {
+                        item.Title = tc.Title == null ? "" : tc.Title;
+                        var images = await fileUploadAppService.getImgThumbnail(tc.Id);
+                        if (images.Count > 0)
+                        {
+                            foreach (var image in images)
+                            {
+                                if (image.Link != null)
+                                {
+                                    item.Img.Add(image.Link);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 return output;

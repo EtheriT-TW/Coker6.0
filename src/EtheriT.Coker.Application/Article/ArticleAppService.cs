@@ -1,21 +1,19 @@
 ﻿using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Shared.Article;
-using EtheriT.Coker.Application.Shared.Dto.Marquee;
-using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Dto;
-using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using System.Web;
+using EtheriT.Coker.Web.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.Dto;
+using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -23,13 +21,19 @@ namespace EtheriT.Coker.Application.Article
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly IMapper mapper;
+        private readonly IConfiguration configuration;
         public ArticleAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            IMapper mapper,
+            IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.mapper = mapper;
+            this.configuration = configuration;
         }
         public async Task<ResponseMessageDto> AddUp_Simple(ArticleDto dto)
         {
@@ -114,7 +118,7 @@ namespace EtheriT.Coker.Application.Article
 
             }
 
-            return new JsonResult(new List<MarqueeGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<ArticleDataGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ArticleDataGetDto> GetSimple(long Id)
         {
@@ -126,6 +130,7 @@ namespace EtheriT.Coker.Application.Article
                 if (result != null)
                 {
                     var output = await (from e in result
+                                        where e.Id == Id
                                         where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
                                         select new ArticleDataGetDto
                                         {
@@ -171,6 +176,129 @@ namespace EtheriT.Coker.Application.Article
                 output.Error = e.Message;
             }
             return output;
+        }
+        public async Task<GetArticleContenDto> GetConten(SearchIDDto dto)
+        {
+            GetArticleContenDto results = new GetArticleContenDto();
+            try
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var article = await db.Article.Where(e => e.FK_WebsiteId == siteId)
+                                    .Where(e => e.Id == dto.Id)
+                                    .Where(e => !e.IsDeleted)
+                                    .FirstOrDefaultAsync();
+                if (article != null)
+                {
+                    results.Conten = new ArticleSaveContenDto
+                    {
+                        SaveHtml = article.SaveHtml,
+                        SaveCss = article.SaveCss
+                    };
+                    results.Conten.SaveHtml = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.SaveHtml));
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+        public async Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var userId = await loginUserData.GetUserId();
+
+                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
+                ArticleContenDto importDto = new ArticleContenDto
+                {
+                    Id = dto.Id,
+                    Html = dto.SaveHtml,
+                    Css = dto.SaveCss
+                };
+                var s = await SaveConten(dto);
+                var user = await loginUserData.GetUser();
+                var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                if (article != null)
+                {
+                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+                    importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+
+                    article.Html = importDto.Html;
+                    article.Css = importDto.Css;
+                    article.LastModificationTime = DateTime.Now;
+                    article.LastModifierUserId = userId;
+
+                    await loginUserData.SaveChanges(article);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
+                var user = await loginUserData.GetUser();
+                var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
+
+                article.SaveHtml = dto.SaveHtml;
+                article.SaveCss = dto.SaveCss;
+                article.LastModificationTime = DateTime.Now;
+                article.LastModifierUserId = user.Id;
+
+                db.SaveChanges();
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<GetFrontContenOutputDto> GetFrontConten(ArticleGetFrontContenInputDto dto)
+        {
+            if (dto.siteId == null)
+            {
+                dto.siteId = configuration.GetValue<long>("WebConfig:SiteId");
+            }
+            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
+            try
+            {
+                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
+                var articl = await db.Article.Where(e => e.Id == dto.articleId).Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).FirstOrDefaultAsync();
+                if (side != null)
+                {
+                    result.SiteName = side.Title;
+                    if (articl != null)
+                    {
+                        result.Id = (int)articl.Id;
+                        result.Title = articl.Title;
+                        result.Description = articl.Description;
+                        result.Html = articl.Html;
+                        result.Css = articl.Css;
+                        result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+            }
+            return result;
         }
     }
 }

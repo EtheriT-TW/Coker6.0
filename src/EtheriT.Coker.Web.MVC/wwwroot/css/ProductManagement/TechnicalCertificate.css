@@ -34,6 +34,10 @@ input[type="number"] {
     border: 1px solid var(--color-gray-bg-dark);
 }
 
+.list_img > img {
+    height: 50px;
+}
+
 .img_preview > img {
     height: 100px;
 }

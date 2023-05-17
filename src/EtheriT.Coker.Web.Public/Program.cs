@@ -1,9 +1,11 @@
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Marquee;
@@ -54,6 +56,7 @@ builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
+builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -74,8 +77,10 @@ builder.Configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgName
 List<string> childFilePath = new List<string>();
 builder.Configuration.GetSection("WebConfig:childPath").Bind(childFilePath);
 
-if (childOrgNames != null) {
-    for (int i = 0; i < childOrgNames.Count; i++) {
+if (childOrgNames != null)
+{
+    for (int i = 0; i < childOrgNames.Count; i++)
+    {
         app.UseVirtualDirectory(
             $"upload/{childOrgNames[i]}",
             childFilePath[i]);

@@ -7,6 +7,10 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Runtime.CompilerServices;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -99,8 +103,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                                 {
                                     Id = e.Id,
                                     Disp_opt = e.Disp_opt,
-                                    Img = e.Img,
                                     Title = e.Title,
+                                    Img = "../",
                                     Description = e.Description,
                                     Ser_no = e.Ser_no,
                                     StartDate = e.StartDate,
@@ -108,11 +112,27 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                                     Permanent = e.Permanent,
                                 };
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                if (output != null)
+                {
+                    foreach (var data in output.data)
+                    {
+                        var tid = data.GetType().GetProperty("Id").GetValue(data, null);
+                        var image = (await fileUploadAppService.getImgThumbnail((long?)tid));
+                        if (image.Count > 0)
+                        {
+                            data.GetType().GetProperty("Img").SetValue(data, image.First().Link);
+                        }
+                        else
+                        {
+                            data.GetType().GetProperty("Img").SetValue(data, "");
+                        }
+                    }
+                }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
             {
-
+                var expectiontext = e;
             }
             return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }

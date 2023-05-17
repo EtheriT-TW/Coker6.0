@@ -20,42 +20,49 @@
 					<span class="material-symbols-outlined">add</span>
 				</button>
 				@(
-					Html.DevExtreme().DataGrid<TechCertGetAllListDto>()
-					.DataSource(d => d.RemoteController().Key("Id")
-					.LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
-					)
-					.RemoteOperations(true)
-					.ColumnHidingEnabled(true)
-					.ShowBorders(true)
-					.FilterRow(filterRow => filterRow
-					.Visible(true)
-					.ApplyFilter(GridApplyFilterMode.Auto)
-					)
-					.SearchPanel(searchPanel => searchPanel
-					.Visible(true)
-					.Width(480)
-					.Placeholder("請輸入要搜尋的資料")
-					)
-					.ShowRowLines(true)
-					.Columns(c =>
-					{
-						c.AddFor(e => e.Id).Caption("編號").Width(50);
-						c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
-						c.AddFor(e => e.Title).Caption("圖片名稱");
-						c.AddFor(e => e.Img).Caption("圖片連結");
-						c.AddFor(e => e.Description).Caption("說明");
-						c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
-						c.AddFor(e => e.StartDate).Caption("起始日期");
-						c.AddFor(e => e.EndDate).Caption("結束日期");
-						c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
-						c.Add()
-						.Type(GridCommandColumnType.Buttons)
-						.Buttons(b =>
+						Html.DevExtreme().DataGrid<TechCertGetAllListDto>()
+						.DataSource(d => d.RemoteController().Key("Id")
+						.LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
+						)
+						.RemoteOperations(true)
+						.ColumnHidingEnabled(true)
+						.ShowBorders(true)
+						.FilterRow(filterRow => filterRow
+						.Visible(true)
+						.ApplyFilter(GridApplyFilterMode.Auto)
+						)
+						.SearchPanel(searchPanel => searchPanel
+						.Visible(true)
+						.Width(480)
+						.Placeholder("請輸入要搜尋的資料")
+						)
+						.ShowRowLines(true)
+						.Columns(c =>
 						{
-							b.Add().Name("edit").OnClick("editButtonClicked");
-							b.Add().Name("delete").OnClick("deleteButtonClicked");
-						});
-					})
+							c.AddFor(e => e.Id).Caption("編號").Width(50);
+							c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
+							c.AddFor(e => e.Title).Caption("證照名稱").Width(100);
+							c.AddFor(e => e.Img).Caption("圖示")
+							.AllowFiltering(false)
+							.AllowSorting(false)
+							.CellTemplate(@<text>
+								<div class="list_img">
+									<img src="<%- value %>" alt="" />
+								</div>
+							</text>);
+							c.AddFor(e => e.Description).Caption("說明").Width(150);
+							c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
+							c.AddFor(e => e.StartDate).Caption("起始日期").Width(150);
+							c.AddFor(e => e.EndDate).Caption("結束日期").Width(150);
+							c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
+							c.Add()
+							.Type(GridCommandColumnType.Buttons)
+							.Buttons(b =>
+							{
+								b.Add().Name("edit").OnClick("editButtonClicked");
+								b.Add().Name("delete").OnClick("deleteButtonClicked");
+							});
+						})
 					.ColumnAutoWidth(true)
 					.Paging(paging => paging.PageSize(30))
 					.Pager(pager =>

@@ -1,4 +1,6 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -20,12 +22,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IConfiguration Configuration;
         private readonly IWebsiteApplication websiteApplication;
+        private readonly IArticleAppService articleAppService;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
             IWebMenuApplication webMenuApplication,
             IConfiguration configuration,
-            IWebsiteApplication websiteApplication
+            IWebsiteApplication websiteApplication,
+            IArticleAppService articleAppService
         )
         {
             this._logger = logger;
@@ -33,6 +37,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.webMenuApplication = webMenuApplication;
             this.Configuration = configuration;
             this.websiteApplication = websiteApplication;
+            this.articleAppService = articleAppService;
         }
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
@@ -46,43 +51,60 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 search = search ?? "".Trim(),
                 freightModels = freight
             };
-            switch (option)
-            {
-                case "":
-                    break;
-                case "prod":
-                    break;
-            }
             string view;
+
             if (!string.IsNullOrEmpty(key))
             {
-                if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test")
+                switch (option)
                 {
-                    view = key;
-                }
-                else if (key == "Toilet")
-                {
-                    view = "Product";
-                    if (id != 0) view = "ProductContent";
-                }
-                else
-                {
-                    model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                    case "article":
+                        model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
 
-                    if (string.IsNullOrEmpty(model.PageData.Html))
-                    {
-                        Response.StatusCode = 404;
-                        view = "Error/404";
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(model.PageData.Description))
+                        if (string.IsNullOrEmpty(model.PageData.Html))
                         {
-                            string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
-                            model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                            Response.StatusCode = 404;
+                            view = "Error/404";
                         }
-                        view = "Index";
-                    }
+                        else
+                        {
+                            if (string.IsNullOrEmpty(model.PageData.Description))
+                            {
+                                string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                            }
+                            view = "Index";
+                        }
+                        break;
+                    default:
+                        if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test")
+                        {
+                            view = key;
+                        }
+                        else if (key == "product")
+                        {
+                            view = "Product";
+                            if (id != 0) view = "ProductContent";
+                        }
+                        else
+                        {
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+
+                            if (string.IsNullOrEmpty(model.PageData.Html))
+                            {
+                                Response.StatusCode = 404;
+                                view = "Error/404";
+                            }
+                            else
+                            {
+                                if (string.IsNullOrEmpty(model.PageData.Description))
+                                {
+                                    string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                                }
+                                view = "Index";
+                            }
+                        }
+                        break;
                 }
             }
             else

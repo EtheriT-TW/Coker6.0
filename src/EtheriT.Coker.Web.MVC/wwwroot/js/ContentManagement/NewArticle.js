@@ -3,6 +3,55 @@ var keyId, disp_opt = true, pop_visible = true;
 var article_list
 
 function PageReady() {
+    // 啟動
+    const editor = grapesInit({
+        save: function (html, css) {
+            var _dfr = $.Deferred();
+            co.WebMesnus.saveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        import: function (html, css) {
+            var _dfr = $.Deferred();
+            co.WebMesnus.importConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        getComponer: function () {
+            var _dfr = $.Deferred();
+            co.HtmlContent.GetAllComponent().done(function (result) {
+                if (result.success) _dfr.resolve(result.list);
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        }
+    });
+
+    //設定html資料
+    let setPage = function (id) {
+        co.WebMesnus.getConten(id).done(function (result) {
+            if (result.success) {
+                var html = co.Data.HtmlDecode(result.conten.saveHtml);
+                editor.setComponents(html);
+                editor.setStyle(result.conten.saveCss);
+            } else {
+                co.sweet.error(result.error);
+            }
+        });
+    }
+
     co.Articles = {
         AddUp: function (data) {
             return $.ajax({

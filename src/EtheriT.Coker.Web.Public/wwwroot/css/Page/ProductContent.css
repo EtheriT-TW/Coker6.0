@@ -140,11 +140,11 @@ input[type="number"] {
     content: " \f107";
 }
 
-#Product > .content > .certification {
+#Product > .content > .pro_tc {
     color: var(--gray-text);
 }
 
-    #Product > .content > .certification > .image > li > button > img {
+    #Product > .content > .pro_tc > .image > li > button > img {
         height: 3.25rem;
     }
 
@@ -277,9 +277,12 @@ input:disabled + .btn_radio {
         content: "　\f019";
     }
 
+#TechnicalDocuments > .badge_directions > div {
+    height: 150px;
+}
+
 #TechnicalDocuments > .badge_directions > img {
-    width: 8rem;
-    margin-right: 1rem;
+    width: 150px;
 }
 
 

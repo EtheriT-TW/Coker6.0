@@ -12,7 +12,7 @@ namespace EtheriT.Coker.Application
         public Task<UploadFileOutputDto> uploadTechnicalCertificateFiles(IList<IFormFile> files, int type, long sid);
         public Task<UploadFileOutputDto> getHtmlContentFiles();
         public Task<string> getImgUrl(long? imgid, long websiteid);
-        public Task<List<ImgGetDto>> getImgThumbnail(long? tid);
+        public Task<List<FileGetImgDto>> getImgFiles(long? tid, int size);
         public Task<ResponseMessageDto> deleteFile(Guid key);
         public Task<ResponseMessageDto> deleteImg(long? imgid);
     }

@@ -45,9 +45,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             }
         }
         [HttpGet]
-        public async Task<List<ImgGetDto>> getImgThumbnail(long? tid)
+        public async Task<List<FileGetImgDto>> getImgFiles(long? tid, int size)
         {
-            return await fileUploadAppService.getImgThumbnail(tid);
+            return await fileUploadAppService.getImgFiles(tid, size);
         }
         [HttpDelete]
         public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto)

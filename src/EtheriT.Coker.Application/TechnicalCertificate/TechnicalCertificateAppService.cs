@@ -11,6 +11,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Runtime.CompilerServices;
+using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto;
+using System.Xml.Linq;
+using System.Reflection.Metadata;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -117,7 +122,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     foreach (var data in output.data)
                     {
                         var tid = data.GetType().GetProperty("Id").GetValue(data, null);
-                        var image = (await fileUploadAppService.getImgThumbnail((long?)tid));
+                        var image = (await fileUploadAppService.getImgFiles((long?)tid, 3));
                         if (image.Count > 0)
                         {
                             data.GetType().GetProperty("Img").SetValue(data, image.First().Link);
@@ -160,6 +165,48 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             }
 
             return new JsonResult(new List<TechCertGetAllChoseListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<List<TechCertDisplayDto>> GetDisplayData(LongIdDto dto)
+        {
+            try
+            {
+                var tcdatas = await (from ptc in db.Prod_TechCerts
+                                     where ptc.IsChecked && ptc.FK_PId == dto.Id
+                                     join tc in db.TechnicalCertificates on ptc.FK_TCId equals tc.Id
+                                     select new TechCertDisplayDto
+                                     {
+                                         Id = tc.Id,
+                                         Img = new List<FileGetImgDto>(),
+                                         Title = tc.Title,
+                                         Description = tc.Description
+                                     }).ToListAsync(); ;
+
+                foreach (var tcdata in tcdatas)
+                {
+                    var imgdatas = await fileUploadAppService.getImgFiles(tcdata.Id, 1);
+                    if (imgdatas.Count > 0)
+                    {
+                        foreach (var imgdata in imgdatas)
+                        {
+                            if (imgdata.Link != null)
+                            {
+                                tcdata.Img.Add(new FileGetImgDto
+                                {
+                                    Id = imgdata.Id,
+                                    Link = imgdata.Link,
+                                    Name = imgdata.Name,
+                                });
+                            }
+                        }
+                    }
+                }
+                return tcdatas;
+            }
+            catch (Exception e)
+            {
+            }
+
+            return null;
         }
         public async Task<TechCertDto> GetOne(int id)
         {

@@ -12,6 +12,11 @@ using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using EtheriT.Coker.Application.Shared.Dto.Files;
+using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Shared.TechnicalCertificate;
+using EtheriT.Coker.Application.TechnicalCertificate;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -21,17 +26,23 @@ namespace EtheriT.Coker.Application.Product
         private readonly LoginUserData loginUserData;
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly IConfiguration configuration;
+        private readonly ITechnicalCertificateAppService technicalCertificateAppService;
         public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITagAppService tagAppService,
-            IFileUploadAppService fileUploadAppService
+            IFileUploadAppService fileUploadAppService,
+            IConfiguration configuration,
+            ITechnicalCertificateAppService technicalCertificateAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.configuration = configuration;
+            this.technicalCertificateAppService = technicalCertificateAppService;
         }
         /* Add & Update */
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
@@ -282,6 +293,7 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 var db_p = db.Prods.Where(e => e.Id == Id).FirstOrDefault();
 
                 if (db_p != null)
@@ -356,7 +368,7 @@ namespace EtheriT.Coker.Application.Product
                                         Id = ptc.Id,
                                         FK_PId = ptc.FK_PId,
                                         FK_TCId = ptc.FK_TCId,
-                                        Img = new List<string>(),
+                                        Img = new List<FileGetImgDto>(),
                                         IsChecked = ptc.IsChecked,
                                         Title = "",
                                     }).ToListAsync();
@@ -368,14 +380,19 @@ namespace EtheriT.Coker.Application.Product
                     if (tc != null)
                     {
                         item.Title = tc.Title == null ? "" : tc.Title;
-                        var images = await fileUploadAppService.getImgThumbnail(tc.Id);
+                        var images = await fileUploadAppService.getImgFiles(tc.Id, 3);
                         if (images.Count > 0)
                         {
                             foreach (var image in images)
                             {
                                 if (image.Link != null)
                                 {
-                                    item.Img.Add(image.Link);
+                                    item.Img.Add(new FileGetImgDto
+                                    {
+                                        Id = image.Id,
+                                        Link = image.Link,
+                                        Name = image.Name,
+                                    });
                                 }
                             }
                         }
@@ -474,7 +491,10 @@ namespace EtheriT.Coker.Application.Product
         {
             try
             {
-                var db_p = db.Prods.Where(e => e.Id == id).FirstOrDefault();
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var db_p = db.Prods.Where(e => e.Id == id && e.FK_WebsiteId == websiteId)
+                    .Where(e => !e.IsDeleted && (e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now < e.EndTime)))
+                    .FirstOrDefault();
                 var db_ps = db.Prod_Stocks.Where(e => e.Id == db_p.Id).FirstOrDefault();
 
                 if (db_p != null && db_ps != null)

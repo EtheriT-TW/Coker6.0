@@ -80,15 +80,15 @@ function PageReady() {
     }
 
     $(".btn_addToCar").on("click", AddToCart);
-    $(".btn_certification").on("click", function () {
+    $(".btn_tc").on("click", function () {
         $("#ProductDescription").removeClass("active show")
         $("#TechnicalDocuments").addClass("active show")
         $("#pills-description-tab").removeClass("active")
         $("#pills-documents-tab").addClass("active")
-        var btn_data = $(this).data("certification")
+        var btn_data = $(this).data("tcid")
         $(".badge_directions").each(function () {
             var $self = $(this)
-            if ($self.data("certification") == btn_data) {
+            if ($self.data("pro_tc") == btn_data) {
                 $('html, body').animate({ scrollTop: $self.offset().top - ($("header").height() * 2) }, 0);
             }
         })
@@ -111,131 +111,148 @@ function ElementInit() {
 
 function PageDefaultSet() {
     Product.GetOne.Prod(Pid).done(function (result) {
-        $pro_name.text(result.title);
-        $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
-        $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
-        var spec_height = 0;
-        $pro_specification.children("li").each(function () {
-            spec_height += $(this).height();
-        })
-        if (spec_height > $pro_specification.height()) {
-            $btn_detailed.removeClass("d-none")
-        }
-
-        if (Pid == 1) {
-            var item = $($("#TemplateDemoDescription").html()).clone();
-            $("#ProductDescription").append(item);
-            var icon = $($("#TemplateIcon").html()).clone();
-            $("#Product > .content > .certification > ul").append(icon);
-        } else {
+        if (typeof (result) != "undefined") {
+            $pro_name.text(result.title);
+            $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
+            $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
+            var spec_height = 0;
+            $pro_specification.children("li").each(function () {
+                spec_height += $(this).height();
+            })
+            if (spec_height > $pro_specification.height()) {
+                $btn_detailed.removeClass("d-none")
+            }
             $("#ProductDescription").append("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
-        }
 
-        if (Pid == 1 || Pid == 4) {
-            var item = $($("#TemplateDemoFile").html()).clone();
-            $("#TechnicalDocuments").prepend(item);
-        }
-    });
+            Product.GetOne.TechCert({ Id: Pid }).done(function (result) {
+                if (result.length > 0) {
+                    $("#Product > .content > .pro_tc").removeClass("d-none")
+                    var techcert_list = []
+                    result.forEach(function (item) {
+                        console.log(item)
+                        if (item.img.length > 0) {
+                            item.img.forEach(function (img) {
+                                $(".pro_tc > ul").append(`<li><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
+                                $(".pro_tc_content").append(`<div class="badge_directions d-flex align-items-center" data-tcid="${item.id}">
+			                                                <img class="py-2 me-5" src="${img.link}" alt="${img.name}" />
+			                                                <div class="text d-flex align-items-center">${item.description}</div></div>
+		                                                    <hr class="m-1" />`);
+                            })
+                        }
+                    })
 
-    Product.GetOne.TechCert(Pid).done(function (result) {
-        if (result.length > 0) {
-            $("#Product > .content > .certification").removeClass("d-none")
-            var techcert_list = []
-            result.forEach(function (item) {
-                techcert_list.push(item.id);
-                if (item.img.length > 0) {
-                    item.img.forEach(function (img) {
-                        console.log($("#Product > .content > .certification > ul"));
-                        $("#Product > .content > .certification > ul").append(`<li><button class="btn_certification bg-transparent border-0" data-certification="1"><img src="${img}" alt="" /></button></li>`);
+                    $(".btn_tc").on("click", function () {
+                        $("#ProductDescription").removeClass("active show")
+                        $("#TechnicalDocuments").addClass("active show")
+                        $("#pills-description-tab").removeClass("active")
+                        $("#pills-documents-tab").addClass("active")
+                        var $self_btn = $(this);
+                        $(".badge_directions").each(function () {
+                            var $self_badge = $(this);
+                            if ($self_badge.data("tcid") == $self_btn.data("tcid")) {
+                                $('html, body').animate({ scrollTop: $self_badge.offset().top - $("header > nav").height() - $self_badge.height() - 50 }, 0);
+                            }
+                        })
+                    })
+
+                    //$(".badge_directions").each(function () {
+                    //    var $img_self = $(this)
+                    //    if (techcert_list.indexOf($img_self.data("pro_tc")) < 0) {
+                    //        $img_self.next("hr").remove();
+                    //        $img_self.remove();
+                    //    }
+                    //})
+                } else {
+                    //$(".btn_tc").each(function () {
+                    //    $(this).parents("li").first().remove();
+                    //})
+
+                    $(".badge_directions").each(function () {
+                        var $img_self = $(this)
+                        $img_self.next("hr").remove();
+                        $img_self.remove();
                     })
                 }
             })
 
-            $(".badge_directions").each(function () {
-                var $img_self = $(this)
-                if (techcert_list.indexOf($img_self.data("certification")) < 0) {
-                    $img_self.next("hr").remove();
-                    $img_self.remove();
+            Product.GetOne.Stock(Pid).done(function (result) {
+                if (result.length > 1) {
+
+                    var obj = {};
+
+                    var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
+                    var item1_control = item1.find(".spec_control"),
+                        item2_control = item2.find(".spec_control");
+
+                    item1.data("stype", 1)
+                    item2.data("stype", 2)
+                    result.forEach(function (spec) {
+                        obj["s1id"] = spec.fK_S1id;
+                        obj["s2id"] = spec.fK_S2id;
+                        obj["price"] = spec.price;
+                        price_list.push(obj);
+                        obj = {}
+
+                        if (spec.fK_S1id > 0) {
+                            if (s1_list.indexOf(spec.fK_S1id) < 0) {
+                                item1_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + spec.fK_S1id + '">' + spec.s1_Name + '</label>');
+                                item1_control.prepend('<input id="s1_' + spec.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + spec.fK_S1id + '">');
+                                s1_list.push(spec.fK_S1id);
+                            }
+                        } else {
+                            if (!s1 >= 0) {
+                                s1 = 0;
+                            }
+                        }
+
+                        if (spec.fK_S2id > 0) {
+                            if (s2_list.indexOf(spec.fK_S2id) < 0) {
+                                item2_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + spec.fK_S2id + '">' + spec.s2_Name + '</label>');
+                                item2_control.prepend('<input id="s2_' + spec.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + spec.fK_S2id + '">');
+                                s2_list.push(spec.fK_S2id);
+                            }
+                        } else {
+                            if (!s2 >= 0) {
+                                s2 = 0;
+                            }
+                        }
+                    })
+
+                    $options.prepend(item2);
+                    $options.prepend(item1);
+
+                    $radio = $("#Product > .content > .options > .radio");
+                    $radio.each(function () {
+                        $input = $(this).children(".spec_control").children("input")
+                        $input.each(function () {
+                            $(this).on("click", SpecRadio)
+                        })
+                    })
+
+                    if (result[0].price == result[result.length - 1].price) {
+                        $pro_discount.text(result[0].price.toLocaleString('en-US'));
+                    } else {
+                        $pro_discount.text(result[0].price.toLocaleString('en-US') + " ~ " + result[result.length - 1].price.toLocaleString('en-US'));
+                    }
+                } else {
+                    s1 = result[0].fK_S1id;
+                    s2 = result[0].fK_S2id;
+                    $pro_discount.text(result[0].price.toLocaleString('en-US'));
                 }
             })
         } else {
-            $(".btn_certification").each(function () {
-                $(this).parents("li").first().remove();
-            })
-
-            $(".badge_directions").each(function () {
-                var $img_self = $(this)
-                $img_self.next("hr").remove();
-                $img_self.remove();
-            })
-        }
-    })
-
-    Product.GetOne.Stock(Pid).done(function (result) {
-        if (result.length > 1) {
-
-            var obj = {};
-
-            var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
-            var item1_control = item1.find(".spec_control"),
-                item2_control = item2.find(".spec_control");
-
-            item1.data("stype", 1)
-            item2.data("stype", 2)
-            result.forEach(function (spec) {
-                obj["s1id"] = spec.fK_S1id;
-                obj["s2id"] = spec.fK_S2id;
-                obj["price"] = spec.price;
-                price_list.push(obj);
-                obj = {}
-
-                if (spec.fK_S1id > 0) {
-                    if (s1_list.indexOf(spec.fK_S1id) < 0) {
-                        item1_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + spec.fK_S1id + '">' + spec.s1_Name + '</label>');
-                        item1_control.prepend('<input id="s1_' + spec.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + spec.fK_S1id + '">');
-                        s1_list.push(spec.fK_S1id);
-                    }
-                } else {
-                    if (!s1 >= 0) {
-                        s1 = 0;
-                    }
-                }
-
-                if (spec.fK_S2id > 0) {
-                    if (s2_list.indexOf(spec.fK_S2id) < 0) {
-                        item2_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + spec.fK_S2id + '">' + spec.s2_Name + '</label>');
-                        item2_control.prepend('<input id="s2_' + spec.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + spec.fK_S2id + '">');
-                        s2_list.push(spec.fK_S2id);
-                    }
-                } else {
-                    if (!s2 >= 0) {
-                        s2 = 0;
-                    }
-                }
-            })
-
-            $options.prepend(item2);
-            $options.prepend(item1);
-
-            $radio = $("#Product > .content > .options > .radio");
-            $radio.each(function () {
-                $input = $(this).children(".spec_control").children("input")
-                $input.each(function () {
-                    $(this).on("click", SpecRadio)
-                })
-            })
-
-            if (result[0].price == result[result.length - 1].price) {
-                $pro_discount.text(result[0].price.toLocaleString('en-US'));
+            if (window.location.pathname.substr(-2, 2) == 1) {
+                var item = $($("#TemplateDemoDescription").html()).clone();
+                $("#ProductDescription").append(item);
+                var icon = $($("#TemplateIcon").html()).clone();
+                $("#Product > .content > .pro_tc > ul").append(icon);
+                var item = $($("#TemplateDemoFile").html()).clone();
+                $("#TechnicalDocuments").prepend(item);
             } else {
-                $pro_discount.text(result[0].price.toLocaleString('en-US') + " ~ " + result[result.length - 1].price.toLocaleString('en-US'));
+                window.location.href = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/"));
             }
-        } else {
-            s1 = result[0].fK_S1id;
-            s2 = result[0].fK_S2id;
-            $pro_discount.text(result[0].price.toLocaleString('en-US'));
         }
-    })
+    });
 
     var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper")
     if (Pid == 1) {

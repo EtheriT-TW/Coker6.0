@@ -447,12 +447,12 @@ var Coker = {
                 dataType: "json"
             });
         },
-        getImgThumbnail: function (tid) {
+        getImgFile: function (tid, size) {
             return $.ajax({
-                url: "/api/FileUpload/getImgThumbnail",
+                url: "/api/FileUpload/getImgFiles",
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
-                data: { tid: tid },
+                data: { tid: tid, size: size },
                 headers: _c.Data.Header,
                 dataType: "json"
             });

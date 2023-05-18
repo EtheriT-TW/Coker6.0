@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -227,50 +228,71 @@ namespace EtheriT.Coker.Application
                 return "";
             }
         }
-        public async Task<List<ImgGetDto>> getImgThumbnail(long? tid)
+        // size = 1 原圖 2中縮圖 3小縮圖
+        public async Task<List<FileGetImgDto>> getImgFiles(long? tid, int size)
         {
+            var result = new List<FileGetImgDto>();
             try
             {
                 long websiteId = await loginUserData.GetWebsiteId();
                 string orgName = await loginUserData.GetWebsiteOrgName();
-                var result = new List<ImgGetDto>();
 
-                var faids = await (db.FileBinds.Where(e => e.Sid == tid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
+                var faids = await (db.FileBinds.Where(e => e.Sid == tid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId)).ToListAsync();
 
                 if (faids != null)
                 {
-                    foreach (var faid in faids)
+                    if (size == 1)
                     {
-                        var faguid = await (db.FileUploads.Where(e => e.Id == faid).Select(e => e.GuidKey).FirstOrDefaultAsync());
-                        if (faguid != Guid.Empty)
+                        foreach (var faid in faids)
                         {
-                            var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == faguid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
-                            if (chimg_ids.Count > 0)
-                            {
-                                var chimg = new List<FileUpload>();
-                                foreach (var chimg_id in chimg_ids)
-                                {
-                                    chimg.Add(await (db.FileUploads.Where(e => e.Id == chimg_id).Where(e => !e.IsDeleted).FirstOrDefaultAsync()));
+                            var fadata = await (db.FileUploads.Where(e => e.Id == faid)).FirstOrDefaultAsync();
 
-                                }
-                                chimg = chimg.OrderBy(e => e.Size).ToList();
-                                result.Add(new ImgGetDto
+                            if (fadata.GuidKey != Guid.Empty)
+                            {
+                                result.Add(new FileGetImgDto
                                 {
-                                    Id = faid.Value,
-                                    Name = chimg[0].OriginalFileName,
-                                    Link = chimg[0].DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                    Id = fadata.Id,
+                                    Name = fadata.OriginalFileName,
+                                    Link = fadata.DownloadFileName.Replace("upload", $"upload/{orgName}")
                                 });
                             }
                         }
                     }
-                }
+                    else
+                    {
+                        foreach (var faid in faids)
+                        {
+                            var fadata = await (db.FileUploads.Where(e => e.Id == faid)).FirstOrDefaultAsync();
 
-                return result;
+                            if (fadata.GuidKey != Guid.Empty)
+                            {
+                                var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fadata.GuidKey).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
+                                if (chimg_ids.Count > 0)
+                                {
+                                    var chimg = new List<FileUpload>();
+                                    foreach (var chimg_id in chimg_ids)
+                                    {
+                                        chimg.Add(await (db.FileUploads.Where(e => e.Id == chimg_id).Where(e => !e.IsDeleted).FirstOrDefaultAsync()));
+
+                                    }
+                                    chimg = chimg.OrderByDescending(e => e.Size).ToList();
+                                    result.Add(new FileGetImgDto
+                                    {
+                                        Id = faid.Value,
+                                        Name = chimg[size - 2].OriginalFileName,
+                                        Link = chimg[size - 2].DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
-                return null;
+
             }
+            return result;
         }
         private async Task<FileItemDto> SaveFile(IFormFile file, string directory)
         {

@@ -130,14 +130,16 @@ function PageDefaultSet() {
                     var techcert_list = []
                     result.forEach(function (item) {
                         console.log(item)
+                        var temp_html = "";
                         if (item.img.length > 0) {
                             item.img.forEach(function (img) {
-                                $(".pro_tc > ul").append(`<li><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
-                                $(".pro_tc_content").append(`<div class="badge_directions d-flex align-items-center" data-tcid="${item.id}">
-			                                                <img class="py-2 me-5" src="${img.link}" alt="${img.name}" />
+                                $(".pro_tc > ul").prepend(`<li class="me-1"><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
+                                temp_html += `<img class="my-1" src="${img.link}" alt="${img.name}" />`;
+                            })
+                            $(".pro_tc_content > .filedownload").after(`<div class="badge_${item.id} d-flex align-items-center" data-tcid="${item.id}">
+                                                            <div class="d-flex flex-column py-2 me-5">${temp_html}</div>
 			                                                <div class="text d-flex align-items-center">${item.description}</div></div>
 		                                                    <hr class="m-1" />`);
-                            })
                         }
                     })
 
@@ -147,12 +149,15 @@ function PageDefaultSet() {
                         $("#pills-description-tab").removeClass("active")
                         $("#pills-documents-tab").addClass("active")
                         var $self_btn = $(this);
-                        $(".badge_directions").each(function () {
-                            var $self_badge = $(this);
-                            if ($self_badge.data("tcid") == $self_btn.data("tcid")) {
-                                $('html, body').animate({ scrollTop: $self_badge.offset().top - $("header > nav").height() - $self_badge.height() - 50 }, 0);
-                            }
-                        })
+                        console.log($(`.badge_${$self_btn.data("tcid")}`))
+                        console.log($(`.badge_${$self_btn.data("tcid")}`).height())
+                        $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
+                        //$(".badge_directions").each(function () {
+                        //    var $self_badge = $(this);
+                        //    if ($self_badge.data("tcid") == $self_btn.data("tcid")) {
+                        //        $('html, body').animate({ scrollTop: $self_badge.offset().top - $("header > nav").height() - $self_badge.height() - 50 }, 0);
+                        //    }
+                        //})
                     })
 
                     //$(".badge_directions").each(function () {
@@ -167,11 +172,11 @@ function PageDefaultSet() {
                     //    $(this).parents("li").first().remove();
                     //})
 
-                    $(".badge_directions").each(function () {
-                        var $img_self = $(this)
-                        $img_self.next("hr").remove();
-                        $img_self.remove();
-                    })
+                    //$(".badge_directions").each(function () {
+                    //    var $img_self = $(this)
+                    //    $img_self.next("hr").remove();
+                    //    $img_self.remove();
+                    //})
                 }
             })
 
@@ -246,8 +251,6 @@ function PageDefaultSet() {
                 $("#ProductDescription").append(item);
                 var icon = $($("#TemplateIcon").html()).clone();
                 $("#Product > .content > .pro_tc > ul").append(icon);
-                var item = $($("#TemplateDemoFile").html()).clone();
-                $("#TechnicalDocuments").prepend(item);
             } else {
                 window.location.href = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/"));
             }

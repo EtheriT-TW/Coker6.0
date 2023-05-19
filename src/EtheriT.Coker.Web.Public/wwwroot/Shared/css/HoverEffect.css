@@ -5,13 +5,13 @@
     .hover_inside_scale > img, .hover_inside_scale > .hoverbody {
         transform: scale(1);
         filter: saturate(100%);
-        transition: 0.5s all;
+        transition: 0.75s all;
     }
 
     .hover_inside_scale:hover > img, .hover_inside_scale:hover > .hoverbody {
-        transform: scale(1.25);
-        filter: saturate(200%);
-        transition: 0.5s all;
+        transform: scale(1.15);
+        filter: saturate(150%);
+        transition: 0.75s all;
     }
 
 .hover_protrude_scale {

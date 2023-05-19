@@ -274,17 +274,16 @@ input:disabled + .btn_radio {
     #TechnicalDocuments > #FileDownload > .file > a > div::after {
         font-family: 'Font Awesome 6 Free';
         font-weight: 900;
-        content: "　\f019";
+        content: "\u3000\f019";
     }
 
 #TechnicalDocuments > .badge_directions > div {
     height: 150px;
 }
 
-#TechnicalDocuments > .badge_directions > img {
+#TechnicalDocuments > [class*="badge_"] > img {
     width: 150px;
 }
-
 
 @media only screen and (max-width: 1400px) {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {

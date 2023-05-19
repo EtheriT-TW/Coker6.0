@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.Migrations.Seed;
 using EtheriT.Coker.Core.Models;
+using Directory = EtheriT.Coker.Core.Models.Directory;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -50,6 +51,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<ObjectType> ObjectTypes { get; set; }
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
         public DbSet<Article> Article { get; set; }
+        public DbSet<Directory> Directory { get; set; }
 
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
@@ -165,6 +167,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Article>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<Directory>(o =>
+            {
+                o.HasOne(f => f.Website).WithMany(u => u.Directory).HasForeignKey(f => f.FK_WebsiteId);
             });
 
             base.OnModelCreating(modelBuilder);

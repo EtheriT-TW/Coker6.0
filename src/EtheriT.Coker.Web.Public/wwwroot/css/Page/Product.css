@@ -53,11 +53,15 @@ input[type="number"] {
     border-radius: 25px;
 }
 
+    .prod_card .card-img-top {
+        height: 200px;
+    }
+
     .prod_card > figcaption > .card-body > .top_line > button {
         color: var(--gray-icon);
     }
 
-    .prod_card > figcaption > .card-body > a > p {
+    .prod_card > figcaption > .card-body .card-text {
         overflow: hidden;
         height: 4rem;
         text-overflow: ellipsis;
@@ -117,6 +121,10 @@ input[type="number"] {
         white-space: nowrap;
     }
 
+        .pro_round_tag > li > a {
+            color: var(--gray-text);
+        }
+
 /* Filter */
 #Filter {
     background-color: var(--gray-blue);
@@ -133,12 +141,8 @@ input[type="number"] {
 }
 
 /* Tick Area */
-.tick_area > .title {
+.tag_category > .title {
     background-color: var(--gray-bg-light);
-}
-
-.tick_area > ul > li {
-    cursor: pointer;
 }
 
 /* Ads */

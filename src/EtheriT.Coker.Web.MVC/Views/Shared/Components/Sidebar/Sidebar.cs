@@ -129,6 +129,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         CollapseId="#ContentManagement",
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
+                                PageName="Directory",
+                                Title="目錄管理",
+                                Controller="ContentManagement",
+                                Action="Directory",
+                                Icon="",
+                            },
+                            new JobMenu{
                                 PageName="NewArticle",
                                 Title="文章管理",
                                 Controller="ContentManagement",

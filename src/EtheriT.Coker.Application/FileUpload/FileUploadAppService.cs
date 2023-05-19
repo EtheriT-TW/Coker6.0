@@ -4,19 +4,10 @@ using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -306,7 +297,7 @@ namespace EtheriT.Coker.Application
                 var directoryPath = $"{rootPath}/{directory}";
                 var path = $"/{directory}/{key}.{ext}";
                 if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
-                if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
+                if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
                 using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
                 {
                     FileUpload fileUpload = new FileUpload
@@ -350,7 +341,7 @@ namespace EtheriT.Coker.Application
                         var directoryPath = $"{rootPath}/{directory}";
                         var path = $"/{directory}/{key}.{ext}";
                         if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
-                        if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
+                        if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
                         using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
                         {
                             FileUpload fileUpload = new FileUpload

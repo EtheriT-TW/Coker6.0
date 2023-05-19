@@ -32,6 +32,8 @@ using EtheriT.Coker.Application.Configuration;
 using Microsoft.AspNetCore.Mvc.Razor;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Shared.Directory;
+using EtheriT.Coker.Application.Directory;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -121,6 +123,7 @@ builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 builder.Services.AddTransient<IObjectTypeAppService, ObjectTypeAppService>();
 builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
+builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 
 //¦h»y¨t
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

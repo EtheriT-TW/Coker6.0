@@ -111,7 +111,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Action="Index",
                                 Icon="",
                             },
-                            new JobMenu{ 
+                            new JobMenu{
                                 PageName="ComponerManager",
                                 Title="元件管理",
                                 Controller="Page",
@@ -136,10 +136,10 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Icon="",
                             },
                             new JobMenu{
-                                PageName="NewArticle",
+                                PageName="Article",
                                 Title="文章管理",
                                 Controller="ContentManagement",
-                                Action="NewArticle",
+                                Action="Article",
                                 Icon="",
                             },
                             new JobMenu{

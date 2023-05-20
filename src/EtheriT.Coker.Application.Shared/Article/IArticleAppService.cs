@@ -9,9 +9,9 @@ namespace EtheriT.Coker.Application.Shared.Article
 {
     public interface IArticleAppService
     {
-        public Task<ResponseMessageDto> AddUp_Simple(ArticleDto dto);
+        public Task<ResponseMessageDto> AddUp(ArticleDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<ArticleDataGetDto> GetSimple(long Id);
+        public Task<ArticleGetDataDto> GetDataOne(long Id);
         public Task<ResponseMessageDto> Delete(long Id);
         public Task<GetArticleContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto);

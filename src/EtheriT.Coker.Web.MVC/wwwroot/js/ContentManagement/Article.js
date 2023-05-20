@@ -7,7 +7,7 @@ function PageReady() {
     co.Articles = {
         AddUp: function (data) {
             return $.ajax({
-                url: "/api/Article/AddUp_Simple",
+                url: "/api/Article/AddUp",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
@@ -15,9 +15,9 @@ function PageReady() {
                 dataType: "json"
             });
         },
-        GetSimple: function (Id) {
+        GetDataOne: function (Id) {
             return $.ajax({
-                url: "/api/Article/GetSimple/",
+                url: "/api/Article/GetDataOne/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
@@ -114,6 +114,9 @@ function PageReady() {
     }
 
     ElementInit();
+    console.log("Init");
+    ImageUploadInit("single", $(".image_upload"));
+    TagListModalInit();
 
     const forms = $('#ArticletForm');
     (() => {
@@ -257,7 +260,7 @@ function HashDataEdit() {
                 FormDataClear();
                 MoveToContent();
             } else {
-                co.Articles.GetSimple(parseInt(hash)).done(function (result) {
+                co.Articles.GetDataOne(parseInt(hash)).done(function (result) {
                     if (result != null) {
                         keyId = parseInt(hash);
                         if (hash.indexOf("-") > 0) {
@@ -284,7 +287,22 @@ function editButtonClicked(e) {
     window.location.hash = keyId;
 }
 
+function FormDataClear() {
+    TagDataClear();
+    keyId = 0;
+    $btn_display.children("span").text("visibility");
+    $btn_pop_visible.children("span").text("group");
+    $title_text.val("");
+    $title.children("div").children(".count").text(0);
+    $describe_text.val("");
+    $describe.children("div").children(".count").text(0);
+    $sort_input.val("");
+    $sort_input.attr("disabled", "disabled");
+    $sort_checkbox.prop("checked", false);
+}
+
 function FormDataSet(result) {
+    console.log(result);
     FormDataClear();
     keyId = result.id;
 
@@ -307,19 +325,8 @@ function FormDataSet(result) {
         $sort_checkbox.prop("checked", true);
     }
 
-}
+    TagDataSet(result.tagDatas);
 
-function FormDataClear() {
-    keyId = 0;
-    $btn_display.children("span").text("visibility");
-    $btn_pop_visible.children("span").text("group");
-    $title_text.val("");
-    $title.children("div").children(".count").text(0);
-    $describe_text.val("");
-    $describe.children("div").children(".count").text(0);
-    $sort_input.val("");
-    $sort_input.attr("disabled", "disabled");
-    $sort_checkbox.prop("checked", false);
 }
 
 function paletteButtonClicked(e) {
@@ -339,6 +346,9 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(success_text, error_text, place) {
+    console.log(img_delete_list[0])
+    console.log(img_file)
+
     co.Articles.AddUp({
         Id: keyId,
         Title: $title_text.val(),
@@ -346,6 +356,7 @@ function AddUp(success_text, error_text, place) {
         Visible: disp_opt,
         SerNO: $sort_checkbox.is(":checked") ? $sort_input.val() : 500,
         PopularVisible: pop_visible,
+        TagSelected: tag_list,
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         if (place == "canvas") {

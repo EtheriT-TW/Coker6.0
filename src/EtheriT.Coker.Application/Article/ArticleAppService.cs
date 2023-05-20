@@ -10,10 +10,12 @@ using EtheriT.Coker.Application.Dto;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using System.Web;
-using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -23,25 +25,32 @@ namespace EtheriT.Coker.Application.Article
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly IConfiguration configuration;
+        private readonly ITagAppService tagAppService;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
-            IConfiguration configuration
+            IConfiguration configuration,
+            ITagAppService tagAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.configuration = configuration;
+            this.tagAppService = tagAppService;
         }
-        public async Task<ResponseMessageDto> AddUp_Simple(ArticleDto dto)
+        public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto tag_response = new ResponseMessageDto() { Success = false };
+
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long usetId = await loginUserData.GetUserId();
+                var asoid = dto.Id;
+
                 if (dto.Id == 0)
                 {
                     Core.Models.Article a = new Core.Models.Article
@@ -55,6 +64,8 @@ namespace EtheriT.Coker.Application.Article
                         CreatorUserId = usetId,
                     };
                     db.Article.Add(a);
+                    await loginUserData.SaveChanges(a);
+                    asoid = a.Id;
                 }
                 else
                 {
@@ -70,11 +81,31 @@ namespace EtheriT.Coker.Application.Article
                         result.PopularVisible = dto.PopularVisible;
                         result.LastModifierUserId = usetId;
                         result.LastModificationTime = DateTime.Now;
+
+                        await loginUserData.SaveChanges(result);
                     }
                     else throw new Exception("查無文章資料");
                 }
-                db.SaveChanges();
-                output.Success = true;
+
+                if (asoid != null)
+                {
+                    var tagitem = new List<TagAssociateDto>();
+                    foreach (var data in dto.TagSelected)
+                    {
+                        tagitem.Add(new TagAssociateDto()
+                        {
+                            Id = data.Id,
+                            FK_AId = (long)asoid,
+                            FK_TId = data.FK_TId,
+                            Type = (int)TagAssociateTypeEnum.文章,
+                            IsDeleted = data.IsDeleted
+                        });
+                    }
+
+                    tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
+                }
+
+                output.Success = tag_response.Success;
             }
             catch (Exception e)
             {
@@ -120,7 +151,7 @@ namespace EtheriT.Coker.Application.Article
 
             return new JsonResult(new List<ArticleDataGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<ArticleDataGetDto> GetSimple(long Id)
+        public async Task<ArticleGetDataDto> GetDataOne(long Id)
         {
             try
             {
@@ -132,7 +163,7 @@ namespace EtheriT.Coker.Application.Article
                     var output = await (from e in result
                                         where e.Id == Id
                                         where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-                                        select new ArticleDataGetDto
+                                        select new ArticleGetDataDto
                                         {
                                             Id = e.Id,
                                             Title = e.Title,
@@ -140,7 +171,20 @@ namespace EtheriT.Coker.Application.Article
                                             Visible = e.Visible,
                                             SerNO = e.SerNO,
                                             PopularVisible = e.PopularVisible,
+                                            TagDatas = new List<TagGetSelectedDto>(),
                                         }).FirstOrDefaultAsync();
+
+                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                    {
+                        Fk_Aid = output.Id,
+                        Type = (int)TagAssociateTypeEnum.文章,
+                    }
+                    );
+
+                    if (tagDatas != null)
+                    {
+                        output.TagDatas = tagDatas;
+                    }
 
                     return output;
                 }
@@ -155,6 +199,8 @@ namespace EtheriT.Coker.Application.Article
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = false };
+
             try
             {
                 long usetId = await loginUserData.GetUserId();
@@ -162,11 +208,24 @@ namespace EtheriT.Coker.Application.Article
 
                 if (result != null)
                 {
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.文章 && !e.IsDeleted).ToListAsync();
+
+                    if (tagids != null)
+                    {
+                        foreach (var tagid in tagids)
+                        {
+
+                            tagdeleteresponse = await tagAppService.TagAssociateDelete(tagid.Id);
+                        }
+                    }
+
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;
                     result.DeleterUserId = usetId;
+
                     db.SaveChanges();
-                    output.Success = true;
+
+                    output.Success = tagdeleteresponse.Success;
                 }
                 else throw new Exception("查無文章資料");
             }

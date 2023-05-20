@@ -8,9 +8,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("Directory");
         }
-        public IActionResult NewArticle()
+        public IActionResult Article()
         {
-            return View("NewArticle");
+            return View("Article");
         }
         public IActionResult Marquee()
         {

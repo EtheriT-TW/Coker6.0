@@ -1,10 +1,11 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Article
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
-	ViewData["Title"] = "NewArticle";
+	ViewData["Title"] = "Article";
 }
 
-<link rel="stylesheet" href="~/css/ContentManagement/NewArticle.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
 <!--導入grapesjs-->
 <link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
 <script src="/lib/grapesjs/grapes.min.js"></script>
@@ -23,7 +24,8 @@
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
 
-<script src="~/js/ContentManagement/NewArticle.min.js" asp-append-version="true"></script>
+<script src="~/js/Components/ImageUpload.min.js" asp-append-version="true"></script>
+<script src="~/js/ContentManagement/Article.min.js" asp-append-version="true"></script>
 
 <div class="">
 	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
@@ -112,14 +114,28 @@
 			</div>
 
 			<form id="ArticletForm" class="card-body needs-validation">
-				<div class="d-flex align-self-center mb-3 justify-content-end">
-					<button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
-						<span class="material-symbols-outlined fs-2">visibility</span>
-					</button>
+				<div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
+					<div class="image_upload w-100">
+						<div class="align-items-center align-items-md-start d-flex position-relative">
+							<input class="input_pic d-none" type="file" accept="image/*" />
+							<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent">
+								<span class="material-symbols-outlined fs-1">add_photo_alternate</span>
+								<img class="img_preview d-none h-100 w-auto" src="" />
+							</button>
+							<button class="btn_img_delete position-absolute rounded-circle bg-white d-flex align-items-center">
+								<span class="material-symbols-outlined">close</span>
+							</button>
+						</div>
+					</div>
+					<div class="d-flex">
+						<button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
+							<span class="material-symbols-outlined fs-2">visibility</span>
+						</button>
 
-					<button class="btn_pop_visible bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
-						<span class="material-symbols-outlined fs-2">group</span>
-					</button>
+						<button class="btn_pop_visible bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
+							<span class="material-symbols-outlined fs-2">group</span>
+						</button>
+					</div>
 				</div>
 
 				<div class="title border mb-3 p-2 rounded">
@@ -137,6 +153,8 @@
 					</div>
 					<textarea class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入文章描述" required></textarea>
 				</div>
+
+				@await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
 
 				<div class="sort input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">

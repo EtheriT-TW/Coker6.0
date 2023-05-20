@@ -1,6 +1,8 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Directory
 @using EtheriT.Coker.Application.Shared.Dto.EnterAd
+@using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
 	ViewData["Title"] = "Directory";
 }
@@ -20,7 +22,7 @@
 					<span class="material-symbols-outlined">add</span>
 				</button>
 				@(
-					Html.DevExtreme().DataGrid<DirectoryGetAllListDto>()
+					Html.DevExtreme().DataGrid<DirectoryGetListDto>()
 					.DataSource(d => d.RemoteController().Key("Id")
 					.LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
 					)
@@ -39,9 +41,9 @@
 					.ShowRowLines(true)
 					.Columns(c =>
 					{
-						c.AddFor(e => e.Id).Caption("編號").Width(50);
 						c.AddFor(e => e.Title).Caption("標題");
 						c.AddFor(e => e.Description).Caption("描述");
+						c.AddFor(e => e.Tags).Caption("標籤");
 						c.AddFor(e => e.Type).Caption("綁定內容").Width(100);
 						c.AddFor(e => e.Visible).Caption("是否顯示").Width(100);
 						c.Add()
@@ -92,9 +94,8 @@
 					<div class="bind_type d-flex">
 						<label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="BindType">綁定內容</label>
 						<select id="BindType" class="form-select" aria-label="Bind Type Select" required>
-							<option selected disabled>選擇內容</option>
-							<option value="product">商品</option>
-							<option value="article">文章</option>
+							<option value="1">商品</option>
+							<option value="2">文章</option>
 						</select>
 					</div>
 
@@ -103,12 +104,24 @@
 					</button>
 				</div>
 
-				<div class="tag input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">alternate_email</span>標籤
+				<div class="title border mb-3 p-2 rounded">
+					<div class="d-flex justify-content-between w-100">
+						<span class="input-group-text bg-transparent border-0 p-0">標題</span>
+						<div class="count">0</div>
 					</div>
-					<input class="form-control rounded text-start" type="button" aria-label="Input Tag of Directory" data-bs-toggle="modal" data-bs-target="#TagModal">
+					<textarea class="form-control border-0" aria-label="With textarea" maxlength="60" placeholder="輸入文章標題"></textarea>
 				</div>
+
+				<div class="description border mb-3 p-2 rounded">
+					<div class="d-flex justify-content-between w-100">
+						<span class="input-group-text bg-transparent border-0 p-0">描述</span>
+						<div class="count">0</div>
+					</div>
+					<textarea class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入文章描述"></textarea>
+				</div>
+
+				@await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+
 			</form>
 		</div>
 

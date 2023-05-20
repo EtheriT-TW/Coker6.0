@@ -1,0 +1,17 @@
+﻿
+#TagModal > .modal-dialog {
+    min-width: 40vw;
+}
+
+.modal-open .wrapper {
+    transition: unset !important;
+    filter: unset !important;
+}
+
+.modal_price > div > input {
+    padding-left: 3rem;
+}
+
+.tag > input {
+    padding-left: 4.5rem;
+}

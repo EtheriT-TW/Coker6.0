@@ -26,6 +26,10 @@ input[type="number"] {
     background-color: var(--color-gray-bg-dark);
 }
 
-#DirectorytForm > .tag > input {
-    padding-left: 4.5rem;
+#DirectorytForm > .title .count::after {
+    content: '/60';
+}
+
+#DirectorytForm > .description .count::after {
+    content: '/150';
 }

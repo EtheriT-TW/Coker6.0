@@ -1,14 +1,12 @@
-﻿var $btn_display, $bind_type, $tag_input
+﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text, $tag_input
 var keyId, disp_opt = true
 var directory_list;
 
 function PageReady() {
-    console.log("Directory");
-
     co.Directory = {
         AddUp: function (data) {
             return $.ajax({
-                /*url: "/api/Marquee/AddUp",*/
+                url: "/api/Directory/AddUp",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
@@ -16,28 +14,47 @@ function PageReady() {
                 dataType: "json"
             });
         },
-        Get: function (id) {
+        Get: function (Id) {
             return $.ajax({
-                /*url: "/api/Marquee/Get/",*/
+                url: "/api/Directory/GetDataOne/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: { id: id },
+                data: { Id: Id },
             });
         },
-        Delete: function (id) {
+        Delete: function (Id) {
             return $.ajax({
-                /*url: "/api/Marquee/Delete/",*/
+                url: "/api/Directory/Delete/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: { id: id },
+                data: { Id: Id },
             });
         }
     };
 
 
     ElementInit();
+    TagListModalInit();
+
+    const forms = $('#DirectorytForm');
+    (() => {
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    Coker.sweet.confirm("即將儲存", "儲存後將顯示於安排的位置", "儲存", "取消", function () {
+                        AddUp("已成功儲存", "儲存發生未知錯誤");
+                    });
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回目錄列表", "資料將不被保存", "確定", "取消", function () {
@@ -62,6 +79,16 @@ function PageReady() {
         }
     })
 
+    $title_text.on('keyup', function () {
+        var $self = $(this);
+        $title.children("div").children(".count").text($self.val().length)
+    });
+
+    $description_text.on('keyup', function () {
+        var $self = $(this);
+        $description.children("div").children(".count").text($self.val().length)
+    });
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -71,8 +98,12 @@ function PageReady() {
 
 function ElementInit() {
     $btn_display = $(".btn_display");
-    $tag_input = $(".tag > input");
     $bind_type = $("#BindType");
+    $title = $(".title");
+    $title_text = $title.children("textarea");
+    $description = $(".description");
+    $description_text = $description.children("textarea");
+    $tag_input = $(".tag > input");
 }
 
 
@@ -96,16 +127,16 @@ function HashDataEdit() {
                 MoveToContent();
             } else {
                 MoveToContent();
-                FormDataSet({ id: hash });
-                //co.Directorys.GetSimple(parseInt(hash)).done(function (result) {
-                //    if (result != null) {
-                //        MoveToContent();
-                //        FormDataSet(result);
-                //    } else {
-                //        window.location.hash = ""
-                //        keyId = "";
-                //    }
-                //})
+                co.Directory.Get(parseInt(hash)).done(function (result) {
+                    console.log(result);
+                    if (result != null) {
+                        MoveToContent();
+                        FormDataSet(result);
+                    } else {
+                        window.location.hash = ""
+                        keyId = "";
+                    }
+                })
             }
         }
     } else {
@@ -126,39 +157,49 @@ function editButtonClicked(e) {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        //co.Directorys.Delete(e.row.key).done(function (result) {
-        //    if (result.success) {
-        //        e.component.refresh();
-        //    }
-        //});
+        co.Directory.Delete(e.row.key).done(function (result) {
+            if (result.success) {
+                e.component.refresh();
+            }
+        });
         e.component.refresh();
     });
 }
 
 function FormDataClear() {
+    TagDataClear();
     keyId = 0;
     $btn_display.children("span").text("visibility");
-    $bind_type[0].selectedIndex = 0;
+    $bind_type.val(0);
+    $title_text.val("");
+    $description_text.val("");
     $tag_input.val("");
 }
 
 function FormDataSet(result) {
     FormDataClear();
     keyId = result.id;
-    disp_opt = false;
+    disp_opt = result.visible;
     if (disp_opt) {
         $btn_display.children("span").text("visibility");
     } else {
         $btn_display.children("span").text("visibility_off");
     }
-    $bind_type.val("");
+    $bind_type.val(result.type);
+    $title_text.val(result.title);
+    $description_text.val(result.description);
     $tag_input.val("")
-
+    TagDataSet(result.tagDatas);
 }
 
 function AddUp(success_text, error_text) {
-    co.Directorys.AddUp({
-
+    co.Directory.AddUp({
+        Id: keyId,
+        Title: $title_text.val(),
+        Description: $description_text.val(),
+        Type: parseInt($bind_type.val()),
+        Visible: disp_opt,
+        TagSelected: tag_list
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         directory_list.component.refresh();
@@ -169,7 +210,7 @@ function AddUp(success_text, error_text) {
 }
 
 function MoveToContent() {
-    UnValidated();
+    $("#DirectorytForm").removeClass("was-validated");
     if (keyId == 0) {
         $(".btn_to_canvas").addClass("text-dark");
         $(".btn_to_canvas").attr('disabled', '');
@@ -188,8 +229,4 @@ function BackToList() {
     $("#DirectoryContent").addClass("d-none");
     $("#DirectoryCanvas").addClass("d-none");
     window.location.hash = ""
-}
-
-function UnValidated() {
-    $("#DirectoryForm").removeClass("was-validated");
 }

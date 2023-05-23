@@ -125,6 +125,7 @@
 						editing.UseIcons(true);
 					})
 					.OnContentReady("contentReady")
+					.OnToolbarPreparing("toolbarPreparing")
 					)
 			</div>
 		</div>
@@ -492,3 +493,21 @@
 		</div>
 	</div>
 </div>
+@(
+	Html.DevExtreme().Popup()
+		.ID("importProdPopup")
+		.Width("50%")
+		.Height(180)
+		.ShowTitle(true)
+		.DragEnabled(false)
+		.CloseOnOutsideClick(true)
+)
+@using (Html.DevExtreme().NamedTemplate("importProdPopup-template"))
+{
+	<div id="ImportProd">
+		<p>請選擇欲上傳的檔案</p>
+		<form name="fileUploadForm">
+			@Html.DevExtreme().FileUploader().Name("files").Accept(".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel").OnUploaded("ImportProd");
+		</form>
+	</div>
+}

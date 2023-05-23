@@ -12,6 +12,9 @@ using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using EtheriT.Coker.Application.Shared.Dto.Import;
+using Microsoft.AspNetCore.Http;
+using EtheriT.Coker.Application.Import;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -21,17 +24,20 @@ namespace EtheriT.Coker.Application.Product
         private readonly LoginUserData loginUserData;
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
-        public ProductAppService(
+        private readonly ImportAppService importAppService;
+		public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITagAppService tagAppService,
-            IFileUploadAppService fileUploadAppService
-        )
+            IFileUploadAppService fileUploadAppService,
+			ImportAppService importAppService
+		)
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.importAppService = importAppService;
         }
         /* Add & Update */
         public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
@@ -792,5 +798,10 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
-    }
+        public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files) {
+            ImportOutputDto response = await importAppService.ProdReplace(files);
+            return response;
+		}
+
+	}
 }

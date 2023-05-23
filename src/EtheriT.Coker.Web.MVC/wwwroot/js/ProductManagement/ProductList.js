@@ -6,151 +6,39 @@ var $price_modal, priceModal, $techcert_body, techcertModal;
 var techcert_changedBySelectBox, techcert_clearSelectionButton, tag_changedBySelectBox, tag_clearSelectionButton;
 var techcert_check_list = [], techcert_text, tag_check_list = [], tag_text
 var file_num = 0;
+let importProdPopup = null;
+function ImportProd() {
+    var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
+    co.Product.AddUp.Import(formData).done(function (response) {
+        importProdPopup.hide();
+        co.sweet.success("檔案上傳成功");
+    }).fail(function () {
+        co.sweet.error("檔案格式錯誤，無法解讀。");
+    });
+    
+}
+function showImportProdPopup() {
+    importProdPopup = $("#importProdPopup").dxPopup("instance");
+    importProdPopup.option("contentTemplate", $("#importProdPopup-template"));
+    importProdPopup.option("title", "商品匯入");
+    importProdPopup.show();
+}
+
+function toolbarPreparing(e) {
+    var dataGrid = e.component;
+
+    e.toolbarOptions.items.unshift({
+        location: "after",
+        widget: "dxButton",
+        options: {
+            icon: "fa-solid fa-file-excel",
+            text: "商品匯入",
+            onClick: showImportProdPopup
+        },
+    });
+}
 
 function PageReady() {
-    co.Product = {
-        AddUp: {
-            Product: function (data) {
-                return $.ajax({
-                    url: "/api/Product/ProductAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
-            Stock: function (data) {
-                return $.ajax({
-                    url: "/api/Product/StockAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
-            ProdTechCert: function (data) {
-                return $.ajax({
-                    url: "/api/Product/TechCertAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
-            ProdPrice: function (data) {
-                return $.ajax({
-                    url: "/api/Product/ProdPriceAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
-        },
-        Get: {
-            ProdOne: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetProdDataOne/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { id: id },
-                });
-            },
-            ProdStock: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetStockDataAll/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { PId: id },
-                });
-            },
-            ProdSpec: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetSpecDetail/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { typeid: id },
-                });
-            },
-            ProdTechCert: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetTechCertDataAll/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { PId: id },
-                });
-            },
-            ProdPrice: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetPriceDataAll/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { PSId: id },
-                });
-            },
-        },
-        Delete: {
-            Prod: function (id) {
-                return $.ajax({
-                    url: "/api/Product/ProdDelete/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { Id: id },
-                });
-            },
-            Stock: function (id) {
-                return $.ajax({
-                    url: "/api/Product/StockDelete/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { Id: id },
-                });
-            },
-            Price: function (id) {
-                return $.ajax({
-                    url: "/api/Product/PriceDelete/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { Id: id },
-                });
-            }
-        }
-    };
-
-    co.Tag = {
-        AddDelect: function (data) {
-            return $.ajax({
-                url: "/api/Tag/TagAssociateAddDelect",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/Tag/GetProductDataAll/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { PId: id },
-            });
-        }
-    };
-
     ElementInit();
 
     /* File Upload */

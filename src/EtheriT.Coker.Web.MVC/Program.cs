@@ -32,6 +32,7 @@ using EtheriT.Coker.Application.Configuration;
 using Microsoft.AspNetCore.Mvc.Razor;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Import;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -116,6 +117,7 @@ builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<LoginUserData>();
+builder.Services.AddTransient<ImportAppService>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();

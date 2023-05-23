@@ -423,6 +423,160 @@ var Coker = {
             });
         }
     },
+    Product : {
+        AddUp: {
+            Product: function (data) {
+                return $.ajax({
+                    url: "/api/Product/ProductAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            Stock: function (data) {
+                return $.ajax({
+                    url: "/api/Product/StockAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            ProdTechCert: function (data) {
+                return $.ajax({
+                    url: "/api/Product/TechCertAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            ProdPrice: function (data) {
+                return $.ajax({
+                    url: "/api/Product/ProdPriceAddUp",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            Import: function (formData) {
+                return $.ajax({
+                    url: '/api/Product/ProdReplace',
+                    type: 'POST',
+                    data: formData,
+                    headers: _c.Data.Header,
+                    contentType: false,
+                    crossDomain: true,
+                    dataType: 'json',
+                    mimeType: "multipart/form-data",
+                    processData: false
+                });
+            }
+        },
+        Get: {
+            ProdOne: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetProdDataOne/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { id: id },
+                });
+            },
+            ProdStock: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetStockDataAll/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { PId: id },
+                });
+            },
+            ProdSpec: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetSpecDetail/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { typeid: id },
+                });
+            },
+            ProdTechCert: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetTechCertDataAll/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { PId: id },
+                });
+            },
+            ProdPrice: function (id) {
+                return $.ajax({
+                    url: "/api/Product/GetPriceDataAll/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { PSId: id },
+                });
+            },
+        },
+        Delete: {
+            Prod: function (id) {
+                return $.ajax({
+                    url: "/api/Product/ProdDelete/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { Id: id },
+                });
+            },
+            Stock: function (id) {
+                return $.ajax({
+                    url: "/api/Product/StockDelete/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { Id: id },
+                });
+            },
+            Price: function (id) {
+                return $.ajax({
+                    url: "/api/Product/PriceDelete/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { Id: id },
+                });
+            }
+        }
+    },
+    Tag: {
+        AddDelect: function (data) {
+            return $.ajax({
+                url: "/api/Tag/TagAssociateAddDelect",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Tag/GetProductDataAll/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { PId: id },
+            });
+        }
+    },
     File: {
         Upload: function (formData) {
             return $.ajax({
@@ -508,7 +662,7 @@ var Coker = {
                 },
             });
             return upload;
-        },
+        }
     }
 }
 var _c = Coker;

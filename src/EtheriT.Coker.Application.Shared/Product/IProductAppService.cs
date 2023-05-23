@@ -1,8 +1,11 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Shared.Product
@@ -29,5 +32,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
-    }
+        public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files);
+
+	}
 }

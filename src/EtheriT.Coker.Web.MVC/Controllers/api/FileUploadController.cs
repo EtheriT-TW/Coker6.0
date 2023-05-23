@@ -30,7 +30,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
                 case FileBindTypeEnum.技術證照:
                     return await fileUploadAppService.uploadTechnicalCertificateFiles(files, type, (long)sid);
-                default:
+                case FileBindTypeEnum.資料暫存:
+					return await fileUploadAppService.uploadTempFiles(files);
+				default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
             return null;

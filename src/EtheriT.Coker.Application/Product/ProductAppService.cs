@@ -20,6 +20,8 @@ using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto;
+using AutoMapper;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -30,8 +32,8 @@ namespace EtheriT.Coker.Application.Product
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
-        private readonly ITechnicalCertificateAppService technicalCertificateAppService;
-        public ProductAppService(
+		private readonly IMapper mapper;
+		private readonly ITechnicalCertificateAppService technicalCertificateAppService;
         private readonly ImportAppService importAppService;
 		public ProductAppService(
             CokerDbContext db,
@@ -39,9 +41,8 @@ namespace EtheriT.Coker.Application.Product
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService,
             IConfiguration configuration,
-            ITechnicalCertificateAppService technicalCertificateAppService
-        )
-            IFileUploadAppService fileUploadAppService,
+            IMapper mapper,
+            ITechnicalCertificateAppService technicalCertificateAppService,
 			ImportAppService importAppService
 		)
         {
@@ -822,8 +823,18 @@ namespace EtheriT.Coker.Application.Product
             return output;
         }
         public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files) {
-            ImportOutputDto response = await importAppService.ProdReplace(files);
+			ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
+			List<ProductImportDto> prods = await importAppService.ProdReplace(files);
+
             return response;
+		}
+        private async Task<ImportMassageItem> InsertOrUpdate(ProductImportDto item) {
+			ImportMassageItem importMassageItem = null;
+			var p = await db.Prods.Where(e => e.Title == item.Title).FirstOrDefaultAsync();
+            if(p != null) {
+                Prod prod = mapper.Map<Prod>(item);
+			}
+            return importMassageItem;
 		}
 
 	}

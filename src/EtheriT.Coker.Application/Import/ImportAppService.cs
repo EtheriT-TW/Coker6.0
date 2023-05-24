@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Import;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using MiniExcelLibs;
@@ -23,39 +24,39 @@ namespace EtheriT.Coker.Application.Import
 			this.fileUploadAppService = fileUploadAppService;
 			_folder = VirtualDirectory.Value.upload;
 		}
-		public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)
+		public async Task<List<ProductImportDto>> ProdReplace(IList<IFormFile> files)
 		{
-			ImportOutputDto response=new ImportOutputDto { ErrorList=new List<ImportMassageItem>()};
 			UploadFileOutputDto upload = await fileUploadAppService.uploadTempFiles(files);
-			if (upload.Files != null) {
+			List<ProductImportDto> products = new List<ProductImportDto>();
+			if (upload.Files != null)
+			{
 				for (int i = 0; i < upload.Files.Count; i++)
 				{
 					var file = upload.Files[i];
-					string path = $"{_folder.Replace("\\upload", "").Replace("\\","/")}{file.Path}";
-					response.ErrorList.AddRange(readExcel(path));
+					string path = $"{_folder.Replace("\\upload", "").Replace("\\", "/")}{file.Path}";
+					products.AddRange(readExcel(path));
+					await fileUploadAppService.deleteFile(path);
 				}
 			}
-			
-			return response;
+			return products;
 		}
-		private List<ImportMassageItem> readExcel(string path) {
-			List<ImportMassageItem> errorList= new List<ImportMassageItem>();
-			var rows = MiniExcel.Query(path,sheetName: "商品").ToList();
-			var columns = MiniExcel.GetColumns(path); // e.g result : ["A","B"...]
-			var cnt = columns.Count;  // get column count
+		private List<ProductImportDto> readExcel(string path)
+		{
+			List<ProductImportDto> data = new List<ProductImportDto>();
+			var rows = MiniExcel.Query<ProductImportDto>(path, sheetName: "商品",startCell: "A2").ToList();
 			try
 			{
 				for (int i = 0; i < rows.Count; i++)
 				{
 					if (rows[i] != null)
 					{
-						errorList.Add(new ImportMassageItem { Name = rows[i].A });
+						data.Add(rows[i]);
 					}
 				}
 			}
 			catch (Exception ex) { }
-			
-			return errorList;
+
+			return data;
 		}
 	}
 }

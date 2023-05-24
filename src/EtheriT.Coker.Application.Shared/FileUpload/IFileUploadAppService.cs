@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application
         public Task<string> getImgUrl(long? imgid, long websiteid);
         public Task<List<FileGetImgDto>> getImgFiles(long? tid, int size);
         public Task<ResponseMessageDto> deleteFile(Guid key);
-        public Task<ResponseMessageDto> deleteImg(long? imgid);
+		public Task<ResponseMessageDto> deleteFile(string path);
+		public Task<ResponseMessageDto> deleteImg(long? imgid);
     }
 }

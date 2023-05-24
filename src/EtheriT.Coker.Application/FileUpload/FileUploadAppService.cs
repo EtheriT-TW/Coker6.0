@@ -6,6 +6,7 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
@@ -118,6 +119,23 @@ namespace EtheriT.Coker.Application
 			{
 				response.Error = ex.Message;
 			}
+			return response;
+		}
+		public async Task<ResponseMessageDto> deleteFile(string path)
+		{
+			ResponseMessageDto response = new ResponseMessageDto();
+			try
+			{
+				if (File.Exists(path)) {
+					File.Delete($"{path}");
+				}
+				response.Success = true;
+			}
+			catch (Exception ex)
+			{
+				response.Error = ex.Message;
+			}
+			await loginUserData.SetLogs(AppName, "deleteFile", path, JsonConvert.SerializeObject(response));
 			return response;
 		}
 		public async Task<ResponseMessageDto> deleteFile(Guid key)
@@ -278,45 +296,57 @@ namespace EtheriT.Coker.Application
             }
             return result;
         }
-        private async Task<FileItemDto> SaveFile(IFormFile file, string directory)
-        {
-            if (file.Length > 0)
-            {
-                string orgName = await loginUserData.GetWebsiteOrgName();
-                Guid key = Guid.NewGuid();
-                string[] sp = file.FileName.Split('.');
-                string ext = sp[sp.Length - 1];
-                var rootPath = $"{_folder}/{orgName}";
-                var directoryPath = $"{rootPath}/{directory}";
-                var path = $"/{directory}/{key}.{ext}";
-                if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
-                if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
-                using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
-                {
-                    FileUpload fileUpload = new FileUpload
-                    {
-                        FK_WebsiteId = await loginUserData.GetWebsiteId(),
-                        FileGuid = key,
-                        GuidKey = Guid.NewGuid(),
-                        DownloadFileName = $@"/upload{path}",
-                        OriginalFileName = file.FileName,
-                        ContentType = file.ContentType,
-                        Size = file.Length
-                    };
-                    await file.CopyToAsync(stream);
-                    db.FileUploads.Add(fileUpload);
-                    await loginUserData.SaveChanges(fileUpload);
-                    return new FileItemDto
-                    {
-                        Name = fileUpload.OriginalFileName,
-                        Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
-                        Guid = fileUpload.GuidKey,
-                    };
-                }
-            }
-            else throw new Exception("上傳失敗");
-        }
-        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, string directory, long sid)
+		private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
+		{
+			if (file.Length > 0)
+			{
+				string orgName = await loginUserData.GetWebsiteOrgName();
+				Guid key = Guid.NewGuid();
+				string[] sp = file.FileName.Split('.');
+				string ext = sp[sp.Length - 1];
+				var rootPath = $"{_folder}/{orgName}";
+				var directoryPath = $"{rootPath}/{directory}";
+				var path = $"/{directory}/{key}.{ext}";
+				if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
+				if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
+				using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
+				{
+					await file.CopyToAsync(stream);
+					if (isTemp)
+					{
+						return new FileItemDto
+						{
+							Name = file.FileName,
+							Path = $@"/upload{path}".Replace("/upload/", $"/upload/{orgName}/"),
+							Guid = Guid.NewGuid()
+						};
+					}
+					else
+					{
+						FileUpload fileUpload = new FileUpload
+						{
+							FK_WebsiteId = await loginUserData.GetWebsiteId(),
+							FileGuid = key,
+							GuidKey = Guid.NewGuid(),
+							DownloadFileName = $@"/upload{path}",
+							OriginalFileName = file.FileName,
+							ContentType = file.ContentType,
+							Size = file.Length
+						};
+						db.FileUploads.Add(fileUpload);
+						await loginUserData.SaveChanges(fileUpload);
+						return new FileItemDto
+						{
+							Name = fileUpload.OriginalFileName,
+							Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
+							Guid = fileUpload.GuidKey,
+						};
+					}
+				}
+			}
+			else throw new Exception("上傳失敗");
+		}
+		private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, string directory, long sid)
         {
             if (files.Count() > 0)
             {

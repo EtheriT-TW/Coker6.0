@@ -15,6 +15,8 @@ using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -317,7 +319,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var db_p = db.Prods.Where(e => e.Id == Id).FirstOrDefault();
+                var db_p = db.Prods.Where(e => e.Id == Id).OrderBy(e => e.Ser_No).FirstOrDefault();
 
                 if (db_p != null)
                 {
@@ -434,6 +436,69 @@ namespace EtheriT.Coker.Application.Product
             }
 
             return null;
+        }
+        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(List<long> Ids)
+        {
+
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var result = db.Prods;
+                var output = new List<DirectoryReleInfoDto>();
+                var productData = new List<ProdGetDataDto>();
+
+                if (result != null)
+                {
+                    foreach (var Id in Ids)
+                    {
+                        var tempoutput = await (from e in result
+                                                where e.Id == Id
+                                                where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                                select new ProdGetDataDto
+                                                {
+                                                    Id = e.Id,
+                                                    Title = e.Title,
+                                                    Introduction = e.Introduction,
+                                                    Ser_No = e.Ser_No,
+                                                }).FirstOrDefaultAsync();
+
+                        if (tempoutput != null)
+                        {
+                            productData.Add(tempoutput);
+                        }
+                    }
+
+                    if (productData != null)
+                    {
+                        productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
+                        foreach (var data in productData)
+                        {
+                            //var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                            //{
+                            //    Sid = data.Id,
+                            //    Type = (int)FileBindTypeEnum.產品,
+                            //    Size = 1
+                            //});
+
+                            output.Add(new DirectoryReleInfoDto
+                            {
+                                //MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link,
+                                Id = data.Id,
+                                MainImage = "",
+                                Title = data.Title,
+                                Description = data.Introduction
+                            });
+                        }
+                    }
+
+                    return output;
+                }
+                else throw new Exception("查無文章資料");
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
         }
         /* Delete */
         public async Task<ResponseMessageDto> ProdDelete(long Id)

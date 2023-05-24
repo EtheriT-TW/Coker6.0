@@ -17,6 +17,7 @@ using EtheriT.Coker.Application.Shared.Article;
 using System.Diagnostics;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Product;
+using System.Linq;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -157,12 +158,11 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
         }
-        public async Task<ResponseMessageDto> GetReleInfo(long Id)
+        public async Task<List<DirectoryReleInfoDto>> GetReleInfo(long Id)
         {
-            ResponseMessageDto temp_output = new ResponseMessageDto() { Success = false };
-
-
+            var DataIds = new List<long>();
             long WebsiteID = await loginUserData.GetWebsiteId();
+            var output = new List<DirectoryReleInfoDto>();
 
             var db_d = db.Directory.Where(e => e.Id == Id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
 
@@ -181,10 +181,17 @@ namespace EtheriT.Coker.Application.Directory
                                 var db_ps = await (db.Tag_Associates.Where(e => e.FK_TId == tag.FK_TId && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
                                 if (db_ps != null)
                                 {
-                                    foreach (var db_a in db_ps)
+                                    foreach (var db_p in db_ps)
                                     {
-                                        product_datas.Add(await productAppService.GetProdDataOne(db_a.FK_AId));
+                                        product_datas.Add(await productAppService.GetProdDataOne(db_p.FK_AId));
                                     }
+                                }
+                            }
+                            foreach (var product_data in product_datas)
+                            {
+                                if (!DataIds.Contains(product_data.Id))
+                                {
+                                    DataIds.Add(product_data.Id);
                                 }
                             }
                             break;
@@ -201,6 +208,37 @@ namespace EtheriT.Coker.Application.Directory
                                     }
                                 }
                             }
+                            foreach (var article_data in article_datas)
+                            {
+                                if (!DataIds.Contains(article_data.Id))
+                                {
+                                    DataIds.Add(article_data.Id);
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                    switch ((DirectoryTypeEnum)db_d.Type)
+                    {
+                        case DirectoryTypeEnum.商品:
+
+                            var tempproddata = await productAppService.GetDirectoryReleInfo(DataIds);
+                            if (tempproddata != null)
+                            {
+                                output = tempproddata;
+                            }
+
+                            break;
+                        case DirectoryTypeEnum.文章:
+
+                            var temparticledata = await articleAppService.GetDirectoryReleInfo(DataIds);
+                            if (temparticledata != null)
+                            {
+                                output = temparticledata;
+                            }
+
                             break;
                         default:
                             break;
@@ -208,7 +246,7 @@ namespace EtheriT.Coker.Application.Directory
                 }
             }
 
-            return temp_output;
+            return output;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {

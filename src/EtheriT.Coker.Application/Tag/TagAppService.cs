@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -74,25 +75,25 @@ namespace EtheriT.Coker.Application.Tag
 
             try
             {
-                foreach (var item in dto)
+                foreach (var data in dto)
                 {
-                    if (item.Id == 0 && item.IsChecked)
+                    if (data.Id == 0 && !data.IsDeleted)
                     {
                         long usetId = await loginUserData.GetUserId();
 
                         Core.Models.Tag_Associate ta = new Core.Models.Tag_Associate
                         {
-                            FK_TId = item.FK_TId,
-                            FK_AId = item.FK_AId,
-                            Type = item.Type,
+                            FK_TId = data.FK_TId,
+                            FK_AId = data.FK_AId,
+                            Type = data.Type,
                             CreatorUserId = usetId,
                         };
                         db.Tag_Associates.Add(ta);
                         db.SaveChanges();
                     }
-                    else if (item.Id != null && item.Id != 0 && !item.IsChecked)
+                    else if (data.Id > 0 && data.IsDeleted)
                     {
-                        await this.TagAssociateDelete((long)item.Id);
+                        await this.TagAssociateDelete((long)data.Id);
                     }
                 }
 
@@ -105,6 +106,31 @@ namespace EtheriT.Coker.Application.Tag
             }
 
             return output;
+        }
+        public async Task<List<TagGetSelectedDto>> GetTagAssociate(TagAssociateGetDto dto)
+        {
+            try
+            {
+
+                long WebsiteID = await loginUserData.GetWebsiteId();
+
+                var output = from ta in db.Tag_Associates
+                             where ta.FK_AId == dto.Fk_Aid && ta.Type == dto.Type && !ta.IsDeleted
+                             join t in db.Tags on ta.FK_TId equals t.Id
+                             where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
+                             select new TagGetSelectedDto
+                             {
+                                 Id = ta.Id,
+                                 FK_TId = ta.FK_TId,
+                                 Tag_Name = t.Title
+                             };
+
+                return await output.ToListAsync();
+
+            }
+            catch (Exception e) { }
+
+            return null;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -180,7 +206,7 @@ namespace EtheriT.Coker.Application.Tag
 
             return output;
         }
-        public async Task<ResponseMessageDto> TagAssociateDelete(long AId)
+        public async Task<ResponseMessageDto> TagAssociateDelete(long Id)
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -188,7 +214,7 @@ namespace EtheriT.Coker.Application.Tag
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var db_ta = await db.Tag_Associates.Where(e => e.FK_AId == AId).ToListAsync();
+                var db_ta = await db.Tag_Associates.Where(e => e.Id == Id).ToListAsync();
 
                 if (db_ta != null)
                 {

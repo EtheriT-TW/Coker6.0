@@ -1,10 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Marquee;
-using EtheriT.Coker.Application.Member;
-using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
-using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Freight;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

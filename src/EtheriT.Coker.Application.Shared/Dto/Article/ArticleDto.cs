@@ -1,4 +1,6 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.Tag;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -7,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Article
 {
-	public class ArticleDto
-	{
+    public class ArticleDto
+    {
         public long? Id { get; set; }
         public long FK_WebsiteId { get; set; }
         public string? Title { get; set; }
@@ -21,5 +23,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public string? SaveCss { get; set; }
         public string? Html { get; set; }
         public string? Css { get; set; }
+        public List<TagSelectedDto> TagSelected { get; set; }
     }
 }

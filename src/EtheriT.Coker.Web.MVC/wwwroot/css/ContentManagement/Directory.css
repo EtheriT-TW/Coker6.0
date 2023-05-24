@@ -1,0 +1,35 @@
+﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
+/* Directory List */
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
+/* Directory Content */
+#DirectoryContent > .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#DirectorytForm > .title .count::after {
+    content: '/60';
+}
+
+#DirectorytForm > .description .count::after {
+    content: '/150';
+}

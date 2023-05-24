@@ -4,18 +4,10 @@ using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application
 {
@@ -201,183 +193,192 @@ namespace EtheriT.Coker.Application
 				response.Error = e.Message;
 			}
 
-			await loginUserData.SetLogs(AppName, "deleteImgFile", imgid.ToString(), JsonConvert.SerializeObject(response));
-			return response;
-		}
-		public async Task<string> getImgUrl(long? imgid, long websiteid)
-		{
-			try
-			{
-				var files = await (db.FileUploads
-							.Where(e => e.FK_WebsiteId == websiteid)
-							.Where(e => e.Id == imgid)
-							.Where(e => !e.IsDeleted)
-							.Select(e => e.DownloadFileName).FirstOrDefaultAsync());
-				return files;
-			}
-			catch (Exception ex)
-			{
-				return "";
-			}
-		}
-		public async Task<List<ImgGetDto>> getImgThumbnail(long? tid)
-		{
-			try
-			{
-				long websiteId = await loginUserData.GetWebsiteId();
-				string orgName = await loginUserData.GetWebsiteOrgName();
-				var result = new List<ImgGetDto>();
+            await loginUserData.SetLogs(AppName, "deleteImgFile", imgid.ToString(), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<string> getImgUrl(long? imgid, long websiteid)
+        {
+            try
+            {
+                var files = await (db.FileUploads
+                            .Where(e => e.FK_WebsiteId == websiteid)
+                            .Where(e => e.Id == imgid)
+                            .Where(e => !e.IsDeleted)
+                            .Select(e => e.DownloadFileName).FirstOrDefaultAsync());
+                return files;
+            }
+            catch (Exception ex)
+            {
+                return "";
+            }
+        }
+        // size = 1 原圖 2中縮圖 3小縮圖
+        public async Task<List<FileGetImgDto>> getImgFiles(long? tid, int size)
+        {
+            var result = new List<FileGetImgDto>();
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                string orgName = await loginUserData.GetWebsiteOrgName();
 
-				var faids = await (db.FileBinds.Where(e => e.Sid == tid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
+                var faids = await (db.FileBinds.Where(e => e.Sid == tid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId)).ToListAsync();
 
-				if (faids != null)
-				{
-					foreach (var faid in faids)
-					{
-						var faguid = await (db.FileUploads.Where(e => e.Id == faid).Select(e => e.GuidKey).FirstOrDefaultAsync());
-						if (faguid != Guid.Empty)
-						{
-							var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == faguid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
-							if (chimg_ids.Count > 0)
-							{
-								var chimg = new List<FileUpload>();
-								foreach (var chimg_id in chimg_ids)
-								{
-									chimg.Add(await (db.FileUploads.Where(e => e.Id == chimg_id).Where(e => !e.IsDeleted).FirstOrDefaultAsync()));
+                if (faids != null)
+                {
+                    if (size == 1)
+                    {
+                        foreach (var faid in faids)
+                        {
+                            var fadata = await (db.FileUploads.Where(e => e.Id == faid)).FirstOrDefaultAsync();
 
-								}
-								chimg = chimg.OrderBy(e => e.Size).ToList();
-								result.Add(new ImgGetDto
-								{
-									Id = faid.Value,
-									Name = chimg[0].OriginalFileName,
-									Link = chimg[0].DownloadFileName.Replace("upload", $"upload/{orgName}")
-								});
-							}
-						}
-					}
-				}
+                            if (fadata.GuidKey != Guid.Empty)
+                            {
+                                result.Add(new FileGetImgDto
+                                {
+                                    Id = fadata.Id,
+                                    Name = fadata.OriginalFileName,
+                                    Link = fadata.DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var faid in faids)
+                        {
+                            var fadata = await (db.FileUploads.Where(e => e.Id == faid)).FirstOrDefaultAsync();
 
-				return result;
-			}
-			catch (Exception ex)
-			{
-				return null;
-			}
-		}
-		private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
-		{
-			if (file.Length > 0)
-			{
-				string orgName = await loginUserData.GetWebsiteOrgName();
-				Guid key = Guid.NewGuid();
-				string[] sp = file.FileName.Split('.');
-				string ext = sp[sp.Length - 1];
-				var rootPath = $"{_folder}/{orgName}";
-				var directoryPath = $"{rootPath}/{directory}";
-				var path = $"/{directory}/{key}.{ext}";
-				if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
-				if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-				using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
-				{
-					await file.CopyToAsync(stream);
-					if (isTemp)
-					{
-						return new FileItemDto
-						{
-							Name = file.FileName,
-							Path = $@"/upload{path}".Replace("/upload/", $"/upload/{orgName}/"),
-							Guid = Guid.NewGuid()
-						};
-					}
-					else
-					{
-						FileUpload fileUpload = new FileUpload
-						{
-							FK_WebsiteId = await loginUserData.GetWebsiteId(),
-							FileGuid = key,
-							GuidKey = Guid.NewGuid(),
-							DownloadFileName = $@"/upload{path}",
-							OriginalFileName = file.FileName,
-							ContentType = file.ContentType,
-							Size = file.Length
-						};
-						db.FileUploads.Add(fileUpload);
-						await loginUserData.SaveChanges(fileUpload);
-						return new FileItemDto
-						{
-							Name = fileUpload.OriginalFileName,
-							Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
-							Guid = fileUpload.GuidKey,
-						};
-					}
-				}
-			}
-			else throw new Exception("上傳失敗");
-		}
-		private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, string directory, long sid)
-		{
-			if (files.Count() > 0)
-			{
-				Guid faimg_id = new Guid();
-				string orgName = await loginUserData.GetWebsiteOrgName();
-				var return_item = new List<FileItemDto>();
-				try
-				{
-					foreach (var file in files)
-					{
-						Guid key = Guid.NewGuid();
-						string[] sp = file.FileName.Split('.');
-						string ext = sp[sp.Length - 1];
-						var rootPath = $"{_folder}/{orgName}";
-						var directoryPath = $"{rootPath}/{directory}";
-						var path = $"/{directory}/{key}.{ext}";
-						if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
-						if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
-						using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
-						{
-							FileUpload fileUpload = new FileUpload
-							{
-								FK_WebsiteId = await loginUserData.GetWebsiteId(),
-								FileGuid = key,
-								GuidKey = Guid.NewGuid(),
-								DownloadFileName = $@"/upload{path}",
-								OriginalFileName = file.FileName,
-								ContentType = file.ContentType,
-								Size = file.Length
-							};
-							await file.CopyToAsync(stream);
-							db.FileUploads.Add(fileUpload);
-							await loginUserData.SaveChanges(fileUpload);
-							if (faimg_id != Guid.Empty)
-							{
-								FileBindMore fileBindMore = new FileBindMore
-								{
-									type = type,
-									FK_FileBindGuid = faimg_id,
-									FK_FileUploadId = fileUpload.Id
-								};
-								db.FileBindMores.Add(fileBindMore);
-								await loginUserData.SaveChanges(fileBindMore);
-							}
-							else
-							{
-								faimg_id = fileUpload.GuidKey;
-								long userid = await loginUserData.GetUserId();
-								Core.Models.FileBind fb = new Core.Models.FileBind
-								{
-									Guid = Guid.NewGuid(),
-									Name = fileUpload.OriginalFileName,
-									type = type,
-									Sid = sid,
-									num = 1,
-									SerNo = 1,
-									MediaLink = "",
-									FK_FileUploadId = fileUpload.Id,
-									CreatorUserId = userid,
-								};
-								db.FileBinds.Add(fb);
-								db.SaveChanges();
+                            if (fadata.GuidKey != Guid.Empty)
+                            {
+                                var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fadata.GuidKey).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
+                                if (chimg_ids.Count > 0)
+                                {
+                                    var chimg = new List<FileUpload>();
+                                    foreach (var chimg_id in chimg_ids)
+                                    {
+                                        chimg.Add(await (db.FileUploads.Where(e => e.Id == chimg_id).Where(e => !e.IsDeleted).FirstOrDefaultAsync()));
+
+                                    }
+                                    chimg = chimg.OrderByDescending(e => e.Size).ToList();
+                                    result.Add(new FileGetImgDto
+                                    {
+                                        Id = faid.Value,
+                                        Name = chimg[size - 2].OriginalFileName,
+                                        Link = chimg[size - 2].DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return result;
+        }
+        private async Task<FileItemDto> SaveFile(IFormFile file, string directory)
+        {
+            if (file.Length > 0)
+            {
+                string orgName = await loginUserData.GetWebsiteOrgName();
+                Guid key = Guid.NewGuid();
+                string[] sp = file.FileName.Split('.');
+                string ext = sp[sp.Length - 1];
+                var rootPath = $"{_folder}/{orgName}";
+                var directoryPath = $"{rootPath}/{directory}";
+                var path = $"/{directory}/{key}.{ext}";
+                if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
+                if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
+                using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                {
+                    FileUpload fileUpload = new FileUpload
+                    {
+                        FK_WebsiteId = await loginUserData.GetWebsiteId(),
+                        FileGuid = key,
+                        GuidKey = Guid.NewGuid(),
+                        DownloadFileName = $@"/upload{path}",
+                        OriginalFileName = file.FileName,
+                        ContentType = file.ContentType,
+                        Size = file.Length
+                    };
+                    await file.CopyToAsync(stream);
+                    db.FileUploads.Add(fileUpload);
+                    await loginUserData.SaveChanges(fileUpload);
+                    return new FileItemDto
+                    {
+                        Name = fileUpload.OriginalFileName,
+                        Path = fileUpload.DownloadFileName.Replace("/upload/", $"/upload/{orgName}/"),
+                        Guid = fileUpload.GuidKey,
+                    };
+                }
+            }
+            else throw new Exception("上傳失敗");
+        }
+        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, string directory, long sid)
+        {
+            if (files.Count() > 0)
+            {
+                Guid faimg_id = new Guid();
+                string orgName = await loginUserData.GetWebsiteOrgName();
+                var return_item = new List<FileItemDto>();
+                try
+                {
+                    foreach (var file in files)
+                    {
+                        Guid key = Guid.NewGuid();
+                        string[] sp = file.FileName.Split('.');
+                        string ext = sp[sp.Length - 1];
+                        var rootPath = $"{_folder}/{orgName}";
+                        var directoryPath = $"{rootPath}/{directory}";
+                        var path = $"/{directory}/{key}.{ext}";
+                        if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
+                        if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
+                        using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
+                        {
+                            FileUpload fileUpload = new FileUpload
+                            {
+                                FK_WebsiteId = await loginUserData.GetWebsiteId(),
+                                FileGuid = key,
+                                GuidKey = Guid.NewGuid(),
+                                DownloadFileName = $@"/upload{path}",
+                                OriginalFileName = file.FileName,
+                                ContentType = file.ContentType,
+                                Size = file.Length
+                            };
+                            await file.CopyToAsync(stream);
+                            db.FileUploads.Add(fileUpload);
+                            await loginUserData.SaveChanges(fileUpload);
+                            if (faimg_id != Guid.Empty)
+                            {
+                                FileBindMore fileBindMore = new FileBindMore
+                                {
+                                    type = type,
+                                    FK_FileBindGuid = faimg_id,
+                                    FK_FileUploadId = fileUpload.Id
+                                };
+                                db.FileBindMores.Add(fileBindMore);
+                                await loginUserData.SaveChanges(fileBindMore);
+                            }
+                            else
+                            {
+                                faimg_id = fileUpload.GuidKey;
+                                long userid = await loginUserData.GetUserId();
+                                Core.Models.FileBind fb = new Core.Models.FileBind
+                                {
+                                    Guid = Guid.NewGuid(),
+                                    Name = fileUpload.OriginalFileName,
+                                    type = type,
+                                    Sid = sid,
+                                    num = 1,
+                                    SerNo = 1,
+                                    MediaLink = "",
+                                    FK_FileUploadId = fileUpload.Id,
+                                    CreatorUserId = userid,
+                                };
+                                db.FileBinds.Add(fb);
+                                db.SaveChanges();
 
 							}
 

@@ -20,9 +20,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.articleAppService = articleAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> AddUp_Simple(ArticleDto dto)
+        public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
-            return await articleAppService.AddUp_Simple(dto);
+            return await articleAppService.AddUp(dto);
         }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -30,9 +30,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await articleAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<ArticleDataGetDto> GetSimple(long Id)
+        public async Task<ArticleGetDataDto> GetDataOne(long Id)
         {
-            return await articleAppService.GetSimple(Id);
+            return await articleAppService.GetDataOne(Id);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(long Id)

@@ -34,3 +34,21 @@ input[type="number"] {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
+
+#ArticleContent > form .image_upload > div {
+    width: fit-content;
+}
+
+#ArticleContent > form .image_upload .btn_input_pic {
+    height: 250px;
+    width: 400px;
+    max-height: 250px;
+    max-width: 100%;
+}
+
+#ArticleContent > form .image_upload .btn_img_delete {
+    width: 2.5rem;
+    height: 2.5rem;
+    top: -0.75rem;
+    right: -0.75rem;
+}

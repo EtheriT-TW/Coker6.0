@@ -52,11 +52,13 @@
                 data: { id: id }
             });
         },
-        TechCert: function (id) {
+        TechCert: function (data) {
             return $.ajax({
-                url: "/api/Product/GetTechCertDataAll/",
-                type: "GET",
-                data: { PId: id }
+                url: "/api/TechnicalCertificate/GetDisplayData",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         },
     },

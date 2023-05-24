@@ -4,9 +4,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class ContentManagementController : Controller
     {
-        public IActionResult NewArticle()
+        public IActionResult Directory()
         {
-            return View("NewArticle");
+            return View("Directory");
+        }
+        public IActionResult Article()
+        {
+            return View("Article");
         }
         public IActionResult Marquee()
         {

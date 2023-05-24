@@ -185,7 +185,7 @@ function HashDataEdit() {
                 co.TechnicalCertificate.Get(parseInt(hash)).done(function (result) {
                     MoveToContent();
                     if (result != null) {
-                        co.File.getImgThumbnail(result.id).done(function (img_result) {
+                        co.File.getImgFile(result.id, 3).done(function (img_result) {
                             FormDataSet(result, img_result);
                         });
                     } else {
@@ -206,6 +206,7 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result, img_result) {
+    console.log(img_result)
     FormDataClear();
     keyId = result.id;
     startDate = result.startDate;

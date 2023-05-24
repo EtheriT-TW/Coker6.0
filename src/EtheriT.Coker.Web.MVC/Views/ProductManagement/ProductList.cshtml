@@ -2,6 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @model ProductManagementModel
 @{
 	ViewData["Title"] = "ProductList";
@@ -230,161 +231,9 @@
 					</div>
 				</div>
 
-				<div class="marks input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up align-items-center">
-						<span class="material-symbols-outlined me-1">bookmark</span>選擇技術證照
-					</div>
-					<input id="InputMarks" class="form-control rounded text-start" type="button" aria-label="Input Marks of Product" data-bs-toggle="modal" data-bs-target="#TechCertModal">
-				</div>
+				@await Component.InvokeAsync(nameof(Modal), new {dispaly = "TechCertListModal"})
 
-				<template id="TemplateCheck">
-					<div class="form-check">
-						<input id="" class="form-check-input" type="checkbox" value="" data-ptcid="">
-						<label class="form-check-label" for=""></label>
-					</div>
-				</template>
-
-				<div id="TechCertModal" class="modal fade" tabindex="-1" aria-labelledby="Technical Certificate Modal Label" aria-hidden="true">
-					<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title" id="exampleModalLabel">選擇技術證照</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-							</div>
-							<div class="modal-body">
-								<div class="bg-white p-3">
-									@(Html.DevExtreme().DataGrid<TechCertGetAllChoseListDto>()
-										.DataSource(d => d.RemoteController().Key("Id")
-										.LoadUrl("/api/TechnicalCertificate/GetChoseList").LoadMethod("Get")
-										)
-										.ID("TechCertList")
-										.Selection(s => s.Mode(SelectionMode.Multiple))
-										.RemoteOperations(true)
-										.ColumnHidingEnabled(false)
-										.ShowBorders(true)
-										.FilterRow(filterRow => filterRow
-										.Visible(true)
-										.ApplyFilter(GridApplyFilterMode.Auto)
-										)
-										.SearchPanel(searchPanel => searchPanel
-										.Visible(true)
-										.Width(480)
-										.Placeholder("請輸入要搜尋的資料")
-										)
-										.Columns(c =>
-										{
-											c.AddFor(e => e.Id).Caption("編號").Visible(false);
-											c.AddFor(e => e.Title).Caption("技術證照").Width(150);
-											c.AddFor(e => e.Img).Caption("圖片");
-										})
-										.OnSelectionChanged("TechCertList_SelectChange")
-										.Toolbar(toolbar =>
-										{
-											toolbar.Items(items =>
-											{
-												items.Add()
-											.Location(ToolbarItemLocation.Before)
-											.Widget(w =>
-											w.Button()
-											.Text("選項清除")
-											.Disabled(true)
-											.OnClick("TechCertList_ClearBtnClick")
-											.OnInitialized("TechCertList_ClearBtnInit")
-											);
-											});
-
-											toolbar.Items(i =>
-											{
-												i.Add()
-											.Name(DataGridToolbarItem.SearchPanel)
-											.ShowText(ToolbarItemShowTextMode.Always)
-											.Location(ToolbarItemLocation.After);
-											});
-										})
-										)
-								</div>
-							</div>
-							<div class="modal-footer">
-								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-								<button type="button" class="btn_techcert_save btn btn-primary">確認</button>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="tag input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1">alternate_email</span>標籤
-					</div>
-					<input id="InputTag" class="form-control rounded text-start" type="button" aria-label="Input Tag of Product" data-bs-toggle="modal" data-bs-target="#TagModal">
-				</div>
-
-				<div id="TagModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
-					<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title" id="exampleModalLabel">選擇標籤</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-							</div>
-							<div class="modal-body">
-								<div class="bg-white p-3">
-									@(Html.DevExtreme().DataGrid<TechCertGetAllChoseListDto>()
-										.DataSource(d => d.RemoteController().Key("Id")
-										.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
-										)
-										.ID("TagList")
-										.Selection(s => s.Mode(SelectionMode.Multiple))
-										.RemoteOperations(true)
-										.ColumnHidingEnabled(false)
-										.ShowBorders(true)
-										.FilterRow(filterRow => filterRow
-										.Visible(true)
-										.ApplyFilter(GridApplyFilterMode.Auto)
-										)
-										.SearchPanel(searchPanel => searchPanel
-										.Visible(true)
-										.Width(480)
-										.Placeholder("請輸入要搜尋的資料")
-										)
-										.Columns(c =>
-										{
-											c.AddFor(e => e.Id).Caption("編號").Visible(false);
-											c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
-										})
-										.OnSelectionChanged("TagList_SelectChange")
-										.Toolbar(toolbar =>
-										{
-											toolbar.Items(items =>
-											{
-												items.Add()
-											.Location(ToolbarItemLocation.Before)
-											.Widget(w =>
-											w.Button()
-											.Text("選項清除")
-											.Disabled(true)
-											.OnClick("TagList_ClearBtnClick")
-											.OnInitialized("TagList_ClearBtnInit")
-											);
-											});
-
-											toolbar.Items(i =>
-											{
-												i.Add()
-											.Name(DataGridToolbarItem.SearchPanel)
-											.ShowText(ToolbarItemShowTextMode.Always)
-											.Location(ToolbarItemLocation.After);
-											});
-										})
-										)
-								</div>
-							</div>
-							<div class="modal-footer">
-								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-								<button type="button" class="btn_tag_save btn btn-primary">確認</button>
-							</div>
-						</div>
-					</div>
-				</div>
+				@await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
 
 				<div id="Spec_Frame"></div>
 
@@ -409,7 +258,7 @@
 				</template>
 
 				<template id="TemplateSpecification">
-					<div class="frame border mb-3 pt-3 px-3 rounded position-relative" data-psid="">
+					<div class="frame border mb-3 pt-3 px-3 rounded position-relative">
 						<div class="spec_title position-absolute bg-white px-2">規格設定</div>
 						<div class="topline row">
 							<div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">

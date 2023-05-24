@@ -447,19 +447,19 @@ var Coker = {
                 dataType: "json"
             });
         },
-        getImgFile: function (tid, size) {
+        getImgFile: function (data) {
             return $.ajax({
                 url: "/api/FileUpload/getImgFiles",
-                type: "Get",
+                type: "Post",
                 contentType: 'application/json; charset=utf-8',
-                data: { tid: tid, size: size },
                 headers: _c.Data.Header,
+                data: JSON.stringify(data),
                 dataType: "json"
             });
         },
-        DeleteImg: function (imgid) {
+        DeleteImgByImgId: function (imgid) {
             return $.ajax({
-                url: "/api/FileUpload/DeleteImage",
+                url: "/api/FileUpload/DeleteImageByImgId",
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 data: { imgid: imgid },

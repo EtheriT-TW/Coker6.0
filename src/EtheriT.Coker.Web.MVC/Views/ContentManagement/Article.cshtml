@@ -59,12 +59,12 @@
 					.ShowRowLines(true)
 					.Columns(c =>
 					{
-						c.AddFor(e => e.Id).Caption("編號").Width(50);
 						c.AddFor(e => e.Title).Caption("標題").Width(200);
 						c.AddFor(e => e.Description).Caption("描述");
+						c.AddFor(e => e.Tags).Caption("標籤");
 						c.AddFor(e => e.Visible).Caption("是否顯示").Width(90);
 						c.AddFor(e => e.SerNO).Caption("排序").Width(90);
-						c.AddFor(e => e.Popular).Caption("人氣值").Width(150);
+						c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
 						c.AddFor(e => e.PopularVisible).Caption("是否顯示人氣值").Width(150);
 						c.Add()
 						.Type(GridCommandColumnType.Buttons)

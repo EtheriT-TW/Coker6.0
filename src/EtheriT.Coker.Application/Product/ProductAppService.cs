@@ -9,14 +9,12 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
-using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
-using EtheriT.Coker.Application.TechnicalCertificate;
-using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -45,9 +43,13 @@ namespace EtheriT.Coker.Application.Product
             this.technicalCertificateAppService = technicalCertificateAppService;
         }
         /* Add & Update */
-        public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
+        public async Task<ResponseMessageDto> ProductAddUp(ProdAddUpDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto tag_response = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto techcert_response = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto stock_response = new ResponseMessageDto() { Success = true };
+            var asoid = dto.Id;
 
             try
             {
@@ -71,7 +73,7 @@ namespace EtheriT.Coker.Application.Product
                     };
                     db.Prods.Add(p);
                     db.SaveChanges();
-                    output.Message = p.Id.ToString();
+                    asoid = p.Id;
                 }
                 else
                 {
@@ -91,7 +93,42 @@ namespace EtheriT.Coker.Application.Product
                     }
                 }
                 db.SaveChanges();
-                output.Success = true;
+
+                if (asoid != null)
+                {
+                    var tagitem = new List<TagAssociateDto>();
+                    foreach (var data in dto.TagSelected)
+                    {
+                        tagitem.Add(new TagAssociateDto()
+                        {
+                            Id = data.Id,
+                            FK_AId = (long)asoid,
+                            FK_TId = data.FK_TId,
+                            Type = (int)TagAssociateTypeEnum.商品,
+                            IsDeleted = data.IsDeleted
+                        });
+                    }
+
+                    tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
+
+                    var techcertitem = new List<TechCertProdAssociateDto>();
+                    foreach (var data in dto.TechCertSelected)
+                    {
+                        techcertitem.Add(new TechCertProdAssociateDto()
+                        {
+                            Id = data.Id,
+                            FK_PId = (long)asoid,
+                            FK_TCId = data.FK_TCId,
+                            IsDeleted = data.IsDeleted
+                        });
+                    }
+
+                    techcert_response = await technicalCertificateAppService.TechCertAssociateAddDelect(techcertitem);
+
+                    stock_response = await this.StockAddUp(asoid, dto.Stocks);
+                }
+
+                output.Success = tag_response.Success && techcert_response.Success && stock_response.Success;
             }
             catch (Exception e)
             {
@@ -101,9 +138,10 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
-        public async Task<ResponseMessageDto> StockAddUp(List<ProductStockDto> dto)
+        public async Task<ResponseMessageDto> StockAddUp(long Pid, List<ProductStockDto> dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto priceresponse = new ResponseMessageDto() { Success = false };
 
             try
             {
@@ -115,18 +153,23 @@ namespace EtheriT.Coker.Application.Product
                     {
                         Core.Models.Prod_Stock ps = new Core.Models.Prod_Stock
                         {
-                            FK_Pid = item.Pid,
+                            FK_Pid = Pid,
                             FK_S1id = item.FK_S1id,
                             FK_S2id = item.FK_S2id,
                             Stock = item.Stock,
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
-                            Ser_No = 500,
+                            Ser_No = item.Ser_No,
                             CreatorUserId = usetId,
                         };
                         db.Prod_Stocks.Add(ps);
                         db.SaveChanges();
-                        output.Message += ps.Id + ",";
+
+                        foreach (var price in item.Prices)
+                        {
+                            price.FK_PSId = ps.Id;
+
+                        }
                     }
                     else
                     {
@@ -139,13 +182,19 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.Stock = item.Stock;
                             db_ps.Min_Qty = item.Min_Qty;
                             db_ps.Alert_Qty = item.Alert_Qty;
+                            db_ps.Ser_No = item.Ser_No;
                             db_ps.LastModificationTime = DateTime.Now;
                             db_ps.LastModifierUserId = usetId;
                         }
                     }
+
+                    priceresponse = await this.PriceAddUp(item.Prices);
+
                 }
+
                 db.SaveChanges();
-                output.Success = true;
+
+                output.Success = priceresponse.Success;
             }
             catch (Exception e)
             {
@@ -155,10 +204,10 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
-        public async Task<ResponseMessageDto> TechCertAddUp(List<ProductTechCertDto> dto)
+        public async Task<ResponseMessageDto> PriceAddUp(List<ProductPriceDto> dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
+            ResponseMessageDto deleteresponse = new ResponseMessageDto() { Success = true };
             try
             {
                 long usetId = await loginUserData.GetUserId();
@@ -166,58 +215,11 @@ namespace EtheriT.Coker.Application.Product
                 {
                     foreach (var item in dto)
                     {
-                        if (item.Id == 0)
-                        {
-                            Core.Models.Prod_TechCert ptc = new Core.Models.Prod_TechCert
-                            {
-                                FK_PId = item.FK_PId,
-                                FK_TCId = item.FK_TCId,
-                                IsChecked = item.IsChecked,
-                                CreatorUserId = usetId,
-                            };
-                            db.Prod_TechCerts.Add(ptc);
-                            db.SaveChanges();
-                        }
-                        else
-                        {
-                            var db_ptc = db.Prod_TechCerts.Where(e => e.Id == item.Id).FirstOrDefault();
-
-                            if (db_ptc != null)
-                            {
-                                db_ptc.IsChecked = item.IsChecked;
-                                db_ptc.LastModifierUserId = usetId;
-                                db_ptc.LastModificationTime = DateTime.Now;
-                            }
-                        }
-                    }
-                }
-
-                db.SaveChanges();
-                output.Success = true;
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
-            }
-
-            return output;
-        }
-        public async Task<ResponseMessageDto> ProdPriceAddUp(List<ProductPriceDto> dto)
-        {
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            try
-            {
-                long usetId = await loginUserData.GetUserId();
-                if (usetId != null)
-                {
-                    foreach (var item in dto)
-                    {
-                        if (item.Id == 0)
+                        if (item.Id == 0 && !item.IsDelete)
                         {
                             Core.Models.Prod_Price pp = new Core.Models.Prod_Price
                             {
-                                FK_PSId = item.FK_PSId,
+                                FK_PSId = (long)item.FK_PSId,
                                 FK_RId = item.FK_RId,
                                 Price = item.Price,
                                 Bonus = item.Bonus,
@@ -226,7 +228,7 @@ namespace EtheriT.Coker.Application.Product
                             db.Prod_Prices.Add(pp);
                             db.SaveChanges();
                         }
-                        else
+                        else if (!item.IsDelete)
                         {
                             var db_pp = db.Prod_Prices.Where(e => e.Id == item.Id).FirstOrDefault();
 
@@ -237,6 +239,14 @@ namespace EtheriT.Coker.Application.Product
                                 db_pp.Bonus = item.Bonus;
                                 db_pp.LastModifierUserId = usetId;
                                 db_pp.LastModificationTime = DateTime.Now;
+                            }
+                        }
+                        else
+                        {
+                            deleteresponse = await this.PriceDelete((long)item.Id);
+                            if (!deleteresponse.Success)
+                            {
+                                output.Success = false;
                             }
                         }
                     }
@@ -260,24 +270,37 @@ namespace EtheriT.Coker.Application.Product
             {
                 long webid = await loginUserData.GetWebsiteId();
 
-                var dataQuery = from ps in db.Prod_Stocks
-                                where !ps.IsDeleted
-                                from pp in db.Prod_Prices
-                                where !pp.IsDeleted && pp.FK_PSId == ps.Id
-                                join p in db.Prods on ps.FK_Pid equals p.Id
-                                where !p.IsDeleted && p.FK_WebsiteId == webid
-                                group pp by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
+                var dataQuery = from p in db.Prods
+                                where p.FK_WebsiteId == webid && !p.IsDeleted
                                 select new ProductGetAllListDto
                                 {
-                                    Id = s.Key.Id,
-                                    Title = s.Key.Title,
-                                    Disp_Opt = s.Key.Disp_Opt,
-                                    Ser_No = s.Key.Ser_No,
-                                    Price = s.Min(e => e.Price) == s.Max(e => e.Price) ? s.Min(e => e.Price).ToString() : s.Min(e => e.Price) + " ~ " + s.Max(e => e.Price),
-                                    StartTime = s.Key.StartTime,
-                                    EndTime = s.Key.EndTime,
-                                    Permanent = s.Key.permanent
+                                    Id = p.Id,
+                                    Title = p.Title,
+                                    Disp_Opt = p.Disp_Opt,
+                                    Ser_No = p.Ser_No,
+                                    Price = "",
+                                    StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
+                                    EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
+                                    Permanent = p.permanent
                                 };
+                //var dataQuery = from ps in db.Prod_Stocks
+                //                where !ps.IsDeleted
+                //                from pp in db.Prod_Prices
+                //                where !pp.IsDeleted && pp.FK_PSId == ps.Id
+                //                join p in db.Prods on ps.FK_Pid equals p.Id
+                //                where !p.IsDeleted && p.FK_WebsiteId == webid
+                //                group pp by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
+                //                select new ProductGetAllListDto
+                //                {
+                //                    Id = s.Key.Id,
+                //                    Title = s.Key.Title,
+                //                    Disp_Opt = s.Key.Disp_Opt,
+                //                    Ser_No = s.Key.Ser_No,
+                //                    Price = s.Min(e => e.Price) == s.Max(e => e.Price) ? s.Min(e => e.Price).ToString() : s.Min(e => e.Price) + " ~ " + s.Max(e => e.Price),
+                //                    StartTime = s.Key.StartTime,
+                //                    EndTime = s.Key.EndTime,
+                //                    Permanent = s.Key.permanent
+                //                };
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -289,7 +312,7 @@ namespace EtheriT.Coker.Application.Product
 
             return new JsonResult(new List<ProductGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<ProductDto> GetProdDataOne(long Id)
+        public async Task<ProdGetDataDto> GetProdDataOne(long Id)
         {
             try
             {
@@ -298,7 +321,7 @@ namespace EtheriT.Coker.Application.Product
 
                 if (db_p != null)
                 {
-                    ProductDto output = new ProductDto()
+                    ProdGetDataDto output = new ProdGetDataDto()
                     {
                         Id = db_p.Id,
                         Title = db_p.Title,
@@ -309,7 +332,36 @@ namespace EtheriT.Coker.Application.Product
                         StartTime = db_p.StartTime,
                         EndTime = db_p.EndTime,
                         Permanent = db_p.permanent,
+                        TagDatas = new List<TagGetSelectedDto>(),
+                        TechCertDatas = new List<TechCertGetSelectedDto>(),
+                        Stocks = new List<ProductStockDto>(),
                     };
+
+                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                    {
+                        Fk_Aid = output.Id,
+                        Type = (int)TagAssociateTypeEnum.商品,
+                    }
+                    );
+
+                    if (tagDatas != null)
+                    {
+                        output.TagDatas = tagDatas;
+                    }
+
+                    var techcertDatas = await technicalCertificateAppService.GetTechCertAssociate(db_p.Id);
+
+                    if (techcertDatas != null)
+                    {
+                        output.TechCertDatas = techcertDatas;
+                    }
+
+                    var stockDatas = await this.GetStockDataAll(output.Id);
+                    if (stockDatas != null)
+                    {
+                        output.Stocks = stockDatas;
+                    }
+
                     return output;
                 }
                 else throw new Exception("查無商品資料");
@@ -336,7 +388,8 @@ namespace EtheriT.Coker.Application.Product
                                         Price = ps.Price,
                                         Min_Qty = ps.Min_Qty,
                                         Stock = ps.Stock,
-                                        Alert_Qty = ps.Alert_Qty
+                                        Alert_Qty = ps.Alert_Qty,
+                                        Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 
                 var db_sp = db.Prod_Specs.ToList();
@@ -345,58 +398,7 @@ namespace EtheriT.Coker.Application.Product
                 {
                     item.FK_ST1id = (item.FK_S1id != null && (int)item.FK_S1id > 0) ? db_sp[(int)item.FK_S1id - 1].FK_Tid : 0;
                     item.FK_ST2id = (item.FK_S2id != null && (int)item.FK_S2id > 0) ? db_sp[(int)item.FK_S2id - 1].FK_Tid : 0;
-                }
-
-                return output;
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
-        }
-        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
-        {
-            try
-            {
-                var output = await (from ptc in db.Prod_TechCerts
-                                    where !ptc.IsDeleted && ptc.FK_PId == PId
-                                    orderby ptc.Id
-                                    select new TechCertGetAllDto
-                                    {
-                                        Id = ptc.Id,
-                                        FK_PId = ptc.FK_PId,
-                                        FK_TCId = ptc.FK_TCId,
-                                        Img = new List<FileGetImgDto>(),
-                                        IsChecked = ptc.IsChecked,
-                                        Title = "",
-                                    }).ToListAsync();
-
-
-                foreach (var item in output)
-                {
-                    var tc = db.TechnicalCertificates.Where(e => e.Id == item.FK_TCId && !e.IsDeleted).FirstOrDefault();
-                    if (tc != null)
-                    {
-                        item.Title = tc.Title == null ? "" : tc.Title;
-                        var images = await fileUploadAppService.getImgFiles(tc.Id, 3);
-                        if (images.Count > 0)
-                        {
-                            foreach (var image in images)
-                            {
-                                if (image.Link != null)
-                                {
-                                    item.Img.Add(new FileGetImgDto
-                                    {
-                                        Id = image.Id,
-                                        Link = image.Link,
-                                        Name = image.Name,
-                                    });
-                                }
-                            }
-                        }
-                    }
+                    item.Prices = await this.GetPriceDataAll(item.Id);
                 }
 
                 return output;
@@ -433,6 +435,200 @@ namespace EtheriT.Coker.Application.Product
 
             return null;
         }
+        /* Delete */
+        public async Task<ResponseMessageDto> ProdDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto techcertdeleteresponse = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto stockresponse = new ResponseMessageDto() { Success = true };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_p = db.Prods.Where(e => e.Id == Id).FirstOrDefault();
+
+                if (db_p != null)
+                {
+                    db_p.IsDeleted = true;
+                    db_p.DeletionTime = DateTime.Now;
+                    db_p.DeleterUserId = usetId;
+
+                    var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == Id);
+                    if (db_ps != null)
+                    {
+                        foreach (var ps in db_ps)
+                        {
+                            ps.IsDeleted = true;
+                            ps.DeletionTime = DateTime.Now;
+                            ps.DeleterUserId = usetId;
+
+                            var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == ps.Id);
+                            foreach (var item in db_pp)
+                            {
+                                item.IsDeleted = true;
+                                item.DeleterUserId = usetId;
+                                item.DeletionTime = DateTime.Now;
+                            }
+                        }
+                    }
+
+                    var db_ptc = db.Prod_TechCerts.Where(e => e.FK_PId == Id);
+                    if (db_ptc != null)
+                    {
+                        foreach (var pst in db_ptc)
+                        {
+                            pst.IsDeleted = true;
+                            pst.DeletionTime = DateTime.Now;
+                            pst.DeleterUserId = usetId;
+                        }
+                    }
+
+
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted).ToListAsync();
+
+                    if (tagids != null)
+                    {
+                        foreach (var tagid in tagids)
+                        {
+
+                            tagdeleteresponse = await tagAppService.TagAssociateDelete(tagid.Id);
+                            if (tagdeleteresponse.Success == false)
+                            {
+                                output.Success = false;
+                            }
+                        }
+                    }
+
+                    var techcertids = await db.Prod_TechCerts.Where(e => e.FK_PId == Id && !e.IsDeleted).ToListAsync();
+
+                    if (techcertids != null)
+                    {
+                        foreach (var techcertid in techcertids)
+                        {
+                            techcertdeleteresponse = await technicalCertificateAppService.TechCertAssociateDelete(techcertid.Id);
+                            if (techcertdeleteresponse.Success == false)
+                            {
+                                output.Success = false;
+                            }
+                        }
+                    }
+
+                    var stockids = await db.Prod_Stocks.Where(e => e.FK_Pid == Id && !e.IsDeleted).ToListAsync();
+
+                    if (stockids != null)
+                    {
+                        foreach (var stockid in stockids)
+                        {
+                            stockresponse = await this.StockDelete(stockid.Id);
+                            if (stockresponse.Success == false)
+                            {
+                                output.Success = false;
+                            }
+                        }
+                    }
+
+                    db.SaveChanges();
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> StockDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_ps = db.Prod_Stocks.Where(e => e.Id == Id).FirstOrDefault();
+                if (db_ps != null)
+                {
+                    db_ps.IsDeleted = true;
+                    db_ps.DeletionTime = DateTime.Now;
+                    db_ps.DeleterUserId = usetId;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+
+                var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == Id);
+                foreach (var item in db_pp)
+                {
+                    item.IsDeleted = true;
+                    item.DeleterUserId = usetId;
+                    item.DeletionTime = DateTime.Now;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> PriceDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_pp = db.Prod_Prices.Where(e => e.Id == Id).FirstOrDefault();
+                if (db_pp != null)
+                {
+                    db_pp.IsDeleted = true;
+                    db_pp.DeletionTime = DateTime.Now;
+                    db_pp.DeleterUserId = usetId;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        /* Product Log */
+        public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
+
+                Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                {
+                    FK_Pid = dto.FK_Pid,
+                    FK_Uid = db_t.UserID,
+                    FK_Tid = dto.FK_Tid,
+                    Action = dto.Action,
+                };
+                db.Prod_Logs.Add(pl);
+                db.SaveChanges();
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        /* Other Get */
         public async Task<List<ProdIdTitleDto>> GetSpecType()
         {
             try
@@ -486,7 +682,6 @@ namespace EtheriT.Coker.Application.Product
 
             return null;
         }
-        /* Get Display */
         public async Task<ProdGetOneDto> GetDisplayOne(long id)
         {
             try
@@ -632,185 +827,6 @@ namespace EtheriT.Coker.Application.Product
 
             }
             return null;
-        }
-        /* Delete */
-        public async Task<ResponseMessageDto> ProdDelete(long Id)
-        {
-
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
-            try
-            {
-                long usetId = await loginUserData.GetUserId();
-                var db_p = db.Prods.Where(e => e.Id == Id).FirstOrDefault();
-
-                if (db_p != null)
-                {
-                    db_p.IsDeleted = true;
-                    db_p.DeletionTime = DateTime.Now;
-                    db_p.DeleterUserId = usetId;
-
-                    var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == Id);
-                    if (db_ps != null)
-                    {
-                        foreach (var ps in db_ps)
-                        {
-                            ps.IsDeleted = true;
-                            ps.DeletionTime = DateTime.Now;
-                            ps.DeleterUserId = usetId;
-
-                            var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == ps.Id);
-                            foreach (var item in db_pp)
-                            {
-                                item.IsDeleted = true;
-                                item.DeleterUserId = usetId;
-                                item.DeletionTime = DateTime.Now;
-                            }
-                        }
-                    }
-
-                    var db_ptc = db.Prod_TechCerts.Where(e => e.FK_PId == Id);
-                    if (db_ptc != null)
-                    {
-                        foreach (var pst in db_ptc)
-                        {
-                            pst.IsDeleted = true;
-                            pst.DeletionTime = DateTime.Now;
-                            pst.DeleterUserId = usetId;
-                        }
-                    }
-
-                    await tagAppService.TagAssociateDelete(Id);
-
-                    db.SaveChanges();
-
-                    output.Success = true;
-                }
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
-            }
-
-            return output;
-        }
-        public async Task<ResponseMessageDto> StockDelete(long Id)
-        {
-
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
-            try
-            {
-                long usetId = await loginUserData.GetUserId();
-                var db_ps = db.Prod_Stocks.Where(e => e.Id == Id).FirstOrDefault();
-                if (db_ps != null)
-                {
-                    db_ps.IsDeleted = true;
-                    db_ps.DeletionTime = DateTime.Now;
-                    db_ps.DeleterUserId = usetId;
-                    db.SaveChanges();
-                    output.Success = true;
-                }
-
-                var db_pp = db.Prod_Prices.Where(e => e.FK_PSId == Id);
-                foreach (var item in db_pp)
-                {
-                    item.IsDeleted = true;
-                    item.DeleterUserId = usetId;
-                    item.DeletionTime = DateTime.Now;
-                }
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
-            }
-
-            return output;
-        }
-        public async Task<ResponseMessageDto> PriceDelete(long Id)
-        {
-
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
-            try
-            {
-                long usetId = await loginUserData.GetUserId();
-                var db_pp = db.Prod_Prices.Where(e => e.Id == Id).FirstOrDefault();
-                if (db_pp != null)
-                {
-                    db_pp.IsDeleted = true;
-                    db_pp.DeletionTime = DateTime.Now;
-                    db_pp.DeleterUserId = usetId;
-                    db.SaveChanges();
-                    output.Success = true;
-                }
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
-            }
-
-            return output;
-        }
-        public async Task<ResponseMessageDto> TechCertDelete(long PSId)
-        {
-
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
-            try
-            {
-                long usetId = await loginUserData.GetUserId();
-                var db_pp = await db.Prod_Prices.Where(e => e.FK_PSId == PSId).ToListAsync();
-
-                foreach (var item in db_pp)
-                {
-                    item.IsDeleted = true;
-                    item.DeletionTime = DateTime.Now;
-                    item.DeleterUserId = usetId;
-                    db.SaveChanges();
-                    output.Success = true;
-                }
-                if (db_pp != null)
-                {
-                }
-            }
-            catch
-            {
-
-            }
-
-            return output;
-        }
-        /* Product Log */
-        public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
-        {
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
-            try
-            {
-                var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
-
-                Core.Models.Prod_Log pl = new Core.Models.Prod_Log
-                {
-                    FK_Pid = dto.FK_Pid,
-                    FK_Uid = db_t.UserID,
-                    FK_Tid = dto.FK_Tid,
-                    Action = dto.Action,
-                };
-                db.Prod_Logs.Add(pl);
-                db.SaveChanges();
-                output.Success = true;
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
-            }
-
-            return output;
         }
     }
 }

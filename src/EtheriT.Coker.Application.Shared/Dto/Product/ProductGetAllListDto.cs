@@ -8,8 +8,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public bool Disp_Opt { get; set; }
         public int Ser_No { get; set; }
         public string Price { get; set; }
-        public virtual DateTime? StartTime { get; set; }
-        public virtual DateTime? EndTime { get; set; }
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
         public bool Permanent { get; set; }
     }
 }

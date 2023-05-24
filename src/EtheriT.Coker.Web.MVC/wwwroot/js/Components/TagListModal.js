@@ -1,4 +1,4 @@
-﻿var $btn_save, $tag
+﻿var $btn_tag_save, $tag
 var tag_list = []
 var $price_modal, priceModal, $techcert_body, techcertModal;
 var tag_changedBySelectBox, tag_clearSelectionButton;
@@ -18,7 +18,7 @@ function TagListModalInit() {
         getTagListDataGridInstance().selectRows(temp_list);
     })
 
-    $btn_save.on("click", function () {
+    $btn_tag_save.on("click", function () {
         if (tag_check_list.length > 0) {
             tag_list.forEach(function (item) {
                 var index = tag_check_list.indexOf(item.FK_TId)
@@ -50,11 +50,7 @@ function TagListModalInit() {
 
 function TagListModalElementInit() {
     $tag = $("#InputTag");
-    $btn_save = $(".btn_save");
-}
-
-function getTechCertListDataGridInstance() {
-    return $("#TechCertList").dxDataGrid("instance");
+    $btn_tag_save = $(".btn_tag_save");
 }
 
 function getTagListDataGridInstance() {
@@ -111,7 +107,6 @@ function TagDataSet(datas) {
             obj["IsDeleted"] = false;
             temp_list.push(data.fK_TId);
             text = text == "" ? data.tag_Name : text + "、" + data.tag_Name;
-            console.log(text);
             tag_list.push(obj)
         })
         getTagListDataGridInstance().selectRows(temp_list);

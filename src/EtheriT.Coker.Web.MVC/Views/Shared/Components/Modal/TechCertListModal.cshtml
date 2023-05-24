@@ -1,10 +1,10 @@
 ﻿@using DevExtreme.AspNet.Mvc
-@using EtheriT.Coker.Application.Shared.Dto.Tag
+@using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 
-<link rel="stylesheet" href="~/css/Components/TagListModal.min.css" asp-append-version="true" />
-<script src="~/js/Components/TagListModal.min.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/Components/TechCertListModal.min.css" asp-append-version="true" />
+<script src="~/js/Components/TechCertListModal.min.js" asp-append-version="true"></script>
 
-<div id="TagModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
+<div id="TechCertModal" class="modal fade" tabindex="-1" aria-labelledby="TechCert Modal Label" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -13,11 +13,11 @@
 			</div>
 			<div class="modal-body">
 				<div class="bg-white p-3">
-					@(Html.DevExtreme().DataGrid<TagGetAllListDto>()
+					@(Html.DevExtreme().DataGrid<TechCertGetAllListDto>()
 						.DataSource(d => d.RemoteController().Key("Id")
-						.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
+						.LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
 						)
-						.ID("TagList")
+						.ID("TechCertList")
 						.Selection(s => s.Mode(SelectionMode.Multiple))
 						.RemoteOperations(true)
 						.ColumnHidingEnabled(false)
@@ -34,9 +34,10 @@
 						.Columns(c =>
 						{
 							c.AddFor(e => e.Id).Caption("編號").Visible(false);
-							c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
+							c.AddFor(e => e.Title).Caption("技術證照").Width(150);
+							c.AddFor(e => e.Img).Caption("圖片");
 						})
-						.OnSelectionChanged("TagList_SelectChange")
+						.OnSelectionChanged("TechCertList_SelectChange")
 						.Toolbar(toolbar =>
 						{
 							toolbar.Items(items =>
@@ -47,8 +48,8 @@
 							w.Button()
 							.Text("選項清除")
 							.Disabled(true)
-							.OnClick("TagList_ClearBtnClick")
-							.OnInitialized("TagList_ClearBtnInit")
+							.OnClick("TechCertList_ClearBtnClick")
+							.OnInitialized("TechCertList_ClearBtnInit")
 							);
 							});
 
@@ -65,15 +66,15 @@
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-				<button type="button" class="btn_tag_save btn btn-primary">確認</button>
+				<button type="button" class="btn_techcert_save btn btn-primary">確認</button>
 			</div>
 		</div>
 	</div>
 </div>
 
-<div class="tag input-group mb-3">
+<div class="techcert input-group mb-3">
 	<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-		<span class="material-symbols-outlined me-1">alternate_email</span>標籤
+		<span class="material-symbols-outlined me-1">bookmark</span>技術證照
 	</div>
-	<input id="InputTag" class="form-control rounded text-start" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
+	<input id="InputTechCert" class="form-control rounded text-start" type="button" aria-label="Input TechCert" data-bs-toggle="modal" data-bs-target="#TechCertModal">
 </div>

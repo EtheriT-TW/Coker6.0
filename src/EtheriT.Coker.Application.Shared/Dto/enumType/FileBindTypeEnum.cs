@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Dto
         選單圖 = 2,
         選單覆蓋 = 3,
         技術證照 = 4,
-        右側浮動廣告 = 5
+        右側浮動廣告 = 5,
+        文章管理 = 6
     }
 }

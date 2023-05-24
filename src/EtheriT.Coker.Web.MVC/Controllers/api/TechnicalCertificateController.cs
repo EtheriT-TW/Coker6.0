@@ -31,11 +31,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await technicalCertificateAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<JsonResult> GetChoseList(DataSourceLoadOptions loadOptions)
-        {
-            return await technicalCertificateAppService.GetChoseList(loadOptions);
-        }
-        [HttpGet]
         public async Task<TechCertDto> GetOne(int id)
         {
             return await technicalCertificateAppService.GetOne(id);

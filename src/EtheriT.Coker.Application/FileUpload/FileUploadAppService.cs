@@ -75,7 +75,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<UploadFileOutputDto> uploadTechnicalCertificateFiles(IList<IFormFile> files, int type, long sid)
+        public async Task<UploadFileOutputDto> uploadImageFiles(IList<IFormFile> files, int type, long sid, string page)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
@@ -84,7 +84,7 @@ namespace EtheriT.Coker.Application
             };
             try
             {
-                List<FileItemDto> items = await SaveImage(files, type, "TechnicalCertificate", sid);
+                List<FileItemDto> items = await SaveImage(files, type, page, sid);
                 foreach (var item in items)
                 {
                     response.Files.Add(item);
@@ -154,9 +154,40 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> deleteImg(long? imgid)
+        public async Task<ResponseMessageDto> deleteImgBySId(FileGetImgInputDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            response.Success = true;
+
+            try
+            {
+                long websiteId = await loginUserData.GetWebsiteId();
+                long usetId = await loginUserData.GetUserId();
+
+                var imgdatas = await db.FileBinds.Where(e => e.Sid == dto.Sid && e.type == dto.Type && !e.IsDeleted).ToListAsync();
+
+                foreach (var imgdata in imgdatas)
+                {
+                    var delete_response = await deleteImgByImgId(imgdata.FK_FileUploadId);
+                    if (!delete_response.Success)
+                    {
+                        response.Success = false;
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+                response.Success = false;
+            }
+
+            return response;
+        }
+        public async Task<ResponseMessageDto> deleteImgByImgId(long? imgid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            response.Success = true;
 
             try
             {
@@ -166,10 +197,6 @@ namespace EtheriT.Coker.Application
                 var faimg = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == imgid).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
                 if (faimg != null)
                 {
-                    faimg.IsDeleted = true;
-                    faimg.DeletionTime = DateTime.Now;
-                    faimg.DeleterUserId = usetId;
-
                     var chimg_binds = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == faimg.GuidKey).Where(e => !e.IsDeleted).ToListAsync());
                     if (chimg_binds != null)
                     {
@@ -189,15 +216,28 @@ namespace EtheriT.Coker.Application
                         }
                         db.SaveChanges();
                     }
+
+                    var fbs = await (db.FileBinds.Where(e => e.FK_FileUploadId == faimg.Id).ToListAsync());
+                    foreach (var fb in fbs)
+                    {
+                        fb.IsDeleted = true;
+                        fb.DeletionTime = DateTime.Now;
+                        fb.DeleterUserId = usetId;
+                        db.SaveChanges();
+                    }
+
+                    faimg.IsDeleted = true;
+                    faimg.DeletionTime = DateTime.Now;
+                    faimg.DeleterUserId = usetId;
                 }
 
                 db.SaveChanges();
-                response.Success = true;
 
             }
             catch (Exception e)
             {
                 response.Error = e.Message;
+                response.Success = false;
             }
 
             await loginUserData.SetLogs(AppName, "deleteImgFile", imgid.ToString(), JsonConvert.SerializeObject(response));
@@ -220,7 +260,7 @@ namespace EtheriT.Coker.Application
             }
         }
         // size = 1 原圖 2中縮圖 3小縮圖
-        public async Task<List<FileGetImgDto>> getImgFiles(long? tid, int size)
+        public async Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto)
         {
             var result = new List<FileGetImgDto>();
             try
@@ -228,11 +268,11 @@ namespace EtheriT.Coker.Application
                 long websiteId = await loginUserData.GetWebsiteId();
                 string orgName = await loginUserData.GetWebsiteOrgName();
 
-                var faids = await (db.FileBinds.Where(e => e.Sid == tid).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId)).ToListAsync();
+                var faids = await (db.FileBinds.Where(e => e.Sid == dto.Sid && e.type == dto.Type).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId)).ToListAsync();
 
                 if (faids != null)
                 {
-                    if (size == 1)
+                    if (dto.Size == 1)
                     {
                         foreach (var faid in faids)
                         {
@@ -270,8 +310,8 @@ namespace EtheriT.Coker.Application
                                     result.Add(new FileGetImgDto
                                     {
                                         Id = faid.Value,
-                                        Name = chimg[size - 2].OriginalFileName,
-                                        Link = chimg[size - 2].DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                        Name = chimg[dto.Size - 2].OriginalFileName,
+                                        Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload/{orgName}")
                                     });
                                 }
                             }

@@ -1,10 +1,7 @@
-﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $tag, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
+﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], techcert_list = [], tag_list = []
-var $price_modal, priceModal, $techcert_body, techcertModal;
-
-var techcert_changedBySelectBox, techcert_clearSelectionButton, tag_changedBySelectBox, tag_clearSelectionButton;
-var techcert_check_list = [], techcert_text, tag_check_list = [], tag_text
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = []
+var $price_modal, priceModal
 var file_num = 0;
 
 function PageReady() {
@@ -19,37 +16,7 @@ function PageReady() {
                     data: JSON.stringify(data),
                     dataType: "json"
                 });
-            },
-            Stock: function (data) {
-                return $.ajax({
-                    url: "/api/Product/StockAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
-            ProdTechCert: function (data) {
-                return $.ajax({
-                    url: "/api/Product/TechCertAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
-            ProdPrice: function (data) {
-                return $.ajax({
-                    url: "/api/Product/ProdPriceAddUp",
-                    type: "POST",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: JSON.stringify(data),
-                    dataType: "json"
-                });
-            },
+            }
         },
         Get: {
             ProdOne: function (id) {
@@ -61,15 +28,6 @@ function PageReady() {
                     data: { id: id },
                 });
             },
-            ProdStock: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetStockDataAll/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { PId: id },
-                });
-            },
             ProdSpec: function (id) {
                 return $.ajax({
                     url: "/api/Product/GetSpecDetail/",
@@ -77,24 +35,6 @@ function PageReady() {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { typeid: id },
-                });
-            },
-            ProdTechCert: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetTechCertDataAll/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { PId: id },
-                });
-            },
-            ProdPrice: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetPriceDataAll/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { PSId: id },
                 });
             },
         },
@@ -117,41 +57,12 @@ function PageReady() {
                     data: { Id: id },
                 });
             },
-            Price: function (id) {
-                return $.ajax({
-                    url: "/api/Product/PriceDelete/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { Id: id },
-                });
-            }
-        }
-    };
-
-    co.Tag = {
-        AddDelect: function (data) {
-            return $.ajax({
-                url: "/api/Tag/TagAssociateAddDelect",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/Tag/GetProductDataAll/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { PId: id },
-            });
         }
     };
 
     ElementInit();
+    TechCertListModalInit();
+    TagListModalInit();
 
     /* File Upload */
     $(".upload_list").on("click", function () {
@@ -276,6 +187,7 @@ function PageReady() {
         });
     });
 
+    /* 日期選擇 */
     $picker = $("#InputDate");
 
     co.Picker.Init($picker);
@@ -286,6 +198,7 @@ function PageReady() {
         endDate = picker.endDate.format("");
     });
 
+    /*Form觸發*/
     const forms = $('#ProductForm');
     (() => {
         Array.from(forms).forEach(form => {
@@ -389,56 +302,6 @@ function PageReady() {
         setInterval(hashChange, 1000);
     }
 
-    $(".btn_techcert_save").on("click", function () {
-        if (techcert_check_list.length > 0) {
-            techcert_list.forEach(function (item) {
-                var index = techcert_check_list.indexOf(item.FK_TCId)
-                if (index > -1) {
-                    item.Checked = true;
-                    techcert_check_list.splice(index, 1)
-                } else {
-                    item.Checked = false;
-                }
-            })
-            if (techcert_check_list.length > 0) {
-                techcert_check_list.forEach(function (item) {
-                    var obj = {};
-                    obj["Id"] = 0;
-                    obj["FK_TCId"] = item;
-                    obj["Checked"] = true;
-                    techcert_list.push(obj);
-                })
-            }
-        }
-        $marks.val(techcert_text);
-        techcertModal.hide();
-    })
-
-    $(".btn_tag_save").on("click", function () {
-        if (tag_check_list.length > 0) {
-            tag_list.forEach(function (item) {
-                var index = tag_check_list.indexOf(item.FK_TId)
-                if (index > -1) {
-                    item.Checked = true;
-                    tag_check_list.splice(index, 1)
-                } else {
-                    item.Checked = false;
-                }
-            })
-            if (tag_check_list.length > 0) {
-                tag_check_list.forEach(function (item) {
-                    var obj = {};
-                    obj["Id"] = 0;
-                    obj["FK_TId"] = item;
-                    obj["Checked"] = true;
-                    tag_list.push(obj);
-                })
-            }
-        }
-        $tag.val(tag_text);
-        tagModal.hide();
-    })
-
     $(".btn_to_canvas").on("click", function (event) {
         event.preventDefault()
 
@@ -475,7 +338,6 @@ function ElementInit() {
     $illustrate = $("#InputIllustrate");
     $illustrate_count = $("#ProductForm > .illustrate .illustrate_count");
     $marks = $("#InputMarks");
-    $tag = $("#InputTag");
     $spec_select = $(".spec_select")
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
@@ -483,28 +345,6 @@ function ElementInit() {
     $alert_number = $(".input_alert_number");
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
-
-    techcertModal = new bootstrap.Modal(document.getElementById('TechCertModal'))
-    $("#TechCertModal").on("hidden.bs.modal", function () {
-        var temp_list = [];
-        techcert_list.forEach(function (item) {
-            if (item.Checked) {
-                temp_list.push(item.FK_TCId);
-            }
-        })
-        getTechCertListDataGridInstance().selectRows(temp_list);
-    })
-
-    tagModal = new bootstrap.Modal(document.getElementById('TagModal'))
-    $("#TagModal").on("hidden.bs.modal", function () {
-        var temp_list = [];
-        tag_list.forEach(function (item) {
-            if (item.Checked) {
-                temp_list.push(item.FK_TId);
-            }
-        })
-        getTagListDataGridInstance().selectRows(temp_list);
-    })
 
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
@@ -518,7 +358,7 @@ function ElementInit() {
             var $self = $(this)
             var psid = $self.parents(".frame").data("psid")
             var temppsid = $self.parents(".frame").data("temppsid")
-            var index = modal_price_list.findIndex(item => item["PSid"] == psid || (item["TempPSid"] != null && item["TempPSid"] == temppsid))
+            var index = modal_price_list.findIndex(item => item["FK_PSId"] == psid || (item["TempPSid"] != null && item["TempPSid"] == temppsid))
             if (index > -1) {
                 text = "現金：" + modal_price_list[index]["Price"] + " 紅利：" + modal_price_list[index]["Bonus"]
                 $self.val(text);
@@ -531,77 +371,9 @@ function ElementInit() {
     })
 }
 
-function getTechCertListDataGridInstance() {
-    return $("#TechCertList").dxDataGrid("instance");
-}
-
-function TechCertList_ClearBtnInit(e) {
-    techcert_clearSelectionButton = e.component;
-}
-
-function TechCertList_ClearBtnClick() {
-    if (techcert_list.length > 0) {
-        techcert_list.forEach(function (item) {
-            item.Checked = false;
-        })
-    }
-    getTechCertListDataGridInstance().clearSelection();
-}
-
-function TechCertList_SelectChange(selectedItems) {
-    var data = selectedItems.selectedRowsData;
-
-    techcert_check_list = [];
-    if (data.length > 0) {
-        techcert_text = data.map((value) => `${value.Title}`).join("、");
-
-        data.forEach(function (item) {
-            techcert_check_list.push(item.Id)
-        })
-    } else {
-        techcert_text = "無";
-    }
-
-    techcert_changedBySelectBox = false;
-    techcert_clearSelectionButton.option('disabled', !data.length);
-}
-
-function getTagListDataGridInstance() {
-    return $("#TagList").dxDataGrid("instance");
-}
-
-function TagList_ClearBtnInit(e) {
-    tag_clearSelectionButton = e.component;
-}
-
-function TagList_ClearBtnClick() {
-    if (tag_list.length > 0) {
-        tag_list.forEach(function (item) {
-            item.Checked = false;
-        })
-    }
-    getTagListDataGridInstance().clearSelection();
-}
-
-function TagList_SelectChange(selectedItems) {
-    var data = selectedItems.selectedRowsData;
-
-    tag_check_list = [];
-    if (data.length > 0) {
-        tag_text = data.map((value) => `${value.Title}`).join("、");
-
-        data.forEach(function (item) {
-            tag_check_list.push(item.Id)
-        })
-    } else {
-        tag_text = "無";
-    }
-
-    tag_changedBySelectBox = false;
-    tag_clearSelectionButton.option('disabled', !data.length);
-}
-
 function FormDataClear() {
+    TechCertDataClear();
+    TagDataClear();
     $("#Spec_Frame > .frame").each(function () {
         $(this).remove();
     })
@@ -616,7 +388,6 @@ function FormDataClear() {
     $illustrate.val("");
     $illustrate_count.text(0);
     $marks.val("");
-    $tag.val("");
     $price.val("");
     $stock_number.val("");
     $alert_number.val("");
@@ -628,14 +399,9 @@ function FormDataClear() {
     endDate = null;
     spec_remove_list = [];
 
-    techcert_list = []
-    tag_list = []
     modal_price_list = []
     price_tid = 0;
     temp_psid = 0;
-
-    techcert_text = "";
-    TechCertList_ClearBtnClick();
 
     UploadPreviewFrameClear();
     $("#ProductForm > .data_upload > ul").children(".upload_list").remove();
@@ -700,26 +466,26 @@ function paletteButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    co.Product.Get.ProdStock(result.id).done(function (all_result) {
-        all_result.forEach(function (result) {
-            co.Product.Get.ProdPrice(result.id).done(function (all_result) {
-                all_result.forEach(function (result) {
-                    var obj = {};
-                    obj["Id"] = result.id;
-                    obj["Tempid"] = price_tid;
-                    obj["PSid"] = result.fK_PSId;
-                    obj["TempPSid"] = 0;
-                    obj["Rid"] = result.fK_RId
-                    obj["Price"] = result.price
-                    obj["Bonus"] = result.bonus
-                    obj["IsDelete"] = false;
-                    price_tid += 1;
-                    modal_price_list.push(obj);
-                })
-                SpecAdd(result);
-            })
-        })
-    })
+    TagDataSet(result.tagDatas);
+    TechCertDataSet(result.techCertDatas);
+
+    result.stocks.forEach(function (stock) {
+        stock.prices.forEach(function (price) {
+            var price_obj = {};
+            price_obj["Id"] = price.id;
+            price_obj["Tempid"] = price_tid;
+            price_obj["FK_PSId"] = price.fK_PSId;
+            price_obj["TempPSid"] = 0;
+            price_obj["FK_RId"] = price.fK_RId
+            price_obj["Price"] = price.price
+            price_obj["Bonus"] = price.bonus
+            price_obj["IsDelete"] = false;
+            price_tid += 1;
+            modal_price_list.push(price_obj);
+        });
+        SpecAdd(stock);
+    });
+
     startDate = result.startTime;
     endDate = result.endTime;
     keyId = result.id;
@@ -732,44 +498,6 @@ function FormDataSet(result) {
     $introduction_count.text($introduction.val().length);
     $illustrate.val(result.description);
     $illustrate_count.text($illustrate.val().length);
-
-    co.Product.Get.ProdTechCert(result.id).done(function (result) {
-        var text = ""
-        if (result != null && result.length > 0) {
-            var temp_list = [];
-            result.forEach(function (item) {
-                var obj = {};
-                obj["Id"] = item.id;
-                obj["FK_TCId"] = item.fK_TCId;
-                obj["Checked"] = item.isChecked;
-                if (item.isChecked) {
-                    temp_list.push(item.fK_TCId);
-                    text = text == "" ? item.title : text + "、" + item.title;
-                }
-                techcert_list.push(obj)
-            })
-            getTechCertListDataGridInstance().selectRows(temp_list);
-        }
-        $marks.val(text == "" ? "無" : text);
-    })
-
-    co.Tag.Get(result.id).done(function (result) {
-        var text = ""
-        if (result != null && result.length > 0) {
-            var temp_list = [];
-            result.forEach(function (item) {
-                var obj = {};
-                obj["Id"] = item.id;
-                obj["FK_TId"] = item.fK_TId;
-                obj["Checked"] = true;
-                temp_list.push(item.fK_TId);
-                text = text == "" ? item.title : text + "、" + item.title;
-                tag_list.push(obj)
-            })
-            getTagListDataGridInstance().selectRows(temp_list);
-        }
-        $tag.val(text == "" ? "無" : text);
-    })
 
     $date = $("#InputDate");
     if (result.permanent) {
@@ -803,7 +531,7 @@ function SpecPriceAdd(result) {
     item.data("ppid", result == null ? 0 : result.Id);
     item.data("tempid", result == null ? -1 : result.Tempid);
     if (result != null) {
-        item_role.val(result.Rid);
+        item_role.val(result.FK_RId);
         item_cash.val(result.Price);
         item_bonus.val(result.Bonus);
     }
@@ -844,9 +572,9 @@ function SpecPriceSave() {
         var obj = {};
         obj["Id"] = $self.data("ppid");
         obj["Tempid"] = price_tid;
-        obj["PSid"] = $self.parents(".modal-body").first().data("psid");
+        obj["FK_PSId"] = $self.parents(".modal-body").first().data("psid");
         obj["TempPSid"] = $self.parents(".modal-body").first().data("temppsid");
-        obj["Rid"] = $self.find(".select_role").val();
+        obj["FK_RId"] = $self.find(".select_role").val();
         obj["Price"] = $self.find(".input_cash").val();
         obj["Bonus"] = $self.find(".input_bonus").val();
         obj["IsDelete"] = false;
@@ -855,7 +583,7 @@ function SpecPriceSave() {
             $(".alert_text").removeClass("d-none");
             save_success = false
         } else {
-            if (temp_list.find(item => item["Rid"] == obj["Rid"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
+            if (temp_list.find(item => item["FK_RId"] == obj["FK_RId"] && item["Price"] == obj["Price"] && item["Bonus"] == obj["Bonus"]) != null) {
                 $(".alert_text").removeClass("d-none");
                 $(".alert_text").text("價格不可重複");
                 save_success = false
@@ -867,7 +595,7 @@ function SpecPriceSave() {
                     price_tid += 1;
                 } else {
                     var index = modal_price_list.findIndex(item => item["Tempid"] == $self.data("tempid"))
-                    modal_price_list[index]["Rid"] = $self.find(".select_role").val();
+                    modal_price_list[index]["FK_RId"] = $self.find(".select_role").val();
                     modal_price_list[index]["Price"] = $self.find(".input_cash").val();
                     modal_price_list[index]["Bonus"] = $self.find(".input_bonus").val();
                 }
@@ -962,7 +690,7 @@ function SpecAdd(result) {
         item.data("temppsid", temp_psid);
     }
 
-    var index = modal_price_list.findIndex(mitem => mitem["PSid"] == item.data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.data("temppsid")))
+    var index = modal_price_list.findIndex(mitem => mitem["FK_PSId"] == item.data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.data("temppsid")))
     if (index > -1) {
         text = "現金：" + modal_price_list[index]["Price"] + " 紅利：" + modal_price_list[index]["Bonus"]
         item_price.val(text);
@@ -989,7 +717,7 @@ function SpecAdd(result) {
         $price_modal.parents(".modal-body").first().data("psid", psid != null ? psid : "")
         $price_modal.parents(".modal-body").first().data("temppsid", temppsid != null ? temppsid : "")
         modal_price_list.forEach(function (item) {
-            if (item.PSid == psid || (item.TempPsid != null && item.TempPsid == temppsid)) {
+            if (item.FK_PSId == psid || (item.TempPsid != null && item.TempPsid == temppsid)) {
                 SpecPriceAdd(item)
                 isnull = false;
             }
@@ -1276,41 +1004,51 @@ function SortChange(change, minindex, maxindex) {
 }
 
 function AddUp(success_text, error_text, target) {
-    if (spec_remove_list.length > 0) {
-        spec_remove_list.forEach(function (item) {
-            co.Product.Delete.Stock(item);
+    var stock_addup_list = []
+    var temp_serno = 1;
+    $("#Spec_Frame > .frame").each(function () {
+        var $self = $(this);
+        var obj = {};
+        var fk_sid = [];
+        $self.find(".input_spec").each(function () {
+            var id = -1;
+            $self_input = $(this);
+            $self_input.siblings("datalist").children("option").each(function () {
+                var $option = $(this);
+                if ($option.val() == $self_input.val()) {
+                    id = $option.data("sid");
+                }
+            })
+            fk_sid.push(id > -1 ? id : 0)
         })
-    }
 
-    var upload_addup_list = [];
-    $("#ProductForm > .data_upload > ul > .upload_list").each(function () {
-        var $li_self = $(this);
-        if ($li_self.data("file")) {
-            var obj = {}
-            obj["Files"] = $li_self.data("file");
-            obj["Guid"] = $li_self.data("id") ? $li_self.data("id") : "";
-            obj["TempId"] = $li_self.data("tempid") ? $li_self.data("tempid") : "";
-            obj["Sid"] = 1;
-            var number;
-            if ($li_self.data("uploadtype") == 1 || $li_self.data("uploadtype") == 3) {
-                number = 0;
-            } else if ($li_self.data("uploadtype") == 2) {
-                number = $li_self.data("file").length;
-            } else {
-                number = -1;
+        obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
+        obj["FK_S1id"] = fk_sid[0];
+        obj["FK_S2id"] = fk_sid[1];
+        obj["Stock"] = $self.find(".input_stock_number").val();
+        obj["Ser_No"] = temp_serno;
+        temp_serno++;
+        obj["Alert_Qty"] = $self.find(".input_alert_number").val();
+        obj["Min_Qty"] = $self.find(".input_min_number").val();
+
+        var price_list = [];
+        modal_price_list.forEach(function (item) {
+            if (item.FK_PSId == $self.data("psid") || item.TempPSid == $self.data("temppsid")) {
+                var price_object = {};
+                price_object["Id"] = item.Id;
+                price_object["FK_PSId"] = item.FK_PSId;
+                price_object["FK_RId"] = item.FK_RId;
+                price_object["Price"] = item.Price;
+                price_object["Bonus"] = item.Bonus;
+                price_object["IsDelete"] = item.IsDelete;
+                price_list.push(price_object)
             }
-            obj["Num"] = number;
-            obj["SerNo"] = $li_self.data("serno");
-            upload_addup_list.push(obj);
-        } else {
-            if ($li_self.hasClass("upload_list") && $li_self.find(".title").text() == "") {
-                $li_self.remove();
-                file_num -= 1;
-            }
-        }
+        })
+
+        obj["Prices"] = price_list;
+
+        stock_addup_list.push(obj);
     })
-    console.log(upload_addup_list)
-
 
     co.Product.AddUp.Product({
         Id: keyId,
@@ -1322,137 +1060,36 @@ function AddUp(success_text, error_text, target) {
         StartTime: startDate,
         EndTime: endDate,
         Permanent: $permanent.is(":checked"),
+        TagSelected: tag_list,
+        TechCertSelected: techcert_list,
+        Stocks: stock_addup_list
     }).done(function (result) {
         if (result.success) {
-            keyId = result.message == null ? keyId : result.message;
-
-            var techcert_addup_list = [];
-            if (techcert_list != null) {
-                techcert_list.forEach(function (item) {
-                    var obj = {};
-                    obj["Id"] = item.Id;
-                    obj["FK_PId"] = keyId;
-                    obj["FK_TCId"] = item.FK_TCId;
-                    obj["IsChecked"] = item.Checked;
-                    techcert_addup_list.push(obj);
-                })
+            if (target == "List") {
+                Coker.sweet.success(success_text, null, true);
+                setTimeout(function () {
+                    BackToList();
+                    product_list.component.refresh();
+                }, 1000);
+            } else if (target == "Canvas") {
+                Coker.sweet.success(success_text, null, true);
+                setTimeout(function () {
+                    var hash = window.location.hash.replace("#", "") + "-1";
+                    window.location.hash = hash;
+                }, 1000);
             }
-            co.Product.AddUp.ProdTechCert(techcert_addup_list).done(function (result) {
-                if (result.success) {
-                    var tag_adddelect_list = [];
-                    if (tag_list != null) {
-                        tag_list.forEach(function (item) {
-                            var obj = {};
-                            obj["Id"] = item.Id;
-                            obj["FK_TId"] = item.FK_TId;
-                            obj["FK_AId"] = keyId;
-                            obj["IsChecked"] = item.Checked;
-                            obj["Type"] = 1;
-                            tag_adddelect_list.push(obj);
-                        })
-                    }
-                    co.Tag.AddDelect(tag_adddelect_list).done(function (result) {
-                        if (result.success) {
-                            var stock_addup_list = []
-                            $("#Spec_Frame > .frame").each(function () {
-                                var $self = $(this);
-
-                                var obj = {};
-                                var fk_sid = [];
-                                $self.find(".input_spec").each(function () {
-                                    var id = -1;
-                                    $self_input = $(this);
-                                    $self_input.siblings("datalist").children("option").each(function () {
-                                        var $option = $(this);
-                                        if ($option.val() == $self_input.val()) {
-                                            id = $option.data("sid");
-                                        }
-                                    })
-                                    fk_sid.push(id > -1 ? id : 0)
-                                })
-
-                                obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
-                                obj["Pid"] = keyId;
-                                obj["FK_S1id"] = fk_sid[0];
-                                obj["FK_S2id"] = fk_sid[1];
-                                obj["Stock"] = $self.find(".input_stock_number").val();
-                                obj["Min_Qty"] = $self.find(".input_min_number").val();
-                                obj["Alert_Qty"] = $self.find(".input_alert_number").val();
-
-                                stock_addup_list.push(obj);
-                            })
-
-                            co.Product.AddUp.Stock(stock_addup_list).done(function (result) {
-                                if (result.success) {
-                                    console.log(result)
-                                    var new_index = result.message.split(",");
-                                    var price_addup_list = [];
-                                    modal_price_list.forEach(function (item) {
-                                        console.log(item)
-                                        if (!item.IsDelete) {
-                                            var obj = {};
-                                            obj["Id"] = item.Id;
-                                            if (item.PSid != null && item.PSid != "") {
-                                                obj["FK_PSId"] = item.PSid;
-                                            } else {
-                                                obj["FK_PSId"] = new_index[item.TempPSid - 1];
-                                            }
-                                            obj["FK_RId"] = item.Rid;
-                                            obj["Price"] = item.Price;
-                                            obj["Bonus"] = item.Bonus;
-                                            price_addup_list.push(obj)
-                                        } else {
-                                            if (item.PSid != null && item.Id != null) {
-                                                co.Product.Delete.Price(item.Id);
-                                            }
-                                        }
-                                    })
-
-                                    co.Product.AddUp.ProdPrice(price_addup_list).done(function () {
-                                        if (result.success) {
-                                            if (target == "List") {
-                                                Coker.sweet.success(success_text, null, true);
-                                                setTimeout(function () {
-                                                    BackToList();
-                                                    product_list.component.refresh();
-                                                }, 1000);
-                                            } else if (target == "Canvas") {
-                                                Coker.sweet.success(success_text, null, true);
-                                                setTimeout(function () {
-                                                    var hash = window.location.hash.replace("#", "") + "-1";
-                                                    window.location.hash = hash;
-                                                }, 1000);
-                                            }
-                                        } else {
-                                            Coker.sweet.error("錯誤", error_text, null, true);
-                                        }
-                                    }).fail(function () {
-                                        Coker.sweet.error("錯誤", error_text, null, true);
-                                    })
-                                } else {
-                                    Coker.sweet.error("錯誤", error_text, null, true);
-                                }
-                            }).fail(function () {
-                                Coker.sweet.error("錯誤", error_text, null, true);
-                            })
-                        } else {
-                            Coker.sweet.error("錯誤", error_text, null, true);
-                        }
-                    }).fail(function () {
-                        Coker.sweet.error("錯誤", error_text, null, true);
-                    })
-                } else {
-                    Coker.sweet.error("錯誤", error_text, null, true);
-                }
-            }).fail(function () {
-                Coker.sweet.error("錯誤", error_text, null, true);
-            })
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
         }
     }).fail(function () {
         Coker.sweet.error("錯誤", error_text, null, true);
     });
+
+    if (spec_remove_list.length > 0) {
+        spec_remove_list.forEach(function (item) {
+            co.Product.Delete.Stock(item);
+        })
+    }
 }
 
 function MoveToContent() {

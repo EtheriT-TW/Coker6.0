@@ -28,11 +28,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplayStock(id);
         }
         [HttpGet]
-        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
-        {
-            return await productAppService.GetTechCertDataAll(PId);
-        }
-        [HttpGet]
         public async Task<ProdGetDisplayDto> GetDisplaySimple(long id)
         {
             return await productAppService.GetDisplaySimple(id);

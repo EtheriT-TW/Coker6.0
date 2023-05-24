@@ -20,5 +20,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public string? SaveCss { get; set; }
         public string? Html { get; set; }
         public string? Css { get; set; }
+        public string Tags { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Freight;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -29,7 +30,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
                 case FileBindTypeEnum.技術證照:
-                    return await fileUploadAppService.uploadTechnicalCertificateFiles(files, type, (long)sid);
+                    return await fileUploadAppService.uploadImageFiles(files, type, (long)sid, "TechnicalCertificate");
+                case FileBindTypeEnum.文章管理:
+                    return await fileUploadAppService.uploadImageFiles(files, type, (long)sid, "Article");
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
@@ -44,10 +47,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.getHtmlContentFiles();
             }
         }
-        [HttpGet]
-        public async Task<List<FileGetImgDto>> getImgFiles(long? tid, int size)
+        [HttpPost]
+        public async Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto)
         {
-            return await fileUploadAppService.getImgFiles(tid, size);
+            return await fileUploadAppService.getImgFiles(dto);
         }
         [HttpDelete]
         public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto)
@@ -55,9 +58,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await fileUploadAppService.deleteFile(dto.key);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> DeleteImage(long? imgid)
+        public async Task<ResponseMessageDto> DeleteImageByImgId(long? imgid)
         {
-            return await fileUploadAppService.deleteImg(imgid);
+            return await fileUploadAppService.deleteImgByImgId(imgid);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> deleteImgBySId(FileGetImgInputDto dto)
+        {
+            return await fileUploadAppService.deleteImgBySId(dto);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿function ViewTypeChangeInit() {
-    $(".frame").each(function () {
+    $(".type_change_frame").each(function () {
         var $self = $(this)
         if (!!!$self.data("isInit")) {
             if ($self.data("action") == "TypeChange") {
@@ -32,22 +32,26 @@ function typeChange($self, $brother, $content, type) {
     if (type == "List") {
         $content.each(function () {
             var $self = $(this)
-            $self.removeClass("row row-cols-2 row-cols-sm-4");
+            $self.removeClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");
             $self.find("figure").removeClass("flex-column");
+            $self.find(".image_frame").removeClass("w-100");
             $self.find(".image").addClass("px-0");
-            $self.find("figcaption").addClass("flex-grow-1 p-3");
+            $self.find("figcaption").addClass("flex-grow-1 p-3 py-0 py-md-3");
             $self.find(".title").removeClass("text-center");
-            $self.find(".describe").removeClass("d-none");
+            $self.find(".title").addClass("h-100");
+            $self.find(".description").removeClass("d-none");
         })
     } else if (type == "Grid") {
         $content.each(function () {
             var $self = $(this)
-            $self.addClass("row row-cols-2 row-cols-sm-4");
+            $self.addClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");
             $self.find("figure").addClass("flex-column");
+            $self.find(".image_frame").addClass("w-100");
             $self.find(".image").removeClass("px-0");
-            $self.find("figcaption").removeClass("flex-grow-1 p-3");
+            $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
             $self.find(".title").addClass("text-center");
-            $self.find(".describe").addClass("d-none");
+            $self.find(".title").removeClass("h-100");
+            $self.find(".description").addClass("d-none");
 
         })
     }

@@ -78,7 +78,8 @@ var grapesInit = function (options) {
                 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
                 '/shared/css/Frame.min.css',
                 '/shared/css/HoverEffect.min.css',
-                '/shared/css/Swiper.min.css'
+                '/shared/css/Swiper.min.css',
+                '/shared/css/Directory.min.css',
             ],
             scripts: [
                 '/lib/jquery/dist/jquery.min.js',
@@ -86,20 +87,24 @@ var grapesInit = function (options) {
                 '/lib/swiper/swiper-bundle.min.js',
                 '/lib/masonry-layout/dist/masonry.pkgd.min.js',
                 '/shared/js/Frame.min.js',
+                '/shared/css/HoverEffect.min.js',
                 '/shared/js/Swiper.min.js',
                 '/shared/js/ViewTypeChange.min.js',
-                '/shared/js/Sitemap.min.js'
+                '/shared/js/Sitemap.min.js',
+                '/shared/js/DirectoryGetData.min.js'
             ],
         },
         domComponents: {
-            processor: (obj) => {                
+            processor: (obj) => {
                 if (!!obj.classes) {
                     const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
                     let checkClass = [
                         { key: "SwiperInit", state: false, run: true, class: [], parameter: {} },
                         { key: "FrameInit", state: false, run: true, class: [], parameter: {} },
                         { key: "ViewTypeChangeInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "SitemapInit", state: false, run: true, class: [], parameter: {} }
+                        { key: "SitemapInit", state: false, run: true, class: [], parameter: {} }, ,
+                        { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
+                        { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} }
                     ];
                     const setConfig = function (index, str) {
                         checkClass[index].state = true;
@@ -119,10 +124,17 @@ var grapesInit = function (options) {
                                 setConfig(1, s);
                                 break;
                             case "frame":
+                            case "type_change_frame":
                                 setConfig(2, s);
                                 break;
                             case "sitemap_hierarchical_frame":
                                 setConfig(3, s);
+                                break;
+                            case "hover_mask":
+                                setConfig(4, s);
+                                break;
+                            case "catalog_frame":
+                                setConfig(5, s);
                                 break;
                         }
                     });

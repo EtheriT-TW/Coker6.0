@@ -27,6 +27,8 @@ using AutoMapper;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Tag;
 using System.Text.RegularExpressions;
+using AutoMapper;
+using System.Diagnostics;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -112,20 +114,20 @@ namespace EtheriT.Coker.Application.Product
 				}
 				db.SaveChanges();
 
-				if (asoid != null)
-				{
-					var tagitem = new List<TagAssociateDto>();
-					foreach (var data in dto.TagSelected)
-					{
-						tagitem.Add(new TagAssociateDto()
-						{
-							Id = data.Id,
-							FK_AId = (long)asoid,
-							FK_TId = data.FK_TId,
-							Type = (int)TagAssociateTypeEnum.商品,
-							IsDeleted = data.IsDeleted
-						});
-					}
+                if (asoid != 0)
+                {
+                    var tagitem = new List<TagAssociateDto>();
+                    foreach (var data in dto.TagSelected)
+                    {
+                        tagitem.Add(new TagAssociateDto()
+                        {
+                            Id = data.Id,
+                            FK_AId = (long)asoid,
+                            FK_TId = data.FK_TId,
+                            Type = (int)TagAssociateTypeEnum.商品,
+                            IsDeleted = data.IsDeleted
+                        });
+                    }
 
 					tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
 
@@ -455,74 +457,60 @@ namespace EtheriT.Coker.Application.Product
 
 			}
 
-			return null;
-		}
-		public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(List<long> Ids)
-		{
+            return null;
+        }
+        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
+        {
 
-			try
-			{
-				long WebsiteID = await loginUserData.GetWebsiteId();
-				var result = db.Prods;
-				var output = new List<DirectoryReleInfoDto>();
-				var productData = new List<ProdGetDataDto>();
+            try
+            {
+                long WebsiteID = dto.SiteId > 0 ? dto.SiteId : await loginUserData.GetWebsiteId();
+                var output = new List<DirectoryReleInfoDto>();
+                var productData = new List<ProdGetDataDto>();
 
-				if (result != null)
-				{
-					foreach (var Id in Ids)
-					{
-						var tempoutput = await (from e in result
-												where e.Id == Id
-												where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-												select new ProdGetDataDto
-												{
-													Id = e.Id,
-													Title = e.Title,
-													Introduction = e.Introduction,
-													Ser_No = e.Ser_No,
-												}).FirstOrDefaultAsync();
+                foreach (var Id in dto.Ids)
+                {
+                    var result = await db.Prods.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
 
-						if (tempoutput != null)
-						{
-							productData.Add(tempoutput);
-						}
-					}
+                    if (result != null)
+                    {
+                        ProdGetDataDto tempoutput = mapper.Map<ProdGetDataDto>(result);
+                        productData.Add(tempoutput);
+                    }
+                    else throw new Exception("查無商品資料");
+                }
 
-					if (productData != null)
-					{
-						productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
-						foreach (var data in productData)
-						{
-							//var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-							//{
-							//    Sid = data.Id,
-							//    Type = (int)FileBindTypeEnum.產品,
-							//    Size = 1
-							//});
+                if (productData != null)
+                {
+                    productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
+                    foreach (var data in productData)
+                    {
+                        var output_data = new DirectoryReleInfoDto();
+                        output_data = mapper.Map(data, output_data);
+                        output_data.Link = $"/lcb/product/toilet/{data.Id}";
+                        output_data.MainImage = "/upload/product/pro_pic_01.jpg";
 
-							output.Add(new DirectoryReleInfoDto
-							{
-								//MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link,
-								Id = data.Id,
-								MainImage = "",
-								Title = data.Title,
-								Description = data.Introduction
-							});
-						}
-					}
+                        output.Add(output_data);
 
-					return output;
-				}
-				else throw new Exception("查無文章資料");
-			}
-			catch (Exception e)
-			{
-				return null;
-			}
-		}
-		/* Delete */
-		public async Task<ResponseMessageDto> ProdDelete(long Id)
-		{
+                        //var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        //{
+                        //    Sid = data.Id,
+                        //    Type = (int)FileBindTypeEnum.產品,
+                        //    Size = 1
+                        //});
+                    }
+                }
+
+                return output;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+        /* Delete */
+        public async Task<ResponseMessageDto> ProdDelete(long Id)
+        {
 
 			ResponseMessageDto output = new ResponseMessageDto() { Success = true };
 			ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = true };

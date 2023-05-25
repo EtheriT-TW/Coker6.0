@@ -129,7 +129,6 @@ function PageDefaultSet() {
                     $("#Product > .content > .pro_tc").removeClass("d-none")
                     var techcert_list = []
                     result.forEach(function (item) {
-                        console.log(item)
                         var temp_html = "";
                         if (item.img.length > 0) {
                             item.img.forEach(function (img) {
@@ -149,8 +148,6 @@ function PageDefaultSet() {
                         $("#pills-description-tab").removeClass("active")
                         $("#pills-documents-tab").addClass("active")
                         var $self_btn = $(this);
-                        console.log($(`.badge_${$self_btn.data("tcid")}`))
-                        console.log($(`.badge_${$self_btn.data("tcid")}`).height())
                         $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
                         //$(".badge_directions").each(function () {
                         //    var $self_badge = $(this);

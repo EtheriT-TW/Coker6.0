@@ -83,7 +83,6 @@
                     co.WebMesnus.delete(data.id).done(function (result) {
                         if (result.success) co.sweet.success("已成功刪除");
                         else co.sweet.error(result.error);
-                        /*console.log(data);*/
                     });
                 },
                 add: function (cEl) {
@@ -105,8 +104,6 @@
                     });
                     //editor.setComponents("<span>Hi<span>");
                     //editor.setStyle("");
-                    /*console.log(data);*/
-                },
                 save: function () {
 
                 },

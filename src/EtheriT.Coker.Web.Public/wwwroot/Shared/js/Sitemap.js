@@ -1,5 +1,4 @@
 ﻿function SitemapInit() {
-    console.log("SitemapInit");
     var WebMesnus = {
         GetAllById: function (id) {
             return $.ajax({

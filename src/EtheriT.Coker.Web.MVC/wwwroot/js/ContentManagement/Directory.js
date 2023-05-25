@@ -126,7 +126,6 @@ function HashDataEdit() {
             } else {
                 MoveToContent();
                 co.Directory.Get(parseInt(hash)).done(function (result) {
-                    console.log(result);
                     if (result != null) {
                         MoveToContent();
                         FormDataSet(result);

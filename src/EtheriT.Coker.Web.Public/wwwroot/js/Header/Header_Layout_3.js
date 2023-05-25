@@ -5,7 +5,6 @@ var $modal_title, sear_text = "", $modal_body;
 var $sear_modal, $sear_target, $input_sear;
 
 function HeaderInit() {
-    console.log("Layout3")
     ElementInit();
 
     $btn_expand.on("click", function () {
@@ -21,12 +20,10 @@ function HeaderInit() {
             function () {
                 var $selfa = $(this).children("a");
                 $selfa.dropdown("show");
-                console.log("In");
             },
             function () {
                 var $selfa = $(this).children("a");
                 $selfa.dropdown("hide");
-                console.log("Out");
             });
     }
 

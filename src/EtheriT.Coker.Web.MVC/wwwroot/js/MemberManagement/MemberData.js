@@ -183,7 +183,6 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result)
     $member_number.text(result.id)
     $name.val(result.name);
     $sex.each(function () {

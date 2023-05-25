@@ -114,7 +114,6 @@ function PageReady() {
     }
 
     ElementInit();
-    console.log("Init");
     ImageUploadInit("single", $(".image_upload"));
     TagListModalInit();
 
@@ -267,7 +266,6 @@ function HashDataEdit() {
                             MoveToCanvas();
                         } else {
                             MoveToContent();
-                            console.log(result.id);
                             co.File.getImgFile({ Sid: result.id, Type: 6, Size: 3 }).done(function (img_result) {
                                 FormDataSet(result, img_result[0]);
                             });
@@ -306,8 +304,6 @@ function FormDataClear() {
 }
 
 function FormDataSet(result, img_result) {
-    console.log(result);
-    console.log(img_result);
     FormDataClear();
     SingleSetImage(img_result);
     keyId = result.id;
@@ -352,7 +348,6 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(success_text, error_text, place) {
-    console.log(img_file)
 
     co.Articles.AddUp({
         Id: keyId,

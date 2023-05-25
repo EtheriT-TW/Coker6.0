@@ -1,11 +1,13 @@
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Marquee;
@@ -60,6 +62,7 @@ builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
 builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
+builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

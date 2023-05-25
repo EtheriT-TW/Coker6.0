@@ -8,8 +8,6 @@ var $header, $img_ul;
 
 
 function HeaderInit() {
-    console.log("Layout4")
-
     ElementInit();
 
     if ($(window).width() <= 768) {

@@ -206,7 +206,6 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result, img_result) {
-    console.log(img_result)
     FormDataClear();
     keyId = result.id;
     startDate = result.startDate;
@@ -269,7 +268,6 @@ function FormDataSet(result, img_result) {
             })
 
             item_input.change(function () {
-                console.log(img_start_index)
                 if (img_start_index == null) {
                     uploadImage(this.files[0]);
                 } else {
@@ -359,7 +357,6 @@ function uploadImage(this_file) {
     })
 
     item_input.change(function () {
-        console.log(img_start_index)
         if (img_start_index == null) {
             uploadImage(this.files[0]);
         } else {
@@ -385,7 +382,6 @@ function reuploadImage(this_file, this_input) {
         var reader = new FileReader();
         reader.readAsDataURL(img_file[img_start_index + 2]);
         reader.onload = (function (e) {
-            console.log()
             this_input.next("div").children(".btn_input_pic").children("img").attr("src", e.target.result);
         });
     }).catch(function (err) {

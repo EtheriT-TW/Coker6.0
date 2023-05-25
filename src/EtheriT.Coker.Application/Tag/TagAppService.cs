@@ -187,13 +187,22 @@ namespace EtheriT.Coker.Application.Tag
 
             try
             {
-                long usetId = await loginUserData.GetUserId();
+                long userId = await loginUserData.GetUserId();
+                var db_tas = await db.Tag_Associates.Where(e => e.FK_TId == Id).ToListAsync();
+                foreach(var db_ta in db_tas)
+                {
+                    db_ta.IsDeleted = true;
+                    db_ta.DeleterUserId = userId;
+                    db_ta.DeletionTime = DateTime.Now;
+                    db.SaveChanges();
+                }
+
                 var db_t = db.Tags.Where(e => e.Id == Id).FirstOrDefault();
                 if (db_t != null)
                 {
                     db_t.IsDeleted = true;
                     db_t.DeletionTime = DateTime.Now;
-                    db_t.DeleterUserId = usetId;
+                    db_t.DeleterUserId = userId;
                     db.SaveChanges();
                     output.Success = true;
                 }

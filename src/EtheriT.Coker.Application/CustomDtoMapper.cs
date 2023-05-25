@@ -4,6 +4,8 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.ObjectType;
 using EtheriT.Coker.Application.Shared.Dto.EnterAd;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
@@ -65,6 +67,22 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.CanDel, option => option.MapFrom(c => false))
                 .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
                 .ForMember(e => e.MaxLevel, option => option.MapFrom(c => 0));
-        }
-    }
+
+            //Prod
+            CreateMap<ProductImportDto, Prod>()
+                .ReverseMap();
+			CreateMap<ProdAddUpDto, Prod>()
+				.ReverseMap();
+			CreateMap<ProductImportDto, ProdAddUpDto>()
+				.ForMember(e => e.Id, option => option.MapFrom(c => 0))
+				.ReverseMap();
+
+			//Tags
+			CreateMap<TagSelectedDto, Core.Models.Tag>()
+				.ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
+				.ReverseMap();
+			
+
+		}
+	}
 }

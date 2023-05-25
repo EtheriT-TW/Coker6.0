@@ -9,6 +9,9 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
             if (dispaly == "TagListModal")
             {
                 return View("TagListModal");
+            }else if(dispaly == "TechCertListModal")
+            {
+                return View("TechCertListModal");
             }
             return View();
         }

@@ -8,14 +8,9 @@ using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Runtime.CompilerServices;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto;
-using System.Xml.Linq;
-using System.Reflection.Metadata;
-using static System.Net.Mime.MediaTypeNames;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -96,6 +91,68 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             }
             return output;
         }
+        public async Task<ResponseMessageDto> TechCertAssociateAddDelect(List<TechCertProdAssociateDto> dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                foreach (var data in dto)
+                {
+                    if (data.Id == 0 && !data.IsDeleted)
+                    {
+                        long usetId = await loginUserData.GetUserId();
+
+                        Core.Models.Prod_TechCert ptc = new Core.Models.Prod_TechCert
+                        {
+                            FK_PId = data.FK_PId,
+                            FK_TCId = data.FK_TCId,
+                            CreatorUserId = usetId,
+                        };
+                        db.Prod_TechCerts.Add(ptc);
+                        db.SaveChanges();
+                    }
+                    else if (data.Id > 0 && data.IsDeleted)
+                    {
+                        await this.TechCertAssociateDelete((long)data.Id);
+                    }
+                }
+
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<List<TechCertGetSelectedDto>> GetTechCertAssociate(long Pid)
+        {
+            try
+            {
+
+                long WebsiteID = await loginUserData.GetWebsiteId();
+
+                var output = from ptc in db.Prod_TechCerts
+                             where ptc.FK_PId == Pid && !ptc.IsDeleted
+                             join tc in db.TechnicalCertificates on ptc.FK_TCId equals tc.Id
+                             where !tc.IsDeleted && tc.FK_WebsiteId == WebsiteID
+                             select new TechCertGetSelectedDto
+                             {
+                                 Id = ptc.Id,
+                                 FK_TCId = ptc.FK_TCId,
+                                 TechCert_Name = tc.Title
+                             };
+
+                return await output.ToListAsync();
+
+            }
+            catch (Exception e) { }
+
+            return null;
+        }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -122,7 +179,13 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     foreach (var data in output.data)
                     {
                         var tid = data.GetType().GetProperty("Id").GetValue(data, null);
-                        var image = (await fileUploadAppService.getImgFiles((long?)tid, 3));
+                        var getImgFileInput = new FileGetImgInputDto
+                        {
+                            Sid = (long)tid,
+                            Type = (int)FileBindTypeEnum.技術證照,
+                            Size = 3
+                        };
+                        var image = (await fileUploadAppService.getImgFiles(getImgFileInput));
                         if (image.Count > 0)
                         {
                             data.GetType().GetProperty("Img").SetValue(data, image.First().Link);
@@ -141,31 +204,6 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             }
             return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<JsonResult> GetChoseList(DataSourceLoadOptions loadOptions)
-        {
-            try
-            {
-                long webid = await loginUserData.GetWebsiteId();
-
-                var dataQuery = from tc in db.TechnicalCertificates
-                                where !tc.IsDeleted && tc.FK_WebsiteId == webid
-                                select new TechCertGetAllChoseListDto
-                                {
-                                    Id = tc.Id,
-                                    Img = tc.Img,
-                                    Title = tc.Title
-                                };
-
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return new JsonResult(new List<TechCertGetAllChoseListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-        }
         public async Task<List<TechCertDisplayDto>> GetDisplayData(LongIdDto dto)
         {
             try
@@ -183,7 +221,13 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
                 foreach (var tcdata in tcdatas)
                 {
-                    var imgdatas = await fileUploadAppService.getImgFiles(tcdata.Id, 1);
+                    var getImgFileInput = new FileGetImgInputDto
+                    {
+                        Sid = tcdata.Id,
+                        Type = (int)FileBindTypeEnum.技術證照,
+                        Size = 1
+                    };
+                    var imgdatas = await fileUploadAppService.getImgFiles(getImgFileInput);
                     if (imgdatas.Count > 0)
                     {
                         foreach (var imgdata in imgdatas)
@@ -251,18 +295,50 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
                 if (db_tc != null)
                 {
-                    if (db_tc.Img != "")
+                    var delete_img_dto = new FileGetImgInputDto
                     {
-                        var delete_img = await fileUploadAppService.deleteImg(long.Parse(db_tc.Img));
-                    }
+                        Sid = db_tc.Id,
+                        Type = (int)FileBindTypeEnum.技術證照
+                    };
+                    var imgdelete_response = await fileUploadAppService.deleteImgBySId(delete_img_dto);
 
                     db_tc.IsDeleted = true;
                     db_tc.DeletionTime = DateTime.Now;
                     db_tc.DeleterUserId = usetId;
                     db.SaveChanges();
-                    output.Success = true;
+                    output.Success = imgdelete_response.Success;
                 }
                 else throw new Exception("查無資料");
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> TechCertAssociateDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                var db_ptc = await db.Prod_TechCerts.Where(e => e.Id == Id).ToListAsync();
+
+                if (db_ptc != null)
+                {
+                    foreach (var item in db_ptc)
+                    {
+                        item.IsDeleted = true;
+                        item.DeletionTime = DateTime.Now;
+                        item.DeleterUserId = usetId;
+                        db.SaveChanges();
+                        output.Success = true;
+                    }
+                }
             }
             catch (Exception e)
             {

@@ -1,4 +1,4 @@
-﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text, $tag_input
+﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text
 var keyId, disp_opt = true
 var directory_list;
 
@@ -33,7 +33,6 @@ function PageReady() {
             });
         }
     };
-
 
     ElementInit();
     TagListModalInit();
@@ -103,7 +102,6 @@ function ElementInit() {
     $title_text = $title.children("textarea");
     $description = $(".description");
     $description_text = $description.children("textarea");
-    $tag_input = $(".tag > input");
 }
 
 
@@ -173,7 +171,6 @@ function FormDataClear() {
     $bind_type.val(0);
     $title_text.val("");
     $description_text.val("");
-    $tag_input.val("");
 }
 
 function FormDataSet(result) {
@@ -188,7 +185,6 @@ function FormDataSet(result) {
     $bind_type.val(result.type);
     $title_text.val(result.title);
     $description_text.val(result.description);
-    $tag_input.val("")
     TagDataSet(result.tagDatas);
 }
 

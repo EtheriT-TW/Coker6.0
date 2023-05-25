@@ -24,24 +24,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.productAppService = productAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> ProductAddUp(ProductDto dto)
+        public async Task<ResponseMessageDto> ProductAddUp(ProdAddUpDto dto)
         {
             return await productAppService.ProductAddUp(dto);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> StockAddUp(List<ProductStockDto> dto)
-        {
-            return await productAppService.StockAddUp(dto);
-        }
-        [HttpPost]
-        public async Task<ResponseMessageDto> TechCertAddUp(List<ProductTechCertDto> dto)
-        {
-            return await productAppService.TechCertAddUp(dto);
-        }
-        [HttpPost]
         public async Task<ResponseMessageDto> ProdPriceAddUp(List<ProductPriceDto> dto)
         {
-            return await productAppService.ProdPriceAddUp(dto);
+            return await productAppService.PriceAddUp(dto);
         }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -49,7 +39,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetAllList(loadOptions);
         }
         [HttpGet]
-        public async Task<ProductDto> GetProdDataOne(long Id)
+        public async Task<ProdGetDataDto> GetProdDataOne(long Id)
         {
             return await productAppService.GetProdDataOne(Id);
         }
@@ -57,11 +47,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<List<ProductStockDto>> GetStockDataAll(long PId)
         {
             return await productAppService.GetStockDataAll(PId);
-        }
-        [HttpGet]
-        public async Task<List<TechCertGetAllDto>> GetTechCertDataAll(long PId)
-        {
-            return await productAppService.GetTechCertDataAll(PId);
         }
         [HttpGet]
         public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)

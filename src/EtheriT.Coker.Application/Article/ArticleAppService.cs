@@ -16,6 +16,9 @@ using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using System.Collections.Generic;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -26,12 +29,14 @@ namespace EtheriT.Coker.Application.Article
         private readonly IMapper mapper;
         private readonly IConfiguration configuration;
         private readonly ITagAppService tagAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
             IConfiguration configuration,
-            ITagAppService tagAppService
+            ITagAppService tagAppService,
+            IFileUploadAppService fileUploadAppService
         )
         {
             this.db = db;
@@ -39,6 +44,7 @@ namespace EtheriT.Coker.Application.Article
             this.mapper = mapper;
             this.configuration = configuration;
             this.tagAppService = tagAppService;
+            this.fileUploadAppService = fileUploadAppService;
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -103,6 +109,7 @@ namespace EtheriT.Coker.Application.Article
                     }
 
                     tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
+                    output.Message = asoid.ToString();
                 }
 
                 output.Success = tag_response.Success;
@@ -138,8 +145,28 @@ namespace EtheriT.Coker.Application.Article
                                         Html = e.Html,
                                         SaveCss = e.SaveCss,
                                         Css = e.Css,
+                                        Tags = "",
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                    if (output != null)
+                    {
+                        foreach (var data in output.data)
+                        {
+                            var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                            {
+                                Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
+                                Type = (int)TagAssociateTypeEnum.文章
+                            });
+
+                            var tag_text = "";
+                            foreach (var tagData in tagDatas)
+                            {
+                                tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
+                            }
+
+                            data.GetType().GetProperty("Tags").SetValue(data, tag_text == "" ? "無" : tag_text);
+                        }
+                    }
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無文章資料");
@@ -163,6 +190,7 @@ namespace EtheriT.Coker.Application.Article
                     var output = await (from e in result
                                         where e.Id == Id
                                         where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                        orderby e.SerNO
                                         select new ArticleGetDataDto
                                         {
                                             Id = e.Id,
@@ -174,16 +202,81 @@ namespace EtheriT.Coker.Application.Article
                                             TagDatas = new List<TagGetSelectedDto>(),
                                         }).FirstOrDefaultAsync();
 
-                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                    if (output != null)
                     {
-                        Fk_Aid = output.Id,
-                        Type = (int)TagAssociateTypeEnum.文章,
-                    }
-                    );
+                        var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                        {
+                            Fk_Aid = output.Id,
+                            Type = (int)TagAssociateTypeEnum.文章,
+                        }
+                        );
 
-                    if (tagDatas != null)
+                        if (tagDatas != null)
+                        {
+                            output.TagDatas = tagDatas;
+                        }
+                    }
+
+                    return output;
+                }
+                else throw new Exception("查無文章資料");
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(List<long> Ids)
+        {
+
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var result = db.Article;
+                var output = new List<DirectoryReleInfoDto>();
+                var articleData = new List<ArticleGetDataDto>();
+
+                if (result != null)
+                {
+                    foreach (var Id in Ids)
                     {
-                        output.TagDatas = tagDatas;
+                        var tempoutput = await (from e in result
+                                                where e.Id == Id
+                                                where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                                select new ArticleGetDataDto
+                                                {
+                                                    Id = e.Id,
+                                                    Title = e.Title,
+                                                    Description = e.Description,
+                                                    SerNO = e.SerNO
+                                                }).FirstOrDefaultAsync();
+
+                        if (tempoutput != null)
+                        {
+                            articleData.Add(tempoutput);
+                        }
+                    }
+
+                    if (articleData != null)
+                    {
+                        articleData.Sort((x, y) => (x.SerNO.CompareTo(y.SerNO) * 2 + x.Id.CompareTo(y.Id)));
+                        foreach (var data in articleData)
+                        {
+                            var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                            {
+                                Sid = data.Id,
+                                Type = (int)FileBindTypeEnum.文章管理,
+                                Size = 1
+                            });
+
+                            output.Add(new DirectoryReleInfoDto
+                            {
+                                Id = data.Id,
+                                MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link,
+                                Title = data.Title,
+                                Description = data.Description
+                            });
+                        }
                     }
 
                     return output;
@@ -199,7 +292,7 @@ namespace EtheriT.Coker.Application.Article
         {
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = true };
 
             try
             {
@@ -219,13 +312,20 @@ namespace EtheriT.Coker.Application.Article
                         }
                     }
 
+                    var delete_img_dto = new FileGetImgInputDto
+                    {
+                        Sid = result.Id,
+                        Type = (int)FileBindTypeEnum.文章管理
+                    };
+                    var imgdelete_response = await fileUploadAppService.deleteImgBySId(delete_img_dto);
+
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;
                     result.DeleterUserId = usetId;
 
                     db.SaveChanges();
 
-                    output.Success = tagdeleteresponse.Success;
+                    output.Success = tagdeleteresponse.Success && imgdelete_response.Success;
                 }
                 else throw new Exception("查無文章資料");
             }

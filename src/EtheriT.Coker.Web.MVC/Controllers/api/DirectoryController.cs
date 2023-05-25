@@ -29,6 +29,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await directoryAppService.GetDataOne(Id);
         }
         [HttpGet]
+        public async Task<List<DirectoryReleInfoDto>> GetReleInfo(long Id)
+        {
+            return await directoryAppService.GetReleInfo(Id);
+        }
+        [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             return await directoryAppService.GetAllList(loadOptions);

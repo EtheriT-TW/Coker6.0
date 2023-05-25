@@ -185,7 +185,7 @@ function HashDataEdit() {
                 co.TechnicalCertificate.Get(parseInt(hash)).done(function (result) {
                     MoveToContent();
                     if (result != null) {
-                        co.File.getImgFile(result.id, 3).done(function (img_result) {
+                        co.File.getImgFile({ Sid: result.id, Type: 4, Size: 3 }).done(function (img_result) {
                             FormDataSet(result, img_result);
                         });
                     } else {
@@ -429,7 +429,7 @@ function AddUp(display, success_text, error_text) {
 
             if (img_delete_list.length > 0) {
                 img_delete_list.forEach(function (imgid) {
-                    co.File.DeleteImg(imgid).done(function (result) {
+                    co.File.DeleteImgByImgId(imgid).done(function (result) {
                     });
                 })
             }

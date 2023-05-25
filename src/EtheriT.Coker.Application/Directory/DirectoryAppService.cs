@@ -12,6 +12,12 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Article;
+using System.Diagnostics;
+using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Product;
+using System.Linq;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -21,22 +27,28 @@ namespace EtheriT.Coker.Application.Directory
         private readonly LoginUserData loginUserData;
         private readonly ITagAppService tagAppService;
         private readonly IMapper mapper;
+        private readonly IArticleAppService articleAppService;
+        private readonly IProductAppService productAppService;
         public DirectoryAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
-            ITagAppService tagAppService
+            ITagAppService tagAppService,
+            IArticleAppService articleAppService,
+            IProductAppService productAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.tagAppService = tagAppService;
+            this.articleAppService = articleAppService;
+            this.productAppService = productAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            ResponseMessageDto tag_response = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto tag_response = new ResponseMessageDto() { Success = true };
 
             try
             {
@@ -146,6 +158,96 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
         }
+        public async Task<List<DirectoryReleInfoDto>> GetReleInfo(long Id)
+        {
+            var DataIds = new List<long>();
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            var output = new List<DirectoryReleInfoDto>();
+
+            var db_d = db.Directory.Where(e => e.Id == Id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+
+            if (db_d != null)
+            {
+                var tags = await (db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.目錄 && !e.IsDeleted)).ToListAsync();
+
+                if (tags != null)
+                {
+                    switch ((DirectoryTypeEnum)db_d.Type)
+                    {
+                        case DirectoryTypeEnum.商品:
+                            var product_datas = new List<ProdGetDataDto>();
+                            foreach (var tag in tags)
+                            {
+                                var db_ps = await (db.Tag_Associates.Where(e => e.FK_TId == tag.FK_TId && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
+                                if (db_ps != null)
+                                {
+                                    foreach (var db_p in db_ps)
+                                    {
+                                        product_datas.Add(await productAppService.GetProdDataOne(db_p.FK_AId));
+                                    }
+                                }
+                            }
+                            foreach (var product_data in product_datas)
+                            {
+                                if (!DataIds.Contains(product_data.Id))
+                                {
+                                    DataIds.Add(product_data.Id);
+                                }
+                            }
+                            break;
+                        case DirectoryTypeEnum.文章:
+                            var article_datas = new List<ArticleGetDataDto>();
+                            foreach (var tag in tags)
+                            {
+                                var db_as = await (db.Tag_Associates.Where(e => e.FK_TId == tag.FK_TId && e.Type == (int)TagAssociateTypeEnum.文章 && !e.IsDeleted)).ToListAsync();
+                                if (db_as != null)
+                                {
+                                    foreach (var db_a in db_as)
+                                    {
+                                        article_datas.Add(await articleAppService.GetDataOne(db_a.FK_AId));
+                                    }
+                                }
+                            }
+                            foreach (var article_data in article_datas)
+                            {
+                                if (!DataIds.Contains(article_data.Id))
+                                {
+                                    DataIds.Add(article_data.Id);
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                    switch ((DirectoryTypeEnum)db_d.Type)
+                    {
+                        case DirectoryTypeEnum.商品:
+
+                            var tempproddata = await productAppService.GetDirectoryReleInfo(DataIds);
+                            if (tempproddata != null)
+                            {
+                                output = tempproddata;
+                            }
+
+                            break;
+                        case DirectoryTypeEnum.文章:
+
+                            var temparticledata = await articleAppService.GetDirectoryReleInfo(DataIds);
+                            if (temparticledata != null)
+                            {
+                                output = temparticledata;
+                            }
+
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            return output;
+        }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -174,7 +276,7 @@ namespace EtheriT.Coker.Application.Directory
                             var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                             {
                                 Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
-                                Type = 3
+                                Type = (int)TagAssociateTypeEnum.目錄
                             });
 
                             var tag_text = "";

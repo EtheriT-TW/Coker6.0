@@ -1,9 +1,10 @@
 ﻿
-using System.ComponentModel.DataAnnotations;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
-	public class ProductDto
+    public class ProdGetDataDto
     {
         public long Id { get; set; }
         public string Title { get; set; }
@@ -15,5 +16,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }
         public bool Permanent { get; set; }
+        public List<TagGetSelectedDto> TagDatas { get; set; }
+        public List<TechCertGetSelectedDto> TechCertDatas { get; set; }
+        public List<ProductStockDto> Stocks { get; set; }
     }
 }

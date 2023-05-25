@@ -11875,17 +11875,29 @@ a.bg-dark-light25:hover, a.bg-dark-light25:focus, button.bg-dark-light25:hover, 
     list-style: none;
     cursor: pointer;
 }
+
     .custom-context-menu > li {
         border: #fff solid 1px;
         padding: 0.5rem;
     }
+
         .custom-context-menu > li:not(:first-child) {
-            border-top:none;
+            border-top: none;
         }
+
 .table-icons .material-symbols-outlined {
     color: #fff;
     opacity: 1;
 }
+
 .gjs-block__media > i.material-symbols-outlined.credit_card.fa-5x {
     font-size: 5em;
+}
+
+@media (max-width: 576px) { /* line 6, ../../scss/bootstrap/_grid.scss */
+
+    .dx-datagrid-search-panel {
+        width: fit-content !important;
+    }
+
 }

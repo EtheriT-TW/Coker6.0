@@ -1,4 +1,2 @@
-﻿
-function FooterInit() {
-    console.log("Layout4")
+﻿function FooterInit() {
 }

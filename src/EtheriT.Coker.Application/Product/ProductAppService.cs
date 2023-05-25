@@ -17,6 +17,8 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using AutoMapper;
+using System.Diagnostics;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -28,13 +30,15 @@ namespace EtheriT.Coker.Application.Product
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IConfiguration configuration;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
+        private readonly IMapper mapper;
         public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService,
             IConfiguration configuration,
-            ITechnicalCertificateAppService technicalCertificateAppService
+            ITechnicalCertificateAppService technicalCertificateAppService,
+            IMapper mapper
         )
         {
             this.db = db;
@@ -43,6 +47,7 @@ namespace EtheriT.Coker.Application.Product
             this.fileUploadAppService = fileUploadAppService;
             this.configuration = configuration;
             this.technicalCertificateAppService = technicalCertificateAppService;
+            this.mapper = mapper;
         }
         /* Add & Update */
         public async Task<ResponseMessageDto> ProductAddUp(ProdAddUpDto dto)
@@ -96,7 +101,7 @@ namespace EtheriT.Coker.Application.Product
                 }
                 db.SaveChanges();
 
-                if (asoid != null)
+                if (asoid != 0)
                 {
                     var tagitem = new List<TagAssociateDto>();
                     foreach (var data in dto.TagSelected)
@@ -437,63 +442,49 @@ namespace EtheriT.Coker.Application.Product
 
             return null;
         }
-        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(List<long> Ids)
+        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
 
             try
             {
-                long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.Prods;
+                long WebsiteID = dto.SiteId > 0 ? dto.SiteId : await loginUserData.GetWebsiteId();
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
 
-                if (result != null)
+                foreach (var Id in dto.Ids)
                 {
-                    foreach (var Id in Ids)
+                    var result = await db.Prods.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
+
+                    if (result != null)
                     {
-                        var tempoutput = await (from e in result
-                                                where e.Id == Id
-                                                where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-                                                select new ProdGetDataDto
-                                                {
-                                                    Id = e.Id,
-                                                    Title = e.Title,
-                                                    Introduction = e.Introduction,
-                                                    Ser_No = e.Ser_No,
-                                                }).FirstOrDefaultAsync();
-
-                        if (tempoutput != null)
-                        {
-                            productData.Add(tempoutput);
-                        }
+                        ProdGetDataDto tempoutput = mapper.Map<ProdGetDataDto>(result);
+                        productData.Add(tempoutput);
                     }
-
-                    if (productData != null)
-                    {
-                        productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
-                        foreach (var data in productData)
-                        {
-                            //var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                            //{
-                            //    Sid = data.Id,
-                            //    Type = (int)FileBindTypeEnum.產品,
-                            //    Size = 1
-                            //});
-
-                            output.Add(new DirectoryReleInfoDto
-                            {
-                                //MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link,
-                                Id = data.Id,
-                                MainImage = "",
-                                Title = data.Title,
-                                Description = data.Introduction
-                            });
-                        }
-                    }
-
-                    return output;
+                    else throw new Exception("查無商品資料");
                 }
-                else throw new Exception("查無文章資料");
+
+                if (productData != null)
+                {
+                    productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
+                    foreach (var data in productData)
+                    {
+                        var output_data = new DirectoryReleInfoDto();
+                        output_data = mapper.Map(data, output_data);
+                        output_data.Link = $"/lcb/product/toilet/{data.Id}";
+                        output_data.MainImage = "/upload/product/pro_pic_01.jpg";
+
+                        output.Add(output_data);
+
+                        //var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        //{
+                        //    Sid = data.Id,
+                        //    Type = (int)FileBindTypeEnum.產品,
+                        //    Size = 1
+                        //});
+                    }
+                }
+
+                return output;
             }
             catch (Exception e)
             {

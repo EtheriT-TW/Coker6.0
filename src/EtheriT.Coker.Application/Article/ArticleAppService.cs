@@ -19,6 +19,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using System.Collections.Generic;
+using System;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -182,7 +183,12 @@ namespace EtheriT.Coker.Application.Article
         {
             try
             {
+
                 long WebsiteID = await loginUserData.GetWebsiteId();
+                if (WebsiteID == 0)
+                {
+                    WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                }
                 var result = db.Article;
 
                 if (result != null)
@@ -226,62 +232,48 @@ namespace EtheriT.Coker.Application.Article
                 return null;
             }
         }
-        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(List<long> Ids)
+        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
-
             try
             {
-                long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.Article;
+                long WebsiteID = dto.SiteId > 0 ? dto.SiteId : await loginUserData.GetWebsiteId();
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleGetDataDto>();
 
-                if (result != null)
+                foreach (var Id in dto.Ids)
                 {
-                    foreach (var Id in Ids)
+                    var result = await db.Article.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
+
+                    if (result != null)
                     {
-                        var tempoutput = await (from e in result
-                                                where e.Id == Id
-                                                where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-                                                select new ArticleGetDataDto
-                                                {
-                                                    Id = e.Id,
-                                                    Title = e.Title,
-                                                    Description = e.Description,
-                                                    SerNO = e.SerNO
-                                                }).FirstOrDefaultAsync();
-
-                        if (tempoutput != null)
-                        {
-                            articleData.Add(tempoutput);
-                        }
+                        ArticleGetDataDto tempoutput = mapper.Map<ArticleGetDataDto>(result);
+                        articleData.Add(tempoutput);
                     }
-
-                    if (articleData != null)
-                    {
-                        articleData.Sort((x, y) => (x.SerNO.CompareTo(y.SerNO) * 2 + x.Id.CompareTo(y.Id)));
-                        foreach (var data in articleData)
-                        {
-                            var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                            {
-                                Sid = data.Id,
-                                Type = (int)FileBindTypeEnum.文章管理,
-                                Size = 1
-                            });
-
-                            output.Add(new DirectoryReleInfoDto
-                            {
-                                Id = data.Id,
-                                MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link,
-                                Title = data.Title,
-                                Description = data.Description
-                            });
-                        }
-                    }
-
-                    return output;
+                    else throw new Exception("查無文章資料");
                 }
-                else throw new Exception("查無文章資料");
+
+                if (articleData != null)
+                {
+                    articleData.Sort((x, y) => (x.SerNO.CompareTo(y.SerNO) * 2 + x.Id.CompareTo(y.Id)));
+                    foreach (var data in articleData)
+                    {
+                        var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        {
+                            Sid = data.Id,
+                            Type = (int)FileBindTypeEnum.文章管理,
+                            Size = 3
+                        });
+
+                        var output_data = new DirectoryReleInfoDto();
+                        output_data = mapper.Map(data, output_data);
+                        output_data.Link = $"/lcb/catalog/article/{data.Id}";
+                        output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+
+                        output.Add(output_data);
+                    }
+                }
+
+                return output;
             }
             catch (Exception e)
             {

@@ -1,7 +1,6 @@
 ﻿var menu_width
 
 function FooterInit() {
-    console.log("Layout1")
     $menu_item = $("#Footer_Menu > ul > li > ul")
     $content = $("#Footer_Menu > ul > li > ul > li")
     MenuItemResize();

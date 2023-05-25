@@ -158,17 +158,17 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
         }
-        public async Task<List<DirectoryReleInfoDto>> GetReleInfo(long Id)
+        public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
             var DataIds = new List<long>();
-            long WebsiteID = await loginUserData.GetWebsiteId();
-            var output = new List<DirectoryReleInfoDto>();
+            long WebsiteID = dto.SiteId != 0 ? dto.SiteId : await loginUserData.GetWebsiteId();
+            var output = new DirectoryReleInfoGetDto();
 
-            var db_d = db.Directory.Where(e => e.Id == Id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+            var db_d = db.Directory.Where(e => e.Id == dto.Ids[0] && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
 
             if (db_d != null)
             {
-                var tags = await (db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.目錄 && !e.IsDeleted)).ToListAsync();
+                var tags = await (db.Tag_Associates.Where(e => e.FK_AId == dto.Ids[0] && e.Type == (int)TagAssociateTypeEnum.目錄 && !e.IsDeleted)).ToListAsync();
 
                 if (tags != null)
                 {
@@ -220,23 +220,32 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                     }
 
+                    var page = (int)dto.Page;
+                    var shownum = (int)dto.ShowNum;
+                    output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
                         case DirectoryTypeEnum.商品:
-
-                            var tempproddata = await productAppService.GetDirectoryReleInfo(DataIds);
+                            var tempproddata = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+                            {
+                                Ids = DataIds.Skip((page - 1) * shownum - 1).Take(shownum).ToList<long>(),
+                                SiteId = dto.SiteId,
+                            });
                             if (tempproddata != null)
                             {
-                                output = tempproddata;
+                                output.ReleInfos = tempproddata;
                             }
 
                             break;
                         case DirectoryTypeEnum.文章:
-
-                            var temparticledata = await articleAppService.GetDirectoryReleInfo(DataIds);
+                            var temparticledata = await articleAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+                            {
+                                Ids = DataIds.Skip((page - 1) * shownum - 1).Take(shownum).ToList<long>(),
+                                SiteId = dto.SiteId
+                            });
                             if (temparticledata != null)
                             {
-                                output = temparticledata;
+                                output.ReleInfos = temparticledata;
                             }
 
                             break;

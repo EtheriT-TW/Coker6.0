@@ -15,3 +15,7 @@
 .tag > input {
     padding-left: 4.5rem;
 }
+
+.dx-datagrid-search-panel {
+    width: fit-content !important;
+}

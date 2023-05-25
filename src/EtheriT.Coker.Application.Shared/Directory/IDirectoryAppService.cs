@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Directory
     {
         public Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto);
         public Task<DirectoryGetDataDto> GetDataOne(long Id);
-        public Task<List<DirectoryReleInfoDto>> GetReleInfo(long Id);
+        public Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<ResponseMessageDto> Delete(long Id);
     }

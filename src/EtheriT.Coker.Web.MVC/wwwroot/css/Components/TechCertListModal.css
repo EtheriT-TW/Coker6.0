@@ -15,3 +15,7 @@
 .techcert > input {
     padding-left: 6.5rem;
 }
+
+.dx-datagrid-search-panel {
+    width: fit-content !important;
+}

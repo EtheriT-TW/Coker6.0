@@ -1,6 +1,4 @@
 ﻿function HeaderInit() {
-    console.log("Layout1")
-
     var mega_menu_height = $("nav").css("height");
     $("body").css("padding-top", mega_menu_height);
 

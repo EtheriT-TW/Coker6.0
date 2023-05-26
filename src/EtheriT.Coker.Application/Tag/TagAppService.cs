@@ -9,8 +9,6 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using EtheriT.Coker.Application.Shared.Dto.Article;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -35,7 +33,7 @@ namespace EtheriT.Coker.Application.Tag
             {
                 long usetId = await loginUserData.GetUserId();
                 long webid = await loginUserData.GetWebsiteId();
-
+                
                 if (data != null)
                 {
                     if (dto.Key == null)

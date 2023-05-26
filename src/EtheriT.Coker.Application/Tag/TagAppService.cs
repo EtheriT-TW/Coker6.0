@@ -36,30 +36,33 @@ namespace EtheriT.Coker.Application.Tag
                 long usetId = await loginUserData.GetUserId();
                 long webid = await loginUserData.GetWebsiteId();
 
-                if (dto.Key == null)
+                if (data != null)
                 {
-                    Core.Models.Tag t = new Core.Models.Tag
+                    if (dto.Key == null)
                     {
-                        FK_WebsiteId = webid,
-                        Title = data.Title
-                    };
-                    db.Tags.Add(t);
-                    db.SaveChanges();
-                }
-                else
-                {
-                    var db_t = db.Tags.Where(e => e.Id == dto.Key).FirstOrDefault();
-
-                    if (db_t != null)
-                    {
-                        db_t.Title = data.Title;
-                        db_t.LastModifierUserId = usetId;
-                        db_t.LastModificationTime = DateTime.Now;
+                        Core.Models.Tag t = new Core.Models.Tag
+                        {
+                            FK_WebsiteId = webid,
+                            Title = data.Title
+                        };
+                        db.Tags.Add(t);
                         db.SaveChanges();
                     }
-                }
+                    else
+                    {
+                        var db_t = db.Tags.Where(e => e.Id == dto.Key).FirstOrDefault();
 
-                output.Success = true;
+                        if (db_t != null)
+                        {
+                            db_t.Title = data.Title;
+                            db_t.LastModifierUserId = usetId;
+                            db_t.LastModificationTime = DateTime.Now;
+                            db.SaveChanges();
+                        }
+                    }
+
+                    output.Success = true;
+                }
             }
             catch (Exception e)
             {
@@ -189,7 +192,7 @@ namespace EtheriT.Coker.Application.Tag
             {
                 long userId = await loginUserData.GetUserId();
                 var db_tas = await db.Tag_Associates.Where(e => e.FK_TId == Id).ToListAsync();
-                foreach(var db_ta in db_tas)
+                foreach (var db_ta in db_tas)
                 {
                     db_ta.IsDeleted = true;
                     db_ta.DeleterUserId = userId;

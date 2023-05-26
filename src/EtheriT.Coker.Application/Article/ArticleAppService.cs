@@ -236,7 +236,7 @@ namespace EtheriT.Coker.Application.Article
         {
             try
             {
-                long WebsiteID = dto.SiteId > 0 ? dto.SiteId : await loginUserData.GetWebsiteId();
+                long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleGetDataDto>();
 

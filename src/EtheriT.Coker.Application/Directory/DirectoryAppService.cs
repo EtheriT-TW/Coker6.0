@@ -161,7 +161,7 @@ namespace EtheriT.Coker.Application.Directory
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
             var DataIds = new List<long>();
-            long WebsiteID = dto.SiteId != 0 ? dto.SiteId : await loginUserData.GetWebsiteId();
+            long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
             var output = new DirectoryReleInfoGetDto();
 
             var db_d = db.Directory.Where(e => e.Id == dto.Ids[0] && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();

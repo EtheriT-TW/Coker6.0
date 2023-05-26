@@ -67,25 +67,19 @@ namespace EtheriT.Coker.Application
             //Prod
             CreateMap<ProductImportDto, Prod>()
                 .ReverseMap();
-			CreateMap<ProdAddUpDto, Prod>()
-				.ReverseMap();
-			CreateMap<ProductImportDto, ProdAddUpDto>()
-				.ForMember(e => e.Id, option => option.MapFrom(c => 0))
-				.ReverseMap();
-
-			//Tags
-			CreateMap<TagSelectedDto, Core.Models.Tag>()
-				.ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
-				.ReverseMap();
-			
-
-		}
-	}
-
-            //Product
+            CreateMap<ProdAddUpDto, Prod>()
+                .ReverseMap();
+            CreateMap<ProductImportDto, ProdAddUpDto>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => 0))
+                .ReverseMap();
             CreateMap<ProdGetDataDto, Prod>().ReverseMap();
             CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+                .ReverseMap();
+
+            //Tags
+            CreateMap<TagSelectedDto, Core.Models.Tag>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
                 .ReverseMap();
 
             //Article

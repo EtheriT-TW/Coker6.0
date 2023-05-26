@@ -104,6 +104,7 @@
                     });
                     //editor.setComponents("<span>Hi<span>");
                     //editor.setStyle("");
+                },
                 save: function () {
 
                 },

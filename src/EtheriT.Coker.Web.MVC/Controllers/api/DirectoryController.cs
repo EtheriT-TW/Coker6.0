@@ -28,7 +28,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await directoryAppService.GetDataOne(Id);
         }
-        [HttpGet]
+        [HttpPost]
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
             return await directoryAppService.GetReleInfo(dto);

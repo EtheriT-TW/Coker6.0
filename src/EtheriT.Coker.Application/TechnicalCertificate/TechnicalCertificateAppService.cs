@@ -166,7 +166,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                                     Id = e.Id,
                                     Disp_opt = e.Disp_opt,
                                     Title = e.Title,
-                                    Img = "../",
+                                    Img = new List<string>(),
                                     Description = e.Description,
                                     Ser_no = e.Ser_no,
                                     StartDate = e.StartDate,
@@ -188,7 +188,12 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         var image = (await fileUploadAppService.getImgFiles(getImgFileInput));
                         if (image.Count > 0)
                         {
-                            data.GetType().GetProperty("Img").SetValue(data, image.First().Link);
+                            var img_list = new List<string>();
+                            foreach (var img in image)
+                            {
+                                img_list.Add(img.Link);
+                            }
+                            data.GetType().GetProperty("Img").SetValue(data, img_list);
                         }
                         else
                         {

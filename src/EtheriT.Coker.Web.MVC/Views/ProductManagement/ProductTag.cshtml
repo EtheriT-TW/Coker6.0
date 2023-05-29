@@ -62,7 +62,7 @@
 						.Buttons(b =>
 						{
 							b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
-							b.Add().Name("save");
+							b.Add().Name("save").OnClick("saveButtonClicked");
 							b.Add().Name("cancel");
 							b.Add().Name("delete").OnClick("deleteButtonClicked");
 						});
@@ -87,6 +87,8 @@
 					}))
 			</div>
 		</div>
+
+		<div class="text-end my-2 text-danger">※標籤名稱不可以符號開頭</div>
 	</div>
 </div>
 

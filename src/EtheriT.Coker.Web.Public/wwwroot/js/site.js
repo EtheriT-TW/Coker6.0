@@ -383,17 +383,6 @@ var Coker = {
                 else return s
             }
         }
-    },
-    Directory: {
-        getDirectoryData: function (data) {
-            return $.ajax({
-                url: "/api/Directory/GetReleInfo",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-    },
+    }
 }
 let _c = Coker;

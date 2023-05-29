@@ -4,6 +4,7 @@
 // Write your JavaScript code.
 "use strict";
 var PreLoader;
+
 (function (a) {
 
     var now = new Date();

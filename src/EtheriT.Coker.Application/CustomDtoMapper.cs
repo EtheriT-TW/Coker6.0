@@ -64,38 +64,32 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
                 .ForMember(e => e.MaxLevel, option => option.MapFrom(c => 0));
 
-            //Prod
-            CreateMap<ProductImportDto, Prod>()
+			//Product
+			CreateMap<ProductImportDto, Prod>()
                 .ReverseMap();
 			CreateMap<ProdAddUpDto, Prod>()
 				.ReverseMap();
 			CreateMap<ProductImportDto, ProdAddUpDto>()
 				.ForMember(e => e.Id, option => option.MapFrom(c => 0))
 				.ReverseMap();
+			CreateMap<ProdGetDataDto, Prod>().ReverseMap();
+			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
+				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+				.ReverseMap();
 
 			//Tags
 			CreateMap<TagSelectedDto, Core.Models.Tag>()
 				.ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
 				.ReverseMap();
-			
 
+			//Article
+			CreateMap<ArticleGetDataDto, Core.Models.Article>().ReverseMap();
+			CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
+
+			//Directory
+			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
+				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+				.ReverseMap();
 		}
-	}
-
-            //Product
-            CreateMap<ProdGetDataDto, Prod>().ReverseMap();
-            CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
-                .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
-                .ReverseMap();
-
-            //Article
-            CreateMap<ArticleGetDataDto, Core.Models.Article>().ReverseMap();
-            CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
-
-            //Directory
-            CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
-                .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
-                .ReverseMap();
-        }
     }
 }

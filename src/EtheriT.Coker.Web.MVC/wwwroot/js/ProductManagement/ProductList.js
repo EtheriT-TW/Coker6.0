@@ -1137,7 +1137,7 @@ function UploadListAdd(result) {
         var obj = {};
         obj["Id"] = result.id;
         obj["Name"] = result.name;
-        var link = result.link[0].replace("upload/", "upload/coker6/")
+        var link = result.link[0];
         if (result.fileType == 4) {
             obj["File"] = result.name;
         } else {

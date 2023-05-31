@@ -354,6 +354,7 @@ namespace EtheriT.Coker.Application
         public async Task<List<FileGetProdDisplayDto>> getProdDisplayFiles(long Pid, int size)
         {
             var output = new List<FileGetProdDisplayDto>();
+            string orgName = await loginUserData.GetWebsiteOrgName();
 
             try
             {
@@ -445,6 +446,13 @@ namespace EtheriT.Coker.Application
                 }
 
                 output.Sort((x, y) => (x.SerNo.CompareTo(y.SerNo) * 2 + x.Id.CompareTo(y.Id)));
+                for (var i = 0; i < output.Count; i++)
+                {
+                    for (var j = 0; j < output[i].Link.Count; j++)
+                    {
+                        output[i].Link[j] = output[i].Link[j].Replace("upload", $"upload/{orgName}");
+                    }
+                }
 
                 return output;
             }

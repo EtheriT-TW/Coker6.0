@@ -362,7 +362,7 @@ function AddUp(success_text, error_text, place) {
 
             if (img_delete_list.length > 0) {
                 img_delete_list.forEach(function (imgid) {
-                    co.File.DeleteImgByImgId(imgid).done(function (result) {
+                    co.File.DeleteFileById(imgid).done(function (result) {
                     });
                 })
             }

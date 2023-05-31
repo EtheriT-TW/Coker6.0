@@ -19,3 +19,7 @@
 .dx-datagrid-search-panel {
     width: fit-content !important;
 }
+
+.list_img > img {
+    height: 50px;
+}

@@ -423,7 +423,7 @@ var Coker = {
             });
         }
     },
-    Product : {
+    Product: {
         AddUp: {
             Product: function (data) {
                 return $.ajax({
@@ -591,6 +591,29 @@ var Coker = {
                 processData: false
             });
         },
+        Upload360: function (formData) {
+            return $.ajax({
+                url: '/api/FileUpload/upload360Files',
+                type: 'POST',
+                data: formData,
+                headers: _c.Data.Header,
+                contentType: false,
+                crossDomain: true,
+                dataType: 'json',
+                mimeType: "multipart/form-data",
+                processData: false
+            });
+        },
+        UploadYTLink: function (data) {
+            return $.ajax({
+                url: "/api/FileUpload/uploadYTLink",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         getFileList: function (type) {
             return $.ajax({
                 url: "/api/FileUpload/getFileList",
@@ -611,13 +634,13 @@ var Coker = {
                 dataType: "json"
             });
         },
-        DeleteImgByImgId: function (imgid) {
+        fileSortChange: function (data) {
             return $.ajax({
-                url: "/api/FileUpload/DeleteImageByImgId",
-                type: "Get",
+                url: "/api/FileUpload/fileSortChange",
+                type: "Post",
                 contentType: 'application/json; charset=utf-8',
-                data: { imgid: imgid },
                 headers: _c.Data.Header,
+                data: JSON.stringify(data),
                 dataType: "json"
             });
         },
@@ -631,8 +654,20 @@ var Coker = {
                 dataType: "json"
             });
         },
+        DeleteFileById: function (fileid) {
+            return $.ajax({
+                url: "/api/FileUpload/DeleteFileById",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                data: { fileid: fileid },
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
         UploadImageInit: function (elementId, label_text) {
             const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                accept: "image/*",
+                multiple: true,
                 text: {
                     browse: "　瀏 覽　",
                     chooseFile: "選擇圖片...",
@@ -643,6 +678,7 @@ var Coker = {
         },
         Upload360Init: function (elementId, label_text) {
             const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                accept: "image/*",
                 multiple: true,
                 text: {
                     browse: "　瀏 覽　",
@@ -655,6 +691,19 @@ var Coker = {
         },
         UploadVideoInit: function (elementId, label_text) {
             const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                accept: "video/*",
+                multiple: true,
+                text: {
+                    browse: "　瀏 覽　",
+                    chooseFile: "選擇檔案...",
+                    label: "影片上傳",
+                },
+            });
+            return upload;
+        },
+        UploadVideoPreviewInit: function (elementId, label_text) {
+            const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                accept: "video/*",
                 text: {
                     browse: "　瀏 覽　",
                     chooseFile: "選擇檔案...",

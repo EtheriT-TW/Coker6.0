@@ -195,10 +195,6 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                             }
                             data.GetType().GetProperty("Img").SetValue(data, img_list);
                         }
-                        else
-                        {
-                            data.GetType().GetProperty("Img").SetValue(data, "");
-                        }
                     }
                 }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -22,21 +23,44 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.fileUploadAppService = fileUploadAppService;
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
             {
                 case FileBindTypeEnum.產品:
-                    return await fileUploadAppService.uploadProdtFiles(files, id ?? 0);
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product");
                 case FileBindTypeEnum.技術證照:
-                    return await fileUploadAppService.uploadImageFiles(files, type, (long)sid, "TechnicalCertificate");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "TechnicalCertificate");
                 case FileBindTypeEnum.文章管理:
-                    return await fileUploadAppService.uploadImageFiles(files, type, (long)sid, "Article");
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article");
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
-            return null;
+        }
+        [HttpPost]
+        public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, [FromForm] int type, [FromForm] long? sid)
+        {
+            FileBindTypeEnum s = (FileBindTypeEnum)type;
+            switch (s)
+            {
+                case FileBindTypeEnum.產品:
+                    return await fileUploadAppService.upload360Files(files, type, (long)sid, "Product");
+                default:
+                    return null;
+            }
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> uploadYTLink(FileYTLinkUploadDto dto)
+        {
+            FileBindTypeEnum s = (FileBindTypeEnum)dto.Type;
+            switch (s)
+            {
+                case FileBindTypeEnum.產品:
+                    return await fileUploadAppService.uploadYTLink(dto, "Product");
+                default:
+                    return null;
+            }
         }
         [HttpPost]
         public async Task<ResponseMessageDto> getFileList(GetFileListDto dto)
@@ -52,15 +76,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await fileUploadAppService.getImgFiles(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> fileSortChange(FileChangeSortDto dto)
+        {
+            return await fileUploadAppService.fileSortChange(dto);
+        }
         [HttpDelete]
         public async Task<ResponseMessageDto> DeleteFile(DeleteDtoByKey dto)
         {
             return await fileUploadAppService.deleteFile(dto.key);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> DeleteImageByImgId(long? imgid)
+        public async Task<ResponseMessageDto> DeleteFileById(long? fileid)
         {
-            return await fileUploadAppService.deleteImgByImgId(imgid);
+            return await fileUploadAppService.deleteFileById(fileid);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> deleteImgBySId(FileGetImgInputDto dto)

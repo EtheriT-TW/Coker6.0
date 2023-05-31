@@ -14,35 +14,39 @@
 			<div class="modal-body">
 				<div class="bg-white p-3">
 					@(Html.DevExtreme().DataGrid<TechCertGetAllListDto>()
-							.DataSource(d => d.RemoteController().Key("Id")
-							.LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
-							)
-							.ID("TechCertList")
-							.Selection(s => s.Mode(SelectionMode.Multiple))
-							.RemoteOperations(true)
-							.ColumnHidingEnabled(false)
-							.ShowBorders(true)
-							.FilterRow(filterRow => filterRow
-							.Visible(true)
-							.ApplyFilter(GridApplyFilterMode.Auto)
-							)
-							.SearchPanel(searchPanel => searchPanel
-							.Visible(true)
-							.Placeholder("請輸入要搜尋的資料")
-							)
-							.Columns(c =>
-							{
-								c.AddFor(e => e.Id).Caption("編號").Visible(false);
-								c.AddFor(e => e.Title).Caption("技術證照").Width(150);
-								c.AddFor(e => e.Img).Caption("圖片")
+						.DataSource(d => d.RemoteController().Key("Id")
+						.LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
+						)
+						.ID("TechCertList")
+						.Selection(s => s.Mode(SelectionMode.Multiple))
+						.RemoteOperations(true)
+						.ColumnHidingEnabled(false)
+						.ShowBorders(true)
+						.FilterRow(filterRow => filterRow
+						.Visible(true)
+						.ApplyFilter(GridApplyFilterMode.Auto)
+						)
+						.SearchPanel(searchPanel => searchPanel
+						.Visible(true)
+						.Placeholder("請輸入要搜尋的資料")
+						)
+						.Columns(c =>
+						{
+							c.AddFor(e => e.Id).Caption("編號").Visible(false);
+							c.AddFor(e => e.Title).Caption("技術證照").Width(150);
+							c.AddFor(e => e.Img).Caption("圖片")
 							.AllowFiltering(false)
 							.AllowSorting(false)
-							.CellTemplate(@<text>
+							.CellTemplate(
+							@<text>
 								<div class="list_img">
-									<img style="max-height: 50px" src="<%- value %>" alt="" />
+									<% for(var i = value.length - 1 ; i >= 0 ; i--) { %>
+									<img class="me-1" src="<%- value[i] %>" alt="" />
+									<% } %>
 								</div>
-							</text>);
-							})
+							</text>
+							);
+						})
 						.OnSelectionChanged("TechCertList_SelectChange")
 						.Toolbar(toolbar =>
 						{

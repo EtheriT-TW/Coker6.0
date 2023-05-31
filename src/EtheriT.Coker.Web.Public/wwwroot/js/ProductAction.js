@@ -45,6 +45,13 @@
                 data: { id: id }
             });
         },
+        ProdOne: function (id) {
+            return $.ajax({
+                url: "/api/Product/GetProdDataOne/",
+                type: "GET",
+                data: { id: id }
+            });
+        },
         Stock: function (id) {
             return $.ajax({
                 url: "/api/Product/GetDisplayStock/",

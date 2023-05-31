@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto;
 using AutoMapper;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -32,6 +33,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
+        private readonly IFileUploadAppService fileUploadAppService;
         private readonly ImportAppService importAppService;
         public ProductAppService(
             CokerDbContext db,
@@ -40,6 +42,7 @@ namespace EtheriT.Coker.Application.Product
             IConfiguration configuration,
             IMapper mapper,
             ITechnicalCertificateAppService technicalCertificateAppService,
+            IFileUploadAppService fileUploadAppService,
             ImportAppService importAppService
         )
         {
@@ -49,6 +52,7 @@ namespace EtheriT.Coker.Application.Product
             this.configuration = configuration;
             this.technicalCertificateAppService = technicalCertificateAppService;
             this.importAppService = importAppService;
+            this.fileUploadAppService = fileUploadAppService;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -138,6 +142,7 @@ namespace EtheriT.Coker.Application.Product
                 }
 
                 output.Success = tag_response.Success && techcert_response.Success && stock_response.Success;
+                output.Message = asoid.ToString();
             }
             catch (Exception e)
             {
@@ -224,7 +229,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                if (usetId != null)
+                if (usetId != 0)
                 {
                     foreach (var item in dto)
                     {
@@ -348,6 +353,7 @@ namespace EtheriT.Coker.Application.Product
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertGetSelectedDto>(),
                         Stocks = new List<ProductStockDto>(),
+                        Files = new List<FileGetProdDisplayDto>(),
                     };
 
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
@@ -373,6 +379,12 @@ namespace EtheriT.Coker.Application.Product
                     if (stockDatas != null)
                     {
                         output.Stocks = stockDatas;
+                    }
+
+                    var fileDatas = await fileUploadAppService.getProdDisplayFiles(output.Id, 3);
+                    if (fileDatas != null)
+                    {
+                        output.Files = fileDatas;
                     }
 
                     return output;
@@ -505,6 +517,7 @@ namespace EtheriT.Coker.Application.Product
             ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = true };
             ResponseMessageDto techcertdeleteresponse = new ResponseMessageDto() { Success = true };
             ResponseMessageDto stockresponse = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto fileresponse = new ResponseMessageDto() { Success = true };
 
             try
             {
@@ -546,7 +559,6 @@ namespace EtheriT.Coker.Application.Product
                             pst.DeleterUserId = usetId;
                         }
                     }
-
 
                     var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted).ToListAsync();
 
@@ -590,6 +602,14 @@ namespace EtheriT.Coker.Application.Product
                             }
                         }
                     }
+
+                    fileresponse = await fileUploadAppService.deleteImgBySId(new FileGetImgInputDto()
+                    {
+                        Sid = Id,
+                        Type = (int)FileBindTypeEnum.產品,
+                    });
+
+                    output.Success = fileresponse.Success;
 
                     db.SaveChanges();
                 }

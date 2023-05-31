@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.ObjectType;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
@@ -64,32 +65,38 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
                 .ForMember(e => e.MaxLevel, option => option.MapFrom(c => 0));
 
-			//Product
-			CreateMap<ProductImportDto, Prod>()
+            //Product
+            CreateMap<ProductImportDto, Prod>()
                 .ReverseMap();
-			CreateMap<ProdAddUpDto, Prod>()
-				.ReverseMap();
-			CreateMap<ProductImportDto, ProdAddUpDto>()
-				.ForMember(e => e.Id, option => option.MapFrom(c => 0))
-				.ReverseMap();
-			CreateMap<ProdGetDataDto, Prod>().ReverseMap();
-			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
-				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
-				.ReverseMap();
+            CreateMap<ProdAddUpDto, Prod>()
+                .ReverseMap();
+            CreateMap<ProductImportDto, ProdAddUpDto>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => 0))
+                .ReverseMap();
+            CreateMap<ProdGetDataDto, Prod>().ReverseMap();
+            CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+                .ReverseMap();
 
-			//Tags
-			CreateMap<TagSelectedDto, Core.Models.Tag>()
-				.ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
-				.ReverseMap();
+            //Tags
+            CreateMap<TagSelectedDto, Core.Models.Tag>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
+                .ReverseMap();
 
-			//Article
-			CreateMap<ArticleGetDataDto, Core.Models.Article>().ReverseMap();
-			CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
+            //Article
+            CreateMap<ArticleGetDataDto, Core.Models.Article>().ReverseMap();
+            CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
 
-			//Directory
-			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
-				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
-				.ReverseMap();
-		}
+            //Directory
+            CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+                .ReverseMap();
+
+            //FileUpload
+            //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
+            //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
+            //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
+            //    .ReverseMap();
+        }
     }
 }

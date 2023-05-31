@@ -236,7 +236,7 @@ namespace EtheriT.Coker.Application.Product
                                 FK_RId = item.FK_RId,
                                 Price = item.Price,
                                 Bonus = item.Bonus,
-                                CreatorUserId = usetId,
+                                CreatorUserId = usetId
                             };
                             db.Prod_Prices.Add(pp);
                             db.SaveChanges();

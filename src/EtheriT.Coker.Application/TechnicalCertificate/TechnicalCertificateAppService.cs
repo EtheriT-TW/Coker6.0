@@ -195,10 +195,6 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                             }
                             data.GetType().GetProperty("Img").SetValue(data, img_list);
                         }
-                        else
-                        {
-                            data.GetType().GetProperty("Img").SetValue(data, "");
-                        }
                     }
                 }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -206,8 +202,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             catch (Exception e)
             {
                 var expectiontext = e;
-            }
-            return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+				return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+			}
         }
         public async Task<List<TechCertDisplayDto>> GetDisplayData(LongIdDto dto)
         {

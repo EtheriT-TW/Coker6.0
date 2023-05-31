@@ -374,7 +374,9 @@ upload/**/*.*
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
 !**/wwwroot/lib/tui-code/**/*.*
+**/wwwroot/lib/grapesjs/**/*.*
 */*/wwwroot/dist/
 **/package-lock.json
 *.lock
+
 NuGet.config

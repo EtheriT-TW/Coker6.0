@@ -1,19 +1,17 @@
 ﻿using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Files;
-using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.IO;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
+using System.IO;
 
 namespace EtheriT.Coker.Application
 {
@@ -47,12 +45,7 @@ namespace EtheriT.Coker.Application
         public async Task<UploadFileOutputDto> uploadHtmlContentFiles(IList<IFormFile> files)
         {
             UploadFileOutputDto response = await uploadFiles(files, "htmlConten");
-            await loginUserData.SetLogs(AppName, "uploadProdtFiles", "FileBinary...", JsonConvert.SerializeObject(response));
-            return response;
-        }
-        public async Task<UploadFileOutputDto> uploadProdtFiles(IList<IFormFile> files, long id)
-        {
-            UploadFileOutputDto response = await uploadFiles(files, "Prod");
+            await loginUserData.SetLogs(AppName, "uploadHtmlFiles", "FileBinary...", JsonConvert.SerializeObject(response));
             return response;
         }
         private async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string type, bool isTemp = false)
@@ -86,7 +79,7 @@ namespace EtheriT.Coker.Application
             };
             try
             {
-                List<FileItemDto> items = await SaveImage(files, type, serno, page, sid);
+                List<FileItemDto> items = await SaveImage(files, type, (int)FileBindMoreEnum.壓縮圖片, serno, page, sid);
                 foreach (var item in items)
                 {
                     response.Files.Add(item);
@@ -108,7 +101,7 @@ namespace EtheriT.Coker.Application
             };
             return null;
         }
-        public async Task<ResponseMessageDto> uploadYTLink(FileYTLinkUploadDto dto, string page)
+        public async Task<ResponseMessageDto> uploadYTLink(FileYTLinkUploadDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto() { Success = true };
 
@@ -244,11 +237,12 @@ namespace EtheriT.Coker.Application
 
                             if (fadata.GuidKey != Guid.Empty)
                             {
+                                orgName = orgName == "" ? "" : $"/{orgName}";
                                 result.Add(new FileGetImgDto
                                 {
                                     Id = fadata.Id,
                                     Name = fadata.OriginalFileName,
-                                    Link = fadata.DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                    Link = fadata.DownloadFileName.Replace("upload", $"upload{orgName}")
                                 });
                             }
                         }
@@ -271,11 +265,12 @@ namespace EtheriT.Coker.Application
 
                                     }
                                     chimg = chimg.OrderByDescending(e => e.Size).ToList();
+                                    orgName = orgName == "" ? "" : $"/{orgName}";
                                     result.Add(new FileGetImgDto
                                     {
                                         Id = faid.Value,
                                         Name = chimg[dto.Size - 2].OriginalFileName,
-                                        Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload/{orgName}")
+                                        Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload{orgName}")
                                     });
                                 }
                             }
@@ -296,7 +291,10 @@ namespace EtheriT.Coker.Application
             try
             {
                 long websiteId = await loginUserData.GetWebsiteId();
-                string orgName = await loginUserData.GetWebsiteOrgName();
+                if (websiteId == 0)
+                {
+                    websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                }
 
                 if (size == 1)
                 {
@@ -413,7 +411,7 @@ namespace EtheriT.Coker.Application
                                     if (fb.num == 1)
                                     {
                                         var ids = new List<long> { fu.Id };
-                                        var file_link = await this.getImgFilesById(ids, 3);
+                                        var file_link = await this.getImgFilesById(ids, size);
 
                                         output.Add(new FileGetProdDisplayDto
                                         {
@@ -450,7 +448,10 @@ namespace EtheriT.Coker.Application
                 {
                     for (var j = 0; j < output[i].Link.Count; j++)
                     {
-                        output[i].Link[j] = output[i].Link[j].Replace("upload", $"upload/{orgName}");
+                        if (orgName != "")
+                        {
+                            output[i].Link[j] = output[i].Link[j].Replace("upload", $"upload/{orgName}");
+                        }
                     }
                 }
 
@@ -529,7 +530,7 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> deleteImgBySId(FileGetImgInputDto dto)
+        public async Task<ResponseMessageDto> deleteImgBySId(FileDeleteDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             response.Success = true;
@@ -543,7 +544,8 @@ namespace EtheriT.Coker.Application
 
                 foreach (var imgdata in imgdatas)
                 {
-                    var delete_response = await deleteFileById(imgdata.FK_FileUploadId);
+                    dto.Fid = imgdata.FK_FileUploadId;
+                    var delete_response = await deleteFileById(dto);
                     if (!delete_response.Success)
                     {
                         response.Success = false;
@@ -559,68 +561,91 @@ namespace EtheriT.Coker.Application
 
             return response;
         }
-        public async Task<ResponseMessageDto> deleteFileById(long? fileid)
+        public async Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             response.Success = true;
 
             try
             {
-                long websiteId = await loginUserData.GetWebsiteId();
-                long usetId = await loginUserData.GetUserId();
-
-                var fafile = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == fileid).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
-                if (fafile != null)
+                if (dto.Fid != 0)
                 {
-                    var chfile_binds = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fafile.GuidKey).Where(e => !e.IsDeleted).ToListAsync());
-                    if (chfile_binds != null)
+                    long websiteId = await loginUserData.GetWebsiteId();
+                    long usetId = await loginUserData.GetUserId();
+
+                    var fafile_other = await (db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid && e.type == dto.Type && e.Sid != dto.Sid)).ToListAsync();
+                    var fafile_binds = await (db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid && e.type == dto.Type && e.Sid == dto.Sid).FirstOrDefaultAsync());
+
+                    if (fafile_other.Count > 0 && fafile_binds != null)
                     {
-                        foreach (var chfile_bind in chfile_binds)
+                        fafile_binds.IsDeleted = true;
+                        fafile_binds.DeletionTime = DateTime.Now;
+                        fafile_binds.DeleterUserId = usetId;
+                        db.SaveChanges();
+                    }
+                    else if (fafile_binds != null)
+                    {
+                        var fafile = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == dto.Fid).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+                        if (fafile != null)
                         {
-                            var chfile = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == chfile_bind.FK_FileUploadId).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
-                            if (chfile != null)
+                            var chfile_binds = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fafile.GuidKey && e.type == (int)FileBindMoreEnum.壓縮圖片).Where(e => !e.IsDeleted).ToListAsync());
+                            if (chfile_binds != null)
                             {
-                                chfile.IsDeleted = true;
-                                chfile.DeletionTime = DateTime.Now;
-                                chfile.DeleterUserId = usetId;
-                                db.SaveChanges();
+                                foreach (var chfile_bind in chfile_binds)
+                                {
+                                    var chfile = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == chfile_bind.FK_FileUploadId).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
+                                    if (chfile != null && response.Success)
+                                    {
+                                        response = await this.deleteFile(chfile.GuidKey);
+                                        if (response.Success)
+                                        {
+                                            chfile.IsDeleted = true;
+                                            chfile.DeletionTime = DateTime.Now;
+                                            chfile.DeleterUserId = usetId;
+
+                                            chfile_bind.IsDeleted = true;
+                                            chfile_bind.DeletionTime = DateTime.Now;
+                                            chfile_bind.DeleterUserId = usetId;
+
+                                            db.SaveChanges();
+                                        }
+                                    }
+                                }
                             }
-                            chfile_bind.IsDeleted = true;
-                            chfile_bind.DeletionTime = DateTime.Now;
-                            chfile_bind.DeleterUserId = usetId;
                         }
-                        db.SaveChanges();
-                    }
 
-                    var fbs = await (db.FileBinds.Where(e => e.FK_FileUploadId == fafile.Id).ToListAsync());
-                    foreach (var fb in fbs)
-                    {
-                        fb.IsDeleted = true;
-                        fb.DeletionTime = DateTime.Now;
-                        fb.DeleterUserId = usetId;
-                        db.SaveChanges();
-                        if (fb.MediaLink != "")
+                        response = await this.deleteFile(fafile.GuidKey);
+                        if (response.Success)
                         {
-                            await this.deleteFile(fafile.GuidKey);
+                            fafile.IsDeleted = true;
+                            fafile.DeletionTime = DateTime.Now;
+                            fafile.DeleterUserId = usetId;
+
+                            fafile_binds.IsDeleted = true;
+                            fafile_binds.DeletionTime = DateTime.Now;
+                            fafile_binds.DeleterUserId = usetId;
+                            db.SaveChanges();
                         }
+
                     }
-
-                    fafile.IsDeleted = true;
-                    fafile.DeletionTime = DateTime.Now;
-                    fafile.DeleterUserId = usetId;
+                    await loginUserData.SetLogs(AppName, "deleteImgFile", dto.Fid.ToString(), JsonConvert.SerializeObject(response));
+                    return response;
                 }
-
-                db.SaveChanges();
+                else
+                {
+                    response.Error = "Fid為0";
+                    response.Success = false;
+                    return response;
+                }
 
             }
             catch (Exception e)
             {
                 response.Error = e.Message;
                 response.Success = false;
+                return response;
             }
 
-            await loginUserData.SetLogs(AppName, "deleteImgFile", fileid.ToString(), JsonConvert.SerializeObject(response));
-            return response;
         }
         public async Task<string> getImgUrl(long? imgid, long websiteid)
         {
@@ -688,7 +713,7 @@ namespace EtheriT.Coker.Application
             }
             else throw new Exception("上傳失敗");
         }
-        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int type, int serno, string directory, long sid)
+        private async Task<List<FileItemDto>> SaveImage(IList<IFormFile> files, int asotype, int bindtype, int serno, string directory, long sid)
         {
             if (files.Count() > 0)
             {
@@ -726,7 +751,7 @@ namespace EtheriT.Coker.Application
                             {
                                 FileBindMore fileBindMore = new FileBindMore
                                 {
-                                    type = type,
+                                    type = bindtype,
                                     FK_FileBindGuid = faimg_id,
                                     FK_FileUploadId = fileUpload.Id
                                 };
@@ -741,7 +766,7 @@ namespace EtheriT.Coker.Application
                                 {
                                     Guid = Guid.NewGuid(),
                                     Name = fileUpload.OriginalFileName,
-                                    type = type,
+                                    type = asotype,
                                     Sid = sid,
                                     num = 1,
                                     SerNo = serno,

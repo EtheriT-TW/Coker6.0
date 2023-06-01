@@ -6,7 +6,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
     public class TechCertDisplayDto
     {
         public long Id { get; set; }
-        public List<FileGetImgDto> Img { get; set; }
+        public List<FileGetImgDto> Img_orig { get; set; }
+        public List<FileGetImgDto> Img_small { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
     }

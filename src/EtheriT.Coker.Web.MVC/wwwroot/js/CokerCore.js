@@ -644,13 +644,13 @@ var Coker = {
                 dataType: "json"
             });
         },
-        Delete: function (key) {
+        Delete: function (data) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFile",
-                type: "Delete",
+                type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify({ key: key }),
+                data: JSON.stringify(data),
                 dataType: "json"
             });
         },

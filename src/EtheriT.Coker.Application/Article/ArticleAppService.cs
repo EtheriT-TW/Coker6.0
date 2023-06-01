@@ -114,6 +114,7 @@ namespace EtheriT.Coker.Application.Article
                 }
 
                 output.Success = tag_response.Success;
+                output.Message = asoid.ToString();
             }
             catch (Exception e)
             {
@@ -304,7 +305,7 @@ namespace EtheriT.Coker.Application.Article
                         }
                     }
 
-                    var delete_img_dto = new FileGetImgInputDto
+                    var delete_img_dto = new FileDeleteDto
                     {
                         Sid = result.Id,
                         Type = (int)FileBindTypeEnum.文章管理

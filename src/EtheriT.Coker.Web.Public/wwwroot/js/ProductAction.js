@@ -45,6 +45,13 @@
                 data: { id: id }
             });
         },
+        ProdMainDisplay: function (Id) {
+            return $.ajax({
+                url: "/api/Product/GetMainDisplayOne/",
+                type: "GET",
+                data: { Id: Id }
+            });
+        },
         ProdOne: function (id) {
             return $.ajax({
                 url: "/api/Product/GetProdDataOne/",
@@ -57,15 +64,6 @@
                 url: "/api/Product/GetDisplayStock/",
                 type: "GET",
                 data: { id: id }
-            });
-        },
-        TechCert: function (data) {
-            return $.ajax({
-                url: "/api/TechnicalCertificate/GetDisplayData",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(data),
-                dataType: "json"
             });
         },
     },

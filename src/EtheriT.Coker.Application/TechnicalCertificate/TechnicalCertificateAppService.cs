@@ -10,7 +10,7 @@ using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
+using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -19,21 +19,25 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly IConfiguration configuration;
         public TechnicalCertificateAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IFileUploadAppService fileUploadAppService
+            IFileUploadAppService fileUploadAppService,
+            IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.fileUploadAppService = fileUploadAppService;
+            this.configuration = configuration;
         }
         public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
             {
+                var asoid = dto.Id;
                 if (dto.Id == 0)
                 {
                     var db_t = db.Tokens.Where(e => e.id == dto.TId).FirstOrDefault();
@@ -55,7 +59,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         };
                         db.TechnicalCertificates.Add(tc);
                         db.SaveChanges();
-                        output.Message = tc.Id.ToString();
+                        asoid = tc.Id;
                     }
                     else throw new Exception("查無資料");
                 }
@@ -78,11 +82,11 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         db_tc.LastModificationTime = DateTime.Now;
                         db_tc.LastModifierUserId = db_t.UserID;
                         db.SaveChanges();
-                        output.Message = db_tc.Id.ToString();
                     }
                     else throw new Exception("查無資料");
                 }
                 output.Success = true;
+                output.Message = asoid.ToString();
             }
             catch (Exception e)
             {
@@ -134,6 +138,10 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             {
 
                 long WebsiteID = await loginUserData.GetWebsiteId();
+                if (WebsiteID == 0)
+                {
+                    WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                }
 
                 var output = from ptc in db.Prod_TechCerts
                              where ptc.FK_PId == Pid && !ptc.IsDeleted
@@ -202,40 +210,65 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             catch (Exception e)
             {
                 var expectiontext = e;
-				return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-			}
+                return new JsonResult(new List<TechCertGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
         }
-        public async Task<List<TechCertDisplayDto>> GetDisplayData(LongIdDto dto)
+        public async Task<List<TechCertDisplayDto>> GetDisplayData(long pid)
         {
             try
             {
+
                 var tcdatas = await (from ptc in db.Prod_TechCerts
-                                     where ptc.IsChecked && ptc.FK_PId == dto.Id
+                                     where ptc.FK_PId == pid && !ptc.IsDeleted
                                      join tc in db.TechnicalCertificates on ptc.FK_TCId equals tc.Id
+                                     where !tc.IsDeleted
                                      select new TechCertDisplayDto
                                      {
                                          Id = tc.Id,
-                                         Img = new List<FileGetImgDto>(),
+                                         Img_orig = new List<FileGetImgDto>(),
+                                         Img_small = new List<FileGetImgDto>(),
                                          Title = tc.Title,
                                          Description = tc.Description
                                      }).ToListAsync(); ;
 
                 foreach (var tcdata in tcdatas)
                 {
-                    var getImgFileInput = new FileGetImgInputDto
+                    var imgdatas_orig = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
                     {
                         Sid = tcdata.Id,
                         Type = (int)FileBindTypeEnum.技術證照,
                         Size = 1
-                    };
-                    var imgdatas = await fileUploadAppService.getImgFiles(getImgFileInput);
-                    if (imgdatas.Count > 0)
+                    });
+                    if (imgdatas_orig.Count > 0)
                     {
-                        foreach (var imgdata in imgdatas)
+                        foreach (var imgdata in imgdatas_orig)
                         {
                             if (imgdata.Link != null)
                             {
-                                tcdata.Img.Add(new FileGetImgDto
+                                tcdata.Img_orig.Add(new FileGetImgDto
+                                {
+                                    Id = imgdata.Id,
+                                    Link = imgdata.Link,
+                                    Name = imgdata.Name,
+                                });
+                            }
+                        }
+                    }
+
+
+                    var imgdatas_small = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                    {
+                        Sid = tcdata.Id,
+                        Type = (int)FileBindTypeEnum.技術證照,
+                        Size = 3
+                    });
+                    if (imgdatas_small.Count > 0)
+                    {
+                        foreach (var imgdata in imgdatas_small)
+                        {
+                            if (imgdata.Link != null)
+                            {
+                                tcdata.Img_small.Add(new FileGetImgDto
                                 {
                                     Id = imgdata.Id,
                                     Link = imgdata.Link,
@@ -296,7 +329,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
                 if (db_tc != null)
                 {
-                    var delete_img_dto = new FileGetImgInputDto
+                    var delete_img_dto = new FileDeleteDto
                     {
                         Sid = db_tc.Id,
                         Type = (int)FileBindTypeEnum.技術證照

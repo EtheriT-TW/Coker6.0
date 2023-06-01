@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using AutoMapper;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using System;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -381,7 +382,7 @@ namespace EtheriT.Coker.Application.Product
                         output.Stocks = stockDatas;
                     }
 
-                    var fileDatas = await fileUploadAppService.getProdDisplayFiles(output.Id, 3);
+                    var fileDatas = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
                     if (fileDatas != null)
                     {
                         output.Files = fileDatas;
@@ -393,9 +394,8 @@ namespace EtheriT.Coker.Application.Product
             }
             catch (Exception e)
             {
-
+                return null;
             }
-            return null;
         }
         public async Task<List<ProductStockDto>> GetStockDataAll(long PId)
         {
@@ -409,7 +409,9 @@ namespace EtheriT.Coker.Application.Product
                                         Pid = PId,
                                         Id = ps.Id,
                                         FK_S1id = ps.FK_S1id,
+                                        S1_Title = "",
                                         FK_S2id = ps.FK_S2id,
+                                        S2_Title = "",
                                         Price = ps.Price,
                                         Min_Qty = ps.Min_Qty,
                                         Stock = ps.Stock,
@@ -422,7 +424,9 @@ namespace EtheriT.Coker.Application.Product
                 foreach (var item in output)
                 {
                     item.FK_ST1id = (item.FK_S1id != null && (int)item.FK_S1id > 0) ? db_sp[(int)item.FK_S1id - 1].FK_Tid : 0;
+                    item.S1_Title = (item.FK_S1id != null && (int)item.FK_S1id > 0) ? db_sp[(int)item.FK_S1id - 1].Title : "";
                     item.FK_ST2id = (item.FK_S2id != null && (int)item.FK_S2id > 0) ? db_sp[(int)item.FK_S2id - 1].FK_Tid : 0;
+                    item.S2_Title = (item.FK_S2id != null && (int)item.FK_S2id > 0) ? db_sp[(int)item.FK_S2id - 1].Title : "";
                     item.Prices = await this.GetPriceDataAll(item.Id);
                 }
 
@@ -459,6 +463,81 @@ namespace EtheriT.Coker.Application.Product
             }
 
             return null;
+        }
+        public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
+        {
+            try
+            {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var db_p = db.Prods.Where(e => e.Id == Id).OrderBy(e => e.Ser_No).FirstOrDefault();
+
+                if (db_p != null)
+                {
+                    ProdGetMainDisplayDto output = new ProdGetMainDisplayDto()
+                    {
+                        Id = db_p.Id,
+                        Title = db_p.Title,
+                        Introduction = db_p.Introduction,
+                        Description = db_p.Description,
+                        TagDatas = new List<TagGetSelectedDto>(),
+                        TechCertDatas = new List<TechCertDisplayDto>(),
+                        Stocks = new List<ProductStockDto>(),
+                        Files_Original = new List<FileGetProdDisplayDto>(),
+                        Files_Medium = new List<FileGetProdDisplayDto>(),
+                        Files_Small = new List<FileGetProdDisplayDto>(),
+                    };
+
+                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                    {
+                        Fk_Aid = output.Id,
+                        Type = (int)TagAssociateTypeEnum.商品,
+                    }
+                    );
+
+                    if (tagDatas != null)
+                    {
+                        output.TagDatas = tagDatas;
+                    }
+
+                    var techcertDatas = await technicalCertificateAppService.GetDisplayData(db_p.Id);
+
+                    if (techcertDatas != null)
+                    {
+                        output.TechCertDatas = techcertDatas;
+                    }
+
+                    var stockDatas = await this.GetStockDataAll(output.Id);
+                    if (stockDatas != null)
+                    {
+                        output.Stocks = stockDatas;
+                    }
+
+                    var fileDatas_original = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
+                    if (fileDatas_original != null)
+                    {
+                        output.Files_Original = fileDatas_original;
+                    }
+
+                    var fileDatas_medium = await fileUploadAppService.getProdDisplayFiles(output.Id, 2);
+                    if (fileDatas_medium != null)
+                    {
+                        output.Files_Medium = fileDatas_medium;
+                    }
+
+                    var fileDatas_small = await fileUploadAppService.getProdDisplayFiles(output.Id, 3);
+                    if (fileDatas_small != null)
+                    {
+                        output.Files_Small = fileDatas_small;
+                    }
+
+                    return output;
+                }
+                else throw new Exception("查無商品資料");
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
         }
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
@@ -603,7 +682,7 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
 
-                    fileresponse = await fileUploadAppService.deleteImgBySId(new FileGetImgInputDto()
+                    fileresponse = await fileUploadAppService.deleteImgBySId(new FileDeleteDto()
                     {
                         Sid = Id,
                         Type = (int)FileBindTypeEnum.產品,

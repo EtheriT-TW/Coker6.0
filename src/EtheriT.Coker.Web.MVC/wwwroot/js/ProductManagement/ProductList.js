@@ -49,6 +49,7 @@ function PageReady() {
 
     $(window).on("fileUploadWithPreview:imagesAdded", function (event) {
         var cachedFile = upload_file.cachedFileArray;
+        console.log(upload_file)
 
         $("#ProductForm > .data_upload > ul > li").each(function () {
             var $self = $(this);
@@ -64,48 +65,49 @@ function PageReady() {
                             file_type = file.type;
                             new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
                         })
-
+                        console.log(cachedFile)
                         var temp_files = [];
+                        file_num--;
                         new_file_list.forEach(function (file, index) {
                             var img_file = [];
                             img_file.push(file);
-                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7 })
+                            console.log(img_file)
+                            var obj = {};
+                            obj["TempId"] = $self.data("tempid") + index;
+                            obj["Type"] = $self.data("uploadtype");
+                            var reader = new FileReader();
+                            reader.readAsDataURL(img_file[0]);
+                            reader.onload = (function (e) {
+                                obj["Link"] = e.target.result;
+                            });
+                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 500, height: 500, imageType: img_file[0].type })
                             htmlImageCompress.then(function (result) {
                                 img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
+                                console.log(`Size: ${result.fileSize}`);
+                                console.log(result.file);
 
-                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3 })
+                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3, width: 150, height: 150, imageType: img_file[0].type })
                                 htmlImageCompress.then(function (result) {
+                                    console.log(`Size: ${result.fileSize}`);
+                                    console.log(result.file);
                                     img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                    var reader = new FileReader();
-                                    reader.readAsDataURL(img_file[2]);
-                                    reader.onload = (function (e) {
-                                        var obj = {};
-                                        obj["File"] = img_file;
-                                        obj["Link"] = e.target.result;
-                                        obj["TempId"] = $self.data("tempid") + index;
-                                        obj["Type"] = $self.data("uploadtype");
-                                        obj["IsDelete"] = false;
-                                        obj["Name"] = result.origin.name;
-                                        total_files.push(obj);
-                                        temp_files.push(obj)
-                                    });
+                                    obj["File"] = img_file;
+                                    obj["IsDelete"] = false;
+                                    obj["Name"] = result.origin.name;
+                                    total_files.push(obj);
+                                    UploadListAdd(obj);
                                 }).catch(function (err) {
                                     UploadPreviewFrameClear();
+                                    console.log(err)
                                     co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                 })
 
                             }).catch(function (err) {
                                 UploadPreviewFrameClear();
+                                console.log(err)
                                 co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                             })
                         })
-
-                        setTimeout(function () {
-                            file_num--;
-                            temp_files.forEach(function (file) {
-                                UploadListAdd(file);
-                            })
-                        }, 500);
 
                         break;
                     //360圖片上傳
@@ -1087,7 +1089,7 @@ function UploadFile($self) {
 
 function UploadListAdd(result) {
     console.log("UploadListAdd");
-    //console.log(result);
+    console.log(result);
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
@@ -1376,7 +1378,11 @@ function AddUp(success_text, error_text, target) {
                             case 3:
                             case 4:
                                 if (typeof (file["Id"]) != "undefined") {
-                                    co.File.DeleteFileById(file["Id"]);
+                                    co.File.DeleteFileById({
+                                        Sid: result.message,
+                                        Type: 1,
+                                        Fid: file["Id"],
+                                    });
                                 }
                                 break;
                         }

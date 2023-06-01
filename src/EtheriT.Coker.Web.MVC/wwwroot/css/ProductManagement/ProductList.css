@@ -53,11 +53,26 @@ input[type="number"] {
         width: 2.5rem;
     }
 
-.data_upload > .preview_frame {
-    min-height: 350px;
+/* Product Form */
+.media_preview {
+    height: calc(70vh - 115px);
 }
 
-/* Product Form */
+    .media_preview img {
+        max-height: 100%;
+        max-width: 100%;
+        width: auto;
+        height: auto;
+    }
+
+.data_upload > ul {
+    height: 70vh;
+}
+
+.data_upload > .preview_frame {
+    height: 70vh;
+}
+
 #ProductForm > div > div > .btn_input_pic {
     height: 3.5rem;
     width: 3.5rem;
@@ -124,6 +139,10 @@ input[type="number"] {
 
 @media only screen and (max-width: 576px) {
     .data_upload > ul {
-        max-height: 150px;
+        max-height: 200px;
+    }
+
+    .data_upload > .preview_frame {
+        height: 300px;
     }
 }

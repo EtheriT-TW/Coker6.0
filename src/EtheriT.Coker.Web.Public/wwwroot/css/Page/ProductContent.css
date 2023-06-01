@@ -100,7 +100,7 @@ input[type="number"] {
     overflow: hidden;
 }
 
-    #Product > .image > .pro_tag > li {
+    #Product > .image > .pro_tag .round_tag {
         padding: 0.25rem 0.8rem;
         margin-right: 0.5rem;
         float: left;
@@ -281,9 +281,11 @@ input:disabled + .btn_radio {
     height: 150px;
 }
 
-#TechnicalDocuments > [class*="badge_"] > img {
-    width: 150px;
-}
+/*#TechnicalDocuments [class*="badge_"] img {
+    max-width: 80vw;
+    height: 150px;
+    width: auto;
+}*/
 
 @media only screen and (max-width: 1400px) {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {

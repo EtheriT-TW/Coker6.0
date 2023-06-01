@@ -21,19 +21,35 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<ResponseMessageDto> AddUp([FromForm] DevExpressDto dto)
+        public async Task<ResponseMessageDto> TypeAddUp([FromForm] DevExpressDto dto)
         {
-            return await specificationAppService.AddUp(dto);
+            return await specificationAppService.TypeAddUp(dto);
+        }
+        [HttpPost]
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<ResponseMessageDto> SpecAddUp([FromForm] DevExpressDto dto)
+        {
+            return await specificationAppService.SpecAddUp(dto);
         }
         [HttpGet]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllTypeList(DataSourceLoadOptions loadOptions)
         {
-            return await specificationAppService.GetAllList(loadOptions);
+            return await specificationAppService.GetAllTypeList(loadOptions);
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> Delete(long Id)
+        public async Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions)
         {
-            return await specificationAppService.Delete(Id);
+            return await specificationAppService.GetAllSpecList(loadOptions);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> TypeDelete(long Id)
+        {
+            return await specificationAppService.TypeDelete(Id);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> SpecDelete(long Id)
+        {
+            return await specificationAppService.SpecDelete(Id);
         }
     }
 }

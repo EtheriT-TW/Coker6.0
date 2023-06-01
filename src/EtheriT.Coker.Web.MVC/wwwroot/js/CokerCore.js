@@ -712,6 +712,26 @@ var Coker = {
             });
             return upload;
         }
+    },
+    Spec: {
+        TypeDelect: function (id) {
+            return $.ajax({
+                url: "/api/Specification/TypeDelete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id },
+            });
+        },
+        SpecDelect: function (id) {
+            return $.ajax({
+                url: "/api/Specification/SpecDelete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id },
+            });
+        }
     }
 }
 var _c = Coker;

@@ -1001,14 +1001,6 @@ function UploadFile($self) {
                         $parent.find(".media_preview > div").children().remove();
                         $parent.find(".media_preview > div").children().remove();
                         $parent.find(".media_preview > div").append(`<img src="${file}" class=""></img>`);
-                        var $img = $parent.find(".media_preview > div > img");
-                        $img.attr('src', url).on('load', function () {
-                            if (this.width > this.height) {
-                                $img.addClass("h-auto w-100")
-                            } else {
-                                $img.addClass("img-fluid")
-                            }
-                        });
                     } else if (typeof ($self.data("tempid")) != "undefined") {
                         var data = total_files.find(item => item["TempId"] == $self.data("tempid"));
                         if (typeof (data) != "undefined") {
@@ -1017,14 +1009,6 @@ function UploadFile($self) {
                             $parent.find(".media_preview > div").children().remove();
                             var link = data["Link"];
                             $parent.find(".media_preview > div").append(`<img src="${link}" class=""></img>`);
-                            var $img = $parent.find(".media_preview > div > img");
-                            $img.attr('src', url).on('load', function () {
-                                if (this.width > this.height) {
-                                    $img.addClass("h-auto w-100")
-                                } else {
-                                    $img.addClass("img-fluid")
-                                }
-                            });
                         }
                         $parent.find(".media_frame").addClass("d-flex");
                     }

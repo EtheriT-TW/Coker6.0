@@ -7,9 +7,12 @@ namespace EtheriT.Coker.Application.Shared.Specification
 {
     public interface ISpecificationAppService
     {
-        public Task<ResponseMessageDto> AddUp([FromForm] DevExpressDto dto);
-        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
-        public Task<ResponseMessageDto> Delete(long Id);
+        public Task<ResponseMessageDto> TypeAddUp([FromForm] DevExpressDto dto);
+        public Task<ResponseMessageDto> SpecAddUp([FromForm] DevExpressDto dto);
+        public Task<JsonResult> GetAllTypeList(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions);
+        public Task<ResponseMessageDto> TypeDelete(long Id);
+        public Task<ResponseMessageDto> SpecDelete(long Id);
 
     }
 }

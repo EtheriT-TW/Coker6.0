@@ -266,11 +266,33 @@ namespace EtheriT.Coker.Application
                                     }
                                     chimg = chimg.OrderByDescending(e => e.Size).ToList();
                                     orgName = orgName == "" ? "" : $"/{orgName}";
+                                    if (chimg_ids.Count == 2)
+                                    {
+                                        result.Add(new FileGetImgDto
+                                        {
+                                            Id = faid.Value,
+                                            Name = chimg[dto.Size - 2].OriginalFileName,
+                                            Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload{orgName}")
+                                        });
+                                    }
+                                    else if (chimg_ids.Count == 1)
+                                    {
+                                        result.Add(new FileGetImgDto
+                                        {
+                                            Id = faid.Value,
+                                            Name = chimg[0].OriginalFileName,
+                                            Link = chimg[0].DownloadFileName.Replace("upload", $"upload{orgName}")
+                                        });
+                                    }
+                                }
+                                else
+                                {
+                                    orgName = orgName == "" ? "" : $"/{orgName}";
                                     result.Add(new FileGetImgDto
                                     {
-                                        Id = faid.Value,
-                                        Name = chimg[dto.Size - 2].OriginalFileName,
-                                        Link = chimg[dto.Size - 2].DownloadFileName.Replace("upload", $"upload{orgName}")
+                                        Id = fadata.Id,
+                                        Name = fadata.OriginalFileName,
+                                        Link = fadata.DownloadFileName.Replace("upload", $"upload{orgName}")
                                     });
                                 }
                             }
@@ -317,7 +339,7 @@ namespace EtheriT.Coker.Application
                         {
                             var files = await db.FileBindMores.Where(e => e.FK_FileBindGuid == fa_file.GuidKey && !e.IsDeleted).ToListAsync();
 
-                            if (files != null)
+                            if (files.Count > 0)
                             {
                                 var temp_files = new List<FileGetImgDto>();
                                 foreach (var file in files)
@@ -336,7 +358,19 @@ namespace EtheriT.Coker.Application
                                 }
 
                                 temp_files.Sort((x, y) => x.Size.CompareTo(y.Size));
-                                result.Add(temp_files[size - 2].Link);
+
+                                if (files.Count == 2)
+                                {
+                                    result.Add(temp_files[size - 2].Link);
+                                }
+                                else
+                                {
+                                    result.Add(temp_files[0].Link);
+                                }
+                            }
+                            else
+                            {
+                                result.Add(fa_file.DownloadFileName == null ? "" : fa_file.DownloadFileName);
                             }
                         }
                     }

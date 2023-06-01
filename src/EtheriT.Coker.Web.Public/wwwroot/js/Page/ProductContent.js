@@ -140,10 +140,13 @@ function PageDefaultSet(result) {
             })
 
             item.img_orig.forEach(function (img) {
-                $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} d-flex align-items-center" data-tcid="${item.id}">
-                                                            <div class="d-flex flex-column py-2 me-5"><img class="my-1" src="${img.link}" alt="${img.name}" /></div>
-                                                            <div class="text d-flex align-items-center">${item.description}</div></div>
-                                                            <hr class="m-1" />`);
+                $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} row">
+			                                                       <div class="col-12 col-lg-3 col-md-5">
+				                                                       <img class="w-100 h-auto" src="${img.link}" alt="${img.name}" />
+			                                                       </div>
+			                                                       <div class="description align-self-center col">${item.description}</div>
+		                                                       </div>
+		                                                       <hr class="m-1" />`)
             })
         } else {
             $(".pro_tc").addClass("d-none");
@@ -226,7 +229,6 @@ function PageDefaultSet(result) {
             $pro_discount.text(minprice.toString().toLocaleString('en-US') + " ~ " + maxprice.toString().toLocaleString('en-US'));
         }
     } else {
-        console.log(result.stocks[0])
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
         $pro_discount.text(result.stocks[0].price.toLocaleString('en-US'));
@@ -255,6 +257,15 @@ function PageDefaultSet(result) {
             pre_slide_image.attr("src", img_small.link[0]);
             $preview_swiper.append(pre_slide);
         });
+
+    }
+
+    if (result.tagDatas.length > 0) {
+        result.tagDatas.forEach(item => {
+            $(".pro_tag").prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="">${item.tag_Name}</a></li>`);
+        })
+    } else {
+        $(".pro_tag").addClass("d-none");
     }
 }
 

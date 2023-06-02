@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.Specification
 @{
 	ViewData["Title"] = "SpecSetting";
 }
@@ -18,7 +19,7 @@
 				<div class="type_list position-relative col-12 col-lg-6">
 					<div class="bg-black bg-opacity-10 py-2 rounded-3 mb-4 fs-5 text-center">規格類型</div>
 					<div>
-						@(Html.DevExtreme().DataGrid<ProductSpecListDto>()
+						@(Html.DevExtreme().DataGrid<SpecTypeListDto>()
 							.DataSource(d => d.RemoteController().Key("Id")
 							.LoadUrl("/api/Specification/GetAllTypeList").LoadMethod("Get")
 							.InsertUrl("/api/Specification/TypeAddUp").InsertMethod("Post")
@@ -85,13 +86,15 @@
 								.ShowText(ToolbarItemShowTextMode.Always)
 								.Location(ToolbarItemLocation.After);
 								});
-							}))
+							})
+							.OnContentReady("contentReady")
+							.OnSaved("typeSaved"))
 					</div>
 				</div>
 				<div class="spec_list position-relative col-12 col-lg-6 d-none d-lg-block">
 					<div class="bg-black bg-opacity-10 py-2 rounded-3 mb-4 fs-5 text-center">規格名稱</div>
 					<div>
-						@(Html.DevExtreme().DataGrid<ProductSpecListDto>()
+						@(Html.DevExtreme().DataGrid<SpecSpecListDto>()
 							.DataSource(d => d.RemoteController().Key("Id")
 							.LoadUrl("/api/Specification/GetAllSpecList").LoadMethod("Get")
 							.InsertUrl("/api/Specification/SpecAddUp").InsertMethod("Post")
@@ -130,12 +133,12 @@
 							})
 							.Columns(c =>
 							{
-								c.AddFor(e => e.Type)
-											.Lookup(lookup => lookup
-											.DataSource("getType")
-											.DisplayExpr("Type")
-											.ValueExpr("Id")
-											).Caption("規格類型");
+								c.AddFor(e => e.FK_Tid)
+								.Lookup(lookup => lookup
+								.DataSource("getType")
+								.DisplayExpr("Type")
+								.ValueExpr("Id")
+								).Caption("規格類型");
 								c.AddFor(e => e.Title).Caption("規格名稱");
 								c.Add()
 								.Type(GridCommandColumnType.Buttons)
@@ -164,7 +167,8 @@
 								.ShowText(ToolbarItemShowTextMode.Always)
 								.Location(ToolbarItemLocation.After);
 								});
-							}))
+							})
+							.OnContentReady("contentReady"))
 					</div>
 				</div>
 			</div>

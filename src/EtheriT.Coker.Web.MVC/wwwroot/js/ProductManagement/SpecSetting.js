@@ -1,8 +1,18 @@
 ﻿var TypeList_dxData, SpecList_dxData;
 
 function PageReady() {
-    TypeList_dxData = $("#TypeList").dxDataGrid("instance");
-    SpecList_dxData = $("#SpecList").dxDataGrid("instance");
+}
+
+function contentReady(e) {
+    if (e.element[0].id == "TypeList") {
+        TypeList_dxData = $("#TypeList").dxDataGrid("instance");
+    } else if (e.element[0].id == "SpecList") {
+        SpecList_dxData = $("#SpecList").dxDataGrid("instance");
+    }
+}
+
+function typeSaved(e) {
+    SpecList_dxData.refresh();
 }
 
 function editButtonClicked(e) {

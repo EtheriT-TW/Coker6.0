@@ -1,7 +1,6 @@
 ﻿using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Specification;
 using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Web.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.Specification;
 
 namespace EtheriT.Coker.Application.Specification
 {
@@ -28,7 +27,8 @@ namespace EtheriT.Coker.Application.Specification
         public async Task<ResponseMessageDto> TypeAddUp(DevExpressDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            var data = JsonConvert.DeserializeObject<ProductSpecListDto>(dto.Values);
+            var data = JsonConvert.DeserializeObject<SpecTypeListDto>(dto.Values);
+            data.Id = dto.Key == null ? 0 : (long)dto.Key;
 
             try
             {
@@ -71,38 +71,18 @@ namespace EtheriT.Coker.Application.Specification
         public async Task<ResponseMessageDto> SpecAddUp(DevExpressDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            var data = JsonConvert.DeserializeObject<ProductSpecListDto>(dto.Values);
+            var data = JsonConvert.DeserializeObject<SpecSpecListDto>(dto.Values);
+            data.Id = dto.Key == null ? 0 : (long)dto.Key;
 
             try
             {
                 long userId = await loginUserData.GetUserId();
-                long webid = await loginUserData.GetWebsiteId();
 
-                long tid = 0;
-
-                if (data.Type != null)
-                {
-                    tid = db.Prod_Spec_Types.Where(e => e.Type == data.Type && !e.IsDeleted).Select(e => e.Id).FirstOrDefault();
-
-                    if (tid == null || tid == 0)
-                    {
-                        Core.Models.Prod_Spec_Type pst = new Core.Models.Prod_Spec_Type
-                        {
-                            FK_WebsiteId = webid,
-                            Type = data.Type,
-                            CreatorUserId = userId,
-                        };
-                        db.Prod_Spec_Types.Add(pst);
-                        db.SaveChanges();
-                        tid = pst.Id;
-                    }
-                }
-
-                if (dto.Key == null)
+                if (data.Id == 0)
                 {
                     Core.Models.Prod_Spec ps = new Core.Models.Prod_Spec
                     {
-                        FK_Tid = tid,
+                        FK_Tid = data.FK_Tid,
                         Title = data.Title,
                         CreatorUserId = userId,
                     };
@@ -111,12 +91,11 @@ namespace EtheriT.Coker.Application.Specification
                 }
                 else
                 {
-                    var db_ps = db.Prod_Specs.Where(e => e.Id == dto.Key).FirstOrDefault();
-
+                    var db_ps = await db.Prod_Specs.Where(e => e.Id == data.Id && !e.IsDeleted).FirstOrDefaultAsync();
                     if (db_ps != null)
                     {
-                        if (data.Type != null) { db_ps.FK_Tid = tid; }
-                        if (data.Title != null) { db_ps.Title = data.Title; }
+                        db_ps.Title = data.Title == null ? db_ps.Title : data.Title;
+                        db_ps.FK_Tid = data.FK_Tid == 0 ? db_ps.FK_Tid : data.FK_Tid;
                         db_ps.LastModifierUserId = userId;
                         db_ps.LastModificationTime = DateTime.Now;
                         db.SaveChanges();
@@ -124,14 +103,14 @@ namespace EtheriT.Coker.Application.Specification
                 }
 
                 output.Success = true;
+                return output;
             }
             catch (Exception e)
             {
                 output.Success = false;
                 output.Error = e.Message;
+                return output;
             }
-
-            return output;
         }
         public async Task<JsonResult> GetAllTypeList(DataSourceLoadOptions loadOptions)
         {
@@ -141,7 +120,7 @@ namespace EtheriT.Coker.Application.Specification
 
                 var dataQuery = from pst in db.Prod_Spec_Types
                                 where !pst.IsDeleted && pst.FK_WebsiteId == webid
-                                select new ProductSpecListDto
+                                select new SpecTypeListDto
                                 {
                                     Id = pst.Id,
                                     Type = pst.Type
@@ -155,7 +134,7 @@ namespace EtheriT.Coker.Application.Specification
 
             }
 
-            return new JsonResult(new List<ProductSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<SpecTypeListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions)
         {
@@ -167,9 +146,10 @@ namespace EtheriT.Coker.Application.Specification
                                 where !pst.IsDeleted && pst.FK_WebsiteId == webid
                                 from ps in db.Prod_Specs
                                 where !ps.IsDeleted && ps.FK_Tid == pst.Id
-                                select new ProductSpecListDto
+                                select new SpecSpecListDto
                                 {
                                     Id = ps.Id,
+                                    FK_Tid = pst.Id,
                                     Type = pst.Type,
                                     Title = ps.Title
                                 };
@@ -182,7 +162,7 @@ namespace EtheriT.Coker.Application.Specification
 
             }
 
-            return new JsonResult(new List<ProductSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<SpecSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ResponseMessageDto> TypeDelete(long Id)
         {

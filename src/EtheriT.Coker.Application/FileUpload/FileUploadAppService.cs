@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -358,6 +359,7 @@ namespace EtheriT.Coker.Application
                                 }
 
                                 temp_files.Sort((x, y) => x.Size.CompareTo(y.Size));
+                                temp_files.Reverse();
 
                                 if (files.Count == 2)
                                 {

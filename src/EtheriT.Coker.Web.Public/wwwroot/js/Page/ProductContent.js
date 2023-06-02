@@ -1,6 +1,7 @@
 ﻿var $input_quantity
 var Pid, s1, s2
-var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = []
+var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
+var preview_swiper, product_swiper
 
 function PageReady() {
 
@@ -15,49 +16,6 @@ function PageReady() {
         } else {
             window.location.href = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/"));
         }
-    });
-
-
-    var preview_swiper = new Swiper(".PreviewSwiper", {
-        slidesPerView: 4,
-        loop: false,
-        spaceBetween: 10,
-        freeMode: true,
-        watchSlidesProgress: true,
-        scrollbar: {
-            el: ".swiper-scrollbar",
-        },
-        breakpoints: {
-            576: {
-                slidesPerView: 4,
-            },
-            768: {
-                slidesPerView: 6,
-            },
-            992: {
-                slidesPerView: 8,
-            }
-        }
-    });
-
-    var product_swiper = new Swiper(".ProductSwiper", {
-        spaceBetween: 15,
-        loop: true,
-        navigation: {
-            nextEl: ".btn_swiper_next_product",
-            prevEl: ".btn_swiper_prev_product",
-        },
-        breakpoints: {
-            768: {
-                allowTouchMove: true,
-            },
-            992: {
-                allowTouchMove: false,
-            }
-        },
-        thumbs: {
-            swiper: preview_swiper,
-        },
     });
 
     $(".pro_display").on("click", ShowBigPro);
@@ -247,6 +205,7 @@ function PageDefaultSet(result) {
             var slide_image = slide.find(".pro_display");
             slide_image.attr("alt", img_med.name);
             slide_image.attr("src", img_med.link[0]);
+            slide_image.data("id", img_med.id);
             $product_swiper.append(slide);
             slide_image.on("click", ShowBigPro);
         });
@@ -256,10 +215,54 @@ function PageDefaultSet(result) {
             var pre_slide_image = pre_slide.find("img");
             pre_slide_image.attr("alt", img_small.name);
             pre_slide_image.attr("src", img_small.link[0]);
+            pre_slide_image.data("id", img_small.id);
             $preview_swiper.append(pre_slide);
         });
-
     }
+
+    preview_swiper = new Swiper(".PreviewSwiper", {
+        slidesPerView: 4,
+        loop: false,
+        spaceBetween: 10,
+        freeMode: true,
+        watchSlidesProgress: true,
+        scrollbar: {
+            el: ".swiper-scrollbar",
+        },
+        breakpoints: {
+            576: {
+                slidesPerView: 4,
+            },
+            768: {
+                slidesPerView: 6,
+            },
+            992: {
+                slidesPerView: 8,
+            }
+        }
+    });
+
+    product_swiper = new Swiper(".ProductSwiper", {
+        spaceBetween: 15,
+        loop: true,
+        navigation: {
+            nextEl: ".btn_swiper_next_product",
+            prevEl: ".btn_swiper_prev_product",
+        },
+        breakpoints: {
+            768: {
+                allowTouchMove: true,
+            },
+            992: {
+                allowTouchMove: false,
+            }
+        },
+        thumbs: {
+            swiper: preview_swiper,
+        },
+    });
+
+    img_origin_list = result.files_Original;
 
     if (result.tagDatas.length > 0) {
         result.tagDatas.forEach(item => {
@@ -397,7 +400,9 @@ function ShowBigPro() {
 }
 
 function addImage(pro_self) {
-    var pro_filename = pro_self.attr("src");
+    var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
+
+    var pro_filename = img_data.link[0];
     while (pro_filename.indexOf('/') >= 0) {
         pro_filename = pro_filename.substr(pro_filename.indexOf('/') + 1);
     }

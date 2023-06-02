@@ -302,26 +302,33 @@ namespace EtheriT.Coker.Application.Product
                                     EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
                                     Permanent = p.permanent
                                 };
-                //var dataQuery = from ps in db.Prod_Stocks
-                //                where !ps.IsDeleted
-                //                from pp in db.Prod_Prices
-                //                where !pp.IsDeleted && pp.FK_PSId == ps.Id
-                //                join p in db.Prods on ps.FK_Pid equals p.Id
-                //                where !p.IsDeleted && p.FK_WebsiteId == webid
-                //                group pp by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
-                //                select new ProductGetAllListDto
-                //                {
-                //                    Id = s.Key.Id,
-                //                    Title = s.Key.Title,
-                //                    Disp_Opt = s.Key.Disp_Opt,
-                //                    Ser_No = s.Key.Ser_No,
-                //                    Price = s.Min(e => e.Price) == s.Max(e => e.Price) ? s.Min(e => e.Price).ToString() : s.Min(e => e.Price) + " ~ " + s.Max(e => e.Price),
-                //                    StartTime = s.Key.StartTime,
-                //                    EndTime = s.Key.EndTime,
-                //                    Permanent = s.Key.permanent
-                //                };
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+                int min_price = 0, max_price = 0;
+                foreach (var data in output.data)
+                {
+                    var pid = (long)data.GetType().GetProperty("Id").GetValue(data, null);
+                    var db_ps = await db.Prod_Stocks.Where(e => e.FK_Pid == pid && !e.IsDeleted).ToListAsync();
+                    if (db_ps.Count > 0)
+                    {
+                        for (var ps_i = 0; ps_i < db_ps.Count(); ps_i++)
+                        {
+                            var db_pp = await db.Prod_Prices.Where(e => e.FK_PSId == db_ps[ps_i].Id && !e.IsDeleted).ToListAsync();
+                            if (db_pp.Count > 0)
+                            {
+                                for (var pp_i = 0; pp_i < db_pp.Count; pp_i++)
+                                {
+                                    var price = (int)(db_pp[pp_i].Price ?? 0);
+                                    if (min_price == 0 || price < min_price) { min_price = price; }
+                                    if (price > max_price) { max_price = price; }
+                                }
+                            }
+                        }
+                        var price_text = min_price == max_price ? max_price.ToString("###,###") : $"{min_price}~{max_price}";
+                        data.GetType().GetProperty("Price").SetValue(data, price_text);
+                    }
+                }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)

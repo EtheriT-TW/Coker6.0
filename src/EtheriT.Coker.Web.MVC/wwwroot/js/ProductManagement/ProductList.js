@@ -49,7 +49,6 @@ function PageReady() {
 
     $(window).on("fileUploadWithPreview:imagesAdded", function (event) {
         var cachedFile = upload_file.cachedFileArray;
-        console.log(upload_file)
 
         $("#ProductForm > .data_upload > ul > li").each(function () {
             var $self = $(this);
@@ -65,13 +64,11 @@ function PageReady() {
                             file_type = file.type;
                             new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
                         })
-                        console.log(cachedFile)
                         var temp_files = [];
                         file_num--;
                         new_file_list.forEach(function (file, index) {
                             var img_file = [];
                             img_file.push(file);
-                            console.log(img_file)
                             var obj = {};
                             obj["TempId"] = $self.data("tempid") + index;
                             obj["Type"] = $self.data("uploadtype");
@@ -83,13 +80,9 @@ function PageReady() {
                             htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 500, height: 500, imageType: img_file[0].type })
                             htmlImageCompress.then(function (result) {
                                 img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                console.log(`Size: ${result.fileSize}`);
-                                console.log(result.file);
 
                                 htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3, width: 150, height: 150, imageType: img_file[0].type })
                                 htmlImageCompress.then(function (result) {
-                                    console.log(`Size: ${result.fileSize}`);
-                                    console.log(result.file);
                                     img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
                                     obj["File"] = img_file;
                                     obj["IsDelete"] = false;
@@ -98,13 +91,13 @@ function PageReady() {
                                     UploadListAdd(obj);
                                 }).catch(function (err) {
                                     UploadPreviewFrameClear();
-                                    console.log(err)
+                                    console.log($`發生錯誤：${err}`);
                                     co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                 })
 
                             }).catch(function (err) {
                                 UploadPreviewFrameClear();
-                                console.log(err)
+                                console.log($`發生錯誤：${err}`);
                                 co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                             })
                         })
@@ -186,7 +179,7 @@ function PageReady() {
     })
 
     $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
-        console.log("fileUploadWithPreview:imageDeleted")
+        //console.log("fileUploadWithPreview:imageDeleted")
         $("#ProductForm > .data_upload > ul > li").each(function () {
             var $self = $(this);
             if ($self.data("edit")) {
@@ -572,7 +565,7 @@ function paletteButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result)
+    //console.log(result)
 
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
@@ -1018,7 +1011,7 @@ function UploadFile($self) {
                 upload_file = co.File.Upload360Init("FileUpload");
                 if ($self.data("file")) {
                     upload_file.addFiles($self.data("file"));
-                    console.log(upload_file);
+                    //console.log(upload_file);
                     $parent.find(".upload_frame").find("span").text($self.data("file").length + " 張圖片已選擇");
                 }
                 $parent.find(".upload_frame").removeClass("d-none");
@@ -1029,7 +1022,6 @@ function UploadFile($self) {
                     $parent.find(".upload_frame").removeClass("d-none");
                 } else {
                     if (typeof ($self.data("id")) != "undefined") {
-                        console.log("舊資料")
                         var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
                         var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
                         $parent.find(".media_frame").addClass("d-flex");
@@ -1072,8 +1064,8 @@ function UploadFile($self) {
 }
 
 function UploadListAdd(result) {
-    console.log("UploadListAdd");
-    console.log(result);
+    //console.log("UploadListAdd");
+    //console.log(result);
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
@@ -1109,8 +1101,6 @@ function UploadListAdd(result) {
             UploadFile($(this));
         })
     } else {
-        console.log(result);
-
         file_num += 1;
 
         item.data("id", result.id);
@@ -1132,7 +1122,6 @@ function UploadListAdd(result) {
         obj["Type"] = result.fileType;
         obj["IsDelete"] = false;
         total_files.push(obj);
-        console.log(total_files);
 
         item.on("click", function () {
             UploadFile($(this));
@@ -1210,7 +1199,7 @@ function SortChange(change, minindex, maxindex) {
 }
 
 function AddUp(success_text, error_text, target) {
-    console.log(total_files);
+    //console.log(total_files);
 
     var stock_addup_list = []
     var temp_serno = 1;
@@ -1318,12 +1307,11 @@ function AddUp(success_text, error_text, target) {
                                     for (var j = i; j < i + 3; j++) {
                                         formData.append('files', data[j]);
                                     }
-                                    console.log(formData.get("files"));
+                                    //console.log(formData.get("files"));
                                     formData.delete('files');
                                 }
                                 break;
                             case 3:
-                                console.log(typeof (data[0]["File"]))
                                 if (typeof (data[0]["File"]) == "string") {
                                     co.File.fileSortChange({
                                         Id: data[0]["Id"],

@@ -19,8 +19,6 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<List<ProductPriceDto>> GetPriceDataAll(long PSId);
         public Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id);
         public Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto);
-        public Task<List<ProdIdTitleDto>> GetSpecType();
-        public Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid);
         public Task<ProdGetOneDto> GetDisplayOne(long id);
         public Task<List<ProductStockDto>> GetDisplayStock(long id);
         public Task<ProdGetDisplayDto> GetDisplaySimple(long id);

@@ -426,25 +426,27 @@ namespace EtheriT.Coker.Application.Product
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 
-                var db_sp = db.Prod_Specs.ToList();
+                var db_sp = await db.Prod_Specs.Where(e => !e.IsDeleted).ToListAsync();
 
-                foreach (var item in output)
+                if (db_sp.Count > 0)
                 {
-                    item.FK_ST1id = (item.FK_S1id != null && (int)item.FK_S1id > 0) ? db_sp[(int)item.FK_S1id - 1].FK_Tid : 0;
-                    item.S1_Title = (item.FK_S1id != null && (int)item.FK_S1id > 0) ? db_sp[(int)item.FK_S1id - 1].Title : "";
-                    item.FK_ST2id = (item.FK_S2id != null && (int)item.FK_S2id > 0) ? db_sp[(int)item.FK_S2id - 1].FK_Tid : 0;
-                    item.S2_Title = (item.FK_S2id != null && (int)item.FK_S2id > 0) ? db_sp[(int)item.FK_S2id - 1].Title : "";
-                    item.Prices = await this.GetPriceDataAll(item.Id);
+                    foreach (var item in output)
+                    {
+                        item.FK_ST1id = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).FK_Tid : 0;
+                        item.S1_Title = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).Title : "";
+                        item.FK_ST2id = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).FK_Tid : 0;
+                        item.S2_Title = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).Title : "";
+                        item.Prices = await this.GetPriceDataAll(item.Id);
+                    }
                 }
 
                 return output;
             }
             catch (Exception e)
             {
-
+                return null;
             }
 
-            return null;
         }
         public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)
         {
@@ -797,59 +799,6 @@ namespace EtheriT.Coker.Application.Product
             return output;
         }
         /* Other Get */
-        public async Task<List<ProdIdTitleDto>> GetSpecType()
-        {
-            try
-            {
-                var db_pst = db.Prod_Spec_Types;
-
-                if (db_pst != null)
-                {
-                    long WebsiteID = await loginUserData.GetWebsiteId();
-                    var output = await (from pst in db_pst
-                                        where !pst.IsDeleted && pst.FK_WebsiteId == WebsiteID
-                                        select new ProdIdTitleDto
-                                        {
-                                            Id = pst.Id,
-                                            Title = pst.Type
-                                        }).ToListAsync();
-                    return output;
-                }
-                else throw new Exception("查無資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
-        }
-        public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
-        {
-            try
-            {
-                var db_ps = db.Prod_Specs;
-
-                if (db_ps != null)
-                {
-                    var output = await (from ps in db_ps
-                                        where !ps.IsDeleted && ps.FK_Tid == typeid
-                                        select new ProdIdTitleDto
-                                        {
-                                            Id = ps.Id,
-                                            Title = ps.Title
-                                        }).ToListAsync();
-                    return output;
-                }
-                else throw new Exception("查無資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
-        }
         public async Task<ProdGetOneDto> GetDisplayOne(long id)
         {
             try

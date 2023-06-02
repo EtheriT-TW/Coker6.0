@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.Specification
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Models.ProductManagement
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
@@ -260,9 +261,9 @@
 						{
 							<option selected="" value="" disabled="disabled">規格類型</option>
 							<option value="0">無</option>
-							@foreach (var spectype in Model.SpecType ?? new List<ProdIdTitleDto>())
+							@foreach (var spectype in Model.SpecType ?? new List<SpecTypeListDto>())
 							{
-								<option value="@spectype.Id">@spectype.Title</option>
+								<option value="@spectype.Id">@spectype.Type</option>
 							}
 						}
 					</select>

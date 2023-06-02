@@ -498,15 +498,6 @@ var Coker = {
                     data: { PId: id },
                 });
             },
-            ProdSpec: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetSpecDetail/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { typeid: id },
-                });
-            },
             ProdTechCert: function (id) {
                 return $.ajax({
                     url: "/api/Product/GetTechCertDataAll/",
@@ -714,6 +705,16 @@ var Coker = {
         }
     },
     Spec: {
+        SpecAddUp: function (data) {
+            return $.ajax({
+                url: "/api/Specification/SpecAddUp_Data",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         TypeDelect: function (id) {
             return $.ajax({
                 url: "/api/Specification/TypeDelete/",
@@ -731,7 +732,15 @@ var Coker = {
                 headers: _c.Data.Header,
                 data: { Id: id },
             });
-        }
+        },
+        GetPickSpecList: function () {
+            return $.ajax({
+                url: "/api/Specification/GetPickSpecList/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+            });
+        },
     }
 }
 var _c = Coker;

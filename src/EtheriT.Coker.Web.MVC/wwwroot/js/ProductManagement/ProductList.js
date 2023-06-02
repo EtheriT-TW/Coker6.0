@@ -1,6 +1,6 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = []
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list
 var $price_modal, priceModal
 var file_num = 0, total_files = [];
 let importProdPopup = null;
@@ -56,7 +56,6 @@ function PageReady() {
                 switch ($self.data("uploadtype")) {
                     //圖片上傳
                     case 1:
-
                         var new_file_list = [];
                         var file_name, file_type;
                         cachedFile.forEach(function (file, index) {
@@ -539,8 +538,11 @@ function HashDataEdit() {
                 } else {
                     co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
                         if (result != null) {
-                            FormDataSet(result);
-                            MoveToContent();
+                            co.Spec.GetPickSpecList().done(function (pick_result) {
+                                spec_pick_list = pick_result;
+                                FormDataSet(result);
+                                MoveToContent();
+                            });
                         } else {
                             window.location.hash = ""
                         }
@@ -565,7 +567,7 @@ function paletteButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    //console.log(result)
+    console.log(result)
 
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
@@ -713,6 +715,7 @@ function SpecPriceSave() {
 }
 
 function SpecAdd(result) {
+
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
     var item_topline = item.find(".topline"),
@@ -749,16 +752,17 @@ function SpecAdd(result) {
                 }
             })
             item_select_input_1.removeAttr("disabled")
-            co.Product.Get.ProdSpec(item_select_1.val()).done(function (spec1_result) {
-                if (spec1_result != null) {
-                    spec1_result.forEach(function (spec1) {
-                        item_select_list_1.append('<option value="' + spec1.title + '" data-sid="' + spec1.id + '"></option>')
-                        if (spec1.id == result.fK_S1id) {
-                            item_select_input_1.val(spec1.title);
-                        }
-                    })
-                }
-            });
+
+            var temp_spec_list = spec_pick_list.find(item => item.id == item_select_1.val())
+            if (temp_spec_list.specs.length > 0) {
+                temp_spec_list.specs.forEach(item => {
+                    item_select_list_1.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
+                    if (item.id == result.fK_S1id) {
+                        item_select_input_1.val(item.title);
+                        item_select_input_1.data("id", item.id);
+                    }
+                })
+            }
         }
     }
 
@@ -775,16 +779,17 @@ function SpecAdd(result) {
                 }
             })
             item_select_input_2.removeAttr("disabled")
-            co.Product.Get.ProdSpec(item_select_2.val()).done(function (spec2_result) {
-                if (spec2_result != null) {
-                    spec2_result.forEach(function (spec2) {
-                        item_select_list_2.append('<option value="' + spec2.title + '" data-sid="' + spec2.id + '"></option>')
-                        if (spec2.id == result.fK_S2id) {
-                            item_select_input_2.val(spec2.title);
-                        }
-                    })
-                }
-            });
+
+            var temp_spec_list = spec_pick_list.find(item => item.id == item_select_2.val())
+            if (temp_spec_list.specs.length > 0) {
+                temp_spec_list.specs.forEach(item => {
+                    item_select_list_2.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
+                    if (item.id == result.fK_S2id) {
+                        item_select_input_2.val(item.title);
+                        item_select_input_2.data("id", item.id);
+                    }
+                })
+            }
         }
     }
 
@@ -802,6 +807,7 @@ function SpecAdd(result) {
     } else {
         item_price.val("");
     }
+
     item_min.val(result != null ? result.min_Qty : "");
     item_stock.val(result != null ? result.stock : "");
     item_alert.val("");
@@ -869,7 +875,6 @@ function SpecAdd(result) {
         $self.on("change", function () {
             var $spec_type = $(this);
             var $spec_bro = $spec_type.parents(".spec").first().siblings(".spec");
-            var $spec_input = $spec_type.siblings(".input_spec");
             var $spec_list = $spec_type.siblings("datalist");
 
             $spec_input.val("");
@@ -893,16 +898,44 @@ function SpecAdd(result) {
                     }
                 })
                 $spec_input.removeAttr("disabled")
-                co.Product.Get.ProdSpec($spec_type.val()).done(function (spec_result) {
-                    if (spec_result != null) {
-                        spec_result.forEach(function (spec) {
-                            $spec_list.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')
-                        })
-                    }
-                });
+                var temp_spec_list = spec_pick_list.find(item => item.id == $spec_type.val())
+                if (temp_spec_list.specs.length > 0) {
+                    temp_spec_list.specs.forEach(item => {
+                        $spec_list.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
+                    })
+                }
+            }
+        })
+
+        var $spec_input = $self.siblings(".input_spec");
+
+        $spec_input.blur(function () {
+            var $option; var id;
+            if ($spec_input.val() != "") {
+                id = 0;
+                $spec_input.each(function () {
+                    $self_input = $(this);
+                    $self_input.siblings("datalist").children("option").each(function () {
+                        $option = $(this);
+                        if ($option.val() == $self_input.val()) {
+                            id = $option.data("sid");
+                        }
+                    })
+                })
+                if (id == 0) {
+                    co.Spec.SpecAddUp({ FK_Tid: $spec_input.prev("select").val(), Title: $spec_input.val(), }).done(function (result) {
+                        if (result.success) {
+                            co.Spec.GetPickSpecList().done(function (pick_result) {
+                                spec_pick_list = pick_result;
+                                $self_input.siblings("datalist").append(`<option value="${$spec_input.val()}" data-sid="${result.message}"></option>`)
+                            });
+                        }
+                    });
+                }
             }
         })
     })
+
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
     $min_number = $(".input_min_number");
@@ -1208,7 +1241,7 @@ function AddUp(success_text, error_text, target) {
         var obj = {};
         var fk_sid = [];
         $self.find(".input_spec").each(function () {
-            var id = -1;
+            var id = 0;
             $self_input = $(this);
             $self_input.siblings("datalist").children("option").each(function () {
                 var $option = $(this);
@@ -1216,17 +1249,17 @@ function AddUp(success_text, error_text, target) {
                     id = $option.data("sid");
                 }
             })
-            fk_sid.push(id > -1 ? id : 0)
+            fk_sid.push(id)
         })
 
         obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
         obj["Stock"] = $self.find(".input_stock_number").val();
-        obj["Ser_No"] = temp_serno;
-        temp_serno++;
         obj["Alert_Qty"] = $self.find(".input_alert_number").val();
         obj["Min_Qty"] = $self.find(".input_min_number").val();
+        obj["Ser_No"] = temp_serno;
+        temp_serno++;
 
         var price_list = [];
         modal_price_list.forEach(function (item) {

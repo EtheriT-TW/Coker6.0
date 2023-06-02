@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using EtheriT.Coker.Application.Shared.Specification;
+using EtheriT.Coker.Application.Shared.Dto.Specification;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -27,7 +28,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<ResponseMessageDto> SpecAddUp([FromForm] DevExpressDto dto)
+        public async Task<ResponseMessageDto> SpecAddUp_List([FromForm] DevExpressDto dto)
+        {
+            return await specificationAppService.SpecAddUp(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SpecAddUp_Data(SpecSpecListDto dto)
         {
             return await specificationAppService.SpecAddUp(dto);
         }
@@ -40,6 +46,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<JsonResult> GetAllSpecList(DataSourceLoadOptions loadOptions)
         {
             return await specificationAppService.GetAllSpecList(loadOptions);
+        }
+        [HttpGet]
+        public async Task<List<SpecTypePickListDto>> GetPickSpecList()
+        {
+            return await specificationAppService.GetPickSpecList();
         }
         [HttpGet]
         public async Task<ResponseMessageDto> TypeDelete(long Id)

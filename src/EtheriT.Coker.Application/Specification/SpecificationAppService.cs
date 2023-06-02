@@ -76,26 +76,45 @@ namespace EtheriT.Coker.Application.Specification
 
             try
             {
-                long userId = await loginUserData.GetUserId();
+                output = await this.SpecAddUp(data);
+                
+                return output;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+                return output;
+            }
+        }
+        public async Task<ResponseMessageDto> SpecAddUp(SpecSpecListDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
-                if (data.Id == 0)
+            try
+            {
+                long userId = await loginUserData.GetUserId();
+                var psid = dto.Id;
+
+                if (dto.Id == 0)
                 {
                     Core.Models.Prod_Spec ps = new Core.Models.Prod_Spec
                     {
-                        FK_Tid = data.FK_Tid,
-                        Title = data.Title,
+                        FK_Tid = dto.FK_Tid,
+                        Title = dto.Title,
                         CreatorUserId = userId,
                     };
                     db.Prod_Specs.Add(ps);
                     db.SaveChanges();
+                    psid = ps.Id;
                 }
                 else
                 {
-                    var db_ps = await db.Prod_Specs.Where(e => e.Id == data.Id && !e.IsDeleted).FirstOrDefaultAsync();
+                    var db_ps = await db.Prod_Specs.Where(e => e.Id == dto.Id && !e.IsDeleted).FirstOrDefaultAsync();
                     if (db_ps != null)
                     {
-                        db_ps.Title = data.Title == null ? db_ps.Title : data.Title;
-                        db_ps.FK_Tid = data.FK_Tid == 0 ? db_ps.FK_Tid : data.FK_Tid;
+                        db_ps.Title = dto.Title == null ? db_ps.Title : dto.Title;
+                        db_ps.FK_Tid = dto.FK_Tid == 0 ? db_ps.FK_Tid : dto.FK_Tid;
                         db_ps.LastModifierUserId = userId;
                         db_ps.LastModificationTime = DateTime.Now;
                         db.SaveChanges();
@@ -103,6 +122,7 @@ namespace EtheriT.Coker.Application.Specification
                 }
 
                 output.Success = true;
+                output.Message = psid.ToString();
                 return output;
             }
             catch (Exception e)
@@ -163,6 +183,74 @@ namespace EtheriT.Coker.Application.Specification
             }
 
             return new JsonResult(new List<SpecSpecListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<List<SpecTypeListDto>> GetPickTypeList()
+        {
+            var output = new List<SpecTypeListDto>();
+
+            try
+            {
+                var websiteid = await loginUserData.GetWebsiteId();
+
+                var db_pt = await db.Prod_Spec_Types.Where(e => e.FK_WebsiteId == websiteid && !e.IsDeleted).ToListAsync();
+                if (db_pt.Count > 0)
+                {
+                    for (var pt_i = 0; pt_i < db_pt.Count; pt_i++)
+                    {
+                        output.Add(new SpecTypeListDto()
+                        {
+                            Id = db_pt[pt_i].Id,
+                            Type = db_pt[pt_i].Type,
+                        });
+                    }
+                }
+            }
+            catch (Exception err)
+            {
+            }
+            return output;
+
+        }
+        public async Task<List<SpecTypePickListDto>> GetPickSpecList()
+        {
+            var output = new List<SpecTypePickListDto>();
+
+            try
+            {
+                var websiteid = await loginUserData.GetWebsiteId();
+
+                var db_pt = await db.Prod_Spec_Types.Where(e => e.FK_WebsiteId == websiteid && !e.IsDeleted).ToListAsync();
+                if (db_pt.Count > 0)
+                {
+                    for (var pt_i = 0; pt_i < db_pt.Count; pt_i++)
+                    {
+                        var speclist = new List<SpecSpecPickListDto>();
+                        var db_ps = await db.Prod_Specs.Where(e => e.FK_Tid == db_pt[pt_i].Id && !e.IsDeleted).ToListAsync();
+                        if (db_ps.Count > 0)
+                        {
+                            for (var ps_i = 0; ps_i < db_ps.Count; ps_i++)
+                            {
+                                speclist.Add(new SpecSpecPickListDto()
+                                {
+                                    Id = db_ps[ps_i].Id,
+                                    Title = db_ps[ps_i].Title,
+                                });
+                            }
+                        }
+                        output.Add(new SpecTypePickListDto()
+                        {
+                            Id = db_pt[pt_i].Id,
+                            Type = db_pt[pt_i].Type,
+                            Specs = speclist,
+                        });
+                    }
+                }
+            }
+            catch (Exception err)
+            {
+            }
+            return output;
+
         }
         public async Task<ResponseMessageDto> TypeDelete(long Id)
         {

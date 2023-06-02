@@ -645,13 +645,13 @@ var Coker = {
                 dataType: "json"
             });
         },
-        DeleteFileById: function (fileid) {
+        DeleteFileById: function (data) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFileById",
-                type: "Get",
+                type: "Post",
                 contentType: 'application/json; charset=utf-8',
-                data: { fileid: fileid },
                 headers: _c.Data.Header,
+                data: JSON.stringify(data),
                 dataType: "json"
             });
         },

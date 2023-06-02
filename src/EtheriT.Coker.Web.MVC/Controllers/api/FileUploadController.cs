@@ -86,12 +86,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await fileUploadAppService.deleteFile(dto.key);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> deleteImgBySId(FileDeleteDto dto)
-        {
-            return await fileUploadAppService.deleteImgBySId(dto);
-        }
-        [HttpGet]
+        [HttpPost]
         public async Task<ResponseMessageDto> DeleteFileById(FileDeleteDto dto)
         {
             return await fileUploadAppService.deleteFileById(dto);

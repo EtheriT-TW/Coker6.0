@@ -140,13 +140,13 @@ function PageDefaultSet(result) {
             })
 
             item.img_orig.forEach(function (img) {
-                $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} row">
-			                                                       <div class="col-12 col-lg-3 col-md-5">
-				                                                       <img class="w-100 h-auto" src="${img.link}" alt="${img.name}" />
-			                                                       </div>
-			                                                       <div class="description align-self-center col">${item.description}</div>
-		                                                       </div>
-		                                                       <hr class="m-1" />`)
+                $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} row pb-3">
+			                                                      <div class="col-12 col-lg-3 col-md-5 text-center">
+				                                                      <img class="" src="${img.link}" alt="${img.name}" />
+			                                                      </div>
+			                                                      <div class="description align-self-center col">${item.description}</div>
+		                                                      </div>
+		                                                      <hr class="m-1" />`)
             })
         } else {
             $(".pro_tc").addClass("d-none");
@@ -248,6 +248,7 @@ function PageDefaultSet(result) {
             slide_image.attr("alt", img_med.name);
             slide_image.attr("src", img_med.link[0]);
             $product_swiper.append(slide);
+            slide_image.on("click", ShowBigPro);
         });
 
         result.files_Small.forEach(img_small => {

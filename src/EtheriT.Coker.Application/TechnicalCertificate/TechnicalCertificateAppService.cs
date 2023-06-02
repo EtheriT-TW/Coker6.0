@@ -334,7 +334,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         Sid = db_tc.Id,
                         Type = (int)FileBindTypeEnum.技術證照
                     };
-                    var imgdelete_response = await fileUploadAppService.deleteImgBySId(delete_img_dto);
+                    var imgdelete_response = await fileUploadAppService.deleteFileById(delete_img_dto);
 
                     db_tc.IsDeleted = true;
                     db_tc.DeletionTime = DateTime.Now;

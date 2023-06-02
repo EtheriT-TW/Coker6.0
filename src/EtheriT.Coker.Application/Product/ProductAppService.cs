@@ -691,7 +691,7 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
 
-                    fileresponse = await fileUploadAppService.deleteImgBySId(new FileDeleteDto()
+                    fileresponse = await fileUploadAppService.deleteFileById(new FileDeleteDto()
                     {
                         Sid = Id,
                         Type = (int)FileBindTypeEnum.產品,

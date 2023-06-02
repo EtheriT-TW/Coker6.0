@@ -19,7 +19,6 @@ namespace EtheriT.Coker.Application
         public Task<List<FileGetProdDisplayDto>> getProdDisplayFiles(long Pid, int size);
         public Task<ResponseMessageDto> fileSortChange(FileChangeSortDto dto);
         public Task<ResponseMessageDto> deleteFile(Guid key);
-        public Task<ResponseMessageDto> deleteImgBySId(FileDeleteDto dto);
         public Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto);
         public Task<ResponseMessageDto> deleteFile(string path);
     }

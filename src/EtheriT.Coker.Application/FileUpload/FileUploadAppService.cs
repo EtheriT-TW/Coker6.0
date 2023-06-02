@@ -496,6 +496,22 @@ namespace EtheriT.Coker.Application
                 return output;
             }
         }
+        public async Task<string> getImgUrl(long? imgid, long websiteid)
+        {
+            try
+            {
+                var files = await (db.FileUploads
+                            .Where(e => e.FK_WebsiteId == websiteid)
+                            .Where(e => e.Id == imgid)
+                            .Where(e => !e.IsDeleted)
+                            .Select(e => e.DownloadFileName).FirstOrDefaultAsync());
+                return files;
+            }
+            catch (Exception ex)
+            {
+                return "";
+            }
+        }
         public async Task<ResponseMessageDto> fileSortChange(FileChangeSortDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -562,37 +578,6 @@ namespace EtheriT.Coker.Application
                 response.Error = ex.Message;
             }
             await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
-            return response;
-        }
-        public async Task<ResponseMessageDto> deleteImgBySId(FileDeleteDto dto)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            response.Success = true;
-
-            try
-            {
-                long websiteId = await loginUserData.GetWebsiteId();
-                long usetId = await loginUserData.GetUserId();
-
-                var imgdatas = await db.FileBinds.Where(e => e.Sid == dto.Sid && e.type == dto.Type && !e.IsDeleted).ToListAsync();
-
-                foreach (var imgdata in imgdatas)
-                {
-                    dto.Fid = imgdata.FK_FileUploadId;
-                    var delete_response = await deleteFileById(dto);
-                    if (!delete_response.Success)
-                    {
-                        response.Success = false;
-                    }
-                }
-
-            }
-            catch (Exception e)
-            {
-                response.Error = e.Message;
-                response.Success = false;
-            }
-
             return response;
         }
         public async Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto)
@@ -680,22 +665,6 @@ namespace EtheriT.Coker.Application
                 return response;
             }
 
-        }
-        public async Task<string> getImgUrl(long? imgid, long websiteid)
-        {
-            try
-            {
-                var files = await (db.FileUploads
-                            .Where(e => e.FK_WebsiteId == websiteid)
-                            .Where(e => e.Id == imgid)
-                            .Where(e => !e.IsDeleted)
-                            .Select(e => e.DownloadFileName).FirstOrDefaultAsync());
-                return files;
-            }
-            catch (Exception ex)
-            {
-                return "";
-            }
         }
         private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
         {

@@ -567,7 +567,7 @@ function paletteButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result)
+    //console.log(result)
 
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
@@ -1377,14 +1377,13 @@ function AddUp(success_text, error_text, target) {
                     if (typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true) {
                         switch (file["Type"]) {
                             case 2:
-
                                 break;
                             case 1:
                             case 3:
                             case 4:
                                 if (typeof (file["Id"]) != "undefined") {
                                     co.File.DeleteFileById({
-                                        Sid: result.message,
+                                        Sid: parseInt(result.message),
                                         Type: 1,
                                         Fid: file["Id"],
                                     });

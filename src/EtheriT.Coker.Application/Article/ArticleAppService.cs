@@ -310,7 +310,7 @@ namespace EtheriT.Coker.Application.Article
                         Sid = result.Id,
                         Type = (int)FileBindTypeEnum.文章管理
                     };
-                    var imgdelete_response = await fileUploadAppService.deleteImgBySId(delete_img_dto);
+                    var imgdelete_response = await fileUploadAppService.deleteFileById(delete_img_dto);
 
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;

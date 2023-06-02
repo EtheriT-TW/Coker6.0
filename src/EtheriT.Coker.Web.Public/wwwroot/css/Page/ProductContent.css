@@ -277,15 +277,15 @@ input:disabled + .btn_radio {
         content: "\u3000\f019";
     }
 
-#TechnicalDocuments > .badge_directions > div {
+#TechnicalDocuments [class*="badge_"] div:has(img) {
     height: 150px;
 }
 
-/*#TechnicalDocuments [class*="badge_"] img {
-    max-width: 80vw;
-    height: 150px;
-    width: auto;
-}*/
+#TechnicalDocuments [class*="badge_"] img {
+    object-fit: contain;
+    width: 100%;
+    height: 100%;
+}
 
 @media only screen and (max-width: 1400px) {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {

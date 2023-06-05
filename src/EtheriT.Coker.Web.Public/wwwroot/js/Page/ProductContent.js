@@ -1,6 +1,7 @@
 ﻿var $input_quantity
 var Pid, s1, s2
-var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = []
+var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
+var preview_swiper, product_swiper
 
 function PageReady() {
 
@@ -8,48 +9,13 @@ function PageReady() {
     window.CI360.init();
 
     Pid = $(location).attr('href').substr($(location).attr('href').lastIndexOf("/") + 1);
-    PageDefaultSet(Pid);
 
-    var preview_swiper = new Swiper(".PreviewSwiper", {
-        slidesPerView: 4,
-        loop: false,
-        spaceBetween: 10,
-        freeMode: true,
-        watchSlidesProgress: true,
-        scrollbar: {
-            el: ".swiper-scrollbar",
-        },
-        breakpoints: {
-            576: {
-                slidesPerView: 4,
-            },
-            768: {
-                slidesPerView: 6,
-            },
-            992: {
-                slidesPerView: 8,
-            }
+    Product.GetOne.ProdMainDisplay(Pid).done(function (result) {
+        if (result != null) {
+            PageDefaultSet(result);
+        } else {
+            window.location.href = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/"));
         }
-    });
-
-    var product_swiper = new Swiper(".ProductSwiper", {
-        spaceBetween: 15,
-        loop: true,
-        navigation: {
-            nextEl: ".btn_swiper_next_product",
-            prevEl: ".btn_swiper_prev_product",
-        },
-        breakpoints: {
-            768: {
-                allowTouchMove: true,
-            },
-            992: {
-                allowTouchMove: false,
-            }
-        },
-        thumbs: {
-            swiper: preview_swiper,
-        },
     });
 
     $(".pro_display").on("click", ShowBigPro);
@@ -93,6 +59,7 @@ function PageReady() {
             }
         })
     })
+
 }
 
 function ElementInit() {
@@ -109,169 +76,200 @@ function ElementInit() {
     $options = $prod_content.find(".options");
 }
 
-function PageDefaultSet() {
-    Product.GetOne.Prod(Pid).done(function (result) {
-        if (typeof (result) != "undefined") {
-            $pro_name.text(result.title);
-            $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
-            $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
-            var spec_height = 0;
-            $pro_specification.children("li").each(function () {
-                spec_height += $(this).height();
-            })
-            if (spec_height > $pro_specification.height()) {
-                $btn_detailed.removeClass("d-none")
-            }
-            $("#ProductDescription").append("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
+function PageDefaultSet(result) {
+    console.log(result)
 
-            Product.GetOne.TechCert({ Id: Pid }).done(function (result) {
-                if (result.length > 0) {
-                    $("#Product > .content > .pro_tc").removeClass("d-none")
-                    var techcert_list = []
-                    result.forEach(function (item) {
-                        var temp_html = "";
-                        if (item.img.length > 0) {
-                            item.img.forEach(function (img) {
-                                $(".pro_tc > ul").prepend(`<li class="me-1"><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
-                                temp_html += `<img class="my-1" src="${img.link}" alt="${img.name}" />`;
-                            })
-                            $(".pro_tc_content > .filedownload").after(`<div class="badge_${item.id} d-flex align-items-center" data-tcid="${item.id}">
-                                                            <div class="d-flex flex-column py-2 me-5">${temp_html}</div>
-			                                                <div class="text d-flex align-items-center">${item.description}</div></div>
-		                                                    <hr class="m-1" />`);
-                        }
-                    })
+    $pro_name.text(result.title);
+    $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
+    $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
+    var spec_height = 0;
+    $pro_specification.children("li").each(function () {
+        spec_height += $(this).height();
+    })
+    if (spec_height > $pro_specification.height()) {
+        $btn_detailed.removeClass("d-none")
+    }
+    $("#ProductDescription").append("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
 
-                    $(".btn_tc").on("click", function () {
-                        $("#ProductDescription").removeClass("active show")
-                        $("#TechnicalDocuments").addClass("active show")
-                        $("#pills-description-tab").removeClass("active")
-                        $("#pills-documents-tab").addClass("active")
-                        var $self_btn = $(this);
-                        $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
-                        //$(".badge_directions").each(function () {
-                        //    var $self_badge = $(this);
-                        //    if ($self_badge.data("tcid") == $self_btn.data("tcid")) {
-                        //        $('html, body').animate({ scrollTop: $self_badge.offset().top - $("header > nav").height() - $self_badge.height() - 50 }, 0);
-                        //    }
-                        //})
-                    })
-
-                    //$(".badge_directions").each(function () {
-                    //    var $img_self = $(this)
-                    //    if (techcert_list.indexOf($img_self.data("pro_tc")) < 0) {
-                    //        $img_self.next("hr").remove();
-                    //        $img_self.remove();
-                    //    }
-                    //})
-                } else {
-                    //$(".btn_tc").each(function () {
-                    //    $(this).parents("li").first().remove();
-                    //})
-
-                    //$(".badge_directions").each(function () {
-                    //    var $img_self = $(this)
-                    //    $img_self.next("hr").remove();
-                    //    $img_self.remove();
-                    //})
-                }
+    result.techCertDatas.forEach(item => {
+        if (item.img_small.length > 0) {
+            item.img_small.forEach(function (img) {
+                $(".pro_tc > ul").append(`<li class="me-1"><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
             })
 
-            Product.GetOne.Stock(Pid).done(function (result) {
-                if (result.length > 1) {
-
-                    var obj = {};
-
-                    var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
-                    var item1_control = item1.find(".spec_control"),
-                        item2_control = item2.find(".spec_control");
-
-                    item1.data("stype", 1)
-                    item2.data("stype", 2)
-                    result.forEach(function (spec) {
-                        obj["s1id"] = spec.fK_S1id;
-                        obj["s2id"] = spec.fK_S2id;
-                        obj["price"] = spec.price;
-                        price_list.push(obj);
-                        obj = {}
-
-                        if (spec.fK_S1id > 0) {
-                            if (s1_list.indexOf(spec.fK_S1id) < 0) {
-                                item1_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + spec.fK_S1id + '">' + spec.s1_Name + '</label>');
-                                item1_control.prepend('<input id="s1_' + spec.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + spec.fK_S1id + '">');
-                                s1_list.push(spec.fK_S1id);
-                            }
-                        } else {
-                            if (!s1 >= 0) {
-                                s1 = 0;
-                            }
-                        }
-
-                        if (spec.fK_S2id > 0) {
-                            if (s2_list.indexOf(spec.fK_S2id) < 0) {
-                                item2_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + spec.fK_S2id + '">' + spec.s2_Name + '</label>');
-                                item2_control.prepend('<input id="s2_' + spec.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + spec.fK_S2id + '">');
-                                s2_list.push(spec.fK_S2id);
-                            }
-                        } else {
-                            if (!s2 >= 0) {
-                                s2 = 0;
-                            }
-                        }
-                    })
-
-                    $options.prepend(item2);
-                    $options.prepend(item1);
-
-                    $radio = $("#Product > .content > .options > .radio");
-                    $radio.each(function () {
-                        $input = $(this).children(".spec_control").children("input")
-                        $input.each(function () {
-                            $(this).on("click", SpecRadio)
-                        })
-                    })
-
-                    if (result[0].price == result[result.length - 1].price) {
-                        $pro_discount.text(result[0].price.toLocaleString('en-US'));
-                    } else {
-                        $pro_discount.text(result[0].price.toLocaleString('en-US') + " ~ " + result[result.length - 1].price.toLocaleString('en-US'));
-                    }
-                } else {
-                    s1 = result[0].fK_S1id;
-                    s2 = result[0].fK_S2id;
-                    $pro_discount.text(result[0].price.toLocaleString('en-US'));
-                }
+            item.img_orig.forEach(function (img) {
+                $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} row pb-3">
+			                                                      <div class="col-12 col-lg-3 col-md-5 text-center">
+				                                                      <img class="" src="${img.link}" alt="${img.name}" />
+			                                                      </div>
+			                                                      <div class="description align-self-center col">${item.description}</div>
+		                                                      </div>
+		                                                      <hr class="m-1" />`)
             })
         } else {
-            if (window.location.pathname.substr(-2, 2) == 1) {
-                var item = $($("#TemplateDemoDescription").html()).clone();
-                $("#ProductDescription").append(item);
-                var icon = $($("#TemplateIcon").html()).clone();
-                $("#Product > .content > .pro_tc > ul").append(icon);
-            } else {
-                window.location.href = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/"));
-            }
+            $(".pro_tc").addClass("d-none");
         }
     });
 
-    var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper")
-    if (Pid == 1) {
+    if (!$(".pro_tc").hasClass("d-none")) {
+        $(".btn_tc").on("click", function () {
+            $("#ProductDescription").removeClass("active show")
+            $("#TechnicalDocuments").addClass("active show")
+            $("#pills-description-tab").removeClass("active")
+            $("#pills-documents-tab").addClass("active")
+            var $self_btn = $(this);
+            $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
+        })
+    }
+
+    if (result.stocks.length > 1) {
+        var obj = {};
+
+        var item1 = $($("#Template_Spec_Radio").html()).clone(), item2 = $($("#Template_Spec_Radio").html()).clone();
+        var item1_control = item1.find(".spec_control"),
+            item2_control = item2.find(".spec_control");
+
+        item1.data("stype", 1)
+        item2.data("stype", 2)
+
+        var maxprice = 0, minprice = 0;
+        result.stocks.forEach(data => {
+            console.log(data)
+            obj["s1id"] = data.fK_S1id;
+            obj["s2id"] = data.fK_S2id;
+            var roleid = 1;
+            obj["price"] = data.prices.find(e => e.fK_RId == roleid).price;
+            price_list.push(obj);
+            maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
+            minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
+            obj = {}
+
+            if (data.fK_S1id > 0) {
+                if (s1_list.indexOf(data.fK_S1id) < 0) {
+                    item1_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
+                    item1_control.prepend('<input id="s1_' + data.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + data.fK_S1id + '">');
+                    s1_list.push(data.fK_S1id);
+                }
+            } else {
+                if (!s1 >= 0) {
+                    s1 = 0;
+                }
+            }
+
+            if (data.fK_S2id > 0) {
+                if (s2_list.indexOf(data.fK_S2id) < 0) {
+                    item2_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
+                    item2_control.prepend('<input id="s2_' + data.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + data.fK_S2id + '">');
+                    s2_list.push(data.fK_S2id);
+                }
+            } else {
+                if (!s2 >= 0) {
+                    s2 = 0;
+                }
+            }
+
+        });
+
+        $options.prepend(item2);
+        $options.prepend(item1);
+
+        $radio = $("#Product > .content > .options > .radio");
+        $radio.each(function () {
+            $input = $(this).children(".spec_control").children("input")
+            $input.each(function () {
+                $(this).on("click", SpecRadio)
+            })
+        })
+
+        if (maxprice == minprice) {
+            $pro_discount.text(result.stocks[0].price.toLocaleString('en-US'));
+        } else {
+            $pro_discount.text(minprice.toString().toLocaleString('en-US') + " ~ " + maxprice.toString().toLocaleString('en-US'));
+        }
+    } else {
+        s1 = result.stocks[0].fK_S1id;
+        s2 = result.stocks[0].fK_S2id;
+        $pro_discount.text(result.stocks[0].price.toLocaleString('en-US'));
+    }
+
+    var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper");
+
+    if (result.id == 1) {
         var demo_slide = $($("#TemplateDemoSlide").html()).clone();
         var demo_pre_slide = $($("#TemplateDemoPreviewSlide").html()).clone();
         $product_swiper.append(demo_slide);
         $preview_swiper.append(demo_pre_slide);
     } else {
-        var slide = $($("#TemplateImageSlide").html()).clone();
-        var slide_image = slide.find(".pro_display");
-        slide.data("pid", Pid);
-        slide_image.attr("src", "/upload/product/pro_0" + Pid + ".png")
-        $product_swiper.append(slide);
+        result.files_Medium.forEach(img_med => {
+            var slide = $($("#TemplateImageSlide").html()).clone();
+            var slide_image = slide.find(".pro_display");
+            slide_image.attr("alt", img_med.name);
+            slide_image.attr("src", img_med.link[0]);
+            slide_image.data("id", img_med.id);
+            $product_swiper.append(slide);
+            slide_image.on("click", ShowBigPro);
+        });
 
-        var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
-        var pre_slide_image = pre_slide.find("img");
-        pre_slide.data("pid", Pid);
-        pre_slide_image.attr("src", "/upload/product/pro_0" + Pid + ".png")
-        $preview_swiper.append(pre_slide);
+        result.files_Small.forEach(img_small => {
+            var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
+            var pre_slide_image = pre_slide.find("img");
+            pre_slide_image.attr("alt", img_small.name);
+            pre_slide_image.attr("src", img_small.link[0]);
+            pre_slide_image.data("id", img_small.id);
+            $preview_swiper.append(pre_slide);
+        });
+    }
+
+    preview_swiper = new Swiper(".PreviewSwiper", {
+        slidesPerView: 4,
+        loop: false,
+        spaceBetween: 10,
+        freeMode: true,
+        watchSlidesProgress: true,
+        scrollbar: {
+            el: ".swiper-scrollbar",
+        },
+        breakpoints: {
+            576: {
+                slidesPerView: 4,
+            },
+            768: {
+                slidesPerView: 6,
+            },
+            992: {
+                slidesPerView: 8,
+            }
+        }
+    });
+
+    product_swiper = new Swiper(".ProductSwiper", {
+        spaceBetween: 15,
+        loop: true,
+        navigation: {
+            nextEl: ".btn_swiper_next_product",
+            prevEl: ".btn_swiper_prev_product",
+        },
+        breakpoints: {
+            768: {
+                allowTouchMove: true,
+            },
+            992: {
+                allowTouchMove: false,
+            }
+        },
+        thumbs: {
+            swiper: preview_swiper,
+        },
+    });
+
+    img_origin_list = result.files_Original;
+
+    if (result.tagDatas.length > 0) {
+        result.tagDatas.forEach(item => {
+            $(".pro_tag").prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="">${item.tag_Name}</a></li>`);
+        })
+    } else {
+        $(".pro_tag").addClass("d-none");
     }
 }
 
@@ -402,7 +400,9 @@ function ShowBigPro() {
 }
 
 function addImage(pro_self) {
-    var pro_filename = pro_self.attr("src");
+    var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
+
+    var pro_filename = img_data.link[0];
     while (pro_filename.indexOf('/') >= 0) {
         pro_filename = pro_filename.substr(pro_filename.indexOf('/') + 1);
     }

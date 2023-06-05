@@ -498,15 +498,6 @@ var Coker = {
                     data: { PId: id },
                 });
             },
-            ProdSpec: function (id) {
-                return $.ajax({
-                    url: "/api/Product/GetSpecDetail/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { typeid: id },
-                });
-            },
             ProdTechCert: function (id) {
                 return $.ajax({
                     url: "/api/Product/GetTechCertDataAll/",
@@ -644,23 +635,23 @@ var Coker = {
                 dataType: "json"
             });
         },
-        Delete: function (key) {
+        Delete: function (data) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFile",
-                type: "Delete",
+                type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify({ key: key }),
+                data: JSON.stringify(data),
                 dataType: "json"
             });
         },
-        DeleteFileById: function (fileid) {
+        DeleteFileById: function (data) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFileById",
-                type: "Get",
+                type: "Post",
                 contentType: 'application/json; charset=utf-8',
-                data: { fileid: fileid },
                 headers: _c.Data.Header,
+                data: JSON.stringify(data),
                 dataType: "json"
             });
         },
@@ -712,6 +703,44 @@ var Coker = {
             });
             return upload;
         }
+    },
+    Spec: {
+        SpecAddUp: function (data) {
+            return $.ajax({
+                url: "/api/Specification/SpecAddUp_Data",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        TypeDelect: function (id) {
+            return $.ajax({
+                url: "/api/Specification/TypeDelete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id },
+            });
+        },
+        SpecDelect: function (id) {
+            return $.ajax({
+                url: "/api/Specification/SpecDelete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: id },
+            });
+        },
+        GetPickSpecList: function () {
+            return $.ajax({
+                url: "/api/Specification/GetPickSpecList/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+            });
+        },
     }
 }
 var _c = Coker;

@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.Specification
 @{
 	ViewData["Title"] = "SpecSetting";
 }
@@ -14,77 +15,162 @@
 
 	<div id="" class="py-2">
 		<div id="SpecSettingList" class="card border-0">
-			<div class="card-body position-relative">
-				@(Html.DevExtreme().DataGrid<ProductSpecListDto>()
-					.DataSource(d => d.RemoteController().Key("Id")
-					.LoadUrl("/api/Specification/GetAllList").LoadMethod("Get")
-					.InsertUrl("/api/Specification/AddUp").InsertMethod("Post")
-					.UpdateUrl("/api/Specification/AddUp").UpdateMethod("Post")
-					)
-					.ID("gridContainer")
-					.RemoteOperations(true)
-					.ShowBorders(true)
-					.FilterRow(filterRow => filterRow
-					.Visible(true)
-					.ApplyFilter(GridApplyFilterMode.Auto)
-					)
-					.HeaderFilter(headerFilter => headerFilter.Visible(true))
-					.SearchPanel(searchPanel => searchPanel
-					.Visible(true)
-					.Width(480)
-					.Placeholder("請輸入要搜尋的資料")
-					)
-					.ShowRowLines(true)
-					.Paging(paging => paging.PageSize(30))
-					.Pager(pager =>
-					{
-						pager.Visible(true);
-						pager.ShowPageSizeSelector(true);
-						pager.AllowedPageSizes(new[] { 10, 20, 30 });
-						pager.ShowInfo(true);
-					})
-					.Editing(editing =>
-					{
-						editing.Mode(GridEditMode.Row);
-						editing.AllowAdding(true);
-						editing.AllowDeleting(true);
-						editing.AllowUpdating(true);
-						editing.NewRowPosition(GridNewRowPosition.ViewportTop);
-						editing.UseIcons(true);
-					})
-					.Columns(c =>
-					{
-						c.AddFor(e => e.Id).Caption("編號").Width(50).AllowEditing(false);
-						c.AddFor(e => e.Type).Caption("規格類型");
-						c.AddFor(e => e.Title).Caption("規格名稱");
-						c.Add()
-						.Type(GridCommandColumnType.Buttons)
-						.Buttons(b =>
-						{
-							b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
-							b.Add().Name("save");
-							b.Add().Name("cancel");
-							b.Add().Name("delete").OnClick("deleteButtonClicked");
-						});
-					})
-					.Toolbar(toolbar =>
-					{
-						toolbar.Items(i =>
-						{
-							i.Add()
-						.Name(DataGridToolbarItem.AddRowButton)
-						.ShowText(ToolbarItemShowTextMode.Always)
-						.Location(ToolbarItemLocation.Before);
-						});
+			<div class="card-body row">
+				<div class="type_list position-relative col-12 col-lg-6">
+					<div class="bg-black bg-opacity-10 py-2 rounded-3 mb-4 fs-5 text-center">規格類型</div>
+					<div>
+						@(Html.DevExtreme().DataGrid<SpecTypeListDto>()
+							.DataSource(d => d.RemoteController().Key("Id")
+							.LoadUrl("/api/Specification/GetAllTypeList").LoadMethod("Get")
+							.InsertUrl("/api/Specification/TypeAddUp").InsertMethod("Post")
+							.UpdateUrl("/api/Specification/TypeAddUp").UpdateMethod("Post")
+							)
+							.ID("TypeList")
+							.RemoteOperations(true)
+							.ShowBorders(true)
+							.FilterRow(filterRow => filterRow
+							.Visible(true)
+							.ApplyFilter(GridApplyFilterMode.Auto)
+							)
+							.HeaderFilter(headerFilter => headerFilter.Visible(true))
+							.SearchPanel(searchPanel => searchPanel
+							.Visible(true)
+							.Width(280)
+							.Placeholder("請輸入要搜尋的資料")
+							)
+							.ShowRowLines(true)
+							.Paging(paging => paging.PageSize(30))
+							.Pager(pager =>
+							{
+								pager.Visible(true);
+								pager.ShowPageSizeSelector(true);
+								pager.AllowedPageSizes(new[] { 10, 20, 30 });
+								pager.ShowInfo(true);
+							})
+							.Editing(editing =>
+							{
+								editing.Mode(GridEditMode.Row);
+								editing.AllowAdding(true);
+								editing.AllowDeleting(true);
+								editing.AllowUpdating(true);
+								editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+								editing.UseIcons(true);
+							})
+							.Columns(c =>
+							{
+								c.AddFor(e => e.Type).Caption("規格類型");
+								c.Add()
+								.Type(GridCommandColumnType.Buttons)
+								.Buttons(b =>
+								{
+									b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
+									b.Add().Name("save");
+									b.Add().Name("cancel");
+									b.Add().Name("delete").OnClick("typeDeleteButtonClicked");
+								});
+							})
+							.Toolbar(toolbar =>
+							{
+								toolbar.Items(i =>
+								{
+									i.Add()
+								.Name(DataGridToolbarItem.AddRowButton)
+								.ShowText(ToolbarItemShowTextMode.Always)
+								.Location(ToolbarItemLocation.Before);
+								});
 
-						toolbar.Items(i =>
-						{
-							i.Add()
-						.Name(DataGridToolbarItem.SearchPanel)
-						.ShowText(ToolbarItemShowTextMode.Always)
-						.Location(ToolbarItemLocation.After);
-						});
-					}))
+								toolbar.Items(i =>
+								{
+									i.Add()
+								.Name(DataGridToolbarItem.SearchPanel)
+								.ShowText(ToolbarItemShowTextMode.Always)
+								.Location(ToolbarItemLocation.After);
+								});
+							})
+							.OnContentReady("contentReady")
+							.OnSaved("typeSaved"))
+					</div>
+				</div>
+				<div class="spec_list position-relative col-12 col-lg-6 d-none d-lg-block">
+					<div class="bg-black bg-opacity-10 py-2 rounded-3 mb-4 fs-5 text-center">規格名稱</div>
+					<div>
+						@(Html.DevExtreme().DataGrid<SpecSpecListDto>()
+							.DataSource(d => d.RemoteController().Key("Id")
+							.LoadUrl("/api/Specification/GetAllSpecList").LoadMethod("Get")
+							.InsertUrl("/api/Specification/SpecAddUp_List").InsertMethod("Post")
+							.UpdateUrl("/api/Specification/SpecAddUp_List").UpdateMethod("Post")
+							)
+							.ID("SpecList")
+							.RemoteOperations(true)
+							.ShowBorders(true)
+							.FilterRow(filterRow => filterRow
+							.Visible(true)
+							.ApplyFilter(GridApplyFilterMode.Auto)
+							)
+							.HeaderFilter(headerFilter => headerFilter.Visible(true))
+							.SearchPanel(searchPanel => searchPanel
+							.Visible(true)
+							.Width(280)
+							.Placeholder("請輸入要搜尋的資料")
+							)
+							.ShowRowLines(true)
+							.Paging(paging => paging.PageSize(30))
+							.Pager(pager =>
+							{
+								pager.Visible(true);
+								pager.ShowPageSizeSelector(true);
+								pager.AllowedPageSizes(new[] { 10, 20, 30 });
+								pager.ShowInfo(true);
+							})
+							.Editing(editing =>
+							{
+								editing.Mode(GridEditMode.Row);
+								editing.AllowAdding(true);
+								editing.AllowDeleting(true);
+								editing.AllowUpdating(true);
+								editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+								editing.UseIcons(true);
+							})
+							.Columns(c =>
+							{
+								c.AddFor(e => e.FK_Tid)
+								.Lookup(lookup => lookup
+								.DataSource("getType")
+								.DisplayExpr("Type")
+								.ValueExpr("Id")
+								).Caption("規格類型");
+								c.AddFor(e => e.Title).Caption("規格名稱");
+								c.Add()
+								.Type(GridCommandColumnType.Buttons)
+								.Buttons(b =>
+								{
+									b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
+									b.Add().Name("save");
+									b.Add().Name("cancel");
+									b.Add().Name("delete").OnClick("specDeleteButtonClicked");
+								});
+							})
+							.Toolbar(toolbar =>
+							{
+								toolbar.Items(i =>
+								{
+									i.Add()
+								.Name(DataGridToolbarItem.AddRowButton)
+								.ShowText(ToolbarItemShowTextMode.Always)
+								.Location(ToolbarItemLocation.Before);
+								});
+
+								toolbar.Items(i =>
+								{
+									i.Add()
+								.Name(DataGridToolbarItem.SearchPanel)
+								.ShowText(ToolbarItemShowTextMode.Always)
+								.Location(ToolbarItemLocation.After);
+								});
+							})
+							.OnContentReady("contentReady"))
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

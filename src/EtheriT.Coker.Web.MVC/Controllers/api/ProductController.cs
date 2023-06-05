@@ -54,16 +54,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.GetPriceDataAll(PSId);
         }
         [HttpGet]
-        public async Task<List<ProdIdTitleDto>> GetSpecType()
-        {
-            return await productAppService.GetSpecType();
-        }
-        [HttpGet]
-        public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
-        {
-            return await productAppService.GetSpecDetail(typeid);
-        }
-        [HttpGet]
         public async Task<ResponseMessageDto> ProdDelete(long Id)
         {
             return await productAppService.ProdDelete(Id);
@@ -79,9 +69,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await productAppService.PriceDelete(Id);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> ProdReplace(IList<IFormFile> files) {
-			return await productAppService.ProdReplace(files);
-		}
+        public async Task<ResponseMessageDto> ProdReplace(IList<IFormFile> files)
+        {
+            return await productAppService.ProdReplace(files);
+        }
 
-	}
+    }
 }

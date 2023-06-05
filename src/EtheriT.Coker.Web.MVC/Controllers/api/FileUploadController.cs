@@ -57,7 +57,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             switch (s)
             {
                 case FileBindTypeEnum.產品:
-                    return await fileUploadAppService.uploadYTLink(dto, "Product");
+                    return await fileUploadAppService.uploadYTLink(dto);
                 default:
                     return null;
             }
@@ -86,15 +86,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await fileUploadAppService.deleteFile(dto.key);
         }
-        [HttpGet]
-        public async Task<ResponseMessageDto> DeleteFileById(long? fileid)
+        [HttpPost]
+        public async Task<ResponseMessageDto> DeleteFileById(FileDeleteDto dto)
         {
-            return await fileUploadAppService.deleteFileById(fileid);
-        }
-        [HttpGet]
-        public async Task<ResponseMessageDto> deleteImgBySId(FileGetImgInputDto dto)
-        {
-            return await fileUploadAppService.deleteImgBySId(dto);
+            return await fileUploadAppService.deleteFileById(dto);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
 var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
-var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = []
+var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list
 var $price_modal, priceModal
 var file_num = 0, total_files = [];
 let importProdPopup = null;
@@ -56,7 +56,6 @@ function PageReady() {
                 switch ($self.data("uploadtype")) {
                     //圖片上傳
                     case 1:
-
                         var new_file_list = [];
                         var file_name, file_type;
                         cachedFile.forEach(function (file, index) {
@@ -64,48 +63,43 @@ function PageReady() {
                             file_type = file.type;
                             new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
                         })
-
                         var temp_files = [];
+                        file_num--;
                         new_file_list.forEach(function (file, index) {
                             var img_file = [];
                             img_file.push(file);
-                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7 })
+                            var obj = {};
+                            obj["TempId"] = $self.data("tempid") + index;
+                            obj["Type"] = $self.data("uploadtype");
+                            var reader = new FileReader();
+                            reader.readAsDataURL(img_file[0]);
+                            reader.onload = (function (e) {
+                                obj["Link"] = e.target.result;
+                            });
+                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 500, height: 500, imageType: img_file[0].type })
                             htmlImageCompress.then(function (result) {
                                 img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
 
-                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3 })
+                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3, width: 150, height: 150, imageType: img_file[0].type })
                                 htmlImageCompress.then(function (result) {
                                     img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                    var reader = new FileReader();
-                                    reader.readAsDataURL(img_file[2]);
-                                    reader.onload = (function (e) {
-                                        var obj = {};
-                                        obj["File"] = img_file;
-                                        obj["Link"] = e.target.result;
-                                        obj["TempId"] = $self.data("tempid") + index;
-                                        obj["Type"] = $self.data("uploadtype");
-                                        obj["IsDelete"] = false;
-                                        obj["Name"] = result.origin.name;
-                                        total_files.push(obj);
-                                        temp_files.push(obj)
-                                    });
+                                    obj["File"] = img_file;
+                                    obj["IsDelete"] = false;
+                                    obj["Name"] = result.origin.name;
+                                    total_files.push(obj);
+                                    UploadListAdd(obj);
                                 }).catch(function (err) {
                                     UploadPreviewFrameClear();
+                                    console.log($`發生錯誤：${err}`);
                                     co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                 })
 
                             }).catch(function (err) {
                                 UploadPreviewFrameClear();
+                                console.log($`發生錯誤：${err}`);
                                 co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                             })
                         })
-
-                        setTimeout(function () {
-                            file_num--;
-                            temp_files.forEach(function (file) {
-                                UploadListAdd(file);
-                            })
-                        }, 500);
 
                         break;
                     //360圖片上傳
@@ -184,7 +178,7 @@ function PageReady() {
     })
 
     $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
-        console.log("fileUploadWithPreview:imageDeleted")
+        //console.log("fileUploadWithPreview:imageDeleted")
         $("#ProductForm > .data_upload > ul > li").each(function () {
             var $self = $(this);
             if ($self.data("edit")) {
@@ -544,8 +538,11 @@ function HashDataEdit() {
                 } else {
                     co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
                         if (result != null) {
-                            FormDataSet(result);
-                            MoveToContent();
+                            co.Spec.GetPickSpecList().done(function (pick_result) {
+                                spec_pick_list = pick_result;
+                                FormDataSet(result);
+                                MoveToContent();
+                            });
                         } else {
                             window.location.hash = ""
                         }
@@ -570,7 +567,7 @@ function paletteButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    console.log(result)
+    //console.log(result)
 
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
@@ -718,6 +715,7 @@ function SpecPriceSave() {
 }
 
 function SpecAdd(result) {
+
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
     var item_topline = item.find(".topline"),
@@ -754,16 +752,17 @@ function SpecAdd(result) {
                 }
             })
             item_select_input_1.removeAttr("disabled")
-            co.Product.Get.ProdSpec(item_select_1.val()).done(function (spec1_result) {
-                if (spec1_result != null) {
-                    spec1_result.forEach(function (spec1) {
-                        item_select_list_1.append('<option value="' + spec1.title + '" data-sid="' + spec1.id + '"></option>')
-                        if (spec1.id == result.fK_S1id) {
-                            item_select_input_1.val(spec1.title);
-                        }
-                    })
-                }
-            });
+
+            var temp_spec_list = spec_pick_list.find(item => item.id == item_select_1.val())
+            if (temp_spec_list.specs.length > 0) {
+                temp_spec_list.specs.forEach(item => {
+                    item_select_list_1.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
+                    if (item.id == result.fK_S1id) {
+                        item_select_input_1.val(item.title);
+                        item_select_input_1.data("id", item.id);
+                    }
+                })
+            }
         }
     }
 
@@ -780,16 +779,17 @@ function SpecAdd(result) {
                 }
             })
             item_select_input_2.removeAttr("disabled")
-            co.Product.Get.ProdSpec(item_select_2.val()).done(function (spec2_result) {
-                if (spec2_result != null) {
-                    spec2_result.forEach(function (spec2) {
-                        item_select_list_2.append('<option value="' + spec2.title + '" data-sid="' + spec2.id + '"></option>')
-                        if (spec2.id == result.fK_S2id) {
-                            item_select_input_2.val(spec2.title);
-                        }
-                    })
-                }
-            });
+
+            var temp_spec_list = spec_pick_list.find(item => item.id == item_select_2.val())
+            if (temp_spec_list.specs.length > 0) {
+                temp_spec_list.specs.forEach(item => {
+                    item_select_list_2.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
+                    if (item.id == result.fK_S2id) {
+                        item_select_input_2.val(item.title);
+                        item_select_input_2.data("id", item.id);
+                    }
+                })
+            }
         }
     }
 
@@ -807,6 +807,7 @@ function SpecAdd(result) {
     } else {
         item_price.val("");
     }
+
     item_min.val(result != null ? result.min_Qty : "");
     item_stock.val(result != null ? result.stock : "");
     item_alert.val("");
@@ -874,7 +875,6 @@ function SpecAdd(result) {
         $self.on("change", function () {
             var $spec_type = $(this);
             var $spec_bro = $spec_type.parents(".spec").first().siblings(".spec");
-            var $spec_input = $spec_type.siblings(".input_spec");
             var $spec_list = $spec_type.siblings("datalist");
 
             $spec_input.val("");
@@ -898,16 +898,44 @@ function SpecAdd(result) {
                     }
                 })
                 $spec_input.removeAttr("disabled")
-                co.Product.Get.ProdSpec($spec_type.val()).done(function (spec_result) {
-                    if (spec_result != null) {
-                        spec_result.forEach(function (spec) {
-                            $spec_list.append('<option value="' + spec.title + '" data-sid="' + spec.id + '"></option>')
-                        })
-                    }
-                });
+                var temp_spec_list = spec_pick_list.find(item => item.id == $spec_type.val())
+                if (temp_spec_list.specs.length > 0) {
+                    temp_spec_list.specs.forEach(item => {
+                        $spec_list.append(`<option value="${item.title}" data-sid="${item.id}"></option>`)
+                    })
+                }
+            }
+        })
+
+        var $spec_input = $self.siblings(".input_spec");
+
+        $spec_input.blur(function () {
+            var $option; var id;
+            if ($spec_input.val() != "") {
+                id = 0;
+                $spec_input.each(function () {
+                    $self_input = $(this);
+                    $self_input.siblings("datalist").children("option").each(function () {
+                        $option = $(this);
+                        if ($option.val() == $self_input.val()) {
+                            id = $option.data("sid");
+                        }
+                    })
+                })
+                if (id == 0) {
+                    co.Spec.SpecAddUp({ FK_Tid: $spec_input.prev("select").val(), Title: $spec_input.val(), }).done(function (result) {
+                        if (result.success) {
+                            co.Spec.GetPickSpecList().done(function (pick_result) {
+                                spec_pick_list = pick_result;
+                                $self_input.siblings("datalist").append(`<option value="${$spec_input.val()}" data-sid="${result.message}"></option>`)
+                            });
+                        }
+                    });
+                }
             }
         })
     })
+
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
     $min_number = $(".input_min_number");
@@ -999,14 +1027,6 @@ function UploadFile($self) {
                         $parent.find(".media_preview > div").children().remove();
                         $parent.find(".media_preview > div").children().remove();
                         $parent.find(".media_preview > div").append(`<img src="${file}" class=""></img>`);
-                        var $img = $parent.find(".media_preview > div > img");
-                        $img.attr('src', url).on('load', function () {
-                            if (this.width > this.height) {
-                                $img.addClass("h-auto w-100")
-                            } else {
-                                $img.addClass("img-fluid")
-                            }
-                        });
                     } else if (typeof ($self.data("tempid")) != "undefined") {
                         var data = total_files.find(item => item["TempId"] == $self.data("tempid"));
                         if (typeof (data) != "undefined") {
@@ -1015,14 +1035,6 @@ function UploadFile($self) {
                             $parent.find(".media_preview > div").children().remove();
                             var link = data["Link"];
                             $parent.find(".media_preview > div").append(`<img src="${link}" class=""></img>`);
-                            var $img = $parent.find(".media_preview > div > img");
-                            $img.attr('src', url).on('load', function () {
-                                if (this.width > this.height) {
-                                    $img.addClass("h-auto w-100")
-                                } else {
-                                    $img.addClass("img-fluid")
-                                }
-                            });
                         }
                         $parent.find(".media_frame").addClass("d-flex");
                     }
@@ -1032,7 +1044,7 @@ function UploadFile($self) {
                 upload_file = co.File.Upload360Init("FileUpload");
                 if ($self.data("file")) {
                     upload_file.addFiles($self.data("file"));
-                    console.log(upload_file);
+                    //console.log(upload_file);
                     $parent.find(".upload_frame").find("span").text($self.data("file").length + " 張圖片已選擇");
                 }
                 $parent.find(".upload_frame").removeClass("d-none");
@@ -1043,7 +1055,6 @@ function UploadFile($self) {
                     $parent.find(".upload_frame").removeClass("d-none");
                 } else {
                     if (typeof ($self.data("id")) != "undefined") {
-                        console.log("舊資料")
                         var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
                         var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
                         $parent.find(".media_frame").addClass("d-flex");
@@ -1086,8 +1097,8 @@ function UploadFile($self) {
 }
 
 function UploadListAdd(result) {
-    console.log("UploadListAdd");
-    console.log(result);
+    //console.log("UploadListAdd");
+    //console.log(result);
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
@@ -1123,8 +1134,6 @@ function UploadListAdd(result) {
             UploadFile($(this));
         })
     } else {
-        console.log(result);
-
         file_num += 1;
 
         item.data("id", result.id);
@@ -1146,7 +1155,6 @@ function UploadListAdd(result) {
         obj["Type"] = result.fileType;
         obj["IsDelete"] = false;
         total_files.push(obj);
-        console.log(total_files);
 
         item.on("click", function () {
             UploadFile($(this));
@@ -1224,7 +1232,7 @@ function SortChange(change, minindex, maxindex) {
 }
 
 function AddUp(success_text, error_text, target) {
-    console.log(total_files);
+    //console.log(total_files);
 
     var stock_addup_list = []
     var temp_serno = 1;
@@ -1233,7 +1241,7 @@ function AddUp(success_text, error_text, target) {
         var obj = {};
         var fk_sid = [];
         $self.find(".input_spec").each(function () {
-            var id = -1;
+            var id = 0;
             $self_input = $(this);
             $self_input.siblings("datalist").children("option").each(function () {
                 var $option = $(this);
@@ -1241,17 +1249,17 @@ function AddUp(success_text, error_text, target) {
                     id = $option.data("sid");
                 }
             })
-            fk_sid.push(id > -1 ? id : 0)
+            fk_sid.push(id)
         })
 
         obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];
         obj["Stock"] = $self.find(".input_stock_number").val();
-        obj["Ser_No"] = temp_serno;
-        temp_serno++;
         obj["Alert_Qty"] = $self.find(".input_alert_number").val();
         obj["Min_Qty"] = $self.find(".input_min_number").val();
+        obj["Ser_No"] = temp_serno;
+        temp_serno++;
 
         var price_list = [];
         modal_price_list.forEach(function (item) {
@@ -1332,12 +1340,11 @@ function AddUp(success_text, error_text, target) {
                                     for (var j = i; j < i + 3; j++) {
                                         formData.append('files', data[j]);
                                     }
-                                    console.log(formData.get("files"));
+                                    //console.log(formData.get("files"));
                                     formData.delete('files');
                                 }
                                 break;
                             case 3:
-                                console.log(typeof (data[0]["File"]))
                                 if (typeof (data[0]["File"]) == "string") {
                                     co.File.fileSortChange({
                                         Id: data[0]["Id"],
@@ -1370,13 +1377,16 @@ function AddUp(success_text, error_text, target) {
                     if (typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true) {
                         switch (file["Type"]) {
                             case 2:
-
                                 break;
                             case 1:
                             case 3:
                             case 4:
                                 if (typeof (file["Id"]) != "undefined") {
-                                    co.File.DeleteFileById(file["Id"]);
+                                    co.File.DeleteFileById({
+                                        Sid: parseInt(result.message),
+                                        Type: 1,
+                                        Fid: file["Id"],
+                                    });
                                 }
                                 break;
                         }

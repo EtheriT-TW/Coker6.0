@@ -425,7 +425,11 @@ function AddUp(display, success_text, error_text) {
 
             if (img_delete_list.length > 0) {
                 img_delete_list.forEach(function (imgid) {
-                    co.File.DeleteFileById(imgid).done(function (result) {
+                    co.File.DeleteFileById({
+                        Sid: result.message,
+                        Type: 4,
+                        Fid: imgid,
+                    }).done(function (result) {
                     });
                 })
             }

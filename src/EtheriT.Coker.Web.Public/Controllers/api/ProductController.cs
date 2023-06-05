@@ -18,6 +18,19 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             this.productAppService = productAppService;
         }
         [HttpGet]
+        public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
+        {
+            return await productAppService.GetMainDisplayOne(Id);
+        }
+
+
+
+        [HttpGet]
+        public async Task<ProdGetDataDto> GetProdDataOne(long Id)
+        {
+            return await productAppService.GetProdDataOne(Id);
+        }
+        [HttpGet]
         public async Task<ProdGetOneDto> GetDisplayOne(long id)
         {
             return await productAppService.GetDisplayOne(id);

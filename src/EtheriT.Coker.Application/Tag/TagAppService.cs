@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -16,13 +17,16 @@ namespace EtheriT.Coker.Application.Tag
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly IConfiguration configuration;
         public TagAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.configuration = configuration;
         }
         public async Task<ResponseMessageDto> TagAddUp(DevExpressDto dto)
         {
@@ -33,7 +37,7 @@ namespace EtheriT.Coker.Application.Tag
             {
                 long usetId = await loginUserData.GetUserId();
                 long webid = await loginUserData.GetWebsiteId();
-                
+
                 if (data != null)
                 {
                     if (dto.Key == null)
@@ -115,6 +119,10 @@ namespace EtheriT.Coker.Application.Tag
             {
 
                 long WebsiteID = await loginUserData.GetWebsiteId();
+                if (WebsiteID == 0)
+                {
+                    WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                }
 
                 var output = from ta in db.Tag_Associates
                              where ta.FK_AId == dto.Fk_Aid && ta.Type == dto.Type && !ta.IsDeleted

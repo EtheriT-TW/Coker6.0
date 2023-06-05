@@ -1,9 +1,9 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Product;
+﻿using EtheriT.Coker.Application.Shared.Dto.Specification;
 
 namespace EtheriT.Coker.Web.MVC.Models.ProductManagement
 {
     public class ProductManagementModel
     {
-        public List<ProdIdTitleDto> SpecType { get; set; }
+        public List<SpecTypeListDto> SpecType { get; set; }
     }
 }

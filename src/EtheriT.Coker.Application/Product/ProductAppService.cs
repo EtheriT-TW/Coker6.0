@@ -25,6 +25,8 @@ using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Specification;
+using System;
+using EtheriT.Coker.Application.Shared.Dto.Specification;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -302,43 +304,50 @@ namespace EtheriT.Coker.Application.Product
 			{
 				long webid = await loginUserData.GetWebsiteId();
 
-				var dataQuery = from p in db.Prods
-								where p.FK_WebsiteId == webid && !p.IsDeleted
-								select new ProductGetAllListDto
-								{
-									Id = p.Id,
-									Title = p.Title,
-									Disp_Opt = p.Disp_Opt,
-									Ser_No = p.Ser_No,
-									Price = "",
-									StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
-									EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
-									Permanent = p.permanent
-								};
-				//var dataQuery = from ps in db.Prod_Stocks
-				//                where !ps.IsDeleted
-				//                from pp in db.Prod_Prices
-				//                where !pp.IsDeleted && pp.FK_PSId == ps.Id
-				//                join p in db.Prods on ps.FK_Pid equals p.Id
-				//                where !p.IsDeleted && p.FK_WebsiteId == webid
-				//                group pp by new { p.Id, p.Title, p.Disp_Opt, p.Ser_No, p.StartTime, p.EndTime, p.permanent } into s
-				//                select new ProductGetAllListDto
-				//                {
-				//                    Id = s.Key.Id,
-				//                    Title = s.Key.Title,
-				//                    Disp_Opt = s.Key.Disp_Opt,
-				//                    Ser_No = s.Key.Ser_No,
-				//                    Price = s.Min(e => e.Price) == s.Max(e => e.Price) ? s.Min(e => e.Price).ToString() : s.Min(e => e.Price) + " ~ " + s.Max(e => e.Price),
-				//                    StartTime = s.Key.StartTime,
-				//                    EndTime = s.Key.EndTime,
-				//                    Permanent = s.Key.permanent
-				//                };
+                var dataQuery = from p in db.Prods
+                                where p.FK_WebsiteId == webid && !p.IsDeleted
+                                select new ProductGetAllListDto
+                                {
+                                    Id = p.Id,
+                                    Title = p.Title,
+                                    Disp_Opt = p.Disp_Opt,
+                                    Ser_No = p.Ser_No,
+                                    Price = "",
+                                    StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
+                                    EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
+                                    Permanent = p.permanent
+                                };
 
-				var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-			}
-			catch (Exception e)
-			{
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+                int min_price = 0, max_price = 0;
+                foreach (var data in output.data)
+                {
+                    var pid = (long)data.GetType().GetProperty("Id").GetValue(data, null);
+                    var db_ps = await db.Prod_Stocks.Where(e => e.FK_Pid == pid && !e.IsDeleted).ToListAsync();
+                    if (db_ps.Count > 0)
+                    {
+                        for (var ps_i = 0; ps_i < db_ps.Count(); ps_i++)
+                        {
+                            var db_pp = await db.Prod_Prices.Where(e => e.FK_PSId == db_ps[ps_i].Id && !e.IsDeleted).ToListAsync();
+                            if (db_pp.Count > 0)
+                            {
+                                for (var pp_i = 0; pp_i < db_pp.Count; pp_i++)
+                                {
+                                    var price = (int)(db_pp[pp_i].Price ?? 0);
+                                    if (min_price == 0 || price < min_price) { min_price = price; }
+                                    if (price > max_price) { max_price = price; }
+                                }
+                            }
+                        }
+                        var price_text = min_price == max_price ? max_price.ToString("###,###") : $"{min_price}~{max_price}";
+                        data.GetType().GetProperty("Price").SetValue(data, price_text);
+                    }
+                }
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e)
+            {
 
 			}
 
@@ -395,50 +404,80 @@ namespace EtheriT.Coker.Application.Product
 						output.Stocks = stockDatas;
 					}
 
-					var fileDatas = await fileUploadAppService.getProdDisplayFiles(output.Id, 3);
-					if (fileDatas != null)
-					{
-						output.Files = fileDatas;
-					}
+                    var fileDatas = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
+                    if (fileDatas != null)
+                    {
+                        output.Files = fileDatas;
+                    }
 
-					return output;
-				}
-				else throw new Exception("查無商品資料");
-			}
-			catch (Exception e)
-			{
+                    return output;
+                }
+                else throw new Exception("查無商品資料");
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+        public async Task<List<ProductStockDto>> GetStockDataAll(long PId)
+        {
+            try
+            {
+                var output = await (from ps in db.Prod_Stocks
+                                    where !ps.IsDeleted && ps.FK_Pid == PId
+                                    orderby ps.Id
+                                    select new ProductStockDto
+                                    {
+                                        Pid = PId,
+                                        Id = ps.Id,
+                                        FK_S1id = ps.FK_S1id,
+                                        S1_Title = "",
+                                        FK_S2id = ps.FK_S2id,
+                                        S2_Title = "",
+                                        Price = ps.Price,
+                                        Min_Qty = ps.Min_Qty,
+                                        Stock = ps.Stock,
+                                        Alert_Qty = ps.Alert_Qty,
+                                        Prices = new List<ProductPriceDto>(),
+                                    }).ToListAsync();
 
-			}
-			return null;
-		}
-		public async Task<List<ProductStockDto>> GetStockDataAll(long PId)
-		{
-			try
-			{
-				var output = await (from ps in db.Prod_Stocks
-									where !ps.IsDeleted && ps.FK_Pid == PId
-									orderby ps.Id
-									select new ProductStockDto
-									{
-										Pid = PId,
-										Id = ps.Id,
-										FK_S1id = ps.FK_S1id,
-										FK_S2id = ps.FK_S2id,
-										Price = ps.Price,
-										Min_Qty = ps.Min_Qty,
-										Stock = ps.Stock,
-										Alert_Qty = ps.Alert_Qty,
-										Prices = new List<ProductPriceDto>(),
-									}).ToListAsync();
+                var db_sp = await db.Prod_Specs.Where(e => !e.IsDeleted).ToListAsync();
 
-				var db_sp = db.Prod_Specs.ToList();
+                if (db_sp.Count > 0)
+                {
+                    foreach (var item in output)
+                    {
+                        item.FK_ST1id = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).FK_Tid : 0;
+                        item.S1_Title = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).Title : "";
+                        item.FK_ST2id = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).FK_Tid : 0;
+                        item.S2_Title = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).Title : "";
+                        item.Prices = await this.GetPriceDataAll(item.Id);
+                    }
+                }
 
-				foreach (var item in output)
-				{
-					item.FK_ST1id = (item.FK_S1id != null && (int)item.FK_S1id > 0) ? db_sp[(int)item.FK_S1id - 1].FK_Tid : 0;
-					item.FK_ST2id = (item.FK_S2id != null && (int)item.FK_S2id > 0) ? db_sp[(int)item.FK_S2id - 1].FK_Tid : 0;
-					item.Prices = await this.GetPriceDataAll(item.Id);
-				}
+                return output;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+
+        }
+        public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)
+        {
+            try
+            {
+                var output = await (from pp in db.Prod_Prices
+                                    where !pp.IsDeleted && pp.FK_PSId == PSId
+                                    orderby pp.FK_PSId
+                                    select new ProductPriceDto
+                                    {
+                                        Id = pp.Id,
+                                        FK_PSId = pp.FK_PSId,
+                                        FK_RId = pp.FK_RId,
+                                        Price = pp.Price,
+                                        Bonus = pp.Bonus??0,
+                                    }).ToListAsync();
 
 				return output;
 			}
@@ -447,35 +486,85 @@ namespace EtheriT.Coker.Application.Product
 
 			}
 
-			return null;
-		}
-		public async Task<List<ProductPriceDto>> GetPriceDataAll(long PSId)
-		{
-			try
-			{
-				var output = await (from pp in db.Prod_Prices
-									where !pp.IsDeleted && pp.FK_PSId == PSId
-									orderby pp.FK_PSId
-									select new ProductPriceDto
-									{
-										Id = pp.Id,
-										FK_PSId = pp.FK_PSId,
-										FK_RId = pp.FK_RId,
-										Price = pp.Price,
-										Bonus = pp.Bonus??0,
-									}).ToListAsync();
+            return null;
+        }
+        public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
+        {
+            try
+            {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var db_p = db.Prods.Where(e => e.Id == Id).OrderBy(e => e.Ser_No).FirstOrDefault();
 
-				return output;
-			}
-			catch (Exception e)
-			{
+                if (db_p != null)
+                {
+                    ProdGetMainDisplayDto output = new ProdGetMainDisplayDto()
+                    {
+                        Id = db_p.Id,
+                        Title = db_p.Title,
+                        Introduction = db_p.Introduction,
+                        Description = db_p.Description,
+                        TagDatas = new List<TagGetSelectedDto>(),
+                        TechCertDatas = new List<TechCertDisplayDto>(),
+                        Stocks = new List<ProductStockDto>(),
+                        Files_Original = new List<FileGetProdDisplayDto>(),
+                        Files_Medium = new List<FileGetProdDisplayDto>(),
+                        Files_Small = new List<FileGetProdDisplayDto>(),
+                    };
 
-			}
+                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                    {
+                        Fk_Aid = output.Id,
+                        Type = (int)TagAssociateTypeEnum.商品,
+                    }
+                    );
 
-			return null;
-		}
-		public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
-		{
+                    if (tagDatas != null)
+                    {
+                        output.TagDatas = tagDatas;
+                    }
+
+                    var techcertDatas = await technicalCertificateAppService.GetDisplayData(db_p.Id);
+
+                    if (techcertDatas != null)
+                    {
+                        output.TechCertDatas = techcertDatas;
+                    }
+
+                    var stockDatas = await this.GetStockDataAll(output.Id);
+                    if (stockDatas != null)
+                    {
+                        output.Stocks = stockDatas;
+                    }
+
+                    var fileDatas_original = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
+                    if (fileDatas_original != null)
+                    {
+                        output.Files_Original = fileDatas_original;
+                    }
+
+                    var fileDatas_medium = await fileUploadAppService.getProdDisplayFiles(output.Id, 2);
+                    if (fileDatas_medium != null)
+                    {
+                        output.Files_Medium = fileDatas_medium;
+                    }
+
+                    var fileDatas_small = await fileUploadAppService.getProdDisplayFiles(output.Id, 3);
+                    if (fileDatas_small != null)
+                    {
+                        output.Files_Small = fileDatas_small;
+                    }
+
+                    return output;
+                }
+                else throw new Exception("查無商品資料");
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+        }
+        public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
+        {
 
 			try
 			{
@@ -617,11 +706,11 @@ namespace EtheriT.Coker.Application.Product
 						}
 					}
 
-					fileresponse = await fileUploadAppService.deleteImgBySId(new FileGetImgInputDto()
-					{
-						Sid = Id,
-						Type = (int)FileBindTypeEnum.產品,
-					});
+                    fileresponse = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                    {
+                        Sid = Id,
+                        Type = (int)FileBindTypeEnum.產品,
+                    });
 
 					output.Success = fileresponse.Success;
 
@@ -725,67 +814,14 @@ namespace EtheriT.Coker.Application.Product
 			return output;
 		}
 		/* Other Get */
-		public async Task<List<ProdIdTitleDto>> GetSpecType()
-		{
-			try
-			{
-				var db_pst = db.Prod_Spec_Types;
-
-				if (db_pst != null)
-				{
-					long WebsiteID = await loginUserData.GetWebsiteId();
-					var output = await (from pst in db_pst
-										where !pst.IsDeleted && pst.FK_WebsiteId == WebsiteID
-										select new ProdIdTitleDto
-										{
-											Id = pst.Id,
-											Title = pst.Type
-										}).ToListAsync();
-					return output;
-				}
-				else throw new Exception("查無資料");
-			}
-			catch (Exception e)
-			{
-
-			}
-
-			return null;
-		}
-		public async Task<List<ProdIdTitleDto>> GetSpecDetail(long typeid)
-		{
-			try
-			{
-				var db_ps = db.Prod_Specs;
-
-				if (db_ps != null)
-				{
-					var output = await (from ps in db_ps
-										where !ps.IsDeleted && ps.FK_Tid == typeid
-										select new ProdIdTitleDto
-										{
-											Id = ps.Id,
-											Title = ps.Title
-										}).ToListAsync();
-					return output;
-				}
-				else throw new Exception("查無資料");
-			}
-			catch (Exception e)
-			{
-
-			}
-
-			return null;
-		}
 		public async Task<ProdGetOneDto> GetDisplayOne(long id)
 		{
 			try
 			{
 				var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
-				var db_p = db.Prods.Where(e => e.Id == id && e.FK_WebsiteId == websiteId)
+				var db_p = await db.Prods.Where(e => e.Id == id && e.FK_WebsiteId == websiteId)
 					.Where(e => !e.IsDeleted && (e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now < e.EndTime)))
-					.FirstOrDefault();
+					.FirstOrDefaultAsync();
 				var db_ps = db.Prod_Stocks.Where(e => e.Id == db_p.Id).FirstOrDefault();
 
 				if (db_p != null && db_ps != null)
@@ -995,32 +1031,27 @@ namespace EtheriT.Coker.Application.Product
 		}
 		private async Task<ProductStockDto> InsertOrUpdateStore(ProductImportDto item) {
 			ProductStockDto stockDto = mapper.Map<ProductStockDto>(item);
-			List<ProductSpecListDto> prodSpecList = new List<ProductSpecListDto> {
-					new ProductSpecListDto{
-						Title = item.Spec1 ?? "",
+			List<SpecTypeListDto> prodSpecList = new List<SpecTypeListDto> {
+					new SpecTypeListDto{
 						Type = item.Spec1Name ?? ""
 					},
-					new ProductSpecListDto{
-						Title = item.Spec2 ?? "",
+					new SpecTypeListDto{
 						Type = item.Spec2Name ?? ""
 					}
 				};
 			for (int i = 0; i < prodSpecList.Count; i++)
 			{
-				if (!string.IsNullOrEmpty(prodSpecList[i].Title) && !string.IsNullOrEmpty(prodSpecList[i].Type))
+				if (!string.IsNullOrEmpty(prodSpecList[i].Type))
 				{
-					await specificationAppService.AddUp(
-						new DevExpressDto
-						{
-							Values = JsonConvert.SerializeObject(
-								new ProductSpecListDto
-								{
-									Title = prodSpecList[i].Title,
-									Type = prodSpecList[i].Type
-								}
-							)
-						}
-					);
+					prodSpecList[i].Id = await db.Prod_Spec_Types.Where(e => e.Type == prodSpecList[i].Type).Select(e => e.Id).FirstOrDefaultAsync();
+					if (prodSpecList[i].Id != 0) {
+						await specificationAppService.TypeAddUp(
+							new DevExpressDto
+							{
+								Values = JsonConvert.SerializeObject(prodSpecList[i])
+							}
+						);
+					}
 				}
 			}
 			Prod_Spec? s1 = await db.Prod_Specs.Where(s => s.Title == item.Spec1).FirstOrDefaultAsync();

@@ -191,12 +191,7 @@
 			<div class="swiper-scrollbar"></div>
 		</div>
 
-		<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2">
-			<li class="rounded-pill me-1 px-3 py-1">奈米</li>
-			<li class="rounded-pill me-1 px-3 py-1">單體</li>
-			<li class="rounded-pill me-1 px-3 py-1">智慧馬桶</li>
-			<li class="rounded-pill me-1 px-3 py-1">一觸即掀</li>
-		</ul>
+		<ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
 	</div>
 
 	<div class="content col-md-6 col-sm-12">
@@ -219,22 +214,22 @@
 			<ul class="text-start w-100 collapse"></ul>
 
 			<button class="btn_detailed icon_down px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target=".specification > .collapse" aria-expanded="false" aria-controls="collapseSpecification">
-				詳細說明
+				詳細規格
 			</button>
 		</div>
 
-		<div class="pro_tc px-3 d-none">
+		<div class="pro_tc px-3">
 			<div class="title">標章認證</div>
 			<ul class="image d-flex flex-wrap"></ul>
 		</div>
-
+		@*
 		<template id="TemplateIcon">
-			<li><button class="btn_tc bg-transparent border-0" data-certification="1"><img src="~/upload/badge/badge_01.jpg" alt="" /></button></li>
-			<li><button class="btn_tc bg-transparent border-0" data-certification="2"><img src="~/upload/badge/badge_02.jpg" alt="" /></button></li>
-			<li><button class="btn_tc bg-transparent border-0" data-certification="3"><img src="~/upload/badge/badge_03.jpg" alt="" /></button></li>
-			<li><button class="btn_tc bg-transparent border-0" data-certification="4"><img src="~/upload/badge/badge_04.jpg" alt="" /></button></li>
-			<li><button class="btn_tc bg-transparent border-0" data-certification="5"><img src="~/upload/badge/badge_05.jpg" alt="" /></button></li>
-		</template>
+		<li><button class="btn_tc bg-transparent border-0" data-certification="1"><img src="~/upload/badge/badge_01.jpg" alt="" /></button></li>
+		<li><button class="btn_tc bg-transparent border-0" data-certification="2"><img src="~/upload/badge/badge_02.jpg" alt="" /></button></li>
+		<li><button class="btn_tc bg-transparent border-0" data-certification="3"><img src="~/upload/badge/badge_03.jpg" alt="" /></button></li>
+		<li><button class="btn_tc bg-transparent border-0" data-certification="4"><img src="~/upload/badge/badge_04.jpg" alt="" /></button></li>
+		<li><button class="btn_tc bg-transparent border-0" data-certification="5"><img src="~/upload/badge/badge_05.jpg" alt="" /></button></li>
+		</template>*@
 
 		<hr class="m-1" />
 
@@ -293,7 +288,7 @@
 	</ul>
 </div>
 
-<template id="TemplateDemoDescription">
+@*<template id="TemplateDemoDescription">
 	<ul>
 		<li>■ 中心孔距:305mm</li>
 		<li>■ 用水量:小號2.9公升，大號3.8公升</li>
@@ -309,7 +304,7 @@
 	<img class="py-2" src="~/upload/propic_01.jpg" alt="" />
 
 	<img class="py-2" src="~/upload/propic_02.jpg" alt="" />
-</template>
+</template>*@
 
 <div id="TabContent" class="tab-content container">
 	<div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
@@ -317,13 +312,15 @@
 
 	<div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
 		<div id="FileDownload" class="filedownload d-flex pt-5 pb-3 flex-wrap">
-			<div class="file px-4 py-1 border border-dark">
-				<a href="/upload/badge/badge_03.jpg" download="施工圖.dwg"><div>施工圖.dwg</div></a>
+			@*<div class="file px-4 py-1 border border-dark">
+			<a href="/upload/badge/badge_03.jpg" download="施工圖.dwg"><div>施工圖.dwg</div></a>
 			</div>
 			<div class="file px-4 py-1 border border-dark">
-				<a href="/upload/badge/badge_03.jpg" download="施工圖.pdf"><div>施工圖.pdf</div></a>
-			</div>
+			<a href="/upload/badge/badge_03.jpg" download="施工圖.pdf"><div>施工圖.pdf</div></a>
+			</div>*@
 		</div>
+
+		<div class="techcert_list"></div>
 
 		@*<div class="badge_directions d-flex align-items-center" data-certification="1">
 		<img class="py-2" src="~/upload/badge/badge_01.jpg" alt="" />

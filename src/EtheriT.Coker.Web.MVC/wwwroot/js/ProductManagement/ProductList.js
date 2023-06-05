@@ -1087,7 +1087,7 @@ function UploadFile($self) {
 
 function UploadListAdd(result) {
     console.log("UploadListAdd");
-    //console.log(result);
+    console.log(result);
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");

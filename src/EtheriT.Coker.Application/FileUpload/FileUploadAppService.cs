@@ -193,7 +193,75 @@ namespace EtheriT.Coker.Application
 
             return response;
         }
-        public async Task<UploadFileOutputDto> getHtmlContentFiles()
+        public async Task<ResponseMessageDto> uploadImageLink(FileImageImportDto dto) {
+			ResponseMessageDto response = new ResponseMessageDto() { Success = true };
+
+			try
+			{
+				long WebsiteID = await loginUserData.GetWebsiteId();
+				long userId = await loginUserData.GetUserId();
+                var myFile = await db.FileUploads.Where(e => e.DownloadFileName == dto.mediaLink).FirstOrDefaultAsync();
+                if (myFile != null) dto.Id = myFile.Id;
+                else {
+					Guid key = Guid.NewGuid();
+					FileUpload fu = new FileUpload
+					{
+						FK_WebsiteId = WebsiteID,
+						GuidKey = Guid.NewGuid(),
+						ContentType = "image/",
+						OriginalFileName = dto.mediaLink,
+						DownloadFileName = dto.mediaLink,
+						Size = 0,
+						FileGuid = key,
+						CreatorUserId = userId
+					};
+					db.FileUploads.Add(fu);
+					db.SaveChanges();
+					dto.Id = fu.Id;
+				}
+				var myFileBind = db.FileBinds
+                        .Where(e => e.FK_FileUploadId == dto.Id)
+						.Where(e => e.Sid == dto.SId)
+						.Where(e => e.type == (int)dto.Type)
+						.FirstOrDefault();
+                if (myFileBind == null)
+                {
+                    FileBind fb = new FileBind
+                    {
+                        Guid = Guid.NewGuid(),
+                        Name = dto.mediaLink,
+                        Sid = dto.SId,
+                        type = (int)dto.Type,
+                        num = 1,
+                        SerNo = dto.SerNo,
+                        MediaLink = dto.mediaLink,
+                        FK_FileUploadId = dto.Id,
+                        CreatorUserId = userId,
+                        CreationTime = DateTime.Now,
+                    };
+                    db.FileBinds.Add(fb);
+                    db.SaveChanges();
+                }
+                else {
+					myFileBind.SerNo = dto.SerNo;
+					myFileBind.Name = dto.mediaLink;
+					myFileBind.FK_FileUploadId= dto.Id;
+					myFileBind.MediaLink = dto.mediaLink;
+					myFileBind.LastModifierUserId = userId;
+					myFileBind.LastModificationTime = DateTime.Now;
+					db.SaveChanges();
+				}
+			}
+			catch (Exception e)
+			{
+				response.Success = false;
+				response.Error = e.Message;
+			}
+
+			return response;
+		}
+
+		public async Task<UploadFileOutputDto> getHtmlContentFiles()
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {

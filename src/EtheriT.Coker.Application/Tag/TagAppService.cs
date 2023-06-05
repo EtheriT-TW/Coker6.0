@@ -76,8 +76,9 @@ namespace EtheriT.Coker.Application.Tag
 
             try
             {
-                foreach (var data in dto)
+                for(int i=0; i< dto.Count; i++)
                 {
+                    var data = dto[i];
                     if (data.Id == 0 && !data.IsDeleted)
                     {
                         long usetId = await loginUserData.GetUserId();
@@ -90,7 +91,7 @@ namespace EtheriT.Coker.Application.Tag
                             CreatorUserId = usetId,
                         };
                         db.Tag_Associates.Add(ta);
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                     }
                     else if (data.Id > 0 && data.IsDeleted)
                     {

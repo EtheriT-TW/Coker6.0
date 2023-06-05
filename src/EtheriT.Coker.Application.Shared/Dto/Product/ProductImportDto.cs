@@ -17,11 +17,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Html { get; set; }
 		public DateTime StartTime { get; set; }
 		public DateTime EndTime { get; set; }
+		public string? Spec1Name { get; set; }
 		public string? Spec1 { get; set; }
+		public string? Spec2Name { get; set; }
 		public string? Spec2 { get; set; }
-		public int Stock { get; set; }
-		public double OriginalPrice { get; set; }
-		public double price { get; set; }
+		public int Stock { get; set; } = 0;
+		public double Price { get; set; }
 		public string? Image1 { get; set; }
 		public string? Image2 { get; set; }
 		public string? Image3 { get; set; }

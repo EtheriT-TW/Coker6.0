@@ -33,7 +33,7 @@ namespace EtheriT.Coker.Application.Import
 				for (int i = 0; i < upload.Files.Count; i++)
 				{
 					var file = upload.Files[i];
-					string path = $"{_folder.Replace("\\upload", "").Replace("\\", "/")}{file.Path}";
+					string path = $"{_folder.Replace("\\", "/")}{(file.Path??"").Replace("/upload", "")}";
 					products.AddRange(readExcel(path));
 					await fileUploadAppService.deleteFile(path);
 				}

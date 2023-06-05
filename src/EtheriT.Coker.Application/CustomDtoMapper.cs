@@ -69,17 +69,22 @@ namespace EtheriT.Coker.Application
             CreateMap<ProductImportDto, Prod>()
                 .ReverseMap();
             CreateMap<ProdAddUpDto, Prod>()
-                .ReverseMap();
+				.ReverseMap();
             CreateMap<ProductImportDto, ProdAddUpDto>()
                 .ForMember(e => e.Id, option => option.MapFrom(c => 0))
-                .ReverseMap();
+				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
+				.ForMember(e => e.Permanent, option => option.MapFrom(c => true))
+				.ReverseMap();
             CreateMap<ProdGetDataDto, Prod>().ReverseMap();
             CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
                 .ReverseMap();
+            CreateMap<ProductStockDto, ProductImportDto>()
+                .ReverseMap()
+                .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price } }));
 
-            //Tags
-            CreateMap<TagSelectedDto, Core.Models.Tag>()
+			//Tags
+			CreateMap<TagSelectedDto, Core.Models.Tag>()
                 .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
                 .ReverseMap();
 
@@ -92,7 +97,7 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
                 .ReverseMap();
 
-            //FileUpload
+			//FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
             //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
             //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))

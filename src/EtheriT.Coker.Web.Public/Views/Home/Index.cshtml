@@ -2,6 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.Public.Models
+@using System.Web;
 @model HomeViewModel
 @{
 	ViewData["SideName"] = "德瑞克|";
@@ -12,6 +13,18 @@
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
 
+<Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+<div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
+
+<div class="top_title p-3">
+	<nav class="bread d-none d-md-block container">
+		<ol class="list-unstyled d-flex">
+		</ol>
+	</nav>
+	<div class="title fs-1 fw-bold px-5 text-white container">@Model.PageData.Title</div>
+</div>
+
+@*
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
 	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
 </div>
@@ -157,7 +170,7 @@
 	</div>
 </div>
 
-@*<div id="Guess_Like" class="container-fluid">
+<div id="Guess_Like" class="container-fluid">
 	<div class="container">
 		<div class="row row-cols-1 row-cols-sm-3 align-items-center placeholder-glow">
 			<div class="col py-3 placeholder-glow">
@@ -224,9 +237,9 @@
 			</div>
 		</div>
 	</div>
-</div>*@
+</div>
 
-@*<template id="Template_Guess_Like">
+<!--<template id="Template_Guess_Like">
 	<div class="frame position-relative p-4" data-pid="">
 		<a class="pro_link" href="">
 						<div class="pro_name fw-bold overflow-hidden pe-4"><span class="placeholder col-12"></span></div>
@@ -245,7 +258,7 @@
 						<button class="btn_buy bg-transparent rounded-pill align-self-center px-4" data-bs-toggle="modal" data-bs-target="#ShoppingCarModal">立即購買</button>
 					</div>
 	</div>
-</template>*@
+</template>-->
 
 <div id="Favorite" class="container">
 	<div class="title fs-2 d-flex align-items-center justify-content-center pb-5">您喜愛的商品</div>
@@ -696,4 +709,4 @@
 			</div>
 		</a>
 	</figcaption>
-</figure>
+</figure>*@

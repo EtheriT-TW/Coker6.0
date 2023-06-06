@@ -1,6 +1,5 @@
 ﻿
 using EtheriT.Coker.Application;
-using EtheriT.Coker.Web.Public.Views.Shared.Components.Header;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
@@ -21,6 +20,10 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var website = HttpContext.GetRouteData().Values["website"];
+            if (website == null)
+            {
+                website = HttpContext.GetRouteData().Values["key"];
+            }
             if (website != null && !website.ToString().Equals("upload"))
             {
                 var tempid = await websiteApplication.GetSiteId(siteId, website.ToString());

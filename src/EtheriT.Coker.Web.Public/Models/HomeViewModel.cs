@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
 namespace EtheriT.Coker.Web.Public.Models
 {
@@ -8,5 +9,6 @@ namespace EtheriT.Coker.Web.Public.Models
         public List<HtmlContentDisplayDto>? enterAd { get; set; }
         public List<ProdGetDisplayDto>? guessLike { get; set; }
         public String site_name { get; set; }
+        public GetFrontContenOutputDto? PageData { get; set; }
     }
 }

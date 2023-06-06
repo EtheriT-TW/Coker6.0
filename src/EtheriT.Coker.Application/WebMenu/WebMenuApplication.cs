@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -81,7 +82,6 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-
         private async Task<List<MenuItemDto>> GetChild(long? id)
         {
             try
@@ -132,7 +132,27 @@ namespace EtheriT.Coker.Application
                 throw new Exception("資料錯誤");
             }
         }
+        public async Task<List<GetMenuBreadDto>> GetMenuBread(long Id)
+        {
+            var output = new List<GetMenuBreadDto>();
 
+            var result = await db.WebMenus.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
+            if (result != null)
+            {
+                var parentid = result.FK_RootNodeId;
+                if (parentid != null)
+                {
+                    output.AddRange(await this.GetMenuBread((long)parentid));
+                }
+                output.Add(new GetMenuBreadDto
+                {
+                    Title = result.Title,
+                    Link = result.RouterName,
+                });
+            }
+
+            return output;
+        }
         public async Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();

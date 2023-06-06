@@ -1,12 +1,15 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -17,13 +20,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IProductAppService productAppService;
         private readonly IConfiguration Configuration;
         private readonly IWebsiteApplication websiteApplication;
+        private readonly IWebMenuApplication webMenuApplication;
 
         public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
             IConfiguration Configuration,
-            IWebsiteApplication websiteApplication
+            IWebsiteApplication websiteApplication,
+            IWebMenuApplication webMenuApplication
             )
         {
             this._logger = logger;
@@ -31,12 +36,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.productAppService = productAppService;
             this.Configuration = Configuration;
             this.websiteApplication = websiteApplication;
+            this.webMenuApplication = webMenuApplication;
         }
 
-        public async Task<IActionResult> IndexAsync()
+        public async Task<IActionResult> IndexAsync(string key)
         {
+            string view;
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            var site_name = $"Layout_{await websiteApplication.GetLayoutType(siteId)}_Site";
+            var defaultData = await websiteApplication.GetDefaultData(siteId, key);
+
+            var site_name = $"Layout_{defaultData.Id}_Site";
             var enterAd = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(siteId, 8, 1)).Value));
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(siteId, 3)).Value));
             HomeViewModel model = new HomeViewModel
@@ -45,7 +54,30 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 enterAd = enterAd,
                 guessLike = guessLike,
             };
-            return View(model);
+            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
+
+            if (string.IsNullOrEmpty(model.PageData.Html))
+            {
+                Response.StatusCode = 404;
+                view = "Error/404";
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(model.PageData.Description))
+                {
+                    string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                }
+                if (key != null)
+                {
+                    model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                    model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                }
+
+                view = "Index";
+            }
+
+            return View(view, model);
         }
 
         public IActionResult Privacy()

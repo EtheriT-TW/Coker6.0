@@ -118,7 +118,7 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{id?}",
+    pattern: "{key?}/{id?}",
     defaults: new { controller = "Home", action = "Index" });
 
 //var options = new RewriteOptions()

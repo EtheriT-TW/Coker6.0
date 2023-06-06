@@ -68,6 +68,7 @@ builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertific
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<ImportAppService, ImportAppService>();
+builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

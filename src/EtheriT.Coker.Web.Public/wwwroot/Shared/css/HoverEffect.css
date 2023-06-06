@@ -38,6 +38,18 @@
         height: 4.5rem;
     }
 
+.hover_article_scale {
+    transition: all 0.25s;
+    background-color: white;
+}
+
+    .hover_article_scale:hover {
+        transform: scale(1.05);
+        z-index: 1;
+        transition: all 0.25s;
+        background-color: lightgray;
+    }
+
 .hover_link_bold > a:hover {
     color: black;
     font-weight: bold;

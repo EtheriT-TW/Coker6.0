@@ -36,7 +36,7 @@ namespace EtheriT.Coker.Application
                 var tempid = await GetSiteId(siteId, website.ToString());
                 if (tempid != 0)
                 {
-                    siteId = await GetSiteId(siteId, website.ToString());
+                    siteId = tempid;
                 }
             }
             var orgname = await GetOrgName(siteId);
@@ -75,7 +75,7 @@ namespace EtheriT.Coker.Application
             var childId = await (from w in db.MappingWebsiteRelationship
                                  where w.FatherId == father_id
                                  select w.WebsiteId).ToListAsync();
-            if (childId != null)
+            if (childId.Count() > 0)
             {
                 var id = await (from w in db.Websites
                                 where w.OrgName == key

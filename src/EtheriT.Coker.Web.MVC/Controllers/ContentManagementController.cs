@@ -4,6 +4,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class ContentManagementController : Controller
     {
+        public IActionResult Tag()
+        {
+            return View("Tag");
+        }
         public IActionResult Directory()
         {
             return View("Directory");

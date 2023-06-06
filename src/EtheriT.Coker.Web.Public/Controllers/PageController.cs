@@ -5,9 +5,7 @@ using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Web.Public.Models;
-using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -88,6 +86,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else
                         {
                             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
 
                             if (string.IsNullOrEmpty(model.PageData.Html))
                             {
@@ -101,6 +100,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                     string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
                                     model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
                                 }
+                                if (siteId != defaultData.Id)
+                                {
+                                    model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                                    model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                                }
+
                                 view = "Index";
                             }
                         }

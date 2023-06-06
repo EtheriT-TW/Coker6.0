@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Web.Public.Models
         public string? search { get; set; }
 		public GetFrontContenOutputDto? PageData { get; set; }
         public List<FreightDisplayDto>? freightModels { get; set; }
+        public List<GetMenuBreadDto>? MenuBread { get; set; }
     }
 }

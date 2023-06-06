@@ -1,2 +1,17 @@
-﻿body {
+﻿.top_title {
+    background-color: #000B;
+}
+
+    .top_title > .title {
+        text-align: start;
+    }
+
+@media only screen and (max-width: 768px) {
+    .top_title {
+        background-color: #000;
+    }
+
+        .top_title > .title {
+            text-align: center;
+        }
 }

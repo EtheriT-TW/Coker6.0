@@ -26,6 +26,10 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var website = HttpContext.GetRouteData().Values["website"];
+            if (website == null)
+            {
+                website = HttpContext.GetRouteData().Values["key"];
+            }
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
 
@@ -36,7 +40,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                 case 4:
 
                     break;
-                case 5:
+                case 2:
                     footerViewModel = new FooterViewModel
                     {
                         footerViewModels = new List<FooterViewModel> {
@@ -88,7 +92,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         }
                     };
                     break;
-                case 6:
+                case 3:
                     footerViewModel = new FooterViewModel
                     {
                         Sitemap_Link = "#",

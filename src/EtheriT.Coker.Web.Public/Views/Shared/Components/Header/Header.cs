@@ -30,6 +30,10 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var website = HttpContext.GetRouteData().Values["website"];
+            if (website == null)
+            {
+                website = HttpContext.GetRouteData().Values["key"];
+            }
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);

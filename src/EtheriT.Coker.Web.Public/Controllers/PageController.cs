@@ -57,6 +57,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 {
                     case "article":
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
+                        model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                        model.PageData.LayoutType = defaultData.Layout_Type;
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {
@@ -87,6 +89,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         {
                             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                            model.PageData.LayoutType = defaultData.Layout_Type;
 
                             if (string.IsNullOrEmpty(model.PageData.Html))
                             {

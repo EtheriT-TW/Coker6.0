@@ -91,7 +91,7 @@ var grapesInit = function (options) {
                 '/shared/js/Swiper.min.js',
                 '/shared/js/ViewTypeChange.min.js',
                 '/shared/js/Sitemap.min.js',
-                '/shared/js/DirectoryGetData.min.js'
+                '/shared/js/DirectoryGetData.min.js',
             ],
         },
         domComponents: {
@@ -104,7 +104,7 @@ var grapesInit = function (options) {
                         { key: "ViewTypeChangeInit", state: false, run: true, class: [], parameter: {} },
                         { key: "SitemapInit", state: false, run: true, class: [], parameter: {} },
                         { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} }
+                        { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
                     ];
                     const setConfig = function (index, str) {
                         checkClass[index].state = true;

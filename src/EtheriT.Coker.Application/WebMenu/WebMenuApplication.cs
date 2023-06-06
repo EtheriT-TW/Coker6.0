@@ -137,6 +137,31 @@ namespace EtheriT.Coker.Application
             var output = new List<GetMenuBreadDto>();
 
             var result = await db.WebMenus.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
+            if (result != null && result.PageType != (int)PageTypeEnum.首頁)
+            {
+                output.Add(new GetMenuBreadDto
+                {
+                    Title = "Home",
+                    Link = "home",
+                });
+                var parentid = result.FK_RootNodeId;
+                if (parentid != null)
+                {
+                    output.AddRange(await this.GetBread((long)parentid));
+                }
+                output.Add(new GetMenuBreadDto
+                {
+                    Title = result.Title,
+                    Link = result.RouterName,
+                });
+            }
+            return output;
+        }
+        private async Task<List<GetMenuBreadDto>> GetBread(long Id)
+        {
+            var output = new List<GetMenuBreadDto>();
+
+            var result = await db.WebMenus.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
             if (result != null)
             {
                 var parentid = result.FK_RootNodeId;

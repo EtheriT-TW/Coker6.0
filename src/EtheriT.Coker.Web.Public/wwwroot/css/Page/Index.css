@@ -1,17 +1,27 @@
-﻿.top_title {
+﻿.top_title_2 {
     background-color: #000B;
 }
 
-    .top_title > .title {
+    .top_title_2 > .title {
         text-align: start;
     }
 
+    .top_title_2 li a {
+        color: orange;
+    }
+
+    .top_title_2 li:not(:first-child)::before {
+        content: '>';
+        padding-right: 0.25rem;
+        color: orange;
+    }
+
 @media only screen and (max-width: 768px) {
-    .top_title {
+    .top_title_2 {
         background-color: #000;
     }
 
-        .top_title > .title {
+        .top_title_2 > .title {
             text-align: center;
         }
 }

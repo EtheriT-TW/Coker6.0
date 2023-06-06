@@ -16,5 +16,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public string CurrentUrl { get; set; }
         public string Html { get; set; }
         public string Css { get; set; }
+        public int LayoutType { get; set; }
     }
 }

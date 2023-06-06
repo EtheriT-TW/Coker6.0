@@ -1,5 +1,6 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.HtmlContent
 @using EtheriT.Coker.Application.Shared.Dto.Product
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.Public.Models
 @using System.Web;
@@ -13,16 +14,26 @@
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
 
+@if (Model.PageData.LayoutType == 3)
+{
+	@if (Model.MenuBread.Count() > 0)
+	{
+		<div class="top_title_2 p-3">
+			<nav class="bread d-none d-md-block container">
+				<ol class="list-unstyled d-flex">
+					@foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+					{
+						<li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
+					}
+				</ol>
+			</nav>
+			<div class="title fs-1 fw-bold px-5 text-white container">@Model.PageData.Title</div>
+		</div>
+	};
+};
+
 <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
-
-<div class="top_title p-3">
-	<nav class="bread d-none d-md-block container">
-		<ol class="list-unstyled d-flex">
-		</ol>
-	</nav>
-	<div class="title fs-1 fw-bold px-5 text-white container">@Model.PageData.Title</div>
-</div>
 
 @*
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">

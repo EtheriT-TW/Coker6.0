@@ -33,10 +33,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 
             switch (defaultData.Id)
             {
-                case 4:
-
+                case 1:
                     break;
-                case 5:
+                case 2:
                     footerViewModel = new FooterViewModel
                     {
                         footerViewModels = new List<FooterViewModel> {
@@ -88,7 +87,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         }
                     };
                     break;
-                case 6:
+                case 3:
                     footerViewModel = new FooterViewModel
                     {
                         Sitemap_Link = "#",

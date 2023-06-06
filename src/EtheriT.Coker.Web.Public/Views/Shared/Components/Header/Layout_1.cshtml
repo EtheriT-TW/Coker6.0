@@ -30,18 +30,13 @@
 			<!-- Menu Canvas Search Block -->
 			<div class="offcanvas-header pt-2 ps-5">
 				<h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
-				@*<div class="d-lg-none d-flex justify-content-center align-items-center mt-4">
-				<input class="border-1 rounded-pill" type="text">
-				<button class="bg-transparent border-0"><i class="fa-solid fa-magnifying-glass"></i></button>
-				<button class="bg-transparent border-0 d-none d-sm-flex">智慧搜尋</button>
-				</div>*@
 			</div>
 
 			<!-- Menu Canvas Menu -->
 			<ul class="navbar-nav offcanvas-body w-100 m-0">
 				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
 				{
-					<li class="title nav-item flex-lg-grow-1 flex-grow-0">
+					<li class="title nav-item col-lg-2">
 						<a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-center text-nowrap">@menu.Title</a>
 						<div class="content w-100 start-50 translate-middle-x">
 							<ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100">

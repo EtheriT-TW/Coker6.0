@@ -15,9 +15,11 @@ using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.ShoppingCart;
+using EtheriT.Coker.Application.Specification;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.TechnicalCertificate;
 using EtheriT.Coker.Application.Token;
@@ -65,6 +67,7 @@ builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
 builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
 builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<ImportAppService, ImportAppService>();
+builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

@@ -57,13 +57,6 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Icon="",
                             },
                             new JobMenu{
-                                PageName="ProductTag",
-                                Title="商品標籤",
-                                Controller="ProductManagement",
-                                Action="ProductTag",
-                                Icon="",
-                            },
-                            new JobMenu{
                                 PageName="TechnicalCertificate",
                                 Title="技術證照",
                                 Controller="ProductManagement",
@@ -128,6 +121,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Icon="sticky_note_2",
                         CollapseId="#ContentManagement",
                         jobItemModels= new List<JobMenu> {
+                            new JobMenu{
+                                PageName="Tag",
+                                Title="標籤設定",
+                                Controller="ContentManagement",
+                                Action="Tag",
+                                Icon="",
+                            },
                             new JobMenu{
                                 PageName="Directory",
                                 Title="目錄管理",

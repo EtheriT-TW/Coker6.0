@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Web.ConsoleApp.DbContextSet;
+using Microsoft.Extensions.Configuration;
 
 // load the configuration file.
 var configBuilder = new ConfigurationBuilder().
@@ -7,6 +9,9 @@ var configBuilder = new ConfigurationBuilder().
 // get the section to read
 var configSection = configBuilder.GetSection("ConnectionStrings");
 
-// get the configuration values in the section.
-var source = configSection["source"] ?? null;
-Console.WriteLine(source);
+
+using (var dbContext = new NewDbContext(configSection["source"]??""))
+{
+    var a = dbContext.Articles.Where(e => !e.IsDeleted);
+    Console.WriteLine(a.Count());
+}

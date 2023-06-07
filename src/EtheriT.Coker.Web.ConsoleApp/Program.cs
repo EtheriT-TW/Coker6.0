@@ -9,6 +9,7 @@ var configBuilder = new ConfigurationBuilder().
 // get the section to read
 var configSection = configBuilder.GetSection("ConnectionStrings");
 
+Console.WriteLine($"dbString：{configSection["source"]}");
 
 using (var dbContext = new NewDbContext(configSection["source"]??""))
 {

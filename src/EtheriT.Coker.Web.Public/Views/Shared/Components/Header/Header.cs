@@ -45,7 +45,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             switch (defaultData.Layout_Type)
             {
                 case 1:
-                    webmenus_data = webmenus_data.Take(6).ToList();
+                    webmenus_data = webmenus_data.ToList();
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
@@ -97,7 +97,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     };
                     break;
                 case 3:
-                    webmenus_data = webmenus_data.Take(9).ToList();
+                    webmenus_data = webmenus_data.ToList();
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
@@ -136,7 +136,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     });
                     break;
                 case 4:
-                    webmenus_data = webmenus_data.Take(4).ToList();
+                    webmenus_data = webmenus_data.ToList();
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,

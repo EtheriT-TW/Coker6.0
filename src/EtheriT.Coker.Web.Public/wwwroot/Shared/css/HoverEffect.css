@@ -14,6 +14,26 @@
         transition: 0.75s all;
     }
 
+.hover_inside_scale_bg {
+    background-size: 100% !important;
+    transition: 0.5s all !important;
+}
+
+    .hover_inside_scale_bg:hover {
+        background-size: 125% !important;
+        transition: 0.5s all !important;
+    }
+
+.hover_filter img {
+    filter: grayscale(50%);
+    transition: 0.25s all;
+}
+
+.hover_filter:hover img {
+    filter: grayscale(0);
+    transition: 0.25s all;
+}
+
 .hover_protrude_scale {
     transition: all 0.5s;
 }

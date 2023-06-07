@@ -74,6 +74,7 @@ var grapesInit = function (options) {
             styles: [
                 '/lib/bootstrap/dist/css/bootstrap.min.css',
                 '/lib/swiper/swiper-bundle.min.css',
+                '/lib/fortawesome/css/all.min.css',
                 '/css/Grapes/GrapesCss.min.css',
                 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
                 '/shared/css/Frame.min.css',
@@ -92,6 +93,7 @@ var grapesInit = function (options) {
                 '/shared/js/ViewTypeChange.min.js',
                 '/shared/js/Sitemap.min.js',
                 '/shared/js/DirectoryGetData.min.js',
+                '/shared/js/LinkWithIcon.min.js',
             ],
         },
         domComponents: {
@@ -105,6 +107,7 @@ var grapesInit = function (options) {
                         { key: "SitemapInit", state: false, run: true, class: [], parameter: {} },
                         { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
                         { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
+                        { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
                     ];
                     const setConfig = function (index, str) {
                         checkClass[index].state = true;
@@ -135,6 +138,9 @@ var grapesInit = function (options) {
                                 break;
                             case "catalog_frame":
                                 setConfig(5, s);
+                                break;
+                            case "link_with_icon":
+                                setConfig(6, s);
                                 break;
                         }
                     });

@@ -101,6 +101,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
+                        HomeLink = $"/{website_data[0].OrgName}/home",
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                     };
@@ -140,6 +141,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
+                        HomeLink = $"/{website_data[0].OrgName}/home",
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                     };

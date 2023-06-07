@@ -13,7 +13,7 @@
     const panelManager = editor.Panels;
 
     //設定UI文字
-    editor.I18n.setMessages({tw: tw});
+    editor.I18n.setMessages({ tw: tw });
 
     /*檔案管理*/
     AssetManager.addType('image', {
@@ -25,7 +25,7 @@
     editor.on('asset:add', (option) => {
         //console.log(option);
     });
-    
+
     editor.on('run:open-assets', () => {
         const modal = editor.Modal;
         const modalBody = modal.getContentEl();
@@ -33,7 +33,7 @@
         const assetsHeader = modalBody.querySelector('.gjs-am-assets-header');
         const assetsBody = modalBody.querySelector('.gjs-am-assets-cont');
         const assetsFilter = modalBody.querySelector('.gjs-am-assets-filter');
-        if (!!!assetsFilter) { 
+        if (!!!assetsFilter) {
             const filter = $(`
                 <div class="input-group mb-3 gjs-am-assets-filter">
                     <input type="text" class="form-control" placeholder="搜尋檔案名稱" aria-label="搜尋檔案名稱" aria-describedby="button-addon2">
@@ -112,6 +112,39 @@
                         ]
                     }
                 ]
+            }
+        },
+    });
+
+    editor.DomComponents.addType('linkWithIcon', {
+        isComponent: el => el.classList?.contains('link_with_icon'),
+        model: {
+            defaults: {
+                traits: [
+                    // Strings are automatically converted to text types
+                    { name: 'download', type: 'text', label: '檔案名稱', placeholder: '請輸入檔案名稱' },
+                    {
+                        name: 'file', type: 'button',
+                        text: "選擇檔案",
+                        command: editor => {
+                            AssetManager.open();
+                            AssetManager.onSelect((resule) => {
+                                var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
+                                editor.getSelected().set("attributes", { "href": resule.id });
+                                LinkWithIconInit();
+                                AssetManager.close();
+                            });
+                        },
+                    }
+                ],
+            },
+            init() {
+                this.on('change:attributes:download', function () {
+                    setTimeout(() => {
+                        var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
+                        LinkWithIconInit();
+                    }, "100");
+                });
             }
         },
     });

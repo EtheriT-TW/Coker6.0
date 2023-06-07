@@ -46,6 +46,7 @@ function ready() {
         if ($(".hover_mask").length > 0) HoverEffectInit();
         if ($(".catalog_frame").length > 0) DirectoryGetDataInit();
         if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
+        if ($(".link_with_icon").length > 0) LinkWithIconInit();
     }
     if ($PostCSS.length > 0) {
         const $mainCss = $("#frameCss")

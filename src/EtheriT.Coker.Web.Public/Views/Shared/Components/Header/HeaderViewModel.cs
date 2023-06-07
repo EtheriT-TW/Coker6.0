@@ -6,6 +6,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
     public class HeaderViewModel
     {
         public string? Title { get; set; }
+        public string? HomeLink { get; set; }
         public string? LogoImageUrl { get; set; }
         public string? Sitemap_Link { get; set; }
         public bool? Sitemap_Target { get; set; }

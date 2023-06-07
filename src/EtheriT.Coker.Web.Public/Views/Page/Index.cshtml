@@ -12,13 +12,14 @@
 <link rel="stylesheet" href="~/Shared/css/Swiper.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/css/HoverEffect.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/css/Directory.min.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/Page//Index.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/Shared/js/Frame.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/Swiper.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/ViewTypeChange.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/Sitemap.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/HoverEffect.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/DirectoryGetData.min.js" asp-append-version="true"></script>
+<script src="~/Shared/js/LinkWithIcon.min.js" asp-append-version="true"></script>
 
 @if (Model.PageData.LayoutType == 3)
 {
@@ -35,8 +36,8 @@
 			</nav>
 			<div class="title fs-1 fw-bold px-5 text-white container">@Model.PageData.Title</div>
 		</div>
-	};
-};
+	}
+}
 
 <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>

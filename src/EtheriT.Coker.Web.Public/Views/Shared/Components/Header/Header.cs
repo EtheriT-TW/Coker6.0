@@ -152,12 +152,19 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         }
                         else if (data.PageType != (int)PageTypeEnum.首頁)
                         {
+                            var imageUrl = "";
+                            var imageLink = "";
+                            if (data.ImgUrl != null)
+                            {
+                                imageUrl = data.ImgUrl.Replace("upload", "upload/eplus");
+                                imageLink = $"/{website_data[0].OrgName}/{data.RouterName}";
+                            }
                             headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                             {
                                 Title = data.Title,
                                 Target = data.Target,
-                                imageUrl = data.ImgUrl.Replace("upload", "upload/eplus"),
-                                imageLink = $"/{website_data[0].OrgName}/{data.RouterName}",
+                                imageUrl = imageUrl,
+                                imageLink = imageLink,
                             });
                         }
                     });

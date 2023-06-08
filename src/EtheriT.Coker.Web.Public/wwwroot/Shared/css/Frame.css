@@ -57,6 +57,17 @@ iframe {
     width: auto;
 }
 
+/* frame_type_1 */
+.frame_type_1 .title_block {
+    text-align-last: justify;
+    min-width: 8.25rem;
+    background-color: #eaeaea;
+}
+
+    .frame_type_1 .title_block + a:hover {
+        font-size: larger;
+    }
+
 @media only screen and (max-width: 992px) {
     .container.retracted {
         padding-left: 0;

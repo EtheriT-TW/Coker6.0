@@ -92,7 +92,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         Title = "入口網站",
                         menuItemModels = new List<MenuItem.MenuItemModel> {
                             new MenuItem.MenuItemModel {Title="高雄軟體園區資訊服務網", Link="/ksp/home"},
-                            new MenuItem.MenuItemModel {Title="經濟部加工出口區管理處", Link="/eplus/home"},
+                            new MenuItem.MenuItemModel {Title="e++產業服務平台", Link="/eplus/home"},
                         },
                     };
                     break;

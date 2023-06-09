@@ -69,11 +69,17 @@
                             })
                         }
                     });
+                    ImageUploadModalInit($("#ImageUpload"), true, false);
+                    ImageUploadModalInit($("#OverImageUpload"), true, false);
                 },
                 edit: function () {
                     openEditForm();
                     $("#btnUpdate").removeClass("d-none");
                     $("#btnRefresh,#btnAdd").addClass("d-none");
+                    ImageUploadModalClear($("#ImageUpload"));
+                    ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
+                    ImageUploadModalClear($("#OverImageUpload"));
+                    ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#ImageUpload").siblings("#overImgName").val())
                 },
                 del: function (data) {
                     if ($("#myEditor>li").length == 0) {
@@ -93,14 +99,155 @@
                         if (!result.success) co.sweet.error(result.error);
                         else {
                             data.id = parseInt(result.message);
+
+                            if ($("#ImageUpload").data("file").File != null) {
+                                var formData = new FormData();
+                                formData.append("files", $("#ImageUpload").data("file").File);
+                                formData.append("type", 2);
+                                formData.append("sid", data.id);
+                                formData.append("serno", 500);
+                                co.File.Upload(formData).done(function (result) {
+                                    if (result.success) {
+                                        co.WebMesnus.getAll().done(function (result) {
+                                            if (result.success) {
+                                                menuEditor.setData(result.maps);
+                                                $("#myEditor").removeClass("d-none");
+                                                if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+                                                else $("#myEditor").addClass("d-none");
+                                                myOffcanvas.show();
+                                            } else {
+                                                menuEditor.setData([]);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+
+                            if ($("#OverImageUpload").data("file").File != null) {
+                                var formData = new FormData();
+                                formData.append("files", $("#OverImageUpload").data("file").File);
+                                formData.append("type", 3);
+                                formData.append("sid", data.id);
+                                formData.append("serno", 500);
+                                co.File.Upload(formData).done(function (result) {
+                                    if (result.success) {
+                                        co.WebMesnus.getAll().done(function (result) {
+                                            if (result.success) {
+                                                menuEditor.setData(result.maps);
+                                                $("#myEditor").removeClass("d-none");
+                                                if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+                                                else $("#myEditor").addClass("d-none");
+                                                myOffcanvas.show();
+                                            } else {
+                                                menuEditor.setData([]);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+
                             co.sweet.success("新增成功");
+                            ImageUploadModalClear($("#ImageUpload"));
+                            ImageUploadModalClear($("#OverImageUpload"));
                         }
                     });
                 },
                 update: function (data) {
+                    if ($("#ImageUpload").data("delectList") != null) {
+                        co.File.DeleteFileById({
+                            Sid: data.id,
+                            Type: 2,
+                            Fid: $("#ImageUpload").data("delectList")[0]
+                        }).done(function (result) {
+                            if (result.success) {
+                                co.WebMesnus.getAll().done(function (result) {
+                                    if (result.success) {
+                                        menuEditor.setData(result.maps);
+                                        $("#myEditor").removeClass("d-none");
+                                        if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+                                        else $("#myEditor").addClass("d-none");
+                                        myOffcanvas.show();
+                                    } else {
+                                        menuEditor.setData([]);
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    if ($("#OverImageUpload").data("delectList") != null) {
+                        co.File.DeleteFileById({
+                            Sid: data.id,
+                            Type: 3,
+                            Fid: $("#OverImageUpload").data("delectList")[0]
+                        }).done(function (result) {
+                            if (result.success) {
+                                co.WebMesnus.getAll().done(function (result) {
+                                    if (result.success) {
+                                        menuEditor.setData(result.maps);
+                                        $("#myEditor").removeClass("d-none");
+                                        if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+                                        else $("#myEditor").addClass("d-none");
+                                        myOffcanvas.show();
+                                    } else {
+                                        menuEditor.setData([]);
+                                    }
+                                });
+                            }
+                        });
+                    }
+
                     co.WebMesnus.createOrEdit(data).done(function (result) {
+                        if ($("#ImageUpload").data("file") != null && $("#ImageUpload").data("file").File != null && $("#ImageUpload").data("file").Id == 0) {
+                            var formData = new FormData();
+                            formData.append("files", $("#ImageUpload").data("file").File);
+                            formData.append("type", 2);
+                            formData.append("sid", data.id);
+                            formData.append("serno", 500);
+                            co.File.Upload(formData).done(function (result) {
+                                if (result.success) {
+                                    co.WebMesnus.getAll().done(function (result) {
+                                        if (result.success) {
+                                            menuEditor.setData(result.maps);
+                                            $("#myEditor").removeClass("d-none");
+                                            if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+                                            else $("#myEditor").addClass("d-none");
+                                            myOffcanvas.show();
+                                        } else {
+                                            menuEditor.setData([]);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        if ($("#OverImageUpload").data("file") != null && $("#OverImageUpload").data("file").File != null && $("#OverImageUpload").data("file").Id == 0) {
+                            var formData = new FormData();
+                            formData.append("files", $("#OverImageUpload").data("file").File);
+                            formData.append("type", 3);
+                            formData.append("sid", data.id);
+                            formData.append("serno", 500);
+                            co.File.Upload(formData).done(function (result) {
+                                if (result.success) {
+                                    co.WebMesnus.getAll().done(function (result) {
+                                        if (result.success) {
+                                            menuEditor.setData(result.maps);
+                                            $("#myEditor").removeClass("d-none");
+                                            if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
+                                            else $("#myEditor").addClass("d-none");
+                                            myOffcanvas.show();
+                                        } else {
+                                            menuEditor.setData([]);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
                         if (!result.success) co.sweet.error(result.error);
                         else co.sweet.success("更新成功");
+                        ImageUploadModalClear($("#ImageUpload"));
+                        ImageUploadModalClear($("#OverImageUpload"));
                     });
                     //editor.setComponents("<span>Hi<span>");
                     //editor.setStyle("");
@@ -181,6 +328,8 @@
         closeEdit();
     });
     $("#btnExtend").on("click", function () {
+        ImageUploadModalClear($("#ImageUpload"));
+        ImageUploadModalClear($("#OverImageUpload"));
         openEditForm();
         $('#frmEdit [name="id"]').val(0);
         $("#btnRefresh,#btnAdd").removeClass("d-none");

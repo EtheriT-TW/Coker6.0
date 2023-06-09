@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application
 {
@@ -90,6 +91,20 @@ namespace EtheriT.Coker.Application
             catch (Exception ex)
             {
                 response.ErrorFiles.Add(ex.Message);
+            }
+            if (type == (int)FileBindTypeEnum.選單圖)
+            {
+                var websiteid = await loginUserData.GetWebsiteId();
+                var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                db_bind.ImgId = response.Files[0].Id;
+                db.SaveChanges();
+            }
+            else if (type == (int)FileBindTypeEnum.選單覆蓋)
+            {
+                var websiteid = await loginUserData.GetWebsiteId();
+                var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                db_bind.OverImgId = response.Files[0].Id;
+                db.SaveChanges();
             }
             return response;
         }
@@ -187,37 +202,39 @@ namespace EtheriT.Coker.Application
 
             return response;
         }
-        public async Task<ResponseMessageDto> uploadImageLink(FileImageImportDto dto) {
-			ResponseMessageDto response = new ResponseMessageDto() { Success = true };
+        public async Task<ResponseMessageDto> uploadImageLink(FileImageImportDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto() { Success = true };
 
-			try
-			{
-				long WebsiteID = await loginUserData.GetWebsiteId();
-				long userId = await loginUserData.GetUserId();
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                long userId = await loginUserData.GetUserId();
                 var myFile = await db.FileUploads.Where(e => e.DownloadFileName == dto.mediaLink).FirstOrDefaultAsync();
                 if (myFile != null) dto.Id = myFile.Id;
-                else {
-					Guid key = Guid.NewGuid();
-					FileUpload fu = new FileUpload
-					{
-						FK_WebsiteId = WebsiteID,
-						GuidKey = Guid.NewGuid(),
-						ContentType = "image/",
-						OriginalFileName = dto.mediaLink,
-						DownloadFileName = dto.mediaLink,
-						Size = 0,
-						FileGuid = key,
-						CreatorUserId = userId
-					};
-					db.FileUploads.Add(fu);
-					db.SaveChanges();
-					dto.Id = fu.Id;
-				}
-				var myFileBind = db.FileBinds
+                else
+                {
+                    Guid key = Guid.NewGuid();
+                    FileUpload fu = new FileUpload
+                    {
+                        FK_WebsiteId = WebsiteID,
+                        GuidKey = Guid.NewGuid(),
+                        ContentType = "image/",
+                        OriginalFileName = dto.mediaLink,
+                        DownloadFileName = dto.mediaLink,
+                        Size = 0,
+                        FileGuid = key,
+                        CreatorUserId = userId
+                    };
+                    db.FileUploads.Add(fu);
+                    db.SaveChanges();
+                    dto.Id = fu.Id;
+                }
+                var myFileBind = db.FileBinds
                         .Where(e => e.FK_FileUploadId == dto.Id)
-						.Where(e => e.Sid == dto.SId)
-						.Where(e => e.type == (int)dto.Type)
-						.FirstOrDefault();
+                        .Where(e => e.Sid == dto.SId)
+                        .Where(e => e.type == (int)dto.Type)
+                        .FirstOrDefault();
                 if (myFileBind == null)
                 {
                     FileBind fb = new FileBind
@@ -236,26 +253,27 @@ namespace EtheriT.Coker.Application
                     db.FileBinds.Add(fb);
                     db.SaveChanges();
                 }
-                else {
-					myFileBind.SerNo = dto.SerNo;
-					myFileBind.Name = dto.mediaLink;
-					myFileBind.FK_FileUploadId= dto.Id;
-					myFileBind.MediaLink = dto.mediaLink;
-					myFileBind.LastModifierUserId = userId;
-					myFileBind.LastModificationTime = DateTime.Now;
-					db.SaveChanges();
-				}
-			}
-			catch (Exception e)
-			{
-				response.Success = false;
-				response.Error = e.Message;
-			}
+                else
+                {
+                    myFileBind.SerNo = dto.SerNo;
+                    myFileBind.Name = dto.mediaLink;
+                    myFileBind.FK_FileUploadId = dto.Id;
+                    myFileBind.MediaLink = dto.mediaLink;
+                    myFileBind.LastModifierUserId = userId;
+                    myFileBind.LastModificationTime = DateTime.Now;
+                    db.SaveChanges();
+                }
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Error = e.Message;
+            }
 
-			return response;
-		}
+            return response;
+        }
 
-		public async Task<UploadFileOutputDto> getHtmlContentFiles()
+        public async Task<UploadFileOutputDto> getHtmlContentFiles()
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
@@ -718,6 +736,28 @@ namespace EtheriT.Coker.Application
 
                     }
                     await loginUserData.SetLogs(AppName, "deleteImgFile", dto.Fid.ToString(), JsonConvert.SerializeObject(response));
+
+                    if (dto.Type == (int)FileBindTypeEnum.選單圖)
+                    {
+                        var websiteid = await loginUserData.GetWebsiteId();
+                        var db_bind = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                        if (db_bind != null)
+                        {
+                            db_bind.ImgId = null;
+                            db.SaveChanges();
+                        }
+                    }
+                    else if (dto.Type == (int)FileBindTypeEnum.選單覆蓋)
+                    {
+                        var websiteid = await loginUserData.GetWebsiteId();
+                        var db_bind = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                        if (db_bind != null)
+                        {
+                            db_bind.OverImgId = null;
+                            db.SaveChanges();
+                        }
+                    }
+
                     return response;
                 }
                 else

@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
@@ -87,6 +88,7 @@ namespace EtheriT.Coker.Application
             try
             {
                 var WebsiteID = await loginUserData.GetWebsiteId();
+                var orgName = await loginUserData.GetWebsiteOrgName();
                 var menus = await db.WebMenus
                             .Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
@@ -98,6 +100,28 @@ namespace EtheriT.Coker.Application
                 foreach (var m in result)
                 {
                     m.Children = await GetChild(m.Id);
+                    if (m.ImgId != null)
+                    {
+                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
+                        {
+                            Sid = m.Id,
+                            Type = 2,
+                            Size = 1,
+                        });
+                        m.ImgUrl = data[0].Link;
+                        m.ImgName = data[0].Name;
+                    }
+                    if (m.OverImgId != null)
+                    {
+                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
+                        {
+                            Sid = m.Id,
+                            Type = 3,
+                            Size = 1,
+                        });
+                        m.OverImgUrl = data[0].Link;
+                        m.OverImgName = data[0].Name;
+                    }
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;
@@ -335,6 +359,18 @@ namespace EtheriT.Coker.Application
                 {
                     item.IsDeleted = true;
                     await loginUserData.SaveChanges(item);
+                    var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                    {
+                        Sid = item.Id,
+                        Fid = item.ImgId,
+                        Type = (int)FileBindTypeEnum.選單圖,
+                    });
+                    var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                    {
+                        Sid = item.Id,
+                        Fid = item.OverImgId,
+                        Type = (int)FileBindTypeEnum.選單覆蓋,
+                    });
                 }
             }
             catch (Exception ex)

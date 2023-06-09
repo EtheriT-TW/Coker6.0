@@ -21,7 +21,10 @@ namespace EtheriT.Coker.Application.Dto
         public bool PopularVisible { get; set; }
         public long? ImgId { get; set; }
         public string? ImgUrl { get; set; }
+        public string? ImgName { get; set; }
         public long? OverImgId { get; set; }
+        public string? OverImgUrl { get; set; }
+        public string? OverImgName { get; set; }
         public string? LinkUrl { get; set; }
         public bool? Target { get; set; }
         public bool LanBar { get; set; }

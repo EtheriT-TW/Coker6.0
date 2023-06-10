@@ -4,6 +4,7 @@
  }
  ***************/
 function SwiperInit(obj) {
+    console.log("SwiperInit")
     var config = {
         slidesPerView: 1,
         spaceBetween: 15,
@@ -107,4 +108,53 @@ function SwiperInit(obj) {
             $self.data("isInit", true)
         }
     });
+
+
+    $(".six_swiper").prop("draggable", true).each(function () {
+        var $self = $(this);
+
+        if (!!!$self.data("isInit")) {
+            var Id = "#" + $self.attr("id") + " > .swiper"
+            var selfConfig = $.extend(config, {
+                navigation: {
+                    nextEl: Id + " > .swiper_button_next > button",
+                    prevEl: Id + " > .swiper_button_prev > button",
+                },
+                slidesPerView: 6,
+            }, obj.autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {});
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+        }
+    });
+}
+
+function SwiperAddslide(Swiper) {
+    console.log("SwiperAddslide")
+    var $Swiper = $(Swiper)
+    var new_slide = $($Swiper.find(".template_slide").html()).clone();
+    $Swiper.find(".swiper-wrapper").append(new_slide);
+
+    var swiper = document.querySelector('.swiper').swiper;
+
+    swiper.update();
+    //$Swiper.parents("div").first().prop("draggable", true).each(function () {
+    //    var $self = $(this);
+    //    console.log($self)
+
+    //    var Id = "#" + $self.attr("id") + " > .swiper"
+    //    var selfConfig = $.extend({
+    //        navigation: {
+    //            nextEl: Id + " > .swiper_button_next > button",
+    //            prevEl: Id + " > .swiper_button_prev > button",
+    //        },
+    //        slidesPerView: 6,
+    //        spaceBetween: 15
+    //    });
+    //});
 }

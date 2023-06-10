@@ -81,6 +81,7 @@ var grapesInit = function (options) {
                 '/shared/css/HoverEffect.min.css',
                 '/shared/css/Swiper.min.css',
                 '/shared/css/Directory.min.css',
+                '/shared/css/AnchorPoint.min.css',
             ],
             scripts: [
                 '/lib/jquery/dist/jquery.min.js',
@@ -94,6 +95,7 @@ var grapesInit = function (options) {
                 '/shared/js/Sitemap.min.js',
                 '/shared/js/DirectoryGetData.min.js',
                 '/shared/js/LinkWithIcon.min.js',
+                '/shared/js/AnchorPoint.min.js',
             ],
         },
         domComponents: {
@@ -108,6 +110,7 @@ var grapesInit = function (options) {
                         { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
                         { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
                         { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
+                        { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} }
                     ];
                     const setConfig = function (index, str) {
                         checkClass[index].state = true;
@@ -120,6 +123,7 @@ var grapesInit = function (options) {
                             case "one_swiper":
                             case "two_swiper":
                             case "four_swiper":
+                            case "six_swiper":
                                 setConfig(0, s);
                                 checkClass[0].parameter.autoplay = false;
                                 break;
@@ -141,6 +145,9 @@ var grapesInit = function (options) {
                                 break;
                             case "link_with_icon":
                                 setConfig(6, s);
+                                break;
+                            case "anchor_point":
+                                setConfig(7, s);
                                 break;
                         }
                     });

@@ -1,6 +1,7 @@
 ﻿.gjs-css-rules, .gjs-js-cont {
     display: none;
 }
+
 .gjs-dashed {
     div {
         padding: 5px;
@@ -10,4 +11,17 @@
     [class*="container"] {
         margin: 5px auto;
     }
+}
+
+.edit_lock * {
+    pointer-events: none;
+    outline: none !important;
+}
+
+.edit_lock .allowedit {
+    pointer-events: auto;
+}
+
+.gjs-dashed .edit_lock .allowedit {
+    outline: 1px dashed rgba(170,170,170,0.7) !important;
 }

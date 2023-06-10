@@ -27,6 +27,16 @@
     height: 3.75rem;
 }
 
+.six_swiper .swiper {
+    min-height: 5rem;
+}
+
+.six_swiper .swiper_btn_circle {
+    width: 2rem;
+    height: 2rem;
+}
+
+
 .swiper:has( > div > button[class*="swiper_btn_circle_hide"]):hover > .swiper_button_prev > .swiper_btn_circle_hide_left {
     transition: all 0.5s;
     left: 0rem;

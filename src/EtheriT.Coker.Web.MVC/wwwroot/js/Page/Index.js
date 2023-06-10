@@ -108,17 +108,7 @@
                                 formData.append("serno", 500);
                                 co.File.Upload(formData).done(function (result) {
                                     if (result.success) {
-                                        co.WebMesnus.getAll().done(function (result) {
-                                            if (result.success) {
-                                                menuEditor.setData(result.maps);
-                                                $("#myEditor").removeClass("d-none");
-                                                if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
-                                                else $("#myEditor").addClass("d-none");
-                                                myOffcanvas.show();
-                                            } else {
-                                                menuEditor.setData([]);
-                                            }
-                                        });
+                                        menuReload(menuEditor, myOffcanvas);
                                     }
                                 });
                             }
@@ -131,17 +121,7 @@
                                 formData.append("serno", 500);
                                 co.File.Upload(formData).done(function (result) {
                                     if (result.success) {
-                                        co.WebMesnus.getAll().done(function (result) {
-                                            if (result.success) {
-                                                menuEditor.setData(result.maps);
-                                                $("#myEditor").removeClass("d-none");
-                                                if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
-                                                else $("#myEditor").addClass("d-none");
-                                                myOffcanvas.show();
-                                            } else {
-                                                menuEditor.setData([]);
-                                            }
-                                        });
+                                        menuReload(menuEditor, myOffcanvas);
                                     }
                                 });
                             }
@@ -160,17 +140,7 @@
                             Fid: $("#ImageUpload").data("delectList")[0]
                         }).done(function (result) {
                             if (result.success) {
-                                co.WebMesnus.getAll().done(function (result) {
-                                    if (result.success) {
-                                        menuEditor.setData(result.maps);
-                                        $("#myEditor").removeClass("d-none");
-                                        if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
-                                        else $("#myEditor").addClass("d-none");
-                                        myOffcanvas.show();
-                                    } else {
-                                        menuEditor.setData([]);
-                                    }
-                                });
+                                menuReload(menuEditor, myOffcanvas);
                             }
                         });
                     }
@@ -182,17 +152,7 @@
                             Fid: $("#OverImageUpload").data("delectList")[0]
                         }).done(function (result) {
                             if (result.success) {
-                                co.WebMesnus.getAll().done(function (result) {
-                                    if (result.success) {
-                                        menuEditor.setData(result.maps);
-                                        $("#myEditor").removeClass("d-none");
-                                        if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
-                                        else $("#myEditor").addClass("d-none");
-                                        myOffcanvas.show();
-                                    } else {
-                                        menuEditor.setData([]);
-                                    }
-                                });
+                                menuReload(menuEditor, myOffcanvas);
                             }
                         });
                     }
@@ -206,17 +166,7 @@
                             formData.append("serno", 500);
                             co.File.Upload(formData).done(function (result) {
                                 if (result.success) {
-                                    co.WebMesnus.getAll().done(function (result) {
-                                        if (result.success) {
-                                            menuEditor.setData(result.maps);
-                                            $("#myEditor").removeClass("d-none");
-                                            if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
-                                            else $("#myEditor").addClass("d-none");
-                                            myOffcanvas.show();
-                                        } else {
-                                            menuEditor.setData([]);
-                                        }
-                                    });
+                                    menuReload(menuEditor, myOffcanvas);
                                 }
                             });
                         }
@@ -229,17 +179,7 @@
                             formData.append("serno", 500);
                             co.File.Upload(formData).done(function (result) {
                                 if (result.success) {
-                                    co.WebMesnus.getAll().done(function (result) {
-                                        if (result.success) {
-                                            menuEditor.setData(result.maps);
-                                            $("#myEditor").removeClass("d-none");
-                                            if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
-                                            else $("#myEditor").addClass("d-none");
-                                            myOffcanvas.show();
-                                        } else {
-                                            menuEditor.setData([]);
-                                        }
-                                    });
+                                    menuReload(menuEditor, myOffcanvas);
                                 }
                             });
                         }
@@ -337,6 +277,16 @@
         $("#btnRefresh").trigger("click");
     });
 
+    menuReload(menuEditor, myOffcanvas);
+    /*$(".material-symbols-outlined").each(function () {
+        console.log(`"${$(this).text().trim()}"`);
+    });*/
+    /*$($.iconset_fontawesome_6.icons).each(function () {
+        console.log(`"${this.replace(/[-]{3}[\w]{2,4}$/g,"")}"`);
+    });*/
+}
+
+function menuReload(menuEditor, myOffcanvas) {
     co.WebMesnus.getAll().done(function (result) {
         if (result.success) {
             menuEditor.setData(result.maps);
@@ -348,10 +298,4 @@
             menuEditor.setData([]);
         }
     });
-    /*$(".material-symbols-outlined").each(function () {
-        console.log(`"${$(this).text().trim()}"`);
-    });*/
-    /*$($.iconset_fontawesome_6.icons).each(function () {
-        console.log(`"${this.replace(/[-]{3}[\w]{2,4}$/g,"")}"`);
-    });*/
 }

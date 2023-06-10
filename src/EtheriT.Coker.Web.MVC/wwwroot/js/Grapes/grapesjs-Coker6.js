@@ -159,8 +159,11 @@
                         name: 'swiper-slide', type: 'button',
                         text: "新增一欄",
                         command: editor => {
-                            var SwiperAddslide = $(".gjs-frame")[0].contentWindow.SwiperAddslide;
-                            SwiperAddslide(editor.getSelected().view.$el[0].childNodes[0]);
+                            var $selected = editor.getSelected();
+                            var swiper = $selected.find(".swiper")[0].getEl().swiper;
+                            var new_slide = $("<div>").append($($selected.find(".template_slide")[0].toHTML()).removeClass("d-none").addClass("swiper-slide")).html();
+                            $selected.find(".swiper-wrapper")[0].append(new_slide);
+                            swiper.update();
                         },
                     }
                 ],

@@ -138,23 +138,9 @@ function SwiperAddslide(Swiper) {
     console.log("SwiperAddslide")
     var $Swiper = $(Swiper)
     var new_slide = $($Swiper.find(".template_slide").html()).clone();
-    $Swiper.find(".swiper-wrapper").append(new_slide);
+    //$Swiper.find(".swiper-wrapper").append(new_slide);
 
     var swiper = document.querySelector('.swiper').swiper;
-
-    swiper.update();
-    //$Swiper.parents("div").first().prop("draggable", true).each(function () {
-    //    var $self = $(this);
-    //    console.log($self)
-
-    //    var Id = "#" + $self.attr("id") + " > .swiper"
-    //    var selfConfig = $.extend({
-    //        navigation: {
-    //            nextEl: Id + " > .swiper_button_next > button",
-    //            prevEl: Id + " > .swiper_button_prev > button",
-    //        },
-    //        slidesPerView: 6,
-    //        spaceBetween: 15
-    //    });
-    //});
+    swiper.appendSlide(new_slide);
+    //swiper.update();
 }

@@ -149,6 +149,27 @@
         },
     });
 
+    editor.DomComponents.addType('輪播', {
+        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
+        model: {
+            defaults: {
+                traits: [
+                    // Strings are automatically converted to text types
+                    {
+                        name: 'swiper-slide', type: 'button',
+                        text: "新增一欄",
+                        command: editor => {
+                            var SwiperAddslide = $(".gjs-frame")[0].contentWindow.SwiperAddslide;
+                            SwiperAddslide(editor.getSelected().view.$el[0].childNodes[0]);
+                        },
+                    }
+                ],
+            },
+            init() {
+                var component = editor.getSelected();
+            }
+        },
+    });
 
     editor.DomComponents.addType('頁內錨點', {
         isComponent: el => el.classList?.contains('anchor_inpage'),

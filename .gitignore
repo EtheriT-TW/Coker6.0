@@ -370,6 +370,7 @@ upload/**/*.*
 !bootstrap.min.js
 !bootstrap.min.css
 !**/wwwroot/lib/bootstrap/**/*.min.js.map
+!**/wwwroot/lib/bootstrap/**/bootstrap.bundle.min.js
 !**/wwwroot/lib/jquery/**/*.min.js.map
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css

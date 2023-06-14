@@ -47,7 +47,7 @@ function ready() {
         if ($(".catalog_frame").length > 0) DirectoryGetDataInit();
         if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
         if ($(".link_with_icon").length > 0) LinkWithIconInit();
-        if ($(".anchor_point").length > 0) AnchorPointInit();
+        if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
     }
     if ($PostCSS.length > 0) {
         const $mainCss = $("#frameCss")

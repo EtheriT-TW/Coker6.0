@@ -145,8 +145,9 @@ var grapesInit = function (options) {
                                 break;
                             case "link_with_icon":
                                 setConfig(6, s);
-                                break;
-                            case "anchor_point":
+                                break
+                            case "anchor_directory":
+                            case "anchor_title":
                                 setConfig(7, s);
                                 break;
                         }

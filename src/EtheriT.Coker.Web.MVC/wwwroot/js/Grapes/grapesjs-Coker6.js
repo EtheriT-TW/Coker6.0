@@ -174,26 +174,6 @@
         },
     });
 
-    editor.DomComponents.addType('錨點', {
-        isComponent: el => el.classList?.contains('anchor_point'),
-        model: {
-            defaults: {
-                traits: [
-                    {
-                        name: 'data-anchorid', type: 'text', label: '錨點id', placeholder: 'ex: 123, 456' },
-                ]
-            },
-            init() {
-                this.on('change:attributes:data-anchorid', function () {
-                    setTimeout(() => {
-                        var AnchorPointInit = $(".gjs-frame")[0].contentWindow.AnchorPointInit;
-                        AnchorPointInit();
-                    }, "100");
-                });
-            }
-        },
-    });
-
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {
         $(categories.models).each(function (index, category) {

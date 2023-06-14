@@ -161,7 +161,7 @@
                         command: editor => {
                             var $selected = editor.getSelected();
                             var swiper = $selected.find(".swiper")[0].getEl().swiper;
-                            var new_slide = $("<div>").append($($selected.find(".template_slide")[0].toHTML()).removeClass("d-none").addClass("swiper-slide")).html();
+                            var new_slide = $("<div>").append($($selected.find(".template_slide")[0].find(".swiper-slide")[0].toHTML())).html();
                             $selected.find(".swiper-wrapper")[0].append(new_slide);
                             swiper.update();
                         },
@@ -174,12 +174,13 @@
         },
     });
 
-    editor.DomComponents.addType('頁內錨點', {
-        isComponent: el => el.classList?.contains('anchor_inpage'),
+    editor.DomComponents.addType('錨點', {
+        isComponent: el => el.classList?.contains('anchor_point'),
         model: {
             defaults: {
                 traits: [
-                    { name: 'data-anchorid', type: 'text', label: '錨點id', placeholder: 'ex: #123, #456' },
+                    {
+                        name: 'data-anchorid', type: 'text', label: '錨點id', placeholder: 'ex: 123, 456' },
                 ]
             },
             init() {

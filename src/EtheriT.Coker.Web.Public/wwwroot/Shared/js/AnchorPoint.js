@@ -1,22 +1,19 @@
 ﻿function AnchorPointInit() {
-
-    if ($(".anchor_point").hasClass("anchor_inpage")) {
-        $(".anchor_point").each(function () {
-            var $self = $(this);
+    console.log("AnchorPointInit")
+    $(".anchor_point").each(function () {
+        var $self = $(this);
+        $self.children("ul").empty();
+        console.log($self.data("anchorid"));
+        if ($self.data("anchorid") != "" && typeof ($self.data("anchorid")) != "undefined") {
             var anchorId = $self.data("anchorid").split(',');
             if (anchorId.length > 0) {
                 var anchorName = [];
                 anchorId.forEach(id => {
-                    var item = $(id);
-                    var name = item.text().substr(0, item.text().indexOf("\n"));
-                    while (name == "") {
-                        item = $(id).children().first();
-                        name = item.text().substr(0, item.text().indexOf("\n"));
-                    };
+                    var name = $(`#${id}`).text().substr(0, $(`#${id}`).text().indexOf("\n"));
                     anchorName.push(name);
                 });
                 for (var i = 0; i < anchorId.length; i++) {
-                    $self.children("ul").append(`<li class="fs-5"><a class="text-black text-decoration-none" href="${anchorId[i]}"><div class="p-2 px-4">${anchorName[i]}</div></a></li>`)
+                    $self.children("ul").append(`<li class="fs-5"><a class="text-black text-decoration-none" href="#${anchorId[i]}"><div class="p-2 px-4">${anchorName[i]}</div></a></li>`)
                 }
 
                 $self.children('a[href^="#"]').click(function (event) {
@@ -27,8 +24,6 @@
                     event.preventDefault();
                 });
             }
-        })
-    } else {
-        console.log("OutPage")
-    }
+        }
+    })
 }

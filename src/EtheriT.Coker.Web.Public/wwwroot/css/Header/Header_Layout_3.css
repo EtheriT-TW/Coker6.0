@@ -25,6 +25,12 @@
 }
 
 
+@media only screen and (min-width: 1200px) and (max-width: 1400px) {
+    .container {
+        max-width: 1170px !important;
+    }
+}
+
 @media only screen and (min-width: 769px) {
     .navbar-nav > .nav-item:hover {
         background-color: var(--blue-middle);

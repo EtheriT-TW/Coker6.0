@@ -367,6 +367,8 @@ FodyWeavers.xsd
 *.min.js.map
 *.min.css
 upload/**/*.*
+**/wwwroot/lib/grapesjs/**/*.*
+**/wwwroot/lib/swiper/**/*.*
 !bootstrap.min.js
 !bootstrap.min.css
 !**/wwwroot/lib/bootstrap/**/*.min.js.map

@@ -9,11 +9,9 @@ using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using Microsoft.EntityFrameworkCore;
-using EtheriT.Coker.Application.Shared.Dto;
 using AutoMapper;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Web;
 
 namespace EtheriT.Coker.Application.HtmlContent

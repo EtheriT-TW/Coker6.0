@@ -11,9 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application
 {
@@ -106,11 +103,6 @@ namespace EtheriT.Coker.Application
 					db_bind3.OverImgId = response.Files[0].Id;
 					db.SaveChanges();
 					break;
-					//case (int)FileBindTypeEnum.右側浮動廣告:
-					//	var db_html = await db.Html_Contents.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-					//	db_html.Img = response.Files[0].Path;
-					//	db.SaveChanges();
-					//	break;
 			}
 			return response;
         }

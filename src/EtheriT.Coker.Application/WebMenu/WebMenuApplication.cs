@@ -128,7 +128,7 @@ namespace EtheriT.Coker.Application
             }
             catch (Exception ex)
             {
-                throw new Exception("資料錯誤");
+                throw ex;
             }
         }
         private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID)

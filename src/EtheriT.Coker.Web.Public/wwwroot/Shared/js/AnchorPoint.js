@@ -9,8 +9,8 @@
                 anchorId.forEach(id => {
                     var item = $(id);
                     var name = item.text().substr(0, item.text().indexOf("\n"));
-                    while (name == "") {
-                        item = $(id).children().first();
+                    while (name == "" && item !=null) {
+                        item = item.children().first();
                         name = item.text().substr(0, item.text().indexOf("\n"));
                     };
                     anchorName.push(name);

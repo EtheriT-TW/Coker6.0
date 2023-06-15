@@ -1,10 +1,10 @@
 @charset "UTF-8";
 /**
 * DevExtreme (dx.contrast.compact.css)
-* Version: 21.2.10
-* Build date: Fri Sep 02 2022
+* Version: 21.2.13
+* Build date: Fri Apr 07 2023
 *
-* Copyright (c) 2012 - 2022 Developer Express Inc. ALL RIGHTS RESERVED
+* Copyright (c) 2012 - 2023 Developer Express Inc. ALL RIGHTS RESERVED
 * Read about DevExtreme licensing here: https://js.devexpress.com/Licensing/
 */
 .dx-validationsummary-item {
@@ -1593,6 +1593,7 @@
   -webkit-touch-callout: none;
   padding: 0;
   outline: 0;
+  -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
   color: #fff;
   font-weight: 400;
@@ -4719,6 +4720,14 @@
   flex-grow: 1;
   border-radius: 0 4px 4px 0;
 }
+.dx-editor-outlined.dx-texteditor-with-label.dx-state-hover .dx-texteditor-label .dx-label {
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
+}
+.dx-editor-outlined.dx-texteditor-with-label.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label {
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
+}
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty {
   border: 0;
@@ -4731,7 +4740,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty .dx-texteditor-label .dx-label {
   border-bottom: 1px solid #fff;
   border-top: 1px solid #fff;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty .dx-texteditor-label .dx-label span {
@@ -4780,7 +4788,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-invalid .dx-texteditor-label .dx-label {
   border-bottom: 1px solid #ea4444;
   border-top: 1px solid #ea4444;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-invalid .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-invalid .dx-texteditor-label .dx-label span {
@@ -4829,7 +4836,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover .dx-texteditor-label .dx-label {
   border-bottom: 1px solid #fff;
   border-top: 1px solid #fff;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-hover .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover .dx-texteditor-label .dx-label span {
@@ -4877,9 +4883,13 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-hover.dx-dropdowneditor-active .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover.dx-dropdowneditor-active .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #fff;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-hover.dx-dropdowneditor-active .dx-texteditor-label .dx-label span,
@@ -4930,7 +4940,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label {
   border-bottom: 1px solid #ea4444;
   border-top: 1px solid #ea4444;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label span {
@@ -4978,9 +4987,13 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-dropdowneditor-active .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-dropdowneditor-active .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #fff;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-dropdowneditor-active .dx-texteditor-label .dx-label span,
@@ -5037,7 +5050,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly .dx-texteditor-label .dx-label {
   border-bottom: 1px dashed #fff;
   border-top: 1px dashed #fff;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-disabled .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-readonly .dx-texteditor-label .dx-label span,
@@ -5104,7 +5116,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label {
   border-bottom: 1px dashed #fff;
   border-top: 1px dashed #fff;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-disabled.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-readonly.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label span,
@@ -5207,7 +5218,6 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-textarea.dx-state-focused.dx-state-hover .dx-texteditor-label .dx-label {
   border-bottom: 1px dashed #cf00d7;
   border-top: 1px dashed #cf00d7;
-  height: 100%;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-disabled.dx-state-focused .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-disabled.dx-state-focused.dx-state-hover .dx-texteditor-label .dx-label span,
@@ -5354,9 +5364,13 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-invalid .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #ea4444;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-invalid .dx-texteditor-label .dx-label span,
@@ -5406,9 +5420,13 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px dashed #fff;
   border-top: 0;
-  height: 100%;
+  border-left: 1px dashed transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label span,
@@ -5464,9 +5482,13 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-readonly .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-disabled .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-readonly .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px dashed #fff;
   border-top: 0;
-  height: 100%;
+  border-left: 1px dashed transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-disabled .dx-texteditor-label .dx-label span,
@@ -5585,9 +5607,13 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-hover .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-hover .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #fff;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-hover .dx-texteditor-label .dx-label span,
@@ -5637,9 +5663,13 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #ea4444;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label span,
@@ -5719,9 +5749,13 @@
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-focused.dx-state-hover .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-textarea.dx-state-focused .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-textarea.dx-state-focused.dx-state-hover .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #cf00d7;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-dropdowneditor-active.dx-state-focused .dx-texteditor-label .dx-label span,
@@ -5861,9 +5895,13 @@
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-focused.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-textarea.dx-state-focused.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-label.dx-textarea.dx-state-focused.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label {
+  height: 100%;
   border-bottom: 1px solid #ea4444;
   border-top: 0;
-  height: 100%;
+  border-left: 1px solid transparent;
+  margin-left: -1px;
+  -webkit-clip-path: inset(-10px -1px -1px 1px);
+  clip-path: inset(-10px -1px -1px 1px);
   padding: 0 2px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-dropdowneditor-active.dx-state-focused.dx-invalid .dx-texteditor-label .dx-label span,
@@ -6281,6 +6319,10 @@
 .dx-dropdowneditor.dx-dropdowneditor-field-clickable,
 .dx-dropdowneditor.dx-dropdowneditor-field-clickable .dx-texteditor-input {
   cursor: pointer;
+}
+.dx-dropdowneditor.dx-dropdowneditor-field-clickable .dx-texteditor-buttons-container .dx-state-disabled .dx-button,
+.dx-dropdowneditor.dx-dropdowneditor-field-clickable .dx-texteditor-buttons-container .dx-state-disabled.dx-button {
+  pointer-events: auto;
 }
 .dx-dropdowneditor-input-wrapper {
   -webkit-tap-highlight-color: transparent;
@@ -9267,7 +9309,9 @@
   padding: 5px;
 }
 .dx-toolbar-menu-section .dx-list-item-content > .dx-button .dx-button-content,
-.dx-toolbar-menu-section .dx-toolbar-item-auto-hide > .dx-button .dx-button-content {
+.dx-toolbar-menu-section .dx-list-item-content > .dx-toolbar-item-content > .dx-button .dx-button-content,
+.dx-toolbar-menu-section .dx-toolbar-item-auto-hide > .dx-button .dx-button-content,
+.dx-toolbar-menu-section .dx-toolbar-item-auto-hide > .dx-toolbar-item-content > .dx-button .dx-button-content {
   padding: 0;
 }
 .dx-toolbar-menu-section .dx-toolbar-hidden-button .dx-button {
@@ -11273,7 +11317,7 @@
   border: none;
   background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAARCAQAAACRZI9xAAAAb0lEQVQoU4XOAQrAIAgFUE+2Qd1pt9rJdghnOee3jBQR5KESb4OkHj6kZ1n5VnIuUJV5UUIpUkBGZmQASEQOAnGEYCCKrgAmQgJYCicDaSfalnNF7Id2zhGQAj8g+gmCiD4yAkSdZMBRJzkw1MkmXtMsiBZyxb08AAAAAElFTkSuQmCC") no-repeat;
 }
-.dx-colorbox-input-container .dx-placeholder::before {
+.dx-colorbox-input-container .dx-placeholder {
   max-width: calc(100% - 25px);
 }
 .dx-colorbox .dx-texteditor-input-container::before {
@@ -11965,6 +12009,9 @@
 }
 .dx-datagrid-content .dx-datagrid-table.dx-datagrid-table-fixed .dx-column-indicators .dx-sort.dx-sort-index {
   width: 26px;
+}
+.dx-datagrid-content .dx-datagrid-table .dx-datagrid-best-fit {
+  max-width: none!important;
 }
 .dx-datagrid-content .dx-datagrid-table .dx-datagrid-best-fit .dx-column-indicators {
   float: none!important;
@@ -13413,6 +13460,9 @@
   border-top: 1px solid #fff;
   border-bottom: 1px solid #fff;
 }
+.dx-datagrid-rowsview .dx-master-detail-row .dx-texteditor-input {
+  padding-right: 0;
+}
 .dx-datagrid-rowsview .dx-master-detail-row:not(.dx-datagrid-edit-form) .dx-master-detail-cell,
 .dx-datagrid-rowsview .dx-master-detail-row:not(.dx-datagrid-edit-form) > .dx-datagrid-group-space {
   background-color: #000;
@@ -14029,6 +14079,9 @@ input.dx-hidden {
 }
 .dx-treelist-content .dx-treelist-table.dx-treelist-table-fixed .dx-column-indicators .dx-sort.dx-sort-index {
   width: 26px;
+}
+.dx-treelist-content .dx-treelist-table .dx-treelist-best-fit {
+  max-width: none!important;
 }
 .dx-treelist-content .dx-treelist-table .dx-treelist-best-fit .dx-column-indicators {
   float: none!important;
@@ -15546,6 +15599,9 @@ input.dx-hidden {
   border-top: 1px solid #fff;
   border-bottom: 1px solid #fff;
 }
+.dx-treelist-rowsview .dx-master-detail-row .dx-texteditor-input {
+  padding-right: 0;
+}
 .dx-treelist-rowsview .dx-master-detail-row:not(.dx-treelist-edit-form) .dx-master-detail-cell,
 .dx-treelist-rowsview .dx-master-detail-row:not(.dx-treelist-edit-form) > .dx-treelist-group-space {
   background-color: #000;
@@ -15890,11 +15946,14 @@ input.dx-hidden {
 .dx-treelist-rowsview.dx-treelist-nowrap .dx-treelist-table .dx-treelist-cell-expandable .dx-treelist-text-content {
   white-space: nowrap;
 }
+.dx-treelist-rowsview .dx-treelist-content .dx-treelist-table .dx-row .dx-editor-cell {
+  padding-left: 5px;
+}
 .dx-treelist-checkbox-size {
   line-height: 0;
 }
-.dx-treelist-cell-expandable .dx-checkbox,
-.dx-treelist-select-all .dx-checkbox {
+.dx-treelist-cell-expandable .dx-select-checkbox,
+.dx-treelist-select-all .dx-select-checkbox {
   position: absolute;
 }
 .dx-treelist-icon-container.dx-editor-inline-block {
@@ -16093,7 +16152,7 @@ input.dx-hidden {
   -ms-flex-direction: column;
   flex-direction: column;
 }
-.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container.dx-layout-2 .dx-row:nth-child(1) {
+.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container.dx-layout-2 .dx-row:first-child {
   -webkit-box-flex: 3;
   -webkit-flex-grow: 3;
   -ms-flex-positive: 3;
@@ -16141,7 +16200,7 @@ input.dx-hidden {
   flex-direction: row;
   height: 0;
 }
-.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container .dx-row:nth-child(1) {
+.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container .dx-row:first-child {
   -webkit-box-flex: 2;
   -webkit-flex-grow: 2;
   -ms-flex-positive: 2;
@@ -16592,6 +16651,9 @@ input.dx-hidden {
 }
 .dx-pivotgridfieldchooser .dx-icon-hierarchy {
   background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAMUlEQVQoz2P4z4AfMlBXQcJ/EKShggQoxKEAojsBwxQqKUjACpEVoOhGNYVKCiiKLAATcARoA49V5wAAAABJRU5ErkJggg==") center center no-repeat;
+}
+.dx-pivotgridfieldchooser .dx-icon-hierarchy::before {
+  content: none;
 }
 .dx-rtl .dx-pivotgrid-fields-container .dx-position-indicator.dx-position-indicator-horizontal {
   margin-left: -3px;
@@ -18564,7 +18626,7 @@ input.dx-hidden {
   width: 50px;
   font-size: 14px;
 }
-.dx-scheduler-time-panel .dx-scheduler-time-panel-row:nth-child(1) td > div,
+.dx-scheduler-time-panel .dx-scheduler-time-panel-row:first-child td > div,
 .dx-scheduler-time-panel .dx-scheduler-virtual-row ~ .dx-scheduler-time-panel-row:nth-child(2) td > div {
   margin-top: 0;
 }

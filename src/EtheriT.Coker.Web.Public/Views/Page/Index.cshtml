@@ -14,6 +14,10 @@
 <link rel="stylesheet" href="~/Shared/css/Directory.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/css/AnchorPoint.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+@if (Model.PageData.CurrentUrl != "/home")
+{
+    <link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
+}
 <script src="~/Shared/js/Frame.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/Swiper.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/ViewTypeChange.min.js" asp-append-version="true"></script>
@@ -22,6 +26,7 @@
 <script src="~/Shared/js/DirectoryGetData.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/LinkWithIcon.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/AnchorPoint.min.js" asp-append-version="true"></script>
+
 
 @switch (Model.PageData.LayoutType)
 {

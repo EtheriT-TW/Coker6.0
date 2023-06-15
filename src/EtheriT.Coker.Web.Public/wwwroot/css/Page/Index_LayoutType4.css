@@ -1,0 +1,7 @@
+﻿body {
+    background-color: #B6D3E1;
+}
+
+    body > content > div {
+        background-color: white;
+    }

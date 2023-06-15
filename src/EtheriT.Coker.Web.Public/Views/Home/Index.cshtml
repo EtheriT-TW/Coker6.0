@@ -6,8 +6,8 @@
 @using System.Web;
 @model HomeViewModel
 @{
-	ViewData["SideName"] = "德瑞克|";
-	ViewData["PageName"] = "Home";
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = Model.PageData.Title;
 }
 
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
@@ -30,45 +30,45 @@
 
 @switch (Model.PageData.LayoutType)
 {
-	case 3:
-		@if (Model.MenuBread.Count() > 0)
-		{
-			<div class="top_title_3 p-3">
-				<nav class="bread d-none d-md-block container">
-					<ol class="list-unstyled d-flex">
-						@foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
-						{
-							<li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
-						}
-					</ol>
-				</nav>
-				<div class="title fs-1 fw-bold text-white container">@Model.PageData.Title</div>
-			</div>
-		}
-		break;
-	case 4:
-		@if (Model.MenuBread.Count() > 0)
-		{
-			<div class="top_title_4 p-3">
-				<nav class="bread d-none d-md-block container">
-					<ol class="list-unstyled d-flex">
-						@foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
-						{
-							<li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
-						}
-					</ol>
-				</nav>
-				<div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
-			</div>
-		}
-		break;
+    case 3:
+        @if (Model.MenuBread.Count() > 0)
+        {
+            <div class="top_title_3 p-3">
+                <nav class="bread d-none d-md-block container">
+                    <ol class="list-unstyled d-flex">
+                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                        {
+                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
+                        }
+                    </ol>
+                </nav>
+                <div class="title fs-1 fw-bold text-white container">@Model.PageData.Title</div>
+            </div>
+        }
+        break;
+    case 4:
+        @if (Model.MenuBread.Count() > 0)
+        {
+            <div class="top_title_4 p-3 bg-white container">
+                <nav class="bread d-none d-md-block container">
+                    <ol class="list-unstyled d-flex">
+                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                        {
+                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
+                        }
+                    </ol>
+                </nav>
+                <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
+            </div>
+        }
+        break;
 }
 
 <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
 
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
+    @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
 </div>
 
 @*

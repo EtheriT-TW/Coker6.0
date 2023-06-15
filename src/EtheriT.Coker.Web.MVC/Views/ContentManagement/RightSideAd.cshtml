@@ -102,6 +102,9 @@
 							<span class="material-symbols-outlined">add_photo_alternate</span>
 						</button>
 						<div class="px-2 fw-bold">加入照片</div>
+						@*<div id="ImageUpload" class="d-flex justify-content-center image_upload">
+							@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+						</div>*@
 					</div>
 					<button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
 						<span class="material-symbols-outlined fs-2">visibility</span>

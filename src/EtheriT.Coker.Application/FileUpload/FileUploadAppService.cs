@@ -91,22 +91,28 @@ namespace EtheriT.Coker.Application
             catch (Exception ex)
             {
                 response.ErrorFiles.Add(ex.Message);
-            }
-            if (type == (int)FileBindTypeEnum.選單圖)
-            {
-                var websiteid = await loginUserData.GetWebsiteId();
-                var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                db_bind.ImgId = response.Files[0].Id;
-                db.SaveChanges();
-            }
-            else if (type == (int)FileBindTypeEnum.選單覆蓋)
-            {
-                var websiteid = await loginUserData.GetWebsiteId();
-                var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                db_bind.OverImgId = response.Files[0].Id;
-                db.SaveChanges();
-            }
-            return response;
+			}
+			var websiteid = await loginUserData.GetWebsiteId();
+			switch (type)
+			{
+				case (int)FileBindTypeEnum.選單圖:
+					var db_bind2 = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+
+					db_bind2.ImgId = response.Files[0].Id;
+					db.SaveChanges();
+					break;
+				case (int)FileBindTypeEnum.選單覆蓋:
+					var db_bind3 = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+					db_bind3.OverImgId = response.Files[0].Id;
+					db.SaveChanges();
+					break;
+					//case (int)FileBindTypeEnum.右側浮動廣告:
+					//	var db_html = await db.Html_Contents.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+					//	db_html.Img = response.Files[0].Path;
+					//	db.SaveChanges();
+					//	break;
+			}
+			return response;
         }
         public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, int type, long? sid, string page)
         {

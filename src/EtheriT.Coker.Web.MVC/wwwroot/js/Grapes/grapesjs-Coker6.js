@@ -116,44 +116,6 @@
         },
     });
 
-    editor.DomComponents.addType('圖片', {
-        isComponent: el => el.tagName == 'IMG',
-        model: {
-            defaults: {
-                traits: [
-                    // Strings are automatically converted to text types
-                    { name: 'alt', type: 'text', label: '名稱', placeholder: '請輸入圖片名稱' },
-                    {
-                        name: 'href', type: 'text', label: '超連結', placeholder: '請輸入連結位子',
-                        command: editor => {
-                            console.log("href重設")
-                            console.log(editor.getSelected())
-                        },
-                    },
-                    {
-                        name: 'target', type: 'select', label: '開啟方式',
-                        options: [
-                            { id: '_self', name: '直接連結' },
-                            { id: '_blank', name: '另開視窗', label: '另開視窗' }
-                        ],
-                        command: editor => {
-                            console.log("target重設")
-                            console.log(editor.getSelected())
-                        },
-                    }
-                ]
-            },
-            //init() {
-            //    this.on('change:attributes:href', function () {
-            //        console.log(editor.getSelected());
-            //    });
-            //    this.on('change:attributes:href', function () {
-            //        console.log(editor.getSelected());
-            //    });
-            //}
-        },
-    });
-
     editor.DomComponents.addType('linkWithIcon', {
         isComponent: el => el.classList?.contains('link_with_icon'),
         model: {
@@ -192,7 +154,6 @@
         model: {
             defaults: {
                 traits: [
-                    // Strings are automatically converted to text types
                     {
                         name: 'swiper-slide', type: 'button',
                         text: "新增一欄",

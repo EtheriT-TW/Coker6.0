@@ -1,7 +1,6 @@
 {
   "name": "etherit.coker.web.public",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "create-bundles": "yarn && gulp buildDev",
@@ -30,5 +29,9 @@
     "sweetalert2": "^11.4.32",
     "swiper": "^8.3.2",
     "yarn": "^1.22.19"
-  }
+  },
+  "devDependencies": {
+    "eslint": "^8.42.0"
+  },
+  "description": ""
 }

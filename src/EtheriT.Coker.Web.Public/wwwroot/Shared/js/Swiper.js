@@ -4,6 +4,10 @@
  }
  ***************/
 function SwiperInit(obj) {
+    //console.log(document.getElementById('SwiperNumModal'))
+    //swiperNumModal = new bootstrap.Modal(document.getElementById('SwiperNumModal'))
+    //swiperNumModal.show();
+
     console.log("SwiperInit")
     var config = {
         slidesPerView: 1,

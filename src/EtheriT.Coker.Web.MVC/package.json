@@ -45,5 +45,9 @@
     "sweetalert2": "^11.6.7",
     "swiper": "^8.3.2",
     "yarn": "^1.22.19"
+  },
+  "devDependencies": {
+    "eslint": "^8.42.0",
+    "eslint-plugin-react": "^7.32.2"
   }
 }

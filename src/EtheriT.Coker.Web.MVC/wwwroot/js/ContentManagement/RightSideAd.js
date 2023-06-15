@@ -3,8 +3,9 @@ var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
 
 function PageReady() {
-
+    //ImageUploadModalInit($("#ImageUpload"), true, false);
     ElementInit();
+    //ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
 
     $picker = $("#InputDate");
 
@@ -161,6 +162,7 @@ function FormDataSet(result) {
 }
 
 function FormDataClear() {
+    //ImageUploadModalClear($("#ImageUpload"));
     keyId = 0;
     $btn_display.children("span").text("visibility");
     disp_opt = true;
@@ -192,10 +194,21 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
+    //if ($("#ImageUpload").data("delectList") != null) {
+    //    co.File.DeleteFileById({
+    //        Sid: data.id,
+    //        Type: 5,
+    //        Fid: $("#ImageUpload").data("delectList")[0]
+    //    }).done(function (result) {
+    //        if (result.success) {
+    //            menuReload(menuEditor, myOffcanvas);
+    //        }
+    //    });
+    //}
+
     co.HtmlContent.AddUp({
         Id: keyId,
         TId: $.cookie('secret'),
-        Img: "/images/QRcode_linechatbot.png",
         Content: "",
         Type: 12,
         Title: $title.val(),
@@ -209,6 +222,28 @@ function AddUp(display, success_text, error_text) {
         permanent: $permanent.is(":checked")
     }).done(function (result) {
         if (result.success) {
+            //if ($("#ImageUpload").data("file") != null && $("#ImageUpload").data("file").File != null && $("#ImageUpload").data("file").Id == 0) {
+            //    var formData = new FormData();
+            //    formData.append("files", $("#ImageUpload").data("file").File);
+            //    formData.append("type", 5);
+            //    formData.append("sid", data.id);
+            //    formData.append("serno", 500);
+            //    co.File.Upload(formData).done(function (result) {
+            //        if (result.success) {
+            //            Coker.sweet.success(success_text, null, true);
+            //            setTimeout(function () {
+            //                BackToList();
+            //                enterAd_list.component.refresh();
+            //            }, 1000);
+            //        }
+            //    });
+            //} else {
+            //    Coker.sweet.success(success_text, null, true);
+            //    setTimeout(function () {
+            //        BackToList();
+            //        enterAd_list.component.refresh();
+            //    }, 1000);
+            //}
             Coker.sweet.success(success_text, null, true);
             setTimeout(function () {
                 BackToList();

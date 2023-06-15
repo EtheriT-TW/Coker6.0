@@ -40,7 +40,32 @@ function ready() {
         $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");
-        if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) SwiperInit({ autoplay: true });
+        if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) {
+
+            //$(`<div class="modal fade" id="SwiperNumModal" tabindex="-1" aria-labelledby="SwiperNumModalLabel" aria-hidden="true">
+            //      <div class="modal-dialog modal-dialog-centered">
+            //        <div class="modal-content">
+            //          <div class="modal-header">
+            //            <h1 class="modal-title fs-5" id="SwiperNumModalLabel">輪播數量選擇</h1>
+            //            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            //          </div>
+            //          <div class="modal-body">
+            //          <button>單欄式</button>
+            //          <button>兩欄式</button>
+            //          <button>三欄式</button>
+            //          <button>四欄式</button>
+            //          <button>六欄式</button>
+            //          </div>
+            //          <div class="modal-footer">
+            //            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            //            <button type="button" class="btn btn-primary">Save changes</button>
+            //          </div>
+            //        </div>
+            //      </div>
+            //    </div>`).appendTo("body");
+            //console.log(document.getElementById('SwiperNumModal'))
+            SwiperInit({ autoplay: true });
+        }
         if ($(".masonry").length > 0) FrameInit();
         if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
         if ($(".hover_mask").length > 0) HoverEffectInit();

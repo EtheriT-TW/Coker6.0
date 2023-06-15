@@ -1,10 +1,10 @@
 @charset "UTF-8";
 /**
 * DevExtreme (dx.material.orange.light.css)
-* Version: 21.2.10
-* Build date: Fri Sep 02 2022
+* Version: 21.2.13
+* Build date: Fri Apr 07 2023
 *
-* Copyright (c) 2012 - 2022 Developer Express Inc. ALL RIGHTS RESERVED
+* Copyright (c) 2012 - 2023 Developer Express Inc. ALL RIGHTS RESERVED
 * Read about DevExtreme licensing here: https://js.devexpress.com/Licensing/
 */
 @import url(https://fonts.googleapis.com/css?family=Roboto:300,400,500,700);
@@ -1636,6 +1636,7 @@
   -webkit-touch-callout: none;
   padding: 0;
   outline: 0;
+  -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
   color: rgba(0,0,0,.87);
   font-weight: 400;
@@ -5382,6 +5383,7 @@
   width: auto;
   max-width: 100%;
   display: block;
+  margin-bottom: -1px;
 }
 .dx-invalid .dx-texteditor-label {
   color: #f44336;
@@ -5542,7 +5544,7 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset 1px 0 transparent,inset -1px 0 transparent;
   box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset 1px 0 transparent,inset -1px 0 transparent;
@@ -5608,7 +5610,7 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-invalid .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -1px rgba(244,67,54,.4),inset 0 1px rgba(244,67,54,.4),inset 1px 0 transparent,inset -1px 0 transparent;
   box-shadow: inset 0 -1px rgba(244,67,54,.4),inset 0 1px rgba(244,67,54,.4),inset 1px 0 transparent,inset -1px 0 transparent;
@@ -5686,7 +5688,7 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-disabled .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-state-hover .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.5),inset 0 1px rgba(0,0,0,.5),inset 1px 0 transparent,inset -1px 0 transparent;
   box-shadow: inset 0 -1px rgba(0,0,0,.5),inset 0 1px rgba(0,0,0,.5),inset 1px 0 transparent,inset -1px 0 transparent;
@@ -5858,7 +5860,7 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-state-hover.dx-textarea.dx-state-focused.dx-state-hover .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-textarea.dx-state-focused .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-textarea.dx-state-focused.dx-state-hover .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -2px #ff5722,inset 0 2px #ff5722,inset 2px 0 transparent,inset -2px 0 transparent;
   box-shadow: inset 0 -2px #ff5722,inset 0 2px #ff5722,inset 2px 0 transparent,inset -2px 0 transparent;
@@ -6210,7 +6212,7 @@
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-state-hover.dx-textarea.dx-state-focused.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-textarea.dx-state-focused.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-readonly.dx-textarea.dx-state-focused.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -2px #f44336,inset 0 2px #f44336,inset 2px 0 transparent,inset -2px 0 transparent;
   box-shadow: inset 0 -2px #f44336,inset 0 2px #f44336,inset 2px 0 transparent,inset -2px 0 transparent;
@@ -6496,7 +6498,7 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-hover .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.87),inset 0 1px rgba(0,0,0,.87),inset 1px 0 transparent,inset -1px 0 transparent;
   box-shadow: inset 0 -1px rgba(0,0,0,.87),inset 0 1px rgba(0,0,0,.87),inset 1px 0 transparent,inset -1px 0 transparent;
@@ -6623,7 +6625,7 @@
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-lookup-empty.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label,
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-texteditor-empty.dx-state-hover.dx-invalid .dx-texteditor-label .dx-label {
-  padding: 0;
+  padding: 0 2px;
   height: 100%;
   -webkit-box-shadow: inset 0 -1px #f44336,inset 0 1px #f44336,inset 1px 0 transparent,inset -1px 0 transparent;
   box-shadow: inset 0 -1px #f44336,inset 0 1px #f44336,inset 1px 0 transparent,inset -1px 0 transparent;
@@ -6938,6 +6940,11 @@
   padding: 0 4px;
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px transparent,inset 1px 0 transparent,inset -1px 0 transparent;
   box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px transparent,inset 1px 0 transparent,inset -1px 0 transparent;
+  margin-left: -2px;
+  margin-right: -2px;
+  border-radius: 1px;
+  -webkit-clip-path: inset(-12px 1px -1px 1px);
+  clip-path: inset(-12px 1px -1px 1px);
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label .dx-texteditor-label .dx-label span,
 .dx-editor-outlined.dx-texteditor-with-label .dx-texteditor-label .dx-label span {
@@ -6946,18 +6953,22 @@
   font-size: 12px;
   top: 0;
   margin-top: 0;
-  height: 12px;
+  height: 13px;
   line-height: 12px;
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label .dx-texteditor-label .dx-label-before,
 .dx-editor-outlined.dx-texteditor-with-label .dx-texteditor-label .dx-label-before {
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 transparent,inset 1px 0 rgba(0,0,0,.42);
   box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 transparent,inset 1px 0 rgba(0,0,0,.42);
+  -webkit-clip-path: inset(-1px 1px -1px -1px);
+  clip-path: inset(-1px 1px -1px -1px);
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label .dx-texteditor-label .dx-label-after,
 .dx-editor-outlined.dx-texteditor-with-label .dx-texteditor-label .dx-label-after {
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 rgba(0,0,0,.42),inset 1px 0 transparent;
   box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 rgba(0,0,0,.42),inset 1px 0 transparent;
+  -webkit-clip-path: inset(-1px -1px -1px 1px);
+  clip-path: inset(-1px -1px -1px 1px);
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-rtl .dx-texteditor-label .dx-label-before,
 .dx-editor-outlined.dx-texteditor-with-label.dx-rtl .dx-texteditor-label .dx-label-before,
@@ -6966,6 +6977,8 @@
   border-radius: 0 4px 4px 0;
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 rgba(0,0,0,.42),inset 1px 0 transparent;
   box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 rgba(0,0,0,.42),inset 1px 0 transparent;
+  -webkit-clip-path: inset(-1px -1px -1px 1px);
+  clip-path: inset(-1px -1px -1px 1px);
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-rtl .dx-texteditor-label .dx-label-after,
 .dx-editor-outlined.dx-texteditor-with-label.dx-rtl .dx-texteditor-label .dx-label-after,
@@ -6974,6 +6987,8 @@
   border-radius: 4px 0 0 4px;
   -webkit-box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 transparent,inset 1px 0 rgba(0,0,0,.42);
   box-shadow: inset 0 -1px rgba(0,0,0,.42),inset 0 1px rgba(0,0,0,.42),inset -1px 0 transparent,inset 1px 0 rgba(0,0,0,.42);
+  -webkit-clip-path: inset(-1px 1px -1px -1px);
+  clip-path: inset(-1px 1px -1px -1px);
 }
 .dx-editor-outlined.dx-texteditor-with-floating-label.dx-state-hover,
 .dx-editor-outlined.dx-texteditor-with-label.dx-state-hover {
@@ -7834,6 +7849,10 @@
 .dx-dropdowneditor.dx-dropdowneditor-field-clickable,
 .dx-dropdowneditor.dx-dropdowneditor-field-clickable .dx-texteditor-input {
   cursor: pointer;
+}
+.dx-dropdowneditor.dx-dropdowneditor-field-clickable .dx-texteditor-buttons-container .dx-state-disabled .dx-button,
+.dx-dropdowneditor.dx-dropdowneditor-field-clickable .dx-texteditor-buttons-container .dx-state-disabled.dx-button {
+  pointer-events: auto;
 }
 .dx-dropdowneditor-input-wrapper {
   -webkit-tap-highlight-color: transparent;
@@ -13938,7 +13957,7 @@
 .dx-colorbox-input-container.dx-colorbox-color-is-not-defined .dx-colorbox-color-result-preview {
   border: none;
 }
-.dx-colorbox-input-container .dx-placeholder::before {
+.dx-colorbox-input-container .dx-placeholder {
   max-width: calc(100% - 25px);
 }
 .dx-colorbox .dx-texteditor-input-container::before {
@@ -14667,6 +14686,9 @@
 }
 .dx-datagrid-content .dx-datagrid-table.dx-datagrid-table-fixed .dx-column-indicators .dx-sort.dx-sort-index {
   width: 26px;
+}
+.dx-datagrid-content .dx-datagrid-table .dx-datagrid-best-fit {
+  max-width: none!important;
 }
 .dx-datagrid-content .dx-datagrid-table .dx-datagrid-best-fit .dx-column-indicators {
   float: none!important;
@@ -15990,22 +16012,6 @@
 .dx-datagrid-rowsview .dx-dropdowneditor-button-visible.dx-dropdowneditor.dx-rtl .dx-texteditor-input {
   padding-right: 0;
 }
-.dx-datagrid-headers .dx-searchbox .dx-placeholder::before,
-.dx-datagrid-headers .dx-searchbox .dx-texteditor-input,
-.dx-datagrid-rowsview .dx-searchbox .dx-placeholder::before,
-.dx-datagrid-rowsview .dx-searchbox .dx-texteditor-input {
-  padding-left: 22px;
-}
-.dx-rtl .dx-datagrid-headers .dx-searchbox .dx-placeholder::before,
-.dx-rtl .dx-datagrid-headers .dx-searchbox .dx-texteditor-input,
-.dx-rtl .dx-datagrid-rowsview .dx-searchbox .dx-placeholder::before,
-.dx-rtl .dx-datagrid-rowsview .dx-searchbox .dx-texteditor-input,
-.dx-rtl.dx-datagrid-headers .dx-searchbox .dx-placeholder::before,
-.dx-rtl.dx-datagrid-headers .dx-searchbox .dx-texteditor-input,
-.dx-rtl.dx-datagrid-rowsview .dx-searchbox .dx-placeholder::before,
-.dx-rtl.dx-datagrid-rowsview .dx-searchbox .dx-texteditor-input {
-  padding-right: 22px;
-}
 .dx-datagrid-column-chooser-list .dx-empty-message,
 .dx-device-mobile .dx-datagrid-column-chooser-list .dx-empty-message {
   color: rgba(102,102,102,.87);
@@ -17008,6 +17014,9 @@ input.dx-hidden {
 }
 .dx-treelist-content .dx-treelist-table.dx-treelist-table-fixed .dx-column-indicators .dx-sort.dx-sort-index {
   width: 26px;
+}
+.dx-treelist-content .dx-treelist-table .dx-treelist-best-fit {
+  max-width: none!important;
 }
 .dx-treelist-content .dx-treelist-table .dx-treelist-best-fit .dx-column-indicators {
   float: none!important;
@@ -18331,22 +18340,6 @@ input.dx-hidden {
 .dx-treelist-rowsview .dx-dropdowneditor-button-visible.dx-dropdowneditor.dx-rtl .dx-texteditor-input {
   padding-right: 0;
 }
-.dx-treelist-headers .dx-searchbox .dx-placeholder::before,
-.dx-treelist-headers .dx-searchbox .dx-texteditor-input,
-.dx-treelist-rowsview .dx-searchbox .dx-placeholder::before,
-.dx-treelist-rowsview .dx-searchbox .dx-texteditor-input {
-  padding-left: 22px;
-}
-.dx-rtl .dx-treelist-headers .dx-searchbox .dx-placeholder::before,
-.dx-rtl .dx-treelist-headers .dx-searchbox .dx-texteditor-input,
-.dx-rtl .dx-treelist-rowsview .dx-searchbox .dx-placeholder::before,
-.dx-rtl .dx-treelist-rowsview .dx-searchbox .dx-texteditor-input,
-.dx-rtl.dx-treelist-headers .dx-searchbox .dx-placeholder::before,
-.dx-rtl.dx-treelist-headers .dx-searchbox .dx-texteditor-input,
-.dx-rtl.dx-treelist-rowsview .dx-searchbox .dx-placeholder::before,
-.dx-rtl.dx-treelist-rowsview .dx-searchbox .dx-texteditor-input {
-  padding-right: 22px;
-}
 .dx-editor-cell {
   padding-top: 0;
   padding-bottom: 0;
@@ -19400,7 +19393,7 @@ input.dx-hidden {
   -ms-flex-direction: column;
   flex-direction: column;
 }
-.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container.dx-layout-2 .dx-row:nth-child(1) {
+.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container.dx-layout-2 .dx-row:first-child {
   -webkit-box-flex: 3;
   -webkit-flex-grow: 3;
   -ms-flex-positive: 3;
@@ -19448,7 +19441,7 @@ input.dx-hidden {
   flex-direction: row;
   height: 0;
 }
-.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container .dx-row:nth-child(1) {
+.dx-pivotgridfieldchooser .dx-pivotgridfieldchooser-container .dx-row:first-child {
   -webkit-box-flex: 2;
   -webkit-flex-grow: 2;
   -ms-flex-positive: 2;
@@ -19894,6 +19887,9 @@ input.dx-hidden {
 }
 .dx-pivotgridfieldchooser .dx-icon-hierarchy {
   background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAMUlEQVQoz2P4z4AfMlBXQcJ/EKShggQoxKEAojsBwxQqKUjACpEVoOhGNYVKCiiKLAATcARoA49V5wAAAABJRU5ErkJggg==") center center no-repeat;
+}
+.dx-pivotgridfieldchooser .dx-icon-hierarchy::before {
+  content: none;
 }
 .dx-rtl .dx-pivotgrid-fields-container .dx-position-indicator.dx-position-indicator-horizontal {
   margin-left: -3px;
@@ -22000,7 +21996,7 @@ input.dx-hidden {
   width: 32.5px;
   font-size: 14px;
 }
-.dx-scheduler-time-panel .dx-scheduler-time-panel-row:nth-child(1) td > div,
+.dx-scheduler-time-panel .dx-scheduler-time-panel-row:first-child td > div,
 .dx-scheduler-time-panel .dx-scheduler-virtual-row ~ .dx-scheduler-time-panel-row:nth-child(2) td > div {
   margin-top: 0;
 }

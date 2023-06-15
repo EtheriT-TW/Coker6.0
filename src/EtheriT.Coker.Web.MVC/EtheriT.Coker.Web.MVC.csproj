@@ -1,11 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
   <ItemGroup>
     <Folder Include="Resources\" />
     <Folder Include="wwwroot\css\Dashboard\" />
@@ -13,10 +11,9 @@
     <Folder Include="wwwroot\lib\jquery-menu-editor\" />
     <Folder Include="wwwroot\lib\tui-code\" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
-    <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.10" />
+    <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.13" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />
     <PackageReference Include="GoogleAuthenticatorService.Core" Version="1.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.10">
@@ -26,13 +23,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.4.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj" />
     <ProjectReference Include="..\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj" />
     <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
   </ItemGroup>
-
-  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
-
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties appsettings_1json__JsonSchema="" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

@@ -587,12 +587,19 @@ namespace EtheriT.Coker.Application.Product
 				if (productData != null)
 				{
 					productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
-					foreach (var data in productData)
+					for (int i = 0; i < productData.Count; i++)
 					{
+						var data = productData[i];
 						var output_data = new DirectoryReleInfoDto();
+						var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+						{
+							Sid = data.Id,
+							Type = (int)FileBindTypeEnum.產品,
+							Size = 1
+						});
 						output_data = mapper.Map(data, output_data);
 						output_data.Link = $"/lcb/product/toilet/{data.Id}";
-						output_data.MainImage = "/upload/product/pro_pic_01.jpg";
+						output_data.MainImage = (imagedata[0]??new FileGetImgDto()).Link;
 
 						output.Add(output_data);
 

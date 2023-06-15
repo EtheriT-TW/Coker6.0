@@ -79,6 +79,16 @@
     background-color: lightgray;
 }
 
+.outpage_link a {
+    color: black;
+    background-color: #e5e5ed;
+}
+
+    .outpage_link a:hover {
+        color: white;
+        background-color: #375695;
+    }
+
 @media only screen and (max-width: 768px) {
     .hover_protrude_scale > .btn_more {
         transform: translate(-50%, -50%) scale(1);

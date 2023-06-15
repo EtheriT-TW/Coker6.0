@@ -533,6 +533,7 @@
         });
     }
 
+    // 複製事件監聽
     editor.on('component:clone', (obj) => {
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
         const classList = obj.getClasses();
@@ -545,8 +546,18 @@
                 else setTimeout(timmer, 100);
             }
             setTimeout(timmer, 100);
+        } else if (classList.indexOf("swiper-slide") > -1) {
+            var cont = iframe.document.getElementsByClassName("swiper-slide").length;
+            const timmer = function () {
+                if (iframe.document.getElementsByClassName("swiper-slide").length != cont) {
+                    var swiper = editor.getSelected().parent().parent().getEl().swiper;
+                    swiper.update();
+                } else setTimeout(timmer, 100);
+            }
+            setTimeout(timmer, 100);
         }
     });
+    // 刪除事件監聽
     editor.on('component:remove', (obj) => {
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
         const classList = obj.getClasses();

@@ -240,7 +240,7 @@
             if (/^fa/.test(this.icon)) {
                 media = `<i class="${this.icon} fa-5x"></i>`;
             } else if (/material-symbols-outlined/.test(this.icon)) {
-                media = `<i class="material-icons material-symbols-outlined fa-5x">${iconText}</i>`;
+                media = `<i class="material-symbols-outlined fa-5x">${iconText}</i>`;
             }
             appendBlock(blockId, {
                 category: this.typeName,

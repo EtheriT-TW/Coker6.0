@@ -88,6 +88,7 @@ var grapesInit = function (options) {
                 '/lib/bootstrap/dist/js/bootstrap.bundle.min.js',
                 '/lib/swiper/swiper-bundle.min.js',
                 '/lib/masonry-layout/dist/masonry.pkgd.min.js',
+                '/lib/jquery-plugin-c-share/dist/jquery.c-share.min.js',
                 '/shared/js/Frame.min.js',
                 '/shared/js/HoverEffect.min.js',
                 '/shared/js/Swiper.min.js',
@@ -96,6 +97,7 @@ var grapesInit = function (options) {
                 '/shared/js/DirectoryGetData.min.js',
                 '/shared/js/LinkWithIcon.min.js',
                 '/shared/js/AnchorPoint.min.js',
+                '/shared/js/ShareBlock.min.js',
             ],
         },
         domComponents: {
@@ -110,7 +112,8 @@ var grapesInit = function (options) {
                         { key: "HoverEffectInit", state: false, run: true, class: [], parameter: {} },
                         { key: "DirectoryGetDataInit", state: false, run: true, class: [], parameter: {} },
                         { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} }
+                        { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} },
+                        { key: "ShareBlockInit", state: false, run: true, class: [], parameter: {} }
                     ];
                     const setConfig = function (index, str) {
                         checkClass[index].state = true;
@@ -149,6 +152,9 @@ var grapesInit = function (options) {
                             case "anchor_directory":
                             case "anchor_title":
                                 setConfig(7, s);
+                                break;
+                            case "shareBlock":
+                                setConfig(8, s);
                                 break;
                         }
                     });

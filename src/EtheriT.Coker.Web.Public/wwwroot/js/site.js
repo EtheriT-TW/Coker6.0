@@ -73,6 +73,7 @@ function ready() {
         if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
         if ($(".link_with_icon").length > 0) LinkWithIconInit();
         if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
+        if ($(".shareBlock").length > 0) ShareBlockInit();
     }
     if ($PostCSS.length > 0) {
         const $mainCss = $("#frameCss")

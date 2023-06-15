@@ -578,19 +578,27 @@
         obj.setAttributes({ id: 'id', 'data-key': '' });
 
         if (classList.indexOf("anchor_title") > -1) {
-            //var cont = $(".anchor_title"")
-            //const timmer = function () {
-            //    if (....) iframe.AnchorPointInit();
-            //    else setTimeout(timmer, 100);
-            //}
-            //setTimeout(timmer, 100);
+            var cont = iframe.document.getElementsByClassName("anchor_title").length;
+            const timmer = function () {
+                if (iframe.document.getElementsByClassName("anchor_title").length != cont) iframe.AnchorPointInit();
+                else setTimeout(timmer, 100);
+            }
+            setTimeout(timmer, 100);
         }
     });
-    editor.on('component:remove', () => {
+    editor.on('component:remove', (obj) => {
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
-        setTimeout(function () {
-            iframe.AnchorPointInit();
-        }, 100);
+        const classList = obj.getClasses();
+        obj.setAttributes({ id: 'id', 'data-key': '' });
+
+        if (classList.indexOf("anchor_title") > -1) {
+            var cont = iframe.document.getElementsByClassName("anchor_title").length;
+            const timmer = function () {
+                if (iframe.document.getElementsByClassName("anchor_title").length != cont) iframe.AnchorPointInit();
+                else setTimeout(timmer, 100);
+            }
+            setTimeout(timmer, 100);
+        }
     });
     editor.on('component:drag:end', () => {
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;

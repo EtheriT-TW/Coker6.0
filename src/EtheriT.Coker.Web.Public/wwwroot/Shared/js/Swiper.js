@@ -4,7 +4,6 @@
  }
  ***************/
 function SwiperInit(obj) {
-    console.log("SwiperInit")
     var config = {
         slidesPerView: 1,
         spaceBetween: 15,

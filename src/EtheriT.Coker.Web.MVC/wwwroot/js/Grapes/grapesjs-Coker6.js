@@ -547,16 +547,25 @@
             }
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
-            var cont = iframe.document.getElementsByClassName("swiper-slide").length;
+            var swiper = editor.getSelected().parent().parent().getEl().swiper;
+            if (typeof (swiper) != "undefined") {
+                var cont = iframe.document.getElementsByClassName("swiper-slide").length;
+                const timmer = function () {
+                    if (iframe.document.getElementsByClassName("swiper-slide").length != cont) swiper.update();
+                    else setTimeout(timmer, 100);
+                }
+                setTimeout(timmer, 100);
+            }
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) {
+            var cont = iframe.document.getElementsByClassName("swiper").length;
             const timmer = function () {
-                if (iframe.document.getElementsByClassName("swiper-slide").length != cont) {
-                    var swiper = editor.getSelected().parent().parent().getEl().swiper;
-                    swiper.update();
-                } else setTimeout(timmer, 100);
+                if (iframe.document.getElementsByClassName("swiper").length != cont) iframe.SwiperInit({ autoplay: false });
+                else setTimeout(timmer, 100);
             }
             setTimeout(timmer, 100);
         }
     });
+
     // 刪除事件監聽
     editor.on('component:remove', (obj) => {
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
@@ -570,11 +579,30 @@
                 else setTimeout(timmer, 100);
             }
             setTimeout(timmer, 100);
+        } else if (classList.indexOf("swiper-slide") > -1) {
+            if (typeof (editor.getSelected()) != "undefined") {
+                var swiper = editor.getSelected().parent().parent().getEl().swiper;
+                if (typeof (swiper) != "undefined") {
+                    var cont = iframe.document.getElementsByClassName("swiper-slide").length;
+                    const timmer = function () {
+                        if (iframe.document.getElementsByClassName("swiper-slide").length != cont) swiper.update();
+                        else setTimeout(timmer, 100);
+                    }
+                    setTimeout(timmer, 100);
+                }
+            }
         }
     });
-    editor.on('component:drag:end', () => {
+
+    // 挪動事件監聽
+    editor.on('component:drag:end', (obj) => {
+        const classList = obj.target.getClasses();
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
-        iframe.AnchorPointInit();
+        if (classList.indexOf("anchor_title") > -1) iframe.AnchorPointInit();
+        else if (classList.indexOf("swiper-slide") > -1) {
+            var swiper = obj.target.parent().parent().getEl().swiper;
+            swiper.update();
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) iframe.SwiperInit({ autoplay: false });
     });
     /**************
      * 指令參考

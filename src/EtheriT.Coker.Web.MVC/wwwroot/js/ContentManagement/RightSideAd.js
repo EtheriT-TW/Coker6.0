@@ -137,7 +137,14 @@ function editButtonClicked(e) {
 
 function FormDataSet(result) {
     FormDataClear();
-    //ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
+    co.File.getImgFile({
+        Sid: result.id,
+        Type: 5,
+        Size: 1,
+    }).done(function (file) {
+        console.log(file)
+        ImageUploadModalDataInsert($("#ImageUpload"), file[0].id, file[0].link, file[0].name)
+    })
     keyId = result.id;
     startDate = result.startDate;
     endDate = result.endDate;
@@ -196,13 +203,9 @@ function deleteButtonClicked(e) {
 function AddUp(display, success_text, error_text) {
     if ($("#ImageUpload").data("delectList") != null) {
         co.File.DeleteFileById({
-            Sid: data.id,
+            Sid: keyId,
             Type: 5,
             Fid: $("#ImageUpload").data("delectList")[0]
-        }).done(function (result) {
-            if (result.success) {
-                menuReload(menuEditor, myOffcanvas);
-            }
         });
     }
 
@@ -244,11 +247,6 @@ function AddUp(display, success_text, error_text) {
                     enterAd_list.component.refresh();
                 }, 1000);
             }
-            //Coker.sweet.success(success_text, null, true);
-            //setTimeout(function () {
-            //    BackToList();
-            //    enterAd_list.component.refresh();
-            //}, 1000);
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
         }

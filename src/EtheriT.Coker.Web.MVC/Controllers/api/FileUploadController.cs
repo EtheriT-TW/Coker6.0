@@ -28,14 +28,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
             {
+                case FileBindTypeEnum.產品:
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product");
                 case FileBindTypeEnum.選單圖:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu");
                 case FileBindTypeEnum.選單覆蓋:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuMouseOver");
-                case FileBindTypeEnum.產品:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product");
                 case FileBindTypeEnum.技術證照:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "TechnicalCertificate");
+                case FileBindTypeEnum.右側浮動廣告:
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "RightSideAd");
                 case FileBindTypeEnum.文章管理:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article");
                 default:

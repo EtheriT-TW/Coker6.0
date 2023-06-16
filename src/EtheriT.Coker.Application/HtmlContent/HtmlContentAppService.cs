@@ -13,6 +13,8 @@ using AutoMapper;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System.Web;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 
 namespace EtheriT.Coker.Application.HtmlContent
 {
@@ -22,15 +24,18 @@ namespace EtheriT.Coker.Application.HtmlContent
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly string ApplicationName;
+        private readonly IFileUploadAppService fileUploadAppService;
         public HtmlContentAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IMapper mapper
+            IMapper mapper,
+            IFileUploadAppService fileUploadAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
+            this.fileUploadAppService = fileUploadAppService;
             ApplicationName = "HtmlContent";
         }
         public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
@@ -39,6 +44,7 @@ namespace EtheriT.Coker.Application.HtmlContent
             try
             {
                 long userid = await loginUserData.GetUserId();
+                var ascoid = dto.Id;
                 dto.Html = HttpUtility.HtmlEncode(dto.Html);
                 if (dto.Id == 0)
                 {
@@ -49,7 +55,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                         newItem.FK_WebsiteId = WebsiteID;
                         db.Html_Contents.Add(newItem);
                         await loginUserData.SaveChanges(newItem);
-                        output.Message = newItem.Id.ToString();
+                        ascoid = newItem.Id;
                     }
                     else throw new Exception("查無資料");
                 }
@@ -64,6 +70,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                     else throw new Exception("查無資料");
                 }
                 output.Success = true;
+                output.Message = ascoid.ToString();
             }
             catch (Exception e)
             {
@@ -73,9 +80,11 @@ namespace EtheriT.Coker.Application.HtmlContent
             await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
-        public async Task<HtmlContentListOutpotDto> GetAllComponent() {
+        public async Task<HtmlContentListOutpotDto> GetAllComponent()
+        {
             HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();
-            try {
+            try
+            {
                 List<long> t = Enum.GetValues(typeof(ObjectTypeEnum)).Cast<ObjectTypeEnum>()
                    .Select(e => { return (long)e; })
                    .ToList();
@@ -86,14 +95,15 @@ namespace EtheriT.Coker.Application.HtmlContent
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
                 respose.Success = true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 respose.Error = e.Message;
             }
-           
+
             return respose;
         }
-        public async Task<HtmlContentListOutpotDto> GetComponent(ObjectTypeEnum type) {
+        public async Task<HtmlContentListOutpotDto> GetComponent(ObjectTypeEnum type)
+        {
             HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();
             try
             {
@@ -136,7 +146,25 @@ namespace EtheriT.Coker.Application.HtmlContent
                                         permanent = e.permanent
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+					if (output != null && type == (int)HtmlContentTypeEnum.右側浮動廣告)
+					{
+						foreach (var data in output.data)
+						{
+							var htmlId = data.GetType().GetProperty("Id").GetValue(data, null);
+							var getImgFileInput = new FileGetImgInputDto
+							{
+								Sid = (long)htmlId,
+								Type = (int)FileBindTypeEnum.右側浮動廣告,
+								Size = 1
+							};
+							var image = await fileUploadAppService.getImgFiles(getImgFileInput);
+							if (image.Count > 0)
+							{
+								data.GetType().GetProperty("Img").SetValue(data, image[0].Link);
+							}
+						}
+					}
+					return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無資料");
             }
@@ -198,15 +226,32 @@ namespace EtheriT.Coker.Application.HtmlContent
                                         orderby e.Ser_no
                                         select new HtmlContentDisplayDto
                                         {
+                                            Id = e.Id,
                                             Title = e.Title,
                                             Img = e.Img,
                                             Html = e.Html,
                                             Link = e.Link,
                                             Target = e.Target,
                                         }).Take(number).ToArrayAsync();
+
+                    if (output != null)
+                    {
+                        for (var i = 0; i < output.Length; i++)
+                        {
+                            var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                            {
+                                Sid = output[i].Id,
+                                Type = (int)FileBindTypeEnum.右側浮動廣告,
+                                Size = 1
+                            });
+                            output[i].Img = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+                        }
+                    }
+
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+
                 }
-                else throw new Exception("查無運費資料");
+                else throw new Exception("查無資料");
             }
             catch (Exception e)
             {
@@ -228,7 +273,18 @@ namespace EtheriT.Coker.Application.HtmlContent
                 {
                     db_hc.IsDeleted = true;
                     await loginUserData.SaveChanges(db_hc);
-                    output.Success = true;
+					switch (db_hc.Type)
+					{
+						case (int)HtmlContentTypeEnum.右側浮動廣告:
+							var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+							{
+								Sid = db_hc.Id,
+								Fid = long.Parse(db_hc.Img),
+								Type = (int)FileBindTypeEnum.右側浮動廣告,
+							});
+							break;
+					}
+					output.Success = true;
                 }
                 else throw new Exception("查無資料");
             }

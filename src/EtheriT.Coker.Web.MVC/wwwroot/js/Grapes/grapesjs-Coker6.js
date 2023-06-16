@@ -166,9 +166,6 @@
                         },
                     }
                 ],
-            },
-            init() {
-                var component = editor.getSelected();
             }
         },
     });

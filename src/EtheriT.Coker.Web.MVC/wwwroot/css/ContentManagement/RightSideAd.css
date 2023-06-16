@@ -1,4 +1,23 @@
 ﻿
+.has_image {
+    height: 150px !important;
+    width: 150px !important;
+}
+
+.img_preview {
+    max-height: 150px;
+    max-width: 150px;
+}
+
+.list_img > img {
+    max-height: 150px;
+    max-width: 300px;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: auto;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;

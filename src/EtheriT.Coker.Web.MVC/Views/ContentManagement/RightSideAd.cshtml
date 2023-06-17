@@ -51,10 +51,10 @@
                             </div>
                         </text>
                     );
+                            c.AddFor(e => e.Link).Caption("連結").Width(200);
                             c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
                             c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
                             c.AddFor(e => e.Target).Caption("另開視窗").Width(90);
-                            c.AddFor(e => e.Link).Caption("連結").Width(200);
                             c.AddFor(e => e.StartDate).Caption("起始日期").Width(125);
                             c.AddFor(e => e.EndDate).Caption("結束日期").Width(125);
                             c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
@@ -104,7 +104,7 @@
             <form id="AdForm" class="card-body needs-validation">
                 <div class="d-flex align-self-center justify-content-between mb-3">
                     <div class="d-flex flex-column align-items-center mb-1">
-                        <div id="ImageUpload" class="d-flex justify-content-center image_upload">
+                        <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
                             @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
                         </div>
                     </div>

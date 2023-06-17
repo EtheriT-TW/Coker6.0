@@ -46,7 +46,11 @@
             </div>
         }
         break;
-    case 4:
+	case 4:
+		@if (Model.PageData.CurrentUrl != "/home")
+		{
+			<link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
+		}
         @if (Model.MenuBread.Count() > 0)
         {
             <div class="top_title_4 p-3 bg-white container">

@@ -6,69 +6,69 @@
 <script src="~/js/Header/Header_Layout_4.min.js" asp-append-version="true"></script>
 
 <div class="modal sear_modal fade" tabindex="-1">
-	<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title">搜尋</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-			</div>
-			<div class="modal-footer d-flex justify-content-center">
-				<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">關閉</button>
-			</div>
-		</div>
-	</div>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">搜尋</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="header bg_cyan_blue">
-	<div class="d-flex flex-column p-3 container">
-		<nav class="navbar navbar-expand-lg bg-body-tertiary">
-			<div class="container-fluid nowrap d-flex flex-column flex-lg-row">
-				<div class="d-flex align-items-center w-100 justify-content-between">
-					<a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink">
-						<img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
-					</a>
-					<button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
-						<span class="material-symbols-outlined">expand_more</span>
-					</button>
-				</div>
-				<div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
-					@if (Model.Sitemap_Link != null)
-					{
-						<a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link">網站導覽</a>
-					}
-					<div class="align-items-center bg-white d-flex rounded">
-						<input class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
-						<div class="dropdown">
-							<a class="dropdown-toggle px-2 text-nowrap text-black" href="/epza/eplus" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-								搜尋
-							</a>
-							<ul class="dropdown-menu">
-								<li><button class="btn_sear_all dropdown-item text-nowrap">全部</button></li>
-								<li><button class="btn_sear_news dropdown-item text-nowrap">最新消息</button></li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="collapse navbar-collapse" id="NavbarContent">
-				<ul class="img_ul">
-					@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
-					{
-						<li class="float-start">
-							<a class="nav-link p-0" aria-current="page" href="@menu.imageLink">
-								<img class="logo" src="@menu.imageUrl" alt="@menu.Title">
-							</a>
-						</li>
-					}
-				</ul>
-			</div>
-		</nav>
-	</div>
+    <div class="d-flex flex-column p-3 container">
+        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+            <div class="container-fluid nowrap d-flex flex-column flex-lg-row">
+                <div class="d-flex align-items-center w-100 justify-content-between">
+                    <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink">
+                        <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
+                    </a>
+                    <button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="material-symbols-outlined">expand_more</span>
+                    </button>
+                </div>
+                <div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
+                    @if (Model.Sitemap_Link != null)
+                    {
+                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link">網站導覽</a>
+                    }
+                    <div class="align-items-center bg-white d-flex rounded">
+                        <input class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
+                        <div class="dropdown">
+                            <a class="dropdown-toggle px-2 text-nowrap text-black" href="/epza/eplus" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                搜尋
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><button class="btn_sear_all dropdown-item text-nowrap">全部</button></li>
+                                <li><button class="btn_sear_news dropdown-item text-nowrap">最新消息</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="collapse navbar-collapse" id="NavbarContent">
+                <ul class="img_ul">
+                    @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+                    {
+                        <li class="float-start">
+                            <a class="nav-link p-0" aria-current="page" href="@menu.imageLink">
+                                <img class="logo" src="@menu.imageUrl" alt="@menu.Title">
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </nav>
+    </div>
 </div>
-<div class="container py-0">
-	<a class="" href="/eplus/home">
-		<img class="w-100" src="~/upload/eplus/banner.jpg" alt="e++產業服務平台">
-	</a>
+<div class="container p-0">
+    <a class="" href="/eplus/home">
+        <img class="w-100" src="~/upload/eplus/banner.jpg" alt="e++產業服務平台">
+    </a>
 </div>

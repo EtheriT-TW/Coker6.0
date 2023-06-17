@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Dto
         技術證照 = 4,
         右側浮動廣告 = 5,
         文章管理 = 6,
+        進入廣告 = 7,
 		資料暫存 = 99
 	}
 }

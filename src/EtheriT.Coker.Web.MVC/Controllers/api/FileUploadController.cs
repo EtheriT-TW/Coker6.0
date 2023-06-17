@@ -40,7 +40,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "RightSideAd");
                 case FileBindTypeEnum.文章管理:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article");
-                default:
+				case FileBindTypeEnum.進入廣告:
+					return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "EnterAd");
+				default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
         }

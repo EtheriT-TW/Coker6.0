@@ -14,10 +14,6 @@
 <link rel="stylesheet" href="~/Shared/css/Directory.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/css/AnchorPoint.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
-@if (Model.PageData.CurrentUrl != "/home")
-{
-    <link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
-}
 <script src="~/Shared/js/Frame.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/Swiper.min.js" asp-append-version="true"></script>
 <script src="~/Shared/js/ViewTypeChange.min.js" asp-append-version="true"></script>
@@ -47,9 +43,13 @@
         }
         break;
     case 4:
+        @if (Model.PageData.CurrentUrl != "/home")
+        {
+            <link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
+        }
         @if (Model.MenuBread.Count() > 0)
         {
-            <div class="top_title_4 p-3 bg-white container">
+            <div class="top_title p-3 bg-white container">
                 <nav class="bread d-none d-md-block container">
                     <ol class="list-unstyled d-flex">
                         @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())

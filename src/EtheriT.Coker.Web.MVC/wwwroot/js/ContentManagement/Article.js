@@ -113,8 +113,8 @@ function PageReady() {
         });
     }
 
+    ImageUploadModalInit($("#ImageUpload"), true, false);
     ElementInit();
-    ImageUploadInit("single", $(".image_upload"));
     TagListModalInit();
 
     const forms = $('#ArticletForm');
@@ -266,9 +266,7 @@ function HashDataEdit() {
                             MoveToCanvas();
                         } else {
                             MoveToContent();
-                            co.File.getImgFile({ Sid: result.id, Type: 6, Size: 3 }).done(function (img_result) {
-                                FormDataSet(result, img_result[0]);
-                            });
+                            FormDataSet(result);
                         }
                     } else {
                         window.location.hash = ""
@@ -290,7 +288,7 @@ function editButtonClicked(e) {
 
 function FormDataClear() {
     TagDataClear();
-    SingleImageClear();
+    ImageUploadModalClear($("#ImageUpload"));
     keyId = 0;
     $btn_display.children("span").text("visibility");
     $btn_pop_visible.children("span").text("group");
@@ -303,9 +301,11 @@ function FormDataClear() {
     $sort_checkbox.prop("checked", false);
 }
 
-function FormDataSet(result, img_result) {
+function FormDataSet(result) {
     FormDataClear();
-    SingleSetImage(img_result);
+    co.File.getImgFile({ Sid: result.id, Type: 6, Size: 3 }).done(function (file) {
+        ImageUploadModalDataInsert($("#ImageUpload"), file[0].id, file[0].link, file[0].name)
+    });
     keyId = result.id;
 
     if (!result.visible) {
@@ -348,6 +348,13 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(success_text, error_text, place) {
+    if ($("#ImageUpload").data("delectList") != null) {
+        co.File.DeleteFileById({
+            Sid: keyId,
+            Type: 5,
+            Fid: $("#ImageUpload").data("delectList")[0]
+        });
+    }
 
     co.Articles.AddUp({
         Id: keyId,
@@ -359,61 +366,45 @@ function AddUp(success_text, error_text, place) {
         TagSelected: tag_list,
     }).done(function (result) {
         if (result.success) {
-
-            if (img_delete_list.length > 0) {
-                img_delete_list.forEach(function (imgid) {
-                    co.File.DeleteFileById({
-                        Sid: result.message,
-                        Type: 6,
-                        Fid: imgid,
-                    }).done(function (result) {
-                    });
-                })
-            }
-
-            if (img_file.length > 0) {
+            if ($("#ImageUpload").data("file") != null && $("#ImageUpload").data("file").File != null && $("#ImageUpload").data("file").Id == 0) {
                 var formData = new FormData();
+                formData.append("files", $("#ImageUpload").data("file").File);
                 formData.append("type", 6);
                 formData.append("sid", result.message);
-                for (var i = 0; i < img_file.length; i += 3) {
-                    for (var j = i; j < i + 3; j++) {
-                        formData.append('files', img_file[j]);
+                formData.append("serno", 500);
+                co.File.Upload(formData).done(function (result) {
+                    if (result.success) {
+                        Coker.sweet.success(success_text, null, true);
+                        setTimeout(function () {
+                            if (place == "canvas") {
+                                setTimeout(function () {
+                                    window.location.hash += "-1";
+                                    MoveToCanvas();
+                                }, 1000);
+                            } else {
+                                setTimeout(function () {
+                                    article_list.component.refresh();
+                                    BackToList();
+                                }, 1000);
+                            }
+                        }, 1000);
                     }
-                    co.File.Upload(formData).done(function (result) {
-                        if (result.success) {
-                            Coker.sweet.success(success_text, null, true);
-                            setTimeout(function () {
-                                if (place == "canvas") {
-                                    setTimeout(function () {
-                                        window.location.hash += "-1";
-                                        MoveToCanvas();
-                                    }, 1000);
-                                } else {
-                                    setTimeout(function () {
-                                        article_list.component.refresh();
-                                        BackToList();
-                                    }, 1000);
-                                }
-                            }, 1000);
-                        } else {
-                            Coker.sweet.error("錯誤", error_text, null, true);
-                        }
-                    });
-                    formData.delete('files');
-                }
+                });
             } else {
                 Coker.sweet.success(success_text, null, true);
-                if (place == "canvas") {
-                    setTimeout(function () {
-                        window.location.hash += "-1";
-                        MoveToCanvas();
-                    }, 1000);
-                } else {
-                    setTimeout(function () {
-                        article_list.component.refresh();
-                        BackToList();
-                    }, 1000);
-                }
+                setTimeout(function () {
+                    if (place == "canvas") {
+                        setTimeout(function () {
+                            window.location.hash += "-1";
+                            MoveToCanvas();
+                        }, 1000);
+                    } else {
+                        setTimeout(function () {
+                            article_list.component.refresh();
+                            BackToList();
+                        }, 1000);
+                    }
+                }, 1000);
             }
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);

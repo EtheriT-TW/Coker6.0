@@ -1,4 +1,14 @@
 ﻿
+.has_image {
+    height: 150px !important;
+    width: 150px !important;
+}
+
+.img_preview {
+    max-height: 150px;
+    max-width: 150px;
+}
+
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -34,12 +44,12 @@ input[type="number"] {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
-
+/*
 #ArticleContent > form .image_upload > div {
     width: fit-content;
 }
-
-#ArticleContent > form .image_upload .btn_input_pic {
+*/
+/*#ArticleContent > form .image_upload .btn_input_pic {
     height: 250px;
     width: 400px;
     max-height: 250px;
@@ -51,4 +61,4 @@ input[type="number"] {
     height: 2.5rem;
     top: -0.75rem;
     right: -0.75rem;
-}
+}*/

@@ -137,12 +137,7 @@ function editButtonClicked(e) {
 
 function FormDataSet(result) {
     FormDataClear();
-    co.File.getImgFile({
-        Sid: result.id,
-        Type: 5,
-        Size: 1,
-    }).done(function (file) {
-        console.log(file)
+    co.File.getImgFile({Sid: result.id,  Type: 5, Size: 1, }).done(function (file) {
         ImageUploadModalDataInsert($("#ImageUpload"), file[0].id, file[0].link, file[0].name)
     })
     keyId = result.id;

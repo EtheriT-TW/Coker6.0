@@ -33,7 +33,6 @@ function ImageUploadModalInit($image_upload, isSingle, needCompress) {
         //}
     } else {
         if (isSingle) {
-
             $image_upload.find(".btn_input_pic").on("click", function (even) {
                 even.preventDefault();
                 $(this).parents("div").first().prev(".input_pic").click();
@@ -50,6 +49,7 @@ function ImageUploadModalInit($image_upload, isSingle, needCompress) {
                     obj["File"] = file;
                     obj["Name"] = file.name;
                     obj["Link"] = e.target.result
+                    if (typeof ($image_upload.data("file")) != "undefined") ImageDelect($image_upload);
                     $image_upload.data("file", obj);
                     ImageSetData($image_upload)
                 };
@@ -138,79 +138,4 @@ function ImageSetData($select) {
         $img_preview.attr("alt", data.Name);
         $file_name.text(data.Name);
     }
-}
-
-function SingleImageClear() {
-    if (!$img_preview.hasClass("d-none")) {
-        $img_preview.addClass("d-none");
-    }
-    $img_preview.siblings("span").removeClass("d-none");
-    $img_preview.siblings("span").text("add_photo_alternate");
-    $img_preview.parents("button").first().removeClass("border-0");
-    $img_preview.parents("button").first().css("width", default_width);
-    $img_preview.attr("src", "");
-    $image_upload.removeData("Id");
-}
-
-function SingleSetImage(data) {
-    if (data != null) {
-        $img_preview.removeClass("d-none");
-        $img_preview.siblings("span").addClass("d-none");
-        $img_preview.parents("button").first().addClass("border-0");
-        default_width = $img_preview.parents("button").first().css("width");
-        $img_preview.parents("button").first().css("width", "unset");
-        $img_preview.attr("src", data.link);
-        $img_preview.attr("alt", data.name);
-        $image_upload.data("Id", data.id);
-    }
-
-    img_file = [];
-}
-
-function SingleUploadImage(this_file) {
-    img_file = [];
-    img_file.push(this_file);
-
-    var htmlImageCompress;
-
-    htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7 })
-    htmlImageCompress.then(function (result) {
-        img_file.push(new File([result.file], img_file[0].name));
-
-        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3 })
-        htmlImageCompress.then(function (result) {
-            img_file.push(new File([result.file], img_file[0].name));
-            var reader = new FileReader();
-            reader.readAsDataURL(img_file[2]);
-            reader.onload = (function (e) {
-                $img_preview.removeClass("d-none");
-                $img_preview.siblings("span").addClass("d-none");
-                $img_preview.parents("button").first().addClass("border-0");
-                default_width = $img_preview.parents("button").first().css("width");
-                $img_preview.parents("button").first().css("width", "unset");
-                $img_preview.attr("src", e.target.result);
-                $img_preview.attr("alt", img_file[0].name);
-            });
-
-            if (typeof ($image_upload.data("Id")) != "undefined") {
-                img_delete_list.push(image_upload.data("Id"));
-                $image_upload.removeData("Id");
-            }
-
-        }).catch(function (err) {
-            console.log($`發生錯誤：${err}`);
-            $img_preview.addClass("d-none");
-            $img_preview.siblings("span").removeClass("d-none");
-            $img_preview.siblings("span").text("warning");
-            $img_preview.parents("button").first().removeClass("border-0");
-            $img_preview.parents("button").first().css("width", default_width);
-            $img_preview.attr("src", "");
-            img_file = [];
-        })
-
-    }).catch(function (err) {
-        console.log($`發生錯誤：${err}`);
-        $img_preview.siblings("span").text("warning");
-        img_file = [];
-    })
 }

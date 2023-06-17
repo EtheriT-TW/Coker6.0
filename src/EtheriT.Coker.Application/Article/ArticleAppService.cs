@@ -18,8 +18,6 @@ using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
-using System.Collections.Generic;
-using System;
 
 namespace EtheriT.Coker.Application.Article
 {

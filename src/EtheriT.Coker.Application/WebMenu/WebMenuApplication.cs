@@ -359,16 +359,21 @@ namespace EtheriT.Coker.Application
                 {
                     item.IsDeleted = true;
                     await loginUserData.SaveChanges(item);
+
+                    var m_imgid_list = new List<long>();
+                    m_imgid_list.Add((long)item.ImgId);
                     var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
                     {
                         Sid = item.Id,
-                        Fid = item.ImgId,
+                        Fid = m_imgid_list,
                         Type = (int)FileBindTypeEnum.選單圖,
                     });
+                    var o_imgid_list = new List<long>();
+                    o_imgid_list.Add((long)item.OverImgId);
                     var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
                     {
                         Sid = item.Id,
-                        Fid = item.OverImgId,
+                        Fid = o_imgid_list,
                         Type = (int)FileBindTypeEnum.選單覆蓋,
                     });
                 }

@@ -352,7 +352,7 @@ function AddUp(success_text, error_text, place) {
         co.File.DeleteFileById({
             Sid: keyId,
             Type: 5,
-            Fid: $("#ImageUpload").data("delectList")[0]
+            Fid: $("#ImageUpload").data("delectList")
         });
     }
 

@@ -5,6 +5,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Files
     {
         public long Sid { get; set; }
         public int Type { get; set; }
-        public long? Fid { get; set; }
+        public List<long>? Fid { get; set; }
     }
 }

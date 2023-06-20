@@ -3,7 +3,7 @@ var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
 
 function PageReady() {
-
+    ImageUploadModalInit($("#ImageUpload"), false, false);
     ElementInit();
 
     $picker = $("#InputDate");
@@ -25,6 +25,10 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
+                    //if (typeof ($("#ImageUpload").data("file")) == "undefined") co.sweet.error("資料有誤", "至少需上傳一張圖片", null, false);
+                    //else {
+
+                    //}
                     Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
                         AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
                     });
@@ -38,11 +42,11 @@ function PageReady() {
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回廣告列表", "資料將不被保存", "確定", "取消", function () {
-            history.back();
+            BackToList();
+            FormDataClear();
         });
     })
     $(".btn_add").on("click", function () {
-        FormDataClear();
         window.location.hash = 0;
         HashDataEdit();
     });
@@ -111,7 +115,6 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
             if (parseInt(hash) == 0) {
-                FormDataClear();
                 MoveToContent();
             } else {
                 co.HtmlContent.Get(parseInt(hash)).done(function (result) {
@@ -136,7 +139,13 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
-    FormDataClear();
+    co.File.getImgFile({ Sid: result.id, Type: 7, Size: 1, }).done(function (files) {
+        if (files.length > 0) {
+            for (var i = files.length - 1; i > -1; i--) {
+                ImageUploadModalDataInsert($("#ImageUpload"), files[i].id, files[i].link, files[i].name)
+            }
+        }
+    })
     keyId = result.id;
     startDate = result.startDate;
     endDate = result.endDate;
@@ -161,6 +170,7 @@ function FormDataSet(result) {
 }
 
 function FormDataClear() {
+    ImageUploadModalClear($("#ImageUpload"));
     keyId = 0;
     $btn_display.children("span").text("visibility");
     disp_opt = true;
@@ -192,10 +202,18 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
+    if (typeof ($("#ImageUpload").find(".img_input_frame").data("delectList")) != "undefined") {
+        co.File.DeleteFileById({
+            sid: keyId,
+            type: 7,
+            fid: $("#ImageUpload").find(".img_input_frame").data("delectList")
+        });
+    }
+
+
     co.HtmlContent.AddUp({
         Id: keyId,
         TId: $.cookie('secret'),
-        Img: "/images/mu_0.jpg",
         Content: "",
         Type: 8,
         Title: $title.val(),
@@ -209,11 +227,38 @@ function AddUp(display, success_text, error_text) {
         permanent: $permanent.is(":checked")
     }).done(function (result) {
         if (result.success) {
-            Coker.sweet.success(success_text, null, true);
-            setTimeout(function () {
-                BackToList();
-                enterAd_list.component.refresh();
-            }, 1000);
+            var file_num = 0, success_file_num = 0, error_file_num = 0;
+            $("#ImageUpload .img_input_frame > .img_input").each(function () {
+                var $item = $(this);
+                if (typeof ($item.data("file")) != "undefined" && $item.data("file").Id == 0) {
+                    file_num++;
+                    var formData = new FormData();
+                    formData.append("type", 7);
+                    formData.append("sid", result.message);
+                    formData.append("serno", 500);
+                    formData.append("files", $item.data("file").File);
+                    co.File.Upload(formData).done(function (result) {
+                        if (result.success) success_file_num++;
+                        else error_file_num++;
+                    });
+                }
+            })
+            const upload_timmer = function () {
+                if (file_num == (success_file_num + error_file_num)) {
+                    if (error_file_num > 0) {
+                        Coker.sweet.error("錯誤", error_text, null, true);
+                    } else {
+                        Coker.sweet.success(success_text, null, true);
+                        setTimeout(function () {
+                            BackToList();
+                            FormDataClear();
+                            enterAd_list.component.refresh();
+                        }, 1000);
+                    }
+                }
+                else setTimeout(upload_timmer, 100);
+            }
+            setTimeout(upload_timmer, 100);
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
         }

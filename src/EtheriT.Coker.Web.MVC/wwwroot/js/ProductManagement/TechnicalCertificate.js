@@ -425,10 +425,12 @@ function AddUp(display, success_text, error_text) {
 
             if (img_delete_list.length > 0) {
                 img_delete_list.forEach(function (imgid) {
+                    var deleteid_list = [];
+                    deleteid_list.add(imgid);
                     co.File.DeleteFileById({
                         Sid: result.message,
                         Type: 4,
-                        Fid: imgid,
+                        Fid: deleteid_list,
                     }).done(function (result) {
                     });
                 })

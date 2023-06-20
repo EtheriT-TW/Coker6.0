@@ -146,25 +146,35 @@ namespace EtheriT.Coker.Application.HtmlContent
                                         permanent = e.permanent
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-					if (output != null && type == (int)HtmlContentTypeEnum.右側浮動廣告)
-					{
-						foreach (var data in output.data)
-						{
-							var htmlId = data.GetType().GetProperty("Id").GetValue(data, null);
-							var getImgFileInput = new FileGetImgInputDto
-							{
-								Sid = (long)htmlId,
-								Type = (int)FileBindTypeEnum.右側浮動廣告,
-								Size = 1
-							};
-							var image = await fileUploadAppService.getImgFiles(getImgFileInput);
-							if (image.Count > 0)
-							{
-								data.GetType().GetProperty("Img").SetValue(data, image[0].Link);
-							}
-						}
-					}
-					return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                    var htmlType = 0;
+                    switch (type)
+                    {
+                        case (int)HtmlContentTypeEnum.右側浮動廣告:
+                            htmlType = (int)FileBindTypeEnum.右側浮動廣告;
+                            break;
+                        case (int)HtmlContentTypeEnum.進入廣告:
+                            htmlType = (int)FileBindTypeEnum.進入廣告;
+                            break;
+                    }
+                    if (output != null && htmlType != -1)
+                    {
+                        foreach (var data in output.data)
+                        {
+                            var htmlId = data.GetType().GetProperty("Id").GetValue(data, null);
+                            var getImgFileInput = new FileGetImgInputDto
+                            {
+                                Sid = (long)htmlId,
+                                Type = htmlType,
+                                Size = 1
+                            };
+                            var image = await fileUploadAppService.getImgFiles(getImgFileInput);
+                            if (image.Count > 0)
+                            {
+                                data.GetType().GetProperty("Img").SetValue(data, image[0].Link);
+                            }
+                        }
+                    }
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無資料");
             }
@@ -273,18 +283,24 @@ namespace EtheriT.Coker.Application.HtmlContent
                 {
                     db_hc.IsDeleted = true;
                     await loginUserData.SaveChanges(db_hc);
-					switch (db_hc.Type)
-					{
-						case (int)HtmlContentTypeEnum.右側浮動廣告:
-							var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
-							{
-								Sid = db_hc.Id,
-								Fid = long.Parse(db_hc.Img),
-								Type = (int)FileBindTypeEnum.右側浮動廣告,
-							});
-							break;
-					}
-					output.Success = true;
+                    switch (db_hc.Type)
+                    {
+                        case (int)HtmlContentTypeEnum.右側浮動廣告:
+                            var delete_image_r = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                            {
+                                Sid = db_hc.Id,
+                                Type = (int)FileBindTypeEnum.右側浮動廣告,
+                            });
+                            break;
+                        case (int)HtmlContentTypeEnum.進入廣告:
+                            var delete_image_e = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                            {
+                                Sid = db_hc.Id,
+                                Type = (int)FileBindTypeEnum.進入廣告,
+                            });
+                            break;
+                    }
+                    output.Success = true;
                 }
                 else throw new Exception("查無資料");
             }

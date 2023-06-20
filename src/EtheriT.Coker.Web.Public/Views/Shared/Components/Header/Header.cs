@@ -158,7 +158,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             var imageLink = "";
                             if (data.ImgUrl != null)
                             {
-                                imageUrl = data.ImgUrl.Replace("upload", "upload/eplus");
+                                imageUrl = data.ImgUrl.Replace("upload", $"upload/{website_data[0].OrgName}");
                                 imageLink = $"/{website_data[0].OrgName}/{data.RouterName}";
                             }
                             headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel

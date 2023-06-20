@@ -1382,10 +1382,12 @@ function AddUp(success_text, error_text, target) {
                             case 3:
                             case 4:
                                 if (typeof (file["Id"]) != "undefined") {
+                                    var deleteid_list = [];
+                                    deleteid_list.add(file["Id"]);
                                     co.File.DeleteFileById({
                                         Sid: parseInt(result.message),
                                         Type: 1,
-                                        Fid: file["Id"],
+                                        Fid: deleteid_list,
                                     });
                                 }
                                 break;

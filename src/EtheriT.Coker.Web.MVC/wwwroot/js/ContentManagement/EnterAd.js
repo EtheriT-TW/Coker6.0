@@ -25,13 +25,12 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    //if (typeof ($("#ImageUpload").data("file")) == "undefined") co.sweet.error("資料有誤", "至少需上傳一張圖片", null, false);
-                    //else {
-
-                    //}
-                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                        AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-                    });
+                    if ($("#ImageUpload").find(".img_input").length <= 1) co.sweet.error("資料有誤", "至少需上傳一張圖片", null, false);
+                    else {
+                        Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                            AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                        });
+                    }
                 }
                 form.classList.add('was-validated')
                 WasValidated();

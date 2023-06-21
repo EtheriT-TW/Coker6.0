@@ -25,15 +25,14 @@ function PageReady() {
                     event.stopPropagation()
                 } else {
                     event.preventDefault();
-                    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                        AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-                    });
-                    //if (typeof ($("#ImageUpload").data("file")) == "undefined") co.sweet.error("資料有誤", "圖片不可為空", null, false);
-                    //else {
-                    //    Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                    //        AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
-                    //    });
-                    //}
+
+                    if (typeof ($("#ImageUpload .img_input_frame > .img_input").data("file")) == "undefined" || $("#ImageUpload .img_input_frame > .img_input").data("file") == null) {
+                        co.sweet.error("資料有誤", "圖示不可為空", null, false);
+                    } else {
+                        Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
+                            AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                        });
+                    }
                 }
                 form.classList.add('was-validated')
                 WasValidated();
@@ -202,11 +201,12 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
-    if (typeof ($("#ImageUpload").find(".img_input_frame").data("delectList")) != "undefined") {
+    var delectList = $("#ImageUpload").find(".img_input_frame").data("delectList")
+    if (typeof (delectList) != "undefined" && delectList != null) {
         co.File.DeleteFileById({
             sid: keyId,
             type: 5,
-            fid: $("#ImageUpload").find(".img_input_frame").data("delectList")
+            fid: delectList
         });
     }
 
@@ -226,10 +226,11 @@ function AddUp(display, success_text, error_text) {
         permanent: $permanent.is(":checked")
     }).done(function (result) {
         if (result.success) {
-            var $file = $("#ImageUpload .img_input_frame > .img_input");
-            if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").Id == 0) {
+            var file = $("#ImageUpload .img_input_frame > .img_input").data("file").File;
+            console.log(file);
+            if (file != null) {
                 var formData = new FormData();
-                formData.append("files", $file.data("file").File);
+                formData.append("files", file);
                 formData.append("type", 5);
                 formData.append("sid", result.message);
                 formData.append("serno", 500);

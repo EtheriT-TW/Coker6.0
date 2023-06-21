@@ -170,6 +170,16 @@
         },
     });
 
+    editor.DomComponents.addType('子頁內容', {
+        isComponent: el => el.classList?.contains('subpage_content'),
+        model: {
+            defaults: {
+                droppable: false,
+                editable: false,
+                copyable: false,
+            }
+        },
+    });
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {
         $(categories.models).each(function (index, category) {

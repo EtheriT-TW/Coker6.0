@@ -26,3 +26,21 @@
     outline: 1px dashed rgba(170,170,170,0.7) !important;
     padding: 0.5rem !important;
 }
+
+.subpage_content {
+    background-color: #666;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+.subpage_content::after {
+    content: '\5b50\9801\9762\5167\5bb9';
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #CCC;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+}

@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using EtheriT.Coker.Web.ConsoleApp.Models;
+using EtheriT.Coker.Web.ConsoleApp.Controllers;
+using EtheriT.Coker.Web.ConsoleApp.DbContextSet;
+using Microsoft.Extensions.Configuration;
 
 // load the configuration file.
 var configBuilder = new ConfigurationBuilder().
@@ -7,6 +10,8 @@ var configBuilder = new ConfigurationBuilder().
 // get the section to read
 var configSection = configBuilder.GetSection("ConnectionStrings");
 
-// get the configuration values in the section.
-var source = configSection["source"] ?? null;
-Console.WriteLine(source);
+OldDataApplicaation old = new OldDataApplicaation(configSection["source"] ?? "", configBuilder.GetSection("SideID").Get<int>());
+List<Article> articles = old.loadData(configBuilder.GetSection("LoadMenuSubId").Get<List<int>>(), configBuilder.GetSection("LoadShopingSubId").Get<List<int>>());
+
+NewDataApplicaation newDB = new NewDataApplicaation(configSection["destination"] ?? "");
+newDB.saveData(articles);

@@ -13,11 +13,11 @@
 			var target = rightSideAd.Target ? "_blank" : "_self";
 			@if (rightSideAd.Link != "")
 			{
-				<div><a href="@rightSideAd.Link" target="@target"><img class="my-1 shadow" src="@rightSideAd.Img" alt="@rightSideAd.Title"></a></div>
+				<div><a href="@rightSideAd.Link" target="@target"><img class="my-1 shadow" src="@rightSideAd.Img[0]" alt="@rightSideAd.Title"></a></div>
 			}
 			else
 			{
-				<div><img class="my-1 shadow" src="@rightSideAd.Img" alt="@rightSideAd.Title"></div>
+				<div><img class="my-1 shadow" src="@rightSideAd.Img[0]" alt="@rightSideAd.Title"></div>
 			}
 		}
 	}

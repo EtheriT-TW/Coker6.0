@@ -238,7 +238,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                                         {
                                             Id = e.Id,
                                             Title = e.Title,
-                                            Img = e.Img,
+                                            Img = new List<string>(),
                                             Html = e.Html,
                                             Link = e.Link,
                                             Target = e.Target,
@@ -246,15 +246,32 @@ namespace EtheriT.Coker.Application.HtmlContent
 
                     if (output != null)
                     {
-                        for (var i = 0; i < output.Length; i++)
+                        switch (type)
                         {
-                            var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                            {
-                                Sid = output[i].Id,
-                                Type = (int)FileBindTypeEnum.右側浮動廣告,
-                                Size = 1
-                            });
-                            output[i].Img = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+                            case (int)HtmlContentTypeEnum.右側浮動廣告:
+                                for (var i = 0; i < output.Length; i++)
+                                {
+                                    var r_imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                                    {
+                                        Sid = output[i].Id,
+                                        Type = (int)FileBindTypeEnum.右側浮動廣告,
+                                        Size = 1
+                                    });
+                                    output[i].Img.Add(r_imagedata.First().Link);
+                                }
+                                break;
+                            case (int)HtmlContentTypeEnum.進入廣告:
+                                var e_imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                                {
+                                    Sid = output[0].Id,
+                                    Type = (int)FileBindTypeEnum.進入廣告,
+                                    Size = 1
+                                });
+                                foreach (var img in e_imagedata)
+                                {
+                                    output[0].Img.Add(img.Link);
+                                }
+                                break;
                         }
                     }
 

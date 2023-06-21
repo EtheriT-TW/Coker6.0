@@ -1,10 +1,14 @@
 ﻿function PageReady() {
     ShoppingCarModalInit();
 
-    if ($("#EnterAdModal").length > 0) {
+    if (typeof ($.cookie('EnterAd_Show')) == "undefined" && $("#EnterAdModal").length > 0) {
         var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
         enterAdModal.show();
     }
+
+    $("#EnterAdModal button").on("click", function () {
+        $.cookie('EnterAd_Show', true, { path: '/' });
+    });
 
     $(".btn_gonews").on("click", function () {
         $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top - ($("header").height() * 2) }, 0);

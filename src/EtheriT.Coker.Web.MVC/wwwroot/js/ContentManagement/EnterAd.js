@@ -202,7 +202,7 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(display, success_text, error_text) {
-    if (typeof ($("#ImageUpload").find(".img_input_frame").data("delectList")) != "undefined") {
+    if (typeof ($("#ImageUpload").find(".img_input_frame").data("delectList")) != "undefined" && $("#ImageUpload").find(".img_input_frame").data("delectList") != null) {
         co.File.DeleteFileById({
             sid: keyId,
             type: 7,

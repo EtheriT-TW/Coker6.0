@@ -40,10 +40,8 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Id).Caption("編號").Width(50);
                         c.AddFor(e => e.Title).Caption("名稱");
-                        c.AddFor(e => e.Img).Caption("圖片連結");
-                        c.AddFor(e => e.Link).Caption("連結").Width(200);
+                        c.AddFor(e => e.Link).Caption("連結");
                         c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
                         c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
                         c.AddFor(e => e.Target).Caption("另開視窗").Width(90);

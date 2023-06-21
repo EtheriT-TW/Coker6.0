@@ -64,5 +64,44 @@
         break;
 }
 
+<!-- EnterAdModal -->
+@if (Model.enterAd.Count > 0)
+{
+    var target = Model.enterAd[0].Target ? "_blank" : "_self";
+    <div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="bg-white btn-close end-0 me-3 p-2 position-absolute rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="d-flex justify-content-center">
+
+                        @if (Model.enterAd[0].Link != "")
+                        {
+                            <a href="@Model.enterAd[0].Link" target="@target" title="@Model.enterAd[0].Title">
+                                <ul>
+                                    @foreach (var img in Model.enterAd[0].Img)
+                                    {
+                                        <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                    }
+                                </ul>
+                            </a>
+                        }
+                        else
+                        {
+                            <ul>
+                                @foreach (var img in Model.enterAd[0].Img)
+                                {
+                                    <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                }
+                            </ul>
+
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>

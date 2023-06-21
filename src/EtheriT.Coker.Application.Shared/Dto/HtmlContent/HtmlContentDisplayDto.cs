@@ -6,7 +6,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.HtmlContent
 	public class HtmlContentDisplayDto
 	{
         public long Id { get; set; }
-        public string? Img { get; set; }
+        public List<string>? Img { get; set; }
         public string? Html { get; set; }
         public string? Css { get; set; }
         public string? Title { get; set; }

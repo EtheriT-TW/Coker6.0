@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.DbContextSet
     public class OldDbContext : DbContext
     {
         public DbSet<Menus> Menus { get; set; }
+        public DbSet<MenuSub> MenuSubs { get; set; }
         public DbSet<Menu_cont> MenuConts { get; set; }
         public DbSet<ShopInfo> ShopInfos { get; set; }
         private string connectionString { get; set; }

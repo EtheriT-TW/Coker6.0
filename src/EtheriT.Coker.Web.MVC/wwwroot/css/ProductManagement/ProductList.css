@@ -106,7 +106,7 @@ input[type="number"] {
     padding-left: 8.5rem;
 }
 
-#ProductForm > .tag > input {
+#ProductForm > .tag > input, #ProductForm > .file > input {
     padding-left: 4.5rem;
 }
 

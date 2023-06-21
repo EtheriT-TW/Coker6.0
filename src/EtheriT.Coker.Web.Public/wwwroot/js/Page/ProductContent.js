@@ -200,7 +200,7 @@ function PageDefaultSet(result) {
         $product_swiper.append(demo_slide);
         $preview_swiper.append(demo_pre_slide);
     } else {
-        result.files_Medium.forEach(img_med => {
+        result.img_Medium.forEach(img_med => {
             var slide = $($("#TemplateImageSlide").html()).clone();
             var slide_image = slide.find(".pro_display");
             slide_image.attr("alt", img_med.name);
@@ -210,7 +210,7 @@ function PageDefaultSet(result) {
             slide_image.on("click", ShowBigPro);
         });
 
-        result.files_Small.forEach(img_small => {
+        result.img_Small.forEach(img_small => {
             var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
             var pre_slide_image = pre_slide.find("img");
             pre_slide_image.attr("alt", img_small.name);
@@ -262,7 +262,7 @@ function PageDefaultSet(result) {
         },
     });
 
-    img_origin_list = result.files_Original;
+    img_origin_list = result.img_Original;
 
     if (result.tagDatas.length > 0) {
         result.tagDatas.forEach(item => {
@@ -270,6 +270,14 @@ function PageDefaultSet(result) {
         })
     } else {
         $(".pro_tag").addClass("d-none");
+    }
+
+    if (result.files.length > 0) {
+        result.files.forEach(function (file) {
+            $("#FileDownload").append(`<div class="file px-4 py-1 border border-dark">
+			                                                            <a href="${file.link}" download="${file.name}" titile="${file.name}"><div>${file.name}</div></a>
+			                                                       </div>`)
+        });
     }
 }
 

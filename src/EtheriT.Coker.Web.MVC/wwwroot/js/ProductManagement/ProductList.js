@@ -434,6 +434,7 @@ function ElementInit() {
     $introduction_count = $("#ProductForm > .introduction .introduction_count");
     $illustrate = $("#InputIllustrate");
     $illustrate_count = $("#ProductForm > .illustrate .illustrate_count");
+    $file = $('#InputFile');
     $marks = $("#InputMarks");
     $spec_select = $(".spec_select")
     $price = $(".input_price");
@@ -484,6 +485,7 @@ function FormDataClear() {
     $introduction_count.text(0);
     $illustrate.val("");
     $illustrate_count.text(0);
+    $file.val('');
     $marks.val("");
     $price.val("");
     $stock_number.val("");
@@ -568,6 +570,7 @@ function paletteButtonClicked(e) {
 
 function FormDataSet(result) {
     //console.log(result)
+    //$("#ProductContent .card-header .titile").append(`編輯商品<span class="d-md-flex d-none">－${result.title}</span>`);
 
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
@@ -1232,7 +1235,6 @@ function SortChange(change, minindex, maxindex) {
 }
 
 function AddUp(success_text, error_text, target) {
-    //console.log(total_files);
 
     var stock_addup_list = []
     var temp_serno = 1;
@@ -1294,9 +1296,21 @@ function AddUp(success_text, error_text, target) {
         TechCertSelected: techcert_list,
         Stocks: stock_addup_list
     }).done(function (result) {
-        //console.log(result)
         var pid = parseInt(result.message);
         if (result.success) {
+            var files = $file.prop('files');
+            if (files.length > 0) {
+                var formData = new FormData();
+                formData.append("type", 8);
+                formData.append("sid", pid);
+                formData.append("serno", 500);
+                for (var i = 0; i < files.length; i++) {
+                    formData.append("files", files[i]);
+                    co.File.Upload(formData);
+                    formData.delete('files');
+                }
+            }
+
             if (total_files.length > 0) {
 
                 $("#ProductForm > .data_upload > ul > li").each(function () {
@@ -1441,6 +1455,8 @@ function AddUp(success_text, error_text, target) {
 }
 
 function MoveToContent() {
+    if (keyId == 0) $("#ProductContent .card-header .titile").text("新增商品")
+    else $("#ProductContent .card-header .titile").text("編輯商品")
     $("#ProductForm").removeClass("was-validated");
     $("#ProductList").addClass("d-none");
     $("#ProductCanvas").addClass("d-none");

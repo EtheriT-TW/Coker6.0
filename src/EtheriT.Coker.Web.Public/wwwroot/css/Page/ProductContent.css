@@ -274,7 +274,7 @@ input:disabled + .btn_radio {
     #TechnicalDocuments > #FileDownload > .file > a > div::after {
         font-family: 'Font Awesome 6 Free';
         font-weight: 900;
-        content: "\u3000\f019";
+        content: "\3000\f019";
     }
 
 #TechnicalDocuments [class*="badge_"] div:has(img) {

@@ -6,366 +6,370 @@
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @model ProductManagementModel
 @{
-	ViewData["Title"] = "ProductList";
+    ViewData["Title"] = "ProductList";
 }
 
 <link rel="stylesheet" href="~/css/ProductManagement/ProductList.min.css" asp-append-version="true" />
 <script src="~/js/ProductManagement/ProductList.min.js" asp-append-version="true"></script>
 
 <div id="PriceModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="PriceModalLabel" aria-hidden="true" data_psid="">
-	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
-		<div class="modal-content">
-			<div class="modal-header px-4">
-				<h5 class="modal-title" id="exampleModalLabel">自訂規格價格</h5>
-				<button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-					<span class="material-icons ">close</span>
-				</button>
-			</div>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header px-4">
+                <h5 class="modal-title" id="exampleModalLabel">自訂規格價格</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span class="material-icons ">close</span>
+                </button>
+            </div>
 
-			<template id="ModalTemplatePrice">
-				<div class="modal_price frame row align-items-center mb-3" data_ppid="">
-					<select class="col select_role form-select" aria-label="Role Select">
-						<option selected value="1">非會員</option>
-						<option value="2">一般會員</option>
-					</select>
+            <template id="ModalTemplatePrice">
+                <div class="modal_price frame row align-items-center mb-3" data_ppid="">
+                    <select class="col select_role form-select" aria-label="Role Select">
+                        <option selected value="1">非會員</option>
+                        <option value="2">一般會員</option>
+                    </select>
 
-					<div class="col cash input-group">
-						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
-						<input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0">
-					</div>
+                    <div class="col cash input-group">
+                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">現金</div>
+                        <input class="input_cash form-control rounded" type="number" aria-label="Input Cash Price of Product" maxlength="9" value="0">
+                    </div>
 
-					<div class="col bonus input-group">
-						<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
-						<input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0">
-					</div>
+                    <div class="col bonus input-group">
+                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">紅利</div>
+                        <input class="input_bonus form-control rounded" type="number" aria-label="Input Bonus Price of Product" maxlength="9" value="0">
+                    </div>
 
-					<button class="col-auto btn_price_delete bg-transparent border-0 d-flex p-0">
-						<span class="material-symbols-outlined">delete</span>
-					</button>
-				</div>
-			</template>
+                    <button class="col-auto btn_price_delete bg-transparent border-0 d-flex p-0">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+            </template>
 
-			<div class="modal-body p-4">
-				<div class="price_option"></div>
-				<div class="d-flex justify-content-center my-2">
-					<button class="btn btn_spec_price_add align-items-center d-flex">
-						<span class="material-symbols-outlined">add</span>
-						<div>新增其他付款方式</div>
-					</button>
-				</div>
-				<div class="alert_text text-center text-danger d-none"></div>
-				<div class="text-center text-danger mb-3">*紅利及價格須輸入一億元(含)以下</div>
-			</div>
-			<div class="modal-footer px-4">
-				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>
-				<button type="button" class="btn_price_save btn btn-primary">儲　存</button>
-			</div>
-		</div>
-	</div>
+            <div class="modal-body p-4">
+                <div class="price_option"></div>
+                <div class="d-flex justify-content-center my-2">
+                    <button class="btn btn_spec_price_add align-items-center d-flex">
+                        <span class="material-symbols-outlined">add</span>
+                        <div>新增其他付款方式</div>
+                    </button>
+                </div>
+                <div class="alert_text text-center text-danger d-none"></div>
+                <div class="text-center text-danger mb-3">*紅利及價格須輸入一億元(含)以下</div>
+            </div>
+            <div class="modal-footer px-4">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取　消</button>
+                <button type="button" class="btn_price_save btn btn-primary">儲　存</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="">
-	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
-		<div class="title fw-bold fs-3">商品列表</div>
-	</div>
+    <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+        <div class="title fw-bold fs-3">商品列表</div>
+    </div>
 
-	<div id="" class="py-2">
-		<div id="ProductList" class="card border-0">
-			<div class="card-body position-relative pb-5">
-				<button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-					<span class="material-symbols-outlined">add</span>
-				</button>
-				@(
-					Html.DevExtreme().DataGrid<ProductGetAllListDto>()
-					.DataSource(d => d.RemoteController().Key("Id")
-					.LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
-					)
-					.RemoteOperations(true)
-					.ColumnHidingEnabled(true)
-					.ShowBorders(true)
-					.FilterRow(filterRow => filterRow
-					.Visible(true)
-					.ApplyFilter(GridApplyFilterMode.Auto)
-					)
-					.SearchPanel(searchPanel => searchPanel
-					.Visible(true)
-					.Width(480)
-					.Placeholder("請輸入要搜尋的資料")
-					)
-					.ShowRowLines(true)
-					.Columns(c =>
-					{
-						c.AddFor(e => e.Disp_Opt).Caption("是否顯示").Width(90);
-						c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
-						c.AddFor(e => e.Title).Caption("商品名稱");
-						c.AddFor(e => e.Price).Caption("價格");
-						c.AddFor(e => e.StartTime).Caption("起始日期");
-						c.AddFor(e => e.EndTime).Caption("結束日期");
-						c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
-						c.Add()
-						.Type(GridCommandColumnType.Buttons)
-						.Buttons(b =>
-						{
-							b.Add().Name("edit").OnClick("editButtonClicked");
-							b.Add().Icon("palette").Name("edit").OnClick("paletteButtonClicked");
-							b.Add().Name("delete").OnClick("deleteButtonClicked");
-						});
-					})
-					.ColumnAutoWidth(true)
-					.Paging(paging => paging.PageSize(30))
-					.Pager(pager =>
-					{
-						pager.Visible(true);
-						pager.ShowPageSizeSelector(true);
-						pager.AllowedPageSizes(new[] { 10, 20, 30 });
-						pager.ShowInfo(true);
-					})
-					.Editing(editing =>
-					{
-						editing.AllowDeleting(true);
-						editing.AllowUpdating(true);
-						editing.UseIcons(true);
-					})
-					.OnContentReady("contentReady")
-					.OnToolbarPreparing("toolbarPreparing")
-					)
-			</div>
-		</div>
+    <div id="" class="py-2">
+        <div id="ProductList" class="card border-0">
+            <div class="card-body position-relative pb-5">
+                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+                @(
+                    Html.DevExtreme().DataGrid<ProductGetAllListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Disp_Opt).Caption("是否顯示").Width(90);
+                        c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
+                        c.AddFor(e => e.Title).Caption("商品名稱");
+                        c.AddFor(e => e.Price).Caption("價格");
+                        c.AddFor(e => e.StartTime).Caption("起始日期");
+                        c.AddFor(e => e.EndTime).Caption("結束日期");
+                        c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
+                        {
+                            b.Add().Name("edit").OnClick("editButtonClicked");
+                            b.Add().Icon("palette").Name("edit").OnClick("paletteButtonClicked");
+                            b.Add().Name("delete").OnClick("deleteButtonClicked");
+                        });
+                    })
+                    .ColumnAutoWidth(true)
+                    .Paging(paging => paging.PageSize(30))
+                    .Pager(pager =>
+                    {
+                        pager.Visible(true);
+                        pager.ShowPageSizeSelector(true);
+                        pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                        pager.ShowInfo(true);
+                    })
+                    .Editing(editing =>
+                    {
+                        editing.AllowDeleting(true);
+                        editing.AllowUpdating(true);
+                        editing.UseIcons(true);
+                    })
+                    .OnContentReady("contentReady")
+                    .OnToolbarPreparing("toolbarPreparing")
+                    )
+            </div>
+        </div>
 
-		<div id="ProductContent" class="card border-0 d-none">
-			<div class="card-header d-flex justify-content-between">
-				<div class="fw-bold fs-5 d-flex align-items-center">
-					<button class="btn_back d-flex bg-transparent border-0 align-items-center">
-						<span class="material-symbols-outlined">
-							keyboard_backspace
-						</span>
-					</button>
-					<div class="lh-lg">新增商品</div>
-				</div>
-				<div class="d-flex">
-					<button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="ProductForm">發　布</button>
-					<button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center" form="ProductForm">
-						進階編輯<span class="material-symbols-outlined ms-1">palette</span>
-					</button>
-				</div>
-			</div>
+        <div id="ProductContent" class="card border-0 d-none">
+            <div class="card-header d-flex justify-content-between flex-column flex-md-row">
+                <div class="fw-bold fs-5 d-flex align-items-center">
+                    <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                        <span class="material-symbols-outlined">
+                            keyboard_backspace
+                        </span>
+                    </button>
+                    <div class="titile lh-lg d-flex"></div>
+                </div>
+                <div class="d-flex flex-md-row flex-column">
+                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-md-3 text-nowrap my-2 my-md-0" form="ProductForm">發　布</button>
+                    <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center text-nowrap justify-content-center" form="ProductForm">
+                        進階編輯<span class="material-symbols-outlined ms-1">palette</span>
+                    </button>
+                </div>
+            </div>
 
-			<form id="ProductForm" class="card-body needs-validation">
-				<div class="name border mb-3 p-2 rounded">
-					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_all">商品名稱</span>
-						<div class="name_count">0</div>
-					</div>
-					<textarea id="InputName" class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入商品名稱" required></textarea>
-				</div>
+            <form id="ProductForm" class="card-body needs-validation">
+                <div class="name border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0 required_all">商品名稱</span>
+                        <div class="name_count">0</div>
+                    </div>
+                    <textarea id="InputName" class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入商品名稱" required></textarea>
+                </div>
 
-				<div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
-					<ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
-						<li class="btn_upload_add border mb-1 p-1 shadow-sm">
-							<button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
-								<span class="material-symbols-outlined">add</span>
-							</button>
-						</li>
-					</ul>
-					<template id="TemplateUploadList">
-						<li class="upload_list d-flex align-items-center border bg-white shadow-sm p-1 mb-1">
-							<input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
-							<span class="material-symbols-outlined" title="變更順序">unfold_more</span>
-							<span class="title flex-grow-1 overflow-auto"></span>
-							<button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
-								<span class="material-symbols-outlined">delete</span>
-							</button>
-						</li>
-					</template>
-					<div class="preview_frame col-12 col-sm-6 border p-2">
-						<div class="default_frame h-100 d-flex d-none justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+                <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
+                    <ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
+                        <li class="btn_upload_add border mb-1 p-1 shadow-sm">
+                            <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                        </li>
+                    </ul>
+                    <template id="TemplateUploadList">
+                        <li class="upload_list d-flex align-items-center border bg-white shadow-sm p-1 mb-1">
+                            <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
+                            <span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+                            <span class="title flex-grow-1 overflow-auto"></span>
+                            <button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </li>
+                    </template>
+                    <div class="preview_frame col-12 col-sm-6 border p-2">
+                        <div class="default_frame h-100 d-flex d-none justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
 
-						<div class="select_frame flex-column d-none">
-							<button class="bg-transparent border mb-1 py-1" data-uploadtype="1">圖片</button>
-							<button class="bg-transparent border mb-1 py-1" data-uploadtype="2">360</button>
-							<button class="bg-transparent border mb-1 py-1" data-uploadtype="3">影片</button>
-							<button class="bg-transparent border mb-1 py-1" data-uploadtype="4">Youtube</button>
-						</div>
+                        <div class="select_frame flex-column d-none">
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="1">圖片</button>
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="2">360</button>
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="3">影片</button>
+                            <button class="bg-transparent border mb-1 py-1" data-uploadtype="4">Youtube</button>
+                        </div>
 
-						<div class="upload_frame custom-file-container d-none" data-upload-id="FileUpload"></div>
+                        <div class="upload_frame custom-file-container d-none" data-upload-id="FileUpload"></div>
 
-						<div class="media_frame d-none flex-column h-100">
-							<div class="mb-2">檔案預覽</div>
-							<div class="input-group mb-3">
-								<input class="form-control lh-lg" type="text" value="Media Name" aria-label="Media Name" readonly="readonly">
-							</div>
-							<div class="media_preview flex-grow-1">
-								<div class='align-items-center bg-black bg-opacity-25 d-flex fw-bold h-100 justify-content-center'></div>
-							</div>
-						</div>
+                        <div class="media_frame d-none flex-column h-100">
+                            <div class="mb-2">檔案預覽</div>
+                            <div class="input-group mb-3">
+                                <input class="form-control lh-lg" type="text" value="Media Name" aria-label="Media Name" readonly="readonly">
+                            </div>
+                            <div class="media_preview flex-grow-1">
+                                <div class='align-items-center bg-black bg-opacity-25 d-flex fw-bold h-100 justify-content-center'></div>
+                            </div>
+                        </div>
 
-						<div class="youtube_frame d-none flex-column h-100">
-							<div class="mb-2">Youtube連結網址</div>
-							<div class="input-group mb-3">
-								<input class="form-control lh-lg" type="text" value="https://www.youtube.com/watch?v=" aria-label="Youtube link" aria-describedby="BtnConnect">
-								<button id="BtnConnect" class="btn btn-outline-secondary px-3" type="button">載入</button>
-							</div>
-							<div class="youtube_preview flex-grow-1">
-								<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>
-							</div>
-						</div>
-					</div>
-					<div class="position-absolute upload_title bg-white">檔案上傳</div>
-				</div>
+                        <div class="youtube_frame d-none flex-column h-100">
+                            <div class="mb-2">Youtube連結網址</div>
+                            <div class="input-group mb-3">
+                                <input class="form-control lh-lg" type="text" value="https://www.youtube.com/watch?v=" aria-label="Youtube link" aria-describedby="BtnConnect">
+                                <button id="BtnConnect" class="btn btn-outline-secondary px-3" type="button">載入</button>
+                            </div>
+                            <div class="youtube_preview flex-grow-1">
+                                <div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="position-absolute upload_title bg-white">檔案上傳</div>
+                </div>
 
-				<div class="introduction border mb-3 p-2 rounded">
-					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_all">商品簡介</span>
-						<div class="introduction_count">0</div>
-					</div>
-					<div id="CollapseIntroduction" class="collapse show">
-						<textarea id="InputIntroduction" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入商品簡介" required></textarea>
-					</div>
-					<div class="d-flex justify-content-center">
-						<button class="btn_expand_out d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIntroduction" aria-expanded="false" aria-controls="CollapseIntroduction">
-							<span class="material-symbols-outlined fs-3">expand_less</span>
-						</button>
-					</div>
-				</div>
+                <div class="introduction border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0 required_all">商品簡介</span>
+                        <div class="introduction_count">0</div>
+                    </div>
+                    <div id="CollapseIntroduction" class="collapse show">
+                        <textarea id="InputIntroduction" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入商品簡介" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button class="btn_expand_out d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIntroduction" aria-expanded="false" aria-controls="CollapseIntroduction">
+                            <span class="material-symbols-outlined fs-3">expand_less</span>
+                        </button>
+                    </div>
+                </div>
 
-				<div class="illustrate border mb-3 p-2 rounded">
-					<div class="d-flex justify-content-between w-100">
-						<span class="input-group-text bg-transparent border-0 p-0 required_all">詳細說明</span>
-						<div class="illustrate_count">0</div>
-					</div>
-					<div id="CollapseIllustrate" class="collapse show">
-						<textarea id="InputIllustrate" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明" required></textarea>
-					</div>
-					<div class="d-flex justify-content-center">
-						<button class="btn_expand_out d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIllustrate" aria-expanded="false" aria-controls="CollapseIllustrate">
-							<span class="material-symbols-outlined fs-3">expand_less</span>
-						</button>
-					</div>
-				</div>
+                <div class="illustrate border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0 required_all">詳細說明</span>
+                        <div class="illustrate_count">0</div>
+                    </div>
+                    <div id="CollapseIllustrate" class="collapse show">
+                        <textarea id="InputIllustrate" class="form-control border-0" aria-label="With textarea" maxlength="3000" placeholder="輸入詳細說明" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button class="btn_expand_out d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseIllustrate" aria-expanded="false" aria-controls="CollapseIllustrate">
+                            <span class="material-symbols-outlined fs-3">expand_less</span>
+                        </button>
+                    </div>
+                </div>
 
-				@await Component.InvokeAsync(nameof(Modal), new {dispaly = "TechCertListModal"})
+                <div class="file input-group mb-3">
+                    <input id="InputFile" class="form-control rounded text-start" type="file" multiple="multiple" aria-label="Input File">
+                </div>
 
-				@await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TechCertListModal"})
 
-				<div id="Spec_Frame"></div>
+                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
 
-				<div class="d-flex justify-content-center mb-3">
-					<button class="btn_spec_add d-flex border-0 bg-transparent" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="新增規格">
-						<span class="material-symbols-outlined fs-3">add</span>
-					</button>
-				</div>
+                <div id="Spec_Frame"></div>
 
-				<template id="TemplateSpecType">
-					<select class="spec_select form-select rounded-left" aria-label="規格類型" required="required">
-						@if (Model.SpecType.Count > 0)
-						{
-							<option selected="" value="" disabled="disabled">規格類型</option>
-							<option value="0">無</option>
-							@foreach (var spectype in Model.SpecType ?? new List<SpecTypeListDto>())
-							{
-								<option value="@spectype.Id">@spectype.Type</option>
-							}
-						}
-					</select>
-				</template>
+                <div class="d-flex justify-content-center mb-3">
+                    <button class="btn_spec_add d-flex border-0 bg-transparent" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="新增規格">
+                        <span class="material-symbols-outlined fs-3">add</span>
+                    </button>
+                </div>
 
-				<template id="TemplateSpecification">
-					<div class="frame border mb-3 pt-3 px-3 rounded position-relative">
-						<div class="spec_title position-absolute bg-white px-2">規格設定</div>
-						<div class="topline row">
-							<div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
+                <template id="TemplateSpecType">
+                    <select class="spec_select form-select rounded-left" aria-label="規格類型" required="required">
+                        <option selected="" value="" disabled="disabled">規格類型</option>
+                        <option value="0">無</option>
+                        @if (Model.SpecType.Count > 0)
+                        {
+                            @foreach (var spectype in Model.SpecType ?? new List<SpecTypeListDto>())
+                            {
+                                <option value="@spectype.Id">@spectype.Type</option>
+                            }
+                        }
+                    </select>
+                </template>
 
-								<input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
-								<datalist id=""></datalist>
-							</div>
+                <template id="TemplateSpecification">
+                    <div class="frame border mb-3 pt-3 px-3 rounded position-relative">
+                        <div class="spec_title position-absolute bg-white px-2">規格設定</div>
+                        <div class="topline row">
+                            <div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
 
-							<div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
+                                <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
+                                <datalist id=""></datalist>
+                            </div>
 
-								<input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
-								<datalist id=""></datalist>
-							</div>
+                            <div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
 
-							<div class="price input-group mb-3 col-12 col-lg-4">
-								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-									<span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
-								</div>
-								<input class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required>
-							</div>
-						</div>
+                                <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
+                                <datalist id=""></datalist>
+                            </div>
 
-						<div id="CollapseDetail1" class="collapse show row">
-							<div class="number input-group mb-3 col-12 col-sm-6 col-xl-3 mb-3">
-								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-									<span class="material-symbols-outlined me-1">inventory_2</span>商品可銷售量
-								</div>
-								<input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
-							</div>
+                            <div class="price input-group mb-3 col-12 col-lg-4">
+                                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                    <span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
+                                </div>
+                                <input class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required>
+                            </div>
+                        </div>
 
-							<div class="min_number input-group mb-3 col-12 col-lg-4">
-								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-									<span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
-								</div>
-								<input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
-							</div>
+                        <div id="CollapseDetail1" class="collapse show row">
+                            <div class="number input-group mb-3 col-12 col-sm-6 col-xl-3 mb-3">
+                                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                    <span class="material-symbols-outlined me-1">inventory_2</span>商品可銷售量
+                                </div>
+                                <input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product">
+                            </div>
 
-							<div class="alert_number input-group mb-3 col-12 col-lg-4">
-								<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-									<span class="material-symbols-outlined me-1">warning</span>可銷售警示量
-								</div>
-								<input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
-							</div>
-						</div>
+                            <div class="min_number input-group mb-3 col-12 col-lg-4">
+                                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                    <span class="material-symbols-outlined me-1">bubble_chart</span>最低購買量
+                                </div>
+                                <input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product">
+                            </div>
 
-						<div class="d-flex justify-content-center">
-							<button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseDetail1" aria-expanded="false" aria-controls="CollapseDetail1">
-								<span class="material-symbols-outlined fs-3">expand_less</span>
-							</button>
-							<button class="btn_delete d-flex border-0 bg-transparent" type="button">
-								<span class="material-symbols-outlined fs-3">delete</span>
-							</button>
-						</div>
-					</div>
-				</template>
+                            <div class="alert_number input-group mb-3 col-12 col-lg-4">
+                                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                    <span class="material-symbols-outlined me-1">warning</span>可銷售警示量
+                                </div>
+                                <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product">
+                            </div>
+                        </div>
 
-				<div class="date input-group mb-3">
-					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
-					</div>
-					<input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
-					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-						<input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
-						<label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
-					</div>
-				</div>
-			</form>
+                        <div class="d-flex justify-content-center">
+                            <button class="btn_expand d-flex border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseDetail1" aria-expanded="false" aria-controls="CollapseDetail1">
+                                <span class="material-symbols-outlined fs-3">expand_less</span>
+                            </button>
+                            <button class="btn_delete d-flex border-0 bg-transparent" type="button">
+                                <span class="material-symbols-outlined fs-3">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
 
-			<div class="mb-3 me-3 text-end">
-				<button class="btn_gotop bg-transparent border-0 text-black-50 text-decoration-underline">返回頁面頂端</button>
-			</div>
-		</div>
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                    </div>
+                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                        <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
+                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                    </div>
+                </div>
+            </form>
 
-		<div id="ProductCanvas" class="card border-0 d-none">
-			<div class="card-body position-relative pb-5">
-				這裡是Canvas頁面
-			</div>
-		</div>
-	</div>
+            <div class="mb-3 me-3 text-end">
+                <button class="btn_gotop bg-transparent border-0 text-black-50 text-decoration-underline">返回頁面頂端</button>
+            </div>
+        </div>
+
+        <div id="ProductCanvas" class="card border-0 d-none">
+            <div class="card-body position-relative pb-5">
+                這裡是Canvas頁面
+            </div>
+        </div>
+    </div>
 </div>
 @(
-	Html.DevExtreme().Popup()
-		.ID("importProdPopup")
-		.Width("50%")
-		.Height(180)
-		.ShowTitle(true)
-		.DragEnabled(false)
-		.CloseOnOutsideClick(true)
+    Html.DevExtreme().Popup()
+        .ID("importProdPopup")
+        .Width("50%")
+        .Height(180)
+        .ShowTitle(true)
+        .DragEnabled(false)
+        .CloseOnOutsideClick(true)
 )
 @using (Html.DevExtreme().NamedTemplate("importProdPopup-template"))
 {
-	<div id="ImportProd">
-		<p>請選擇欲上傳的檔案</p>
-		<form name="fileUploadForm">
-			@Html.DevExtreme().FileUploader().Name("files").Accept(".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel").OnUploaded("ImportProd");
-		</form>
-	</div>
+    <div id="ImportProd">
+        <p>請選擇欲上傳的檔案</p>
+        <form name="fileUploadForm">
+            @Html.DevExtreme().FileUploader().Name("files").Accept(".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel").OnUploaded("ImportProd");
+        </form>
+    </div>
 }

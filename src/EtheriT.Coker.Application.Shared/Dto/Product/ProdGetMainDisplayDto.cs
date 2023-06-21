@@ -14,8 +14,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public List<TagGetSelectedDto> TagDatas { get; set; }
         public List<TechCertDisplayDto> TechCertDatas { get; set; }
         public List<ProductStockDto> Stocks { get; set; }
-        public List<FileGetProdDisplayDto> Files_Original { get; set; }
-        public List<FileGetProdDisplayDto> Files_Medium { get; set; }
-        public List<FileGetProdDisplayDto> Files_Small { get; set; }
+        public List<FileGetImgDto> Files { get; set; }
+        public List<FileGetProdDisplayDto> Img_Original { get; set; }
+        public List<FileGetProdDisplayDto> Img_Medium { get; set; }
+        public List<FileGetProdDisplayDto> Img_Small { get; set; }
     }
 }

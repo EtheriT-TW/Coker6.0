@@ -32,10 +32,11 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
             }
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
-            var rightSideAd = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 12, 4)).Value));
+            var rightSideAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 12, 4)).Value));
+            if (defaultData.Id != siteId) foreach (var rightSideAd in rightSideAds) if (rightSideAd.Img[0] != null) rightSideAd.Img[0] = rightSideAd.Img[0].Replace("upload", $"upload/{defaultData.OrgName}");
             SideFloatingViewModel model = new SideFloatingViewModel
             {
-                rightSideAd = rightSideAd
+                rightSideAd = rightSideAds
             };
             return View(model);
         }

@@ -180,6 +180,11 @@
             }
         },
     });
+
+    editor.DomComponents.addType('輪播容器', {
+        isComponent: el => el.classList?.contains('image_link_slide'),
+    });
+
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {
         $(categories.models).each(function (index, category) {

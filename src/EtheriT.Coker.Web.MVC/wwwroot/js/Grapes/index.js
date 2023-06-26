@@ -28,6 +28,8 @@ var grapesInit = function (options) {
                         });
                         var images = myJSON;
                         editor.AssetManager.add(images);
+                    } else if (result.errorFiles[0] == "Type Error") {
+                        co.sweet.error("錯誤", "不支援的檔案格式", null, false);
                     }
                 });
             }

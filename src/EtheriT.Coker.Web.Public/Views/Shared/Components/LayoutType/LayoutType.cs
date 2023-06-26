@@ -18,7 +18,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var fa_siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var siteId = fa_siteId;
             var website = HttpContext.GetRouteData().Values["website"];
             if (website == null)
             {
@@ -42,6 +43,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
                 SiteName = Layout_Type == 0 ? "Default_Site" : $"~/css/Site/Layout_{Layout_Type}_Site.min.css",
                 OrgName = orgname,
                 LayoutType = Layout_Type,
+                IsFaPage = siteId == fa_siteId,
             };
 
             return View(layoutTypeViewModel);

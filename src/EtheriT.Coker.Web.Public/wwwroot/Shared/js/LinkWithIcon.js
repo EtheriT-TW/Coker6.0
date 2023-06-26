@@ -20,6 +20,10 @@
                 case "odt":
                     $self.find(".icon").append('<i class="fa-solid fa-file-word" style="color: #2c599d;"></i>');
                     break;
+                case "ppt":
+                case "pptx":
+                case "odp":
+                    $self.find(".icon").append('<i class="fa-solid fa-file-powerpoint" style="color: #D04323;"></i>');
                 case "xls":
                 case "xlsx":
                 case "ods":

@@ -274,8 +274,11 @@ function PageDefaultSet(result) {
 
     if (result.files.length > 0) {
         result.files.forEach(function (file) {
+            console.log(IsFaPage)
+            var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
+            console.log(link)
             $("#FileDownload").append(`<div class="file px-4 py-1 border border-dark">
-			                                                            <a href="${file.link}" download="${file.name}" titile="${file.name}"><div>${file.name}</div></a>
+			                                                            <a href="${link}" download="${file.name}" titile="${file.name}"><div>${file.name}</div></a>
 			                                                       </div>`)
         });
     }

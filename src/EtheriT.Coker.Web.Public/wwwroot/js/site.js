@@ -1,4 +1,4 @@
-﻿var OrgName = "Page", LayoutType = 0, SiteId = 0;
+﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true;
 
 function ready() {
 
@@ -15,6 +15,9 @@ function ready() {
         }
         if ($self.data("siteid") != undefined) {
             SiteId = $self.data("siteid");
+        }
+        if ($self.data("isfapage") != undefined) {
+            IsFaPage = $self.data("isfapage");
         }
     });
 
@@ -66,10 +69,19 @@ function ready() {
     FooterInit();
     SideFloatingInit();
 
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
-        $("#Cookie").toggleClass("show");
-    } else {
-        CheckToken();
+    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");
+    else CheckToken();
+
+    const enterAdModalEl = $('#EnterAdModal')
+    var enteradid = enterAdModalEl.data("enteradid")
+    var temp_idlist = typeof ($.cookie('EnterAd_Show')) == "undefined" ? [] : $.cookie('EnterAd_Show').split(",");
+    if ($('#EnterAdModal').length > 0 && (typeof ($.cookie('EnterAd_Show')) == "undefined" || $.inArray(enteradid.toString(), temp_idlist) < 0)) {
+        var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
+        enterAdModal.show();
+        enterAdModalEl.on('hidden.bs.modal', event => {
+            temp_idlist.push(enteradid);
+            $.cookie('EnterAd_Show', temp_idlist, { path: '/' });
+        })
     }
 
     SiteElementInit();

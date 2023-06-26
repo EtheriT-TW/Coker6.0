@@ -822,7 +822,7 @@ namespace EtheriT.Coker.Application
                 var rootPath = $"{_folder}/{orgName}";
                 var directoryPath = $"{rootPath}/{directory}";
                 var path = $"/{directory}/{key}.{ext}";
-                if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception();
+                if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception("Type Error");
                 if (!System.IO.Directory.Exists(directoryPath)) System.IO.Directory.CreateDirectory(directoryPath);
                 using (var stream = new FileStream($"{rootPath}{path}", FileMode.Create))
                 {

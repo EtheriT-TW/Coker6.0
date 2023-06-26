@@ -42,7 +42,7 @@ namespace EtheriT.Coker.Application
             CreateMap<HtmlContentDto, Html_Content>()
                 .ReverseMap()
                 .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
-            CreateMap<ObjectTypeItemDto, Html_Content>()
+             CreateMap<ObjectTypeItemDto, Html_Content>()
                 .ReverseMap()
                 .ForMember(e => e.FK_TopNodeId, option => option.MapFrom(c => c.Type))
                 .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))

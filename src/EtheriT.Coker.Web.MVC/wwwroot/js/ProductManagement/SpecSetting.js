@@ -11,8 +11,26 @@ function contentReady(e) {
     }
 }
 
-function typeSaved(e) {
-    SpecList_dxData.refresh();
+function dataSaving(e) {
+    var first_char;
+    if (typeof (e.newData) != "undefined") {
+        if (typeof (e.newData.Title) != "undefined") first_char = e.newData.Title.substring(0, 1);
+        else if (typeof (e.newData.Type) != "undefined") first_char = e.newData.Type.substring(0, 1);
+    }
+    else if (typeof (e.data) != "undefined") {
+        if (typeof (e.data.Title) != "undefined") first_char = e.data.Title.substring(0, 1);
+        else if (typeof (e.data.Type) != "undefined") first_char = e.data.Type.substring(0, 1);
+    }
+
+    var specialChars = "~·`!！@#$￥%^…&*()（）—-_=+[]{}【】、|\\;:；：'\"“‘,./<>《》?？，。";
+    if (specialChars.indexOf(first_char) == -1) {
+        e.component.saveEditData();
+        TypeList_dxData.refresh();
+        SpecList_dxData.refresh();
+    } else {
+        e.cancel = true;
+        co.sweet.error("資料錯誤", "標籤名稱不可以符號開頭", null, null);
+    }
 }
 
 function editButtonClicked(e) {

@@ -68,6 +68,8 @@ function ImageSetData($select, file) {
     else input_frame = $($("#Template_Image_Preview").html()).clone();
 
     if (file != null) {
+        input_frame.find(".btn_img_delete").removeClass("d-none");
+
         if (typeof (input_frame.data("file")) != "undefined" && input_frame.data("file") != null) {
             var $parent_frame = input_frame.parent(".img_input_frame")
             var temp_delect_list = typeof ($parent_frame.data("delectList")) == "undefined" || $parent_frame.data("delectList") == null ? [] : $parent_frame.data("delectList");

@@ -45,7 +45,8 @@ namespace EtheriT.Coker.Application.Tag
                         Core.Models.Tag t = new Core.Models.Tag
                         {
                             FK_WebsiteId = webid,
-                            Title = data.Title
+                            Title = data.Title,
+                            CreatorUserId = usetId,
                         };
                         db.Tags.Add(t);
                         db.SaveChanges();
@@ -74,13 +75,184 @@ namespace EtheriT.Coker.Application.Tag
 
             return output;
         }
+        public async Task<ResponseMessageDto> TagGroupAddUp(DevExpressDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            var data = JsonConvert.DeserializeObject<TagGroupGetAllListDto>(dto.Values);
+
+
+            try
+            {
+                long webid = await loginUserData.GetWebsiteId();
+                long usetId = await loginUserData.GetUserId();
+
+                if (data != null)
+                {
+                    long assoid = 0;
+                    if (dto.Key == null)
+                    {
+                        Core.Models.Tag_Group tg = new Core.Models.Tag_Group
+                        {
+                            Title = data.Title,
+                            Disp_Opt = data.Disp_Opt == null ? true : (bool)data.Disp_Opt,
+                            CreatorUserId = usetId,
+                            FK_WebsiteId = webid,
+                        };
+                        db.Tag_Groups.Add(tg);
+                        db.SaveChanges();
+                        assoid = tg.Id;
+                    }
+                    else
+                    {
+                        var db_tg = db.Tag_Groups.Where(e => e.Id == dto.Key).FirstOrDefault();
+
+                        if (db_tg != null)
+                        {
+                            if (data.Title != null) db_tg.Title = data.Title;
+                            if (data.Disp_Opt != null) db_tg.Disp_Opt = (bool)data.Disp_Opt;
+                            db_tg.LastModifierUserId = usetId;
+                            db_tg.LastModificationTime = DateTime.Now;
+                            db.SaveChanges();
+                            assoid = (long)dto.Key;
+                        }
+                    }
+
+                    if (data.FK_Tid.Count > 0 && assoid > 0)
+                    {
+                        output = await this.Tag_TagGroupAddUp(new Tag_TagGroupListDto()
+                        {
+                            FK_TGId = assoid,
+                            FK_TId = data.FK_Tid,
+                        });
+                    }
+                    else
+                    {
+                        output.Success = true;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> Tag_TagGroupAddUp(Tag_TagGroupListDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long usetId = await loginUserData.GetUserId();
+                for (var i = 0; i < dto.FK_TId.Count; i++)
+                {
+                    var result = await db.Tag_TagGroups.Where(e => e.FK_TGId == dto.FK_TGId && e.FK_TId == dto.FK_TId[i] && !e.IsDeleted).FirstOrDefaultAsync();
+                    if (result == null)
+                    {
+                        Core.Models.Tag_TagGroup t_tg = new Core.Models.Tag_TagGroup
+                        {
+                            FK_TGId = dto.FK_TGId,
+                            FK_TId = dto.FK_TId[i],
+                            CreatorUserId = usetId,
+                        };
+                        db.Tag_TagGroups.Add(t_tg);
+                        db.SaveChanges();
+                    }
+                }
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                long webid = await loginUserData.GetWebsiteId();
+
+                var dataQuery = from t in db.Tags
+                                where !t.IsDeleted && t.FK_WebsiteId == webid
+                                select new TagGetAllListDto
+                                {
+                                    Id = t.Id,
+                                    Title = t.Title,
+                                };
+
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<TagGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetAllGroupList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                long webid = await loginUserData.GetWebsiteId();
+
+                var dataQuery = from tg in db.Tag_Groups
+                                where !tg.IsDeleted && tg.FK_WebsiteId == webid
+                                select new TagGroupGetAllListDto
+                                {
+                                    Id = tg.Id,
+                                    Title = tg.Title,
+                                    Disp_Opt = tg.Disp_Opt,
+                                    FK_Tid = null,
+                                    TagTitle = null,
+                                };
+
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                if (output != null)
+                {
+                    foreach (var data in output.data)
+                    {
+                        var tag_taggroups = await db.Tag_TagGroups.Where(e => e.FK_TGId == (long)data.GetType().GetProperty("Id").GetValue(data, null) && !e.IsDeleted).ToListAsync();
+                        if (tag_taggroups.Count > 0)
+                        {
+                            var temp_tagids = new List<long>();
+                            var temp_tagtitles = new List<string>();
+                            for (var i = 0; i < tag_taggroups.Count; i++)
+                            {
+                                var tag_name = await db.Tags.Where(e => e.Id == tag_taggroups[i].FK_TId && !e.IsDeleted).FirstOrDefaultAsync();
+                                if (tag_name != null)
+                                {
+                                    temp_tagids.Add(tag_name.Id);
+                                    temp_tagtitles.Add(tag_name.Title);
+                                }
+                            }
+                            data.GetType().GetProperty("FK_Tid").SetValue(data, temp_tagids);
+                            data.GetType().GetProperty("TagTitle").SetValue(data, temp_tagtitles);
+                        }
+                    }
+                }
+
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<TagGroupGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
         public async Task<ResponseMessageDto> TagAssociateAddDelect(List<TagAssociateDto> dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                for(int i=0; i< dto.Count; i++)
+                for (int i = 0; i < dto.Count; i++)
                 {
                     var data = dto[i];
                     if (data.Id == 0 && !data.IsDeleted)
@@ -142,30 +314,6 @@ namespace EtheriT.Coker.Application.Tag
 
             return null;
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
-        {
-            try
-            {
-                long webid = await loginUserData.GetWebsiteId();
-
-                var dataQuery = from t in db.Tags
-                                where !t.IsDeleted && t.FK_WebsiteId == webid
-                                select new TagGetAllListDto
-                                {
-                                    Id = t.Id,
-                                    Title = t.Title,
-                                };
-
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return new JsonResult(new List<TagGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-        }
         public async Task<List<TagGetAllDataDto>> GetProductDataAll(long PId)
         {
             try
@@ -207,12 +355,64 @@ namespace EtheriT.Coker.Application.Tag
                     db.SaveChanges();
                 }
 
+                var db_ttgs = await db.Tag_TagGroups.Where(e => e.FK_TId == Id).ToListAsync();
+                foreach (var db_ttg in db_ttgs)
+                {
+                    db_ttg.IsDeleted = true;
+                    db_ttg.DeleterUserId = userId;
+                    db_ttg.DeletionTime = DateTime.Now;
+                    var db_ttg_remain = await db.Tag_TagGroups.Where(e => e.FK_TGId == db_ttg.FK_TGId && !e.IsDeleted).ToListAsync();
+                    if (db_ttg_remain.Count == 1)
+                    {
+                        var db_tg = await db.Tag_Groups.Where(e => e.Id == db_ttg.FK_TGId && !e.IsDeleted).FirstOrDefaultAsync();
+                        db_tg.Disp_Opt = false;
+                        db_tg.LastModifierUserId = userId;
+                        db_tg.LastModificationTime = DateTime.Now;
+                    }
+                    db.SaveChanges();
+                }
+
                 var db_t = db.Tags.Where(e => e.Id == Id).FirstOrDefault();
                 if (db_t != null)
                 {
                     db_t.IsDeleted = true;
                     db_t.DeletionTime = DateTime.Now;
                     db_t.DeleterUserId = userId;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> TagGroupDelete(long Id)
+        {
+
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                long userId = await loginUserData.GetUserId();
+                var db_ttgs = await db.Tag_TagGroups.Where(e => e.FK_TGId == Id).ToListAsync();
+                foreach (var db_ttg in db_ttgs)
+                {
+                    db_ttg.IsDeleted = true;
+                    db_ttg.DeleterUserId = userId;
+                    db_ttg.DeletionTime = DateTime.Now;
+                    db.SaveChanges();
+                }
+
+                var db_tg = db.Tag_Groups.Where(e => e.Id == Id).FirstOrDefault();
+                if (db_tg != null)
+                {
+                    db_tg.IsDeleted = true;
+                    db_tg.DeletionTime = DateTime.Now;
+                    db_tg.DeleterUserId = userId;
                     db.SaveChanges();
                     output.Success = true;
                 }

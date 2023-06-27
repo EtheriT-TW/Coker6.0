@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Core.Models
     {
         [StringLength(100)] public string? Title { get; set; }
         public bool Disp_Opt { get; set; }
+        public long FK_WebsiteId { get; set; }
         public List<Tag_TagGroup> Tag_TagGroups { get; set; }
     }
 }

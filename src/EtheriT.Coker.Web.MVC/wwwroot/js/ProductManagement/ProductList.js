@@ -632,6 +632,7 @@ function deleteButtonClicked(e) {
 
 function SpecPriceAdd(result) {
     spec_price_num += 1;
+
     var item = $($("#ModalTemplatePrice").html()).clone();
     var item_role = item.find(".select_role"),
         item_cash = item.find(".input_cash"),

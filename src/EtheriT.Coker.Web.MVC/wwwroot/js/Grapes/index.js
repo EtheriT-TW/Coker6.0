@@ -146,6 +146,7 @@ var grapesInit = function (options) {
                                 setConfig(4, s);
                                 break;
                             case "catalog_frame":
+                            case "menu_directory":
                                 setConfig(5, s);
                                 break;
                             case "link_with_icon":

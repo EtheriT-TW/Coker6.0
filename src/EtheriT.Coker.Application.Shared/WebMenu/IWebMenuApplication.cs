@@ -1,13 +1,8 @@
-﻿using EtheriT.Coker.Application.Dto;
+﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using EtheriT.Coker.Application.Webs.Dto;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application
 {
@@ -15,6 +10,9 @@ namespace EtheriT.Coker.Application
     {
         public Task<SiteMapDto> GetAll();
         public Task<SiteMapDto> GetDisplayAll(long WebsiteID);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
+        public Task<MenuGetAllListDto> GetSelectData(long Mid);
+        public Task<MenuItemDto> GetDisplayOne(long Mid);
         public Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto);
         public Task<GetMenuContenDto> GetConten(SearchIDDto dto);
         public Task<GetFrontContenOutputDto> GetFrontConten(GetFrontContenInputDto dto);

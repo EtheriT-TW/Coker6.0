@@ -1,0 +1,80 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+
+<link rel="stylesheet" href="~/css/Components/WebmenuListModal.min.css" asp-append-version="true" />
+<script src="~/js/Components/WebmenuListModal.min.js" asp-append-version="true"></script>
+
+<div id="WebmenuModal" class="modal fade" tabindex="-1" aria-labelledby="Webmenu Modal Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">選擇選單</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-white p-3">
+                    @(Html.DevExtreme().DataGrid<MenuGetAllListDto>()
+                        .DataSource(d => d.RemoteController().Key("Id")
+                        .LoadUrl("/api/WebMenu/GetAllList").LoadMethod("Get")
+                        )
+                        .ID("WebmenuList")
+                        .Selection(s => s.Mode(SelectionMode.Single))
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(false)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.Id).Caption("編號").Visible(false);
+                            c.AddFor(e => e.Title).Caption("選單名稱").Width(150);
+                            c.AddFor(e => e.Items).Caption("子選單");
+                        })
+                        .OnSelectionChanged("WebmenuList_SelectChange")
+                        .Toolbar(toolbar =>
+                        {
+                            toolbar.Items(items =>
+                            {
+                                items.Add()
+                            .Location(ToolbarItemLocation.Before)
+                            .Widget(w =>
+                            w.Button()
+                            .Text("選項清除")
+                            .Disabled(true)
+                            .OnClick("WebmenuList_ClearBtnClick")
+                            .OnInitialized("WebmenuList_ClearBtnInit")
+                            );
+                            });
+
+                            toolbar.Items(i =>
+                            {
+                                i.Add()
+                            .Name(DataGridToolbarItem.SearchPanel)
+                            .ShowText(ToolbarItemShowTextMode.Always)
+                            .Location(ToolbarItemLocation.After);
+                            });
+                        })
+                        .Paging(paging => paging.PageSize(10))
+                        )
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn_webmenu_save btn btn-primary">確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="webmenu input-group mb-3">
+    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+        <span class="material-symbols-outlined me-1">List</span>選單
+    </div>
+    <input id="InputWebmenu" class="form-control rounded text-start" type="button" aria-label="Input Webmenu" data-bs-toggle="modal" data-bs-target="#WebmenuModal">
+</div>

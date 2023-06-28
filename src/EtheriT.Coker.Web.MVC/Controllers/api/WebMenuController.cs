@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application;
+﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
@@ -14,7 +15,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     {
         private readonly ILogger<WebMenuController> _logger;
         private readonly IWebMenuApplication webMenuApplication;
-        public WebMenuController(ILogger<WebMenuController> logger, IWebMenuApplication webMenuApplication) {
+        public WebMenuController(ILogger<WebMenuController> logger, IWebMenuApplication webMenuApplication)
+        {
             this._logger = logger;
             this.webMenuApplication = webMenuApplication;
         }
@@ -29,6 +31,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> CreateOrEdit(MenuItemDto dto)
         {
             return await webMenuApplication.CreateOrEdit(dto);
+        }
+        [HttpGet]
+        [Authorize]
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        {
+            return await webMenuApplication.GetAllList(loadOptions);
         }
         [HttpPost]
         [Authorize]
@@ -50,7 +58,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         [Authorize]
-        public async Task<ResponseMessageDto> updateLevelAndSerNo(UpdateSerNoListDto dto) {
+        public async Task<ResponseMessageDto> updateLevelAndSerNo(UpdateSerNoListDto dto)
+        {
             return await webMenuApplication.updateSerNo(dto);
         }
         [HttpPost]
@@ -61,7 +70,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpGet]
         [Authorize]
-        public async Task<PageTypeDto> GetPageTypeList() {
+        public async Task<PageTypeDto> GetPageTypeList()
+        {
             return await webMenuApplication.GetPageTypeList();
         }
     }

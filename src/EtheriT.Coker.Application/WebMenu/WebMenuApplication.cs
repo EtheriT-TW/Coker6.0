@@ -1,17 +1,25 @@
 ﻿using AutoMapper;
+using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -20,6 +28,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -154,6 +163,99 @@ namespace EtheriT.Coker.Application
             catch (Exception ex)
             {
                 throw new Exception("資料錯誤");
+            }
+        }
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var WebstieId = await loginUserData.GetWebsiteId();
+                var results = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebstieId).ToListAsync();
+                if (results.Count > 0)
+                {
+                    var outputlist = new List<MenuGetAllListDto>();
+                    for (var i = 0; i < results.Count; i++)
+                    {
+                        MenuGetAllListDto outputdata = mapper.Map(results[i], new MenuGetAllListDto());
+                        var outputdata_child = await this.GetChild(outputdata.Id);
+                        if (outputdata_child.Count > 0)
+                        {
+                            outputdata.Items = "";
+                            for (var j = 0; j < outputdata_child.Count; j++)
+                            {
+                                if (j >= 3)
+                                {
+                                    outputdata.Items += "...";
+                                    break;
+                                }
+                                outputdata.Items += outputdata.Items == "" ? outputdata_child[j].Title : $"、{outputdata_child[j].Title}";
+                            }
+                        }
+                        outputlist.Add(outputdata);
+                    }
+                    var output = DataSourceLoader.Load(outputlist, loadOptions);
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                return new JsonResult(new List<ArticleDataGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public async Task<MenuGetAllListDto> GetSelectData(long Mid)
+        {
+            try
+            {
+                var WebstieId = await loginUserData.GetWebsiteId();
+                var results = await db.WebMenus.Where(e => e.Id == Mid && !e.IsDeleted && e.FK_WebsiteId == WebstieId).FirstOrDefaultAsync();
+                if (results != null)
+                {
+                    MenuGetAllListDto output = mapper.Map(results, new MenuGetAllListDto());
+                    var outputdata_child = await this.GetChild(output.Id);
+                    if (outputdata_child.Count > 0)
+                    {
+                        output.Items = "";
+                        for (var j = 0; j < outputdata_child.Count; j++)
+                        {
+                            if (j >= 3)
+                            {
+                                output.Items += "...";
+                                break;
+                            }
+                            output.Items += output.Items == "" ? outputdata_child[j].Title : $"、{outputdata_child[j].Title}";
+                        }
+                    }
+                    return output;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public async Task<MenuItemDto> GetDisplayOne(long Mid)
+        {
+            try
+            {
+                var WebsiteId = await loginUserData.GetWebsiteId();
+                var output = await (from w in db.WebMenus
+                                    where w.Id == Mid
+                                    where !w.IsDeleted && w.FK_WebsiteId == WebsiteId
+                                    select new MenuItemDto
+                                    {
+                                        Id = w.Id,
+                                        Title = w.Title,
+                                        RouterName = w.RouterName,
+                                        Children = new List<MenuItemDto>()
+                                    }).FirstOrDefaultAsync();
+                if (output != null) output.Children = await this.GetChild(Mid);
+                return output;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
         public async Task<List<GetMenuBreadDto>> GetMenuBread(long Id)

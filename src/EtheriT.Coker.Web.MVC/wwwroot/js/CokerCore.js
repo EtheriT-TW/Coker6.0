@@ -297,6 +297,15 @@ var Coker = {
                 dataType: "json"
             });
         },
+        getAllList: function () {
+            return $.ajax({
+                url: "/api/WebMenu/GetAllList/",
+                type: "Get",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json"
+            });
+        },
         createOrEdit: function (data) {
             return $.ajax({
                 url: "/api/WebMenu/CreateOrEdit",

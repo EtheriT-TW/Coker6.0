@@ -82,7 +82,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         line_qr = "/upload/ksp/line_qr.jpg",
                         line_title = "KSP高雄軟體園區\r\n官方LINE@",
                         line_describe = "即時的掌握園區第一手資訊\r\n快點加入高軟官方Line@",
-                        Privacy_Link = "#",
+                        Privacy_Link = $"/{defaultData.OrgName}/Privacy",
                         Accessibility_Link = "#",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>
@@ -95,7 +95,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     footerViewModel = new FooterViewModel
                     {
                         Sitemap_Link = "#",
-                        Privacy_Link = "#",
+                        Privacy_Link = $"/{defaultData.OrgName}/Privacy",
                         Accessibility_Link = "#",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>

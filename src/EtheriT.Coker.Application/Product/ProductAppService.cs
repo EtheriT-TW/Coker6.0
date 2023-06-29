@@ -24,9 +24,9 @@ using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Specification;
-using EtheriT.Coker.Application.Specification;
-using System;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using System.Web;
 
 namespace EtheriT.Coker.Application.Product
 {

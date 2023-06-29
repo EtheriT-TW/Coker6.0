@@ -44,6 +44,7 @@ function ImageClear($select) {
             $img_preview.attr("alt", "");
 
             var $file_name = $select.find(".file_name");
+            $select.find(".btn_img_delete").addClass("d-none");
             $file_name.text("加入照片");
         }
     }

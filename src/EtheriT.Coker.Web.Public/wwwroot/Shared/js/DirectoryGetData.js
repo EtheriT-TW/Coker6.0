@@ -8,12 +8,13 @@
             dataType: "json"
         });
     },
-    getDirectoryMenuData: function (id) {
+    getDirectoryMenuData: function (data) {
         return $.ajax({
-            url: "/api/Directory/GetReleMenu/",
-            type: "GET",
+            url: "/api/Directory/GetReleMenu",
+            type: "POST",
             contentType: 'application/json; charset=utf-8',
-            data: { Id: id },
+            data: JSON.stringify(data),
+            dataType: "json"
         });
     }
 }
@@ -31,13 +32,11 @@ function DirectoryGetDataInit() {
     })
     $(".menu_directory").each(function () {
         var $self = $(this);
-        console.log($self.data("dirid"))
-        if ($self.data("init") != true) {
-            Directory.getDirectoryMenuData($self.data("dirid")).done(function (result) {
-                console.log(result);
+        if ($self.data("init") != true && $self.data("dirid") > 0) {
+            Directory.getDirectoryMenuData({ Id: $self.data("dirid"), WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0 }).done(function (result) {
+                $self.find(".title").text(result.title)
                 $.each(result.children, function (index, SecIItem) {
                     $self.find('.title').text(result.title);
-                    console.log(SecIItem)
                     if (SecIItem.children != null) {
                         var item = $($("#TemplateAccordionItem").html()).clone();
                         item.find(".sectitle").text(SecIItem.title);
@@ -52,11 +51,11 @@ function DirectoryGetDataInit() {
                         });
                         var $body = item.find(".accordion-body");
                         $.each(SecIItem.children, function (index, ThirdIItem) {
-                            $body.append(`<a href="${ThirdIItem.routerName}" title="資料切換至${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`)
+                            $body.append(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`)
                         })
                         $self.find(".accordion").append(item);
                     } else {
-                        var html = `<div class="accordion-item border-0 border-bottom px-1"><a href="${SecIItem.routerName}" title="資料切換至${SecIItem.title}" class="list-group-item border-0 py-3 custom_h5 text-black">${SecIItem.title}</a></div>`
+                        var html = `<div class="accordion-item border-0 border-bottom px-1"><a href="${SecIItem.routerName}" title="連結至：${SecIItem.title}" class="list-group-item border-0 py-3 custom_h5 text-black">${SecIItem.title}</a></div>`
                         $self.find(".accordion").append(html);
                     }
                 })

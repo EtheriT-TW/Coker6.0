@@ -15,20 +15,11 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
-using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -235,14 +226,13 @@ namespace EtheriT.Coker.Application
                 throw ex;
             }
         }
-        public async Task<MenuItemDto> GetDisplayOne(long Mid)
+        public async Task<MenuItemDto> GetDisplayOne(DataIdWebsiteIdDto dto)
         {
             try
             {
-                var WebsiteId = await loginUserData.GetWebsiteId();
                 var output = await (from w in db.WebMenus
-                                    where w.Id == Mid
-                                    where !w.IsDeleted && w.FK_WebsiteId == WebsiteId
+                                    where w.Id == dto.Id
+                                    where !w.IsDeleted && w.FK_WebsiteId == dto.WebsiteId
                                     select new MenuItemDto
                                     {
                                         Id = w.Id,
@@ -250,7 +240,7 @@ namespace EtheriT.Coker.Application
                                         RouterName = w.RouterName,
                                         Children = new List<MenuItemDto>()
                                     }).FirstOrDefaultAsync();
-                if (output != null) output.Children = await this.GetChild(Mid);
+                if (output != null) output.Children = await this.GetDisplayChild(dto.Id, dto.WebsiteId);
                 return output;
             }
             catch (Exception ex)

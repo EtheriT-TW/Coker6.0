@@ -16,8 +16,9 @@ using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Product;
-using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -37,7 +38,8 @@ namespace EtheriT.Coker.Application.Directory
             ITagAppService tagAppService,
             IArticleAppService articleAppService,
             IProductAppService productAppService,
-             IWebMenuApplication webMenuApplicationService
+             IWebMenuApplication webMenuApplicationService,
+             IConfiguration configuration
         )
         {
             this.db = db;
@@ -251,11 +253,16 @@ namespace EtheriT.Coker.Application.Directory
 
             return output;
         }
-        public async Task<MenuItemDto> GetReleMenu(long Id)
+        public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
         {
-            long WebsiteID = await loginUserData.GetWebsiteId();
-            var output = await (from e in db.Directory where e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID select e.FK_Mid).FirstOrDefaultAsync();
-            if (output != null) return await webMenuApplicationService.GetDisplayOne((long)output);
+            var websiteid = dto.WebsiteId;
+            if (websiteid == 0) websiteid = await loginUserData.GetWebsiteId();
+            var output = await (from e in db.Directory where e.Id == dto.Id && !e.IsDeleted select e.FK_Mid).FirstOrDefaultAsync();
+            if (output != null) return await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto()
+            {
+                Id = (long)output,
+                WebsiteId = websiteid
+            });
             return null;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)

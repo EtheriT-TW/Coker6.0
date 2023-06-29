@@ -37,13 +37,39 @@
                 @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                 {
                     <li class="title nav-item col-lg-2">
-                        <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-center text-nowrap">@menu.Title</a>
+                        <div class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black">@menu.Title</div>
                         <div class="content w-100 start-50 translate-middle-x">
                             <ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100">
-                                @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+                                @foreach (var secItem in menu.menuItemModels ?? new List<MenuItemModel>())
                                 {
                                     <li class="subtitle nav-item my-0 my-md-2">
-                                        <a class="nav-link text-black m-auto py-1 text-nowrap" href="@subMenu.Link">@subMenu.Title</a>
+                                        @if (secItem.Link != "")
+                                        {
+                                            var target = secItem.Target == true ? "_blank" : "_self";
+                                            var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
+                                            <a class="nav-link text-black py-1 text-nowrap text-start" href="@secItem.Link" title="@title" target="@target">@secItem.Title</a>
+                                        }
+                                        else
+                                        {
+                                            <a class="nav-link text-black py-1 text-nowrap text-start">@secItem.Title</a>
+                                        }
+                                        <ul class="row mx-0">
+                                        @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
+                                        {
+                                                <li class="px-0">
+                                                    @if (secItem.Link != "")
+                                                    {
+                                                        var target = thirdItem.Target == true ? "_blank" : "_self";
+                                                        var title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                        <a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal" href="@thirdItem.Link" title="@title" target="@target">@thirdItem.Title</a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal">@thirdItem.Title</a>
+                                                    }
+                                                </li>
+                                            }
+                                        </ul>
                                     </li>
                                 }
                             </ul>

@@ -48,6 +48,25 @@
             $self.css("justify-content", "space-evenly")
         }
     });
+    $("#Offcanvas_Mega_Menu > ul > .title > .content > ul > .subtitle ul").each(function () {
+        var $self = $(this);
+        if ($self.children("li").length >= 6) {
+            var width = 100 / 6 * 2;
+            var str_width = `${width}%`
+            $self.parents(".subtitle").first().css("width", str_width);
+            $self.children("li").css("width", "50%");
+            if ($self.children("li").length > 10) {
+                var $parent = $self.prev("a").first();
+                $self.children("li:eq(9)").html(`<a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal" href="${$parent.attr('href')}" title="${$parent.attr('title')}" target="${$parent.attr('target')}">更多...</a>`);
+                $self.children("li:gt(9)").addClass("d-none")
+            }
+        }
+        else {
+            var width = 100 / 6;
+            var str_width = `${width}%`
+            $self.parents(".subtitle").first().css("width", str_width);
+        }
+    });
 }
 
 function MenuLiSize() {

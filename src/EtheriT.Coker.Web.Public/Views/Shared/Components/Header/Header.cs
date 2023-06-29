@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Data;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 {
@@ -59,20 +60,43 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         {
                             if (data_f.Children != null)
                             {
-                                var tempmenuItemModels = new List<MenuItem.MenuItemModel> { };
+                                var secitemModels = new List<MenuItem.MenuItemModel> { };
                                 data_f.Children.ForEach(data_s =>
                                 {
-                                    tempmenuItemModels.Add(new MenuItem.MenuItemModel
+                                    if (data_s.Children != null)
                                     {
-                                        Title = data_s.Title,
-                                        Link = $"/{website_data[0].OrgName}/{data_s.RouterName}",
-                                        Target = data_s.Target
-                                    });
+                                        var thirditemModels = new List<MenuItem.MenuItemModel> { };
+                                        data_s.Children.ForEach(data_t =>
+                                        {
+                                            thirditemModels.Add(new MenuItem.MenuItemModel
+                                            {
+                                                Title = data_t.Title,
+                                                Link = data_t.RouterName != "" ? $"/{website_data[0].OrgName}/{data_t.RouterName}" : data_t.LinkUrl != "" ? data_t.LinkUrl : "",
+                                                Target = data_t.Target
+                                            });
+                                        });
+                                        secitemModels.Add(new MenuItem.MenuItemModel
+                                        {
+                                            Title = data_s.Title,
+                                            Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
+                                            Target = data_s.Target,
+                                            menuItemModels = thirditemModels,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        secitemModels.Add(new MenuItem.MenuItemModel
+                                        {
+                                            Title = data_s.Title,
+                                            Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
+                                            Target = data_s.Target
+                                        });
+                                    }
                                 });
                                 headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                                 {
                                     Title = data_f.Title,
-                                    menuItemModels = tempmenuItemModels,
+                                    menuItemModels = secitemModels,
                                 });
                             }
                             else

@@ -3,7 +3,7 @@ var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
 
 function PageReady() {
-    ImageUploadModalInit($("#ImageUpload"), true, false);
+    ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
 
     $picker = $("#InputDate");
@@ -227,7 +227,6 @@ function AddUp(display, success_text, error_text) {
     }).done(function (result) {
         if (result.success) {
             var file = $("#ImageUpload .img_input_frame > .img_input").data("file").File;
-            console.log(file);
             if (file != null) {
                 var formData = new FormData();
                 formData.append("files", file);

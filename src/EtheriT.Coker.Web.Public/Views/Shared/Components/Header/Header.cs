@@ -54,7 +54,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     };
                     webmenus_data.ForEach(data_f =>
                     {
-                        if (data_f.PageType != (int)PageTypeEnum.首頁)
+                        if (data_f.PageType == (int)PageTypeEnum.購物車) headerViewModel.HasShoppingCar = true;
+                        else if (data_f.PageType != (int)PageTypeEnum.首頁)
                         {
                             if (data_f.Children != null)
                             {
@@ -65,7 +66,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     {
                                         Title = data_s.Title,
                                         Link = $"/{website_data[0].OrgName}/{data_s.RouterName}",
-                                        Target = data_s.Target,
+                                        Target = data_s.Target
                                     });
                                 });
                                 headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel

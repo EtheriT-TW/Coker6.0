@@ -36,7 +36,7 @@
                 <div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
                     @if (Model.Sitemap_Link != null)
                     {
-                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link">網站導覽</a>
+                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link" title="連結至：網站導覽">網站導覽</a>
                     }
                     <div class="align-items-center bg-white d-flex rounded">
                         <input class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
@@ -57,8 +57,15 @@
                     @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                     {
                         <li class="float-start">
-                            <a class="nav-link p-0" aria-current="page" href="@menu.imageLink">
-                                <img class="logo" src="@menu.imageUrl" alt="@menu.Title">
+                            <a class="nav-link p-0 text-black" aria-current="page" href="@menu.imageLink" title="連結至：@menu.Title">
+                                @if (@menu.imageUrl == "")
+                                {
+                                    <div class="w-25 custom_h5 text-white mx-auto">@menu.Title</div>
+                                }
+                                else
+                                {
+                                    <img class="logo" src="@menu.imageUrl" alt="@menu.Title">
+                                }
                             </a>
                         </li>
                     }

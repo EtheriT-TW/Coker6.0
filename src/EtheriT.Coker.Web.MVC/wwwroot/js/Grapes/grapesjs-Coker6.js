@@ -188,7 +188,7 @@
                 droppable: false,
                 editable: false,
                 traits: [{ name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' }],
-            }
+            },
         },
     });
 

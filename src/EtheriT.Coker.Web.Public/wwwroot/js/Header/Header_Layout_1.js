@@ -17,12 +17,14 @@
     });
 
     const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
-    Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
-        $("#btn_car_dropdown > i").addClass("open");
-    })
-    Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
-        $("#btn_car_dropdown > i").removeClass("open");
-    })
+    if (Cart_Dropdown != null) {
+        Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
+            $("#btn_car_dropdown > i").addClass("open");
+        })
+        Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
+            $("#btn_car_dropdown > i").removeClass("open");
+        })
+    }
 
     var $myOffcanvas = $("#Mega_Menu>.offcanvas");
     $myOffcanvas.on('hidden.bs.offcanvas', function () {

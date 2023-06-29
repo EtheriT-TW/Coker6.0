@@ -3,7 +3,7 @@ var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
 
 function PageReady() {
-    ImageUploadModalInit($("#ImageUpload"), false, false);
+    ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
 
     $picker = $("#InputDate");

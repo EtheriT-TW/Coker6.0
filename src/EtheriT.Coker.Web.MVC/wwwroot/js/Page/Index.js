@@ -69,8 +69,8 @@
                             })
                         }
                     });
-                    ImageUploadModalInit($("#ImageUpload"), true, false);
-                    ImageUploadModalInit($("#OverImageUpload"), true, false);
+                    ImageUploadModalInit($("#ImageUpload"));
+                    ImageUploadModalInit($("#OverImageUpload"));
                 },
                 edit: function () {
                     openEditForm();

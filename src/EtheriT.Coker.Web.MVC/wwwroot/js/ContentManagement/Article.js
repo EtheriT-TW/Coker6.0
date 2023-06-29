@@ -113,7 +113,7 @@ function PageReady() {
         });
     }
 
-    ImageUploadModalInit($("#ImageUpload"), true, false);
+    ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
     TagListModalInit();
 

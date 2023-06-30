@@ -4,7 +4,6 @@ using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System.Data;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 {
@@ -40,7 +39,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
             var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
 
-
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
             switch (defaultData.Layout_Type)
@@ -55,8 +53,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     };
                     webmenus_data.ForEach(data_f =>
                     {
-                        if (data_f.PageType == (int)PageTypeEnum.購物車) headerViewModel.HasShoppingCar = true;
-                        else if (data_f.PageType != (int)PageTypeEnum.首頁)
+                        if (data_f.PageType == (int)PageTypeEnum.首頁)
+                        {
+                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/home";
+                            headerViewModel.HomeTarget = false;
+                        }
+                        else if (data_f.PageType == (int)PageTypeEnum.購物車) headerViewModel.HasShoppingCar = true;
+                        else
                         {
                             if (data_f.Children != null)
                             {
@@ -72,14 +75,18 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                             {
                                                 Title = data_t.Title,
                                                 Link = data_t.RouterName != "" ? $"/{website_data[0].OrgName}/{data_t.RouterName}" : data_t.LinkUrl != "" ? data_t.LinkUrl : "",
-                                                Target = data_t.Target
-                                            });
+                                                Target = data_t.Target,
+                                                Icon = data_t.icon != "empty" ? data_t.icon.StartsWith("/upload", true, null) ? "" : data_t.icon.Split(' ')[1] : "",
+                                                IconClass = data_t.icon != "empty" ? data_t.icon.StartsWith("/upload", true, null) ? "" : data_t.icon.Split(' ')[0] : "",
+                                            }); ;
                                         });
                                         secitemModels.Add(new MenuItem.MenuItemModel
                                         {
                                             Title = data_s.Title,
                                             Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
                                             Target = data_s.Target,
+                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
+                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
                                             menuItemModels = thirditemModels,
                                         });
                                     }
@@ -89,7 +96,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         {
                                             Title = data_s.Title,
                                             Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
-                                            Target = data_s.Target
+                                            Target = data_s.Target,
+                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
+                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
                                         });
                                     }
                                 });
@@ -105,7 +114,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 {
                                     Title = data_f.Title,
                                     Target = data_f.Target,
-                                    Link = $"/{website_data[0].OrgName}/{data_f.RouterName}"
+                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
                                 });
                             }
                         }
@@ -115,6 +124,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = "入口網站",
+                        HomeLink = $"/{website_data[0].OrgName}/home",
+                        HomeTarget = false,
                         menuItemModels = new List<MenuItem.MenuItemModel> {
                             new MenuItem.MenuItemModel {Title="高雄軟體園區資訊服務網", Link="/ksp/home"},
                             new MenuItem.MenuItemModel {Title="e++產業服務平台", Link="/eplus/home"},
@@ -126,13 +137,17 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
-                        HomeLink = $"/{website_data[0].OrgName}/home",
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                     };
                     webmenus_data.ForEach(data_f =>
                     {
-                        if (data_f.Children != null)
+                        if (data_f.PageType == (int)PageTypeEnum.首頁)
+                        {
+                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data_f.RouterName}";
+                            headerViewModel.HomeTarget = data_f.Target;
+                        }
+                        else if (data_f.Children != null)
                         {
                             var tempmenuItemModels = new List<MenuItem.MenuItemModel> { };
                             data_f.Children.ForEach(data_s =>
@@ -140,7 +155,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 tempmenuItemModels.Add(new MenuItem.MenuItemModel
                                 {
                                     Title = data_s.Title,
-                                    Link = $"/{website_data[0].OrgName}/{data_s.RouterName}",
+                                    Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
                                     Target = data_s.Target,
                                 });
                             });
@@ -156,7 +171,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             {
                                 Title = data_f.Title,
                                 Target = data_f.Target,
-                                Link = $"/{website_data[0].OrgName}/{data_f.RouterName}"
+                                Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
                             });
                         }
                     });
@@ -166,32 +181,29 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     headerViewModel = new HeaderViewModel
                     {
                         Title = website_data[0].Title,
-                        HomeLink = $"/{website_data[0].OrgName}/home",
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                     };
                     webmenus_data.ForEach(data =>
                     {
-                        if (data.LanBar)
+                        if (data.PageType == (int)PageTypeEnum.首頁)
                         {
-                            headerViewModel.Sitemap_Link = $"/{website_data[0].OrgName}/{data.RouterName}";
+                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data.RouterName}";
+                            headerViewModel.HomeTarget = data.Target;
+                        }
+                        else if (data.LanBar)
+                        {
+                            headerViewModel.Sitemap_Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "";
                             headerViewModel.Sitemap_Target = data.Target;
                         }
-                        else if (data.PageType != (int)PageTypeEnum.首頁)
+                        else
                         {
-                            var imageUrl = "";
-                            var imageLink = "";
-                            if (data.ImgUrl != null)
-                            {
-                                imageUrl = data.ImgUrl.Replace("upload", $"upload/{website_data[0].OrgName}");
-                                imageLink = $"/{website_data[0].OrgName}/{data.RouterName}";
-                            }
                             headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                             {
                                 Title = data.Title,
+                                Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "",
                                 Target = data.Target,
-                                imageUrl = imageUrl,
-                                imageLink = imageLink,
+                                imageUrl = data.ImgUrl != null ? data.ImgUrl.Replace("upload", $"upload/{website_data[0].OrgName}") : "",
                             });
                         }
                     });

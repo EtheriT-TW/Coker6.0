@@ -26,7 +26,11 @@
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid d-flex flex-wrap">
                 <div class="d-flex align-items-center w-auto justify-content-between me-5 me-md-0">
-                    <a class="d-flex navbar-brand" href="@Model.HomeLink">
+                    @{
+                        var home_target = Model.HomeTarget == true ? "_blank" : "_self";
+                        var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                    }
+                    <a class="d-flex navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title">
                         <img class="logo w-100" src="@Model.LogoImageUrl" alt="@Model.Title">
                     </a>
                     <button class="btn_expand collapsed end-0 navbar-toggler position-absolute pt-1" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,32 +39,29 @@
                 </div>
                 <div class="collapse_menus collapse navbar-collapse" id="NavbarContent">
                     <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-wrap">
-                        @{
-                            var target = "_self";
-                            foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+                        @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+                        {
+                            var target = menu.Target == true ? "_blank" : "_self";
+                            var title = menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}";
+                            @if (menu.menuItemModels != null)
                             {
-                                @if (menu.menuItemModels != null)
-                                {
-                                    <li class="nav-item dropdown px-2 my-1">
-                                        <a class="d-flex dropdown-toggle justify-content-center nav-link nocontent ps-4 ps-lg-2 show text-nowrap px-0" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            @menu.Title<span class="d-lg-none material-symbols-outlined">expand_more</span>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
-                                            {
-                                                target = (subMenu.Target != null && subMenu.Target == true) ? "_blank" : "_self";
-                                                <li><a class="dropdown-item text-center text-lg-start fw-normal" href="@subMenu.Link" target="@target">@subMenu.Title</a></li>
-                                            }
-                                        </ul>
-                                    </li>
-                                }
-                                else
-                                {
-                                    target = (menu.Target != null && menu.Target == true) ? "_blank" : "_self";
-                                    <li class="text-nowrap nav-item px-2 text-center my-1">
-                                        <a class="nav-link  px-0" aria-current="page" href="@menu.Link" target="@target">@menu.Title</a>
-                                    </li>
-                                }
+                                <li class="nav-item dropdown px-2 my-1">
+                                    <a class="d-flex dropdown-toggle justify-content-center nav-link nocontent ps-4 ps-lg-2 show text-nowrap px-0" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        @menu.Title<span class="d-lg-none material-symbols-outlined">expand_more</span>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
+                                        {
+
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="text-nowrap nav-item px-2 text-center my-1">
+                                    <a class="nav-link  px-0" aria-current="page" href="@menu.Link" target="@target" title="@title">@menu.Title</a>
+                                </li>
                             }
                         }
                     </ul>

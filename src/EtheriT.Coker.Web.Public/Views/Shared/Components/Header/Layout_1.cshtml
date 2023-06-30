@@ -12,7 +12,11 @@
     <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
         <!-- Logo -->
         <div class="d-none d-lg-flex logo col-2 text-center py-lg-0 py-1">
-            <a href="/">
+            @{
+                var home_target = Model.HomeTarget == true ? "_blank" : "_self";
+                var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+            }
+            <a href="@Model.HomeLink" target="@home_target" title="@home_title">
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
                     <h1>@Model.Title</h1>
@@ -42,30 +46,44 @@
                             <ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100">
                                 @foreach (var secItem in menu.menuItemModels ?? new List<MenuItemModel>())
                                 {
+                                    var iconclass = secItem.Icon == "" ? "d-none" : "";
                                     <li class="subtitle nav-item my-0 my-md-2">
                                         @if (secItem.Link != "")
                                         {
                                             var target = secItem.Target == true ? "_blank" : "_self";
                                             var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
-                                            <a class="nav-link text-black py-1 text-nowrap text-start" href="@secItem.Link" title="@title" target="@target">@secItem.Title</a>
+                                            <a class="nav-link text-black py-1 text-nowrap text-start d-flex" href="@secItem.Link" title="@title" target="@target">
+                                                <i class="@secItem.IconClass me-1 @iconclass">@secItem.Icon</i>
+                                                @secItem.Title
+                                            </a>
                                         }
                                         else
                                         {
-                                            <a class="nav-link text-black py-1 text-nowrap text-start">@secItem.Title</a>
+                                            <a class="nav-link text-black py-1 text-nowrap text-start d-flex">
+                                                <i class="@secItem.IconClass me-1 @iconclass">@secItem.Icon</i>
+                                                @secItem.Title
+                                            </a>
                                         }
                                         <ul class="row mx-0">
-                                        @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
-                                        {
+                                            @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
+                                            {
+                                                iconclass = thirdItem.Icon == "" ? "d-none" : "";
                                                 <li class="px-0">
                                                     @if (secItem.Link != "")
                                                     {
                                                         var target = thirdItem.Target == true ? "_blank" : "_self";
                                                         var title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
-                                                        <a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal" href="@thirdItem.Link" title="@title" target="@target">@thirdItem.Title</a>
+                                                        <a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex" href="@thirdItem.Link" title="@title" target="@target">
+                                                            <i class="@thirdItem.IconClass me-1 @iconclass">@thirdItem.Icon</i>
+                                                            @thirdItem.Title
+                                                        </a>
                                                     }
                                                     else
                                                     {
-                                                        <a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal">@thirdItem.Title</a>
+                                                        <a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex">
+                                                            <i class="@thirdItem.IconClass me-1 @iconclass">@thirdItem.Icon</i>
+                                                            @thirdItem.Title
+                                                        </a>
                                                     }
                                                 </li>
                                             }
@@ -87,14 +105,18 @@
 
         <!-- Logo -->
         <div class="logo d-lg-none col-7 text-center py-lg-0 py-1">
-            <a href="/">
+            @{
+                var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
+                var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+            }
+            <a href="@Model.HomeTarget" target="@logo_target" title="@logo_title">
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
                     <h1>@Model.Title</h1>
                 }
                 else
                 {
-                    <img class="" src="@Model.LogoImageUrl" alt="Derek" />
+                    <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
                     <h1 class="d-none">@Model.Title</h1>
                 }
             </a>

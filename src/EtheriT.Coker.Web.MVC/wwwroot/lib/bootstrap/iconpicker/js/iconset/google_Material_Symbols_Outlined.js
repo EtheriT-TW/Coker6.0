@@ -1116,7 +1116,10 @@
             "material-symbols-outlined house",
             "material-symbols-outlined stadia_controller",
             "material-symbols-outlined translate",
-            "material-symbols-outlined thumb_up_off"
+            "material-symbols-outlined thumb_up_off",
+            "material-symbols-outlined campaign",
+            "material-symbols-outlined crowdsource",
+            "material-symbols-outlined science"
         ]
     };
 })(jQuery);

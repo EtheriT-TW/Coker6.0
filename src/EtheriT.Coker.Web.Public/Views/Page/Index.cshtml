@@ -69,7 +69,6 @@
     <!-- EnterAdModal -->
     @if (Model.enterAd.Count > 0)
     {
-        var target = Model.enterAd[0].Target ? "_blank" : "_self";
         <div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" data-enteradid="@Model.enterAd[0].Id">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
@@ -79,7 +78,9 @@
 
                             @if (Model.enterAd[0].Link != "")
                             {
-                                <a href="@Model.enterAd[0].Link" target="@target" title="@Model.enterAd[0].Title">
+                                var target = Model.enterAd[0].Target == true ? "_blank" : "_self";
+                                var title = Model.enterAd[0].Target == true ? $"連結至：{Model.enterAd[0].Title}(另開視窗)" : $"連結至：{Model.enterAd[0].Title}";
+                                <a href="@Model.enterAd[0].Link" target="@target" title="@title">
                                     <ul>
                                         @foreach (var img in Model.enterAd[0].Img)
                                         {

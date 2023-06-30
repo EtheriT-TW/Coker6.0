@@ -70,28 +70,13 @@
 }
 
 function MenuLiSize() {
-    $(".sub_content").each(function () {
-        var $self = $(this);
-        if ($(window).width() > 768) {
-            var content_width = $self.parents(".content").first().width();
-            if ($self.children("li").length > 0) {
-                if ($self.children("li").length > 7) {
-                    var selfwidth = content_width / 6 * 2
-                    $self.css("width", selfwidth)
-                }
-                $self.css("height", "100%")
-                $self.parents("li").first().css("height", "100%");
-                $self.parents("li").first().css("padding-bottom", "3rem");
-            } else {
-                $self.css("height", "fit-content")
-                $self.parents("li").first().css("height", "fit-content");
-            }
-
-        } else {
-            $self.css("width", "unset")
-            $self.parents("li").first().css("padding-bottom", "0");
-        }
-    });
+    if ($(window).width() > 768) {
+        $(".subtitle").removeClass("w-100")
+        $(".subtitle li").removeClass("w-100")
+    } else {
+        $(".subtitle").addClass("w-100")
+        $(".subtitle li").addClass("w-100")
+    }
 }
 
 function CartDropInit() {

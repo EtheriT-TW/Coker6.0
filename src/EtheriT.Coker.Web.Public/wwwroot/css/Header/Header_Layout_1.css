@@ -151,6 +151,11 @@
     #Offcanvas_Mega_Menu > ul > .title > div:first-child {
         text-align: center;
     }
+
+    #Offcanvas_Mega_Menu > ul > .title > .content > ul {
+        max-height: 13rem;
+        overflow: hidden;
+    }
 }
 
 @media only screen and (max-width: 992px) {

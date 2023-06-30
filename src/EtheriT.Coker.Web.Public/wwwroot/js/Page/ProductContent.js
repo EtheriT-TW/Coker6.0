@@ -77,8 +77,6 @@ function ElementInit() {
 }
 
 function PageDefaultSet(result) {
-    console.log(result)
-
     $pro_name.text(result.title);
     $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
     $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
@@ -134,7 +132,6 @@ function PageDefaultSet(result) {
 
         var maxprice = 0, minprice = 0;
         result.stocks.forEach(data => {
-            console.log(data)
             obj["s1id"] = data.fK_S1id;
             obj["s2id"] = data.fK_S2id;
             var roleid = 1;
@@ -274,9 +271,7 @@ function PageDefaultSet(result) {
 
     if (result.files.length > 0) {
         result.files.forEach(function (file) {
-            console.log(IsFaPage)
             var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
-            console.log(link)
             $("#FileDownload").append(`<div class="file px-4 py-1 border border-dark">
 			                                                            <a href="${link}" download="${file.name}" titile="${file.name}"><div>${file.name}</div></a>
 			                                                       </div>`)

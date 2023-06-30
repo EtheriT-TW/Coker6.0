@@ -257,13 +257,11 @@ function CaptchaVerify($self, $input, SuccessAction) {
 function LoginAction() {
     var loginModal = new bootstrap.Modal($("#LoginModal"))
     loginModal.hide();
-    /*console.log("Login")*/
 }
 
 function RegisterAction() {
     var registerModal = new bootstrap.Modal($("#RegisterModal"))
     registerModal.hide();
-    /*console.log("Register")*/
 }
 
 function NewCaptcha($self, $input) {

@@ -1,6 +1,5 @@
 ﻿
 function ImageUploadModalInit($image_upload) {
-    //console.log("ImageUploadModalInit")
     ImageUploadModalClear($image_upload);
 }
 

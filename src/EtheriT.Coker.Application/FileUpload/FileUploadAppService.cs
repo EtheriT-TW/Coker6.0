@@ -776,6 +776,13 @@ namespace EtheriT.Coker.Application
                                     db.SaveChanges();
                                 }
                                 break;
+                            case (int)FileBindTypeEnum.選單Icon:
+                                var db_menuicon = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                                if (db_menuicon != null)
+                                {
+                                    db_menuicon.icon = "empty";
+                                }
+                                break;
                         }
                     }
                     return response;

@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Dto
         文章管理 = 6,
         進入廣告 = 7,
         產品檔案 = 8,
-		資料暫存 = 99
+        選單Icon = 9,
+        資料暫存 = 99
 	}
 }

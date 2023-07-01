@@ -4,13 +4,9 @@ using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
-using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
@@ -122,6 +118,18 @@ namespace EtheriT.Coker.Application
                         m.OverImgUrl = data[0].Link;
                         m.OverImgName = data[0].Name;
                     }
+                    if (m.icon.StartsWith("IconId"))
+                    {
+                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
+                        {
+                            Sid = m.Id,
+                            Type = 9,
+                            Size = 1,
+                        });
+                        m.IconId = m.icon.Split(":")[1];
+                        m.IconUrl = data[0].Link;
+                        m.icon = "empty";
+                    }
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;
@@ -146,6 +154,11 @@ namespace EtheriT.Coker.Application
                 List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
                 foreach (var m in result)
                 {
+                    if (m.icon != "empty" && m.icon.StartsWith("IconId"))
+                    {
+                        var iconimage = await fileUploadAppService.getImgUrl(long.Parse(m.icon.Split(":")[1]), (long)WebsiteID);
+                        m.IconImage = iconimage;
+                    }
                     m.Children = await GetDisplayChild(m.Id, WebsiteID);
                     if (m.Children.Count == 0) m.Children = null;
                 }
@@ -452,22 +465,29 @@ namespace EtheriT.Coker.Application
                     item.IsDeleted = true;
                     await loginUserData.SaveChanges(item);
 
-                    var m_imgid_list = new List<long>();
-                    m_imgid_list.Add((long)item.ImgId);
-                    var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                    if (item.ImgId != null)
                     {
-                        Sid = item.Id,
-                        Fid = m_imgid_list,
-                        Type = (int)FileBindTypeEnum.選單圖,
-                    });
-                    var o_imgid_list = new List<long>();
-                    o_imgid_list.Add((long)item.OverImgId);
-                    var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                        var m_imgid_list = new List<long>();
+                        m_imgid_list.Add((long)item.ImgId);
+                        var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                        {
+                            Sid = item.Id,
+                            Fid = m_imgid_list,
+                            Type = (int)FileBindTypeEnum.選單圖,
+                        });
+                    }
+
+                    if (item.OverImgId != null)
                     {
-                        Sid = item.Id,
-                        Fid = o_imgid_list,
-                        Type = (int)FileBindTypeEnum.選單覆蓋,
-                    });
+                        var o_imgid_list = new List<long>();
+                        o_imgid_list.Add((long)item.OverImgId);
+                        var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                        {
+                            Sid = item.Id,
+                            Fid = o_imgid_list,
+                            Type = (int)FileBindTypeEnum.選單覆蓋,
+                        });
+                    }
                 }
             }
             catch (Exception ex)

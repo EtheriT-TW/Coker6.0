@@ -87,26 +87,33 @@ namespace EtheriT.Coker.Application
                     response.Files.Add(item);
                 }
                 response.Success = true;
+
+                var websiteid = await loginUserData.GetWebsiteId();
+                switch (type)
+                {
+                    case (int)FileBindTypeEnum.選單圖:
+                        var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                        if (db_bind != null) db_bind.ImgId = response.Files[0].Id;
+                        db.SaveChanges();
+                        break;
+                    case (int)FileBindTypeEnum.選單覆蓋:
+                        var db_bind_over = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                        if (db_bind_over != null) db_bind_over.OverImgId = response.Files[0].Id;
+                        db.SaveChanges();
+                        break;
+                    case (int)FileBindTypeEnum.選單Icon:
+                        var db_bind_icon = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
+                        if (db_bind_icon != null) db_bind_icon.icon = $"IconId:{response.Files[0].Id}";
+                        db.SaveChanges();
+                        break;
+                }
+                return response;
             }
             catch (Exception ex)
             {
                 response.ErrorFiles.Add(ex.Message);
+                return response;
             }
-            var websiteid = await loginUserData.GetWebsiteId();
-            switch (type)
-            {
-                case (int)FileBindTypeEnum.選單圖:
-                    var db_bind = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                    if (db_bind != null) db_bind.ImgId = response.Files[0].Id;
-                    db.SaveChanges();
-                    break;
-                case (int)FileBindTypeEnum.選單覆蓋:
-                    var db_bind_over = await db.WebMenus.Where(e => e.Id == sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                    if (db_bind_over != null) db_bind_over.OverImgId = response.Files[0].Id;
-                    db.SaveChanges();
-                    break;
-            }
-            return response;
         }
         public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, int type, long? sid, string page)
         {

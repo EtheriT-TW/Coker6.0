@@ -10,6 +10,7 @@
         public string? hoverImageUrl { get; set; }
         public string? Icon { get; set; }
         public string? IconClass { get; set; }
+        public string? ImageIcon { get; set; }
         public List<MenuItemModel>? menuItemModels { get; set; }
     }
 }

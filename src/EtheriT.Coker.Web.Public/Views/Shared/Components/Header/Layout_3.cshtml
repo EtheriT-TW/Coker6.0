@@ -45,21 +45,22 @@
                             var title = menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}";
                             @if (menu.menuItemModels != null)
                             {
-                                <li class="nav-item dropdown px-2 my-1">
-                                    <a class="d-flex dropdown-toggle justify-content-center nav-link nocontent ps-4 ps-lg-2 show text-nowrap px-0" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <li class="nav-item dropdown px-2 my-1  text-start">
+                                    <a class="d-flex dropdown-toggle nav-link nocontent px-0 text-nowrap" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         @menu.Title<span class="d-lg-none material-symbols-outlined">expand_more</span>
                                     </a>
-                                    <ul class="dropdown-menu">
+                                    <ul class="dropdown-menu py-0 py-lg-2">
                                         @foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
                                         {
-
+                                            target = (subMenu.Target != null && subMenu.Target == true) ? "_blank" : "_self";
+                                            <li><a class="dropdown-item text-lg-start fw-normal px-0 px-lg-3" href="@subMenu.Link" target="@target">@subMenu.Title</a></li>
                                         }
                                     </ul>
                                 </li>
                             }
                             else
                             {
-                                <li class="text-nowrap nav-item px-2 text-center my-1">
+                                <li class="text-nowrap nav-item px-2 my-1 text-start">
                                     <a class="nav-link  px-0" aria-current="page" href="@menu.Link" target="@target" title="@title">@menu.Title</a>
                                 </li>
                             }

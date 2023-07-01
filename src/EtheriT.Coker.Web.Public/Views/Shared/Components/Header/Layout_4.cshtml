@@ -29,7 +29,6 @@
                     @{
                         var home_target = Model.HomeTarget == true ? "_blank" : "_self";
                         var homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
-                    
                         }
                     <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink" target="@home_target" title="@homte_title">
                         <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
@@ -84,7 +83,11 @@
     </div>
 </div>
 <div class="container p-0">
-    <a class="" href="/eplus/home">
-        <img class="w-100" src="~/upload/eplus/banner.jpg" alt="e++產業服務平台">
+    @{
+        var picture_home_target = Model.HomeTarget == true ? "_blank" : "_self";
+        var picture_homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+    }
+    <a class="" href="@Model.HomeLink" target="@picture_home_target" title="@picture_homte_title">
+        <img class="w-100" src="~/upload/eplus/banner.jpg" alt="@Model.Title">
     </a>
 </div>

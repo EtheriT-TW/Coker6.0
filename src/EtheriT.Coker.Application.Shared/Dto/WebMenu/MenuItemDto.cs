@@ -16,6 +16,9 @@ namespace EtheriT.Coker.Application.Dto
         public int PageType { get; set; }
         public string? Description { get; set; }
         public string? icon { get; set; }
+        public string? IconId { get; set; }
+        public string? IconUrl { get; set; }
+        public string? IconImage { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
         public bool PopularVisible { get; set; }

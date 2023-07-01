@@ -1,8 +1,14 @@
-﻿
-function ImageUploadModalInit($image_upload) {
-    ImageUploadModalClear($image_upload);
-}
-
+﻿$.fn.extend({
+    ImageUploadModalClear: function () {
+        var $select = $(this);
+        $select.find(".img_input_frame").data("delectList", null);
+        $select.find(".img_input_frame").children().each(function () {
+            var $self = $(this);
+            if (!$self.is("template")) $self.remove();
+        })
+        ImageSetData($select, null);
+    }
+});
 function ImageUploadModalClear($select) {
     $select.find(".img_input_frame").data("delectList", null);
     $select.find(".img_input_frame").children().each(function () {
@@ -11,6 +17,7 @@ function ImageUploadModalClear($select) {
     })
     ImageSetData($select, null);
 }
+var ImageUploadModalInit = ImageUploadModalClear;
 
 function ImageDelect($select) {
     var $img_btn = $select.find(".btn_input_pic");
@@ -24,7 +31,6 @@ function ImageDelect($select) {
         ImageClear($select);
     }
 }
-
 function ImageClear($select) {
     var $img_btn = $select.find(".btn_input_pic");
     var $parent_frame = $select.parents(".img_input_frame")

@@ -33,6 +33,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product");
                 case FileBindTypeEnum.選單圖:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu");
+                case FileBindTypeEnum.選單Icon:
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuIcon");
                 case FileBindTypeEnum.選單覆蓋:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "MenuMouseOver");
                 case FileBindTypeEnum.技術證照:

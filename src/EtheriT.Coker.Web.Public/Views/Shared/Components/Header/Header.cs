@@ -76,8 +76,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                                 Title = data_t.Title,
                                                 Link = data_t.RouterName != "" ? $"/{website_data[0].OrgName}/{data_t.RouterName}" : data_t.LinkUrl != "" ? data_t.LinkUrl : "",
                                                 Target = data_t.Target,
-                                                Icon = data_t.icon != "empty" ? data_t.icon.StartsWith("/upload", true, null) ? "" : data_t.icon.Split(' ')[1] : "",
-                                                IconClass = data_t.icon != "empty" ? data_t.icon.StartsWith("/upload", true, null) ? "" : data_t.icon.Split(' ')[0] : "",
+                                                Icon = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[1] : "",
+                                                IconClass = data_t.icon != "empty" ? data_t.icon.StartsWith("IconId", true, null) ? "" : data_t.icon.Split(' ')[0] : "",
+                                                ImageIcon = data_t.IconImage != null ? siteId == defaultData.Id ? data_t.IconImage : data_t.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
                                             }); ;
                                         });
                                         secitemModels.Add(new MenuItem.MenuItemModel
@@ -85,8 +86,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                             Title = data_s.Title,
                                             Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
                                             Target = data_s.Target,
-                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
-                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
+                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
+                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
+                                            ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
                                             menuItemModels = thirditemModels,
                                         });
                                     }
@@ -97,8 +99,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                             Title = data_s.Title,
                                             Link = data_s.RouterName != "" ? $"/{website_data[0].OrgName}/{data_s.RouterName}" : data_s.LinkUrl != "" ? data_s.LinkUrl : "",
                                             Target = data_s.Target,
-                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
-                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("/upload", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
+                                            Icon = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[1] : "",
+                                            IconClass = data_s.icon != "empty" ? data_s.icon.StartsWith("IconId", true, null) ? "" : data_s.icon.Split(' ')[0] : "",
+                                            ImageIcon = data_s.IconImage != null ? siteId == defaultData.Id ? data_s.IconImage : data_s.IconImage.Replace("upload", $"upload/{defaultData.OrgName}") : "",
                                         });
                                     }
                                 });

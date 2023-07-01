@@ -1,6 +1,7 @@
 ﻿var companyInfoIsEdit = false;
 
 function PageReady() {
+    $("#IconImageUpload").ImageUploadModalClear();
     $(".btn_input_icon").on('click', function () {
         $(".input_icon").click();
     });

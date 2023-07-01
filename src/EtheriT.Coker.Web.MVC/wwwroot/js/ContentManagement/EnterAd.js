@@ -209,7 +209,6 @@ function AddUp(display, success_text, error_text) {
         });
     }
 
-
     co.HtmlContent.AddUp({
         Id: keyId,
         TId: $.cookie('secret'),

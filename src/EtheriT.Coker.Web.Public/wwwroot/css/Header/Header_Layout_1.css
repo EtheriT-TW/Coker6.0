@@ -137,9 +137,17 @@
         min-height: 100px;
     }
 
-.subtitle > a {
+.subtitle > .subtitle_title {
     width: fit-content;
     font-weight: bold;
+}
+
+.subtitle .subtitle_title > i {
+    font-size: 2rem;
+}
+
+.subtitle .subtitle_title > img {
+    height: 2rem;
 }
 
 /*RWD*/

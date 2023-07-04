@@ -17,12 +17,14 @@
     });
 
     const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
-    Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
-        $("#btn_car_dropdown > i").addClass("open");
-    })
-    Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
-        $("#btn_car_dropdown > i").removeClass("open");
-    })
+    if (Cart_Dropdown != null) {
+        Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
+            $("#btn_car_dropdown > i").addClass("open");
+        })
+        Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
+            $("#btn_car_dropdown > i").removeClass("open");
+        })
+    }
 
     var $myOffcanvas = $("#Mega_Menu>.offcanvas");
     $myOffcanvas.on('hidden.bs.offcanvas', function () {
@@ -46,31 +48,35 @@
             $self.css("justify-content", "space-evenly")
         }
     });
+    $("#Offcanvas_Mega_Menu > ul > .title > .content > ul > .subtitle ul").each(function () {
+        var $self = $(this);
+        if ($self.children("li").length >= 6) {
+            var width = 100 / 6 * 2;
+            var str_width = `${width}%`
+            $self.parents(".subtitle").first().css("width", str_width);
+            $self.children("li").css("width", "50%");
+            if ($self.children("li").length > 10) {
+                var $parent = $self.prev("a").first();
+                $self.children("li:eq(9)").html(`<a class="ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal" href="${$parent.attr('href')}" title="${$parent.attr('title')}" target="${$parent.attr('target')}">更多...</a>`);
+                $self.children("li:gt(9)").addClass("d-none")
+            }
+        }
+        else {
+            var width = 100 / 6;
+            var str_width = `${width}%`
+            $self.parents(".subtitle").first().css("width", str_width);
+        }
+    });
 }
 
 function MenuLiSize() {
-    $(".sub_content").each(function () {
-        var $self = $(this);
-        if ($(window).width() > 768) {
-            var content_width = $self.parents(".content").first().width();
-            if ($self.children("li").length > 0) {
-                if ($self.children("li").length > 7) {
-                    var selfwidth = content_width / 6 * 2
-                    $self.css("width", selfwidth)
-                }
-                $self.css("height", "100%")
-                $self.parents("li").first().css("height", "100%");
-                $self.parents("li").first().css("padding-bottom", "3rem");
-            } else {
-                $self.css("height", "fit-content")
-                $self.parents("li").first().css("height", "fit-content");
-            }
-
-        } else {
-            $self.css("width", "unset")
-            $self.parents("li").first().css("padding-bottom", "0");
-        }
-    });
+    if ($(window).width() > 768) {
+        $(".subtitle").removeClass("w-100")
+        $(".subtitle li").removeClass("w-100")
+    } else {
+        $(".subtitle").addClass("w-100")
+        $(".subtitle li").addClass("w-100")
+    }
 }
 
 function CartDropInit() {

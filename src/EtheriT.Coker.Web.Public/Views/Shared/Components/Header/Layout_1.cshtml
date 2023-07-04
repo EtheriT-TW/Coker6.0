@@ -8,123 +8,180 @@
 <script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
 <nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
-	<!-- Mega Menu -->
-	<div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
-		<!-- Logo -->
-		<div class="d-none d-lg-flex logo col-2 text-center py-lg-0 py-1">
-			<a href="/">
-				@if (string.IsNullOrEmpty(Model.Title))
-				{
-					<h1>@Model.Title</h1>
-				}
-				else
-				{
-					<img class="position-absolute translate-middle-y" src="@Model.LogoImageUrl" alt="@Model.Title" />
-					<h1 class="d-none">@Model.Title</h1>
-				}
-			</a>
-		</div>
+    <!-- Mega Menu -->
+    <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
+        <!-- Logo -->
+        <div class="d-none d-lg-flex logo col-2 text-center py-lg-0 py-1">
+            @{
+                var home_target = Model.HomeTarget == true ? "_blank" : "_self";
+                var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+            }
+            <a href="@Model.HomeLink" target="@home_target" title="@home_title">
+                @if (string.IsNullOrEmpty(Model.Title))
+                {
+                    <h1>@Model.Title</h1>
+                }
+                else
+                {
+                    <img class="position-absolute translate-middle-y" src="@Model.LogoImageUrl" alt="@Model.Title" />
+                    <h1 class="d-none">@Model.Title</h1>
+                }
+            </a>
+        </div>
 
-		<!-- Menu Canvas -->
-		<div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-lg-8 col visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
-			<!-- Menu Canvas Search Block -->
-			<div class="offcanvas-header pt-2 ps-5">
-				<h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
-			</div>
+        <!-- Menu Canvas -->
+        <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-lg-8 col visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+            <!-- Menu Canvas Search Block -->
+            <div class="offcanvas-header pt-2 ps-5">
+                <h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+            </div>
 
-			<!-- Menu Canvas Menu -->
-			<ul class="navbar-nav offcanvas-body w-100 m-0">
-				@foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
-				{
-					<li class="title nav-item col-lg-2">
-						<a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-center text-nowrap">@menu.Title</a>
-						<div class="content w-100 start-50 translate-middle-x">
-							<ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100">
-								@foreach (var subMenu in menu.menuItemModels ?? new List<MenuItemModel>())
-								{
-									<li class="subtitle nav-item my-0 my-md-2">
-										<a class="nav-link text-black m-auto py-1 text-nowrap" href="@subMenu.Link">@subMenu.Title</a>
-									</li>
-								}
-							</ul>
-						</div>
-					</li>
-				}
-			</ul>
-		</div>
+            <!-- Menu Canvas Menu -->
+            <ul class="navbar-nav offcanvas-body w-100 m-0">
+                @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+                {
+                    <li class="title nav-item col-lg-2">
+                        <div class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black">@menu.Title</div>
+                        <div class="content w-100 start-50 translate-middle-x">
+                            <ul class="d-flex flex-column flex-lg-row flex-wrap w-100 h-100">
+                                @foreach (var secItem in menu.menuItemModels ?? new List<MenuItemModel>())
+                                {
+                                    var iconclass = secItem.Icon == "" ? "d-none" : "";
+                                    var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
+                                    <li class="subtitle nav-item my-0 my-md-2">
+                                        @if (secItem.Link != "")
+                                        {
+                                            var target = secItem.Target == true ? "_blank" : "_self";
+                                            var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
+                                            <a class="subtitle_title nav-link text-black py-1 text-nowrap text-start d-flex align-items-center" href="@secItem.Link" title="@title" target="@target">
+                                                <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                                <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                                @secItem.Title
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="subtitle_title nav-link text-black py-1 text-nowrap text-start d-flex align-items-center">
+                                                <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                                <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                                @secItem.Title
+                                            </div>
+                                        }
+                                        <ul class="row mx-0">
+                                            @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
+                                            {
+                                                iconclass = thirdItem.Icon == "" ? "d-none" : "";
+                                                imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
+                                                <li class="px-0">
+                                                    @if (secItem.Link != "")
+                                                    {
+                                                        var target = thirdItem.Target == true ? "_blank" : "_self";
+                                                        var title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                        <a class="subtitle_title ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                            <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+                                                            <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+                                                            @thirdItem.Title
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="subtitle_title ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex align-items-center">
+                                                            <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+                                                            <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+                                                            @thirdItem.Title
+                                                        </div>
+                                                    }
+                                                </li>
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
 
-		<div class="btn_menu navbar-toggler collapsed px-0 col-1 mt-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
-			<div class="bar"></div>
-			<div class="bar"></div>
-			<div class="bar"></div>
-		</div>
+        <div class="btn_menu navbar-toggler collapsed px-0 col-1 mt-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
 
-		<!-- Logo -->
-		<div class="logo d-lg-none col-7 text-center py-lg-0 py-1">
-			<a href="/">
-				@if (string.IsNullOrEmpty(Model.Title))
-				{
-					<h1>@Model.Title</h1>
-				}
-				else
-				{
-					<img class="" src="@Model.LogoImageUrl" alt="Derek" />
-					<h1 class="d-none">@Model.Title</h1>
-				}
-			</a>
-		</div>
+        <!-- Logo -->
+        <div class="logo d-lg-none col-7 text-center py-lg-0 py-1">
+            @{
+                var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
+                var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+            }
+            <a href="@Model.HomeTarget" target="@logo_target" title="@logo_title">
+                @if (string.IsNullOrEmpty(Model.Title))
+                {
+                    <h1>@Model.Title</h1>
+                }
+                else
+                {
+                    <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
+                    <h1 class="d-none">@Model.Title</h1>
+                }
+            </a>
+        </div>
 
-		<!-- Tool Bar -->
-		<div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2">
-			<!-- Search Block -->
-			<button class="d-flex bg-transparent border-0">
-				<span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
-			</button>
-			<button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
-				<div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
-			</button>
-			<div id="Cart_Dropdown_Parent" class="d-flex px-1">
-				<button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-					<span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
-					<span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
-				</button>
+        <!-- Tool Bar -->
+        <div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2">
+            <!-- Search Block -->
+            <button class="d-flex bg-transparent border-0">
+                <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
+            </button>
+            <button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
+                <div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
+            </button>
+            @if (Model.HasShoppingCar == true)
+            {
+                <div id="Cart_Dropdown_Parent" class="d-flex px-1">
+                    <button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
+                        <span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
+                    </button>
 
-				<div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
-					<ul class="m-0">
-						<template id="Template_Car_Dropdown">
-							<li class="border-bottom me-4" data-scid="">
-								<figure class="position-relative mb-0">
-									<a class="pro_link d-flex" href="">
-										<img class="pro_image" src="" alt="" />
-										<figcaption class="overflow-hidden">
-											<div class="pro_name h-auto"></div>
-											<div class="pro_spec h-auto my-1"></div>
-											<div class="number d-flex">
-												<div class="pro_unit price fw-bold"></div>
-												<div class="pro_quantity fw-bold"></div>
-											</div>
-										</figcaption>
-									</a>
-									<button class="btn_cart_delete bg-transparent border-0 position-absolute">
-										<i class="fa-solid fa-trash"></i>
-									</button>
-								</figure>
-							</li>
-						</template>
-					</ul>
+                    <div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
+                        <ul class="m-0">
+                            <template id="Template_Car_Dropdown">
+                                <li class="border-bottom me-4" data-scid="">
+                                    <figure class="position-relative mb-0">
+                                        <a class="pro_link d-flex" href="" title="">
+                                            <img class="pro_image" src="" alt="" />
+                                            <figcaption class="overflow-hidden">
+                                                <div class="pro_name h-auto"></div>
+                                                <div class="pro_spec h-auto my-1"></div>
+                                                <div class="number d-flex">
+                                                    <div class="pro_unit price fw-bold"></div>
+                                                    <div class="pro_quantity fw-bold"></div>
+                                                </div>
+                                            </figcaption>
+                                        </a>
+                                        <button class="btn_cart_delete bg-transparent border-0 position-absolute">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </figure>
+                                </li>
+                            </template>
+                        </ul>
 
-					<div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
+                        <div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
 
-					<button onclick="location.href='/ShoppingCar';" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</button>
-				</div>
-			</div>
+                        <button onclick="location.href='/ShoppingCar';" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</button>
+                    </div>
+                </div>
+            }
 
-			<!-- Login Button -->
-			<div class="d-flex">
-				<button class="bg-transparent border-0 d-flex align-items-center" type="button">
-					<span class="material-symbols-outlined">person</span>
-				</button>
-			</div>
-		</div>
-	</div>
+            <!-- Login Button -->
+            <div class="d-flex">
+                <button class="bg-transparent border-0 d-flex align-items-center" type="button">
+                    <span class="material-symbols-outlined">person</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </nav>

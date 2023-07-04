@@ -1,0 +1,17 @@
+﻿
+#WebmenuModal > .modal-dialog {
+    min-width: 40vw;
+}
+
+.modal-open .wrapper {
+    transition: unset !important;
+    filter: unset !important;
+}
+
+.webmenu > input {
+    padding-left: 4.5rem;
+}
+
+.dx-datagrid-search-panel {
+    width: fit-content !important;
+}

@@ -1,24 +1,20 @@
 ﻿using AutoMapper;
+using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Formats.Asn1;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json.Serialization;
 using System.Web;
 
 namespace EtheriT.Coker.Application
@@ -122,6 +118,18 @@ namespace EtheriT.Coker.Application
                         m.OverImgUrl = data[0].Link;
                         m.OverImgName = data[0].Name;
                     }
+                    if (m.icon.StartsWith("IconId"))
+                    {
+                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
+                        {
+                            Sid = m.Id,
+                            Type = 9,
+                            Size = 1,
+                        });
+                        m.IconId = m.icon.Split(":")[1];
+                        m.IconUrl = data[0].Link;
+                        m.icon = "empty";
+                    }
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;
@@ -146,6 +154,11 @@ namespace EtheriT.Coker.Application
                 List<MenuItemDto> result = mapper.Map<List<MenuItemDto>>(menus);
                 foreach (var m in result)
                 {
+                    if (m.icon.StartsWith("IconId"))
+                    {
+                        var iconimage = await fileUploadAppService.getImgUrl(long.Parse(m.icon.Split(":")[1]), (long)WebsiteID);
+                        m.IconImage = iconimage;
+                    }
                     m.Children = await GetDisplayChild(m.Id, WebsiteID);
                     if (m.Children.Count == 0) m.Children = null;
                 }
@@ -154,6 +167,98 @@ namespace EtheriT.Coker.Application
             catch (Exception ex)
             {
                 throw new Exception("資料錯誤");
+            }
+        }
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                var WebstieId = await loginUserData.GetWebsiteId();
+                var results = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebstieId).ToListAsync();
+                if (results.Count > 0)
+                {
+                    var outputlist = new List<MenuGetAllListDto>();
+                    for (var i = 0; i < results.Count; i++)
+                    {
+                        MenuGetAllListDto outputdata = mapper.Map(results[i], new MenuGetAllListDto());
+                        var outputdata_child = await this.GetChild(outputdata.Id);
+                        if (outputdata_child.Count > 0)
+                        {
+                            outputdata.Items = "";
+                            for (var j = 0; j < outputdata_child.Count; j++)
+                            {
+                                if (j >= 3)
+                                {
+                                    outputdata.Items += "...";
+                                    break;
+                                }
+                                outputdata.Items += outputdata.Items == "" ? outputdata_child[j].Title : $"、{outputdata_child[j].Title}";
+                            }
+                        }
+                        outputlist.Add(outputdata);
+                    }
+                    var output = DataSourceLoader.Load(outputlist, loadOptions);
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                return new JsonResult(new List<ArticleDataGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public async Task<MenuGetAllListDto> GetSelectData(long Mid)
+        {
+            try
+            {
+                var WebstieId = await loginUserData.GetWebsiteId();
+                var results = await db.WebMenus.Where(e => e.Id == Mid && !e.IsDeleted && e.FK_WebsiteId == WebstieId).FirstOrDefaultAsync();
+                if (results != null)
+                {
+                    MenuGetAllListDto output = mapper.Map(results, new MenuGetAllListDto());
+                    var outputdata_child = await this.GetChild(output.Id);
+                    if (outputdata_child.Count > 0)
+                    {
+                        output.Items = "";
+                        for (var j = 0; j < outputdata_child.Count; j++)
+                        {
+                            if (j >= 3)
+                            {
+                                output.Items += "...";
+                                break;
+                            }
+                            output.Items += output.Items == "" ? outputdata_child[j].Title : $"、{outputdata_child[j].Title}";
+                        }
+                    }
+                    return output;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public async Task<MenuItemDto> GetDisplayOne(DataIdWebsiteIdDto dto)
+        {
+            try
+            {
+                var output = await (from w in db.WebMenus
+                                    where w.Id == dto.Id
+                                    where !w.IsDeleted && w.FK_WebsiteId == dto.WebsiteId
+                                    select new MenuItemDto
+                                    {
+                                        Id = w.Id,
+                                        Title = w.Title,
+                                        RouterName = w.RouterName,
+                                        Children = new List<MenuItemDto>()
+                                    }).FirstOrDefaultAsync();
+                if (output != null) output.Children = await this.GetDisplayChild(dto.Id, dto.WebsiteId);
+                return output;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
         public async Task<List<GetMenuBreadDto>> GetMenuBread(long Id)
@@ -240,6 +345,7 @@ namespace EtheriT.Coker.Application
             var user = await loginUserData.GetUser();
             if (menu == null) throw new Exception("查無資料");
             mapper.Map(dto, menu);
+            if (dto.IconUrl != null) menu.icon = $"IconId:{dto.IconId}";
             menu.LastModificationTime = DateTime.Now;
             menu.LastModifierUserId = user.Id;
             await loginUserData.SaveChanges(menu);
@@ -360,22 +466,29 @@ namespace EtheriT.Coker.Application
                     item.IsDeleted = true;
                     await loginUserData.SaveChanges(item);
 
-                    var m_imgid_list = new List<long>();
-                    m_imgid_list.Add((long)item.ImgId);
-                    var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                    if (item.ImgId != null)
                     {
-                        Sid = item.Id,
-                        Fid = m_imgid_list,
-                        Type = (int)FileBindTypeEnum.選單圖,
-                    });
-                    var o_imgid_list = new List<long>();
-                    o_imgid_list.Add((long)item.OverImgId);
-                    var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                        var m_imgid_list = new List<long>();
+                        m_imgid_list.Add((long)item.ImgId);
+                        var delete_image = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                        {
+                            Sid = item.Id,
+                            Fid = m_imgid_list,
+                            Type = (int)FileBindTypeEnum.選單圖,
+                        });
+                    }
+
+                    if (item.OverImgId != null)
                     {
-                        Sid = item.Id,
-                        Fid = o_imgid_list,
-                        Type = (int)FileBindTypeEnum.選單覆蓋,
-                    });
+                        var o_imgid_list = new List<long>();
+                        o_imgid_list.Add((long)item.OverImgId);
+                        var delete_overImage = await fileUploadAppService.deleteFileById(new FileDeleteDto()
+                        {
+                            Sid = item.Id,
+                            Fid = o_imgid_list,
+                            Type = (int)FileBindTypeEnum.選單覆蓋,
+                        });
+                    }
                 }
             }
             catch (Exception ex)

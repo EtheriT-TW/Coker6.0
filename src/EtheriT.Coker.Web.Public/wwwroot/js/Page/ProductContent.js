@@ -77,8 +77,6 @@ function ElementInit() {
 }
 
 function PageDefaultSet(result) {
-    console.log(result)
-
     $pro_name.text(result.title);
     $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
     $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
@@ -122,6 +120,7 @@ function PageDefaultSet(result) {
         })
     }
 
+    var roleid = 1;
     if (result.stocks.length > 1) {
         var obj = {};
 
@@ -134,10 +133,8 @@ function PageDefaultSet(result) {
 
         var maxprice = 0, minprice = 0;
         result.stocks.forEach(data => {
-            console.log(data)
             obj["s1id"] = data.fK_S1id;
             obj["s2id"] = data.fK_S2id;
-            var roleid = 1;
             obj["price"] = data.prices.find(e => e.fK_RId == roleid).price;
             price_list.push(obj);
             maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
@@ -182,14 +179,16 @@ function PageDefaultSet(result) {
         })
 
         if (maxprice == minprice) {
-            $pro_discount.text(result.stocks[0].price.toLocaleString('en-US'));
+            $pro_discount.text(minprice.toLocaleString('en-US'));
         } else {
             $pro_discount.text(minprice.toString().toLocaleString('en-US') + " ~ " + maxprice.toString().toLocaleString('en-US'));
         }
     } else {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
-        $pro_discount.text(result.stocks[0].price.toLocaleString('en-US'));
+
+        var price = result.stocks[0].prices.find(e => e.fK_RId == roleid).price;
+        $pro_discount.text(price.toLocaleString('en-US'));
     }
 
     var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper");
@@ -274,9 +273,7 @@ function PageDefaultSet(result) {
 
     if (result.files.length > 0) {
         result.files.forEach(function (file) {
-            console.log(IsFaPage)
             var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
-            console.log(link)
             $("#FileDownload").append(`<div class="file px-4 py-1 border border-dark">
 			                                                            <a href="${link}" download="${file.name}" titile="${file.name}"><div>${file.name}</div></a>
 			                                                       </div>`)
@@ -414,12 +411,11 @@ function addImage(pro_self) {
     var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
 
     var pro_filename = img_data.link[0];
-    while (pro_filename.indexOf('/') >= 0) {
-        pro_filename = pro_filename.substr(pro_filename.indexOf('/') + 1);
-    }
+    pro_folder = pro_filename.substr(0, pro_filename.lastIndexOf('/') + 1)
+    pro_filename = pro_filename.substr(pro_filename.lastIndexOf('/') + 1);
 
     var proImage_Self = $("#Pro_Image");
-    proImage_Self.attr("data-filename-x", pro_filename);
+    proImage_Self.attr({ "data-filename-x": pro_filename, "data-folder": pro_folder });
 
     $("#ProDisplayModal").on("shown.bs.modal", function () {
         const proImage = document.getElementById("Pro_Image");

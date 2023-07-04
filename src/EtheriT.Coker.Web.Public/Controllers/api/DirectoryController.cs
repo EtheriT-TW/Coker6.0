@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application.Shared.Directory;
+﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Directory;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +21,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
             return await directoryAppService.GetReleInfo(dto);
+        }
+        [HttpPost]
+        public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
+        {
+            return await directoryAppService.GetReleMenu(dto);
         }
 
     }

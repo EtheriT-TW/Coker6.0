@@ -79,11 +79,7 @@ var grapesInit = function (options) {
                 '/lib/fortawesome/css/all.min.css',
                 '/css/Grapes/GrapesCss.min.css',
                 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
-                '/shared/css/Frame.min.css',
-                '/shared/css/HoverEffect.min.css',
-                '/shared/css/Swiper.min.css',
-                '/shared/css/Directory.min.css',
-                '/shared/css/AnchorPoint.min.css',
+                '/Shared/shared.min.css',
             ],
             scripts: [
                 '/lib/jquery/dist/jquery.min.js',
@@ -91,15 +87,7 @@ var grapesInit = function (options) {
                 '/lib/swiper/swiper-bundle.min.js',
                 '/lib/masonry-layout/dist/masonry.pkgd.min.js',
                 '/lib/jquery-plugin-c-share/dist/jquery.c-share.min.js',
-                '/shared/js/Frame.min.js',
-                '/shared/js/HoverEffect.min.js',
-                '/shared/js/Swiper.min.js',
-                '/shared/js/ViewTypeChange.min.js',
-                '/shared/js/Sitemap.min.js',
-                '/shared/js/DirectoryGetData.min.js',
-                '/shared/js/LinkWithIcon.min.js',
-                '/shared/js/AnchorPoint.min.js',
-                '/shared/js/ShareBlock.min.js',
+                '/Shared/shared.min.js',
             ],
         },
         domComponents: {
@@ -146,6 +134,7 @@ var grapesInit = function (options) {
                                 setConfig(4, s);
                                 break;
                             case "catalog_frame":
+                            case "menu_directory":
                                 setConfig(5, s);
                                 break;
                             case "link_with_icon":

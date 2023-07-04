@@ -10,10 +10,11 @@
 	{
 		@foreach (var rightSideAd in Model.rightSideAd ?? new List<HtmlContentDisplayDto>())
 		{
-			var target = rightSideAd.Target ? "_blank" : "_self";
 			@if (rightSideAd.Link != "")
 			{
-				<div><a href="@rightSideAd.Link" target="@target"><img class="my-1 shadow" src="@rightSideAd.Img[0]" alt="@rightSideAd.Title"></a></div>
+				var target = rightSideAd.Target == true ? "_blank" : "_self";
+				var title = rightSideAd.Target == true ? $"連結至：{rightSideAd.Title}(另開視窗)" : $"連結至：{rightSideAd.Title}";
+				<div><a href="@rightSideAd.Link" target="@target" title="@title"><img class="my-1 shadow" src="@rightSideAd.Img[0]" alt="@rightSideAd.Title"></a></div>
 			}
 			else
 			{

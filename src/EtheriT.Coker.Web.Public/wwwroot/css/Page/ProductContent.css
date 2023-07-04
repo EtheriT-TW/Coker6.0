@@ -22,10 +22,6 @@ input[type="number"] {
         min-height: 50vmin;
     }
 
-#Pro_Image {
-    cursor: zoom-in !important;
-}
-
 /* ProductSwiper */
 .ProductSwiper > .swiper-wrapper > .swiper-slide {
     height: 600px;

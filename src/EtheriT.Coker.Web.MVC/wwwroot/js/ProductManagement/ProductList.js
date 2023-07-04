@@ -434,7 +434,6 @@ function ElementInit() {
     $introduction_count = $("#ProductForm > .introduction .introduction_count");
     $illustrate = $("#InputIllustrate");
     $illustrate_count = $("#ProductForm > .illustrate .illustrate_count");
-    $file = $('#InputFile');
     $marks = $("#InputMarks");
     $spec_select = $(".spec_select")
     $price = $(".input_price");
@@ -485,7 +484,6 @@ function FormDataClear() {
     $introduction_count.text(0);
     $illustrate.val("");
     $illustrate_count.text(0);
-    $file.val('');
     $marks.val("");
     $price.val("");
     $stock_number.val("");
@@ -1299,19 +1297,6 @@ function AddUp(success_text, error_text, target) {
     }).done(function (result) {
         var pid = parseInt(result.message);
         if (result.success) {
-            var files = $file.prop('files');
-            if (files.length > 0) {
-                var formData = new FormData();
-                formData.append("type", 8);
-                formData.append("sid", pid);
-                formData.append("serno", 500);
-                for (var i = 0; i < files.length; i++) {
-                    formData.append("files", files[i]);
-                    co.File.Upload(formData);
-                    formData.delete('files');
-                }
-            }
-
             if (total_files.length > 0) {
 
                 $("#ProductForm > .data_upload > ul > li").each(function () {
@@ -1355,7 +1340,6 @@ function AddUp(success_text, error_text, target) {
                                     for (var j = i; j < i + 3; j++) {
                                         formData.append('files', data[j]);
                                     }
-                                    //console.log(formData.get("files"));
                                     formData.delete('files');
                                 }
                                 break;

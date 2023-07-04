@@ -1,9 +1,14 @@
-﻿
-function ImageUploadModalInit($image_upload, isSingle, needCompress) {
-    //console.log("ImageUploadModalInit")
-    ImageUploadModalClear($image_upload);
-}
-
+﻿$.fn.extend({
+    ImageUploadModalClear: function () {
+        var $select = $(this);
+        $select.find(".img_input_frame").data("delectList", null);
+        $select.find(".img_input_frame").children().each(function () {
+            var $self = $(this);
+            if (!$self.is("template")) $self.remove();
+        })
+        ImageSetData($select, null);
+    }
+});
 function ImageUploadModalClear($select) {
     $select.find(".img_input_frame").data("delectList", null);
     $select.find(".img_input_frame").children().each(function () {
@@ -12,6 +17,7 @@ function ImageUploadModalClear($select) {
     })
     ImageSetData($select, null);
 }
+var ImageUploadModalInit = ImageUploadModalClear;
 
 function ImageDelect($select) {
     var $img_btn = $select.find(".btn_input_pic");
@@ -25,7 +31,6 @@ function ImageDelect($select) {
         ImageClear($select);
     }
 }
-
 function ImageClear($select) {
     var $img_btn = $select.find(".btn_input_pic");
     var $parent_frame = $select.parents(".img_input_frame")
@@ -44,6 +49,7 @@ function ImageClear($select) {
             $img_preview.attr("alt", "");
 
             var $file_name = $select.find(".file_name");
+            $select.find(".btn_img_delete").addClass("d-none");
             $file_name.text("加入照片");
         }
     }
@@ -62,7 +68,7 @@ function ImageUploadModalDataInsert($select, id, link, name) {
 
 function ImageSetData($select, file) {
     var isSingle = $select.data("issinge");
-    //var needCompress = $select.data("needcompress")
+    var needCompress = $select.data("needcompress")
     if (file != null && isSingle) var input_frame = $select.find(".img_input");
     else if ($select.hasClass("img_input")) var input_frame = $select;
     else input_frame = $($("#Template_Image_Preview").html()).clone();
@@ -105,16 +111,48 @@ function ImageSetData($select, file) {
             var $select_input = $(this).parent(".img_input");
             if (typeof ($select_input.data("file")) != "undefined") $select = $select_input;
             $.each(this.files, function (index, file) {
-                var reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function (e) {
-                    var obj = {};
-                    obj["Id"] = 0;
-                    obj["File"] = file;
-                    obj["Name"] = file.name;
-                    obj["Link"] = e.target.result
-                    ImageSetData($select, obj)
-                };
+                if (needCompress) {
+                    var reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = function (e) {
+                        var img_file = [];
+                        img_file.push(file);
+                        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 500, height: 500, imageType: img_file[0].type })
+                        htmlImageCompress.then(function (result) {
+                            img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
+
+                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3, width: 500, height: 500, imageType: img_file[0].type })
+                            htmlImageCompress.then(function (result) {
+                                img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
+                                var obj = {};
+                                obj["Id"] = 0;
+                                obj["File"] = img_file;
+                                obj["Name"] = file.name;
+                                obj["Link"] = e.target.result
+                                ImageSetData($select, obj)
+                            }).catch(function (err) {
+                                console.log($`發生錯誤：${err}`);
+                                UploadPreviewFrameClear();
+                                co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
+                            })
+                        }).catch(function (err) {
+                            console.log($`發生錯誤：${err}`);
+                            UploadPreviewFrameClear();
+                            co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
+                        })
+                    };
+                } else {
+                    var reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = function (e) {
+                        var obj = {};
+                        obj["Id"] = 0;
+                        obj["File"] = file;
+                        obj["Name"] = file.name;
+                        obj["Link"] = e.target.result
+                        ImageSetData($select, obj)
+                    };
+                }
             });
         });
         $select.find(".img_input_frame").prepend(input_frame);

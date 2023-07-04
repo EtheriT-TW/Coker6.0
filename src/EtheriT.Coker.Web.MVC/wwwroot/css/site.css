@@ -11901,3 +11901,13 @@ a.bg-dark-light25:hover, a.bg-dark-light25:focus, button.bg-dark-light25:hover, 
         width: fit-content !important;
     }
 }
+
+.has_image {
+    height: 150px !important;
+    width: 150px !important;
+}
+
+.img_preview {
+    max-height: 150px;
+    max-width: 150px;
+}

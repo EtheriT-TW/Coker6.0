@@ -1,16 +1,4 @@
-﻿.custom_h3 {
-    font-size: 1.5rem;
-}
-
-.custom_h4 {
-    font-size: 1.3rem;
-}
-
-.custom_h5 {
-    font-size: 1.1rem;
-}
-
-li {
+﻿li {
     list-style: none;
 }
 
@@ -22,6 +10,11 @@ iframe {
     float: left;
     width: calc(100%/3);
     height: auto;
+}
+
+.bottom_3-2 {
+    top: calc(100%/3*2);
+    transform: translateY(-50%);
 }
 
 /* Container */
@@ -49,6 +42,22 @@ iframe {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+}
+
+.text_shadow {
+    text-shadow: 2px 2px 4px #242424;
+}
+
+.custom_h3 {
+    font-size: 1.5rem;
+}
+
+.custom_h4 {
+    font-size: 1.3rem;
+}
+
+.custom_h5 {
+    font-size: 1.1rem;
 }
 
 /* Image */

@@ -69,17 +69,20 @@
                             })
                         }
                     });
-                    ImageUploadModalInit($("#ImageUpload"), true, false);
-                    ImageUploadModalInit($("#OverImageUpload"), true, false);
+                    $("#IconImageUpload").ImageUploadModalClear();
+                    $("#ImageUpload").ImageUploadModalClear();
+                    $("#OverImageUpload").ImageUploadModalClear();
                 },
                 edit: function () {
                     openEditForm();
                     $("#btnUpdate").removeClass("d-none");
                     $("#btnRefresh,#btnAdd").addClass("d-none");
-                    ImageUploadModalClear($("#ImageUpload"));
+                    $("#IconImageUpload").ImageUploadModalClear();
+                    ImageUploadModalDataInsert($("#IconImageUpload"), $("#IconImageUpload").siblings("#iconId").val(), $("#IconImageUpload").siblings("#iconUrl").val(), "");
+                    $("#ImageUpload").ImageUploadModalClear();
                     ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
-                    ImageUploadModalClear($("#OverImageUpload"));
-                    ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#ImageUpload").siblings("#overImgName").val())
+                    $("#OverImageUpload").ImageUploadModalClear();
+                    ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val())
                 },
                 del: function (data) {
                     if ($("#myEditor>li").length == 0) {
@@ -99,7 +102,20 @@
                         if (!result.success) co.sweet.error(result.error);
                         else {
                             data.id = parseInt(result.message);
-                            var img_success = 0, overimg_success = 0;
+                            var ico_success = 0, img_success = 0, overimg_success = 0;
+
+                            var $ico_file = $("#IconImageUpload .img_input_frame > .img_input");
+                            if (typeof ($ico_file.data("file")) != "undefined" && $ico_file.data("file") != null) {
+                                var formData = new FormData();
+                                formData.append("files", $ico_file.data("file").File);
+                                formData.append("type", 9);
+                                formData.append("sid", data.id);
+                                formData.append("serno", 500);
+                                co.File.Upload(formData).done(function (result) {
+                                    if (result.success) ico_success = 1;
+                                    else ico_success = -1;
+                                });
+                            } else ico_success = 1;
 
                             var $file = $("#ImageUpload .img_input_frame > .img_input");
                             if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null) {
@@ -128,13 +144,14 @@
                             } else overimg_success = 1;
 
                             const timmer = function () {
-                                if (img_success != 0 && overimg_success != 0) {
-                                    ImageUploadModalClear($("#ImageUpload"));
-                                    ImageUploadModalClear($("#OverImageUpload"));
+                                if (ico_success != 0 && img_success != 0 && overimg_success != 0) {
+                                    $("#IconImageUpload").ImageUploadModalClear();
+                                    $("#ImageUpload").ImageUploadModalClear();
+                                    $("#OverImageUpload").ImageUploadModalClear();
                                     menuReload(menuEditor, myOffcanvas);
                                     if (!result.success) co.sweet.error(result.error);
                                     else {
-                                        if (img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
+                                        if (ico_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
                                         else co.sweet.success("新增成功");
                                     }
                                 } else setTimeout(timmer, 100);
@@ -144,7 +161,19 @@
                     });
                 },
                 update: function (data) {
-                    var img_success = 0, overimg_success = 0, delimg_success = 0, deloverimg_success = 0;
+                    var iconimg_success = 0, img_success = 0, overimg_success = 0, deliconimg_success = 0, delimg_success = 0, deloverimg_success = 0;
+
+                    var $icon_del_list = $("#IconImageUpload .img_input_frame").data("delectList");
+                    if ($icon_del_list != null) {
+                        co.File.DeleteFileById({
+                            sid: data.id,
+                            type: 9,
+                            fid: $icon_del_list,
+                        }).done(function (result) {
+                            if (result.success) deliconimg_success = 1
+                            else deliconimg_success = -1
+                        });
+                    } else deliconimg_success = 1
 
                     var $del_list = $("#ImageUpload .img_input_frame").data("delectList");
                     if ($del_list != null) {
@@ -171,6 +200,26 @@
                     } else deloverimg_success = 1
 
                     co.WebMesnus.createOrEdit(data).done(function (result) {
+                        const iconimgdel_timmer = function () {
+                            if (deliconimg_success != 0) {
+                                if (deliconimg_success == 1) {
+                                    var $file = $("#IconImageUpload .img_input_frame > .img_input");
+                                    if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
+                                        var formData = new FormData();
+                                        formData.append("files", $file.data("file").File);
+                                        formData.append("type", 9);
+                                        formData.append("sid", data.id);
+                                        formData.append("serno", 500);
+                                        co.File.Upload(formData).done(function (result) {
+                                            if (result.success) iconimg_success = 1;
+                                            else iconimg_success = -1;
+                                        });
+                                    } else iconimg_success = 1;
+                                } else iconimg_success = -1;
+                            } else setTimeout(iconimgdel_timmer, 100);
+                        }
+                        setTimeout(iconimgdel_timmer, 100);
+
                         const imgdel_timmer = function () {
                             if (delimg_success != 0) {
                                 if (delimg_success == 1) {
@@ -192,8 +241,8 @@
                         setTimeout(imgdel_timmer, 100);
 
                         const overdel_timmer = function () {
-                            if (delimg_success != 0) {
-                                if (delimg_success == 1) {
+                            if (deloverimg_success != 0) {
+                                if (deloverimg_success == 1) {
                                     var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
                                     if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
                                         var formData = new FormData();
@@ -212,13 +261,14 @@
                         setTimeout(overdel_timmer, 100);
 
                         const timmer = function () {
-                            if (img_success == 1 && overimg_success == 1) {
+                            if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
                                 menuReload(menuEditor, myOffcanvas);
-                                ImageUploadModalClear($("#ImageUpload"));
-                                ImageUploadModalClear($("#OverImageUpload"));
+                                $("#IconImageUpload").ImageUploadModalClear();
+                                $("#ImageUpload").ImageUploadModalClear();
+                                $("#OverImageUpload").ImageUploadModalClear();
                                 if (!result.success) co.sweet.error(result.error);
                                 else {
-                                    if (img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
+                                    if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
                                     else co.sweet.success("新增成功");
                                 }
                             } else setTimeout(timmer, 100);
@@ -304,8 +354,9 @@
         closeEdit();
     });
     $("#btnExtend").on("click", function () {
-        ImageUploadModalClear($("#ImageUpload"));
-        ImageUploadModalClear($("#OverImageUpload"));
+        $("#IconImageUpload").ImageUploadModalClear();
+        $("#ImageUpload").ImageUploadModalClear();
+        $("#OverImageUpload").ImageUploadModalClear();
         openEditForm();
         $('#frmEdit [name="id"]').val(0);
         $("#btnRefresh,#btnAdd").removeClass("d-none");

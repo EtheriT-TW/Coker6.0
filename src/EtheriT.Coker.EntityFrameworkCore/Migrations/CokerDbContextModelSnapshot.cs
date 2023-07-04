@@ -182,6 +182,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<long?>("FK_Mid")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
 

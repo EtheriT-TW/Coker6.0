@@ -3,7 +3,7 @@ var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
 
 function PageReady() {
-    ImageUploadModalInit($("#ImageUpload"), false, false);
+    ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
 
     $picker = $("#InputDate");
@@ -208,7 +208,6 @@ function AddUp(display, success_text, error_text) {
             fid: $("#ImageUpload").find(".img_input_frame").data("delectList")
         });
     }
-
 
     co.HtmlContent.AddUp({
         Id: keyId,

@@ -14,10 +14,11 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Article;
-using System.Diagnostics;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Product;
-using System.Linq;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using Microsoft.Extensions.Configuration;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -29,13 +30,16 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IMapper mapper;
         private readonly IArticleAppService articleAppService;
         private readonly IProductAppService productAppService;
+        private readonly IWebMenuApplication webMenuApplicationService;
         public DirectoryAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
             ITagAppService tagAppService,
             IArticleAppService articleAppService,
-            IProductAppService productAppService
+            IProductAppService productAppService,
+             IWebMenuApplication webMenuApplicationService,
+             IConfiguration configuration
         )
         {
             this.db = db;
@@ -44,6 +48,7 @@ namespace EtheriT.Coker.Application.Directory
             this.tagAppService = tagAppService;
             this.articleAppService = articleAppService;
             this.productAppService = productAppService;
+            this.webMenuApplicationService = webMenuApplicationService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -60,14 +65,9 @@ namespace EtheriT.Coker.Application.Directory
                     if (userid != 0)
                     {
                         long WebsiteID = await loginUserData.GetWebsiteId();
-                        Core.Models.Directory newItem = new Core.Models.Directory
-                        {
-                            FK_WebsiteId = WebsiteID,
-                            Title = dto.Title,
-                            Description = dto.Description,
-                            Visible = dto.Visible,
-                            Type = dto.Type,
-                        };
+                        Core.Models.Directory newItem = mapper.Map<Core.Models.Directory>(dto);
+                        newItem.FK_WebsiteId = WebsiteID;
+                        if (dto.Type == 3) newItem.FK_Mid = dto.FK_Mid;
                         db.Directory.Add(newItem);
                         await loginUserData.SaveChanges(newItem);
                         asoid = newItem.Id;
@@ -77,20 +77,16 @@ namespace EtheriT.Coker.Application.Directory
                 else
                 {
                     var db_d = db.Directory.Where(e => e.Id == dto.Id).FirstOrDefault();
-                    if (db_d != null && userid != 0)
+                    if (db_d != null)
                     {
-                        db_d.Title = dto.Title;
-                        db_d.Description = dto.Description;
-                        db_d.Visible = dto.Visible;
-                        db_d.Type = dto.Type;
-                        db_d.LastModifierUserId = userid;
-                        db_d.LastModificationTime = DateTime.Now;
+                        db_d = mapper.Map(dto, db_d);
+                        if (dto.Type == 3) db_d.FK_Mid = dto.FK_Mid;
                         await loginUserData.SaveChanges(db_d);
                     }
                     else throw new Exception("查無資料");
                 }
 
-                if (asoid != null)
+                if (asoid != null && (dto.Type == (int)DirectoryTypeEnum.商品 || dto.Type == (int)DirectoryTypeEnum.文章))
                 {
                     var tagitem = new List<TagAssociateDto>();
                     foreach (var data in dto.TagSelected)
@@ -104,7 +100,6 @@ namespace EtheriT.Coker.Application.Directory
                             IsDeleted = data.IsDeleted
                         });
                     }
-
                     tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
                 }
 
@@ -135,6 +130,7 @@ namespace EtheriT.Coker.Application.Directory
                                             Visible = e.Visible,
                                             Type = e.Type,
                                             TagDatas = new List<TagGetSelectedDto>(),
+                                            FK_MId = e.FK_Mid
                                         }).FirstOrDefaultAsync();
 
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
@@ -257,6 +253,18 @@ namespace EtheriT.Coker.Application.Directory
 
             return output;
         }
+        public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
+        {
+            var websiteid = dto.WebsiteId;
+            if (websiteid == 0) websiteid = await loginUserData.GetWebsiteId();
+            var output = await (from e in db.Directory where e.Id == dto.Id && !e.IsDeleted select e.FK_Mid).FirstOrDefaultAsync();
+            if (output != null) return await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto()
+            {
+                Id = (long)output,
+                WebsiteId = websiteid
+            });
+            return null;
+        }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             try
@@ -275,26 +283,39 @@ namespace EtheriT.Coker.Application.Directory
                                         Description = e.Description,
                                         Type = ((DirectoryTypeEnum)e.Type).ToString(),
                                         Visible = e.Visible,
-                                        Tags = "",
+                                        Items = "",
+                                        FK_Mid = e.FK_Mid,
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     if (output != null)
                     {
                         foreach (var data in output.data)
                         {
-                            var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                            switch (data.GetType().GetProperty("Type").GetValue(data, null))
                             {
-                                Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
-                                Type = (int)TagAssociateTypeEnum.目錄
-                            });
-
-                            var tag_text = "";
-                            foreach (var tagData in tagDatas)
-                            {
-                                tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
+                                case "商品":
+                                case "文章":
+                                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                                    {
+                                        Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
+                                        Type = (int)TagAssociateTypeEnum.目錄
+                                    });
+                                    var tag_text = "";
+                                    foreach (var tagData in tagDatas) tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
+                                    data.GetType().GetProperty("Items").SetValue(data, tag_text == "" ? "無" : tag_text);
+                                    break;
+                                case "選單":
+                                    var mid = data.GetType().GetProperty("FK_Mid").GetValue(data, null);
+                                    MenuGetAllListDto webmenu_data;
+                                    var webmenu = "";
+                                    if (mid != null)
+                                    {
+                                        webmenu_data = await webMenuApplicationService.GetSelectData((long)mid);
+                                        if (webmenu_data != null) webmenu = webmenu_data.Items == null ? webmenu_data.Title : $"{webmenu_data.Title}({webmenu_data.Items})";
+                                    }
+                                    data.GetType().GetProperty("Items").SetValue(data, webmenu);
+                                    break;
                             }
-
-                            data.GetType().GetProperty("Tags").SetValue(data, tag_text == "" ? "無" : tag_text);
                         }
                     }
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

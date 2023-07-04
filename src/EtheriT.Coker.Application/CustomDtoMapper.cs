@@ -37,16 +37,22 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Html, option => option.MapFrom(c => c.SaveHtml))
                 .ForMember(e => e.Css, option => option.MapFrom(c => c.SaveCss))
                 .ReverseMap();
+            CreateMap<WebMenu, MenuGetAllListDto>()
+                .ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
+                .ReverseMap();
+            CreateMap<MenuItemDto, MenuGetAllListDto>()
+                .ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
+                .ReverseMap();
 
             //Html_Content
             CreateMap<HtmlContentDto, Html_Content>()
                 .ReverseMap()
                 .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
-             CreateMap<ObjectTypeItemDto, Html_Content>()
-                .ReverseMap()
-                .ForMember(e => e.FK_TopNodeId, option => option.MapFrom(c => c.Type))
-                .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
-                .ForMember(e => e.MinLevel, option => option.MapFrom(c => 1));
+            CreateMap<ObjectTypeItemDto, Html_Content>()
+               .ReverseMap()
+               .ForMember(e => e.FK_TopNodeId, option => option.MapFrom(c => c.Type))
+               .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
+               .ForMember(e => e.MinLevel, option => option.MapFrom(c => 1));
             CreateMap<UpdateSerNoDto, Html_Content>()
                 .ForMember(e => e.Ser_no, option => option.MapFrom(c => c.SerNO))
                 .ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
@@ -68,12 +74,12 @@ namespace EtheriT.Coker.Application
             CreateMap<ProductImportDto, Prod>()
                 .ReverseMap();
             CreateMap<ProdAddUpDto, Prod>()
-				.ReverseMap();
+                .ReverseMap();
             CreateMap<ProductImportDto, ProdAddUpDto>()
                 .ForMember(e => e.Id, option => option.MapFrom(c => 0))
-				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
-				.ForMember(e => e.Permanent, option => option.MapFrom(c => true))
-				.ReverseMap();
+                .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
+                .ForMember(e => e.Permanent, option => option.MapFrom(c => true))
+                .ReverseMap();
             CreateMap<ProdGetDataDto, Prod>().ReverseMap();
             CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
@@ -82,8 +88,8 @@ namespace EtheriT.Coker.Application
                 .ReverseMap()
                 .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price } }));
 
-			//Tags
-			CreateMap<TagSelectedDto, Core.Models.Tag>()
+            //Tags
+            CreateMap<TagSelectedDto, Core.Models.Tag>()
                 .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
                 .ReverseMap();
 
@@ -92,11 +98,12 @@ namespace EtheriT.Coker.Application
             CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
 
             //Directory
+            CreateMap<DirectoryAddUpDto, Core.Models.Directory>().ReverseMap();
             CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
                 .ReverseMap();
 
-			//FileUpload
+            //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
             //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
             //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))

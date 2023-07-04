@@ -36,6 +36,23 @@ function PageReady() {
 
     ElementInit();
     TagListModalInit();
+    WebmenuListModalInit();
+
+    $bind_type.on("change", function () {
+        switch (parseInt($bind_type.val())) {
+            case 1:
+            case 2:
+                $(".webmenu > input").attr("disabled", "disabled")
+                $(".tag > input").removeAttr("disabled");
+                WebmenuDataClear();
+                break;
+            case 3:
+                $(".tag > input").attr("disabled", "disabled");
+                $(".webmenu > input").removeAttr("disabled", "disabled")
+                TagDataClear();
+                break;
+        }
+    });
 
     const forms = $('#DirectorytForm');
     (() => {
@@ -102,6 +119,9 @@ function ElementInit() {
     $title_text = $title.children("textarea");
     $description = $(".description");
     $description_text = $description.children("textarea");
+
+    $(".tag > input").attr("disabled", "disabled")
+    $(".webmenu > input").attr("disabled", "disabled")
 }
 
 
@@ -165,14 +185,16 @@ function deleteButtonClicked(e) {
 
 function FormDataClear() {
     TagDataClear();
+    WebmenuDataClear();
     keyId = 0;
     $btn_display.children("span").text("visibility");
-    $bind_type.val(0);
+    $bind_type.val(null);
     $title_text.val("");
     $description_text.val("");
 }
 
 function FormDataSet(result) {
+    console.log(result)
     FormDataClear();
     keyId = result.id;
     disp_opt = result.visible;
@@ -182,19 +204,39 @@ function FormDataSet(result) {
         $btn_display.children("span").text("visibility_off");
     }
     $bind_type.val(result.type);
+
+    switch (parseInt($bind_type.val())) {
+        case 1:
+        case 2:
+            $(".webmenu > input").attr("disabled", "disabled")
+            $(".tag > input").removeAttr("disabled")
+            TagDataSet(result.tagDatas);
+            WebmenuDataClear();
+            break;
+        case 3:
+            $(".tag > input").attr("disabled", "disabled")
+            $(".webmenu > input").removeAttr("disabled", "disabled")
+            WebmenuDataSet(result.fK_MId);
+            TagDataClear();
+            break;
+    }
     $title_text.val(result.title);
     $description_text.val(result.description);
-    TagDataSet(result.tagDatas);
 }
 
 function AddUp(success_text, error_text) {
+    console.log(webmenu_list)
+    var Fk_Mid = null;
+    if (webmenu_list.length > 0 && !webmenu_list[webmenu_list.length - 1].IsDeleted) Fk_Mid = webmenu_list[webmenu_list.length - 1].FK_MId;
+
     co.Directory.AddUp({
         Id: keyId,
         Title: $title_text.val(),
         Description: $description_text.val(),
         Type: parseInt($bind_type.val()),
         Visible: disp_opt,
-        TagSelected: tag_list
+        TagSelected: tag_list,
+        Fk_Mid: Fk_Mid
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         directory_list.component.refresh();

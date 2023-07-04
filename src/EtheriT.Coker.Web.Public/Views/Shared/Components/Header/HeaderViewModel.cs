@@ -7,9 +7,11 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
     {
         public string? Title { get; set; }
         public string? HomeLink { get; set; }
+        public bool? HomeTarget { get; set; }
         public string? LogoImageUrl { get; set; }
         public string? Sitemap_Link { get; set; }
         public bool? Sitemap_Target { get; set; }
+        public bool? HasShoppingCar { get; set; }
         public List<MenuItemModel>? menuItemModels { get; set; }
         public List<MarqueeDisplayDto>? marqueeModels { get; set; }
     }

@@ -152,6 +152,9 @@
 	<script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
 	<script src="~/lib/jquery-twzipcode/jquery.twzipcode.min.js"></script>
 	<script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
+	<script>
+		window.CI360 = { notInitOnLoad: true }
+	</script>
 	<script src="https://scaleflex.cloudimg.io/v7/plugins/js-cloudimage-360-view/latest/js-cloudimage-360-view.min.js?func=proxy"></script>
 	<script src="~/js/site.min.js" asp-append-version="true"></script>
 	@await RenderSectionAsync("Scripts", required: false)

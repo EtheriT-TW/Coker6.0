@@ -5,5 +5,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     {
         商品 = 1,
         文章 = 2,
+        選單 = 3,
     }
 }

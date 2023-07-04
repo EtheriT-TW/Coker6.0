@@ -181,6 +181,30 @@
         },
     });
 
+    editor.DomComponents.addType('目錄', {
+        isComponent: el => el.classList?.contains('menu_directory'),
+        model: {
+            defaults: {
+                droppable: false,
+                editable: false,
+                traits: [{ name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' }],
+            },
+        },
+    });
+
+    editor.DomComponents.addType('目錄內容', {
+        isComponent: el => el.parentElement.classList?.contains('menu_directory'),
+        model: {
+            defaults: {
+                removable: false,
+                draggable: false,
+                droppable: false,
+                editable: false,
+                copyable: false
+            }
+        },
+    });
+
     editor.DomComponents.addType('輪播容器', {
         isComponent: el => el.classList?.contains('image_link_slide'),
     });

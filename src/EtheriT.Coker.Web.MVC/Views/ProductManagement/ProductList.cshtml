@@ -243,10 +243,6 @@
                     </div>
                 </div>
 
-                <div class="file input-group mb-3">
-                    <input id="InputFile" class="form-control rounded text-start" type="file" multiple="multiple" aria-label="Input File">
-                </div>
-
                 @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TechCertListModal"})
 
                 @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})

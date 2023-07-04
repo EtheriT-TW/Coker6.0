@@ -13,7 +13,6 @@
 
         $directory.children('a[href^="#"]').click(function (event) {
             var id = $(this).attr("href");
-            console.log(id)
             var target = $(id).offset().top - 50;
             $('html, body').animate({ scrollTop: target }, 0);
             event.preventDefault();

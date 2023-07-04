@@ -26,7 +26,11 @@
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid nowrap d-flex flex-column flex-lg-row">
                 <div class="d-flex align-items-center w-100 justify-content-between">
-                    <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink">
+                    @{
+                        var home_target = Model.HomeTarget == true ? "_blank" : "_self";
+                        var homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                        }
+                    <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink" target="@home_target" title="@homte_title">
                         <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
                     </a>
                     <button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,7 +40,9 @@
                 <div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
                     @if (Model.Sitemap_Link != null)
                     {
-                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link">網站導覽</a>
+                        var sitemap_target = Model.Sitemap_Target == true ? "_blank" : "_self";
+                        var sitemap_title = Model.Sitemap_Target == true ? "連結至：網站導覽(另開視窗)" : "連結至：網站導覽";
+                        <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target">網站導覽</a>
                     }
                     <div class="align-items-center bg-white d-flex rounded">
                         <input class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
@@ -56,9 +62,18 @@
                 <ul class="img_ul">
                     @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                     {
+                        var target = menu.Target == true ? "_blank" : "_self";
+                        var title = menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}";
                         <li class="float-start">
-                            <a class="nav-link p-0" aria-current="page" href="@menu.imageLink">
-                                <img class="logo" src="@menu.imageUrl" alt="@menu.Title">
+                            <a class="nav-link p-0 text-black" aria-current="page" href="@menu.Link" title="@title" target="@target">
+                                @if (@menu.imageUrl == "")
+                                {
+                                    <div class="w-25 custom_h5 text-white mx-auto">@menu.Title</div>
+                                }
+                                else
+                                {
+                                    <img class="logo" src="@menu.imageUrl" alt="@menu.Title">
+                                }
                             </a>
                         </li>
                     }
@@ -68,7 +83,11 @@
     </div>
 </div>
 <div class="container p-0">
-    <a class="" href="/eplus/home">
-        <img class="w-100" src="~/upload/eplus/banner.jpg" alt="e++產業服務平台">
+    @{
+        var picture_home_target = Model.HomeTarget == true ? "_blank" : "_self";
+        var picture_homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+    }
+    <a class="" href="@Model.HomeLink" target="@picture_home_target" title="@picture_homte_title">
+        <img class="w-100" src="~/upload/eplus/banner.jpg" alt="@Model.Title">
     </a>
 </div>

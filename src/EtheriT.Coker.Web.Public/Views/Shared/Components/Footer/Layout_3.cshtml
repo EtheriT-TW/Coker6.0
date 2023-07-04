@@ -11,11 +11,11 @@
 			{
 				<div class="menu_item text-start my-2 flex-grow-1">
 					<div class="border-bottom pb-1 mb-1 border-dark fs-5 fw-bold">@menu.Title</div>
-					<ul>
+					<ul class="font_weight">
 						@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
 						{
 							<li class="font_small">
-								<a class="text-black" href="@sub_menu.Link">@sub_menu.Title</a>
+								<a class="text-black " href="@sub_menu.Link" title="連結至:@sub_menu.Title">@sub_menu.Title</a>
 							</li>
 						}
 					</ul>
@@ -50,12 +50,12 @@
 					@Model.Content[i]
 					@if (Model.Privacy_Link != null)
 					{
-						<a class="text-white text-decoration-underline" href="@Model.Privacy_Link">隱私權聲明</a>
+						<a class="text-white text-decoration-underline" href="@Model.Privacy_Link" title="連結至:隱私權聲明">隱私權聲明</a>
 					}
 					@if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
 					{
-						<a href="@Model.Accessibility_Link">
-							<img class="px-3 my-3" src="@Model.Accessibility_Badge" />
+						<a href="@Model.Accessibility_Link" title="連結至:無障礙網站AA認證">
+							<img class="px-3 my-3" alt="無障礙網站AA認證" src="@Model.Accessibility_Badge" />
 						</a>
 					}
 				</div>

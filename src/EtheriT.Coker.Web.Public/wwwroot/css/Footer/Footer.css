@@ -279,7 +279,7 @@ footer {
     #Logo_Bottom::before, #Logo_Bottom::after {
         width: 12.5%;
     }
-}
+}   
 
 @media only screen and (max-width: 368px) {
 
@@ -297,5 +297,8 @@ footer {
     .paging_frame_small_2, .paging_frame_small_4 {
         margin-left: 2.5%;
         margin-right: 5%;
+    }
+    .menu-item{
+       width:200px;
     }
 }

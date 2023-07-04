@@ -44,38 +44,38 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     {
                         footerViewModels = new List<FooterViewModel> {
                             new FooterViewModel { Title = "最新消息", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "園區公告", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "活動列表", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "影音專區", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "防疫紓困專區", Link = "/ksp/home" },
+                                new FooterViewModel { Title = "園區公告", Link = "/ksp/Announcement" },
+                                new FooterViewModel { Title = "活動列表", Link = "/ksp/Activity" },
+                                new FooterViewModel { Title = "影音專區", Link = "/ksp/VideoZone" },
+                                new FooterViewModel { Title = "防疫紓困專區", Link = "/ksp/PreventionZone" },
                             },
                             },
                             new FooterViewModel { Title = "園區資訊", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "園區介紹", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "休閒設施", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "會議室租借", Link = "/ksp/home" },
+                                new FooterViewModel { Title = "園區介紹", Link = "/ksp/Introdece" },
+                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/Trafficlnfo" },
+                                new FooterViewModel { Title = "休閒設施", Link = "/ksp/Facilities" },
+                                new FooterViewModel { Title = "會議室租借", Link = "/ksp/MeetingRoomRental" },
                             },
                             },
-                            new FooterViewModel { Title = "園區資訊", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "園區介紹", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "休閒設施", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "會議室租借", Link = "/ksp/home" },
+                            new FooterViewModel { Title = "投資資訊", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
+                                new FooterViewModel { Title = "投資優勢", Link = "/ksp/InvestmentAdvantages" },
+                                new FooterViewModel { Title = "租售空間", Link = "/ksp/RentandSellSpace" },
+                                new FooterViewModel { Title = "投資進駐", Link = "/ksp/Stationed" },
+                                new FooterViewModel { Title = "後續經營", Link = "/ksp/SubsequentOperation" },
                             },
                             },
-                            new FooterViewModel { Title = "園區資訊", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "園區介紹", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "休閒設施", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "會議室租借", Link = "/ksp/home" },
+                            new FooterViewModel { Title = "園區廠商", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
+                                new FooterViewModel { Title = "產業分類查詢", Link = "/ksp/CategoryQuery" },
+                                new FooterViewModel { Title = "地理位置查詢", Link = "/ksp/Locationinquire" },
+                                new FooterViewModel { Title = "", Link = "/ksp/home" },
+                                new FooterViewModel { Title = "", Link = "/ksp/home" },
                             },
                             },
-                            new FooterViewModel { Title = "園區資訊", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "園區介紹", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "休閒設施", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "會議室租借", Link = "/ksp/home" },
+                            new FooterViewModel { Title = "輔助資源", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
+                                new FooterViewModel { Title = "高雄軟體園區專屬輔助資源", Link = "/ksp/TutoringResources" },
+                                new FooterViewModel { Title = "政府輔助資源", Link = "/ksp/AuxiliaryResources" },
+                                new FooterViewModel { Title = "中小企業輔導體系", Link = "/ksp/GuidanceSystem" },
+                                new FooterViewModel { Title = "法人單位/公協會", Link = "/ksp/PublicAssociation" },
                             },
                             }
                         },
@@ -83,7 +83,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         line_title = "KSP高雄軟體園區\r\n官方LINE@",
                         line_describe = "即時的掌握園區第一手資訊\r\n快點加入高軟官方Line@",
                         Privacy_Link = "#",
-                        Accessibility_Link = "#",
+                        Accessibility_Link = "/ksp/footer_privacy",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>
                         {
@@ -95,7 +95,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     footerViewModel = new FooterViewModel
                     {
                         Sitemap_Link = "#",
-                        Privacy_Link = "#",
+                        Privacy_Link = "/eplus/footer_privacy",
                         Accessibility_Link = "#",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>

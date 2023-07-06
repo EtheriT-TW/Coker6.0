@@ -126,10 +126,12 @@ namespace EtheriT.Coker.Application
                             Type = 9,
                             Size = 1,
                         });
-                        m.IconId = m.icon.Split(":")[1];
-                        m.IconUrl = data[0].Link;
-                        m.icon = "empty";
-                    }
+                        if (data != null && data.Any()) {
+							m.IconId = m.icon.Split(":")[1];
+							m.IconUrl = data[0].Link;
+						}
+						m.icon = "empty";
+					}
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;

@@ -252,13 +252,18 @@ namespace EtheriT.Coker.Application.Tag
 
             try
             {
-                for (int i = 0; i < dto.Count; i++)
-                {
-                    var data = dto[i];
-                    if (data.Id == 0 && !data.IsDeleted)
-                    {
-                        long usetId = await loginUserData.GetUserId();
+				long usetId = await loginUserData.GetUserId();
+				List<Core.Models.Tag_Associate> TagBindings = new List<Core.Models.Tag_Associate>();
+                var all = db.Tag_Associates.Select(e =>new { e.Id,e.FK_AId,e.FK_TId }).ToList();
 
+				for (int i = 0; i < dto.Count; i++)
+                {
+					var data = dto[i];
+                    var ass = all.Find(e => e.FK_AId == data.FK_AId && e.FK_TId == data.FK_TId);
+                    if(ass!=null) data.Id = ass.Id;
+                    else data.Id = 0;
+					if (data.Id == 0 && !data.IsDeleted)
+                    {
                         Core.Models.Tag_Associate ta = new Core.Models.Tag_Associate
                         {
                             FK_TId = data.FK_TId,
@@ -266,16 +271,16 @@ namespace EtheriT.Coker.Application.Tag
                             Type = data.Type,
                             CreatorUserId = usetId,
                         };
-                        db.Tag_Associates.Add(ta);
-                        await db.SaveChangesAsync();
+						TagBindings.Add(ta);
                     }
                     else if (data.Id > 0 && data.IsDeleted)
                     {
                         await this.TagAssociateDelete((long)data.Id);
                     }
                 }
-
-                output.Success = true;
+				db.Tag_Associates.AddRange(TagBindings);
+				await db.SaveChangesAsync();
+				output.Success = true;
             }
             catch (Exception e)
             {

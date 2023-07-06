@@ -234,17 +234,34 @@ namespace EtheriT.Coker.Application
 			List<string> fileNames = dto.Where(e => string.IsNullOrEmpty(e.mediaLink)).Select(e => e.mediaLink).ToList();
 			List<FileUpload> nowFiles = db.FileUploads
 										.Where(e => !e.IsDeleted)
+										.Where(e => e.DownloadFileName!=null)
+										.Where(e => fileNames.Contains(e.DownloadFileName))
 										.Where(e => e.FK_WebsiteId == WebsiteID)
 										.ToList();
 			foreach (var file in dto)
 			{
 				try
 				{
-					var myFile = nowFiles.Find(e => e.DownloadFileName == file.mediaLink);
-					if (myFile != null) file.Id = myFile.Id;
-					else
+					string dir = "";
+					switch (file.Type)
 					{
-						if (!(new Regex("^http")).IsMatch(file.mediaLink)) file.mediaLink = $"/upload/Product/{file.mediaLink}";
+						case FileBindTypeEnum.產品:
+							dir = "Product";
+							break;
+						case FileBindTypeEnum.技術證照:
+							dir = "TechnicalCertificate";
+							break;
+						default:
+							dir = "Orthers";
+							break;
+					}
+					if (!(new Regex("^http")).IsMatch(file.mediaLink)) file.mediaLink = $"/upload/{dir}/{file.mediaLink}";
+
+					var myFile = nowFiles.Find(e => e.DownloadFileName == file.mediaLink);
+					var hasFile = files.Find(e => e.DownloadFileName == file.mediaLink);
+					if (myFile == null && hasFile == null) {
+						
+						
 						Guid key = Guid.NewGuid();
 						FileUpload fu = new FileUpload
 						{
@@ -283,7 +300,8 @@ namespace EtheriT.Coker.Application
 						.Where(e => e.Sid == file.SId)
 						.Where(e => e.type == (int)file.Type)
 						.FirstOrDefault();
-				if (myFileBind == null)
+				var hasBind = FileBinds.Find(e => e.FK_FileUploadId == Id && e.Sid == file.SId && e.type == (int)file.Type);
+				if (myFileBind == null && hasBind==null)
 				{
 					FileBind fb = new FileBind
 					{
@@ -300,7 +318,7 @@ namespace EtheriT.Coker.Application
 					};
 					FileBinds.Add(fb);
 				}
-				else
+				else if(myFileBind != null)
 				{
 					myFileBind.SerNo = file.SerNo;
 					myFileBind.Name = file.mediaLink;

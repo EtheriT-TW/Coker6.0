@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,5 +38,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Tag5 { get; set; }
 		public long? FK_WebsiteId { get; set; }
 		public List<ProductStockDto>? stocks { get; set; }
+		public List<TechCertDto>? Techs { get; set; }
 	}
 }

@@ -27,6 +27,7 @@ using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using System.Web;
+using System.Data;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -1003,7 +1004,43 @@ namespace EtheriT.Coker.Application.Product
 			await InsertOrUpdateProd(prods, response.ErrorList);
 			await ImportProdMediaLinks(prods, response.ErrorList);
 			await ImportProdTags(prods, response.ErrorList);
+			await importTechs(prods, response.ErrorList);
 			return response;
+		}
+		private async Task importTechs(List<ProductImportDto> prods, List<ImportMassageItem> errors) {
+			List<TechCertDto> allTech = new List<TechCertDto>();
+			for (int i=0;i< prods.Count; i++) {
+				var prod = prods[i];
+				if(prod.Techs!=null) allTech.AddRange(prod.Techs);
+			}
+			await technicalCertificateAppService.AddAll(allTech);
+			await importProdTech(prods, errors);
+		}
+		private async Task importProdTech(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+		{
+			var prodTitle = prods.GroupBy(x => x.Title).Select(e => e.Key);
+			var crrenProds = db.Prods.Where(e => !e.IsDeleted).Where(e => prodTitle.Contains(e.Title)).Select(e => new {e.Id,e.Title }).ToList();
+			var techs = db.TechnicalCertificates.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
+
+			List<TechCertProdAssociateDto> techCertProdAssociateDtos = new List<TechCertProdAssociateDto>();
+			for (int i = 0; i < prods.Count; i++)
+			{
+				var prod = prods[i];
+				var n = crrenProds.Find(e => e.Title == prod.Title);
+				for (int j=0;j< prod.Techs.Count;j++) {
+					var item = prod.Techs[j];
+					var tec = techs.Find(e => e.Title == item.Title);
+					if (tec != null)
+					{
+						techCertProdAssociateDtos.Add(new TechCertProdAssociateDto {
+							FK_PId=n.Id,
+							FK_TCId= tec.Id,
+							IsDeleted=false,
+						});
+					}
+				}
+			}
+			await technicalCertificateAppService.TechCertAssociateAddDelect(techCertProdAssociateDtos);
 		}
 		private async Task ImportProdTags(List<ProductImportDto> prods, List<ImportMassageItem> errors)
 		{
@@ -1161,63 +1198,6 @@ namespace EtheriT.Coker.Application.Product
 				prod.LastModificationTime = DateTime.Now;
 			}
 			await db.SaveChangesAsync();
-		}
-		private async Task<ImportMassageItem?> InsertOrUpdate(ProductImportDto item)
-		{
-			ImportMassageItem? importMassageItem = null;
-			try
-			{
-				List<string> tagStr = new List<string> { item.Tag1 ?? "_", item.Tag2 ?? "_", item.Tag3 ?? "_", item.Tag4 ?? "_", item.Tag5 ?? "_" };
-				List<string> TechStr = new List<string> { item.Tech1 ?? "", item.Tech2 ?? "", item.Tech3 ?? "", item.Tech4 ?? "" };
-				List<string> ImagStr = new List<string> { item.Image1 ?? "", item.Image2 ?? "", item.Image3 ?? "", item.Image4 ?? "", item.Image5 ?? "" };
-				if (item.Description == null) item.Description = "";
-				if (item.Introduction == null) item.Introduction = "";
-				ProdAddUpDto prod = mapper.Map<ProdAddUpDto>(item);
-				for (int i = 0; i < tagStr.Count; i++)
-				{
-					var st = await db.Tags.Where(e => tagStr[i] == e.Title).FirstOrDefaultAsync();
-					if (st == null && !Regex.IsMatch(tagStr[i], "^_"))
-						await tagAppService.TagAddUp(new DevExpressDto { Values = JsonConvert.SerializeObject(new TagGetAllListDto { Title = tagStr[i] }) });
-				}
-				var p = await db.Prods.Where(e => e.Title == item.Title).FirstOrDefaultAsync();
-				var t = await db.Tags.Where(e => tagStr.Contains(e.Title)).Where(e => e.IsDeleted).ToListAsync();
-				if (p != null && item.Price == 0)
-				{
-					mapper.Map(p, prod);
-				}
-				if (p != null) prod.Id = p.Id;
-				if (t.Any()) prod.TagSelected = mapper.Map<List<TagSelectedDto>>(t);
-				else prod.TagSelected = new List<TagSelectedDto>();
-				prod.TechCertSelected = new List<TechCertSelectedDto>();
-				//prod.Stocks = new List<ProductStockDto> { await InsertOrUpdateStore(item) };
-
-				var response = await ProductAddUp(prod);
-				for (int i = 0; i < ImagStr.Count; i++)
-				{
-					if (!string.IsNullOrEmpty(ImagStr[i]))
-					{
-						await fileUploadAppService.uploadImageLink(new FileImageImportDto
-						{
-							SId = prod.Id,
-							Type = FileBindTypeEnum.產品,
-							mediaLink = ImagStr[i],
-							SerNo = 500
-						});
-					}
-				}
-
-				if (response != null && !response.Success)
-				{
-					throw new Exception(response.Error);
-				}
-			}
-			catch (Exception e)
-			{
-				importMassageItem = new ImportMassageItem { Name = item.Title ?? "", Description = e.Message };
-
-			}
-
-			return importMassageItem;
 		}
 		private async Task<List<Prod_Stock>> InsertOrUpdateStore(ProductImportDto item)
 		{

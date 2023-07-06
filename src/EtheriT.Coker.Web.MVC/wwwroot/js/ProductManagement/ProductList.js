@@ -9,7 +9,7 @@ function ImportProd() {
     co.Product.AddUp.Import(formData).done(function (response) {
         importProdPopup.hide();
         co.sweet.success("檔案上傳成功");
-        if (product_list != null) product_list.refresh();
+        if (product_list != null) product_list.component.refresh();
     }).fail(function () {
         co.sweet.error("檔案格式錯誤，無法解讀。");
     });

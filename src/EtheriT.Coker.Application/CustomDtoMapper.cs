@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
@@ -112,7 +113,10 @@ namespace EtheriT.Coker.Application
 				.ReverseMap();
 			CreateMap<Prod_Price, ProductPriceDto>()
 				.ReverseMap();
-
+			CreateMap<TechCertDto, TechCertImportDto>()
+				.ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
+				.ReverseMap();
+			
 
 			//Tags
 			CreateMap<TagSelectedDto, Core.Models.Tag>()

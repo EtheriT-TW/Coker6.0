@@ -55,7 +55,7 @@
                 ready: function () {
                     co.WebMesnus.GetPageTypeList().done(function (result) {
                         if (result.success) {
-                            const $s = $("#PageType");
+                            const $s = $("#pageType");
                             $(result.type).each(function () {
                                 $s.append(`<option value="${this.value}">${this.key}</option>`);
                             });

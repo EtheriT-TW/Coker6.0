@@ -347,7 +347,7 @@ namespace EtheriT.Coker.Application
             var user = await loginUserData.GetUser();
             if (menu == null) throw new Exception("查無資料");
             mapper.Map(dto, menu);
-            if (dto.IconUrl != null) menu.icon = $"IconId:{dto.IconId}";
+            if (!string.IsNullOrEmpty(dto.IconUrl)) menu.icon = $"IconId:{dto.IconId}";
             menu.LastModificationTime = DateTime.Now;
             menu.LastModifierUserId = user.Id;
             await loginUserData.SaveChanges(menu);

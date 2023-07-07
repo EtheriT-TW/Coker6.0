@@ -75,8 +75,8 @@
                             <input type="hidden" name="icon" class="item-menu">
                         </div>
                         <div class="form-group form-check">
-                            <label for="PageType" class="form-label">頁面類型</label>
-                            <select name="PageType" id="PageType" class="form-select item-menu"></select>
+                            <label for="pageType" class="form-label">頁面類型</label>
+                            <select name="pageType" id="pageType" class="form-select item-menu"></select>
                         </div>
                         <div id="RouterNameBlock" class="form-group form-check">
                             <label for="RouterName" class="form-label">路徑名稱</label>
@@ -84,7 +84,7 @@
                             <div class="invalid-feedback">路徑名稱為必填</div>
                         </div>
                         <div class="form-group form-check">
-                            <label for="linkUrl">連結</label>
+                            <label for="linkUrl">外連網址</label>
                             <input type="text" class="form-control item-menu" id="linkUrl" name="linkUrl" placeholder="請輸入連結">
                         </div>
                         <div class="row mx-0 ps-4">
@@ -107,26 +107,28 @@
                                 <input type="text" class="form-control item-menu d-none" id="overImgName" name="overImgName">
                             </div>
                         </div>
-                        <div class="form-group form-check">
-                            <label for="Visible">是否顯示</label>
-                            <select name="visible" id="visible" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="target">另開視窗</label>
-                            <select name="target" id="target" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="PopularVisible">顯示人氣值</label>
-                            <select name="popularVisible" id="popularVisible" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
+                        <div class="row mx-0 ps-4 py-4">
+                            <div class="col-6 col-md-4 px-0">
+                                <label for="target">另開視窗</label>
+                                <select name="target" id="target" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label for="visible">是否顯示</label>
+                                <select name="visible" id="visible" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-md-4 px-0">
+                                <label for="PopularVisible">顯示人氣值</label>
+                                <select name="popularVisible" id="popularVisible" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group form-check">
                             <label for="Popular">人氣值</label>

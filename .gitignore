@@ -381,5 +381,6 @@ upload/**/*.*
 */*/wwwroot/dist/
 **/package-lock.json
 *.lock
+*.bak
 
 NuGet.config

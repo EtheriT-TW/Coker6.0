@@ -172,6 +172,8 @@
                         }).done(function (result) {
                             if (result.success) deliconimg_success = 1
                             else deliconimg_success = -1
+                            data.IconUrl = "";
+                            data.IconId = "";
                         });
                     } else deliconimg_success = 1
 
@@ -199,9 +201,9 @@
                         });
                     } else deloverimg_success = 1
 
-                    co.WebMesnus.createOrEdit(data).done(function (result) {
-                        const iconimgdel_timmer = function () {
-                            if (deliconimg_success != 0) {
+                    const del_timmer = function () {
+                        if (deliconimg_success != 0 && delimg_success != 0 && deloverimg_success != 0) {
+                            co.WebMesnus.createOrEdit(data).done(function (result) {
                                 if (deliconimg_success == 1) {
                                     var $file = $("#IconImageUpload .img_input_frame > .img_input");
                                     if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
@@ -216,12 +218,7 @@
                                         });
                                     } else iconimg_success = 1;
                                 } else iconimg_success = -1;
-                            } else setTimeout(iconimgdel_timmer, 100);
-                        }
-                        setTimeout(iconimgdel_timmer, 100);
 
-                        const imgdel_timmer = function () {
-                            if (delimg_success != 0) {
                                 if (delimg_success == 1) {
                                     var $file = $("#ImageUpload .img_input_frame > .img_input");
                                     if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
@@ -236,12 +233,7 @@
                                         });
                                     } else img_success = 1;
                                 } else img_success = -1;
-                            } else setTimeout(imgdel_timmer, 100);
-                        }
-                        setTimeout(imgdel_timmer, 100);
 
-                        const overdel_timmer = function () {
-                            if (deloverimg_success != 0) {
                                 if (deloverimg_success == 1) {
                                     var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
                                     if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
@@ -256,25 +248,25 @@
                                         });
                                     } else overimg_success = 1;
                                 } else overimg_success = -1;
-                            } else setTimeout(overdel_timmer, 100);
-                        }
-                        setTimeout(overdel_timmer, 100);
 
-                        const timmer = function () {
-                            if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
-                                menuReload(menuEditor, myOffcanvas);
-                                $("#IconImageUpload").ImageUploadModalClear();
-                                $("#ImageUpload").ImageUploadModalClear();
-                                $("#OverImageUpload").ImageUploadModalClear();
-                                if (!result.success) co.sweet.error(result.error);
-                                else {
-                                    if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
-                                    else co.sweet.success("新增成功");
+                                const timmer = function () {
+                                    if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
+                                        menuReload(menuEditor, myOffcanvas);
+                                        $("#IconImageUpload").ImageUploadModalClear();
+                                        $("#ImageUpload").ImageUploadModalClear();
+                                        $("#OverImageUpload").ImageUploadModalClear();
+                                        if (!result.success) co.sweet.error(result.error);
+                                        else {
+                                            if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
+                                            else co.sweet.success("新增成功");
+                                        }
+                                    } else setTimeout(timmer, 100);
                                 }
-                            } else setTimeout(timmer, 100);
-                        }
-                        setTimeout(timmer, 100);
-                    });
+                                setTimeout(timmer, 100);
+                            });
+                        } else setTimeout(del_timmer, 100);
+                    }
+                    setTimeout(del_timmer, 100);
                     //editor.setComponents("<span>Hi<span>");
                     //editor.setStyle("");
                 },

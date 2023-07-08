@@ -330,8 +330,6 @@ namespace EtheriT.Coker.Application
 			}
 			return FileBinds;
 		}
-
-
 		public async Task<ResponseMessageDto> uploadImageLink(FileImageImportDto dto)
 		{
 			ResponseMessageDto response = new ResponseMessageDto() { Success = true };
@@ -401,7 +399,6 @@ namespace EtheriT.Coker.Application
 
 			return response;
 		}
-
 		public async Task<UploadFileOutputDto> getHtmlContentFiles()
 		{
 			UploadFileOutputDto response = new UploadFileOutputDto
@@ -900,11 +897,8 @@ namespace EtheriT.Coker.Application
 								break;
 							case (int)FileBindTypeEnum.選單Icon:
 								var db_menuicon = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-								if (db_menuicon != null)
-								{
-									db_menuicon.icon = "empty";
-								}
-								break;
+								if (db_menuicon != null) db_menuicon.icon = "empty";
+                                break;
 						}
 					}
 					return response;

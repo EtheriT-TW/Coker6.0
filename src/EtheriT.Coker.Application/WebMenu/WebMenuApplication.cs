@@ -120,18 +120,22 @@ namespace EtheriT.Coker.Application
                     }
                     if (m.icon.StartsWith("IconId"))
                     {
-                        var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
+                        if (m.icon.Split(":")[1] != "")
                         {
-                            Sid = m.Id,
-                            Type = 9,
-                            Size = 1,
-                        });
-                        if (data != null && data.Any()) {
-							m.IconId = m.icon.Split(":")[1];
-							m.IconUrl = data[0].Link;
-						}
-						m.icon = "empty";
-					}
+                            var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
+                            {
+                                Sid = m.Id,
+                                Type = 9,
+                                Size = 1,
+                            });
+                            if (data != null && data.Any())
+                            {
+                                m.IconId = m.icon.Split(":")[1];
+                                m.IconUrl = data[0].Link;
+                            }
+                        } 
+                        m.icon = "empty";
+                    }
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;
@@ -158,8 +162,12 @@ namespace EtheriT.Coker.Application
                 {
                     if (m.icon.StartsWith("IconId"))
                     {
-                        var iconimage = await fileUploadAppService.getImgUrl(long.Parse(m.icon.Split(":")[1]), (long)WebsiteID);
-                        m.IconImage = iconimage;
+                        if (m.icon.Split(":")[1] != "")
+                        {
+                            var iconimage = await fileUploadAppService.getImgUrl(long.Parse(m.icon.Split(":")[1]), (long)WebsiteID);
+                            m.IconImage = iconimage;
+                        }
+                        else m.icon = "empty";
                     }
                     m.Children = await GetDisplayChild(m.Id, WebsiteID);
                     if (m.Children.Count == 0) m.Children = null;

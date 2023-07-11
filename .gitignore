@@ -377,6 +377,7 @@ upload/**/*.*
 !**/wwwroot/lib/devextreme/**/*.min.js
 !**/wwwroot/css/devextreme/**/*.min.css
 !**/wwwroot/lib/tui-code/**/*.*
+!**/wwwroot/lib/**/js-cloudimage-360-view.min.js
 **/wwwroot/lib/grapesjs/**/*.*
 */*/wwwroot/dist/
 **/package-lock.json

@@ -32,6 +32,8 @@ function DirectoryGetDataInit() {
     })
     $(".menu_directory").each(function () {
         var $self = $(this);
+        console.log($self)
+        console.log($self.data("dirid"))
         if ($self.data("init") != true && $self.data("dirid") > 0) {
             Directory.getDirectoryMenuData({ Id: $self.data("dirid"), WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0 }).done(function (result) {
                 $self.find(".title").text(result.title)

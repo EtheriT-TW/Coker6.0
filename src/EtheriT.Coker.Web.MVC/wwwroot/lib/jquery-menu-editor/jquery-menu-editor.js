@@ -1223,17 +1223,19 @@ function MenuEditor(idSelector, options) {
     /* PRIVATE METHODS */
     function editItem($item) {
         var data = $item.data();
+        console.log(data);
         $.each(data, function (p, v) {
             let element = $form.find("[name=" + p + "]");
             if (element.length <= 0) return;
             switch (element[0].tagName) {
                 case "SELECT":
-                    element.find("[value=" + p + "]").prop("selected",true);
+                    element.find("[value=" + v + "]").prop("selected", true);
+                    $(element).trigger("change");
                     break;
                 default:
                     switch (element.attr("type").toUpperCase()) {
                         case "RADIO":
-                            element.find("[value=" + p + "]").prop("checked", true);
+                            element.find("[value=" + v + "]").prop("checked", true);
                             break;
                         default:
                             element.val(v);

@@ -8,6 +8,10 @@
         width: 300px;
     }
 
+        .type_change_frame > .catalog .image_frame > img {
+            max-height: 350px;
+        }
+
     .type_change_frame > .catalog img {
         object-fit: contain;
         max-height: 30vw;

@@ -36,32 +36,34 @@
 </div>
 <div id="gjs" class="d-none"></div>
 <div class="emptyList"></div>
-<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
+<div class="offcanvas offcanvas-start menu-bg" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
     <div class="offcanvas-header">
+        <div class="d-flex justify-content-center align-item-center">
         <h5 class="offcanvas-title" id="offcanvasSiteleLabel">網站地圖</h5>
+        <button type="button" id="btnExtend" class="btn d-flex justify-content-center mx-2 mt-2">
+            <span class="fas fa-plus "></span>
+        </button>
+        </div></>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <div class="row">
-            <button type="button" id="btnExtend" class="btn btn-primary d-flex justify-content-center">
-                <span class="material-symbols-outlined">arrow_forward_ios</span>
-                <span>新增選單</span>
-            </button>
-        </div>
-        <div id="EditBlock" class="row">
+        
+        <div id="EditBlock" class="row d-flex justify-content-center">
             <ul id="myEditor" class="sortableLists list-group item-menu d-none"></ul>
-            <div class="emptyList"></div>
-            <div id="MenuEditorForm" class="card border-primary mb-3 item-menu">
-                <div class="card-header bg-primary text-white">選單資料</div>
+            <div class="emptyList menu-bg"></div>
+            <div id="MenuEditorForm" class="card mb-3 item-menu menu-bg">
+                <div class="card-header text-white">選單資料</div>
                 <div class="card-body">
-                    <form id="frmEdit" class="form-horizontal needs-validation" novalidate>
+                    <form id="frmEdit" class="form-horizontal needs-validation d-flex justify-content-center align-item-center flex-column" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
                         <input type="hidden" id="serNO" name="serNO" value="500" class="item-menu">
                         <input type="hidden" class="item-menu" id="text" name="text">
-                        <div class="form-group form-check">
-                            <label for="Title">標題※圖標僅能擇一</label>
+                        <div class="form-group">
                             <div class="input-group">
-                                <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
+                                <div class="form-floating flex-grow-1 flex-shrink-1 flex-auto">
+                                    <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
+                                    <label for="title">標題※圖標僅能擇一</label>
+                                </div>
                                 <div class="input-group-append">
                                     <button type="button" id="myEditor_icon" class="btn btn-outline-secondary rounded-0"></button>
                                 </div>
@@ -78,28 +80,29 @@
                             <label for="PageType" class="form-label">頁面類型</label>
                             <select name="PageType" id="PageType" class="form-select item-menu"></select>
                         </div>
-                        <div id="RouterNameBlock" class="form-group form-check">
-                            <label for="RouterName" class="form-label">路徑名稱</label>
+                        <div class="form-floating mb-3">
                             <input type="text" class="form-control item-menu" id="routerName" name="routerName" placeholder="請輸入路徑名稱" required>
+                            <label for="RouterName" class="form-label">路徑名稱</label>
                             <div class="invalid-feedback">路徑名稱為必填</div>
                         </div>
-                        <div class="form-group form-check">
-                            <label for="linkUrl">連結</label>
+                        <div class="form-floating mb-3">
                             <input type="text" class="form-control item-menu" id="linkUrl" name="linkUrl" placeholder="請輸入連結">
+                            <label for="linkUrl">連結</label>
                         </div>
-                        <div class="row mx-0 ps-4">
-                            <div class="col-12 col-md-6 px-0">
-                                <div>選單圖片</div>
-                                <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+                        <div class="row mx-0">
+                            <div class="col-12 col-md-5 px-0 border1 p-2">
+                                <div class="text-center text-white fw-bold">選單圖片</div>
+                                <div id="ImageUpload" class="d-flex justify-content-center align-item-center image_upload" data-issinge="true" data-needcompress="false">
                                     @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
                                 </div>
                                 <input type="text" class="form-control item-menu d-none" id="imgId" name="imgId">
                                 <input type="text" class="form-control item-menu d-none" id="imgUrl" name="imgUrl">
                                 <input type="text" class="form-control item-menu d-none" id="imgName" name="imgName">
                             </div>
-                            <div class="col-12 col-md-6 px-0">
-                                <div>滑鼠覆蓋圖片</div>
-                                <div id="OverImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+                            <div class="col-12 col-md-2"></div>
+                            <div class="col-12 col-md-5 px-0 border1 p-2">
+                                <div class="text-center text-white fw-bold">滑鼠覆蓋圖片</div>
+                                <div id="OverImageUpload" class="d-flex justify-content-center align-item-center image_upload" data-issinge="true" data-needcompress="false">
                                     @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
                                 </div>
                                 <input type="text" class="form-control item-menu d-none" id="overImgId" name="overImgId">
@@ -107,26 +110,30 @@
                                 <input type="text" class="form-control item-menu d-none" id="overImgName" name="overImgName">
                             </div>
                         </div>
-                        <div class="form-group form-check">
-                            <label for="Visible">是否顯示</label>
-                            <select name="visible" id="visible" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
+                        <div class="row ">
+                            <div class="col-12 d-flex justify-content-around align-item-center my-3">
+                            <div class="col-4 form-group form-check pr-1">
+                                <label for="Visible">是否顯示</label>
+                                <select name="visible" id="visible" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                                <div class="col-4 form-group form-check px-1">
+                                <label for="target">另開視窗</label>
+                                <select name="target" id="target" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
+                                <div class="col-4 form-group form-check pl-1">
+                                <label for="PopularVisible">顯示人氣值</label>
+                                <select name="popularVisible" id="popularVisible" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false">否</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group form-check">
-                            <label for="target">另開視窗</label>
-                            <select name="target" id="target" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-check">
-                            <label for="PopularVisible">顯示人氣值</label>
-                            <select name="popularVisible" id="popularVisible" class="form-select item-menu">
-                                <option value="true">是</option>
-                                <option value="false">否</option>
-                            </select>
                         </div>
                         <div class="form-group form-check">
                             <label for="Popular">人氣值</label>
@@ -138,10 +145,10 @@
                         </div>
                     </form>
                 </div>
-                <div class="card-footer">
-                    <button type="button" id="btnUpdate" class="btn btn-primary" disabled><i class="fas fa-sync-alt"></i>更新</button>
-                    <button type="button" id="btnAdd" class="btn btn-success"><i class="fas fa-plus"></i>新增</button>
-                    <button type="button" id="btnRefresh" class="btn btn-info">
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" id="btnUpdate" class="btn" disabled><i class="fas fa-sync-alt"></i>更新</button>
+                    <button type="button" id="btnAdd" class="btn btn-danger"><i class="fas fa-plus"></i>新增</button>
+                    <button type="button" id="btnRefresh" class="btn btn-danger">
                         <i class="fa-sharp fa-solid fa-rotate-right"></i>清空
                     </button>
                 </div>

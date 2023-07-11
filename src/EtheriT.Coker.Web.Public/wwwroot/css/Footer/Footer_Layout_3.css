@@ -3,11 +3,12 @@
 }
 
 .footer_right {
-    min-width: 40%;
+    min-width: 35%;
 }
 
 .menu_item {
     min-width: 20%;
+    width:20%;
     padding: 0 2rem;
 }
 

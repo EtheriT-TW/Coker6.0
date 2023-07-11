@@ -66,11 +66,18 @@
     border-color: transparent;
 }
 
+#frmEdit {
+    .form-check{
+        padding-left:0;
+        padding-right:0;
+    }
+}
+
 #offcanvasSite {
     &.offcanvas-lg {
         #EditBlock > .item-menu {
             width: 49%;
-            max-height: calc(100vh - 6rem);
+            max-height: calc(100vh - 8.5rem);
             overflow-y: auto;
         }
     }
@@ -79,7 +86,11 @@
         margin-bottom: 1rem;
     }
 }
-
+.form-floating{
+    label{
+        
+    }
+}
 .has_image {
     height: 150px !important;
     width: 150px !important;
@@ -99,3 +110,80 @@
         border-color: #ccc;
     }
 }
+.menu-bg{
+    background-color: #2f4f4f;
+}
+
+.menu-bg {
+    input, select, textarea, button {
+        color: #2f4f4f;
+        border-color: none;
+        background-color: #faebd7;
+    }
+
+    button:hover {
+        color: #fff;
+    }
+
+    #btnExtend:hover {
+        color: #000;
+    }
+}
+.offcanvas-header {
+    .offcanvas-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #fff;
+    }
+}
+#MenuEditorForm {
+    padding: 0px;
+    margin-left: 1%;
+}
+div.card-header {
+    font-size: 1.25rem;
+    background: #daa520;
+    font-weight: 600;
+}
+.card-header:first-child {
+    border-radius: 0px;
+}
+.form-check {
+    label {
+        color: #fff;
+        font-weight: 600;
+    }
+}
+.sortableLists {
+    padding-right: 0;
+
+    li {
+        background-color: #faebd7;
+        border-bottom: 2px solid #2f4f4f;
+        .btn-group{
+            padding-right:1rem;
+        }
+    }
+}
+.card-footer {
+    border-top:1px solid #fff;
+    button {
+        background: #daa520;
+        color: #FFF;
+        width:30%;
+    }
+
+    button:hover {
+        background: #c8971c;
+        color: #FFF;
+        border:3px solid #fff;
+    }
+}
+#myEditor, #MenuEditorForm {
+    border: 2px solid #daa520;
+}
+.border1 {
+    border: 5px solid #faebd7;
+    border-radius: 5px;
+}
+

@@ -227,6 +227,29 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Icon=""
                             }
                         }
+                    },new JobMenu{
+                        PageName="UserManagement",
+                        Title="使用者管理",
+                        Controller="UserManagement",
+                        Action="Index",
+                        Icon="settings",
+                        CollapseId="#UserManagement",
+                        jobItemModels= new List<JobMenu> {
+                            new JobMenu{
+                                PageName="UserData",
+                                Title="個人資料修改",
+                                Controller="UserManagement",
+                                Action="Index",
+                                Icon="",
+                            },
+                            new JobMenu{
+                                PageName="PowerCtrl",
+                                Title="權限控制",
+                                Controller="PowerManagement",
+                                Action="Index",
+                                Icon=""
+                            }
+                        }
                     }
                 }
             };

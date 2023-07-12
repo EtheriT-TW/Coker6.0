@@ -1,0 +1,22 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Member
+@{
+	ViewData["Title"] = "UserData";
+}
+
+<link rel="stylesheet" href="~/css/UserManagement/Index.min.css" asp-append-version="true" />
+<script src="~/js/UserManagement/Index.min.js" asp-append-version="true"></script>
+
+<div class="py-2 px-4 position-relative">
+	<div id="TopLine" class="d-flex justify-content-between mb-4">
+		<div class="d-flex">
+			<button class="btn_back bg-transparent border-0 align-items-center d-none">
+				<span class="material-symbols-outlined">
+					keyboard_backspace
+				</span>
+			</button>
+			<div class="title fw-bold fs-4">個人資料修改</div>
+		</div>
+		<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
+	</div>
+</div>

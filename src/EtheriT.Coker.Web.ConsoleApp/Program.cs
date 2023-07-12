@@ -11,7 +11,13 @@ var configBuilder = new ConfigurationBuilder().
 var configSection = configBuilder.GetSection("ConnectionStrings");
 
 OldDataApplicaation old = new OldDataApplicaation(configSection["source"] ?? "", configBuilder.GetSection("SideID").Get<int>());
-List<Article> articles = old.loadData(configBuilder.GetSection("LoadMenuSubId").Get<List<int>>(), configBuilder.GetSection("LoadShopingSubId").Get<List<int>>());
+List<Tag> tags;
+List<Article> articles = old.loadData(
+    configBuilder.GetSection("LoadMenuSubAuId").Get<List<int>>() ?? new List<int>(), 
+    configBuilder.GetSection("LoadMenuSubId").Get<List<int>>()??new List<int>(), 
+    configBuilder.GetSection("LoadShopingSubId").Get<List<int>>() ?? new List<int>(),
+    out tags
+);
 
 NewDataApplicaation newDB = new NewDataApplicaation(configSection["destination"] ?? "");
-newDB.saveData(articles);
+newDB.saveData(articles, tags);

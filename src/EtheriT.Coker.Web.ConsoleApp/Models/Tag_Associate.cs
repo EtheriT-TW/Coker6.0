@@ -15,5 +15,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Models
         public long FK_TId { get; set; }
         public long FK_AId { get; set; }
         public int Type { get; set; }
+        public Tag? Tag { get; set; }
+        public Article? Article { get; set; }
     }
 }

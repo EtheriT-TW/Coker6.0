@@ -16,5 +16,12 @@ namespace EtheriT.Coker.Web.ConsoleApp.DbContextSet
         {
             optionsBuilder.UseSqlServer(connectionString);
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder) {
+            modelBuilder.Entity<Tag_Associate>(o =>
+            {
+                o.HasOne(u => u.Article).WithMany(u => u.Associates).HasForeignKey(f => f.FK_AId);
+                o.HasOne(w => w.Tag).WithMany(w => w.Associates).HasForeignKey(f => f.FK_TId);
+            });
+        }
     }
 }

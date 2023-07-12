@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Web.ConsoleApp.Models
     {
         public long FK_WebsiteId { get; set; }
         [StringLength(50)] public string Title { get; set; }
+        public List<Tag_Associate>? Associates { get; set; }
     }
 }

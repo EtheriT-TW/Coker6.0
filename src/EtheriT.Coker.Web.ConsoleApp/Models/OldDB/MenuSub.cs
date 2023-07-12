@@ -78,8 +78,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Models.OldDB
         public string? weblinkTitle3 { get; set; }
         public string? weblinkTitle4 { get; set; }
         public string? weblinkTitle5 { get; set; }
-        public float? PositionX { get; set; }
-        public float? PositionY { get; set; }
+        public double? PositionX { get; set; }
+        public double? PositionY { get; set; }
         public string? StoreName { get; set; }
     }
 }

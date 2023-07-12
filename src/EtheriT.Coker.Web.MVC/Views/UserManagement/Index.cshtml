@@ -8,15 +8,42 @@
 <script src="~/js/UserManagement/Index.min.js" asp-append-version="true"></script>
 
 <div class="py-2 px-4 position-relative">
-	<div id="TopLine" class="d-flex justify-content-between mb-4">
 		<div class="d-flex">
 			<button class="btn_back bg-transparent border-0 align-items-center d-none">
 				<span class="material-symbols-outlined">
 					keyboard_backspace
 				</span>
 			</button>
-			<div class="title fw-bold fs-4">個人資料修改</div>
+			<div class="title fw-bold fs-4 w-100">個人資料修改</div>
 		</div>
+	<div class="w-100 h-auto p-5 body-interface d-flex justify-content-center align-item-center my-2">
+			<div class="d-flex col-12">
+			<div class="d-flex justify-content-start align-items-center col-md-3 flex-column">
+				<img src="">
+				<button class="btn revise-password mt-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTop" aria-controls="offcanvasTop">修改密碼</button>
+				<div class="offcanvas offcanvas-top" tabindex="-1" id="offcanvasTop" aria-labelledby="offcanvasTopLabel">
+					<div class="offcanvas-header d-flex">
+						<h5 id="offcanvasTopLabel" class="fw-bold">修改密碼</h5>
+						<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+					</div>
+					<div class="offcanvas-body d-flex justify-content-center align-items-center flex-column">
+						<input id="password" class="form-control" type="password" placeholder="輸入新密碼">
+						<input id="check-password" class="form-control" type="password" placeholder="確認新密碼">
+						<button class="btn submit">送出</button>
+					</div>
+					
+				</div>
+			</div>
+				<form class="d-flex flex-column justify-content-center align-item-center col-md-6">
+						<input id="s-name" class="form-control" type="text" placeholder="暱稱">
+						<input id="name" class="form-control" type="text" placeholder="姓名">
+						<input id="phone" class="form-control" type="text" placeholder="電話">
+						<input id="email" class="form-control" type="email" placeholder="email">
+						<input id="address" class="form-control" type="text" placeholder="地址">
+				<button class="btn submit" type="button">儲存</button>
+				</form>
+			</div>
 		<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
 	</div>
+
 </div>

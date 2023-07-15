@@ -258,6 +258,7 @@ namespace EtheriT.Coker.Application.Article
                         });
 
                         var output_data = new DirectoryReleInfoDto();
+                        output_data.type = DirectoryTypeEnum.文章;
                         output_data = mapper.Map(data, output_data);
                         output_data.Link = $"/article/{data.Id}";
                         output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;

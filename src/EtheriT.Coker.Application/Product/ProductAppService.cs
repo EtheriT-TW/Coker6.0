@@ -604,8 +604,9 @@ namespace EtheriT.Coker.Application.Product
                             Type = (int)FileBindTypeEnum.產品,
                             Size = 1
                         });
+                        output_data.type = DirectoryTypeEnum.商品;
                         output_data = mapper.Map(data, output_data);
-                        output_data.Link = $"toilet/product/{data.Id}";
+                        output_data.Link = $"/product/{data.Id}";
                         output_data.MainImage = (imagedata[0] ?? new FileGetImgDto()).Link;
 
                         output.Add(output_data);

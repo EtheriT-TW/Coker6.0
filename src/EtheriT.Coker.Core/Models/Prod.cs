@@ -20,6 +20,13 @@ namespace EtheriT.Coker.Core.Models
         public bool permanent { get; set; }
         public List<Prod_Stock> Prod_Stocks { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }
+        public string? SaveHtml { get; set; }
+        [MaxLength]
+        public string? SaveCss { get; set; }
+        [MaxLength]
+        public string? Html { get; set; }
+        [MaxLength]
+        public string? Css { get; set; }
         public Website? Website { get; set; }
 
     }

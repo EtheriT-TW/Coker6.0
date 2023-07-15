@@ -5,6 +5,9 @@ using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Shared.Product
 {
@@ -29,6 +32,10 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> PriceDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
         public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files);
+        public Task<GetProdContenDto> GetConten(SearchIDDto dto);
+        public Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto);
+        public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto);
+        public Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto);
 
     }
 }

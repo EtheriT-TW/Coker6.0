@@ -1,4 +1,6 @@
-﻿<link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
+﻿@using System.Web;
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+<link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Page/ProductContent.min.js" asp-append-version="true"></script>
 
@@ -26,14 +28,54 @@
     </div>
 </div>
 
-<nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
+@*<nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/lcb/home">首頁</a></li>
         <li class="breadcrumb-item">Derek商品</li>
         <li class="breadcrumb-item"><a href="/lcb/product/toilet">馬桶</a></li>
         <li class="breadcrumb-item active" aria-current="page">C659NA德瑞克Smart III淨未來智慧馬桶</li>
     </ol>
-</nav>
+</nav>*@
+
+@switch (Model.PageData.LayoutType)
+{
+    case 3:
+        @if (Model.MenuBread.Count() > 0)
+        {
+            <div class="top_title_3 p-3">
+                <nav class="bread d-none d-md-block container">
+                    <ol class="list-unstyled d-flex">
+                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                        {
+                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
+                        }
+                    </ol>
+                </nav>
+                <div class="title fs-1 fw-bold text-white container">@Model.PageData.Title</div>
+            </div>
+        }
+        break;
+    case 4:
+        @if (Model.PageData.CurrentUrl != "/home")
+        {
+            <link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
+        }
+        @if (Model.MenuBread.Count() > 0)
+        {
+            <div class="top_title p-3 bg-white container">
+                <nav class="bread d-none d-md-block container">
+                    <ol class="list-unstyled d-flex">
+                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                        {
+                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
+                        }
+                    </ol>
+                </nav>
+                <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
+            </div>
+        }
+        break;
+}
 
 <template id="Template3DSlide">
     <div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="">
@@ -308,6 +350,8 @@
 
 <div id="TabContent" class="tab-content container">
     <div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
+        <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+        <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
     </div>
 
     <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
@@ -321,40 +365,5 @@
         </div>
 
         <div class="techcert_list"></div>
-
-        @*<div class="badge_directions d-flex align-items-center" data-certification="1">
-        <img class="py-2" src="~/upload/badge/badge_01.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="2">
-        <img class="py-2" src="~/upload/badge/badge_02.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="3">
-        <img class="py-2" src="~/upload/badge/badge_03.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="4">
-        <img class="py-2" src="~/upload/badge/badge_04.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="5">
-        <img class="py-2" src="~/upload/badge/badge_05.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />*@
     </div>
 </div>

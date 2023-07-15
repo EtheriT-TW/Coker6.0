@@ -4,9 +4,11 @@ using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -25,6 +27,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IWebsiteApplication websiteApplication;
         private readonly IArticleAppService articleAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
+        private readonly IProductAppService productAppService;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -32,7 +35,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IConfiguration configuration,
             IWebsiteApplication websiteApplication,
             IArticleAppService articleAppService,
-            IHtmlContentAppService htmlContentAppService
+            IHtmlContentAppService htmlContentAppService,
+            IProductAppService productAppService
         )
         {
             this._logger = logger;
@@ -42,6 +46,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.websiteApplication = websiteApplication;
             this.articleAppService = articleAppService;
             this.htmlContentAppService = htmlContentAppService;
+            this.productAppService = productAppService;
 
         }
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
@@ -99,7 +104,25 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else if (key == "product")
                         {
                             view = "Product";
-                            if (id != 0) view = "ProductContent";
+                            if (id != 0)
+                            {
+                                model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
+                                model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                                model.PageData.LayoutType = defaultData.Layout_Type;
+
+                                if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
+                                {
+                                    string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                                    if (siteId != defaultData.Id)
+                                    {
+                                        model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                                        model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
+                                        model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                                    }
+                                }
+                                view = "ProductContent";
+                            }
                         }
                         else
                         {

@@ -10,6 +10,24 @@
 }
 
 <link rel="stylesheet" href="~/css/ProductManagement/ProductList.min.css" asp-append-version="true" />
+<!--導入grapesjs-->
+<link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
+<script src="/lib/grapesjs/grapes.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js"></script>
+<script src="~/js/Grapes/locale/tw.js" asp-append-version="true"></script>
+<script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
+<script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
+
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
+
 <script src="~/js/ProductManagement/ProductList.min.js" asp-append-version="true"></script>
 
 <div id="PriceModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="PriceModalLabel" aria-hidden="true" data_psid="">
@@ -67,6 +85,7 @@
 <div class="">
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
         <div class="title fw-bold fs-3">商品列表</div>
+        <a class="btn btn-primary text-decoration-none align-self-center d-none" href="#" role="button">返回選單</a>
     </div>
 
     <div id="" class="py-2">
@@ -345,9 +364,7 @@
         </div>
 
         <div id="ProductCanvas" class="card border-0 d-none">
-            <div class="card-body position-relative pb-5">
-                這裡是Canvas頁面
-            </div>
+            <div id="gjs"></div>
         </div>
     </div>
 </div>

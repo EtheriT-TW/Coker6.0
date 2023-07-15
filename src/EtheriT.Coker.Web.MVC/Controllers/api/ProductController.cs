@@ -1,7 +1,9 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Product;
@@ -73,6 +75,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.ProdReplace(files);
         }
-
+        [HttpPost]
+        public async Task<GetProdContenDto> GetConten(SearchIDDto dto)
+        {
+            return await productAppService.GetConten(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto)
+        {
+            return await productAppService.ImportConten(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto)
+        {
+            return await productAppService.SaveConten(dto);
+        }
     }
 }

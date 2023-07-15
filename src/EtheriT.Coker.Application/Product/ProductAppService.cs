@@ -605,17 +605,10 @@ namespace EtheriT.Coker.Application.Product
                             Size = 1
                         });
                         output_data = mapper.Map(data, output_data);
-                        output_data.Link = $"/lcb/product/toilet/{data.Id}";
+                        output_data.Link = $"toilet/product/{data.Id}";
                         output_data.MainImage = (imagedata[0] ?? new FileGetImgDto()).Link;
 
                         output.Add(output_data);
-
-                        //var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                        //{
-                        //    Sid = data.Id,
-                        //    Type = (int)FileBindTypeEnum.產品,
-                        //    Size = 1
-                        //});
                     }
                 }
 

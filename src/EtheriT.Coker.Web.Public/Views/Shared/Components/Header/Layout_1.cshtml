@@ -77,7 +77,7 @@
                                                     {
                                                         var target = thirdItem.Target == true ? "_blank" : "_self";
                                                         var title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
-                                                        <a class="subtitle_title ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                        <a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
                                                             <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                             <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                             @thirdItem.Title

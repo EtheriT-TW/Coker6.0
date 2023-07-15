@@ -1,5 +1,4 @@
 ﻿using EtheriT.Coker.Application;
-using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
@@ -71,8 +70,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 switch (option)
                 {
                     case "article":
-                        model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
+                        model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                        model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
+                        model.MenuBread.Add(new GetMenuBreadDto
+                        {
+                            Title = model.PageData.Title,
+                            Link = "",
+                        });
                         model.PageData.LayoutType = defaultData.Layout_Type;
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
@@ -96,33 +101,38 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             view = "Index";
                         }
                         break;
+                    case "product":
+                        view = "Product";
+                        if (id != 0)
+                        {
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                            model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
+                            model.MenuBread.Add(new GetMenuBreadDto
+                            {
+                                Title = model.PageData.Title,
+                                Link = "",
+                            });
+                            model.PageData.LayoutType = defaultData.Layout_Type;
+
+                            if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
+                            {
+                                string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                                if (siteId != defaultData.Id)
+                                {
+                                    model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                                    model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
+                                    model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                                }
+                            }
+                            view = "ProductContent";
+                        }
+                        break;
                     default:
                         if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test")
                         {
                             view = key;
-                        }
-                        else if (key == "product")
-                        {
-                            view = "Product";
-                            if (id != 0)
-                            {
-                                model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
-                                model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
-                                model.PageData.LayoutType = defaultData.Layout_Type;
-
-                                if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
-                                {
-                                    string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
-                                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
-                                    if (siteId != defaultData.Id)
-                                    {
-                                        model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
-                                        model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
-                                        model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
-                                    }
-                                }
-                                view = "ProductContent";
-                            }
                         }
                         else
                         {

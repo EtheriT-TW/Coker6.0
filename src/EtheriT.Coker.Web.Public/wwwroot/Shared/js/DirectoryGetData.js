@@ -116,7 +116,6 @@ function DirectoryDataGet($item, dirid, page, shownum) {
         }
 
         $item.data("init", "true");
-
         DirectoryDataInsert($item, result.releInfos);
     })
 }
@@ -124,13 +123,11 @@ function DirectoryDataGet($item, dirid, page, shownum) {
 function DirectoryDataInsert($item, result) {
     result.forEach(function (data) {
         var content = $($item.find(".templatecontent").html()).clone();
-        content.find("a").attr("href", data.link);
+        content.find("a").attr("href", window.location.pathname + data.link);
         content.find("a").attr("alt", data.name);
 
         content.find("img").attr("src", data.mainImage);
         content.find("img").attr("alt", typeof (data.name) == "undefined" ? "" : `${data.name}的主要圖片`);
-
-        content.find("a").attr("href", data.link);
 
         content.find(".title").text(data.title);
         content.find(".description").text(data.description);

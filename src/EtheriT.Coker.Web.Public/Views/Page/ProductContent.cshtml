@@ -1,4 +1,6 @@
-﻿<link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
+﻿@using System.Web;
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+<link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Page/ProductContent.min.js" asp-append-version="true"></script>
 
@@ -26,14 +28,37 @@
     </div>
 </div>
 
-<nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
+@*<nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/lcb/home">首頁</a></li>
         <li class="breadcrumb-item">Derek商品</li>
         <li class="breadcrumb-item"><a href="/lcb/product/toilet">馬桶</a></li>
         <li class="breadcrumb-item active" aria-current="page">C659NA德瑞克Smart III淨未來智慧馬桶</li>
     </ol>
-</nav>
+</nav>*@
+
+@switch (Model.PageData.LayoutType)
+{
+    case 1:
+        <div class="top_title_1 p-3">
+            <nav class="bread d-none d-md-block container">
+                <ol class="list-unstyled d-flex my-0">
+                    @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+                    {
+                        @if (@menu.Link == "")
+                        {
+                            <li class="px-1">@menu.Title</li>
+                        }
+                        else
+                        {
+                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                        }
+                    }
+                </ol>
+            </nav>
+        </div>
+        break;
+}
 
 <template id="Template3DSlide">
     <div class="swiper-slide mb-0 d-flex align-items-center justify-content-center" data-pid="">
@@ -222,14 +247,6 @@
             <div class="title">標章認證</div>
             <ul class="image d-flex flex-wrap"></ul>
         </div>
-        @*
-        <template id="TemplateIcon">
-        <li><button class="btn_tc bg-transparent border-0" data-certification="1"><img src="~/upload/badge/badge_01.jpg" alt="" /></button></li>
-        <li><button class="btn_tc bg-transparent border-0" data-certification="2"><img src="~/upload/badge/badge_02.jpg" alt="" /></button></li>
-        <li><button class="btn_tc bg-transparent border-0" data-certification="3"><img src="~/upload/badge/badge_03.jpg" alt="" /></button></li>
-        <li><button class="btn_tc bg-transparent border-0" data-certification="4"><img src="~/upload/badge/badge_04.jpg" alt="" /></button></li>
-        <li><button class="btn_tc bg-transparent border-0" data-certification="5"><img src="~/upload/badge/badge_05.jpg" alt="" /></button></li>
-        </template>*@
 
         <hr class="m-1" />
 
@@ -288,26 +305,10 @@
     </ul>
 </div>
 
-@*<template id="TemplateDemoDescription">
-	<ul>
-		<li>■ 中心孔距:305mm</li>
-		<li>■ 用水量:小號2.9公升，大號3.8公升</li>
-		<li>■ 洗淨方式:噴射虹吸式</li>
-		<li>■ 潔淨:馬桶排污管上釉</li>
-		<li>■ 最低水壓:0.8kgf/㎝²(流動壓)</li>
-		<li>■ 最高水壓:7kgf/㎝²(靜止壓)</li>
-		<li>■ 搬運警告:若需搬動智慧馬桶，請從下方陶瓷本體處施力搬運；若只抓住上方馬桶座(塑膠部分)，會因塑膠無法承重而造成產品損壞！</li>
-	</ul>
-
-	<iframe src="https://www.youtube.com/embed/JGEj2nhPvDs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-	<img class="py-2" src="~/upload/propic_01.jpg" alt="" />
-
-	<img class="py-2" src="~/upload/propic_02.jpg" alt="" />
-</template>*@
-
 <div id="TabContent" class="tab-content container">
     <div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
+        <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+        <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
     </div>
 
     <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
@@ -321,40 +322,5 @@
         </div>
 
         <div class="techcert_list"></div>
-
-        @*<div class="badge_directions d-flex align-items-center" data-certification="1">
-        <img class="py-2" src="~/upload/badge/badge_01.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="2">
-        <img class="py-2" src="~/upload/badge/badge_02.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="3">
-        <img class="py-2" src="~/upload/badge/badge_03.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="4">
-        <img class="py-2" src="~/upload/badge/badge_04.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="badge_directions d-flex align-items-center" data-certification="5">
-        <img class="py-2" src="~/upload/badge/badge_05.jpg" alt="" />
-        <div class="text">說明文字</div>
-        </div>
-
-        <hr class="m-1" />*@
     </div>
 </div>

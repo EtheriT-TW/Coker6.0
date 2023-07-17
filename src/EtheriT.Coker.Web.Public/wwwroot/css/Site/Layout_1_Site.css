@@ -54,6 +54,21 @@ html {
     flex-wrap: wrap;
 }
 
+.top_title_1 li {
+    color: gray;
+    cursor: default;
+}
+
+    .top_title_1 li a {
+        color: gray;
+    }
+
+    .top_title_1 li:not(:first-child)::before {
+        content: '/';
+        padding-right: 0.25rem;
+        color: gray;
+    }
+
 /* Breadcrumb */
 #Breadcrumb {
     --bs-breadcrumb-divider: '/';

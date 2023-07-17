@@ -87,7 +87,7 @@ function PageDefaultSet(result) {
     if (spec_height > $pro_specification.height()) {
         $btn_detailed.removeClass("d-none")
     }
-    $("#ProductDescription").append("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
+    $("#ProductDescription > Content").before("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
 
     result.techCertDatas.forEach(item => {
         if (item.img_small.length > 0) {
@@ -181,7 +181,7 @@ function PageDefaultSet(result) {
         if (maxprice == minprice) {
             $pro_discount.text(minprice.toLocaleString('en-US'));
         } else {
-            $pro_discount.text(minprice.toString().toLocaleString('en-US') + " ~ " + maxprice.toString().toLocaleString('en-US'));
+            $pro_discount.text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
         }
     } else {
         s1 = result.stocks[0].fK_S1id;

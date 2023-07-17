@@ -42,6 +42,55 @@ function PageReady() {
     TechCertListModalInit();
     TagListModalInit();
 
+    // 啟動
+    const editor = grapesInit({
+        save: function (html, css) {
+            var _dfr = $.Deferred();
+            co.Product.Content.SaveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        import: function (html, css) {
+            var _dfr = $.Deferred();
+            co.Product.Content.ImportConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        getComponer: function () {
+            var _dfr = $.Deferred();
+            co.HtmlContent.GetAllComponent().done(function (result) {
+                if (result.success) _dfr.resolve(result.list);
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        }
+    });
+
+    //設定html資料
+    setPage = function (id) {
+        co.Product.Content.GetConten({ Id: id }).done(function (result) {
+            if (result.success) {
+                var html = co.Data.HtmlDecode(result.conten.saveHtml);
+                editor.setComponents(html);
+                editor.setStyle(result.conten.saveCss);
+            } else {
+                co.sweet.error(result.error);
+            }
+        });
+    }
+
     /* File Upload */
     $(".btn_upload_add > button").on("click", function (e) {
         e.preventDefault();
@@ -535,6 +584,7 @@ function HashDataEdit() {
                 }
             } else {
                 if (hash.includes('-1')) {
+                    keyId = parseInt(hash);
                     MoveToCanvas();
                 } else {
                     co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
@@ -563,6 +613,8 @@ function editButtonClicked(e) {
 }
 
 function paletteButtonClicked(e) {
+    $("#gjs").data("id", e.row.key);
+    setPage(e.row.key);
     keyId = e.row.key + "-1";
     window.location.hash = keyId;
 }
@@ -1450,12 +1502,16 @@ function MoveToContent() {
 }
 
 function MoveToCanvas() {
+    $("#gjs").data("id", keyId);
+    setPage(keyId);
+    $("#TopLine > a").removeClass("d-none");
     $("#ProductList").addClass("d-none");
     $("#ProductContent").addClass("d-none");
     $("#ProductCanvas").removeClass("d-none");
 }
 
 function BackToList() {
+    $("#TopLine > a").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");

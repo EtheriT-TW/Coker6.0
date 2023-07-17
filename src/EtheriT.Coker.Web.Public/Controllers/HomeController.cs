@@ -55,7 +55,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 guessLike = guessLike,
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
-            model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
             model.PageData.LayoutType = defaultData.Layout_Type;
 
             if (string.IsNullOrEmpty(model.PageData.Html))

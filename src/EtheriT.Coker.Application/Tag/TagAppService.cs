@@ -259,7 +259,7 @@ namespace EtheriT.Coker.Application.Tag
 				for (int i = 0; i < dto.Count; i++)
                 {
 					var data = dto[i];
-                    var ass = all.Find(e => e.FK_AId == data.FK_AId && e.FK_TId == data.FK_TId);
+                    var ass = await db.Tag_Associates.Where(e => e.FK_AId == data.FK_AId && e.FK_TId == data.FK_TId && e.Type == data.Type).FirstOrDefaultAsync();
                     if(ass!=null) data.Id = ass.Id;
                     else data.Id = 0;
 					if (data.Id == 0 && !data.IsDeleted)

@@ -416,13 +416,13 @@ function AddUp(success_text, error_text, place) {
 
 function MoveToContent() {
     UnValidated();
-    if (keyId == 0) {
+    /*if (keyId == 0) {
         $(".btn_to_canvas").addClass("text-dark");
         $(".btn_to_canvas").attr('disabled', '');
     } else {
         $(".btn_to_canvas").removeClass("text-dark");
         $(".btn_to_canvas").removeAttr('disabled');
-    }
+    }*/
     $("#ArticleList").addClass("d-none");
     $("#ArticleContent").removeClass("d-none");
     $("#ArticleCanvas").addClass("d-none");

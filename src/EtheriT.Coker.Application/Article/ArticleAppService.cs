@@ -182,19 +182,13 @@ namespace EtheriT.Coker.Application.Article
         {
             try
             {
-
-                long WebsiteID = await loginUserData.GetWebsiteId();
-                if (WebsiteID == 0)
-                {
-                    WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
-                }
                 var result = db.Article;
 
                 if (result != null)
                 {
                     var output = await (from e in result
                                         where e.Id == Id
-                                        where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                        where !e.IsDeleted
                                         orderby e.SerNO
                                         select new ArticleGetDataDto
                                         {
@@ -264,8 +258,9 @@ namespace EtheriT.Coker.Application.Article
                         });
 
                         var output_data = new DirectoryReleInfoDto();
+                        output_data.type = DirectoryTypeEnum.文章;
                         output_data = mapper.Map(data, output_data);
-                        output_data.Link = $"/lcb/catalog/article/{data.Id}";
+                        output_data.Link = $"/article/{data.Id}";
                         output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
 
                         output.Add(output_data);

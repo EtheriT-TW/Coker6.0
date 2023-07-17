@@ -554,6 +554,38 @@ var Coker = {
                     data: { Id: id },
                 });
             }
+        },
+        Content: {
+            GetConten: function (data) {
+                return $.ajax({
+                    url: "/api/Product/GetConten",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            SaveConten: function (data) {
+                return $.ajax({
+                    url: "/api/Product/SaveConten",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            },
+            ImportConten: function (data) {
+                return $.ajax({
+                    url: "/api/Product/ImportConten",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: JSON.stringify(data),
+                    dataType: "json"
+                });
+            }
         }
     },
     Tag: {

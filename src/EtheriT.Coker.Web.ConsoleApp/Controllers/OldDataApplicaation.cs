@@ -32,8 +32,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 				var menuSubs = Menus.GroupBy(e => e.sub_id).Select(e => e.Key).ToList();
 				var shops = dbContext.ShopInfos.Where(e => shopIds.Contains(e.menuID));
 
-				var menuCount = dbContext.MenuConts.Where(e => menus.Contains(e.bid.Value)).Where(e => e.type == "1");
-				var shopsCount = dbContext.MenuConts.Where(e => shopIds.Contains(e.bid.Value)).Where(e => e.type == "11");
+				var menuCount = dbContext.MenuConts.Where(e => menus.Contains(e.menu_id)).Where(e => e.type == "1");
+				var shopsCount = dbContext.MenuConts.Where(e => shopIds.Contains(e.menu_id)).Where(e => e.type == "11");
 
 				var menuSub = dbContext.MenuSubs.Where(e => menuSubs.Contains(e.id));
 
@@ -79,9 +79,9 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 
 					int serNo;
 					int.TryParse(item.ser_no, out serNo);
-					var myMenuCount = menuCount.Where(e => e.bid == item.id).ToList();
+					var myMenuCount = menuCount.Where(e => e.menu_id == item.id).ToList();
 					var myShops = shops.Where(e => e.menuID == item.id).ToList();
-					var myShopsMenuCount = shopsCount.Where(e => e.bid == item.id).ToList();
+					var myShopsMenuCount = shopsCount.Where(e => e.menu_id == item.id).ToList();
 
 					if (tags.Find(e => e.Title == tagName) == null)
 					{
@@ -114,6 +114,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 								new Models.Tag_Associate
 								{
 									FK_TId = TagId,
+									Type= 2,
 									CreationTime = DateTime.Now,
 									IsDeleted = false,
 									CreatorUserId = 1,
@@ -130,7 +131,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 							Models.Tag_Associate a = new Models.Tag_Associate
 							{
 								FK_TId = t.Id,
-								CreationTime = DateTime.Now,
+                                Type = 2,
+                                CreationTime = DateTime.Now,
 								IsDeleted = false,
 								CreatorUserId = 1,
 							};

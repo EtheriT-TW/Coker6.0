@@ -33,7 +33,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Models.OldDB
         public string? col1 { get; set; }
         public string? start_date { get; set; }
         public string? end_date { get; set; }
-        public float? col11 { get; set; }
+        public double? col11 { get; set; }
         public int objectType { get; set; }
         public int? bid { get; set; }
     }

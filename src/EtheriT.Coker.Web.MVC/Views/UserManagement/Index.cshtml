@@ -1,11 +1,15 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Member
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+
 @{
 	ViewData["Title"] = "UserData";
 }
 
 <link rel="stylesheet" href="~/css/UserManagement/Index.min.css" asp-append-version="true" />
 <script src="~/js/UserManagement/Index.min.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/Components/ImageUploadModal.min.css" asp-append-version="true" />
+<script src="~/js/Components/ImageUploadModal.min.js" asp-append-version="true"></script>
 
 <div class="py-2 px-4 position-relative">
 		<div class="d-flex">
@@ -19,7 +23,18 @@
 	<div class="w-100 h-auto p-5 body-interface d-flex justify-content-center align-item-center my-2">
 			<div class="d-flex col-12">
 			<div class="d-flex justify-content-start align-items-center col-md-3 flex-column">
-				<img src="">
+				<div class="img-bg d-flex align-items-center justify-content-center">
+					<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent rounded-circle">
+						<span class="material-symbols-outlined">add_photo_alternate</span>
+						<img class="img_preview d-none" src="" />
+					</button>
+					<button class="btn_img_delete rounded-circle bg-transparent border-0 position-absolute d-none">
+						<span class="material-symbols-outlined bg-white rounded-circle">cancel</span>
+					</button>
+				</div>
+				<div class="d-flex justify-content-end align-items-end">
+					<p class="changeAvatar">更換頭像</p>
+				</div>
 				<button class="btn revise-password mt-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTop" aria-controls="offcanvasTop">修改密碼</button>
 				<div class="offcanvas offcanvas-top" tabindex="-1" id="offcanvasTop" aria-labelledby="offcanvasTopLabel">
 					<div class="offcanvas-header d-flex">
@@ -35,11 +50,37 @@
 				</div>
 			</div>
 				<form class="d-flex flex-column justify-content-center align-item-center col-md-6">
-						<input id="s-name" class="form-control" type="text" placeholder="暱稱">
-						<input id="name" class="form-control" type="text" placeholder="姓名">
-						<input id="phone" class="form-control" type="text" placeholder="電話">
-						<input id="email" class="form-control" type="email" placeholder="email">
-						<input id="address" class="form-control" type="text" placeholder="地址">
+
+				<div class="form-floating mb-3">
+					<input id="s-name" name="s-name" class="form-control" type="text" placeholder="暱稱">
+					<label for="S-name" class="form-label">暱稱</label>
+				</div>
+				<div class="form-floating mb-3">
+					<input id="name" class="form-control" type="text" placeholder="姓名">
+					<label for="name" class="form-label">姓名</label>
+				</div>
+				<div class="form-floating mb-3">
+					<input id="phone" class="form-control" type="text" placeholder="電話">
+					<label for="phone" class="form-label">電話</label>
+				</div>
+				<div class="form-floating mb-3">
+					<input id="email" class="form-control" type="email" placeholder="email">
+					<label for="email" class="form-label">email</label>
+				</div>
+						<div class=" w-100 d-flex justify-content-between align-items-center">
+					<div class="form-floating mb-3">
+						<input id="address" class="form-control w31" type="text" placeholder="縣市">
+						<label for="address" class="form-label">縣市</label>
+					</div>
+					<div class="form-floating mb-3">
+						<input id="address" class="form-control w31" type="text" placeholder="鄉鎮市區">
+						<label for="address" class="form-label">鄉鎮市區</label>
+					</div>
+					<div class="form-floating mb-3">
+						<input id="address" class="form-control w31" type="text" placeholder="路段">
+						<label for="address" class="form-label">路段</label>
+					</div>							
+						</div>	
 				<button class="btn submit" type="button">儲存</button>
 				</form>
 			</div>

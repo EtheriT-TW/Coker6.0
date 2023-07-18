@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "登入";
 }
+<link rel="stylesheet" href="~/css/Account/login.min.css" asp-append-version="true" />
 <script src="~/js/Account/Index.min.js" asp-append-version="true"></script>
 
 <div class="row align-items-center justify-content-center align-items-center">
@@ -14,9 +15,10 @@
                     <label for="username">使用者帳號</label>
                     <input type="text" class="form-control" placeholder="請輸入Email" id="username">
                 </div>
-                <div class="form-group last mb-3">
+                <div class="form-group last mb-3 position-relative">
                     <label for="password">密碼</label>
                     <input type="password" class="form-control" placeholder="請輸入英文或數字" id="password">
+                    <span class="fas fa-eye-slash position-absolute" style="top: 50px; right: 10px;" id="togglePassword" onclick="togglePassword()"></span>
                 </div>
                 <div class="d-sm-flex mb-5 align-items-center">
                     <label class="control control--checkbox mb-3 mb-sm-0">
@@ -25,7 +27,8 @@
                         <div class="control__indicator fa"></div>
                     </label>
                     <span class="ml-auto">
-                        <a class="forgot-pass" asp-area="" asp-controller="Account" asp-action="Forget">忘記密碼</a>
+                        <!--<a class="forgot-pass" asp-area="" asp-controller="Account" asp-action="Forget">忘記密碼</</a>-->
+                        <button class="forget-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop">忘記密碼</button>
                     </span>
                 </div>
                 <input id="loginBtn" type="button" value="登入" class="btn btn-block py-2 btn-secondary">
@@ -37,6 +40,28 @@
                     <a href="#" class="btn btn-block py-2 btn-google"><i class="fab fa-google me-3"></i> Google</a>
                 </div>
             </form>
+            <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastop" aria-labelledby="offcanvasTopLabel">
+                <form class="d-flex flex-column justify-content-center align-item-center p-3">
+                    <!-- <div class="form-floating mb-3">
+                        <input id="phone" class="form-control" type="text" >
+                        <label for="phone" class="form-label">電話</label>
+                    </div>-->
+                    <div class="form-floating mb-3">
+                        <input id="email" class="form-control" type="email" placeholder="電子郵件驗證">
+                        <label for="email" class="form-label">電子郵件驗證</label>
+                    </div>
+                    <button class="btn submit" type="button">傳送驗證碼</button>
+                    <div class="form-floating mb-3">
+                        <input id="password" class="form-control" type="email" placeholder="輸入新密碼">
+                        <label for="password" class="form-label">輸入新密碼</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input id="password" class="form-control" type="email" placeholder=">確認新密碼">
+                        <label for="password" class="form-label">確認新密碼</label>
+                    </div>
+                    <button class="btn submit" type="button">確定</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

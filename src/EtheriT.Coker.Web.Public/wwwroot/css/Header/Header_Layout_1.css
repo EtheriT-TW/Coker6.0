@@ -143,11 +143,11 @@
 }
 
 .subtitle .subtitle_title > i {
-    font-size: 2rem;
+    font-size: 1.5rem;
 }
 
 .subtitle .subtitle_title > img {
-    height: 2rem;
+    height: 1.5rem;
 }
 
 /*RWD*/
@@ -158,11 +158,6 @@
 
     #Offcanvas_Mega_Menu > ul > .title > div:first-child {
         text-align: center;
-    }
-
-    #Offcanvas_Mega_Menu > ul > .title > .content > ul {
-        max-height: 13rem;
-        overflow: hidden;
     }
 }
 

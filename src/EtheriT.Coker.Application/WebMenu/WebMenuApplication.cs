@@ -133,7 +133,7 @@ namespace EtheriT.Coker.Application
                                 m.IconId = m.icon.Split(":")[1];
                                 m.IconUrl = data[0].Link;
                             }
-                        } 
+                        }
                         m.icon = "empty";
                     }
                     if (m.Children.Count == 0) m.Children = null;
@@ -278,21 +278,25 @@ namespace EtheriT.Coker.Application
             var result = await db.WebMenus.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
             if (result != null && result.PageType != (int)PageTypeEnum.首頁)
             {
-                output.Add(new GetMenuBreadDto
+                var site = await db.Websites.Where(e => e.Id == result.FK_WebsiteId).FirstOrDefaultAsync();
+                if (site != null)
                 {
-                    Title = "Home",
-                    Link = "home",
-                });
-                var parentid = result.FK_RootNodeId;
-                if (parentid != null)
-                {
-                    output.AddRange(await this.GetBread((long)parentid));
+                    output.Add(new GetMenuBreadDto
+                    {
+                        Title = "Home",
+                        Link = $"/{site.OrgName}/home",
+                    });
+                    var parentid = result.FK_RootNodeId;
+                    if (parentid != null)
+                    {
+                        output.AddRange(await this.GetBread((long)parentid));
+                    }
+                    output.Add(new GetMenuBreadDto
+                    {
+                        Title = result.Title,
+                        Link = $"/{site.OrgName}/{result.RouterName}",
+                    });
                 }
-                output.Add(new GetMenuBreadDto
-                {
-                    Title = result.Title,
-                    Link = result.RouterName,
-                });
             }
             return output;
         }

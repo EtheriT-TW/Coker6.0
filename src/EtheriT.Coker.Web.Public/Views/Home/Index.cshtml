@@ -15,46 +15,6 @@
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
 
-@switch (Model.PageData.LayoutType)
-{
-    case 3:
-        @if (Model.MenuBread.Count() > 0)
-        {
-            <div class="top_title_3 p-3">
-                <nav class="bread d-none d-md-block container">
-                    <ol class="list-unstyled d-flex">
-                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
-                        {
-                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
-                        }
-                    </ol>
-                </nav>
-                <div class="title fs-1 fw-bold text-white container">@Model.PageData.Title</div>
-            </div>
-        }
-        break;
-    case 4:
-        @if (Model.PageData.CurrentUrl != "/home")
-        {
-            <link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
-        }
-        @if (Model.MenuBread.Count() > 0)
-        {
-            <div class="top_title_4 p-3 bg-white container">
-                <nav class="bread d-none d-md-block container">
-                    <ol class="list-unstyled d-flex">
-                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
-                        {
-                            <li class="px-1"><a class="text-decoration-none" href="@menu.Link">@menu.Title</a></li>
-                        }
-                    </ol>
-                </nav>
-                <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
-            </div>
-        }
-        break;
-}
-
 <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
 
@@ -66,7 +26,7 @@
 <!-- EnterAdModal -->
 @if (Model.enterAd.Count > 0)
 {
-	<div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" data-enteradid="@Model.enterAd[0].Id">
+    <div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" data-enteradid="@Model.enterAd[0].Id">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-body">
@@ -74,14 +34,14 @@
                     <div class="d-flex justify-content-center">
 
                         @if (Model.enterAd[0].Link != "")
-						{
-							var target = Model.enterAd[0].Target == true ? "_blank" : "_self";
-							var title = Model.enterAd[0].Target == true ? $"連結至：{Model.enterAd[0].Title}(另開視窗)" : $"連結至：{Model.enterAd[0].Title}";
-							<a href="@Model.enterAd[0].Link" target="@target" title="@title">
+                        {
+                            var target = Model.enterAd[0].Target == true ? "_blank" : "_self";
+                            var title = Model.enterAd[0].Target == true ? $"連結至：{Model.enterAd[0].Title}(另開視窗)" : $"連結至：{Model.enterAd[0].Title}";
+                            <a href="@Model.enterAd[0].Link" target="@target" title="@title">
                                 <ul>
                                     @foreach (var img in Model.enterAd[0].Img)
                                     {
-										<li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                        <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
                                     }
                                 </ul>
                             </a>
@@ -91,7 +51,7 @@
                             <ul>
                                 @foreach (var img in Model.enterAd[0].Img)
                                 {
-									<li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                    <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
                                 }
                             </ul>
 

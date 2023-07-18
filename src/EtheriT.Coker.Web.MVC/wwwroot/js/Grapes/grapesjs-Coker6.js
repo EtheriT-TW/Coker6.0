@@ -193,32 +193,6 @@
                         name: 'data-dirid', type: 'button',
                         text: "設置目錄",
                         command: editor => {
-                            $(`<div id="choseDirectory" class="modal" tabindex="-1">
-                                  <div class="modal-dialog">
-                                    <div class="modal-content">
-                                      <div class="modal-header">
-                                        <h5 class="modal-title">選擇目錄</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                      </div>
-                                      <div class="modal-body">
-                                        目錄目錄目錄
-                                      </div>
-                                      <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                        <button type="button" class="btn btn_choose btn-primary btn-save">確定</button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>`).appendTo("body");
-                            var DirectoryModal = new bootstrap.Modal('#choseDirectory');
-                            DirectoryModal.show();
-
-                            var selected = editor.getSelected();
-                            var $selected = $(selected.getEl());
-                            console.log(selected.getAttributes()['data-dirid']);
-                            $selected.data("dirid", selected.getAttributes()['data-dirid'])
-                            console.log($selected)
-                            console.log($selected.data("dirid"))
                             $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
                         }
                     }

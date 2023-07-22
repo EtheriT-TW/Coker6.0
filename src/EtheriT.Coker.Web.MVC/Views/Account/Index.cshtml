@@ -27,7 +27,7 @@
                         <div class="control__indicator fa"></div>
                     </label>
                     <span class="ml-auto">
-                        <!--<a class="forgot-pass" asp-area="" asp-controller="Account" asp-action="Forget">忘記密碼</</a>-->
+                        <!--<a class="forgot-pass" asp-area="" asp-controller="Account" asp-action="Forget" >忘記密碼</a>-->
                         <button class="forget-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop">忘記密碼</button>
                     </span>
                 </div>
@@ -42,24 +42,41 @@
             </form>
             <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastop" aria-labelledby="offcanvasTopLabel">
                 <form class="d-flex flex-column justify-content-center align-item-center p-3">
-                    <!-- <div class="form-floating mb-3">
-                        <input id="phone" class="form-control" type="text" >
-                        <label for="phone" class="form-label">電話</label>
-                    </div>-->
                     <div class="form-floating mb-3">
-                        <input id="email" class="form-control" type="email" placeholder="電子郵件驗證">
-                        <label for="email" class="form-label">電子郵件驗證</label>
+                        <input id="email" class="form-control" type="email" placeholder="帳號">
+                        <label for="email" class="form-label">帳號</label>
                     </div>
-                    <button class="btn submit" type="button">傳送驗證碼</button>
+                    <div class="d-flex align-items-center my-3">
+                        <div class="d-flex justify-content-center align-items-center flex-column">
+                        <p>請輸入右側圖字樣</p>
+                        <input id="picture-input" class="form-control" type="text" placeholder="">
+                        </div>
+                        <img class="picture" />
+                    </div>
+                    <button class="forget-btn btn submit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop2" aria-controls="offcanvasTop" id="verification-btn">送出</button>
+                </form>
+            </div>
+             <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastop2" aria-labelledby="offcanvasTopLabel">
+                <form class="d-flex flex-column justify-content-center align-item-center p-3">
                     <div class="form-floating mb-3">
-                        <input id="password" class="form-control" type="email" placeholder="輸入新密碼">
-                        <label for="password" class="form-label">輸入新密碼</label>
+                        <input id="newpassword" class="form-control" type="password" placeholder="密碼">
+                        <label for="newpassword" class="form-label">密碼</label>
+                        <span class="fas fa-eye-slash position-absolute" style="top:20px; right: 5px;" id="togglePassword2" onclick="togglePassword2()"></span>
                     </div>
                     <div class="form-floating mb-3">
-                        <input id="password" class="form-control" type="email" placeholder=">確認新密碼">
-                        <label for="password" class="form-label">確認新密碼</label>
+                        <input id="agnewpassword" class="form-control" type="password" placeholder=">確認密碼">
+                        <label for="agnewpassword" class="form-label">確認密碼</label>
+                        <span class="fas fa-eye-slash position-absolute" style="top:20px; right: 5px;" id="togglePassword3" onclick="togglePassword3()"></span>
                     </div>
-                    <button class="btn submit" type="button">確定</button>
+                    <button class="btn submit" type="button" id="subnewpsw">確定</button>
+                    <div id="rule">
+                        <h4>密碼規則</h4>
+                        <p id="lowercase" class="invalid">至少1個小寫字母</p>
+                        <p id="uppercase" class="invalid">至少1個大寫字母</p>
+                        <p id="number" class="invalid">至少1個數字</p>
+                        <p id="symbol" class="invalid">至少1個符號</p>
+                        <p id="length" class="invalid">至少8碼最多32碼</p>
+                    </div>
                 </form>
             </div>
         </div>

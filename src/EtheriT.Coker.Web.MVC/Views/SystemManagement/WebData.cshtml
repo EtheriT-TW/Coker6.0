@@ -4,13 +4,34 @@
 }
 
 <link rel="stylesheet" href="~/css/SystemManagement/WebData.min.css" asp-append-version="true" />
+
+<!--導入grapesjs-->
+<link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
+<script src="/lib/grapesjs/grapes.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js"></script>
+<script src="~/js/Grapes/locale/tw.js" asp-append-version="true"></script>
+<script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
+<script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>
+
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
+
+
 <script src="~/js/SystemManagement/WebData.min.js" asp-append-version="true"></script>
 
-<div class="">
-    <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
-        <div class="title fw-bold fs-3">網站資料</div>
-    </div>
+<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+    <div class="title fw-bold fs-3">網站資料</div>
+    <a class="btn btn-primary text-decoration-none align-self-center d-none" href="#" role="button">返回網站資料</a>
+</div>
 
+<div id="WebDataMain">
     <div class="d-flex">
         <!-- Company Info -->
         <div class="align-items-stretch d-flex pb-2 pe-2 w-50">
@@ -141,17 +162,10 @@
     <!-- Privacy Statement -->
     <div class="py-2">
         <div class="card border-0">
-            <div id="PrivacyStatement" class="card-body">
+            <div id="PrivacyStatement" class="card-body" data-id="">
                 <div class="d-flex align-items-center pb-2">
-                    <div class="fs-5 fw-bold">隱私權聲明</div>
-                    <button class="bg-transparent border-0 fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePrivacyStatement" aria-expanded="false" aria-controls="CollapsePrivacyStatement"><i class="fa-regular fa-pen-to-square"></i></button>
-                </div>
-                <div id="CollapsePrivacyStatement" class="collapse">
-                    <textarea id="InputPrivacyStatement" class="form-control col" type="text" placeholder=""></textarea>
-                    <div class="form_btn d-flex justify-content-end mt-2">
-                        <button class="btn_exit btn-danger border-0 px-3 py-1">離開</button>
-                        <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
-                    </div>
+                    <div class="title fs-5 fw-bold">隱私權聲明</div>
+                    <button class="btn_privacy bg-transparent border-0 fs-5" type="button"><i class="fa-regular fa-pen-to-square"></i></button>
                 </div>
             </div>
         </div>
@@ -160,19 +174,17 @@
     <!-- Membership Terms -->
     <div class="py-2">
         <div class="card border-0">
-            <div id="MembershipTerms" class="card-body">
+            <div id="MembershipTerms" class="card-body" data-id="">
                 <div class="d-flex align-items-center pb-2">
-                    <div class="fs-5 fw-bold">會員條款說明</div>
-                    <button class="bg-transparent border-0 fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#CollapseMembershipTerms" aria-expanded="false" aria-controls="CollapseMembershipTerms"><i class="fa-regular fa-pen-to-square"></i></button>
-                </div>
-                <div id="CollapseMembershipTerms" class="collapse">
-                    <textarea id="InputMembershipTerms" class="form-control col" type="text" placeholder=""></textarea>
-                    <div class="form_btn d-flex justify-content-end mt-2">
-                        <button class="btn_exit btn-danger border-0 px-3 py-1">離開</button>
-                        <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
-                    </div>
+                    <div class="title fs-5 fw-bold">會員條款說明</div>
+                    <button class="btn_terms bg-transparent border-0 fs-5" type="button"><i class="fa-regular fa-pen-to-square"></i></button>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- footer_privacy -->
+<div id="WebDataCanvas" class="card border-0 d-none">
+    <div id="gjs"></div>
 </div>

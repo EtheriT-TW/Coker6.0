@@ -41,6 +41,7 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
+                        c.AddFor(e => e.Id).Caption("ID").Width(75);
                         c.AddFor(e => e.Title).Caption("標題");
                         c.AddFor(e => e.Description).Caption("描述");
                         c.AddFor(e => e.Type).Caption("綁定內容").Width(100);

@@ -129,8 +129,9 @@ function DirectoryDataInsert($item, result) {
         var content = $($item.find(".templatecontent").html()).clone();
         content.find("a").attr("href", window.location.pathname + data.link);
         content.find("a").attr("alt", data.name);
-
-        content.find("img").attr("src", data.mainImage);
+        var imglink = data.mainImage;
+        if (typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") imglink = imglink.replace("upload", `upload/${OrgName}`);
+        content.find("img").attr("src", imglink);
         content.find("img").attr("alt", typeof (data.name) == "undefined" ? "" : `${data.name}的主要圖片`);
 
         content.find(".title").text(data.title);

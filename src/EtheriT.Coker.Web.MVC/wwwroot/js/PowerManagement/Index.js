@@ -32,5 +32,9 @@
             }
         });
     });
+    $(".fa-trash-alt").on("click", function () {
+        var member = $(this).closest('.member-item , .role-item');
+        member.remove();
+    });
 
 }

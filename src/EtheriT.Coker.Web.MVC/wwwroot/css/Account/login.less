@@ -13,6 +13,20 @@
         height: 60vh;
         top: 20%;
         left: 35%;
+        padding: 10px;
+
+        .picture {
+            border: 1px solid #000;
+            width: 125px;
+            height: 35px;
+            margin:40px 10px 0 10px;
+
+        }
+
+        #picture-input {
+            width: 125px;
+            height: 35px
+        }
     }
 
     .submit {
@@ -24,5 +38,29 @@
     .submit:hover {
         background: #514d4d;
         color: #fff;
+    }
+
+    #rule > h4 {
+        font-weight: bold;
+    }
+
+    .invalid {
+        color: red;
+    }
+
+    .vaild {
+        color: lightgreen;
+    }
+
+    .invalid:before {
+        position: relative;
+        left: 0px;
+        content: "!";
+    }
+
+    .valid:before {
+        position: relative;
+        left: 0px;
+        content: "\2713";
     }
 }

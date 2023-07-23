@@ -73,11 +73,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
-                        model.MenuBread.Add(new GetMenuBreadDto
-                        {
-                            Title = model.PageData.Title,
-                            Link = "",
-                        });
                         model.PageData.LayoutType = defaultData.Layout_Type;
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
@@ -95,7 +90,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 {
                                     model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
                                     model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
-                                    model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                                    model.PageData.Css = (model.PageData.Css??"").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                                 }
                             }
                             view = "Index";

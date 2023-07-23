@@ -55,7 +55,10 @@
                         }
                     </ol>
                 </nav>
-                <div class="title fs-1 fw-bold text-white container">@Model.PageData.Title</div>
+                <div class="title fs-1 fw-bold text-white container">@Model.MenuBread.Last().Title</div>
+            </div>
+            <div class="container">
+                <h2 class="p-2">@Model.PageData.Title</h2>
             </div>
         }
         break;

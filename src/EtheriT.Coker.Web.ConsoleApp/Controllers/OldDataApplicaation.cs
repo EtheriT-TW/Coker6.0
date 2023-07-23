@@ -25,8 +25,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 				var menuSubArtItem = dbContext.MenuSubs.Where(e => auIds.Contains(e.id)).Select(e => new { e.id, e.title }).ToList();
 				var menuSubArtIds = menuSubArt.Select(e => e.id).ToList();
 
-				var Menus = dbContext.Menus.Where(e => menuSubArtIds.Contains(e.sub_id) || subIds.Contains(e.sub_id)).ToList();
-				var shopIds = dbContext.Menus.Where(e => shopSubId.Contains(e.sub_id)).Select(e => e.id).ToList();
+                var shopIds = dbContext.Menus.Where(e => shopSubId.Contains(e.sub_id)).Select(e => e.id).ToList();
+                var Menus = dbContext.Menus.Where(e => menuSubArtIds.Contains(e.sub_id) || subIds.Contains(e.sub_id) || shopIds.Contains(e.id)).ToList();
 				var menus = Menus.Select(e => e.id).ToList();
 				var menusIdStr = Menus.Select(e => e.id.ToString()).ToList();
 				var menuSubs = Menus.GroupBy(e => e.sub_id).Select(e => e.Key).ToList();
@@ -172,7 +172,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     </div>
                     <div class=""col-12 col-md-7 custom_h5 pt-0 pt-md-5 px-0 px-md-5"">
                         {(
-							shop.start != null && shop.end != null ? "" :
+							shop.start == null || shop.end == null ? "" :
 							$@"<div class=""align-items-baseline d-flex my-2"">
                                 <div class=""title_block px-2 py-2 rounded-3 me-2"">活動時間</div>
                                 <div class=""d-flex align-items-center"">
@@ -237,18 +237,18 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 			string html = "";
 			cont.title = HttpUtility.HtmlDecode(cont.title);
 			cont.cont = HttpUtility.HtmlDecode(cont.cont);
-			switch (cont.type)
+			switch (cont.objectType)
 			{
-				case "1":
+				case 1:
 					html += cont.cont;
 					break;
-				case "2":
+				case 2:
 					html = $@"<a download="""" href=""{cont.col1}"" title="" "" target=""_blank"" class=""link_with_icon d-flex text-decoration-none edit_lock"">
                         <div class=""icon pe-2""><i></i></div>
                         <div class=""name text-black"">{cont.title}</div>
                     </a>";
 					break;
-				case "3":
+				case 3:
 					switch (cont.img_align)
 					{
 						case "right":
@@ -264,7 +264,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 							break;
 						case "center":
 							html = $@"<figure class=""d-flex flex-column text-center"">
-                                <img src=""{cont.title}"" alt="""" class=""gjs-plh-image""/>
+                                <img src=""{cont.img}"" alt=""{cont.title}"" class=""gjs-plh-image""/>
                                 <figcaption>
                                     <div>{cont.cont}</div>
                                 </figcaption>
@@ -277,16 +277,16 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                                     <div>{cont.cont}</div>
                                 </div>
                                 <div class=""col-12 col-md-6 text-center align-self-center px-0"">
-                                    <img src=""{cont.img}"" alt="""" class=""img-fluid""/>
+                                    <img src=""{cont.img}"" alt=""{cont.title}"" class=""img-fluid""/>
                                 </div>
                             </div>";
 							break;
 					}
 					break;
-				case "4":
+				case 4:
 					html = $@"<iframe frameborder=""0"" title=""{cont.title}"" src=""https://maps.google.com/maps?&amp;q={cont.title}&z=20&t=q&output=embed"" class=""w-100""></iframe>";
 					break;
-				case "6":
+				case 6:
 					Regex regex = new Regex("^.*(?:(?:youtu.be\\/|v\\/|vi\\/|u\\/w\\/|embed\\/)|(?:(?:watch)??v(?:i)?=|&v(?:i)?=))([^#&?]*).*");
 					html = $@"<iframe title=""{cont.title}"" frameborder=""0"" src=""https://www.youtube.com/embed/{regex.Match(cont.col1 ?? "").Value}"" class=""w-100""></iframe>";
 					break;

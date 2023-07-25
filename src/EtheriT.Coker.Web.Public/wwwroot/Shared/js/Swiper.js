@@ -14,7 +14,7 @@ function SwiperInit(obj) {
 
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper"
-            var selfConfig = $.extend(config, {
+            var selfConfig = Object.assign({}, config,{
                 pagination: {
                     el: Id + " > .swiper_pagination > *",
                     clickable: true,
@@ -40,7 +40,7 @@ function SwiperInit(obj) {
 
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper"
-            var selfConfig = $.extend(config, {
+            var selfConfig = Object.assign({},config, {
                 pagination: {
                     el: Id + " > .swiper_pagination > *",
                     clickable: true,
@@ -74,10 +74,9 @@ function SwiperInit(obj) {
 
     $(".four_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
-
         if (!!!$self.data("isInit")) {
-            var Id = "#" + $self.attr("id") + " > .swiper"
-            var selfConfig = $.extend(config, {
+            var Id = "#" + $self.attr("id") + " > .swiper";
+            var selfConfig = Object.assign({}, config, {
                 pagination: {
                     el: Id + " > .swiper_pagination > *",
                     clickable: true,
@@ -113,8 +112,8 @@ function SwiperInit(obj) {
         var $self = $(this);
 
         if (!!!$self.data("isInit")) {
-            var Id = "#" + $self.attr("id") + " > .swiper"
-            var selfConfig = $.extend(config, {
+            var Id = "#" + $self.attr("id") + " > .swiper";
+            var selfConfig = Object.assign({}, config, {
                 navigation: {
                     nextEl: Id + " > .swiper_button_next > button",
                     prevEl: Id + " > .swiper_button_prev > button",

@@ -1,0 +1,64 @@
+﻿@using DevExtreme.AspNet.Mvc;
+@using EtheriT.Coker.Application.Shared.Dto.Directory;
+
+@(
+    Html.DevExtreme().Popup()
+        .ID("PopupDirectory")
+        .Width("50%")
+        .Height("auto")
+        .Position(PositionAlignment.Center)
+        .ShowTitle(true)
+        .DragEnabled(false)
+        .CloseOnOutsideClick(true)
+)
+@using (Html.DevExtreme().NamedTemplate("PopupDirectory-template"))
+{
+    <div id="DirectoryList2" class="card border-0">
+        <div class="card-body position-relative">
+            @(Html.DevExtreme().DataGrid<DirectoryGetListDto>()
+                .DataSource(
+                d => d.RemoteController().Key("Id")
+                .LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
+                )
+                .ID("DirectoryList2")
+                .Selection(
+                s => s.Mode(SelectionMode.Single)
+                )
+                .RemoteOperations(true)
+                .ColumnHidingEnabled(false)
+                .ShowBorders(true)
+                .FilterRow(
+                filterRow =>
+                filterRow.Visible(true)
+                .ApplyFilter(GridApplyFilterMode.Auto)
+                )
+                .SearchPanel(searchPanel =>
+                searchPanel.Visible(true)
+                .Placeholder("請輸入要搜尋的資料")
+                )
+                .Columns(c =>
+                {
+                    c.AddFor(e => e.Title).Caption("標題");
+                    c.AddFor(e => e.Description).Caption("描述");
+                    c.AddFor(e => e.Type).Caption("綁定內容").Visible(false);
+                })
+                .OnSelectionChanged("DirectoryList_SelectChange")
+                .Toolbar(toolbar =>
+                {
+                    toolbar.Items(i =>
+                    {
+                        i.Add()
+                    .Name(DataGridToolbarItem.SearchPanel)
+                    .ShowText(ToolbarItemShowTextMode.Always)
+                    .Location(ToolbarItemLocation.After);
+                    });
+                })
+                .Paging(paging => paging.PageSize(10))
+                )
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary cancel">取消</button>
+        <button type="button" class="btn btn-primary Sure">確定</button>
+    </div>
+}

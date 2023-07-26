@@ -180,7 +180,7 @@
             }
         },
     });
-
+    var PopupDirectory = null;
     editor.DomComponents.addType('目錄', {
         isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame'),
         model: {
@@ -189,76 +189,34 @@
                 editable: false,
                 traits: [
                     { name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
+                    { name: 'data-diridName', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',
                         text: "設置目錄",
                         command: editor => {
-                            $(`<div class="modal fade" id="DirectoryModal" tabindex="-1" aria-labelledby="DirectoryModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="DirectoryModalLabel">選擇目錄</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div id="DirectoryList2" class="card border-0">
-                                                    <div class="card-body position-relative">
-                                                        @(Html.DevExtreme().DataGrid<DirectoryGetListDto>()
-                                                            .DataSource(d => d.RemoteController().Key("Id")
-                                                            .LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
-                                                            )
-                                                            .ID("DirectoryList2")
-                                                            .Selection(s => s.Mode(SelectionMode.Single))
-                                                            .RemoteOperations(true)
-                                                            .ColumnHidingEnabled(false)
-                                                            .ShowBorders(true)
-                                                            .FilterRow(filterRow => filterRow
-                                                            .Visible(true)
-                                                            .ApplyFilter(GridApplyFilterMode.Auto)
-                                                            )
-                                                            .SearchPanel(searchPanel => searchPanel
-                                                            .Visible(true)
-                                                            .Placeholder("請輸入要搜尋的資料")
-                                                            )
-                                                            .Columns(c =>
-                                                            {
-                                                                c.AddFor(e => e.Title).Caption("標題");
-                                                                c.AddFor(e => e.Description).Caption("描述");
-                                                                c.AddFor(e => e.Type).Caption("綁定內容").Visible(false);
-                                                            })
-                                                            .OnSelectionChanged("DirectoryList_SelectChange")
-                                                            .Toolbar(toolbar =>
-                                                            {
-                                                                toolbar.Items(i =>
-                                                                {
-                                                                    i.Add()
-                                                                .Name(DataGridToolbarItem.SearchPanel)
-                                                                .ShowText(ToolbarItemShowTextMode.Always)
-                                                                .Location(ToolbarItemLocation.After);
-                                                                });
-                                                            })
-                                                            .Paging(paging => paging.PageSize(10))
-                                                            )
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                                <button type="button" class="btn btn-primary">確定</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <script>
-                                    function DirectoryList_SelectChange(selectedItems) {
-                                        var data = selectedItems.selectedRowsData;
-                                        console.log(data);
-                                    }
-                                </script>
-                                `).appendTo("body");
-                            var DirectoryModal = new bootstrap.Modal('#DirectoryModal');
-                            DirectoryModal.show();
-                            $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                            var data = null;
+                            if (!!!PopupDirectory) {
+                                PopupDirectory = $("#PopupDirectory").dxPopup("instance");
+                                PopupDirectory.option("contentTemplate", $("#PopupDirectory-template"));
+                                PopupDirectory.option("title", "設置目錄");
+                                window.DirectoryList_SelectChange = function (selectedItems) {
+                                    data = selectedItems.selectedRowsData[0];
+                                }
+                                window.setTimeout(function () {
+                                    $("#PopupDirectory .cancel").on("click", function () {
+                                        PopupDirectory.hide();
+                                    });
+                                    $("#PopupDirectory .Sure").on("click", function () {
+                                        editor.getSelected().set("attributes", {
+                                            "data-dirid": data.Id,
+                                            "data-diridName": data.Title 
+                                        });
+                                        PopupDirectory.hide();
+                                        $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                                    });
+                                }, 200);
+                            }
+                            PopupDirectory.show();
                         }
                     }
                 ],

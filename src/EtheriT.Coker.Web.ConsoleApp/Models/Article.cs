@@ -28,6 +28,9 @@ namespace EtheriT.Coker.Web.ConsoleApp.Models
         public string? Html { get; set; }
         [MaxLength]
         public string? Css { get; set; }
+        public virtual DateTime? StartTime { get; set; }
+        public virtual DateTime? EndTime { get; set; }
+        public bool permanent { get; set; }
         public List<Tag_Associate>? Associates { get; set; }
     }
 }

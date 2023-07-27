@@ -23,17 +23,20 @@ function DirectoryGetDataInit() {
     var dirid, page, shownum;
     $(".catalog_frame").each(function () {
         var $self = $(this)
-        if ($self.data("dirid") && $self.data("shownum")) {
-            dirid = $self.data("dirid");
-            page = 1;
-            shownum = $self.data("shownum");
-            DirectoryDataGet($self, dirid, page, shownum);
+        var dirid = $self.data("dirid") > 0 ? $self.data("dirid") : $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
+        if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) {
+            $self.data("prevdirid", dirid);
+            if ($self.data("dirid") && $self.data("shownum")) {
+                dirid = $self.data("dirid");
+                page = 1;
+                shownum = $self.data("shownum");
+                DirectoryDataGet($self, dirid, page, shownum);
+            }
         }
     })
     $(".menu_directory").each(function () {
         var $self = $(this);
         var dirid = $self.data("dirid") > 0 ? $self.data("dirid") : $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
-
         if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) {
             $self.data("prevdirid", dirid);
             $self.find(".title").text("");
@@ -129,8 +132,9 @@ function DirectoryDataInsert($item, result) {
         var content = $($item.find(".templatecontent").html()).clone();
         content.find("a").attr("href", window.location.pathname + data.link);
         content.find("a").attr("alt", data.name);
-
-        content.find("img").attr("src", data.mainImage);
+        var imglink = data.mainImage;
+        if (typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") imglink = imglink.replace("upload", `upload/${OrgName}`);
+        content.find("img").attr("src", imglink);
         content.find("img").attr("alt", typeof (data.name) == "undefined" ? "" : `${data.name}的主要圖片`);
 
         content.find(".title").text(data.title);

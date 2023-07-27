@@ -20,5 +20,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await websiteApplication.Exchange(dto);
         }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<ResponseMessageDto> GetPrivacyAndTerms()
+        {
+            return await websiteApplication.GetPrivacyAndTerms();
+        }
     }
 }

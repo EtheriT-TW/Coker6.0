@@ -5,6 +5,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -119,7 +120,6 @@ namespace EtheriT.Coker.Application
             }
             else return new List<WebsDto>();
         }
-
         public async Task<List<WebsiteDataDto>> GetAllData(long SiteId)
         {
             var issubsite = await (from w in db.MappingWebsiteRelationship
@@ -138,6 +138,29 @@ namespace EtheriT.Coker.Application
                                   isSubsite = issubsite == null ? false : true,
                               }).ToListAsync();
             return date;
+        }
+        public async Task<ResponseMessageDto> GetPrivacyAndTerms()
+        {
+            var response = new ResponseMessageDto() { Success = false };
+            var websiteid = await loginUserData.GetWebsiteId();
+            long privacy_id = 0;
+            long terms_id = 0;
+            try
+            {
+                var privacy = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteid && e.RouterName == "footer_privacy").FirstOrDefaultAsync();
+                if (privacy != null) privacy_id = privacy.Id;
+                var terms = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteid && e.RouterName == "terms").FirstOrDefaultAsync();
+                if (terms != null) terms_id = terms.Id;
+                response.Success = true;
+                response.Message = $"{privacy_id} {terms_id}";
+                return response;
+            }
+            catch(Exception ex)
+            {
+                response.Error = ex.Message;
+                return response;
+            }
+            
         }
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {

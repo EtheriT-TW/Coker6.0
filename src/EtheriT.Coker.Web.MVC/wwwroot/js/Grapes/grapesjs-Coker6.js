@@ -180,20 +180,43 @@
             }
         },
     });
-
+    var PopupDirectory = null;
     editor.DomComponents.addType('目錄', {
-        isComponent: el => el.classList?.contains('menu_directory'),
+        isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame'),
         model: {
             defaults: {
                 droppable: false,
                 editable: false,
                 traits: [
                     { name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
+                    { name: 'data-diridName', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',
                         text: "設置目錄",
                         command: editor => {
-                            $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                            var data = null;
+                            if (!!!PopupDirectory) {
+                                PopupDirectory = $("#PopupDirectory").dxPopup("instance");
+                                PopupDirectory.option("contentTemplate", $("#PopupDirectory-template"));
+                                PopupDirectory.option("title", "設置目錄");
+                                window.DirectoryList_SelectChange = function (selectedItems) {
+                                    data = selectedItems.selectedRowsData[0];
+                                }
+                                window.setTimeout(function () {
+                                    $("#PopupDirectory .cancel").on("click", function () {
+                                        PopupDirectory.hide();
+                                    });
+                                    $("#PopupDirectory .Sure").on("click", function () {
+                                        editor.getSelected().set("attributes", {
+                                            "data-dirid": data.Id,
+                                            "data-diridName": data.Title 
+                                        });
+                                        PopupDirectory.hide();
+                                        $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                                    });
+                                }, 200);
+                            }
+                            PopupDirectory.show();
                         }
                     }
                 ],

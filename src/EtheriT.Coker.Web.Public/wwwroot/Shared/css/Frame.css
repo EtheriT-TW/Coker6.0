@@ -59,7 +59,9 @@ iframe {
 .custom_h5 {
     font-size: 1.1rem;
 }
-
+.custom_scale {
+    font-size:1.1rem;
+}
 /* Image */
 .img_maxh150 {
     max-height: 150px;
@@ -87,6 +89,9 @@ iframe {
 @media only screen and (max-width: 768px) {
     .masonry > .grid > .grid-item {
         width: calc(100%/2);
+    }
+    .custom_scale {
+        font-size: 1rem;
     }
 }
 

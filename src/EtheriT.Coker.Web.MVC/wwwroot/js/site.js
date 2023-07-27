@@ -10,7 +10,7 @@ var PreLoader;
     var now = new Date();
     var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
     if (!!!co.Cookie.Get("token")) {
-        if (location.pathname != "/") location.href = "/";
+        if (location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
         else co.Page.Ready();
     } else if (edt > (now.getTime() + co.Data.Time.ReCheckTime)) {
         co.Page.Ready();

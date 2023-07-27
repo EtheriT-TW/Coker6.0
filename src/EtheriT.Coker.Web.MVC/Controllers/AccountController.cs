@@ -25,6 +25,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View();
         }
+        public IActionResult NewPassword()
+        {
+            return View();
+        }
         public IActionResult Privacy()
         {
             return View();

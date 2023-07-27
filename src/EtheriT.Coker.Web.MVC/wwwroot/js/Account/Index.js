@@ -32,12 +32,13 @@ var PageReady = function () {
         
     });
     $("#subnewpsw").on("click", function () {
-        if (lowercase.classList.contains("valid") && uppercase.classList.contains("valid") &&
-            number.classList.contains("valid") && symbol.classList.contains("valid") &&
-            length.classList.contains("valid") && agnewpassword.value === newpassword.value) {
+        if (lowercase.innerHTML=='' && uppercase.innerHTML=='' &&
+            number.innerHTML=='' && symbol.innerHTML=='' &&
+            length.innerHTML=='' && agnewpassword.value == newpassword.value) {
             alert("成功");
         } else {
-            alert("失敗");        }
+            alert("失敗");
+        }
     });
 
     newpassword.onkeyup = function () {
@@ -45,44 +46,44 @@ var PageReady = function () {
         var lower = /[a-z]/g;
         if (newpassword.value.match(lower)) {
             lowercase.classList.remove("invalid");
-            lowercase.classList.add("valid");
+            lowercase.innerHTML = '';
         } else {
-            lowercase.classList.remove("valid");
+            lowercase.innerHTML = '至少1個小寫字母';
             lowercase.classList.add("invalid");
         }
         //大寫
         var upper = /[A-Z]/g;
         if (newpassword.value.match(upper)) {
             uppercase.classList.remove("invalid");
-            uppercase.classList.add("valid");
+            uppercase.innerHTML = '';
         } else {
-            uppercase.classList.remove("valid");
+            uppercase.innerHTML = '至少1個大寫字母';
             uppercase.classList.add("invalid");
         }
         //數字
         var num = /[0-9]/g;
         if (newpassword.value.match(num)) {
             number.classList.remove("invalid");
-            number.classList.add("valid");
+            number.innerHTML = '';
         } else {
-            number.classList.remove("valid");
+            number.innerHTML = '至少1個數字';
             number.classList.add("invalid");
         }
         //符號
         var sym = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g;
         if (newpassword.value.match(sym)) {
             symbol.classList.remove("invalid");
-            symbol.classList.add("valid");
+            symbol.innerHTML = '';
         } else {
-            symbol.classList.remove("valid");
+            symbol.innerHTML = '至少1個符號';
             symbol.classList.add("invalid");
         }
         //大於8小於32
         if (newpassword.value.length >= 8 && newpassword.value.length < 32) {
             length.classList.remove("invalid");
-            length.classList.add("valid");
+            length.innerHTML = '';
         }else {
-            length.classList.remove("valid");
+            length.innerHTML = '至少8碼最多32碼';
             length.classList.add("invalid");
         }
         

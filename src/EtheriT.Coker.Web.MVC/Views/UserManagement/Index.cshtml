@@ -8,8 +8,7 @@
 
 <link rel="stylesheet" href="~/css/UserManagement/Index.min.css" asp-append-version="true" />
 <script src="~/js/UserManagement/Index.min.js" asp-append-version="true"></script>
-<link rel="stylesheet" href="~/css/Components/ImageUploadModal.min.css" asp-append-version="true" />
-<script src="~/js/Components/ImageUploadModal.min.js" asp-append-version="true"></script>
+
 
 <div class="py-2 px-4 position-relative">
 		<div class="d-flex">
@@ -23,14 +22,8 @@
 	<div class="w-100 h-auto p-5 body-interface d-flex justify-content-center align-item-center my-2">
 			<div class="d-flex col-12">
 			<div class="d-flex justify-content-start align-items-center col-md-3 flex-column">
-				<div class="img-bg d-flex align-items-center justify-content-center">
-					<button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent rounded-circle">
-						<span class="material-symbols-outlined">add_photo_alternate</span>
-						<img class="img_preview d-none" src="" />
-					</button>
-					<button class="btn_img_delete rounded-circle bg-transparent border-0 position-absolute d-none">
-						<span class="material-symbols-outlined bg-white rounded-circle">cancel</span>
-					</button>
+				<div class="d-flex align-items-center justify-content-center">
+						@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
 				</div>
 				<div class="d-flex justify-content-end align-items-end">
 					<p class="changeAvatar">更換頭像</p>
@@ -46,7 +39,6 @@
 						<input id="check-password" class="form-control" type="password" placeholder="確認新密碼">
 						<button class="btn submit">送出</button>
 					</div>
-					
 				</div>
 			</div>
 				<form class="d-flex flex-column justify-content-center align-item-center col-md-6">
@@ -69,16 +61,16 @@
 				</div>
 						<div class=" w-100 d-flex justify-content-between align-items-center">
 					<div class="form-floating mb-3">
-						<input id="address" class="form-control w31" type="text" placeholder="縣市">
-						<label for="address" class="form-label">縣市</label>
+						<input id="address1" class="form-control w31" type="text" placeholder="縣市">
+						<label for="address1" class="form-label">縣市</label>
 					</div>
 					<div class="form-floating mb-3">
-						<input id="address" class="form-control w31" type="text" placeholder="鄉鎮市區">
-						<label for="address" class="form-label">鄉鎮市區</label>
+						<input id="address2" class="form-control w31" type="text" placeholder="鄉鎮市區">
+						<label for="address2" class="form-label">鄉鎮市區</label>
 					</div>
 					<div class="form-floating mb-3">
-						<input id="address" class="form-control w31" type="text" placeholder="路段">
-						<label for="address" class="form-label">路段</label>
+						<input id="address3" class="form-control w31" type="text" placeholder="路段">
+						<label for="address3" class="form-label">路段</label>
 					</div>							
 						</div>	
 				<button class="btn submit" type="button">儲存</button>

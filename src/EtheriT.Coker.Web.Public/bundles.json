@@ -78,7 +78,7 @@
         "wwwroot/Shared/css/AnchorPoint.css",
         "wwwroot/Shared/css/DirectoryGetData.css",
         "wwwroot/Shared/css/Frame.css",
-        "wwwroot/Shared/css/HoverEffect.css",
+        "wwwroot/Shared/HoverEffect.css",
         "wwwroot/Shared/css/Swiper.css"
       ]
     }

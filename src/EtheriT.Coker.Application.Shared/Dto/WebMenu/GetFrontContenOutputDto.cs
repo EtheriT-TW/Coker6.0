@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,5 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public string Html { get; set; }
         public string Css { get; set; }
         public int LayoutType { get; set; }
+        public HoldPageNameEnum holdPage { get; set; }
     }
 }

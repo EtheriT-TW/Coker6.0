@@ -64,7 +64,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 enterAd = enterAds,
             };
             string view;
-
+            Console.WriteLine(option);
             if (!string.IsNullOrEmpty(key))
             {
                 switch (option)
@@ -74,6 +74,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
                         model.PageData.LayoutType = defaultData.Layout_Type;
+                        model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {

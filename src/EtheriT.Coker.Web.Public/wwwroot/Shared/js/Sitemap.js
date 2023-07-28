@@ -54,7 +54,7 @@ function CreateSitemap(result) {
                     sec_data.children.forEach(function (third_data) {
                         var third = $($("#Hierarchical_Third_Item").html()).clone();
                         var third_item = third.find(".third");
-                        third_item.attr("href", `${sec_data.routerName}#${third_data.routerName}`);
+                        third_item.attr("href", `${third_data.routerName}`);
                         third_item.attr("alt", third_data.text);
                         third_item.text(`${index_f}-${index_s}-${index_t} ${third_data.title}`);
                         third_frame.append(third);

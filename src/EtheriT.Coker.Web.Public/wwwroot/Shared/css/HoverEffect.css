@@ -102,21 +102,41 @@
     color: black;
     background-color: #e5e5ed;
 }
+
+.outpage_link .local {
+    color: white;
+    background-color: #375695;
+}
+
 .outpage_link a:hover {
     color: white;
     background-color: #375695;
 }
-.outpage_link a {
-    color: black;
-    background-color: #e5e5ed;
+#in4v-2 {
+    padding: 0;
 }
-
 
 @media only screen and (max-width: 768px) {
     .hover_protrude_scale > .btn_more {
         transform: translate(-50%, -50%) scale(1);
     }
+    .outpage_link a {
+        height: 36px;
+    }
 }
+
+.qa-bg {
+    background: #f4f1ec;
+}
+
+.btn {
+    border-radius: 5px 5px 0 0;
+}
+
+    .btn:focus, .btn-check:focus + .btn {
+        outline: 1;
+        box-shadow: 0 0 0 0rem rgba(13,110,253,.25);
+    }
 
 .qual-width-images {
     width: 100%;
@@ -157,7 +177,7 @@
 }
 
 .white-bg:hover > .image-container:not(:hover) img {
-    filter: grayscale(60%) brightness(130%);
+    filter: grayscale(100%) brightness(200%);
     opacity: 0.5;
 }
 
@@ -168,31 +188,34 @@
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.8);
 }
+.black-bg .title {
+    color: white;
+    border-bottom: 1px solid rgba(216, 216, 216, 1);
+    font-size: 28px;
+    font-weight: bold;
+    position: relative;
+}
 
-    .black-bg .title {
-        color: white;
-        border-bottom: 1px solid rgba(216, 216, 216, 1);
-        font-size: 28px;
-        font-weight: bold;
-        position: relative;
-    }
-
-    .black-bg .close {
-        position: absolute;
-        top: 0;
-        right: 10px;
-        color: #fff;
-        font-size: 40px;
-        cursor: pointer;
-    }
+.black-bg .close {
+    position: absolute;
+    top: 0;
+    right: 10px;
+    color: #fff;
+    font-size: 40px;
+    cursor: pointer;
+}
 
 .w50 img {
-    max-width: 45%;
-    max-height: 55vh;
+    max-width: 100vh;
+    height: 62vh;
 }
 
-.footer {
-    width: 100%;
-    height: 15vh;
+.footer img {
+    width: 100vw;
+    height: 18vh;
+    position: center center;
 }
+
+
+
 

@@ -14,6 +14,13 @@
         })
     });
 
+    $('.black-bg .close').click(function () {
+        $(".black-bg").fadeOut(500);
+    });
+    $('#swiper1, #swiper2, #swiper3, #swiper4, #swiper5, #swiper6, #swiper7, #swiper8').click(function () {
+        $(".black-bg").fadeIn(500);
+    });
+
 
 }
 

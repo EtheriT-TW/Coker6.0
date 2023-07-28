@@ -40,6 +40,14 @@ var PageReady = function () {
             alert("失敗");
         }
     });
+    $("#newpassword").on("focus", function () {
+        $("#rule").css("display", "block");
+        $("#short-rule").css("display", "none");
+    });
+    $("#newpassword").on("blur", function () {
+        $("#short-rule").css("display", "block");
+        $("#rule").css("display", "none");
+    });
 
     newpassword.onkeyup = function () {
         //小寫

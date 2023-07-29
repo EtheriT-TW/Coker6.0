@@ -436,7 +436,7 @@ namespace EtheriT.Coker.Application.Article
                         result.Description = articl.Description;
                         result.Html = articl.Html;
                         result.Css = articl.Css;
-                        result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                        result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", ""): result.Html;
                     }
                 }
             }

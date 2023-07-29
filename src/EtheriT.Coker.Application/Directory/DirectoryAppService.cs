@@ -225,7 +225,7 @@ namespace EtheriT.Coker.Application.Directory
                             var tempproddata = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
                             {
                                 Ids = DataIds.Skip((page - 1) * shownum - 1).Take(shownum).ToList<long>(),
-                                SiteId = dto.SiteId,
+                                SiteId = WebsiteID
                             });
                             if (tempproddata != null)
                             {
@@ -237,7 +237,7 @@ namespace EtheriT.Coker.Application.Directory
                             var temparticledata = await articleAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
                             {
                                 Ids = DataIds.Skip((page - 1) * shownum - 1).Take(shownum).ToList<long>(),
-                                SiteId = dto.SiteId
+                                SiteId = WebsiteID
                             });
                             if (temparticledata != null)
                             {

@@ -188,7 +188,7 @@
                 droppable: false,
                 editable: false,
                 traits: [
-                    { name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
+                    //{ name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
                     { name: 'data-diridName', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',
@@ -209,7 +209,7 @@
                                     $("#PopupDirectory .Sure").on("click", function () {
                                         editor.getSelected().set("attributes", {
                                             "data-dirid": data.Id,
-                                            "data-diridName": data.Title 
+                                            "data-diridName": data.Title
                                         });
                                         PopupDirectory.hide();
                                         $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
@@ -225,7 +225,7 @@
     });
 
     editor.DomComponents.addType('目錄內容', {
-        isComponent: el => el.parentElement.classList?.contains('menu_directory'),
+        isComponent: el => el.parentElement.classList?.contains('menu_directory') || el.classList?.contains('catalog'),
         model: {
             defaults: {
                 removable: false,

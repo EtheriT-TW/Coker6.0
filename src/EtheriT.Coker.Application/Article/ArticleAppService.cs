@@ -132,7 +132,7 @@ namespace EtheriT.Coker.Application.Article
                 {
                     var dataQuery = from e in result
                                     where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-                                    select new ArticleDataGetDto
+                                    select new ArticleListGetDto
                                     {
                                         Id = e.Id,
                                         Title = e.Title,
@@ -146,12 +146,18 @@ namespace EtheriT.Coker.Application.Article
                                         SaveCss = e.SaveCss,
                                         Css = e.Css,
                                         Tags = "",
+                                        StartTime = e.StartTime,
+                                        EndTime = e.EndTime,
+                                        permanent = e.permanent
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     if (output != null)
                     {
                         foreach (var data in output.data)
                         {
+                            /***********************
+                             * 這邊是利用id去撈關聯的標籤 但在篩選時 data.GetType().GetProperty() 會抓不到值
+                             ***********************/
                             var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                             {
                                 Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
@@ -176,7 +182,7 @@ namespace EtheriT.Coker.Application.Article
 
             }
 
-            return new JsonResult(new List<ArticleDataGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ArticleGetDataDto> GetDataOne(long Id)
         {
@@ -199,6 +205,9 @@ namespace EtheriT.Coker.Application.Article
                                             SerNO = e.SerNO,
                                             PopularVisible = e.PopularVisible,
                                             TagDatas = new List<TagGetSelectedDto>(),
+                                            StartTime = e.StartTime,
+                                            EndTime = e.EndTime,
+                                            permanent = e.permanent
                                         }).FirstOrDefaultAsync();
 
                     if (output != null)
@@ -235,14 +244,13 @@ namespace EtheriT.Coker.Application.Article
 
                 foreach (var Id in dto.Ids)
                 {
-                    var result = await db.Article.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
+                    var result = await db.Article.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID && (e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))).FirstOrDefaultAsync();
 
                     if (result != null)
                     {
                         ArticleGetDataDto tempoutput = mapper.Map<ArticleGetDataDto>(result);
                         articleData.Add(tempoutput);
                     }
-                    else throw new Exception("查無文章資料");
                 }
 
                 if (articleData != null)
@@ -436,7 +444,7 @@ namespace EtheriT.Coker.Application.Article
                         result.Description = articl.Description;
                         result.Html = articl.Html;
                         result.Css = articl.Css;
-                        result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", ""): result.Html;
+                        result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
                     }
                 }
             }

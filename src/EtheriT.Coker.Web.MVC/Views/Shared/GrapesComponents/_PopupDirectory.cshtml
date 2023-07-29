@@ -15,6 +15,7 @@
 {
     <div id="DirectoryList2" class="card border-0">
         <div class="card-body position-relative">
+
             @(Html.DevExtreme().DataGrid<DirectoryGetListDto>()
                 .DataSource(
                 d => d.RemoteController().Key("Id")

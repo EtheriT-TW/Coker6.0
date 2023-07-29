@@ -172,6 +172,13 @@ function editButtonClicked(e) {
     window.location.hash = keyId;
 }
 
+function reladataButtonClicked(e) {
+    /***************
+     * 查看關聯的內容
+     ***************/
+    console.log(e)
+}
+
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.Directory.Delete(e.row.key).done(function (result) {

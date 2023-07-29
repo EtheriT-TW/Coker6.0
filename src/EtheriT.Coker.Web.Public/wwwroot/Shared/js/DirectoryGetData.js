@@ -73,11 +73,45 @@ function DirectoryGetDataInit() {
 
 function DirectoryDataGet($item, dirid, page, shownum) {
     Directory.getDirectoryData({ Ids: [dirid], SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId, Page: page, ShowNum: shownum }).done(function (result) {
-        if (!$item.data("init")) {
-            for (var i = 1; i <= result.totalPage; i++) {
-                $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
+        $item.find(".page-item").each(function () {
+            var $self = $(this);
+            if (!$self.hasClass("btn_prev") && !$self.hasClass("btn_next")) $self.remove();
+        });
+        if (result.totalPage <= 1) $item.find(".page_btn").addClass("d-none")
+        for (var i = 1; i <= result.totalPage; i++) {
+            if (i == 1) {
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>第一頁</button></li>`)
+                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>第一頁</button></li>`)
+            } else if (i == result.totalPage) {
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>最後一頁</button></li>`)
+                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>最後一頁</button></li>`)
+            } else if (page < 5 && i < 7) {
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</button></li>`)
+                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
+            } else if (page > result.totalPage - 4 && i > result.totalPage - 6) {
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</button></li>`)
+                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
+            } else if (i >= page - 2 && i <= page + 2) {
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</button></li>`)
+                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
             }
+        }
 
+        $(`.btn_page`).on("click", function () {
+            var $self = $(this);
+            if (page != $self.data("page")) {
+                $item.find(".catalog").children().each(function () {
+                    var $self = $(this);
+                    if (!$self.hasClass("templatecontent")) {
+                        $self.remove();
+                    }
+                })
+                page = $self.data("page");
+                DirectoryDataGet($item, dirid, page, shownum);
+            }
+        })
+
+        if (!$item.data("init")) {
             $(`.btn_prev > button`).on("click", function () {
                 if (page > 1) {
                     $item.find(".catalog").children().each(function () {
@@ -87,21 +121,7 @@ function DirectoryDataGet($item, dirid, page, shownum) {
                         }
                     })
                     page--;
-                    DirectoryDataGet($item, page, shownum);
-                }
-            })
-
-            $(`.btn_page`).on("click", function () {
-                var $self = $(this);
-                if (page != $self.data("page")) {
-                    $item.find(".catalog").children().each(function () {
-                        var $self = $(this);
-                        if (!$self.hasClass("templatecontent")) {
-                            $self.remove();
-                        }
-                    })
-                    page = $self.data("page");
-                    DirectoryDataGet($item, page, shownum);
+                    DirectoryDataGet($item, dirid, page, shownum);
                 }
             })
 
@@ -114,7 +134,7 @@ function DirectoryDataGet($item, dirid, page, shownum) {
                         }
                     })
                     page++;
-                    DirectoryDataGet($item, page, shownum);
+                    DirectoryDataGet($item, dirid, page, shownum);
                 }
             })
         }

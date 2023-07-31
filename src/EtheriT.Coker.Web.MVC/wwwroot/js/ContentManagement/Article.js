@@ -348,7 +348,7 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(success_text, error_text, place) {
-    if ($("#ImageUpload").data("delectList") != null) {
+    if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
         co.File.DeleteFileById({
             Sid: keyId,
             Type: 5,

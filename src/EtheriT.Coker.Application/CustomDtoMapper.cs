@@ -124,7 +124,9 @@ namespace EtheriT.Coker.Application
 				.ReverseMap();
 
 			//Article
-			CreateMap<ArticleGetDataDto, Core.Models.Article>().ReverseMap();
+			CreateMap<ArticleGetDataDto, Core.Models.Article>()
+                .ReverseMap()
+                .ForMember(e => e.NodeDate, option => option.MapFrom(c => c.NodeDate==null?null: c.NodeDate.Value.ToString("yyyy/MM/dd")));
 			CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
 
 			//Directory

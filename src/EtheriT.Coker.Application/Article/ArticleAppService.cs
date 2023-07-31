@@ -207,6 +207,7 @@ namespace EtheriT.Coker.Application.Article
                                             TagDatas = new List<TagGetSelectedDto>(),
                                             StartTime = e.StartTime,
                                             EndTime = e.EndTime,
+                                            NodeDate = e.NodeDate==null?"": e.NodeDate.Value.ToString("yyyy/MM/dd"),
                                             permanent = e.permanent
                                         }).FirstOrDefaultAsync();
 

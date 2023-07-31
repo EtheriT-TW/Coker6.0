@@ -153,8 +153,8 @@ function DirectoryDataInsert($item, result) {
         if (typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") imglink = imglink.replace("upload", `upload/${OrgName}`);
         content.find("img").attr("src", imglink);
         content.find("img").attr("alt", `${data.title}的主要圖片`);
-
         content.find(".title").text(data.title);
+        content.find(".date").text(data.nodeDate);
         content.find(".description").text(data.description);
 
         $item.find(".catalog").append(content);

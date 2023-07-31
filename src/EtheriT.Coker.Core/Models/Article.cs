@@ -26,6 +26,7 @@ namespace EtheriT.Coker.Core.Models
         public string? Html { get; set; }
         [MaxLength]
         public string? Css { get; set; }
+        public virtual DateTime? NodeDate { get; set; }
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }
         public bool permanent { get; set; }

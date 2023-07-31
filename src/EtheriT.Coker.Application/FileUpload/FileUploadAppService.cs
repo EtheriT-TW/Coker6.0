@@ -806,11 +806,11 @@ namespace EtheriT.Coker.Application
 				if (dto.Fid != null && dto.Fid.Count > 0)
 				{
 					List<FileBind> fafile_other;
-					FileBind fafile_binds;
+					FileBind? fafile_binds;
 					for (var i = 0; i < dto.Fid.Count; i++)
 					{
 						fafile_other = await (db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid != dto.Sid)).ToListAsync();
-						fafile_binds = await (db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid == dto.Sid).FirstOrDefaultAsync());
+						fafile_binds = await db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid == dto.Sid).FirstOrDefaultAsync();
 
 						if (fafile_other.Count > 0 && fafile_binds != null)
 						{

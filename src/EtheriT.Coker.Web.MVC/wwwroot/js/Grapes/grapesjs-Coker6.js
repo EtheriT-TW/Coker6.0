@@ -237,29 +237,24 @@
         },
     });
 
-    function generateRandomHref() {
-        return "#" + Math.random().toString(5).substr(2, 9);
-    }
-    const randomHref = generateRandomHref();
     editor.DomComponents.addType('QA元件', {
+        isComponent: el => el.classList?.contains('qa'),
         model: {
             defaults: {
-                tagName: 'a',
-                classes: ['qa-bg'],
-                attributes: { href: randomHref },
+                droppable: false,
+                copyable: false
+            }, 
+            init() {
+                const ccid = this.ccid;
+                const c = $(".gjs-frame")[0].contentWindow.$;
+                window.setTimeout(function () {
+                    c(`#${ccid} a`).attr({ "href": `#${ccid}_content`, "Title": "展開QA" });
+                    c(`#${ccid} .collapse`).attr("id", `${ccid}_content`);
+                }, 200)
             }
         },
     });
 
-    editor.DomComponents.addType('QAshow', {
-        model: {
-            defaults: {
-                tagName: 'div',
-                classes: ['collapse'],
-                attributes: { href: randomHref },
-            }
-        },
-    });
 
     editor.DomComponents.addType('子頁內容', {
         isComponent: el => el.classList?.contains('subpage_content'),
@@ -736,7 +731,7 @@
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("anchor_title").length != cont) iframe.AnchorPointInit();
                 else setTimeout(timmer, 100);
-            }
+            }       
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
             if (typeof (editor.getSelected()) != "undefined") {

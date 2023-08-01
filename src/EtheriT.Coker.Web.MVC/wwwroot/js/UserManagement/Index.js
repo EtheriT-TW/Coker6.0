@@ -1,1 +1,3 @@
-﻿
+﻿function PageReady() {
+    $("#ImageUpload").ImageUploadModalClear();
+}

@@ -170,6 +170,30 @@
         },
     });
 
+    function generateRandomHref() {
+        return "#" + Math.random().toString(5).substr(2, 9);
+    }
+    const randomHref = generateRandomHref();
+    editor.DomComponents.addType('QA元件', {
+        model: {
+            defaults: {
+                tagName: 'a',
+                classes: ['qa-bg'],
+                attributes: { href: randomHref },
+            }
+        },
+    });
+
+    editor.DomComponents.addType('QAshow', {
+        model: {
+            defaults: {
+                tagName: 'div',
+                classes: ['collapse'],
+                attributes: { href: randomHref },
+            }
+        },
+    });
+
     editor.DomComponents.addType('子頁內容', {
         isComponent: el => el.classList?.contains('subpage_content'),
         model: {

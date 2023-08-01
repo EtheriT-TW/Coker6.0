@@ -152,7 +152,10 @@ function PageReady() {
                         })
 
                         break;
-                    //360圖片上傳
+                        //360圖片上傳
+                        /* ********** ***************** 
+                        須重打
+                        ***************************/
                     case 2:
                         var new_file_list = [];
                         var file_name, file_type;
@@ -195,6 +198,9 @@ function PageReady() {
                         $self.find(".title").text(`${new_file_list[0].name}...共${new_file_list.length}張圖`);
                         break;
                     //影片上傳
+                    /* ********** *****************
+                    須重打，上傳有問題，尚未查詢
+                    ***************************/
                     case 3:
                         var new_file_list = [];
                         var file_name, file_type;
@@ -1095,6 +1101,9 @@ function UploadFile($self) {
                     }
                 }
                 break;
+             /* ********** *****************
+            須重打，360顯示的部分
+            ***************************/
             case 2:
                 upload_file = co.File.Upload360Init("FileUpload");
                 if ($self.data("file")) {
@@ -1104,6 +1113,9 @@ function UploadFile($self) {
                 }
                 $parent.find(".upload_frame").removeClass("d-none");
                 break;
+             /* ********** *****************
+           須重打，影片顯示的部分
+           ***************************/
             case 3:
                 if ($self.find(".title").text() == "") {
                     upload_file = co.File.UploadVideoInit("FileUpload");
@@ -1267,7 +1279,9 @@ function UploadPreviewFrameClear() {
     $self.find(".youtube_frame").removeClass("d-flex");
     $self.find(".select_frame").removeClass("d-flex");
 }
-
+/* ********** *****************
+排序 沒有資料的情況下依舊可以拖動 需修改
+***************************/
 function SortChange(change, minindex, maxindex) {
     $(".upload_list").each(function () {
         var $li_self = $(this)
@@ -1384,6 +1398,9 @@ function AddUp(success_text, error_text, target) {
                                     })
                                 }
                                 break;
+                                     /* ********** *****************
+                                   360 上傳資料庫，須重打
+                                    ***************************/
                             case 2:
                                 var formData = new FormData();
                                 formData.append("type", 1);
@@ -1396,6 +1413,9 @@ function AddUp(success_text, error_text, target) {
                                     formData.delete('files');
                                 }
                                 break;
+                                /* ********** *****************
+                                   影片上傳資料庫，不確定錯誤是否在這
+                                    ***************************/
                             case 3:
                                 if (typeof (data[0]["File"]) == "string") {
                                     co.File.fileSortChange({
@@ -1428,6 +1448,9 @@ function AddUp(success_text, error_text, target) {
                 total_files.forEach(file => {
                     if (typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true) {
                         switch (file["Type"]) {
+                            /* ********** *****************
+                           360檔案刪除未處理
+                            ***************************/
                             case 2:
                                 break;
                             case 1:

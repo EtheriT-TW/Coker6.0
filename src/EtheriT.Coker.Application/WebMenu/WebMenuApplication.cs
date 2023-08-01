@@ -210,7 +210,7 @@ namespace EtheriT.Coker.Application
                     var output = DataSourceLoader.Load(outputlist, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
-                return new JsonResult(new List<ArticleDataGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception ex)
             {

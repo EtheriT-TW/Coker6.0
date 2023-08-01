@@ -42,5 +42,6 @@
             $self.attr("download", "未命名");
         }
         $self.find(".name").text($self.attr("download"));
+        if (!(new RegExp(`${type}$`,"gi")).test($self.attr("download"))) $self.attr("download", `${$self.attr("download")}.${type}`);
     })
 }

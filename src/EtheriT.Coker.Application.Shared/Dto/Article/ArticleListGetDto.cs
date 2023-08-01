@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Article
 {
-    public class ArticleDataGetDto
+    public class ArticleListGetDto
     {
         public long Id { get; set; }
         public string? Title { get; set; }
@@ -20,6 +20,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public string? SaveCss { get; set; }
         public string? Html { get; set; }
         public string? Css { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+        public bool permanent { get; set; }
         public string Tags { get; set; }
     }
 }

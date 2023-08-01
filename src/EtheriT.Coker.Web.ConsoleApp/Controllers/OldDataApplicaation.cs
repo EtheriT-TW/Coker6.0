@@ -26,7 +26,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                 var menuSubArtIds = menuSubArt.Select(e => e.id).ToList();
 
                 var shopIds = dbContext.Menus.Where(e => shopSubId.Contains(e.sub_id)).Select(e => e.id).ToList();
-                var Menus = dbContext.Menus.Where(e => menuSubArtIds.Contains(e.sub_id) || subIds.Contains(e.sub_id) || shopIds.Contains(e.id)).ToList();
+                var Menus = dbContext.Menus.Where(e => menuSubArtIds.Contains(e.sub_id) || subIds.Contains(e.sub_id) || shopIds.Contains(e.id)).OrderBy(o => o.ser_no).ToList();
                 var menus = Menus.Select(e => e.id).ToList();
                 var menusIdStr = Menus.Select(e => e.id.ToString()).ToList();
                 var menuSubs = Menus.GroupBy(e => e.sub_id).Select(e => e.Key).ToList();
@@ -79,9 +79,9 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
 
                     int serNo;
                     int.TryParse(item.ser_no, out serNo);
-                    var myMenuCount = menuCount.Where(e => e.menu_id == item.id).ToList();
+                    var myMenuCount = menuCount.Where(e => e.menu_id == item.id).OrderBy(o => o.ser_no).ToList();
                     var myShops = shops.Where(e => e.menuID == item.id).ToList();
-                    var myShopsMenuCount = shopsCount.Where(e => e.menu_id == item.id).ToList();
+                    var myShopsMenuCount = shopsCount.Where(e => e.menu_id == item.id).OrderBy(o => o.ser_no).ToList();
 
                     if (tags.Find(e => e.Title == tagName) == null)
                     {
@@ -107,6 +107,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                             PopularVisible = item.popular_disp == "Y",
                             Popular = item.popular.Value,
                             Description = "",
+                            NodeDate= string.IsNullOrEmpty(item.note_date)?null:DateTime.Parse(item.note_date),
                             StartTime = string.IsNullOrEmpty(item.start_date) ? null : DateTime.Parse(item.start_date),
                             EndTime = string.IsNullOrEmpty(item.end_date) ? null : DateTime.Parse(item.end_date),
                             permanent = item.end_date == "2100-12-31",
@@ -124,7 +125,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                                 }
                             }
                         };
-                        switch (int.Parse(item.use_module??"0")) {
+                        switch (int.Parse(string.IsNullOrEmpty(item.use_module)?"0": item.use_module)) {
                             case 8:
                                 article.Html = HttpUtility.HtmlDecode($@"
                                     <div class=""row mx-0"">
@@ -133,12 +134,12 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                                                 <img class=""img-fluid"" src=""{item.img1}"" alt=""{item.title}"" />
                                             </figure>
                                         </div>
-                                        <span>{item.cont}</span>
+                                        <span>{item.cont ?? "".Trim()}</span>
                                     </div>
                                 ");
                                 break;
                             default:
-                                article.Html = HttpUtility.HtmlDecode(item.cont);
+                                article.Html = HttpUtility.HtmlDecode(item.cont ?? "".Trim());
                                 break;
                         }
                     }
@@ -160,6 +161,10 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                         }
                     }
 
+                    for (int j = 0; j < myMenuCount.Count; j++)
+                    {
+                        article.Html += AddMenuCountHtml(myMenuCount[j]);
+                    }
                     for (int j = 0; j < myShops.Count; j++)
                     {
                         article.Html += AddShopMenuCountHtml(myShops[j]);
@@ -168,9 +173,19 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     {
                         article.Html += AddMenuCountHtml(myShopsMenuCount[j]);
                     }
-                    for (int j = 0; j < myMenuCount.Count; j++)
+                    
+                    //排除部分文字無法被編輯問題
+                    if (!string.IsNullOrEmpty(article.Html))
                     {
-                        article.Html += AddMenuCountHtml(myMenuCount[j]);
+                        var m = Regex.Matches(article.Html ?? "", "(?:div>[\\s]*)[^\\s]*([\u4e00-\u9fa5_\",-]+[\\s]{0,1})+");
+                        for (int j = 0; j < m.Count; j++)
+                        {
+                            if (string.IsNullOrEmpty(m[j].Value.Trim())) continue;
+                            else if (Regex.IsMatch(m[j].Value, "^[\"_]")) continue;
+                            else if (m[j].Value.Trim().Length <= 1) continue;
+                            else
+                                article.Html.Replace(m[j].Value, $"div><span>{m[j].Value.Replace("div>","")}</span>");
+                        }
                     }
                     article.Html = HttpUtility.HtmlEncode($@"<div class=""container"">{article.Html}</div>");
                     article.SaveHtml = article.Html;
@@ -269,38 +284,46 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     </a>";
                     break;
                 case 3:
-                    switch (cont.img_align)
+                    if (string.IsNullOrEmpty(cont.img))
                     {
-                        case "right":
-                            html = $@"<div class=""mt-5 row mx-0"">
-                                <div class=""col-12 col-md-6 text-center align-self-center px-0"">
-                                    <img src=""{cont.img}"" alt="""" class=""img-fluid""/>
-                                </div>
-                                <div class=""col-12 col-md-6 p-3"">
-                                    <div class=""fw-bold custom_h4 pb-3"">{cont.title}</div>
+                        html = $@"<div class=""col-12 col-md-6 p-3"">
                                     <div>{cont.cont}</div>
-                                </div>
-                            </div>";
-                            break;
-                        case "center":
-                            html = $@"<figure class=""d-flex flex-column text-center"">
-                                <img src=""{cont.img}"" alt=""{cont.title}"" class=""gjs-plh-image""/>
-                                <figcaption>
-                                    <div>{cont.cont}</div>
-                                </figcaption>
-                            </figure>";
-                            break;
-                        default:
-                            html = $@"<div class=""flex-column-reverse flex-md-row mt-5 row mx-0"">
-                                <div class=""col-12 col-md-6 p-3"">
-                                    <div class=""fw-bold custom_h4 pb-3"">{cont.title}</div>
-                                    <div>{cont.cont}</div>
-                                </div>
-                                <div class=""col-12 col-md-6 text-center align-self-center px-0"">
-                                    <img src=""{cont.img}"" alt=""{cont.title}"" class=""img-fluid""/>
-                                </div>
-                            </div>";
-                            break;
+                                </div>";
+                    }
+                    else
+                    {
+                        switch (cont.img_align)
+                        {
+                            case "right":
+                                html = $@"<div class=""flex-column-reverse flex-md-row mt-5 row mx-0"">
+                                    <div class=""col-12 col-md-6 p-3"">
+                                        <div class=""fw-bold custom_h4 pb-3"">{cont.title}</div>
+                                        <div>{cont.cont}</div>
+                                    </div>
+                                    <div class=""col-12 col-md-6 text-center align-self-center px-0"">
+                                        <img src=""{cont.img}"" alt=""{cont.title}"" class=""img-fluid""/>
+                                    </div>
+                                </div>";
+                                break;
+                            case "center":
+                                html = $@"<figure class=""d-flex flex-column text-center"">
+                                    <img src=""{cont.img}"" alt=""{cont.title}"" class=""gjs-plh-image""/>
+                                    <figcaption>
+                                        <div>{cont.cont}</div>
+                                    </figcaption>
+                                </figure>";
+                                break;
+                            default:
+                                html = $@"<div class=""mt-5 row mx-0"">
+                                    <div class=""col-12 col-md-6 text-center align-self-center px-0"">
+                                        <img src=""{cont.img}"" alt=""${cont.title}"" class=""img-fluid""/>
+                                    </div>
+                                    <div class=""col-12 col-md-6 p-3"">
+                                        <div>{cont.cont}</div>
+                                    </div>
+                                </div>";
+                                break;
+                        }
                     }
                     break;
                 case 4:

@@ -164,6 +164,73 @@
                             $selected.find(".swiper-wrapper")[0].append(new_slide);
                             swiper.update();
                         },
+                    },
+                    {
+                        type: 'button', text: "開啟編輯",
+                        command: editor => {
+                            var $selected = $(editor.getSelected().getEl());
+                            console.log()
+                            if ($selected.find(".swiper-slide").length > 0 && $("#SwiperModal").length < 1) {
+                                $(`<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel" aria-hidden="true">
+                                          <div class="modal-dialog">
+                                            <div class="modal-content">
+                                              <div class="modal-header">
+                                                <h1 class="modal-title fs-5" id="SwiperModalLabel">輪播編輯</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                              </div>
+                                              <div class="modal-body">
+                                                    <ul id="SwiperList" class="px-0"></ul>
+                                                    <template id="TemplateSwiperList">
+                                                        <li class="bg-white d-flex mb-3 border p-2 border-dark rounded">
+                                                            <img class="me-2" src="" alt="" />
+                                                            <div class="align-self-center">
+                                                                <div class="img_alt"></div>
+                                                                <div class="a_href"></div>
+                                                                <div class="a_title"></div>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                              </div>
+                                              <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                <button type="button" class="btn btn-primary">完成編輯</button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <style>
+                                            #SwiperModal img {
+                                                   max-width: 100px;
+                                            }
+                                        </style>
+                                    `).appendTo("body");
+                            }
+                            var $body = $("#SwiperList");
+                            var datas = [];
+                            $selected.find(".swiper-slide").each(function () {
+                                var $self = $(this);
+                                if (!$self.parent().hasClass("template_slide")) {
+                                    var obj = {};
+                                    obj["href"] = $self.find("a").attr("href");
+                                    obj["title"] = $self.find("a").attr("title");
+                                    obj["src"] = $self.find("img").attr("src");
+                                    obj["alt"] = $self.find("img").attr("alt");
+                                    datas.push(obj);
+                                }
+                            });
+                            $.each(datas, function (index, data) {
+                                var content = $($("#TemplateSwiperList").html()).clone();
+                                content.find("img").attr("src", data.src);
+                                content.find("img").attr("alt", data.alt);
+                                content.find(".img_alt").text(data.alt);
+                                content.find(".a_href").text(data.href);
+                                content.find(".a_title").text(data.title);
+                                $body.append(content)
+                            })
+                            $("#SwiperList").sortable();
+                            var SwiperModal = new bootstrap.Modal('#SwiperModal');
+                            SwiperModal.show();
+                        },
                     }
                 ],
             }
@@ -212,7 +279,7 @@
                 droppable: false,
                 editable: false,
                 traits: [
-                    { name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
+                    //{ name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
                     { name: 'data-diridName', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',
@@ -233,7 +300,7 @@
                                     $("#PopupDirectory .Sure").on("click", function () {
                                         editor.getSelected().set("attributes", {
                                             "data-dirid": data.Id,
-                                            "data-diridName": data.Title 
+                                            "data-diridName": data.Title
                                         });
                                         PopupDirectory.hide();
                                         $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
@@ -249,7 +316,7 @@
     });
 
     editor.DomComponents.addType('目錄內容', {
-        isComponent: el => el.parentElement.classList?.contains('menu_directory'),
+        isComponent: el => el.parentElement.classList?.contains('menu_directory') || el.classList?.contains('catalog'),
         model: {
             defaults: {
                 removable: false,

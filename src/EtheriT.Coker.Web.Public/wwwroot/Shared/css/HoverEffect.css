@@ -79,11 +79,12 @@
 
 .hover_article_scale {
     transition: all 0.25s;
+    transform-origin: center center;
     background-color: white;
 }
 
     .hover_article_scale:hover {
-        transform: scale(1.05);
+        transform: scale(1.03);
         z-index: 1;
         transition: all 0.25s;
         background-color: lightgray;

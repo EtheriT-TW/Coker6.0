@@ -4,17 +4,24 @@
         if (!!!$self.data("isInit")) {
             const $btn_grid = $self.find(".btn_grid");
             const $btn_list = $self.find(".btn_list");
+            const $btn_text = $self.find(".btn_text");
             const $content = $self.find(".content").first();
 
             $btn_grid.on("click", function () {
                 if (!$btn_grid.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $content, "Grid");
+                    typeChange($btn_grid, $btn_list, $btn_text, $content, "Grid");
                 }
             })
 
             $btn_list.on("click", function () {
                 if (!$btn_list.data("activate")) {
-                    typeChange($btn_list, $btn_grid, $content, "List");
+                    typeChange($btn_list, $btn_grid,  $btn_text , $content, "List");
+                }
+            })
+
+            $btn_text.on("click", function () {
+                if (!$btn_text.data("activate")) {
+                    typeChange($btn_text ,$btn_list, $btn_grid, $content, "Text");
                 }
             })
         }
@@ -22,39 +29,62 @@
     })
 }
 
-function typeChange($self, $brother, $content, type) {
+function typeChange($self, $brother ,$brother2, $content, type) {
     $self.data("activate", 1);
     $self.removeClass("text-black-50");
     $brother.data("activate", 0);
     $brother.addClass("text-black-50");
+    $brother2.data("activate", 0);
+    $brother2.addClass("text-black-50");
     switch (type) {
         case "List":
             $content.each(function () {
                 var $self = $(this)
-                $self.removeClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");
+                /*$self.removeClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
+                $self.removeClass("row row-cols-sm-4");
                 $self.find("figure").removeClass("flex-column");
                 $self.find(".image_frame").removeClass("w-100");
                 $self.find(".image").addClass("px-0");
+                $self.find(".image").removeClass("d-none");
+                $self.find(".max-h").addClass("max-hei");
                 $self.find("figcaption").addClass("flex-grow-1 p-3 py-0 py-md-3");
                 $self.find(".title").removeClass("text-center");
-                $self.find(".title").addClass("h-100");
+                $self.find(".title").removeClass("h-100");
+                $self.find(".box-shadow").addClass("h_100");
                 $self.find(".description").removeClass("d-none");
             })
             break;
         case "Grid":
             $content.each(function () {
                 var $self = $(this)
-                $self.addClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");
+                /* $self.addClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
+                $self.addClass("row row-cols-sm-4");
                 $self.find("figure").addClass("flex-column");
                 $self.find(".image_frame").addClass("w-100");
                 $self.find(".image").removeClass("px-0");
+                $self.find(".image").removeClass("d-none");
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
                 $self.find(".title").addClass("text-center");
                 $self.find(".title").removeClass("h-100");
+                $self.find(".box-shadow").addClass("h_100");
                 $self.find(".description").addClass("d-none");
             });
             break;
         case "Text":
+            $content.each(function () {
+                var $self = $(this)
+                $self.addClass("row row-cols-sm-4");
+                $self.find("figure").addClass("flex-column");
+                $self.find(".image_frame").removeClass("w-100");
+                $self.find(".image").removeClass("px-0");
+                $self.find(".image").addClass("d-none");
+                $self.find(".max-h").removeClass("max-hei");
+                $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
+                $self.find(".title").addClass("text-center");
+                $self.find(".title").addClass("h-100");
+                $self.find(".box-shadow").removeClass("h_100");
+                $self.find(".description").addClass("d-none");
+            });
             break;
     }
 }

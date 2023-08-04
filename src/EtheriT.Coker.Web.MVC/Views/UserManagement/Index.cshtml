@@ -22,8 +22,8 @@
 	<div class="w-100 h-auto p-5 body-interface d-flex justify-content-center align-item-center my-2">
 			<div class="d-flex col-12">
 			<div class="d-flex justify-content-start align-items-center col-md-3 flex-column">
-				<div class="d-flex align-items-center justify-content-center">
-						@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+				<div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+					@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
 				</div>
 				<div class="d-flex justify-content-end align-items-end">
 					<p class="changeAvatar">更換頭像</p>

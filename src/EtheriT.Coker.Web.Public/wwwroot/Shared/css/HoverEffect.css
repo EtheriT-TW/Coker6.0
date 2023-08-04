@@ -95,10 +95,26 @@
     font-weight: bold;
 }
 
-.hover_dark a:hover {
-    background-color: lightgray;
+.r-line {
+    color: #006699;
+    font-weight: bold;
+    border-left: solid #006699 1px;
+    padding: 0px;
+}
+.hover-outside:hover > .hover_dark {
+    opacity: 0.7;
 }
 
+    .hover-outside:hover > .hover_dark:hover {
+        opacity: 1;
+        transition: .2s linear;
+        transform:scale(1.05);
+        background: lightgray;
+    }
+
+.hover_dark_line {
+    border-bottom: 1px dotted #888888;
+}
 .outpage_link a {
     color: black;
     background-color: #e5e5ed;

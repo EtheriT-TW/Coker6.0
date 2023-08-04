@@ -85,6 +85,10 @@
     });
 
     //元件參數設定
+    /***********************************************************************
+     * 注意事項
+     * 元件名稱需為小寫，否則欄位會無法對應
+     * ********************************************************************* */
     editor.DomComponents.addType('link', {
         isComponent: el => el.tagName == 'A',
         model: {
@@ -169,7 +173,6 @@
                         type: 'button', text: "開啟編輯",
                         command: editor => {
                             var $selected = $(editor.getSelected().getEl());
-                            console.log()
                             if ($selected.find(".swiper-slide").length > 0 && $("#SwiperModal").length < 1) {
                                 $(`<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel" aria-hidden="true">
                                           <div class="modal-dialog">
@@ -210,18 +213,18 @@
                             $selected.find(".swiper-slide").each(function () {
                                 var $self = $(this);
                                 if (!$self.parent().hasClass("template_slide")) {
-                                    var obj = {};
-                                    obj["href"] = $self.find("a").attr("href");
-                                    obj["title"] = $self.find("a").attr("title");
-                                    obj["src"] = $self.find("img").attr("src");
-                                    obj["alt"] = $self.find("img").attr("alt");
+                                    var obj = {
+                                        "href": $self.find("a").attr("href"),
+                                        "title": $self.find("a").attr("title"),
+                                        "src": $self.find("img").attr("src"),
+                                        "alt": $self.find("img").attr("alt")
+                                    };
                                     datas.push(obj);
                                 }
                             });
                             $.each(datas, function (index, data) {
                                 var content = $($("#TemplateSwiperList").html()).clone();
-                                content.find("img").attr("src", data.src);
-                                content.find("img").attr("alt", data.alt);
+                                content.find("img").attr({ "src": data.src, "alt": data.alt });
                                 content.find(".img_alt").text(data.alt);
                                 content.find(".a_href").text(data.href);
                                 content.find(".a_title").text(data.title);
@@ -274,8 +277,7 @@
                 droppable: false,
                 editable: false,
                 traits: [
-                    //{ name: 'data-dirid', type: 'text', label: '關聯目錄', placeholder: '請輸入目錄Id' },
-                    { name: 'data-diridName', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
+                    { name: 'data-diridname', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',
                         text: "設置目錄",
@@ -295,7 +297,7 @@
                                     $("#PopupDirectory .Sure").on("click", function () {
                                         editor.getSelected().set("attributes", {
                                             "data-dirid": data.Id,
-                                            "data-diridName": data.Title
+                                            "data-diridname": data.Title
                                         });
                                         PopupDirectory.hide();
                                         $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();

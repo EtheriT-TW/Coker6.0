@@ -151,7 +151,7 @@
 }
 
     .btn:focus, .btn-check:focus + .btn {
-        outline: 1;
+        /*outline: 1;*/
         box-shadow: 0 0 0 0rem rgba(13,110,253,.25);
     }
 
@@ -169,7 +169,7 @@
 
 .overlay {
     position: absolute;
-    width: 90%;
+    width: 93.5%;
     height: 30px;
     background: rgba(0, 0, 0, 0.7);
     color: #fff;
@@ -194,7 +194,6 @@
 }
 
 .white-bg:hover > .image-container:not(:hover) img {
-    filter: grayscale(100%) brightness(200%);
     opacity: 0.5;
 }
 

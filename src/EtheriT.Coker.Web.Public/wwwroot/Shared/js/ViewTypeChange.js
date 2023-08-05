@@ -44,6 +44,7 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.removeClass("row row-cols-sm-4");
                 $self.find("figure").removeClass("flex-column");
                 $self.find(".image_frame").removeClass("w-100");
+                $self.find(".image_frame").removeClass("d-none");
                 $self.find(".image").addClass("px-0");
                 $self.find(".image").removeClass("d-none");
                 $self.find(".max-h").addClass("max-hei");
@@ -52,6 +53,11 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".title").removeClass("h-100");
                 $self.find(".box-shadow").addClass("h_100");
                 $self.find(".description").removeClass("d-none");
+                $self.find(".more").removeClass("d-none");
+                $self.find(".date").removeClass("d-none");
+                $self.find(".box-shadow").removeClass("text-border");
+                $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
+                $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
             })
             break;
         case "Grid":
@@ -61,13 +67,19 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.addClass("row row-cols-sm-4");
                 $self.find("figure").addClass("flex-column");
                 $self.find(".image_frame").addClass("w-100");
+                $self.find(".image_frame").removeClass("d-none");
                 $self.find(".image").removeClass("px-0");
                 $self.find(".image").removeClass("d-none");
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".title").addClass("text-center");
+                $self.find(".title").removeClass("text-center");
                 $self.find(".title").removeClass("h-100");
                 $self.find(".box-shadow").addClass("h_100");
                 $self.find(".description").addClass("d-none");
+                $self.find(".more").addClass("d-none");
+                $self.find(".date").removeClass("d-none");
+                $self.find(".box-shadow").removeClass("text-border");
+                $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
+                $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
             });
             break;
         case "Text":
@@ -75,15 +87,21 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 var $self = $(this)
                 $self.addClass("row row-cols-sm-4");
                 $self.find("figure").addClass("flex-column");
-                $self.find(".image_frame").removeClass("w-100");
+                $self.find(".image_frame").removeClass("w-100 ");
+                $self.find(".image_frame").addClass("d-none");
                 $self.find(".image").removeClass("px-0");
                 $self.find(".image").addClass("d-none");
                 $self.find(".max-h").removeClass("max-hei");
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".title").addClass("text-center");
+                $self.find(".title").removeClass("text-center");
                 $self.find(".title").addClass("h-100");
                 $self.find(".box-shadow").removeClass("h_100");
                 $self.find(".description").addClass("d-none");
+                $self.find(".date").addClass("d-none");
+                $self.find(".more").addClass("d-none");
+                $self.find(".box-shadow").addClass("text-border");
+                $self.find(".box-shadow").addClass("type1").removeClass("type2 type3");
+                $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
             });
             break;
     }

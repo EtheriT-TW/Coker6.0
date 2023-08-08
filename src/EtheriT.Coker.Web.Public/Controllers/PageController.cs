@@ -127,7 +127,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     default:
-                        if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test")
+                        if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
                         {
                             view = key;
                         }

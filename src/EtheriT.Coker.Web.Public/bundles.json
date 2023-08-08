@@ -49,7 +49,8 @@
         "wwwroot/Shared/js/ShareBlock.js",
         "wwwroot/Shared/js/Sitemap.js",
         "wwwroot/Shared/js/Swiper.js",
-        "wwwroot/Shared/js/ViewTypeChange.js"
+        "wwwroot/Shared/js/ViewTypeChange.js",
+        "wwwroot/Shared/js/Activity.js"
       ]
     }
   ],
@@ -79,7 +80,8 @@
         "wwwroot/Shared/css/DirectoryGetData.css",
         "wwwroot/Shared/css/Frame.css",
         "wwwroot/Shared/HoverEffect.css",
-        "wwwroot/Shared/css/Swiper.css"
+        "wwwroot/Shared/css/Swiper.css",
+        "wwwroot/Shared/css/Activity.less"
       ]
     }
   ],

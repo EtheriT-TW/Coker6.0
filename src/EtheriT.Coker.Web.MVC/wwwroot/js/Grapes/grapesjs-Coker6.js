@@ -257,6 +257,97 @@
             }
         },
     });
+    editor.DomComponents.addType('格列切換控制', {
+        isComponent: el => el.classList?.contains('switch_control'),
+        model: {
+            defaults: {
+                droppable: false,
+                copyable: false,
+                traits: [
+                    {
+                        type: 'checkbox',
+                        label: '文字',
+                        name: 'checkbox_name',
+                        changeProp: 1
+                    }, {
+                        type: 'checkbox',
+                        label: '圖片',
+                        name: 'checkbox_picture',
+                        changeProp: 1
+                    }, {
+                        type: 'checkbox',
+                        label: '圖文',
+                        name: 'checkbox_graphic',
+                        changeProp: 1
+                    }
+                ]
+            },
+            init() {
+                const $self = $(this);
+                console.log($self);
+                $self.on('change:attributes:checkbox_name', () => {
+                    console.log("in");
+                    setTimeout(() => {
+                        var isChecked = this.getAttributes().checkbox_name;
+                        var control = $(".gjs-frame")[0].contentWindow.namecontrol;
+                        control(editor.getId(), isChecked);
+                    }, 100);
+                });
+            }
+        },
+    });
+    editor.DomComponents.addType('活動列表', {
+        isComponent: el => el.classList?.contains('articletype'),
+        
+        createInput() {
+            const el = document.createElement('div');
+            el.innerHTML = `<input type='checkbox'/>`
+            return el;
+            /*
+            createInput({ trait }) {
+            Here we can decide to use properties from the trait
+            const traitOpts = trait.get('options') || [];
+            const options = traitOpts.length ? traitOpts : [
+                console.log("in"),
+                { id: 'url', name: 'URL' },
+                { id: 'email', name: 'Email' },
+            ];
+            console.log("in");
+            // Create a new element container and add some content
+            const el = document.createElement('div');
+            el.innerHTML = `
+              <select class="href-next__type">
+                ${options.map(opt => `<option value="${opt.id}">${opt.name}</option>`).join('')}
+              </select>
+              <div class="href-next__url-inputs">
+                <input class="href-next__url" placeholder="Insert URL"/>
+              </div>
+              <div class="href-next__email-inputs">
+                <input class="href-next__email" placeholder="Insert email"/>
+                <input class="href-next__email-subject" placeholder="Insert subject"/>
+              </div>      `;
+
+            // Let's make our content interactive
+            const inputsUrl = el.querySelector('.href-next__url-inputs');
+            const inputsEmail = el.querySelector('.href-next__email-inputs');
+            const inputType = el.querySelector('.href-next__type');
+            inputType.addEventListener('change', ev => {
+                switch (ev.target.value) {
+                    case 'url':
+                        inputsUrl.style.display = '';
+                        inputsEmail.style.display = 'none';
+                        break;
+                    case 'email':
+                        inputsUrl.style.display = 'none';
+                        inputsEmail.style.display = '';
+                        break;
+                }
+            });
+
+            return el;*/
+            
+        },
+    });
 
 
     editor.DomComponents.addType('子頁內容', {

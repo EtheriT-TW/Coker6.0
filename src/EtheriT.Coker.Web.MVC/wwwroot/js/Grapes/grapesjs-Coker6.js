@@ -289,14 +289,11 @@
                 ]
             },
             init() {
-                const $self = $(this);
-                console.log($self);
-                $self.on('change:checkbox_name', () => {
-                    console.log("in");
+                this.on('change:checkbox_name', () => {
                     setTimeout(() => {
                         var isChecked = this.getAttributes().checkbox_name;
                         var control = $(".gjs-frame")[0].contentWindow.namecontrol;
-                        control(editor.getId(), isChecked);
+                        control(editor.getSelected().getId(), isChecked);
                     }, 100);
                 });
             }

@@ -20,8 +20,6 @@
     padding: 10px;
 }
 
-
-
 .type_change_frame > .catalog .date {
     color: gray;
     font-size: 12px;
@@ -38,6 +36,7 @@
 
 .type_change_frame > .catalog .type1 {
     height: 80px;
+    border-left: solid 10px #919191;
 }
 
 .type_change_frame > .catalog .type2 {
@@ -47,7 +46,19 @@
 .type_change_frame > .catalog .type3 {
     height: 250px;
 }
-
+.type_change_frame > .catalog .more-btn {
+    width: 100px;
+    height: 100px;
+    border-radius:50%;
+    background:#DEDEDE;
+    top:0;
+}
+    .type_change_frame > .catalog .more-btn:hover {
+        background: #919191;
+    }
+.type_change_frame > .catalog .pr3 {
+    padding: 0.5rem 3rem 0.5rem 0.5rem;
+}
 @media only screen and (max-width: 768px) {
     .type_change_frame > .catalog .title {
         line-height: 1.5rem;

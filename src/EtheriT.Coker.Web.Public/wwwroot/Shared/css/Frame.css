@@ -84,42 +84,7 @@ iframe {
     font-weight: bold;
 }
 
-.text-border {
-    border-left: #888888 solid .5rem;
-}
-.type_change_frame > .catalog .box-shadow {
-    box-shadow: 2px 3px 5px rgba(50,50,50,0.3);
-}
 
-.type_change_frame > .catalog .templatecontent {
-    padding: 10px;
-}
-
-.type_change_frame > .catalog .date {
-    color: gray;
-    font-size: 12px;
-}
-
-.type_change_frame > .catalog .image_frame {
-    width: 50%;
-    overflow: hidden;
-}
-
-.type_change_frame > .catalog .img-fluid {
-    height: 200px;
-}
-
-.type_change_frame > .catalog .type1 {
-    height: 80px;
-}
-
-.type_change_frame > .catalog .type2 {
-    height: 320px;
-}
-
-.type_change_frame > .catalog .type3 {
-    height: 250px;
-}
 
 
 @media only screen and (max-width: 992px) {

@@ -374,6 +374,7 @@
                 droppable: false,
                 editable: false,
                 traits: [
+                    { name: 'id', type: 'text', label: 'ID', placeholder: '元件ID名稱' },
                     { name: 'data-diridname', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',

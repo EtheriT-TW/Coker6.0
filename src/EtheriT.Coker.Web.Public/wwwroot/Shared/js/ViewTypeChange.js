@@ -58,6 +58,8 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".box-shadow").removeClass("text-border");
                 $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
                 $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
+                $self.find(".more-btn").addClass("d-none");
+                $self.find(".title").removeClass("pr3").addClass("p-2");;
             })
             break;
         case "Grid":
@@ -80,6 +82,8 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".box-shadow").removeClass("text-border");
                 $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
                 $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
+                $self.find(".more-btn").addClass("d-none");
+                $self.find(".title").removeClass("pr3").addClass("p-2");
             });
             break;
         case "Text":
@@ -102,6 +106,8 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".box-shadow").addClass("text-border");
                 $self.find(".box-shadow").addClass("type1").removeClass("type2 type3");
                 $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
+                $self.find(".more-btn").removeClass("d-none");
+                $self.find(".title").addClass("pr3").removeClass("p-2");
             });
             break;
     }

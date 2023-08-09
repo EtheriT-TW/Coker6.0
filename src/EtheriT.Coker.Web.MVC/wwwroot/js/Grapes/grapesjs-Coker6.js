@@ -268,24 +268,30 @@
                         type: 'checkbox',
                         label: '文字',
                         name: 'checkbox_name',
-                        changeProp: 1
+                        changeProp: 1,
+                        valueTrue: "1",
+                        valueFalse: "0"
                     }, {
                         type: 'checkbox',
                         label: '圖片',
                         name: 'checkbox_picture',
-                        changeProp: 1
+                        changeProp: 1,
+                        valueTrue: "1",
+                        valueFalse: "0"
                     }, {
                         type: 'checkbox',
                         label: '圖文',
                         name: 'checkbox_graphic',
-                        changeProp: 1
+                        changeProp: 1,
+                        valueTrue: "1",
+                        valueFalse: "0"
                     }
                 ]
             },
             init() {
                 const $self = $(this);
                 console.log($self);
-                $self.on('change:attributes:checkbox_name', () => {
+                $self.on('change:checkbox_name', () => {
                     console.log("in");
                     setTimeout(() => {
                         var isChecked = this.getAttributes().checkbox_name;

@@ -17,14 +17,31 @@
     $self.find(".activity_tel").html(tel); 
 }
 
-function namecontrol(isChecked) {
-    console.log(isChecked);
-    if (isChecked) {
+function namecontrol(id) {
+    var o = $("#"+id);
+    var ischeckedname = o.attr("checkbox_name");
+    if (ischeckedname == 1 ) {
         $(".checkbox_name").addClass("d-none");
-    } else {
+    } else if (ischeckedname == 0) {
         $(".checkbox_name").removeClass("d-none");
     }
 }
-
-
+function picturecontrol(id) {
+    var o = $("#" + id);
+    var ischeckedpictur = o.attr("checkbox_picture");
+    if (ischeckedpictur == 1 ) {
+        $(".checkbox_picture").addClass("d-none");
+    } else if ( ischeckedpictur == 0 ) {
+        $(".checkbox_picture").removeClass("d-none");
+    }
+}
+function graphiccontrol(id) {
+    var o = $("#" + id);
+    var ischeckedgraphic = o.attr("checkbox_graphic");
+    if ( ischeckedgraphic == 1) {
+        $(".checkbox_graphic").addClass("d-none");
+    } else if (ischeckedgraphic == 0) {
+        $(".checkbox_graphic").removeClass("d-none");
+    }
+}
    

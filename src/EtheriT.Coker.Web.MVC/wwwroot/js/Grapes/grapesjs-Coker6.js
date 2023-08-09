@@ -268,32 +268,42 @@
                         type: 'checkbox',
                         label: '文字',
                         name: 'checkbox_name',
-                        changeProp: 1,
                         valueTrue: "1",
                         valueFalse: "0"
                     }, {
                         type: 'checkbox',
                         label: '圖片',
                         name: 'checkbox_picture',
-                        changeProp: 1,
                         valueTrue: "1",
                         valueFalse: "0"
                     }, {
                         type: 'checkbox',
                         label: '圖文',
                         name: 'checkbox_graphic',
-                        changeProp: 1,
                         valueTrue: "1",
                         valueFalse: "0"
                     }
                 ]
             },
             init() {
-                this.on('change:checkbox_name', () => {
+                this.on('change:attributes:checkbox_name', () => {
                     setTimeout(() => {
-                        var isChecked = this.getAttributes().checkbox_name;
-                        var control = $(".gjs-frame")[0].contentWindow.namecontrol;
-                        control(editor.getSelected().getId(), isChecked);
+                        var control = $(".gjs-frame")[0].contentWindow.namecontrol; 
+                        control(editor.getSelected().getId()); 
+                    }, 100);
+                });
+                this.on('change:attributes:checkbox_picture', () => {
+                    setTimeout(() => {
+                        console.log(this);
+                        var control = $(".gjs-frame")[0].contentWindow.picturecontrol;
+                        control(editor.getSelected().getId());
+                    }, 100);
+                });
+                this.on('change:attributes:checkbox_graphic', () => {
+                    setTimeout(() => {
+                        console.log(this);
+                        var control = $(".gjs-frame")[0].contentWindow.graphiccontrol;
+                        control(editor.getSelected().getId());
                     }, 100);
                 });
             }
@@ -301,37 +311,46 @@
     });
     editor.DomComponents.addType('活動列表', {
         isComponent: el => el.classList?.contains('articletype'),
-        
-        createInput() {
-            const el = document.createElement('div');
-            el.innerHTML = `<input type='checkbox'/>`
-            return el;
-            /*
-            createInput({ trait }) {
-            Here we can decide to use properties from the trait
+        model: {
+            defaults: {
+                droppable: false,
+                copyable: false,
+                traits: [
+                    { name: 'data-strat-end-date', type: 'date-range', label: '起訖日期' },
+                    { name: 'data-location', type: 'text', label: '地點', placeholder: '請輸入地點' },
+                    { name: 'data-addr', type: 'text', label: '地址', placeholder: '請輸入地址' },
+                    { name: 'data-link', type: 'text', label: '連結', placeholder: '請輸入連結' },
+                    { name: 'data-tel', type: 'text', label: '電話', placeholder: '請輸入電話' }
+                ]
+            },
+        }  
+    });
+    editor.TraitManager.addType("date-range", {
+        // Expects as return a simple HTML string or an HTML element
+        createInput({ trait }) {
+            // Here we can decide to use properties from the trait
             const traitOpts = trait.get('options') || [];
             const options = traitOpts.length ? traitOpts : [
-                console.log("in"),
-                { id: 'url', name: 'URL' },
-                { id: 'email', name: 'Email' },
+                { id: 'strat-date', name: 'stratDate' },
+                { id: 'end-date', name: 'endDate' },
             ];
-            console.log("in");
+
             // Create a new element container and add some content
             const el = document.createElement('div');
             el.innerHTML = `
-              <select class="href-next__type">
-                ${options.map(opt => `<option value="${opt.id}">${opt.name}</option>`).join('')}
-              </select>
-              <div class="href-next__url-inputs">
-                <input class="href-next__url" placeholder="Insert URL"/>
-              </div>
-              <div class="href-next__email-inputs">
-                <input class="href-next__email" placeholder="Insert email"/>
-                <input class="href-next__email-subject" placeholder="Insert subject"/>
-              </div>      `;
+      <select class="href-next__type">
+        ${options.map(opt => `<option value="${opt.id}">${opt.name}</option>`).join('')}
+      </select>
+      <div class="date-range_start-inputs">
+        <input type="date" class="date-range_strat-date" placeholder="請輸入開始日期"/>
+      </div>
+      <div class="date-range_end-inputs">
+        <input type="date" class="date-range_end-date" placeholder="請輸入結束日期"/>
+      </div>
+    `;
 
             // Let's make our content interactive
-            const inputsUrl = el.querySelector('.href-next__url-inputs');
+            const inputsUrl = el.querySelector('.date-range_start-inputs');
             const inputsEmail = el.querySelector('.href-next__email-inputs');
             const inputType = el.querySelector('.href-next__type');
             inputType.addEventListener('change', ev => {
@@ -347,8 +366,7 @@
                 }
             });
 
-            return el;*/
-            
+            return el;
         },
     });
 

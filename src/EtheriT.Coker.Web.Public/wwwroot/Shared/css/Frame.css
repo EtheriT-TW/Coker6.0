@@ -83,8 +83,14 @@ iframe {
 .frame_type_2 .font-weight-bold {
     font-weight: bold;
 }
-
-
+.outpage_link a {
+    color:#000;
+    background-color: #e5e5ed;
+}
+.outpage_link .local {
+    color: white;
+    background-color: #375695;
+}
 
 
 @media only screen and (max-width: 992px) {

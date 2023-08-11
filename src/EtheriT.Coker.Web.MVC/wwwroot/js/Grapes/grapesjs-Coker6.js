@@ -246,7 +246,7 @@
             defaults: {
                 droppable: false,
                 copyable: false
-            }, 
+            },
             init() {
                 const ccid = this.ccid;
                 const c = $(".gjs-frame")[0].contentWindow.$;
@@ -286,27 +286,34 @@
                 ]
             },
             init() {
-                this.on('change:attributes:checkbox_name', () => {
-                    editor.getSelected().components().models.forEach(function (item) {
-                        if (item.getClasses().indexOf('d-none') >= 0) {
-                            item.removeClass("d-none");
-                        } else item.addClass("d-none");
+                var self = this;
+
+                var list = ["btn_text", "btn_grid", "btn_list"];
+                for (var i = 0; i < list.length; i++){
+                    const myClass = list[i];
+                    self.on(`change:attributes:${myClass}`, () => {
+                        editor.getSelected().components().models.forEach(function (item) {
+                            if (item.getClasses().indexOf(myClass) >= 0) {
+                                console.log(myClass);
+                                if (item.getClasses().indexOf('d-none') >= 0) {
+                                    item.removeClass("d-none");
+                                    setTimeout(() => {
+                                        var content = $(".gjs-frame")[0].contentWindow.namecontrol;
+                                        content(editor.getSelected().getId());
+                                    }, 200);
+                                }
+                                else {
+                                    item.addClass("d-none");
+                                    setTimeout(() => {
+                                        var content = $(".gjs-frame")[0].contentWindow.namecontrol;
+                                        content(editor.getSelected().getId());
+                                    }, 200);
+                                }
+                            }
+                        });
+
                     });
-                });
-                this.on('change:attributes:checkbox_picture', () => {
-                    setTimeout(() => {
-                        console.log(this);
-                        var control = $(".gjs-frame")[0].contentWindow.picturecontrol;
-                        control(editor.getSelected().getId());
-                    }, 100);
-                });
-                this.on('change:attributes:checkbox_graphic', () => {
-                    setTimeout(() => {
-                        console.log(this);
-                        var control = $(".gjs-frame")[0].contentWindow.graphiccontrol;
-                        control(editor.getSelected().getId());
-                    }, 100);
-                });
+                }
             }
         },
     });
@@ -324,7 +331,7 @@
                     { name: 'data-tel', type: 'text', label: '電話', placeholder: '請輸入電話' }
                 ]
             },
-        }  
+        }
     });
     editor.TraitManager.addType("date-range", {
         // Expects as return a simple HTML string or an HTML element
@@ -847,7 +854,7 @@
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("anchor_title").length != cont) iframe.AnchorPointInit();
                 else setTimeout(timmer, 100);
-            }       
+            }
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
             if (typeof (editor.getSelected()) != "undefined") {

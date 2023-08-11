@@ -287,10 +287,11 @@
             },
             init() {
                 this.on('change:attributes:checkbox_name', () => {
-                    setTimeout(() => {
-                        var control = $(".gjs-frame")[0].contentWindow.namecontrol; 
-                        control(editor.getSelected().getId()); 
-                    }, 100);
+                    editor.getSelected().components().models.forEach(function (item) {
+                        if (item.getClasses().indexOf('d-none') >= 0) {
+                            item.removeClass("d-none");
+                        } else item.addClass("d-none");
+                    });
                 });
                 this.on('change:attributes:checkbox_picture', () => {
                     setTimeout(() => {

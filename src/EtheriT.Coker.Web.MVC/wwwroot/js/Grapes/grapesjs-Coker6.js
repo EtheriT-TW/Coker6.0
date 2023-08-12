@@ -334,45 +334,33 @@
         }
     });
     editor.TraitManager.addType("date-range", {
-        // Expects as return a simple HTML string or an HTML element
         createInput({ trait }) {
-            // Here we can decide to use properties from the trait
-            const traitOpts = trait.get('options') || [];
-            const options = traitOpts.length ? traitOpts : [
-                { id: 'strat-date', name: 'stratDate' },
-                { id: 'end-date', name: 'endDate' },
-            ];
-
-            // Create a new element container and add some content
             const el = document.createElement('div');
             el.innerHTML = `
-      <select class="href-next__type">
-        ${options.map(opt => `<option value="${opt.id}">${opt.name}</option>`).join('')}
-      </select>
-      <div class="date-range_start-inputs">
-        <input type="date" class="date-range_strat-date" placeholder="請輸入開始日期"/>
-      </div>
-      <div class="date-range_end-inputs">
-        <input type="date" class="date-range_end-date" placeholder="請輸入結束日期"/>
-      </div>
-    `;
+              <div class="date-range_start-inputs">
+                <input type="date" class="date-range_strat-date" placeholder="請輸入開始日期"/>
+              </div>
+              <div class="date-range_end-inputs">
+                <input type="date" class="date-range_end-date" placeholder="請輸入結束日期"/>
+              </div>
+            `;
 
-            // Let's make our content interactive
-            const inputsUrl = el.querySelector('.date-range_start-inputs');
-            const inputsEmail = el.querySelector('.href-next__email-inputs');
+            /* Let's make our content interactive
+            const inputstrat = el.querySelector('.date-range_start-inputs');
+            const inputsend = el.querySelector('.date-range_end-inputs');
             const inputType = el.querySelector('.href-next__type');
             inputType.addEventListener('change', ev => {
                 switch (ev.target.value) {
                     case 'url':
-                        inputsUrl.style.display = '';
-                        inputsEmail.style.display = 'none';
+                        inputstrat.style.display = '';
+                        inputsend.style.display = 'none';
                         break;
                     case 'email':
                         inputsUrl.style.display = 'none';
                         inputsEmail.style.display = '';
                         break;
                 }
-            });
+            });*/
 
             return el;
         },

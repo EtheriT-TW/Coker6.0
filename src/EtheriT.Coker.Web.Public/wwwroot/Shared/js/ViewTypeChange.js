@@ -51,15 +51,39 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find("figcaption").addClass("flex-grow-1 p-3 py-0 py-md-3");
                 $self.find(".title").removeClass("text-center");
                 $self.find(".title").removeClass("h-100");
-                $self.find(".box-shadow").addClass("h_100");
                 $self.find(".description").removeClass("d-none");
                 $self.find(".more").removeClass("d-none");
                 $self.find(".date").removeClass("d-none");
-                $self.find(".box-shadow").removeClass("text-border");
+                $self.find(".box-shadow").removeClass("h_100");
+                $self.find(".box-shadow").addClass("text-border");
                 $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
-                $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
+                $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
+                $self.find(".card-border").removeClass("h_100");    
+                $self.find(".card-border").addClass("text-border");
+                $self.find(".card-border").addClass("type3").removeClass("type2 type1");
+                $self.find(".card-border").addClass("card-border-rd");
                 $self.find(".more-btn").addClass("d-none");
-                $self.find(".title").removeClass("pr3").addClass("p-2");;
+                $self.find(".title").removeClass("pr3");
+                $self.find(".related-tag").removeClass("d-none");
+                $self.find(".card-border").removeClass("pr3").addClass("p-3");
+                $self.find(".imgh").addClass("img-h");
+                $self.find(".mergetag").addClass("merge");
+                $self.find(".check_btn").removeClass("w-100").addClass("check_btn-type3");
+                $self.find(".search-more").removeClass("d-none"); 
+                /*if ($self.find(".search-category")) {
+                  
+                    $self.find(".card-border-rd").removeClass("text-border");
+                    $self.find(".card-border-rd").addClass("type3").removeClass("type2 type1");
+                    $self.find(".card-border-rd").addClass("p-3").removeClass("p-1");
+                    $self.find(".card-border-rd").addClass("h_100");
+                } else {
+               
+                    $self.find(".box-shadow").removeClass("text-border");
+                    $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
+                    $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
+                    $self.find(".box-shadow").addClass("h_100");
+                };*/
+               
             })
             break;
         case "Grid":
@@ -74,16 +98,39 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".image").removeClass("d-none");
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
                 $self.find(".title").removeClass("text-center");
-                $self.find(".title").removeClass("h-100");
-                $self.find(".box-shadow").addClass("h_100");
-                $self.find(".description").addClass("d-none");
+                $self.find(".title").removeClass("h-100 p-2");
+                $self.find(".description").removeClass("d-none");
                 $self.find(".more").addClass("d-none");
                 $self.find(".date").removeClass("d-none");
-                $self.find(".box-shadow").removeClass("text-border");
-                $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
-                $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
                 $self.find(".more-btn").addClass("d-none");
-                $self.find(".title").removeClass("pr3").addClass("p-2");
+                $self.find(".box-shadow").removeClass("h_100");
+                $self.find(".box-shadow").addClass("text-border");
+                $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
+                $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
+                $self.find(".card-border").addClass("type2").removeClass("type1 type3");
+                $self.find(".card-border").addClass("text-border");
+                $self.find(".card-border").removeClass("h_100");
+                $self.find(".card-border").addClass("card-border-rd");
+                $self.find(".card-border").removeClass("pr3").addClass("p-3");
+                $self.find(".related-tag").removeClass("d-none");
+                $self.find(".imgh").removeClass("img-h");
+                $self.find(".mergetag").removeClass("merge");
+                $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
+                $self.find(".search-more").removeClass("d-none"); 
+                $self.find(".title").removeClass("p-2 pr3");
+                /*if ($self.find(".search-category")) {
+                    $self.find(".description").removeClass("d-none");
+                    $self.find(".card-border-rd").removeClass("text-border");
+                    $self.find(".card-border-rd").addClass("type2").removeClass("type1 type3");
+                    $self.find(".card-border-rd").addClass("p-3").removeClass("p-1");
+                    $self.find(".card-border-rd").addClass("h_100");
+                } else {
+                    $self.find(".description").addClass("d-none");
+                    $self.find(".box-shadow").removeClass("text-border");
+                    $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
+                    $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
+                    $self.find(".box-shadow").addClass("h_100");
+                };*/
             });
             break;
         case "Text":
@@ -99,15 +146,40 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
                 $self.find(".title").removeClass("text-center");
                 $self.find(".title").addClass("h-100");
-                $self.find(".box-shadow").removeClass("h_100");
                 $self.find(".description").addClass("d-none");
                 $self.find(".date").addClass("d-none");
                 $self.find(".more").addClass("d-none");
+                $self.find(".more-btn").removeClass("d-none");
+                $self.find(".title").addClass("pr3").removeClass("p-2");
+                $self.find(".box-shadow").removeClass("h_100");
                 $self.find(".box-shadow").addClass("text-border");
                 $self.find(".box-shadow").addClass("type1").removeClass("type2 type3");
                 $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
-                $self.find(".more-btn").removeClass("d-none");
-                $self.find(".title").addClass("pr3").removeClass("p-2");
+                $self.find(".related-tag").addClass("d-none");
+                $self.find(".card-border").removeClass("h_100");
+                $self.find(".card-border").addClass("text-border");
+                $self.find(".card-border").addClass("type1").removeClass("type2 type3");
+                $self.find(".card-border").removeClass("card-border-rd");
+                $self.find(".card-border").removeClass("p-3").addClass("pr3");
+                $self.find(".imgh").removeClass("img-h");
+                $self.find(".mergetag").removeClass("merge ");
+                $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
+                $self.find(".search-more").addClass("d-none"); 
+                /*if ($self.find(".search-category")) {
+                    console.log($self.find(".search-category"));
+                    $self.find(".card-border-rd").removeClass("h_100");
+                    $self.find(".card-border-rd").addClass("text-border");
+                    $self.find(".card-border-rd").addClass("type1").removeClass("type2 type3");
+                    $self.find(".card-border-rd").addClass("p-1").removeClass("p-3");
+                } else if ($self.find(".original-category")) {
+                    console.log("in");
+                    $self.find(".box-shadow").removeClass("h_100");
+                    $self.find(".box-shadow").addClass("text-border");
+                    $self.find(".box-shadow").addClass("type1").removeClass("type2 type3");
+                    $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
+                };*/
+               
+                
             });
             break;
     }

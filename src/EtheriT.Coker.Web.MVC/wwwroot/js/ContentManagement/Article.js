@@ -1,5 +1,5 @@
-﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox
-var keyId, disp_opt = true, pop_visible = true;
+﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox, $picker, $nodeDate, $permanent;
+var startDate, endDate, keyId, disp_opt = true, pop_visible = true;
 var article_list;
 var setPage;
 
@@ -216,6 +216,24 @@ function PageReady() {
         }
     })
 
+    co.Picker.Init($picker);
+    co.Picker.Init($nodeDate, { singleDatePicker: true, timePicker: false, locale: { format: 'YYYY/MM/DD' } });
+    $picker.on('apply.daterangepicker', function (ev, picker) {
+        $(this).val(picker.startDate.format('YYYY/MM/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/MM/DD HH:mm'));
+        startDate = picker.startDate.format("");
+        endDate = picker.endDate.format("");
+    });
+    $permanent.on("click", function () {
+        if ($permanent.is(":checked")) {
+            $picker.val('');
+            $picker.attr("disabled", "disabled");
+            startDate = null;
+            endDate = null;
+        } else {
+            $picker.removeAttr("disabled");
+        }
+    })
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -233,6 +251,9 @@ function ElementInit() {
     $sort = $(".sort");
     $sort_input = $sort.children("input");
     $sort_checkbox = $sort.children(".checkbox").children("input");
+    $picker = $("#InputDate");
+    $nodeDate = $("#NodeDate");
+    $permanent = $("#PermanentCheck");
 }
 
 function contentReady(e) {
@@ -299,6 +320,7 @@ function FormDataClear() {
     $sort_input.val("");
     $sort_input.attr("disabled", "disabled");
     $sort_checkbox.prop("checked", false);
+    $permanent.prop("checked", true);
 }
 
 function FormDataSet(result) {
@@ -320,11 +342,23 @@ function FormDataSet(result) {
     $title.children("div").children(".count").text(result.title.length);
     $describe_text.val(result.description);
     $describe.children("div").children(".count").text(result.description.length);
+    startDate = result.startTime;
+    endDate = result.endTime;
 
     if (result.serNO != 500) {
         $sort_input.val(result.serNO);
         $sort_input.removeAttr("disabled");
         $sort_checkbox.prop("checked", true);
+    }
+
+    if (result.permanent) {
+        $picker.val('');
+        $picker.attr("disabled", "disabled");
+        $permanent.prop("checked", true);
+    } else {
+        startDate != null && $picker.data('daterangepicker').setStartDate(startDate);
+        endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
+        $permanent.prop("checked", false);
     }
 
     TagDataSet(result.tagDatas);
@@ -364,6 +398,9 @@ function AddUp(success_text, error_text, place) {
         SerNO: $sort_checkbox.is(":checked") ? $sort_input.val() : 500,
         PopularVisible: pop_visible,
         TagSelected: tag_list,
+        permanent: $permanent.is(":checked"),
+        StartTime: startDate,
+        EndTime: endDate
     }).done(function (result) {
         if (result.success) {
             if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").Id == 0) {

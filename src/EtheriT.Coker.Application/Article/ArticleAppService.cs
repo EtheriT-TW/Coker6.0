@@ -58,16 +58,8 @@ namespace EtheriT.Coker.Application.Article
 
                 if (dto.Id == 0)
                 {
-                    Core.Models.Article a = new Core.Models.Article
-                    {
-                        FK_WebsiteId = WebsiteID,
-                        Title = dto.Title,
-                        Description = dto.Description,
-                        Visible = dto.Visible,
-                        SerNO = dto.SerNO,
-                        PopularVisible = dto.PopularVisible,
-                        CreatorUserId = usetId,
-                    };
+                    Core.Models.Article a = mapper.Map<Core.Models.Article>(dto);
+                    a.FK_WebsiteId= WebsiteID;
                     db.Article.Add(a);
                     await loginUserData.SaveChanges(a);
                     asoid = a.Id;
@@ -78,15 +70,7 @@ namespace EtheriT.Coker.Application.Article
 
                     if (result != null)
                     {
-                        result.FK_WebsiteId = WebsiteID;
-                        result.Title = dto.Title;
-                        result.Description = dto.Description;
-                        result.Visible = dto.Visible;
-                        result.SerNO = dto.SerNO;
-                        result.PopularVisible = dto.PopularVisible;
-                        result.LastModifierUserId = usetId;
-                        result.LastModificationTime = DateTime.Now;
-
+                        mapper.Map(dto,result);
                         await loginUserData.SaveChanges(result);
                     }
                     else throw new Exception("查無文章資料");
@@ -256,8 +240,10 @@ namespace EtheriT.Coker.Application.Article
 
                 if (articleData != null)
                 {
-                    articleData.Sort((x, y) => (x.SerNO.CompareTo(y.SerNO) * 2 + x.Id.CompareTo(y.Id)));
-                    foreach (var data in articleData)
+                    var articleDataSort = articleData.OrderBy(a => a.NodeDate)
+                                .ThenBy(a => a.SerNO)
+                                .ThenByDescending(e => e.Id);
+                    foreach (var data in articleDataSort)
                     {
                         var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
                         {

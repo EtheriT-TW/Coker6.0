@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public int SerNO { get; set; }
         public int Popular { get; set; }
         public bool PopularVisible { get; set; }
+        public DateTime? NodeDate { get; set; }
         public string? SaveHtml { get; set; }
         public string? SaveCss { get; set; }
         public string? Html { get; set; }

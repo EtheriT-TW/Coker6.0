@@ -216,8 +216,8 @@ var Coker = {
         }
     },
     Picker: {
-        Init: function ($picker) {
-            $picker.daterangepicker({
+        Init: function ($picker, setting) {
+            const target = co.Object.merge({
                 timePicker: true,
                 timePicker24Hour: true,
                 autoUpdateInput: true,
@@ -229,7 +229,9 @@ var Coker = {
                     daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
                     monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"]
                 }
-            });
+            }, setting || {})
+            console.log(target);
+            $picker.daterangepicker(target);
 
             $picker.on('cancel.daterangepicker', function (ev, picker) {
                 $(this).val("");
@@ -790,6 +792,22 @@ var Coker = {
                 headers: _c.Data.Header,
             });
         },
+    },
+    Object: {
+        merge: function (target, source) {
+            console.log("in");
+            // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
+            for (const key of Object.keys(source)) {
+                if (source[key] instanceof Object) {
+                    console.log(source[key]);
+                    Object.assign(source[key], co.Object.merge(target[key], source[key]))
+                }
+            }
+
+            // Join `target` and modified `source`
+            Object.assign(target || {}, source)
+            return target
+        }
     }
 }
 var _c = Coker;

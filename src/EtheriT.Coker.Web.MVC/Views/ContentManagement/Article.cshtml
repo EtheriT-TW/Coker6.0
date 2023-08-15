@@ -62,8 +62,9 @@
                         c.AddFor(e => e.Id).Visible(false);
                         c.AddFor(e => e.Title).Caption("標題");
                         c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
-                        c.AddFor(e => e.StartTime).Caption("起始時間").Width(90);
-                        c.AddFor(e => e.EndTime).Caption("結束時間").Width(90);
+                        c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
+                        c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
+                        c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
                         c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
                         c.AddFor(e => e.SerNO).Caption("排序").Width(90);
                         c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
@@ -137,6 +138,23 @@
                         <div class="count">0</div>
                     </div>
                     <textarea class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入文章標題" required></textarea>
+                </div>
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>發布日期
+                    </div>
+                    <input id="NodeDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off" required>
+                </div>
+
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                    </div>
+                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                        <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
+                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                    </div>
                 </div>
 
                 <div class="describe border mb-3 p-2 rounded">

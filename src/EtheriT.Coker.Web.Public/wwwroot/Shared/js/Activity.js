@@ -1,20 +1,24 @@
-﻿function input_change(id) {
+﻿function date_input_change(id) {
     var $self = $(`#${id}`);
-    console.log($self);
-    var start_date = $self.attr('data-date-strat'); 
+    var start_date = $self.attr('date-date-strat-date'); 
     var end_date = $self.attr('data-date-end'); 
     var location = $self.attr('data-location'); 
     var addr = $self.attr('data-addr'); 
+    var organizer = $self.attr('data-organizer');
+    var aorganizer = $self.attr('data-a-organizer'); 
     var link = $self.attr('data-link'); 
     var tel = $self.attr('data-tel'); 
 
-    console.log("start"+start_date);
-
-    $self.find(".activity_time").html(start_date + ' ' + end_date);
+    $self.find(".activity_start_time").html(start_date);
+    $self.find(".activity_end_time").html(end_date); 
     $self.find(".activity_location").html(location);
     $self.find(".activity_addr").html(addr); 
+    $self.find(".activity-organizer").html(organizer); 
+    $self.find(".activity-a-organizer").html(aorganizer); 
     $self.find(".activity_link").html(link);
     $self.find(".activity_tel").html(tel); 
+    return $self.html();
+
 }
 
 function namecontrol(id) {

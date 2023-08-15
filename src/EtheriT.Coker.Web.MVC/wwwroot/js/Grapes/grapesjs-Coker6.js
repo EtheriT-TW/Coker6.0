@@ -328,24 +328,26 @@
                     { name: 'data-location', type: 'text', label: '地點', placeholder: '請輸入地點' },
                     { name: 'data-addr', type: 'text', label: '地址', placeholder: '請輸入地址' },
                     { name: 'data-link', type: 'text', label: '連結', placeholder: '請輸入連結' },
+                    { name: 'data-organizer', type: 'text', label: '主辦單位', placeholder: '請輸入主辦單位' },
+                    { name: 'data-a-organizer', type: 'text', label: '協辦單位', placeholder: '請輸入協辦單位' },
                     { name: 'data-tel', type: 'text', label: '電話', placeholder: '請輸入電話' }
                 ]
             },
             init() {
                 var self = this;
-                console.log(this);
                 self.on(`change:attributes`, () => {
-                    console.log("in");
                     setTimeout(() => {
                         var content = $(".gjs-frame")[0].contentWindow.date_input_change;
-                        content(editor.getSelected().getId());
+                        editor.getSelected().components(content(editor.getSelected().getId()));
                     }, 200);
                 });
             }
         }
     });
     editor.TraitManager.addType("date-range", {
+        
         createInput({ trait }) {
+            const self = this;
             const el = document.createElement('div');
             el.innerHTML = `
               <div class="date-range_start-inputs">
@@ -355,26 +357,13 @@
                 <input type="date" class="date-range_end-date" />
               </div>
             `;
-
-            /* Let's make our content interactive
-            const inputstrat = el.querySelector('.date-range_start-inputs');
-            const inputsend = el.querySelector('.date-range_end-inputs');
-            const inputType = el.querySelector('.href-next__type');
-            inputType.addEventListener('change', ev => {
-                switch (ev.target.value) {
-                    case 'url':
-                        inputstrat.style.display = '';
-                        inputsend.style.display = 'none';
-                        break;
-                    case 'email':
-                        inputsUrl.style.display = 'none';
-                        inputsEmail.style.display = '';
-                        break;
-                }
-            });*/
-
             return el;
         },
+        onEvent({ elInput, component, event }) {
+            const inputstrat = elInput.querySelector('.date-range_strat-date');
+            const inputsend = elInput.querySelector('.date-range_end-date');
+            component.addAttributes({ "date-date-strat-date": inputstrat.value,"data-date-end": inputsend.value })
+        }
     });
 
 

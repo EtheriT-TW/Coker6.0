@@ -68,29 +68,7 @@ iframe {
     width: auto;
 }
 
-/* frame_type_1 */
-.frame_type_1 .title_block {
-    text-align-last: justify;
-    min-width: 8.25rem;
-    background-color: #eaeaea;
-}
-.frame_type_1 .title_block + a:hover {
-    font-size: larger;
-}
-.frame_type_2 ul li {
-    list-style-type: disc;
-}
-.frame_type_2 .font-weight-bold {
-    font-weight: bold;
-}
-.outpage_link a {
-    color:#000;
-    background-color: #e5e5ed;
-}
-.outpage_link .local {
-    color: white;
-    background-color: #375695;
-}
+
 
 
 

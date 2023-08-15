@@ -267,19 +267,19 @@
                     {
                         type: 'checkbox',
                         label: '文字',
-                        name: 'checkbox_name',
+                        name: 'btn_text',
                         valueTrue: "1",
                         valueFalse: "0"
                     }, {
                         type: 'checkbox',
                         label: '圖片',
-                        name: 'checkbox_picture',
+                        name: 'btn_grid',
                         valueTrue: "1",
                         valueFalse: "0"
                     }, {
                         type: 'checkbox',
                         label: '圖文',
-                        name: 'checkbox_graphic',
+                        name: 'btn_list',
                         valueTrue: "1",
                         valueFalse: "0"
                     }
@@ -331,6 +331,17 @@
                     { name: 'data-tel', type: 'text', label: '電話', placeholder: '請輸入電話' }
                 ]
             },
+            init() {
+                var self = this;
+                console.log(this);
+                self.on(`change:attributes`, () => {
+                    console.log("in");
+                    setTimeout(() => {
+                        var content = $(".gjs-frame")[0].contentWindow.date_input_change;
+                        content(editor.getSelected().getId());
+                    }, 200);
+                });
+            }
         }
     });
     editor.TraitManager.addType("date-range", {
@@ -338,10 +349,10 @@
             const el = document.createElement('div');
             el.innerHTML = `
               <div class="date-range_start-inputs">
-                <input type="date" class="date-range_strat-date" placeholder="請輸入開始日期"/>
+                <input type="date" class="date-range_strat-date" />
               </div>
               <div class="date-range_end-inputs">
-                <input type="date" class="date-range_end-date" placeholder="請輸入結束日期"/>
+                <input type="date" class="date-range_end-date" />
               </div>
             `;
 

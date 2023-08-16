@@ -82,13 +82,12 @@
     transform-origin: center center;
     background-color: white;
 }
-
-    .hover_article_scale:hover {
-        transform: scale(1.03);
-        z-index: 1;
-        transition: all 0.25s;
-        background-color: lightgray;
-    }
+.hover_article_scale:hover {
+     transform: scale(1.03);
+     z-index: 1;
+     transition: all 0.25s;
+     background-color: lightgray;
+}
 
 .hover_link_bold > a:hover {
     color: black;
@@ -108,7 +107,7 @@
     .hover-outside:hover > .hover_dark:hover {
         opacity: 1;
         transition: .2s linear;
-        transform:scale(1.05);
+        transform:scale(1.03);
         background: lightgray;
     }
 

@@ -257,6 +257,18 @@
             }
         },
     });
+    editor.DomComponents.addType('名片介紹', {
+        isComponent: el => el.classList?.contains('frame_type_2'),
+        model: {
+            defaults: {
+                droppable: false,
+                copyable: false
+            },
+            init() {
+             
+            }
+        },
+    });
     editor.DomComponents.addType('格列切換控制', {
         isComponent: el => el.classList?.contains('switch_control'),
         model: {
@@ -286,15 +298,17 @@
                 ]
             },
             init() {
+
                 var self = this;
 
                 var list = ["btn_text", "btn_grid", "btn_list"];
                 for (var i = 0; i < list.length; i++){
                     const myClass = list[i];
+                    
                     self.on(`change:attributes:${myClass}`, () => {
                         editor.getSelected().components().models.forEach(function (item) {
                             if (item.getClasses().indexOf(myClass) >= 0) {
-                                console.log(myClass);
+  
                                 if (item.getClasses().indexOf('d-none') >= 0) {
                                     item.removeClass("d-none");
                                     setTimeout(() => {

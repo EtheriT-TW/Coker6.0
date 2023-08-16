@@ -148,7 +148,7 @@ function DirectoryDataInsert($item, result) {
     result.forEach(function (data) {
         var content = $($item.find(".templatecontent").html()).clone();
         content.find("a").attr("href", window.location.pathname + data.link);
-        content.find("a").attr("titile", `連結至: ${data.title}`);
+        content.find("a").attr("title", `連結至: ${data.title}`);
         var imglink = data.mainImage;
         if (typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") imglink = imglink.replace("upload", `upload/${OrgName}`);
         content.find("img").attr("src", imglink);

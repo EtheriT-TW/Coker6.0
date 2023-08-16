@@ -44,6 +44,11 @@ input[type="number"] {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
+
+#ArticleContent > form  .date > input {
+    padding-left: 9.5rem;
+}
+
 /*
 #ArticleContent > form .image_upload > div {
     width: fit-content;

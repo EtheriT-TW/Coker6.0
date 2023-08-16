@@ -70,20 +70,7 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".mergetag").addClass("merge");
                 $self.find(".check_btn").removeClass("w-100").addClass("check_btn-type3");
                 $self.find(".search-more").removeClass("d-none"); 
-                /*if ($self.find(".search-category")) {
-                  
-                    $self.find(".card-border-rd").removeClass("text-border");
-                    $self.find(".card-border-rd").addClass("type3").removeClass("type2 type1");
-                    $self.find(".card-border-rd").addClass("p-3").removeClass("p-1");
-                    $self.find(".card-border-rd").addClass("h_100");
-                } else {
-               
-                    $self.find(".box-shadow").removeClass("text-border");
-                    $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
-                    $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
-                    $self.find(".box-shadow").addClass("h_100");
-                };*/
-               
+                $self.find(".description").addClass("type3-content").removeClass("type2-content");
             })
             break;
         case "Grid":
@@ -118,19 +105,7 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
                 $self.find(".search-more").removeClass("d-none"); 
                 $self.find(".title").removeClass("p-2 pr3");
-                /*if ($self.find(".search-category")) {
-                    $self.find(".description").removeClass("d-none");
-                    $self.find(".card-border-rd").removeClass("text-border");
-                    $self.find(".card-border-rd").addClass("type2").removeClass("type1 type3");
-                    $self.find(".card-border-rd").addClass("p-3").removeClass("p-1");
-                    $self.find(".card-border-rd").addClass("h_100");
-                } else {
-                    $self.find(".description").addClass("d-none");
-                    $self.find(".box-shadow").removeClass("text-border");
-                    $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
-                    $self.find(".box-shadow").addClass("p-3").removeClass("p-1");
-                    $self.find(".box-shadow").addClass("h_100");
-                };*/
+                $self.find(".description").addClass("type2-content").removeClass("type3-content");
             });
             break;
         case "Text":
@@ -165,19 +140,6 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".mergetag").removeClass("merge ");
                 $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
                 $self.find(".search-more").addClass("d-none"); 
-                /*if ($self.find(".search-category")) {
-                    console.log($self.find(".search-category"));
-                    $self.find(".card-border-rd").removeClass("h_100");
-                    $self.find(".card-border-rd").addClass("text-border");
-                    $self.find(".card-border-rd").addClass("type1").removeClass("type2 type3");
-                    $self.find(".card-border-rd").addClass("p-1").removeClass("p-3");
-                } else if ($self.find(".original-category")) {
-                    console.log("in");
-                    $self.find(".box-shadow").removeClass("h_100");
-                    $self.find(".box-shadow").addClass("text-border");
-                    $self.find(".box-shadow").addClass("type1").removeClass("type2 type3");
-                    $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
-                };*/
                
                 
             });

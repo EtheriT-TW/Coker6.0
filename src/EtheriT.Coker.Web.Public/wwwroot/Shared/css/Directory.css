@@ -41,11 +41,30 @@
 }
 
 .type_change_frame  .catalog .type2 {
-    height: 320px;
+    height: 100%;
 }
 
 .type_change_frame  .catalog .type3 {
     height: 250px;
+}
+.type_change_frame > .catalog .content-h {
+    height: 250px;
+}
+.type_change_frame .type2-content {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    max-height: calc(1.6em * 5);
+    position: relative;
+}
+.type_change_frame .type3-content {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    max-height: calc(1em * 5);
+    position: relative;
 }
 .type_change_frame  .more-btn {
     width: 30px;
@@ -63,15 +82,7 @@
 .type_change_frame > .catalog .pr3 {
     padding: 0.5rem 3rem 0.5rem 0.5rem;
 }
-/*格列切換樣式2*/
 
-.typeswitch_bg {
-    background: #EFEFEF;
-}
-.typeswitch_bg input {
-        background: #F3F3F3;
-        border: none;
-}
 @media only screen and (max-width: 768px) {
     .type_change_frame > .catalog .title {
         line-height: 1.5rem;
@@ -97,6 +108,16 @@
         height: 300px;
     }
 }
+/*格列切換樣式2*/
+
+.typeswitch_bg {
+    background: #EFEFEF;
+}
+
+    .typeswitch_bg input {
+        background: #F3F3F3;
+        border: none;
+    }
 .search-category .catalog .type1 {
     height: 80px;
     border-left: solid 10px #919191;

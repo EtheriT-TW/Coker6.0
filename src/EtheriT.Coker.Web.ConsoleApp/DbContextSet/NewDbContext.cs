@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.DbContextSet
         public DbSet<Article> Articles { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Tag_Associate> Tag_Associates { get; set; }
+        public DbSet<FileUpload> FileUploads { get; set; }
         private string connectionString { get; set; }
 
         public NewDbContext(string connectionString) { 

@@ -236,7 +236,9 @@ namespace EtheriT.Coker.Application.Directory
                         case DirectoryTypeEnum.文章:
                             var temparticledata = await articleAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
                             {
-                                Ids = DataIds.Skip((page - 1) * shownum - 1).Take(shownum).ToList<long>(),
+                                Ids = DataIds,
+                                Page = page,
+                                ShowNum = shownum, 
                                 SiteId = WebsiteID
                             });
                             if (temparticledata != null)

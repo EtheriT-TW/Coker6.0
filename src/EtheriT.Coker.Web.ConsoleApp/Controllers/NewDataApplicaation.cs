@@ -14,13 +14,17 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
         {
             newDb = connectionStr;
         }
-        public bool saveData(List<Article> articles, List<Tag> tags)
+        public bool saveData(List<Article> articles, List<Tag> tags, List<FileUpload> fileUploads)
         {
             var oldTag = tags.Select(e => new { e.Id,e.Title}).ToList();
             saveTags(tags, articles[0].FK_WebsiteId);
             using (var dbContext = new NewDbContext(newDb))
             {
-                foreach(var article in articles)
+                List<string> allFileName = dbContext.FileUploads.Where(e => !e.IsDeleted).Select(e => e.OriginalFileName).ToList();
+                var newFile = fileUploads.FindAll(e => !allFileName.Contains(e.OriginalFileName));
+                dbContext.AddRange(newFile);
+                dbContext.SaveChanges();
+                foreach (var article in articles)
                 {
                     if (article.Associates != null) {
                         foreach (var associate in article.Associates)

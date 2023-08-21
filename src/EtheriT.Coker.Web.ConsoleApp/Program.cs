@@ -24,5 +24,5 @@ oldData.ForEach(e => {
     List<Tag> tags;
     List<Article> articles = e.loadData(out tags);
     NewDataApplicaation newDB = new NewDataApplicaation(configSection["destination"] ?? "");
-    newDB.saveData(articles, tags);
+    newDB.saveData(articles, tags, e.FileUploads);
 });

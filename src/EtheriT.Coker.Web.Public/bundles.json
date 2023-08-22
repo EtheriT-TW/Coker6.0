@@ -77,9 +77,9 @@
       "output": "Shared/shared.min.css",
       "input": [
         "wwwroot/Shared/css/AnchorPoint.css",
-        "wwwroot/Shared/css/DirectoryGetData.css",
+        "wwwroot/Shared/css/Directory.css",
         "wwwroot/Shared/css/Frame.css",
-        "wwwroot/Shared/HoverEffect.css",
+        "wwwroot/Shared/css/HoverEffect.css",
         "wwwroot/Shared/css/Swiper.css",
         "wwwroot/Shared/css/Activity.less"
       ]

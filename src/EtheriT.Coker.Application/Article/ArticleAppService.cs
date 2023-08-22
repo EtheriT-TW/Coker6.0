@@ -18,6 +18,8 @@ using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -132,7 +134,8 @@ namespace EtheriT.Coker.Application.Article
                                         Tags = "",
                                         StartTime = e.StartTime,
                                         EndTime = e.EndTime,
-                                        permanent = e.permanent
+                                        permanent = e.permanent,
+                                        NodeDate = e.NodeDate,
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     if (output != null)
@@ -191,7 +194,7 @@ namespace EtheriT.Coker.Application.Article
                                             TagDatas = new List<TagGetSelectedDto>(),
                                             StartTime = e.StartTime,
                                             EndTime = e.EndTime,
-                                            NodeDate = e.NodeDate==null?"": e.NodeDate.Value.ToString("yyyy/MM/dd"),
+                                            NodeDate = e.NodeDate,
                                             permanent = e.permanent
                                         }).FirstOrDefaultAsync();
 
@@ -227,16 +230,15 @@ namespace EtheriT.Coker.Application.Article
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleGetDataDto>();
 
-                foreach (var Id in dto.Ids)
-                {
-                    var result = await db.Article.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID && (e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))).FirstOrDefaultAsync();
-
-                    if (result != null)
-                    {
-                        ArticleGetDataDto tempoutput = mapper.Map<ArticleGetDataDto>(result);
-                        articleData.Add(tempoutput);
-                    }
-                }
+                var result = await db.Article
+                                    .Where(e => dto.Ids.Contains(e.Id))
+                                    .Where(e => !e.IsDeleted)
+                                    .Where(e => e.FK_WebsiteId == WebsiteID)
+                                    .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
+                                    .ToListAsync();
+                int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
+                if (skip < 0) skip = 0;
+                articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum??12).ToList();
 
                 if (articleData != null)
                 {
@@ -257,6 +259,7 @@ namespace EtheriT.Coker.Application.Article
                         output_data = mapper.Map(data, output_data);
                         output_data.Link = $"/article/{data.Id}";
                         output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+                        output_data.NodeDate = data.NodeDate;
 
                         output.Add(output_data);
                     }
@@ -432,6 +435,7 @@ namespace EtheriT.Coker.Application.Article
                         result.Html = articl.Html;
                         result.Css = articl.Css;
                         result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
+                        result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
                     }
                 }
             }

@@ -138,4 +138,9 @@
 }
 
 <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+@{
+    if (Model.PageData.LastModificationTime != null) {
+        <div class="container editTime font_small text-end">最後編輯時間：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
+    }
+}
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>

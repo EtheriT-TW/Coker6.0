@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
         public List<int> auIds { get; set; }
         public List<int> subIds { get; set; }
         public List<int> shopSubId { get; set; }
+        public List<Models.FileUpload> FileUploads { get; set; }
         public List<Models.Article> loadData(out List<Models.Tag> tags)
         {
             List<Models.Article> articles = new List<Models.Article>();
@@ -135,6 +136,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                         };
                         if (mySubData != null)
                         {
+                            if (!string.IsNullOrEmpty(item.img1)) addFile(item.img1);
                             switch (int.Parse(string.IsNullOrEmpty(mySubData.use_module) ? "0" : mySubData.use_module))
                             {
                                 case 8:
@@ -152,7 +154,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                                                         <img class=""img-fluid"" src=""{(string.IsNullOrEmpty(item.img1) ? "/upload/htmlConten/4bd8bee2-2679-41a9-bb98-9270b6d00801.jpg" : item.img1)}"" alt=""{item.title}"" />
                                                     </figure>
                                                 </div>
-                                                <span>{item.cont ?? "".Trim()}</span>
+                                                <span class=""w-auto"">{item.cont ?? "".Trim()}</span>
                                             </div>
                                         ");
                                     }
@@ -163,7 +165,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                             }
                         }
                     }
-                    else {
+                    else
+                    {
                         article.Html += HttpUtility.HtmlDecode(item.cont ?? "".Trim());
                     }
                     var myTags = TagAssociates.Where(e => e.prod_id == item.id.ToString()).ToList();
@@ -184,14 +187,15 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                         }
                     }
 
-                    switch (item.contDispType) {
+                    switch (item.contDispType)
+                    {
                         case 2:
                             string html2 = $@"<div class=""row row-cols-1 row-cols-sm-2 gx-0"">";
                             for (int j = 0; j < myMenuCount.Count; j++)
                             {
                                 html2 += $@"<div class=""col py-3"">{AddMenuCountHtml(myMenuCount[j])}</div>";
                             }
-                            article.Html += html2+"</div>";
+                            article.Html += html2 + "</div>";
                             break;
                         case 3:
                             string html3 = $@"<div class=""row row-cols-1 row-cols-sm-3 gx-0"">";
@@ -218,7 +222,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                             article.Html += html + "</div>";
                             break;
                     }
-                    if (myShops.Any()) {
+                    if (myShops.Any())
+                    {
                         string htmlString = HttpUtility.HtmlDecode(article.Html);
                         article.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
                         for (int j = 0; j < myShops.Count; j++)
@@ -227,7 +232,8 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                             for (int k = 0; k < mtShopFence.Count(); k++)
                             {
                                 var myShopsMenuCount = shopsCount.Where(e => e.menu_id == mtShopFence[k].id).OrderBy(o => o.ser_no).ToList();
-                                switch (mtShopFence[k].colNum) {
+                                switch (mtShopFence[k].colNum)
+                                {
                                     case 1:
                                         for (int l = 0; l < myShopsMenuCount.Count; l++)
                                         {
@@ -236,7 +242,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                                         break;
                                     default:
                                         string htmlStr = $@"<div class=""row row-cols-{(
-                                            mtShopFence[k].colNum==3?1: mtShopFence[k].colNum==6?3:2
+                                            mtShopFence[k].colNum == 3 ? 1 : mtShopFence[k].colNum == 6 ? 3 : 2
                                         )} row-cols-sm-{mtShopFence[k].colNum} gx-0"">";
                                         for (int l = 0; l < myShopsMenuCount.Count; l++)
                                         {
@@ -248,7 +254,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                             }
                         }
                     }
-                    
+
                     //排除部分文字無法被編輯問題
                     if (!string.IsNullOrEmpty(article.Html))
                     {
@@ -259,46 +265,50 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                             else if (Regex.IsMatch(m[j].Value, "^[\"_]")) continue;
                             else if (m[j].Value.Trim().Length <= 1) continue;
                             else
-                                article.Html.Replace(m[j].Value, $"div><span>{m[j].Value.Replace("div>","")}</span>");
+                                article.Html.Replace(m[j].Value, $"div><span>{m[j].Value.Replace("div>", "")}</span>");
                         }
                     }
-                    article.Html = HttpUtility.HtmlEncode($@"<div class=""container"">{article.Html.Replace("/upload/Article/", "/upload/").Replace("/upload/",$"/upload/Article/")}</div>");
-                    article.SaveHtml = article.Html;
+                    article.Html = HttpUtility.HtmlEncode($@"<div class=""container"">{article.Html.Replace("/upload/Article/", "/upload/")
+                                .Replace("/upload/", $"/upload/Article/")
+                                .Replace("/Article/htmlConten/", "/htmlConten/")}</div>");
+                    article.SaveHtml = article.Html.Replace("/upload/",$"/upload/{orgName}/");
                     articles.Add(article);
                 }
             }
             return articles;
         }
-        private string kspCompny(Models.Menus item) {
+        private string kspCompny(Models.Menus item)
+        {
             if (item == null) return "";
             List<string> parms = new List<string>();
             string html = HttpUtility.HtmlDecode(HttpUtility.HtmlDecode(item.cont ?? ""));
             html = html.Replace("<br />", "<br>").Replace("<br><br>", "<br>");
-            foreach (Match match in Regex.Matches(html, @"<span\s*[^>]*>([\s\S]+?)<br>", RegexOptions.IgnoreCase)) {
+            foreach (Match match in Regex.Matches(html, @"<span\s*[^>]*>([\s\S]+?)<br>", RegexOptions.IgnoreCase))
+            {
                 var s = match.Value.Split("</span>");
-                foreach(string s2 in s) {
-                    parms.Add(Regex.Replace(s2, @"<[^>]*>",""));
+                foreach (string s2 in s)
+                {
+                    parms.Add(Regex.Replace(s2, @"<[^>]*>", ""));
                 }
             }
-            html = $@"<div id=""iem12g"" data-key="""" class=""row mx-0 my-3 frame_type_2"">
-                <div id=""i9isdp"" data-key="""" class=""col-12 col-md-4 px-0 d-flex justify-content-center"">
-                    <img id=""ikjo1i"" data-key="""" src=""/upload/ksp/htmlConten/4bd8bee2-2679-41a9-bb98-9270b6d00801.jpg"" class=""img-fluid""/>
-                    <figcaption id=""ie65g7"" data-key="""" class=""text-center pt-1"">
-                    </figcaption>
-                </div>
-                <div id=""i7o7mt"" data-key="""" class=""col-12 col-md-8 custom_h5 pt-0 px-0 px-5 flex-column"">
-                    <div id=""icvp5e"" data-key="""" class=""d-flex align-items-baseline my-2 flex-column"">
-                    <ul>";
-            for (int i = 0; i < parms.Count; i=i+2) {
-                html += $@"<li class=""p-2""> {parms[i]}：{(i + 1 < parms.Count ? parms[i + 1] : "")}</li>";
-            }
-            html += @"            </ul>
-                    <div class=""mt-5 font-weight-bold"">歡迎有興趣之企業洽詢！
+            html = $@"<div class=""row mx-0 my-3 frame_type_2"">
+                <div class=""col-12 col-md-5 px-0 d-flex justify-content-center"">
+                    <div class=""img_shadow d-flex justify-content-center align-items-center"">
+                        <img src=""{(string.IsNullOrEmpty(item.img1) ? "/upload/htmlConten/8ff2919c-dff5-420d-897b-d0eb639f8473.jpg" : item.img1)}"" class=""img-fluid"" />
                     </div>
-                  </div>
                 </div>
-              </div>";
-
+                <div class=""col-12 col-md-7 custom_h5 pt-0 px-0 px-5 flex-column"">
+                    <div class=""d-flex align-items-baseline my-2 flex-column"">
+                        <ul>";
+            for (int i = 0; i < parms.Count; i = i + 2)
+            {
+                html += $@"<li class=""p-2""><span>{parms[i]}</span>：{(i + 1 < parms.Count ? parms[i + 1] : "")}</li>";
+            }
+            html += @"  </ul>
+                        <div class=""mt-5 font-weight-bold"">歡迎有興趣之企業洽詢！</div>
+                    </div>
+                </div>
+            </div>";
             return html;
         }
         private string AddShopMenuCountHtml(ShopInfo shop)
@@ -308,7 +318,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                 <div class=""templatecontent"">
                     <div custom_block_template=""true"" class=""row mx-0 my-3 frame_type_1"">
                         <div class=""col-12 col-md-5 px-0 d-flex justify-content-center"">
-                            <img src=""{shop.Picture1}"" alt="""" class=""img-fluid"" />
+                            <img src=""{(string.IsNullOrEmpty(shop.Picture1) ? "/upload/htmlConten/8ff2919c-dff5-420d-897b-d0eb639f8473.jpg" : shop.Picture1)}"" alt="""" class=""img-fluid"" />
                         </div>
                         <div class=""col-12 col-md-7 custom_h5 pt-0 px-0 px-md-5 d-flex justify-content-center flex-column"">
                             {(
@@ -384,7 +394,16 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                         </div>
                     </div>
                 </div>
-            </div>";
+            </div>
+            {(
+                string.IsNullOrEmpty(shop.Toldescribe)?"":
+                $@"<div class=""container"">{(shop.Toldescribe ?? "").Replace("\n", "<br />")}</div>"
+            )}
+            {(
+                string.IsNullOrEmpty(shop.Add) ? "" :
+                $@"<div class=""container""><iframe class=""map"" frameborder=""0"" title=""{shop.location}地圖"" src=""https://maps.google.com.tw/maps?f=q&hl=zh-TW&geocode=&q={shop.location}&z=16&output=embed&t="" class=""w-100""></iframe></div>"
+            )}
+            ";
         }
         private string AddMenuCountHtml(Menu_cont cont)
         {
@@ -397,10 +416,15 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     html += cont.cont;
                     break;
                 case 2:
-                    html = $@"<a href=""{cont.img}"" download=""{cont.title}"" target=""_blank"" class=""link_with_icon d-flex text-decoration-none edit_lock"">
-                        <div class=""icon pe-2""><i></i></div>
-                        <div class=""name text-black"">{cont.title}</div>
-                    </a>";
+                    if (string.IsNullOrEmpty(cont.img)) html = "";
+                    else
+                    {
+                        addFile(cont.img);
+                        html = $@"<a href=""{cont.img}"" download=""{(string.IsNullOrEmpty(cont.title) ? "" : cont.title)}"" target=""_blank"" class=""link_with_icon d-flex text-decoration-none edit_lock"">
+                            <div class=""icon pe-2""><i></i></div>
+                            <div class=""name text-black"">{cont.title}</div>
+                        </a>";
+                    }
                     break;
                 case 3:
                     if (string.IsNullOrEmpty(cont.img))
@@ -411,32 +435,41 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     }
                     else
                     {
+                        addFile(cont.img);
                         switch (cont.img_align)
                         {
                             case "right":
-                                html = $@"<div class=""flex-column-reverse flex-md-row mt-5 row mx-0"">
+                                html = $@"<div class=""d-flex flex-column-reverse flex-md-row mt-5 row mx-0"">
                                     <div class=""col-12 col-md-6 p-3"">
                                         <div class=""fw-bold custom_h4 pb-3"">{cont.title}</div>
                                         <div>{cont.cont}</div>
                                     </div>
-                                    <div class=""col-12 col-md-6 text-center align-self-center px-0"">
-                                        <img src=""{cont.img}"" alt=""{cont.title}"" class=""img-fluid""/>
-                                    </div>
+                                    {(string.IsNullOrEmpty(cont.col1) ?
+                                        @$"<div" :
+                                        @$"<a href=""{cont.col1}"" title=""連結至：{cont.title}{(cont.col9 == "_blank" ? "(另開新視窗)" : "")}"" target=""{cont.col9}""")} class=""col-12 col-md-6 text-center align-self-center px-0"">
+                                        <img src=""{cont.img}"" alt=""{(string.IsNullOrEmpty(cont.col1) ? cont.title : " ")}"" class=""img-fluid""/>
+                                    {(string.IsNullOrEmpty(cont.col1) ? "</div>" : @$"</a>")}
                                 </div>";
                                 break;
                             case "center":
                                 html = $@"<figure class=""d-flex flex-column text-center"">
-                                    <img src=""{cont.img}"" alt=""{cont.title}"" class=""gjs-plh-image""/>
-                                    <figcaption>
+                                    {(string.IsNullOrEmpty(cont.col1) ?
+                                        @$"" :
+                                        @$"<a href=""{cont.col1}"" title=""連結至：{cont.title}{(cont.col9 == "_blank" ? "(另開新視窗)" : "")}"" target=""{cont.col9}"" >")}
+                                    <img src=""{cont.img}"" alt=""{(string.IsNullOrEmpty(cont.col1) ? cont.title : " ")}"" class=""gjs-plh-image""/>
+                                    {(string.IsNullOrEmpty(cont.col1) ? "</figure>" : @$"</a>")}
+                                    {(string.IsNullOrEmpty(cont.cont) ? "" : $@"<figcaption>
                                         <div class=""text-start"">{cont.cont}</div>
-                                    </figcaption>
+                                    </figcaption>")}
                                 </figure>";
                                 break;
                             default:
-                                html = $@"<div class=""mt-5 row mx-0"">
-                                    <div class=""col-12 col-md-6 text-center align-self-center px-0"">
-                                        <img src=""{cont.img}"" alt=""${cont.title}"" class=""img-fluid""/>
-                                    </div>
+                                html = $@"<div class=""d-flex mt-5 row mx-0"">
+                                    {(string.IsNullOrEmpty(cont.col1) ?
+                                        @$"<div" :
+                                        @$"<a href=""{cont.col1}"" title=""連結至：{cont.title}{(cont.col9 == "_blank" ? "(另開新視窗)" : "")}"" target=""{cont.col9}""")} class=""col-12 col-md-6 text-center align-self-center px-0"">
+                                        <img src=""{cont.img}"" alt=""{(string.IsNullOrEmpty(cont.col1) ? cont.title : " ")}"" class=""img-fluid""/>
+                                    {(string.IsNullOrEmpty(cont.col1) ? "</div>" : @$"</a>")}
                                     <div class=""col-12 col-md-6 p-3"">
                                         <div class=""text-start"">{cont.cont}</div>
                                     </div>
@@ -452,10 +485,10 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     string theId = GetRandomString4(5);
                     html = $@"<div id=""{theId}""  class=""container my-2 qa"">
                         <a data-bs-toggle=""collapse"" href=""#{theId}_content"" role=""button"" aria-expanded=""true"" aria-controls=""{theId}_content"" class=""btn w-100 qa-bg d-flex justify-content-between align-items-center p-3 fs-5"">
-                            <span id=""ifgh5"" draggable=""true"" class=""fas fa-angle-right"">{cont.title}</span>
+                            <span draggable=""true"" class=""fas fa-angle-right"">{cont.title}</span>
                         </a>
                         <div id=""{theId}_content"" class=""collapse show"">
-                          <div id=""iln6h"" class=""card card-body"">{cont.cont}</div>
+                          <div class=""card card-body"">{cont.cont}</div>
                         </div>
                       </div>";
                     break;
@@ -467,7 +500,54 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
             }
             return html;
         }
-        public string GetRandomString4(int length)
+        private void addFile(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            else path = path.Replace("/upload/Article/", "/upload/")
+                            .Replace("/upload/", $"/upload/Article/")
+                            .Replace("/Article/htmlConten/", "/htmlConten/");
+            if (FileUploads == null) FileUploads = new List<Models.FileUpload>();
+            Models.FileUpload? file = FileUploads.Find(e => e.DownloadFileName == path);
+            var array = path.Split('/');
+            string OriginalFileName = array[array.Length - 1];
+            string ContentType;
+            var array2 = OriginalFileName.Split('.');
+            switch (array2[array2.Length - 1].Trim().ToLower())
+            {
+                case "doc":
+                    ContentType = "application/msword";
+                    break;
+                case "pdf":
+                    ContentType = "application/pdf";
+                    break;
+                case "png":
+                    ContentType = "image/png";
+                    break;
+                default:
+                    ContentType = "image/jpeg";
+                    break;
+            }
+
+            if (file == null)
+            {
+                file = new Models.FileUpload()
+                {
+                    FK_WebsiteId = SiteID,
+                    GuidKey = Guid.NewGuid(),
+                    FileGuid = Guid.NewGuid(),
+                    OriginalFileName = OriginalFileName,
+                    DownloadFileName = path,
+                    ContentType = ContentType,
+                    Size = 0,
+                    IsDeleted = false,
+                    CreationTime = DateTime.Now,
+                    CreatorUserId = 1
+                };
+                FileUploads.Add(file);
+            }
+        }
+
+        private string GetRandomString4(int length)
         {
             var str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
             var next = new Random();

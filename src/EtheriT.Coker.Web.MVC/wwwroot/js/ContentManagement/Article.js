@@ -342,8 +342,10 @@ function FormDataSet(result) {
     $title.children("div").children(".count").text(result.title.length);
     $describe_text.val(result.description);
     $describe.children("div").children(".count").text(result.description.length);
+    $nodeDate.val(result.nodeDate);
     startDate = result.startTime;
     endDate = result.endTime;
+    
 
     if (result.serNO != 500) {
         $sort_input.val(result.serNO);
@@ -359,6 +361,11 @@ function FormDataSet(result) {
         startDate != null && $picker.data('daterangepicker').setStartDate(startDate);
         endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
         $permanent.prop("checked", false);
+    }
+
+    if (result.nodeDate != null) {
+        $nodeDate.data('daterangepicker').setStartDate(result.nodeDate);
+        $nodeDate.data('daterangepicker').setEndDate(result.nodeDate);
     }
 
     TagDataSet(result.tagDatas);
@@ -400,7 +407,8 @@ function AddUp(success_text, error_text, place) {
         TagSelected: tag_list,
         permanent: $permanent.is(":checked"),
         StartTime: startDate,
-        EndTime: endDate
+        EndTime: endDate,
+        NodeDate: $nodeDate.val()
     }).done(function (result) {
         if (result.success) {
             if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").Id == 0) {

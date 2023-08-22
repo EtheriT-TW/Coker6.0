@@ -27,3 +27,5 @@ p {
 .price::before {
     content: '$';
 }
+
+a img{max-width:100%}

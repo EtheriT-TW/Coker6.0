@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public DirectoryTypeEnum type { get; set; }
         public string? MainImage { get; set; }
         public string? Link { get; set; }
-        public string? NodeDate { get; set; }
+        public DateTime? NodeDate { get; set; }
         public int SerNo { get; set; }
         public string? Title { get; set; }
 

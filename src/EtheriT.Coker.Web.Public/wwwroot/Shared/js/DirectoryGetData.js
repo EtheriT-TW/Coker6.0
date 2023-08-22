@@ -154,10 +154,12 @@ function DirectoryDataInsert($item, result) {
         content.find("img").attr("src", imglink);
         content.find("img").attr("alt", `${data.title}的主要圖片`);
         content.find(".title").text(data.title);
-        content.find(".date").text(data.nodeDate);
         content.find(".description").text(data.description);
-
         $item.find(".catalog").append(content);
+        if (data.nodeDate != null && data.nodeDate != "") {
+            var noteDate = new Date(data.nodeDate);
+            content.find(".date").text(`${noteDate.getFullYear()}/${noteDate.getMonth() + 1}/${noteDate.getDate()}`);
+        }
     });
 
     HoverEffectInit();

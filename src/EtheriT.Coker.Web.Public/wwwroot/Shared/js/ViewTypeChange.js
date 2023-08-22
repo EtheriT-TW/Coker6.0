@@ -49,21 +49,18 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".image").removeClass("d-none");
                 $self.find(".max-h").addClass("max-hei");
                 $self.find("figcaption").addClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".title").removeClass("text-center");
-                $self.find(".title").removeClass("h-100");
                 $self.find(".description").removeClass("d-none");
                 $self.find(".more").removeClass("d-none");
                 $self.find(".date").removeClass("d-none");
                 $self.find(".box-shadow").removeClass("h_100");
-                $self.find(".box-shadow").addClass("text-border");
+                $self.find(".box-shadow").removeClass("text-border");
                 $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
                 $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
                 $self.find(".card-border").removeClass("h_100");    
-                $self.find(".card-border").addClass("text-border");
+                $self.find(".hover_protrude_scale").removeClass("text-border");
                 $self.find(".card-border").addClass("type3").removeClass("type2 type1");
                 $self.find(".card-border").addClass("card-border-rd");
                 $self.find(".more-btn").addClass("d-none");
-                $self.find(".title").removeClass("pr3");
                 $self.find(".related-tag").removeClass("d-none");
                 $self.find(".card-border").removeClass("pr3").addClass("p-3");
                 $self.find(".imgh").addClass("img-h");
@@ -71,6 +68,9 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".check_btn").removeClass("w-100").addClass("check_btn-type3");
                 $self.find(".search-more").removeClass("d-none"); 
                 $self.find(".description").addClass("type3-content").removeClass("type2-content");
+                $self.find(".image_frame").addClass("h-100");
+                $self.find(".title").removeClass("type2-title pr3 text-center h-100").addClass("type1-title  fw-bold");
+                $self.find("figcaption").addClass("pb1");
             })
             break;
         case "Grid":
@@ -84,18 +84,15 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".image").removeClass("px-0");
                 $self.find(".image").removeClass("d-none");
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".title").removeClass("text-center");
-                $self.find(".title").removeClass("h-100 p-2");
-                $self.find(".description").removeClass("d-none");
+                $self.find(".description").addClass("d-none");
                 $self.find(".more").addClass("d-none");
-                $self.find(".date").removeClass("d-none");
+                $self.find(".date").addClass("d-none");
                 $self.find(".more-btn").addClass("d-none");
                 $self.find(".box-shadow").removeClass("h_100");
-                $self.find(".box-shadow").addClass("text-border");
+                $self.find(".box-shadow").removeClass("text-border");
                 $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
                 $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
                 $self.find(".card-border").addClass("type2").removeClass("type1 type3");
-                $self.find(".card-border").addClass("text-border");
                 $self.find(".card-border").removeClass("h_100");
                 $self.find(".card-border").addClass("card-border-rd");
                 $self.find(".card-border").removeClass("pr3").addClass("p-3");
@@ -106,6 +103,9 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".search-more").removeClass("d-none"); 
                 $self.find(".title").removeClass("p-2 pr3");
                 $self.find(".description").addClass("type2-content").removeClass("type3-content");
+                $self.find(".image_frame").removeClass("h-100");
+                $self.find(".title").removeClass("h-100 text-center type2-title").addClass("type1-title fw-bold p-2");
+                $self.find("figcaption").addClass("pb1");
             });
             break;
         case "Text":
@@ -119,8 +119,6 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".image").addClass("d-none");
                 $self.find(".max-h").removeClass("max-hei");
                 $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".title").removeClass("text-center");
-                $self.find(".title").addClass("h-100");
                 $self.find(".description").addClass("d-none");
                 $self.find(".date").addClass("d-none");
                 $self.find(".more").addClass("d-none");
@@ -132,16 +130,16 @@ function typeChange($self, $brother ,$brother2, $content, type) {
                 $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
                 $self.find(".related-tag").addClass("d-none");
                 $self.find(".card-border").removeClass("h_100");
-                $self.find(".card-border").addClass("text-border");
                 $self.find(".card-border").addClass("type1").removeClass("type2 type3");
                 $self.find(".card-border").removeClass("card-border-rd");
                 $self.find(".card-border").removeClass("p-3").addClass("pr3");
                 $self.find(".imgh").removeClass("img-h");
                 $self.find(".mergetag").removeClass("merge ");
                 $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
-                $self.find(".search-more").addClass("d-none"); 
-               
-                
+                $self.find(".search-more").addClass("d-none");
+                $self.find(".image_frame").removeClass("h-100");
+                $self.find(".title").removeClass("type1-title fw-bold text-center p-2").addClass("type2-title h-100");
+                $self.find("figcaption").removeClass("pb1");
             });
             break;
     }

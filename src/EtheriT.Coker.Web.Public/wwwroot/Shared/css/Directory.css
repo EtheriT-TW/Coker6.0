@@ -1,14 +1,4 @@
 ﻿
-.type_change_frame > .catalog {
-    max-width: 1024px;
-    margin: auto;
-}
-
-
-.type_change_frame > .catalog .image_frame > img {
-        max-height: 350px;
-}
-
 
 .text-border {
     border-left: #888888 solid .5rem;
@@ -27,14 +17,19 @@
 }
 
 .type_change_frame > .catalog .image_frame {
-    width: 50%;
-    overflow: hidden;
+    height:220px;
+    width:50%;
+    overflow:hidden;
+    background-position:center center;
 }
-
 .type_change_frame > .catalog .img-fluid {
-    height: 200px;
+    max-width:100%;
+    height:100%;
 }
 
+.type_change_frame .fs-5 {
+    line-height: 1.5rem;
+}
 .type_change_frame  .catalog .type1 {
     height: 80px;
     border-left: solid 10px #919191;
@@ -44,11 +39,34 @@
     height: 100%;
 }
 
-.type_change_frame  .catalog .type3 {
-    height: 250px;
+.type_change_frame .catalog .type3 {
+    height: 300px;
 }
-.type_change_frame > .catalog .content-h {
-    height: 250px;
+
+.type_change_frame .title-type2 {
+    height:80px;
+}
+.type_change_frame .description-type2 {
+    height: 140px;
+}
+.type_change_frame .date-type2 {
+    height: 30px;
+}
+.type_change_frame .type1-title {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    max-height: calc(1rem * 3.6);
+    position: relative;
+}
+.type_change_frame .type2-title {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    max-height: calc(1rem * 5.1);
+    position: relative;
 }
 .type_change_frame .type2-content {
     overflow: hidden;
@@ -80,9 +98,11 @@
         background: #919191;
     }
 .type_change_frame > .catalog .pr3 {
-    padding: 0.5rem 3rem 0.5rem 0.5rem;
+    padding: 0rem 3rem 0rem 0rem;
 }
-
+.type_change_frame .pb1 {
+    padding-bottom:1rem;
+}
 @media only screen and (max-width: 768px) {
     .type_change_frame > .catalog .title {
         line-height: 1.5rem;

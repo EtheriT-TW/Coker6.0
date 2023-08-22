@@ -9,7 +9,8 @@
     var link = $self.attr('data-link'); 
     var tel = $self.attr('data-tel'); 
 
-    var parenttime = $self.find(".activity_start_time").parent("div").eq(0);
+    var parenttime = $self.find(".activity_start_time").parents("div").eq(1);
+    console.log(parenttime);
     if (start_date == "" && end_date=="") {
         $(parenttime).addClass("d-none");
     } else {
@@ -43,7 +44,7 @@
         $(parentaorganizer).removeClass("d-none");
     }
        
-    var parentlink = $self.find(".activity_link").parent("div").eq(0);
+    var parentlink = $self.find(".activity_link").parents("div").eq(0);
     if (link == "") {
         $(parentlink).addClass("d-none");
     } else {
@@ -52,7 +53,6 @@
     var parenttel = $self.find(".activity_tel").parents("div").eq(0);
     
     if (tel == "") {
-        console.log(parenttel);
         $(parenttel).addClass("d-none");
     } else {
         $(parenttel).removeClass("d-none");

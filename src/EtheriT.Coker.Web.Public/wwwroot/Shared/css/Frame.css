@@ -99,9 +99,7 @@ iframe {
     .type_change_frame > .catalog .type3 {
         height: 300px;
     }
-    .type_change_frame > .catalog .content-h{
-        height:100px;
-    }
+    
 }
 
 @media only screen and (max-width: 576px) {

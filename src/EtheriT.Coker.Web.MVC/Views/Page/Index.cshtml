@@ -4,6 +4,7 @@
 }
 <!--導入grapesjs-->
 <link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
+<link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css">
 <script src="/lib/grapesjs/grapes.min.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
 <script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
@@ -26,8 +27,8 @@
 <link rel="stylesheet" href="~/css/Page/index.min.css" asp-append-version="true" />
 <script src="~/js/Page/index.min.js" asp-append-version="true"></script>
 
-<div class="py-2 px-4 position-relative">
-    <div id="TopLine" class="d-flex justify-content-between mb-4">
+<div id="TopLine" class="py-2 px-4 position-absolute">
+    <div class="d-flex justify-content-center">
         <div class="title fw-bold fs-4">自訂頁面</div>
         <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
             網站地圖
@@ -39,15 +40,15 @@
 <div class="offcanvas offcanvas-start menu-bg" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
     <div class="offcanvas-header">
         <div class="d-flex justify-content-center align-item-center">
-        <h5 class="offcanvas-title" id="offcanvasSiteleLabel">網站地圖</h5>
-        <button type="button" id="btnExtend" class="btn d-flex justify-content-center mx-2 mt-2">
-            <span class="fas fa-plus "></span>
-        </button>
-        </div></>
+            <h5 class="offcanvas-title" id="offcanvasSiteleLabel">網站地圖</h5>
+            <button type="button" id="btnExtend" class="btn d-flex justify-content-center mx-2 mt-2">
+                <span class="fas fa-plus "></span>
+            </button>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        
+
         <div id="EditBlock" class="row d-flex justify-content-center">
             <ul id="myEditor" class="sortableLists list-group item-menu d-none"></ul>
             <div class="emptyList menu-bg"></div>
@@ -112,28 +113,28 @@
                         </div>
                         <div class="row ">
                             <div class="col-12 d-flex justify-content-around align-item-center my-3">
-                            <div class="col-4 form-group form-check pr-1">
-                                <label for="Visible">是否顯示</label>
-                                <select name="visible" id="visible" class="form-select item-menu">
-                                    <option value="true">是</option>
-                                    <option value="false">否</option>
-                                </select>
-                            </div>
+                                <div class="col-4 form-group form-check pr-1">
+                                    <label for="Visible">是否顯示</label>
+                                    <select name="visible" id="visible" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
                                 <div class="col-4 form-group form-check px-1">
-                                <label for="target">另開視窗</label>
-                                <select name="target" id="target" class="form-select item-menu">
-                                    <option value="true">是</option>
-                                    <option value="false">否</option>
-                                </select>
-                            </div>
+                                    <label for="target">另開視窗</label>
+                                    <select name="target" id="target" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
                                 <div class="col-4 form-group form-check pl-1">
-                                <label for="PopularVisible">顯示人氣值</label>
-                                <select name="popularVisible" id="popularVisible" class="form-select item-menu">
-                                    <option value="true">是</option>
-                                    <option value="false">否</option>
-                                </select>
+                                    <label for="PopularVisible">顯示人氣值</label>
+                                    <select name="popularVisible" id="popularVisible" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
                         </div>
                         <div class="form-group form-check">
                             <label for="Popular">人氣值</label>

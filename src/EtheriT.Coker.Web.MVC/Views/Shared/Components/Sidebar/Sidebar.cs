@@ -220,6 +220,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Icon="",
                             },
                             new JobMenu{
+                                PageName="SEO",
+                                Title="SEO設定",
+                                Controller="SystemManagement",
+                                Action="SEO",
+                                Icon="",
+                            },
+                            new JobMenu{
                                 PageName="Theme",
                                 Title="後台配色設定",
                                 Controller="Theme",

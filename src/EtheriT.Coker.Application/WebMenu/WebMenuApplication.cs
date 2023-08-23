@@ -406,6 +406,7 @@ namespace EtheriT.Coker.Application
                     if (menu != null)
                     {
                         mapper.Map(menu, result);
+                        result.LastModificationTime = null;
                         result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                         result.CurrentUrl = $"/{menu.RouterName}";
                     }

@@ -21,12 +21,3 @@
     width: 2.5rem;
     border: 1px solid #ced4da;
 }
-
-#GoogleSetting > div > img {
-    width: 30px;
-    height: auto;
-}
-
-#GoogleSetting > div > input {
-    width: 10rem;
-}

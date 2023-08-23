@@ -1,0 +1,47 @@
+﻿#TopLine {
+    z-index: 1024;
+    margin-left: calc(50% - 26rem);
+    background: #000;
+    color: #FFF;
+    border-radius: 2rem;
+    top: -3.5rem;
+    transition: top 0.5s 2s;
+
+    &:after {
+        content: '\f078';
+        display: block;
+        text-align: center;
+        font-weight: bold;
+        font-family: 'Font Awesome 6 Free';
+        font-size: 2rem;
+    }
+
+    &:hover {
+        top: 1rem;
+        transition: top 0.5s;
+
+        &:after {
+            content: "\f077";
+        }
+    }
+
+    .title {
+        margin-right: 1rem;
+    }
+}
+
+body.grapesEdit {
+    #gjs{ height:100vh;}
+
+    header {
+        display: none;
+
+        + .content-wrapper {
+            padding: 0
+        }
+    }
+
+    footer {
+        display: none;
+    }
+}

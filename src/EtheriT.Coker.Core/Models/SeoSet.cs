@@ -1,0 +1,24 @@
+﻿using EtheriT.Coker.Core.Entity;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Core.Models
+{
+    public class SeoSet : FullAuditedEntity
+    {
+        [StringLength(50)]
+        public string key { get; set; }
+        [StringLength(150)]
+        public string name { get; set; }
+        public bool enable { get; set; }
+        public string? memo { get; set; }
+        public int? type { get; set; }
+        public int? groupType { get; set; }
+        public int? maxlength { get; set; }
+        public List<StoreSetDetail> storeSetDetails { get; set; }
+    }
+}

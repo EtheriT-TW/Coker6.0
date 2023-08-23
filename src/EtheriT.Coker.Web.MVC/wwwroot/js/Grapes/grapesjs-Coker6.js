@@ -248,27 +248,21 @@
                 copyable: false
             },
             init() {
-                const ccid = this.ccid;
-                const c = $(".gjs-frame")[0].contentWindow.$;
-                window.setTimeout(function () {
-                    c(`#${ccid} a`).attr({ "href": `#${ccid}_content`, "Title": "展開QA" });
-                    c(`#${ccid} .collapse`).attr("id", `${ccid}_content`);
-                }, 200)
+                const self = this;
+                const ccid = self.ccid;
+                console.log("in");
+                self.components().models.forEach(function (item) {
+                    if (item.getClasses().indexOf("qa-bg") >= 0) {
+                        item.setAttributes({ "href": `#${ccid}_content`, "Title": "展開QA", "aria-controls": `${ccid}_content`, "data-bs-toggle":"collapse" })
+                    }
+                    if (item.getClasses().indexOf("collapse") >= 0) {
+                        item.setAttributes({ "id": `${ccid}_content` })
+                    }
+                });
             }
         },
     });
-    editor.DomComponents.addType('名片介紹', {
-        isComponent: el => el.classList?.contains('frame_type_2'),
-        model: {
-            defaults: {
-                droppable: false,
-                copyable: false
-            },
-            init() {
-             
-            }
-        },
-    });
+
     editor.DomComponents.addType('格列切換控制', {
         isComponent: el => el.classList?.contains('switch_control'),
         model: {
@@ -328,6 +322,18 @@
 
                     });
                 }
+            }
+        },
+    });
+    editor.DomComponents.addType('名片介紹', {
+        isComponent: el => el.classList?.contains('frame_type_2'),
+        model: {
+            defaults: {
+                droppable: false,
+                copyable: false
+            },
+            init() {
+
             }
         },
     });
@@ -400,6 +406,7 @@
                 editable: false,
                 traits: [
                     { name: 'id', type: 'text', label: 'ID', placeholder: '元件ID名稱' },
+                    { name: 'data-shownum', type: 'text', label: '單頁筆數' },
                     { name: 'data-diridname', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',

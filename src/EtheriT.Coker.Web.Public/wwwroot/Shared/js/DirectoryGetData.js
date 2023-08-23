@@ -159,6 +159,13 @@ function DirectoryDataInsert($item, result) {
         if (data.nodeDate != null && data.nodeDate != "") {
             var noteDate = new Date(data.nodeDate);
             content.find(".date").text(`${noteDate.getFullYear()}/${noteDate.getMonth() + 1}/${noteDate.getDate()}`);
+            content.find(".date-month").text(`${noteDate.getMonth() + 1}月`);
+            if (noteDate.getDate() < 10) {
+                content.find(".date-day").text(`0${noteDate.getDate()}`);
+            } else {
+                content.find(".date-day").text(`${noteDate.getDate()}`);
+            }
+ 
         }
     });
 

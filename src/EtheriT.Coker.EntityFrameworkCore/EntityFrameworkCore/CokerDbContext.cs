@@ -52,7 +52,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
         public DbSet<Article> Article { get; set; }
         public DbSet<Directory> Directory { get; set; }
-
+        public DbSet<SeoSet> SeoSet { get; set; }
+        public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -172,6 +173,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Directory).HasForeignKey(f => f.FK_WebsiteId);
             });
+            modelBuilder.Entity<StoreSetDetail>(o =>
+            {
+                o.HasOne(f => f.Website).WithMany(u => u.StoreSetDetails).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasOne(f => f.seoSet).WithMany(u => u.storeSetDetails).HasForeignKey(f => f.FK_SeoSetId);
+            });
+            
 
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

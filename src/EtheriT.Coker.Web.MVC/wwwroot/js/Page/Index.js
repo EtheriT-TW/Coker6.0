@@ -328,6 +328,8 @@
                             var html = co.Data.HtmlDecode(result.conten.saveHtml);
                             editor.setComponents(html);
                             editor.setStyle(result.conten.saveCss);
+                            $("body").addClass("grapesEdit");
+                            $("#TopLine .title").text(data.text);
                             myOffcanvas.hide();
                         } else {
                             co.sweet.error(result.error);

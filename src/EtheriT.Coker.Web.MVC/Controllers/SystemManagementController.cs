@@ -8,5 +8,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("WebData");
         }
+        public IActionResult SEO()
+        {
+            return View("SEO");
+        }
     }
 }

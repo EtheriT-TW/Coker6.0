@@ -31,5 +31,6 @@ namespace EtheriT.Coker.Core.Models
         public List<FileUpload> Files { get; set; }
         public List<Article> Articles { get; set; }
         public List<Directory> Directory { get; set; }
+        public List<StoreSetDetail> StoreSetDetails { get; set; }
     }
 }

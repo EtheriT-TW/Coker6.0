@@ -2,8 +2,10 @@
     background-color: #B6D3E1;
 }
 
-    body > content > div {
+    body > content > .container {
         background-color: white;
+        display: flex;
+        flex-direction: column;
     }
 
     body > .top_title > .title {

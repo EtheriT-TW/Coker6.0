@@ -6,6 +6,10 @@ iframe {
     width: 100%;
 }
 
+.text-start ul {
+    list-style: none;
+}
+
 .masonry > .grid > .grid-item {
     float: left;
     width: calc(100%/3);

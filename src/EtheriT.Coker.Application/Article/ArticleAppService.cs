@@ -230,7 +230,8 @@ namespace EtheriT.Coker.Application.Article
 
                 if (articleData != null)
                 {
-                    var articleDataSort = articleData.OrderBy(a => a.NodeDate)
+                    var articleDataSort = articleData
+                                .OrderByDescending(a => a.NodeDate)
                                 .ThenBy(a => a.SerNO)
                                 .ThenByDescending(e => e.Id);
                     foreach (var data in articleDataSort)
@@ -425,6 +426,7 @@ namespace EtheriT.Coker.Application.Article
                         result.Css = articl.Css;
                         result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
+                        result.Popular = articl.PopularVisible ? articl.Popular : null;
                     }
                 }
             }

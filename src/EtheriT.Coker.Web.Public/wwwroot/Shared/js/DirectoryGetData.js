@@ -19,17 +19,30 @@
     }
 }
 
+function initElemntAndLoadDir($dir,page) {
+    const $self = $dir || $(".catalog_frame,.menu_directory").first();
+    const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
+
+    $self.data("prevdirid", dirid);
+    const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
+    const hashPage = !!page? page.toString() : location.hash.replace("#", "");
+
+    if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
+        if (isNaN(hashPage)) page = "1";
+        else page = hashPage;
+        $self.find(".catalog>.template").remove();
+        DirectoryDataGet($self, dirid, page, shownum);
+        $self.data("page", page)
+    }
+    
+}
+
 function DirectoryGetDataInit() {
-    var dirid, page, shownum;
+    const dirLength = $(".catalog_frame,.menu_directory").length;
     $(".catalog_frame").each(function () {
-        var $self = $(this)
-        var dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
-        if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) {
-            $self.data("prevdirid", dirid);
-            shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
-            page = 1;
-            DirectoryDataGet($self, dirid, page, shownum);
-        }
+        const $self = $(this);
+        const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
+        if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) initElemntAndLoadDir($(this));
     })
     $(".menu_directory").each(function () {
         var $self = $(this);
@@ -69,72 +82,87 @@ function DirectoryGetDataInit() {
             });
         }
     })
+    if (dirLength == 1) {
+        if ("onhashchange" in window) {
+            window.onhashchange = hashChangeDirectory;
+        } else {
+            setInterval(hashChangeDirectory, 1000);
+        }
+    }
+}
+function hashChangeDirectory(e) {
+    if (!!e) {
+        initElemntAndLoadDir();
+        e.preventDefault();
+    } else {
+        console.log("HashChange錯誤")
+    }
 }
 
 function DirectoryDataGet($item, dirid, page, shownum) {
+    const dirLength = $(".catalog_frame,.menu_directory").length;
     Directory.getDirectoryData({ Ids: [dirid], SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId, Page: page, ShowNum: shownum }).done(function (result) {
+        let loadPageRange = 2;
         $item.find(".page-item").each(function () {
             var $self = $(this);
             if (!$self.hasClass("btn_prev") && !$self.hasClass("btn_next")) $self.remove();
         });
         if (result.totalPage <= 1) $item.find(".page_btn").addClass("d-none")
+        if (page > result.totalPage) page = result.totalPage;
+        else if (page < 1) page = 1;
+
+        if (page == 1) $item.find(".btn_prev").addClass("d-none");
+        else $item.find(".btn_prev").removeClass("d-none");
+
+        if (page == result.totalPage) $item.find(".btn_next").addClass("d-none");
+        else $item.find(".btn_next").removeClass("d-none");
+
+        if (page == 1 || page == result.totalPage) loadPageRange = 4;
+
         for (var i = 1; i <= result.totalPage; i++) {
             if (i == 1) {
-                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>第一頁</button></li>`)
-                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>第一頁</button></li>`)
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><span class="btn_page page-link text-black bg-secondary" data-page=${i}>1</span></li>`)
+                else {
+                    $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" title="第一頁" data-page=${i}>1</button></li>`);
+                    if (page - loadPageRange - 1 > 0) {
+                        $item.find(".page_btn").children(".btn_next").before(`<li class="page-item px-2">...</li>`);
+                    }
+                }
             } else if (i == result.totalPage) {
-                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>最後一頁</button></li>`)
-                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>最後一頁</button></li>`)
-            } else if (page < 5 && i < 7) {
-                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</button></li>`)
-                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
-            } else if (page > result.totalPage - 4 && i > result.totalPage - 6) {
-                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</button></li>`)
-                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
-            } else if (i >= page - 2 && i <= page + 2) {
-                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</button></li>`)
-                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" data-page=${i}>${i}</button></li>`)
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><span class="btn_page page-link text-black bg-secondary" data-page=${i}>${result.totalPage}</span></li>`)
+                else {
+                    if (page + loadPageRange + 1 < result.totalPage) {
+                        $item.find(".page_btn").children(".btn_next").before(`<li class="page-item px-2">...</li>`);
+                    }
+                    $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" title="最後一頁" data-page=${i}>${result.totalPage}</button></li>`);
+                }
+            } else if (i >= page - loadPageRange && i <= page + loadPageRange) {
+                if (i == page) $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><span class="btn_page page-link text-black bg-secondary" data-page=${i}>${i}</span></li>`)
+                else $item.find(".page_btn").children(".btn_next").before(`<li class="page-item"><button class="btn_page page-link text-black" title="移動至第${i}頁" data-page=${i}>${i}</button></li>`)
             }
         }
-
-        $(`.btn_page`).on("click", function () {
+        $(`.btn_page`).off("click").on("click", function () {
             var $self = $(this);
             if (page != $self.data("page")) {
-                $item.find(".catalog").children().each(function () {
-                    var $self = $(this);
-                    if (!$self.hasClass("templatecontent")) {
-                        $self.remove();
-                    }
-                })
                 page = $self.data("page");
-                DirectoryDataGet($item, dirid, page, shownum);
+                if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
+                else initElemntAndLoadDir($item, page)
             }
         })
-
         if (!$item.data("init")) {
-            $(`.btn_prev > button`).on("click", function () {
+            $item.find(`.btn_prev > button`).on("click", function () {
+                page = parseInt($item.data("page")) - 1;
                 if (page > 1) {
-                    $item.find(".catalog").children().each(function () {
-                        var $self = $(this);
-                        if (!$self.hasClass("templatecontent")) {
-                            $self.remove();
-                        }
-                    })
-                    page--;
-                    DirectoryDataGet($item, dirid, page, shownum);
+                    if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
+                    else initElemntAndLoadDir($item, $self.data("page"))
                 }
             })
 
-            $(`.btn_next > button`).on("click", function () {
+            $item.find(`.btn_next > button`).on("click", function () {
+                page = parseInt($item.data("page")) + 1;
                 if (page < result.totalPage) {
-                    $item.find(".catalog").children().each(function () {
-                        var $self = $(this);
-                        if (!$self.hasClass("templatecontent")) {
-                            $self.remove();
-                        }
-                    })
-                    page++;
-                    DirectoryDataGet($item, dirid, page, shownum);
+                    if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
+                    else initElemntAndLoadDir($item, $self.data("page"))
                 }
             })
         }

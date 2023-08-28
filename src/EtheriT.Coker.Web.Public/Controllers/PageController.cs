@@ -68,7 +68,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 enterAd = enterAds,
             };
             string view;
-            Console.WriteLine(option);
             if (!string.IsNullOrEmpty(key))
             {
                 switch (option)

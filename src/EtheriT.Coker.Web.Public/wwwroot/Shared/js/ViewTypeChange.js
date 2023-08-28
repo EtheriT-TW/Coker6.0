@@ -24,6 +24,10 @@
                     typeChange($btn_text ,$btn_list, $btn_grid, $content, "Text");
                 }
             })
+            if ($btn_grid.hasClass("d-none") && !$btn_list.hasClass("d-none")) $btn_list.trigger("click");
+            if ($btn_grid.hasClass("d-none") && $btn_list.hasClass("d-none") && !$btn_text.hasClass("d-none")) $btn_text.trigger("click");
+            if ($self.find(".btn_grid.d-none,.btn_list.d-none,.btn_text.d-none").length >= 2) $self.find(".switch_control").addClass("d-none");
+            else $self.find(".switch_control").removeClass("d-none");
         }
         $self.data("isInit", true);
     })

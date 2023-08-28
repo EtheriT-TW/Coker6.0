@@ -317,21 +317,21 @@
                     const myClass = list[i];
                     
                     self.on(`change:attributes:${myClass}`, () => {
-                        editor.getSelected().components().models.forEach(function (item) {
+                        self.components().models.forEach(function (item) {
                             if (item.getClasses().indexOf(myClass) >= 0) {
   
                                 if (item.getClasses().indexOf('d-none') >= 0) {
                                     item.removeClass("d-none");
                                     setTimeout(() => {
                                         var content = $(".gjs-frame")[0].contentWindow.namecontrol;
-                                        content(editor.getSelected().getId());
+                                        content(self.getId());
                                     }, 200);
                                 }
                                 else {
                                     item.addClass("d-none");
                                     setTimeout(() => {
                                         var content = $(".gjs-frame")[0].contentWindow.namecontrol;
-                                        content(editor.getSelected().getId());
+                                        content(self.getId());
                                     }, 200);
                                 }
                             }

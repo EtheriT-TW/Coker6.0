@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public string Html { get; set; }
         public string Css { get; set; }
         public int LayoutType { get; set; }
+        public int? Popular { get; set; }
         public DateTime? LastModificationTime { get; set; }
         public HoldPageNameEnum holdPage { get; set; }
     }

@@ -252,7 +252,6 @@ namespace EtheriT.Coker.Application.Directory
                     }
                 }
             }
-            output.ReleInfos = output.ReleInfos.OrderBy(e => e.NodeDate).ThenBy(e => e.SerNo).ToList();
             return output;
         }
         public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)

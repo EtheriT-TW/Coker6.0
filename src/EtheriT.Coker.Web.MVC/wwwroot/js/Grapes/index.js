@@ -37,6 +37,7 @@ var grapesInit = function (options) {
         },
         plugins: [
             'gjs-blocks-basic',
+            'grapesjs-preset-webpage',
             "grapesjs-style-bg",
             'grapesjs-tabs',
             'grapesjs-custom-code',
@@ -44,7 +45,6 @@ var grapesInit = function (options) {
             'grapesjs-blocks-table',
             'grapesjs-parser-postcss',
             'grapesjs-plugin-ckeditor',
-            'grapesjs-preset-webpage',
             'grapesjs-Coker6'
         ],
         pluginsOpts: {

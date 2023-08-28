@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.SeoSet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace EtheriT.Coker.Application.SeoSet
 {
     public interface ISeoSetAppService
     {
-        public void getAll();
-        public void find(string key);
+        public Task<List<SeoSetOutputDto>> getAll();
+        public Task<SeoSetOutputDto?> find(string key);
     }
 }

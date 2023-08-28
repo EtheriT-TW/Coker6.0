@@ -1,37 +1,59 @@
 ﻿#TopLine {
-    z-index: 1024;
-    margin-left: calc(50% - 26rem);
-    background: #000;
-    color: #FFF;
-    border-radius: 2rem;
-    top: -3.5rem;
-    transition: top 0.5s 2s;
+    display: flex;
 
-    &:after {
-        content: '\f078';
-        display: block;
-        text-align: center;
-        font-weight: bold;
-        font-family: 'Font Awesome 6 Free';
-        font-size: 2rem;
-    }
-
-    &:hover {
-        top: 1rem;
-        transition: top 0.5s;
-
-        &:after {
-            content: "\f077";
-        }
-    }
-
-    .title {
-        margin-right: 1rem;
+    >.d-flex {
+        width: 100%;
+        justify-content: space-between;
     }
 }
-
 body.grapesEdit {
-    #gjs{ height:100vh;}
+    #TopLine {
+        z-index: 1024;
+        margin-left: 150px;
+        background: #000;
+        color: #FFF;
+        border-radius: 1rem;
+        top: -2.2rem;
+        transition: top 0.5s 0.5s;
+        position: absolute;
+        display: block;
+        width: auto;
+        max-width: 30rem;
+        text-align: center;
+
+        &:after {
+            content: '\f078';
+            display: inline-block;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Font Awesome 6 Free';
+            font-size: 1.1rem;
+            margin: auto;
+        }
+
+        &:hover {
+            top: 1rem;
+            transition: top 0.5s;
+        }
+
+        .d-flex {
+            >.btn {
+                font-size: 1rem;
+                padding: 0 0.5rem;
+            }
+
+            >.title {
+                margin-right: 1rem;
+                max-width: 20rem;
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 1rem !important;
+            }
+        }
+    }
 
     header {
         display: none;

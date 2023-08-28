@@ -19,8 +19,4 @@
     <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="SeoSet\" />
-  </ItemGroup>
-
 </Project>

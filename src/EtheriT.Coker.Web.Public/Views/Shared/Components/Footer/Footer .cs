@@ -66,9 +66,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             },
                             new FooterViewModel { Title = "園區廠商", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
                                 new FooterViewModel { Title = "產業分類查詢", Link = "/ksp/CategoryQuery" },
-                                new FooterViewModel { Title = "地理位置查詢", Link = "/ksp/Locationinquire" },
-                                new FooterViewModel { Title = "", Link = "/ksp/home" },
-                                new FooterViewModel { Title = "", Link = "/ksp/home" },
+                                new FooterViewModel { Title = "地理位置查詢", Link = "/ksp/Locationinquire" }
                             },
                             },
                             new FooterViewModel { Title = "輔助資源", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {

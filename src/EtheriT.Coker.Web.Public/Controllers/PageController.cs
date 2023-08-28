@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
@@ -27,6 +28,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IArticleAppService articleAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
         private readonly IProductAppService productAppService;
+        private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -35,7 +37,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IWebsiteApplication websiteApplication,
             IArticleAppService articleAppService,
             IHtmlContentAppService htmlContentAppService,
-            IProductAppService productAppService
+            IProductAppService productAppService,
+            StringHandler stringHandler
         )
         {
             this._logger = logger;
@@ -46,6 +49,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.articleAppService = articleAppService;
             this.htmlContentAppService = htmlContentAppService;
             this.productAppService = productAppService;
+            this.stringHandler = stringHandler;
 
         }
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
@@ -86,13 +90,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         {
                             if (string.IsNullOrEmpty(model.PageData.Description))
                             {
-                                string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
                                 model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
-                                if (siteId != defaultData.Id)
-                                {
-                                    model.PageData.Html = model.PageData.Html.Replace("quot;/upload/", $"quot;/upload/{defaultData.OrgName}/");
-                                    model.PageData.Css = (model.PageData.Css??"").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
-                                }
                             }
                             view = "Index";
                         }
@@ -113,13 +112,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
                             if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
                             {
-                                string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
                                 model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
-                                if (siteId != defaultData.Id)
-                                {
-                                    model.PageData.Html = model.PageData.Html.Replace("quot;/upload/", $"quot;/upload/{defaultData.OrgName}/");
-                                    model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
-                                }
                             }
                             view = "ProductContent";
                         }
@@ -144,20 +138,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             {
                                 if (string.IsNullOrEmpty(model.PageData.Description))
                                 {
-                                    string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
+                                    string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
                                     model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
                                 }
-                                if (siteId != defaultData.Id)
-                                {
-                                    model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
-                                    model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
-                                    model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
-                                }
-
                                 view = "Index";
                             }
                         }
                         break;
+                }
+                if (view.IndexOf("Error/") < 0) {
+                    if (siteId != defaultData.Id && model.PageData != null)
+                    {
+                        model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
+                        model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                        model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
+                        model.PageData.Css = (model.PageData.Css??"").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                    }
                 }
             }
             else

@@ -22,6 +22,14 @@
         }
     });
 
+    // Wait for CKEDITOR load
+    setInterval(() => {
+        if (typeof (CKEDITOR) != "undefined") {
+            CKEDITOR.dtd.$editable.a = 1;
+            CKEDITOR.dtd.$editable.span = 1;
+        }
+    }, 200);
+
     editor.on('asset:add', (option) => {
         //console.log(option);
     });
@@ -89,6 +97,7 @@
      * 注意事項
      * 元件名稱需為小寫，否則欄位會無法對應
      * ********************************************************************* */
+    /*連結 */
     editor.DomComponents.addType('link', {
         isComponent: el => el.tagName == 'A',
         model: {
@@ -119,7 +128,7 @@
             }
         },
     });
-
+    /*檔案下載*/
     editor.DomComponents.addType('linkWithIcon', {
         isComponent: el => el.classList?.contains('link_with_icon'),
         model: {
@@ -152,7 +161,7 @@
             }
         },
     });
-
+    //輪播
     editor.DomComponents.addType('輪播', {
         isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
         model: {
@@ -239,7 +248,7 @@
             }
         },
     });
-
+    //QA元件
     editor.DomComponents.addType('QA元件', {
         isComponent: el => el.classList?.contains('qa'),
         model: {
@@ -257,6 +266,7 @@
             }
         },
     });
+    //名片
     editor.DomComponents.addType('名片介紹', {
         isComponent: el => el.classList?.contains('frame_type_2'),
         model: {
@@ -269,6 +279,7 @@
             }
         },
     });
+    //目錄切換控制
     editor.DomComponents.addType('格列切換控制', {
         isComponent: el => el.classList?.contains('switch_control'),
         model: {
@@ -331,6 +342,7 @@
             }
         },
     });
+    //活動
     editor.DomComponents.addType('活動列表', {
         isComponent: el => el.classList?.contains('articletype'),
         model: {
@@ -358,6 +370,7 @@
             }
         }
     });
+    //日期區間型態
     editor.TraitManager.addType("date-range", {
         
         createInput({ trait }) {
@@ -379,8 +392,7 @@
             component.addAttributes({ "date-date-strat-date": inputstrat.value,"data-date-end": inputsend.value })
         }
     });
-
-
+    //子頁內容區
     editor.DomComponents.addType('子頁內容', {
         isComponent: el => el.classList?.contains('subpage_content'),
         model: {
@@ -392,6 +404,7 @@
         },
     });
     var PopupDirectory = null;
+    //目錄
     editor.DomComponents.addType('目錄', {
         isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame'),
         model: {
@@ -434,7 +447,7 @@
             },
         },
     });
-
+    //目錄內容
     editor.DomComponents.addType('目錄內容', {
         isComponent: el => el.parentElement.classList?.contains('menu_directory') || el.classList?.contains('catalog'),
         model: {
@@ -447,11 +460,10 @@
             }
         },
     });
-
+    //輪播容器
     editor.DomComponents.addType('輪播容器', {
         isComponent: el => el.classList?.contains('image_link_slide'),
     });
-
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {
         $(categories.models).each(function (index, category) {
@@ -874,6 +886,7 @@
     });
 
     // 挪動事件監聽
+
     editor.on('component:drag:end', (obj) => {
         const classList = obj.target.getClasses();
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;

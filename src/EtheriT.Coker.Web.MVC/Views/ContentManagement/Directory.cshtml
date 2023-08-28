@@ -1,4 +1,5 @@
 ﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Article;
 @using EtheriT.Coker.Application.Shared.Dto.Directory
 @using EtheriT.Coker.Application.Shared.Dto.EnterAd
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
@@ -133,6 +134,62 @@
 
         <div id="DirectoryCanvas" class="card border-0 d-none">
             <div id="gjs"></div>
+        </div>
+
+        <div id="DirectoryItemps" class="card border-0 d-none">
+            <div class="articles d-none">
+                <div class="card-body position-relative">
+                    <div class="d-flex position-absolute z-index-up">
+                        <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                    </div>
+                    @(
+                        Html.DevExtreme().DataGrid<ArticleListGetDto>()
+                            .DataSource(d => d.RemoteController().Key("Id")
+                            .LoadUrl("/api/Article/GetAllList").LoadMethod("Get")
+                        )
+                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(true)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Width(480)
+                        .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .ShowRowLines(true)
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.Id).Caption("編號").Width(90);
+                            c.AddFor(e => e.Title).Caption("標題");
+                            c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
+                            c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
+                            c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
+                            c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
+                            c.AddFor(e => e.permanent).Caption("永久顯示").Width(110);
+                            c.AddFor(e => e.SerNO).Caption("排序").Width(90);
+                            c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
+                            c.AddFor(e => e.PopularVisible).Caption("是否顯示人氣值").Visible(false);
+                        })
+                        .ColumnAutoWidth(true)
+                        .Paging(paging => paging.PageSize(30))
+                        .Pager(pager =>
+                        {
+                            pager.Visible(true);
+                            pager.ShowPageSizeSelector(true);
+                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                            pager.ShowInfo(true);
+                        })
+                    )
+                </div>
+            </div>
+            <div class="products d-none"></div>
+            <div class="menus d-none"></div>
         </div>
     </div>
 </div>

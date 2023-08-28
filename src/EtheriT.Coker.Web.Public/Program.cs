@@ -1,5 +1,6 @@
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
@@ -59,6 +60,7 @@ builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
+builder.Services.AddTransient<StringHandler>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();

@@ -192,6 +192,18 @@
       "input": [
         "node_modules/grapesjs-parser-postcss/dist/*"
       ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-plugin-ckeditor",
+      "input": [
+        "node_modules/grapesjs-plugin-ckeditor/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-preset-newsletter",
+      "input": [
+        "node_modules/grapesjs-preset-newsletter/dist/*"
+      ]
     }
   ]
 }

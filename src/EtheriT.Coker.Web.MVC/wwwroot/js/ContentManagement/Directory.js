@@ -84,6 +84,9 @@ function PageReady() {
         window.location.hash = 0;
         HashDataEdit();
     });
+    $("#DirectoryItemps .btn_back").off("click").on("click", function () {
+        BackToList();
+    });
 
     $btn_display.on("click", function () {
         if (disp_opt) {
@@ -138,7 +141,9 @@ function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
-            if (parseInt(hash) == 0) {
+            if (!!hash && isNaN(hash)) {
+                MoveToItemList();
+            }else if (parseInt(hash) == 0) {
                 window.location.hash = 0;
                 keyId = 0;
                 FormDataClear();
@@ -173,10 +178,23 @@ function editButtonClicked(e) {
 }
 
 function reladataButtonClicked(e) {
-    /***************
-     * 查看關聯的內容
-     ***************/
-    console.log(e)
+    let type;
+    switch (e.row.data.Type) {
+        case "文章":
+            type = "Articles";
+            break;
+        case "商品":
+            type = "Products";
+            break;
+        case "選單":
+            type = "Menus";
+            break;
+        default:
+            BackToList();
+            break;
+    }
+    keyId = `${type}_${e.row.key}`;
+    window.location.hash = keyId;
 }
 
 function deleteButtonClicked(e) {
@@ -232,7 +250,6 @@ function FormDataSet(result) {
 }
 
 function AddUp(success_text, error_text) {
-    console.log(webmenu_list)
     var Fk_Mid = null;
     if (webmenu_list.length > 0 && !webmenu_list[webmenu_list.length - 1].IsDeleted) Fk_Mid = webmenu_list[webmenu_list.length - 1].FK_MId;
 
@@ -255,7 +272,9 @@ function AddUp(success_text, error_text) {
 
 function MoveToContent() {
     $("#DirectorytForm").removeClass("was-validated");
-    if (keyId == 0) {
+    if (!!keyId && isNaN(keyId)) {
+
+    }if (keyId == 0) {
         $(".btn_to_canvas").addClass("text-dark");
         $(".btn_to_canvas").attr('disabled', '');
     } else {
@@ -265,6 +284,7 @@ function MoveToContent() {
     $("#DirectoryList").addClass("d-none");
     $("#DirectoryContent").removeClass("d-none");
     $("#DirectoryCanvas").addClass("d-none");
+    $("#DirectoryItemps").addClass("d-none");
 }
 
 function BackToList() {
@@ -272,5 +292,17 @@ function BackToList() {
     $("#DirectoryList").removeClass("d-none");
     $("#DirectoryContent").addClass("d-none");
     $("#DirectoryCanvas").addClass("d-none");
+    $("#DirectoryItemps").addClass("d-none");
     window.location.hash = ""
+}
+
+function MoveToItemList() {
+    const para = window.location.hash.replace("#", "").split("_");
+    $("#DirectoryList").addClass("d-none");
+    $("#DirectoryContent").addClass("d-none");
+    $("#DirectoryCanvas").addClass("d-none");
+    $("#DirectoryItemps").removeClass("d-none");
+    $("#DirectoryItemps>div").addClass("d-none");
+    const items = $(`#DirectoryItemps>.${para[0].toLowerCase()}`).removeClass("d-none");
+    if (items.length == 0) BackToList();
 }

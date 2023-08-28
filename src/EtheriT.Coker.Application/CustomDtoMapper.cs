@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.SeoSet;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
@@ -137,11 +138,14 @@ namespace EtheriT.Coker.Application
 				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
 				.ReverseMap();
 
-			//FileUpload
-			//CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
-			//    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
-			//    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
-			//    .ReverseMap();
-		}
+            //SeoSet
+            CreateMap<SeoSetOutputDto, Core.Models.SeoSet>().ReverseMap();
+
+            //FileUpload
+            //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
+            //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
+            //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
+            //    .ReverseMap();
+        }
 	}
 }

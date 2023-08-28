@@ -795,11 +795,9 @@ var Coker = {
     },
     Object: {
         merge: function (target, source) {
-            console.log("in");
             // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
             for (const key of Object.keys(source)) {
                 if (source[key] instanceof Object) {
-                    console.log(source[key]);
                     Object.assign(source[key], co.Object.merge(target[key], source[key]))
                 }
             }

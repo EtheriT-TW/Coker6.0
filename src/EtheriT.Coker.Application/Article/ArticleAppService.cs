@@ -20,6 +20,7 @@ using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using EtheriT.Coker.Application.Common;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -27,6 +28,7 @@ namespace EtheriT.Coker.Application.Article
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly StringHandler stringHandler;
         private readonly IMapper mapper;
         private readonly IConfiguration configuration;
         private readonly ITagAppService tagAppService;
@@ -34,6 +36,7 @@ namespace EtheriT.Coker.Application.Article
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
+            StringHandler stringHandler,
             IMapper mapper,
             IConfiguration configuration,
             ITagAppService tagAppService,
@@ -46,6 +49,7 @@ namespace EtheriT.Coker.Application.Article
             this.configuration = configuration;
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.stringHandler = stringHandler;
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -116,7 +120,7 @@ namespace EtheriT.Coker.Application.Article
 
                 if (result != null)
                 {
-                    var dataQuery = from e in result
+                    var dataQuery = await (from e in result
                                     where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
                                     select new ArticleListGetDto
                                     {
@@ -131,35 +135,19 @@ namespace EtheriT.Coker.Application.Article
                                         Html = e.Html,
                                         SaveCss = e.SaveCss,
                                         Css = e.Css,
-                                        Tags = "",
+                                        Tags = String.Join("、", (
+                                                    from ta in db.Tag_Associates
+                                                    where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
+                                                    join t in db.Tags on ta.FK_TId equals t.Id
+                                                    where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
+                                                    select t.Title
+                                                ).ToList()),
                                         StartTime = e.StartTime,
                                         EndTime = e.EndTime,
                                         permanent = e.permanent,
                                         NodeDate = e.NodeDate,
-                                    };
-                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    if (output != null)
-                    {
-                        foreach (var data in output.data)
-                        {
-                            /***********************
-                             * 這邊是利用id去撈關聯的標籤 但在篩選時 data.GetType().GetProperty() 會抓不到值
-                             ***********************/
-                            var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
-                            {
-                                Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
-                                Type = (int)TagAssociateTypeEnum.文章
-                            });
-
-                            var tag_text = "";
-                            foreach (var tagData in tagDatas)
-                            {
-                                tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
-                            }
-
-                            data.GetType().GetProperty("Tags").SetValue(data, tag_text == "" ? "無" : tag_text);
-                        }
-                    }
+                                    }).ToListAsync();
+                    var output = DataSourceLoader.Load(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
                 else throw new Exception("查無文章資料");
@@ -332,12 +320,13 @@ namespace EtheriT.Coker.Application.Article
                                     .FirstOrDefaultAsync();
                 if (article != null)
                 {
+                    results.Title = article.Title;
                     results.Conten = new ArticleSaveContenDto
                     {
                         SaveHtml = article.SaveHtml,
                         SaveCss = article.SaveCss
                     };
-                    results.Conten.SaveHtml = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.SaveHtml));
+                    results.Conten.SaveHtml = stringHandler.HtmlEncode(results.Conten.SaveHtml);
                     results.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -356,7 +345,7 @@ namespace EtheriT.Coker.Application.Article
             {
                 var userId = await loginUserData.GetUserId();
 
-                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
+                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
                 ArticleContenDto importDto = new ArticleContenDto
                 {
                     Id = dto.Id,
@@ -394,7 +383,7 @@ namespace EtheriT.Coker.Application.Article
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
+                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
                 var user = await loginUserData.GetUser();
                 var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
 

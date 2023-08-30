@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
 {
@@ -337,10 +338,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }
             );
             modelBuilder.Entity<ObjectType>().HasData(
-                new ObjectType { 
-                    Id=1,
+                new ObjectType
+                {
+                    Id = 1,
                     Title = "目錄",
-                    SerNo= 500,
+                    SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ObjectType
@@ -385,6 +387,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+
+            modelBuilder.Entity<StoreSet>().HasData(
+                new StoreSet
+                {
+                    Id = 1,
+                    key = "Google",
+                    name = "Google Analytics(4)",
+                    memo = "請輸入GOOGLE提供之驗證碼：xxxxxx-x",
+                    groupType = 1,
+                    type = 1,
+                    maxlength = 8,
+                    pattern = $@"\d{6}-\d",
+                    IsDeleted = false,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

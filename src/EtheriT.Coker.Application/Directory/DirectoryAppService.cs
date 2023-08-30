@@ -218,7 +218,9 @@ namespace EtheriT.Coker.Application.Directory
 
                     var page = (int)dto.Page;
                     var shownum = (int)dto.ShowNum;
-                    output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
+                    if (dto.MaxLen == null) dto.MaxLen = 0;
+                    if (DataIds.Count < dto.MaxLen || dto.MaxLen==0) output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
+                    else output.TotalPage = (int)Math.Ceiling(dto.MaxLen.Value / (double)shownum);
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
                         case DirectoryTypeEnum.商品:
@@ -239,7 +241,8 @@ namespace EtheriT.Coker.Application.Directory
                                 Ids = DataIds,
                                 Page = page,
                                 ShowNum = shownum, 
-                                SiteId = WebsiteID
+                                SiteId = WebsiteID,
+                                MaxLen = dto.MaxLen
                             });
                             if (temparticledata != null)
                             {

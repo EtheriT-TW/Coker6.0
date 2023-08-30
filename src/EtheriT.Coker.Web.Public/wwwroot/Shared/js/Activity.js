@@ -10,7 +10,6 @@
     var tel = $self.attr('data-tel'); 
 
     var parenttime = $self.find(".activity_start_time").parents("div").eq(1);
-    console.log(parenttime);
     if (start_date == "" && end_date=="") {
         $(parenttime).addClass("d-none");
     } else {

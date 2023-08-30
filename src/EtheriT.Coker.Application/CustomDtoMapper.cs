@@ -139,7 +139,7 @@ namespace EtheriT.Coker.Application
 				.ReverseMap();
 
             //SeoSet
-            CreateMap<SeoSetOutputDto, Core.Models.SeoSet>().ReverseMap();
+            CreateMap<SeoSetOutputDto, Core.Models.StoreSet>().ReverseMap();
 
             //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()

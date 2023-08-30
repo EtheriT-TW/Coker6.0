@@ -222,8 +222,10 @@ namespace EtheriT.Coker.Application.Article
                                     .Where(e => dto.Ids.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.FK_WebsiteId == WebsiteID)
+                                    .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
                                     .ToListAsync();
+                if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();
                 int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
                 if (skip < 0) skip = 0;
                 articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum??12).ToList();

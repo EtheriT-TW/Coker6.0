@@ -97,7 +97,8 @@ var grapesInit = function (options) {
                     enterMode: 2, // CKEDITOR.ENTER_BR,
                     extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font,',
                     fontSize_sizes: '0.8rem;1rem;1.2rem;1.5rem;2rem;2.5rem;3rem;',
-                    colorButton_enableMore :true,
+                    colorButton_enableMore: true,
+                    ckeditor: "https://cdn.ckeditor.com/4.23.0-lts/standard/ckeditor.js",
                     toolbar: [
                         { name: 'styles', items: ['Font', 'FontSize'] },
                         ['Bold', 'Italic', 'Underline', 'Strike'],

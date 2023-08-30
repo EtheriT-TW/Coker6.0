@@ -52,7 +52,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
         public DbSet<Article> Article { get; set; }
         public DbSet<Directory> Directory { get; set; }
-        public DbSet<SeoSet> SeoSet { get; set; }
+        public DbSet<StoreSet> SeoSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)

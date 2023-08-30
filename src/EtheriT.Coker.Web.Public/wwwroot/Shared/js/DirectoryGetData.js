@@ -25,13 +25,21 @@ function initElemntAndLoadDir($dir,page) {
 
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
+    const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
     const hashPage = !!page? page.toString() : location.hash.replace("#", "");
 
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
-        if (isNaN(hashPage)) page = "1";
+        if (isNaN(hashPage) || hashPage=="") page = "1";
         else page = hashPage;
         $self.find(".catalog>.template").remove();
-        DirectoryDataGet($self, dirid, page, shownum);
+        console.log(page);
+        DirectoryDataGet($self,{
+            Ids: [dirid],
+            SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
+            Page: page,
+            ShowNum: shownum,
+            MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen
+        });
         $self.data("page", page)
     }
     
@@ -99,15 +107,17 @@ function hashChangeDirectory(e) {
     }
 }
 
-function DirectoryDataGet($item, dirid, page, shownum) {
+function DirectoryDataGet($item, option) {
     const dirLength = $(".catalog_frame,.menu_directory").length;
-    Directory.getDirectoryData({ Ids: [dirid], SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId, Page: page, ShowNum: shownum }).done(function (result) {
+    let page = parseInt(option.Page);
+    Directory.getDirectoryData(option).done(function (result) {
         let loadPageRange = 2;
         $item.find(".page-item").each(function () {
             var $self = $(this);
             if (!$self.hasClass("btn_prev") && !$self.hasClass("btn_next")) $self.remove();
         });
         if (result.totalPage <= 1) $item.find(".page_btn").addClass("d-none")
+        else $item.find(".page_btn").removeClass("d-none")
         if (page > result.totalPage) page = result.totalPage;
         else if (page < 1) page = 1;
 

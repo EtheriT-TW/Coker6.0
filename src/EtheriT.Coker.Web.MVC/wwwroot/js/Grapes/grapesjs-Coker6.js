@@ -33,6 +33,9 @@
             CKEDITOR.dtd.$editable.div = 1;
         }
     }, 200);
+    editor.on("run:modal-open:modalckeditor", function () {
+        console.log("in");
+    });
 
     editor.on('asset:add', (option) => {
         //console.log(option);

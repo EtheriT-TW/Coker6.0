@@ -20,6 +20,17 @@ function ready() {
             IsFaPage = $self.data("isfapage");
         }
     });
+    $(".nav-link").on("focus", function () {
+        $(this).trigger("mouseover");
+    });
+    $(".dropdown-toggle").on("focus", function () {
+        new bootstrap.Dropdown($(this)[0], {}).show();
+    });
+    $(".accesskey[href]").on("click", function (e) {
+        const $self = $(this);
+        $($self.attr("href")).goTo();
+        return false;
+    });
 
     Coker.Token = {
         GetToken: function () {
@@ -399,4 +410,9 @@ var Coker = {
         }
     }
 }
+$.fn.extend({
+    goTo: function () {
+        $('html, body').animate({ scrollTop: $(this).offset().top }, 0);
+    }
+});
 let _c = Coker;

@@ -45,6 +45,7 @@ var grapesInit = function (options) {
             'grapesjs-blocks-table',
             'grapesjs-parser-postcss',
             'grapesjs-plugin-ckeditor',
+            //'gjs-plugin-ckeditor5',
             'grapesjs-Coker6'
         ],
         pluginsOpts: {
@@ -90,7 +91,9 @@ var grapesInit = function (options) {
                 onToolbar: el => {
                     el.style.minWidth = '350px';
                 },
+                ckeditor: "https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js",
                 options: {
+                    language: 'zh',
                     startupFocus: true,
                     extraAllowedContent: '*(*);*{*}', // Allows any class and any inline style
                     allowedContent: true, // Disable auto-formatting, class removing, etc.
@@ -98,7 +101,6 @@ var grapesInit = function (options) {
                     extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font,',
                     fontSize_sizes: '0.8rem;1rem;1.2rem;1.5rem;2rem;2.5rem;3rem;',
                     colorButton_enableMore: true,
-                    ckeditor: "https://cdn.ckeditor.com/4.23.0-lts/standard/ckeditor.js",
                     toolbar: [
                         { name: 'styles', items: ['Font', 'FontSize'] },
                         ['Bold', 'Italic', 'Underline', 'Strike'],
@@ -106,6 +108,63 @@ var grapesInit = function (options) {
                         { name: 'links', items: ['Link', 'Unlink'] },
                         { name: 'colors', items: ['TextColor', 'BGColor'] },
                     ],
+                }
+            },
+            'gjs-plugin-ckeditor5': {
+                position: 'left',
+                options: {
+                    trackChanges: {},
+                    toolbar: {
+                        items: [
+                            '|',
+                            'fontColor',
+                            'fontSize',
+                            'fontFamily',
+                            'fontBackgroundColor',
+                            'alignment',
+                            'bold',
+                            'italic',
+                            'underline',
+                            'strikethrough',
+                            'link',
+                            'bulletedList',
+                            'numberedList',
+                            'horizontalLine',
+                            '|',
+                            'outdent',
+                            'indent',
+                            '|',
+                            'blockQuote',
+                            'insertTable',
+                            '|',
+                            'undo',
+                            'redo'
+                        ]
+                    },
+                    language: 'zh',
+                    fontSize: {
+                        options: ['0.8rem', '1rem', '1.2rem', '1.5rem', '2rem', '2.5rem', '3rem']
+                    },
+                    table: {
+                        contentToolbar: [
+                            'tableColumn',
+                            'tableRow',
+                            'mergeTableCells',
+                            'tableCellProperties',
+                            'tableProperties'
+                        ]
+                    },
+                    htmlSupport: {
+                        allow: [
+                            {
+                                name: /.*/,
+                                attributes: true,
+                                classes: true,
+                                styles: true
+                            }
+                        ]
+                    },
+                    licenseKey: ''
                 }
             }
         },

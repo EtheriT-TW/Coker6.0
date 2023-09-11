@@ -32,12 +32,14 @@
                     }
                     <a class="d-flex navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title">
                         <img class="logo w-100" src="@Model.LogoImageUrl" alt="@Model.Title">
+                        <h1 class="d-none">@Model.Title</h1>
                     </a>
                     <button class="btn_expand collapsed end-0 navbar-toggler position-absolute pt-1" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="material-symbols-outlined">expand_more</span>
                     </button>
                 </div>
                 <div class="collapse_menus collapse navbar-collapse" id="NavbarContent">
+                    <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
                     <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-wrap">
                         @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                         {
@@ -46,7 +48,7 @@
                             @if (menu.menuItemModels != null)
                             {
                                 <li class="nav-item dropdown px-2 my-1  text-center">
-                                    <a class="d-flex dropdown-toggle nav-link nocontent px-0 text-nowrap justify-content-center" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <a href="#" title="展開選單：@menu.Title" class="d-flex dropdown-toggle nav-link nocontent px-0 text-nowrap justify-content-center" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="px-1 px-lg-0">@menu.Title</span><span class="d-lg-none material-symbols-outlined">expand_more</span>
                                     </a>
                                     <ul class="dropdown-menu py-0 py-lg-2">
@@ -69,6 +71,7 @@
                 </div>
             </div>
         </nav>
+        <label accesskey="S" for="SearchInput" class="hide">:::</label>
         <div class="d-flex lh-lg">
             <button class="btn_sear_text text_blue_middle fw-bold d-none d-md-flex text-nowrap fs-4 me-3 bg-transparent border-0">我想搜尋</button>
             <div class="d-flex border border-2  border-end-0 flex-grow-1">
@@ -81,7 +84,7 @@
                         <li><button class="btn_sear_all dropdown-item text-nowrap">找全部</button></li>
                     </ul>
                 </div>
-                <input class="input_sear form-control border-0 fs_change px-1 px-md-3" type="search" placeholder="請輸入廠商名稱或技術..." aria-label="Search">
+                <input id="SearchInput" class="input_sear form-control border-0 fs_change px-1 px-md-3" type="search" placeholder="請輸入廠商名稱或技術..." aria-label="Search">
             </div>
             <button class="btn btn_sear rounded-0 text-nowrap fs_change d-flex align-items-center bg_blue_middle text-white" type="submit">
                 <span class="material-symbols-outlined">search</span>搜尋

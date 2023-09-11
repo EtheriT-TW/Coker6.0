@@ -204,6 +204,12 @@
       "input": [
         "node_modules/grapesjs-preset-newsletter/dist/*"
       ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-plugin-ckeditor5",
+      "input": [
+        "node_modules/grapesjs-plugin-ckeditor5/dist/*"
+      ]
     }
   ]
 }

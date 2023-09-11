@@ -24,6 +24,7 @@
     "grapesjs-custom-code": "^1.0.1",
     "grapesjs-parser-postcss": "^1.0.1",
     "grapesjs-plugin-ckeditor": "^1.0.1",
+    "grapesjs-plugin-ckeditor5": "^0.0.33",
     "grapesjs-preset-newsletter": "^1.0.2",
     "grapesjs-preset-webpage": "^1.0.2",
     "grapesjs-style-bg": "^1.0.5",

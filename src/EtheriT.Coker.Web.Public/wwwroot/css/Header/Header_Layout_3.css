@@ -32,11 +32,11 @@
 }
 
 @media only screen and (min-width: 769px) {
-    .navbar-nav > .nav-item:hover {
+    .navbar-nav > .nav-item:hover, .navbar-nav > .nav-item > .nav-link:focus {
         background-color: var(--blue-middle);
     }
 
-        .navbar-nav > .nav-item:hover > .nav-link {
+        .navbar-nav > .nav-item:hover > .nav-link, .navbar-nav > .nav-item > .nav-link:focus {
             color: white;
         }
 

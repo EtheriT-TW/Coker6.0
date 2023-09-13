@@ -10,7 +10,7 @@
 
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">
-		<li class="breadcrumb-item"><a href="/lcb/home">首頁</a></li>
+		<li class="breadcrumb-item"><a href="/@ViewData["OrgName"]/home">首頁</a></li>
 		<li class="breadcrumb-item active" aria-current="page">我的收藏</li>
 	</ol>
 </nav>
@@ -41,10 +41,13 @@
 			<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
 			<button class="btn_typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
 				<i class="fa-solid fa-table-list"></i>
+				<span class="d-none">切換</span>
 			</button>
-			<input class="price_low border-0 price_low text-end px-1 mt-1 mt-sm-0" placeholder="最低價">
+			<label for="priceLow" class="d-none">最低價</label>
+			<input id="priceLow" class="price_low border-0 price_low text-end px-1 mt-1 mt-sm-0" placeholder="最低價">
 			<div class="col-1 p-0 text-center mt-1 mt-sm-0">~</div>
-			<input class="price_high border-0 price_low text-end px-1 mt-1 mt-sm-0" placeholder="最高價">
+			<label for="priceHigh" class="d-none">最高價</label>
+			<input id="priceHigh" class="price_high border-0 price_low text-end px-1 mt-1 mt-sm-0" placeholder="最高價">
 			<button class="btn_confirm col-2 mx-2 border-0 text-white mt-1 mt-sm-0" type="button">確認</button>
 		</div>
 	</div>
@@ -62,9 +65,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -106,9 +111,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -149,9 +156,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -192,9 +201,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -235,9 +246,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -278,9 +291,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -321,9 +336,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -364,9 +381,11 @@
 						<div class="top_line position-absolute">
 							<button class="btn_share position-relative bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-share"></i>
+								<span class="d-none">分享</span>
 							</button>
 							<button class="btn_remove_favorites bg-transparent border-0 pe-0">
 								<i class="fs-5 fa-solid fa-xmark"></i>
+								<span class="d-none">取消關注</span>
 							</button>
 						</div>
 
@@ -410,14 +429,16 @@
 	<div class="swiper container">
 		<div class="swiper-wrapper container px-0">
 			<figure class="card swiper-slide border-0" data-pid="1">
-				<a class="pro_link card-img-top text-center" href="Toilet/9"><img class="w-75" src="~/upload/product/pro_pic_09.jpg" alt="" /></a>
+				<a class="pro_link card-img-top text-center" href="Toilet/9" title="連結至：商品"><img class="w-75" src="~/upload/product/pro_pic_09.jpg" alt="商品" /></a>
 				<figcaption class="position-relative">
 					<div class="top_line position-absolute">
 						<button class="btn_favorites bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-regular fa-heart"></i>
+							<span class="d-none">關注</span>
 						</button>
 						<button class="btn_share position-relative bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-solid fa-share"></i>
+							<span class="d-none">分享</span>
 						</button>
 					</div>
 
@@ -435,20 +456,23 @@
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
 							</span>
+							<span class="d-none">放入購物車</span>
 						</button>
 					</div>
 				</figcaption>
 			</figure>
 
 			<figure class="card swiper-slide border-0" data-pid="1">
-				<a class="pro_link card-img-top text-center" href="Toilet/10"><img class="w-75" src="~/upload/product/pro_pic_10.jpg" alt="" /></a>
+				<a class="pro_link card-img-top text-center" href="Toilet/10"><img class="w-75" src="~/upload/product/pro_pic_10.jpg" alt="商品" /></a>
 				<figcaption class="position-relative">
 					<div class="top_line position-absolute">
 						<button class="btn_favorites bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-regular fa-heart"></i>
+							<span class="d-none">關注</span>
 						</button>
 						<button class="btn_share position-relative bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-solid fa-share"></i>
+							<span class="d-none">分享</span>
 						</button>
 					</div>
 
@@ -466,20 +490,23 @@
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
 							</span>
+							<span class="d-none">放入購物車</span>
 						</button>
 					</div>
 				</figcaption>
 			</figure>
 
 			<figure class="card swiper-slide border-0" data-pid="1">
-				<a class="pro_link card-img-top text-center" href="Toilet/9"><img class="w-75" src="~/upload/product/pro_pic_09.jpg" alt="" /></a>
+				<a class="pro_link card-img-top text-center" href="Toilet/9" title="連結至：商品"><img class="w-75" src="~/upload/product/pro_pic_09.jpg" alt="商品" /></a>
 				<figcaption class="position-relative">
 					<div class="top_line position-absolute">
 						<button class="btn_favorites bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-regular fa-heart"></i>
+							<span class="d-none">關注</span>
 						</button>
 						<button class="btn_share position-relative bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-solid fa-share"></i>
+							<span class="d-none">分享</span>
 						</button>
 					</div>
 
@@ -497,20 +524,23 @@
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
 							</span>
+							<span class="d-none">放入購物車</span>
 						</button>
 					</div>
 				</figcaption>
 			</figure>
 
 			<figure class="card swiper-slide border-0" data-pid="1">
-				<a class="pro_link card-img-top text-center" href="Toilet/10"><img class="w-75" src="~/upload/product/pro_pic_10.jpg" alt="" /></a>
+				<a class="pro_link card-img-top text-center" href="Toilet/10"><img class="w-75" src="~/upload/product/pro_pic_10.jpg" alt="商品" /></a>
 				<figcaption class="position-relative">
 					<div class="top_line position-absolute">
 						<button class="btn_favorites bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-regular fa-heart"></i>
+							<span class="d-none">關注</span>
 						</button>
 						<button class="btn_share position-relative bg-transparent border-0 pe-0">
 							<i class="fs-5 fa-solid fa-share"></i>
+							<span class="d-none">分享</span>
 						</button>
 					</div>
 
@@ -528,6 +558,7 @@
 								<i class="fa-solid fa-circle fa-stack-2x"></i>
 								<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
 							</span>
+							<span class="d-none">放入購物車</span>
 						</button>
 					</div>
 				</figcaption>
@@ -540,12 +571,14 @@
 				<i class="fa-solid fa-circle fa-stack-2x"></i>
 				<i class="fa-solid fa-chevron-left fa-stack-1x fa-inverse"></i>
 			</span>
+			<span class="d-none">上一頁</span>
 		</button>
 		<button class="btn_swiper_next_relatedproducts border-0 p-0 text-center bg-transparent fs-3">
 			<span class="fa-stack">
 				<i class="fa-solid fa-circle fa-stack-2x"></i>
 				<i class="fa-solid fa-chevron-right fa-stack-1x fa-inverse"></i>
 			</span>
+			<span class="d-none">下一頁</span>
 		</button>
 	</div>
 </div>

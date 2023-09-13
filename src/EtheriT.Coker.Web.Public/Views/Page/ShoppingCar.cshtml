@@ -28,6 +28,7 @@
 					<tbody>
 						<tr>
 							<th scope="row" class="fw-normal">
+								<label class="d-none" for="radio_recipient1">選擇</label>
 								<input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
 							</th>
 							<td class="fw-normal">姓○</td>
@@ -36,11 +37,15 @@
 							<td class="fw-normal">07-1234***</td>
 							<td class="fw-normal">0912-******</td>
 							<td class="fw-normal">
-								<button type="button" class="btn_delete_recipient bg-transparent border-0"><i class="fa-solid fa-xmark"></i></button>
+								<button type="button" class="btn_delete_recipient bg-transparent border-0">
+									<i class="fa-solid fa-xmark"></i>
+									<span class="d-none">送出</span>
+								</button>
 							</td>
 						</tr>
 						<tr>
 							<th scope="row" class="fw-normal">
+								<label class="d-none" for="radio_recipient2">選擇</label>
 								<input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
 							</th>
 							<td class="fw-normal">姓○</td>
@@ -49,7 +54,10 @@
 							<td class="fw-normal">07-1234***</td>
 							<td class="fw-normal">0912-******</td>
 							<td class="fw-normal">
-								<button type="button" class="btn_delete_recipient bg-transparent border-0"><i class="fa-solid fa-xmark"></i></button>
+								<button type="button" class="btn_delete_recipient bg-transparent border-0">
+									<i class="fa-solid fa-xmark"></i>
+									<span class="d-none">送出</span>
+								</button>
 							</td>
 						</tr>
 					</tbody>
@@ -63,7 +71,7 @@
 </div>
 
 <div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end">
-	<a class="bg-white text-center m-1 py-2" href="/lcb/Favorites">
+	<a class="bg-white text-center m-1 py-2" href="/@ViewData["OrgName"]/Favorites">
 		<div>收藏商品<span class="fw-bold">20</span>件</div>
 	</a>
 	<a href="" class="bg-white text-center m-1 py-2">
@@ -98,8 +106,8 @@
 						<template id="Template_Cart_Details">
 							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
 								<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-									<a class="pro_link col-lg-2 col-12" href="">
-										<img class="pro_image img-fluid" src="">
+									<a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
+										<img class="pro_image img-fluid" alt="商品" src="">
 									</a>
 									<a class="pro_link col text-start overflow-hidden" href="">
 										<div class="content d-lg-block d-none">
@@ -113,7 +121,7 @@
 								</div>
 
 								<div class="content col-sm-6 col row gx-0 overflow-hidden">
-									<a class="pro_link" href="">
+									<a class="pro_link" href="" title="連結至：商品">
 										<div class="d-lg-none d-block text-start">
 											<div class="pro_name single_line fw-bold"></div>
 											<div class="pro_detail d-flex flex-wrap">
@@ -128,12 +136,14 @@
 									<div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
 										<button class="btn_count_minus bg-white border-end-0">
 											<i class="fa-solid fa-minus"></i>
+											<span class="d-none">減少</span>
 										</button>
-
-										<input class="pro_quantity text-center py-1" type="number" name="counter" value="">
+										<label class="d-none" for="quantityInput1">數量</label>
+										<input id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
 
 										<button class="btn_count_plus bg-white border-start-0">
 											<i class="fa-solid fa-plus"></i>
+											<span class="d-none">增加</span>
 										</button>
 									</div>
 
@@ -144,11 +154,13 @@
 									<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
 										<button class="btn_move_to_favorites bg-transparent border-0">
 											<i class="fa-regular fa-heart"></i>
+											<span class="d-none">移到收藏</span>
 										</button>
 									</span>
 									<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
 										<button class="btn_remove_pro bg-transparent border-0">
 											<i class="fa-solid fa-xmark"></i>
+											<span class="d-none">移除商品</span>
 										</button>
 									</span>
 								</div>
@@ -168,7 +180,7 @@
 					</div>
 
 					<div class="swiper_button my-5 d-flex justify-content-center">
-						<a href="/lcb/product/toilet" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
+						<a href="/@ViewData["OrgName"]/product/toilet" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
 
 						<button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
 							下一步
@@ -178,7 +190,7 @@
 
 				<div id="Purchase_Null" class="align-items-center flex-column justify-content-center">
 					<div class="mt-5">您的購物車是空的</div>
-					<a class="btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="/lcb/product/toilet">點此返回選購</a>
+					<a class="btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="/@ViewData["OrgName"]/product/toilet">點此返回選購</a>
 				</div>
 			</div>
 
@@ -268,7 +280,7 @@
 			<div id="Step3" class="card text-center swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
 					<div class="fs-5 my-2">購物明細</div>
-					<a class="px-4 py-2 text-decoration-underline" href="/lcb/product/toilet">我要再選購</a>
+					<a class="px-4 py-2 text-decoration-underline" href="/@ViewData["OrgName"]/product/toilet">我要再選購</a>
 				</div>
 
 				<div class="card-body px-0">
@@ -281,8 +293,9 @@
 					<div id="OrdererForm">
 						<div class="title px-3 py-2 my-3 d-flex align-items-center">
 							<div class="fs-5">訂購人資料</div>
-							<button class="btn_edit_data bg-transparent border-0 fs-3 ms-1">
+							<button class="btn_edit_data bg-transparent border-0 fs-3 ms-1" title="編輯">
 								<i class="fa-regular fa-pen-to-square"></i>
+								<span class="d-none">編輯</span>
 							</button>
 						</div>
 
@@ -310,15 +323,15 @@
 								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
 									<div class="form-check pe-3">
 										<input id="OrdererRadioSir" class="form-check-input" type="radio" name="OrdererRadioGender" value="1" required checked>
-										<label class="form-check-label" for="RadioSir">男</label>
+										<label class="form-check-label" for="OrdererRadioSir">男</label>
 									</div>
 									<div class="form-check pe-3">
 										<input id="OrdererRadioMiss" class="form-check-input" type="radio" name="OrdererRadioGender" value="2" required>
-										<label class="form-check-label" for="RadioMiss">女</label>
+										<label class="form-check-label" for="OrdererRadioMiss">女</label>
 									</div>
 									<div class="form-check">
 										<input id="OrdererRadioElse" class="form-check-input" type="radio" name="OrdererRadioGender" value="3" required>
-										<label class="form-check-label" for="RadioElse">其他</label>
+										<label class="form-check-label" for="OrdererRadioElse">其他</label>
 									</div>
 								</div>
 							</div>
@@ -402,15 +415,15 @@
 								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
 									<div class="form-check pe-3">
 										<input id="RecipientRadioSir" class="form-check-input" type="radio" name="RecipientRadioGender" value="1" required>
-										<label class="form-check-label" for="RadioSir">男</label>
+										<label class="form-check-label" for="RecipientRadioSir">男</label>
 									</div>
 									<div class="form-check pe-3">
 										<input id="RecipientRadioMiss" class="form-check-input" type="radio" name="RecipientRadioGender" value="2" required>
-										<label class="form-check-label" for="RadioMiss">女</label>
+										<label class="form-check-label" for="RecipientRadioMiss">女</label>
 									</div>
 									<div class="form-check">
 										<input id="RecipientRadioElse" class="form-check-input" type="radio" name="RecipientRadioGender" value="3" required>
-										<label class="form-check-label" for="RadioElse">其他</label>
+										<label class="form-check-label" for="RecipientRadioElse">其他</label>
 									</div>
 								</div>
 							</div>
@@ -530,7 +543,7 @@
 							</button>
 						</div>
 
-						<a class="btn_gray_underline col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="/lcb/product/toilet">我要再選購</a>
+						<a class="btn_gray_underline col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="/@ViewData["OrgName"]/product/toilet">我要再選購</a>
 					</div>
 				</div>
 			</div>
@@ -552,10 +565,10 @@
 						<template id="Template_Purchase_Details">
 							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
 								<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-									<a class="pro_link col-lg-2 col-12" href="">
-										<img class="pro_image img-fluid" src="">
+									<a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
+										<img class="pro_image img-fluid" alt="商品" src="">
 									</a>
-									<a class="pro_link col text-start overflow-hidden" href="">
+									<a class="pro_link col text-start overflow-hidden" href="" title="連結至：商品">
 										<div class="content d-lg-block d-none">
 											<div class="pro_name single_line fw-bold"></div>
 											<div class="pro_detail d-flex flex-wrap">
@@ -567,7 +580,7 @@
 								</div>
 
 								<div class="content col-sm-6 col row gx-0 overflow-hidden">
-									<a class="pro_link" href="">
+									<a class="pro_link" href="" title="連結至：商品">
 										<div class="d-lg-none d-block text-start">
 											<div class="pro_name single_line fw-bold"></div>
 											<div class="pro_detail d-flex flex-wrap">
@@ -734,7 +747,7 @@
 						</p>
 
 						<div class="btn_back_home d-flex justify-content-center my-4">
-							<a href="/lcb/home">
+							<a href="/@ViewData["OrgName"]/home">
 								<div class="fs-5 fw-bold px-3 py-1 rounded text-white">回首頁</div>
 							</a>
 						</div>

@@ -31,8 +31,8 @@
             }
             @if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
             {
-                <a href="@Model.Accessibility_Link">
-                    <img class="px-3" src="@Model.Accessibility_Badge" />
+                <a href="@Model.Accessibility_Link" title="連結至:無障礙網站(另開視窗)">
+                    <img class="px-3" alt="通過AA檢測等級無障礙網頁檢測" src="@Model.Accessibility_Badge" />
                 </a>
             }
         </div>

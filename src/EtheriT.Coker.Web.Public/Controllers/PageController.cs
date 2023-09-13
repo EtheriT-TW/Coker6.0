@@ -63,6 +63,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             PageViewModel model = new PageViewModel
             {
                 id = id,
+                orgName = defaultData.OrgName,
                 search = search ?? "".Trim(),
                 freightModels = freight,
                 enterAd = enterAds,

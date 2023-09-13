@@ -104,6 +104,36 @@
      * 注意事項
      * 元件名稱需為小寫，否則欄位會無法對應
      * ********************************************************************* */
+    /*元件浮動控制項*/
+    const commands = editor.Commands;
+    commands.add('tlb-settime', editor => {
+        myModal.show();
+    });
+
+    editor.on('component:selected', () => {
+
+        // whenever a component is selected in the editor
+
+        // set your command and icon here
+        const commandToAdd = 'tlb-settime';
+        const commandIcon = 'fa fa-star';
+
+        // get the selected componnet and its default toolbar
+        const selectedComponent = editor.getSelected();
+        const defaultToolbar = selectedComponent.get('toolbar');
+
+        // check if this command already exists on this component toolbar
+        const commandExists = defaultToolbar.some(item => item.command === commandToAdd);
+
+        // if it doesn't already exist, add it
+        if (!commandExists) {
+            selectedComponent.set({
+                toolbar: [...defaultToolbar, { attributes: { class: commandIcon }, command: commandToAdd }]
+            });
+        }
+
+    });
+
     /*連結 */
     editor.DomComponents.addType('link', {
         isComponent: el => el.tagName == 'A',
@@ -518,42 +548,6 @@
             blockControl();
         }
     }, 500);
-
-    /*元件浮動控制項*/
-    var linkCommandId = function () {
-        myModal.show();
-    }; // Id to use to create the button and anchor tag editor command
-    var toolbarIcon = '<i class="fa fa-star"></i>'; // Icon used in the component toolbar
-    var setType = "default";
-    var linkType = editor.DomComponents.getType(setType);
-    var linkTypeModel = editor.DomComponents.getType(setType).model;
-    editor.DomComponents.addType(setType, {
-        model: {
-            initToolbar() {
-                linkTypeModel.prototype.initToolbar.apply(this, arguments);
-                const tb = this.get('toolbar');
-                const tbExists = tb.some(item => item.command === linkCommandId);
-                // Add link icon in case user click on anchor tag
-                if (!tbExists) {
-                    tb.unshift({
-                        command: linkCommandId,
-                        label: toolbarIcon,
-                    });
-                    this.set('toolbar', tb);
-                }
-            }
-        },
-        // Double click on link open link editor
-        view: linkType.view.extend({
-            events: {
-                "dblclick": "editLink"
-            },
-            editLink: function (e) {
-                e.stopImmediatePropagation(); // prevent the RTE from opening
-                editor.runCommand(linkCommandId, {});
-            }
-        })
-    });
 
     //載入儲存的元件
     settings.getComponer().done(function (result) {

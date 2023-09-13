@@ -9,7 +9,8 @@ namespace EtheriT.Coker.Web.Public.Models
         public List<HtmlContentDisplayDto>? enterAd { get; set; }
         public List<ProdGetDisplayDto>? guessLike { get; set; }
         public String site_name { get; set; }
-        public GetFrontContenOutputDto? PageData { get; set; }
+		public String OrgName { get; set; }
+		public GetFrontContenOutputDto? PageData { get; set; }
         public List<GetMenuBreadDto>? MenuBread { get; set; }
     }
 }

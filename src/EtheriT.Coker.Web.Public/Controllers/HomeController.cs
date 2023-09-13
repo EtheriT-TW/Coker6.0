@@ -51,7 +51,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             HomeViewModel model = new HomeViewModel
             {
                 site_name = site_name,
-                enterAd = enterAds,
+                OrgName= defaultData.OrgName,
+				enterAd = enterAds,
                 guessLike = guessLike,
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });

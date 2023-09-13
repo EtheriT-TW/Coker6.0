@@ -228,6 +228,7 @@
             <div class="track text-center">
                 <button class="btn_favorites bg-transparent border-0 p-0">
                     <i class="fa-regular fa-heart"></i>
+                    <span class="d-none">關注</span>
                 </button>
                 <div>追蹤</div>
             </div>
@@ -270,16 +271,18 @@
 
         <div class="options px-3">
             <div class="counter d-flex align-items-center my-2">
-                <div class="title">數量</div>
+                <label class="title" for="quantityInput1">數量</label>
                 <div class="counter_input d-flex">
                     <button class="btn_count_minus bg-white my-1">
                         <i class="fa-solid fa-minus"></i>
+                        <span class="d-none">減少</span>
                     </button>
 
-                    <input class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
+                    <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
 
                     <button class="btn_count_plus bg-white my-1">
                         <i class="fa-solid fa-plus"></i>
+                        <span class="d-none">增加</span>
                     </button>
                 </div>
             </div>

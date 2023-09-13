@@ -13,7 +13,7 @@
 
 .type_change_frame > .catalog .date {
     color: gray;
-    font-size: 12px;
+    font-size: 0.75rem;
 }
 
 .type_change_frame > .catalog .image_frame {
@@ -159,7 +159,7 @@
 }
 
 .activity span {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: gray;
 }
 .big-t {

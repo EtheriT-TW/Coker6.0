@@ -150,6 +150,26 @@ var Coker = {
                 _dfr.resolve();
             });
             return _dfr.promise();
+        },
+        UpdatePassword: function (para) {
+            var _dfr = $.Deferred();
+            $.ajax({
+                url: "/api/User/UpdatePassword",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(para),
+                dataType: "json"
+            }).done(function (result) {
+                if (result.success) {
+                    _c.sweet.success("密碼變更成功");
+                    _dfr.resolve();
+                } else { 
+                    _c.sweet.error(result.message);
+                    _dfr.resolve();
+                }
+            });
+            return _dfr.promise();
         }
     },
     sweet: {
@@ -598,6 +618,35 @@ var Coker = {
             }
         }
     },
+    Member: {
+        Get: function (id) {
+            return $.ajax({
+                url: "/api/Member/GetAllData/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id },
+            });
+        },
+        Update: function (data) {
+            return $.ajax({
+                url: "/api/Member/Update",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        GetSelf: function () {
+            return $.ajax({
+                url: "/api/Member/GetSelfData/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+            });
+        }
+    },
     Tag: {
         AddDelect: function (data) {
             return $.ajax({
@@ -793,6 +842,28 @@ var Coker = {
             });
         },
     },
+    StoreSet: {
+        GetValues: function (data) {
+            return $.ajax({
+                url: "/api/StoreSet/getValues/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        SaveValues: function (data) {
+            return $.ajax({
+                url: "/api/StoreSet/CreateOrUpdate",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        }
+    },
     Object: {
         merge: function (target, source) {
             // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
@@ -805,6 +876,115 @@ var Coker = {
             // Join `target` and modified `source`
             Object.assign(target || {}, source)
             return target
+        },
+        arrayToObject: function (array) {
+            let obj = {};
+            for (let i = 0; i < array.length; i++) {
+                obj[array[i].key] = array[i].value;
+            }
+            return obj;
+        },
+        objectToArray: function (obj) {
+            let array = [];
+            for (const key of Object.keys(obj)) {
+                array.push({
+                    key: key,
+                    value: obj[key]
+                });
+            }
+            return array;
+        }
+    },
+    Zipcode: {
+        init: function (id) {
+            $TWzipcode = $(id);
+
+            $TWzipcode.twzipcode({
+                'zipcodeIntoDistrict': true,
+            });
+
+            var $county, $district;
+
+            $county = $TWzipcode.children('.county');
+            $district = $TWzipcode.children('.district');
+
+            $county.children('select').attr({
+                id: "SelectCity",
+                class: "city form-select",
+                required: "required"
+            });
+            $county.append("<label class='px-4 required' for='SelectCity'>縣市</label>");
+            var $county_first_option = $county.children('select').children('option').first();
+            $county_first_option.text("請選擇縣市");
+            $county_first_option.attr('disabled', 'disabled');
+
+            $district.children('select').attr({
+                id: "SelectTown",
+                class: "town form-select",
+                required: "required"
+            });
+            $district.append("<label class='required' for='SelectTown'>鄉鎮</label>");
+            var $district_first_option = $district.children('select').children('option').first();
+            $district_first_option.text("請選擇鄉鎮");
+            $district_first_option.attr('disabled', 'disabled');
+        },
+        setData: function (obj) {
+            const $addr = obj.el.find(".address");
+            var address_split = obj.addr.split(" ");
+            obj.el.twzipcode('set', {
+                'county': address_split[0],
+                'district': address_split[1],
+            });
+            $addr.val(address_split[2]);
+        },
+        getData: function ($e) {
+            return $e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()
+        }
+    },
+    Form: {
+        insertData: function (obj) {
+            for (const key in obj) {
+                const $e = $(`[name="${key}"]`);
+                if ($e.length > 0) {
+                    switch ($e[0].tagName) {
+                        case "INPUT":
+                            switch ($e.attr("type").toLowerCase()) {
+                                case "radio":
+                                    $(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
+                                    break;
+                                default:
+                                    $e.val(obj[key]);
+                                    break;
+                            }
+                            break;
+                        case "DIV":
+                            switch ($e.data("formType")) {
+                                case "zipcode":
+                                    co.Zipcode.setData({
+                                        el: $e,
+                                        addr: obj[key]
+                                    });
+                                    break;
+                            }
+                            break;
+                    }
+                } else console.log(key);
+            }
+        },
+        getJson: function (id) {
+            let form = document.getElementById(id);
+            let formFields = new FormData(form);
+            let formDataObject = Object.fromEntries(formFields.entries());
+            let exItems = $(`#${id}`).find(`div[name]`);
+            exItems.each(function () {
+                const $e = $(this);
+                switch ($e.data("formType")) {
+                    case "zipcode":
+                        formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
+                        break;
+                }
+            });
+            return formDataObject;
         }
     }
 }

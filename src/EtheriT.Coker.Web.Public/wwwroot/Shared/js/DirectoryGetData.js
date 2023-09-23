@@ -22,7 +22,7 @@
 function initElemntAndLoadDir($dir,page) {
     const $self = $dir || $(".catalog_frame,.menu_directory").first();
     const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
-
+    
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
     const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
@@ -156,24 +156,27 @@ function DirectoryDataGet($item, option) {
             if (page != $self.data("page")) {
                 page = $self.data("page");
                 if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
-                else initElemntAndLoadDir($item, page)
+                else initElemntAndLoadDir($item, page);
             }
+            $item.goTo();
         })
         if (!$item.data("init")) {
             $item.find(`.btn_prev > button`).on("click", function () {
                 page = parseInt($item.data("page")) - 1;
-                if (page > 1) {
+                if (page >= 1) {
                     if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
                     else initElemntAndLoadDir($item, $self.data("page"))
                 }
+                $item.goTo();
             })
 
             $item.find(`.btn_next > button`).on("click", function () {
                 page = parseInt($item.data("page")) + 1;
-                if (page < result.totalPage) {
+                if (page <= result.totalPage) {
                     if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
                     else initElemntAndLoadDir($item, $self.data("page"))
                 }
+                $item.goTo();
             })
         }
 

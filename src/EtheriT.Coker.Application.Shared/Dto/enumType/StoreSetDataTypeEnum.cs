@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         radio=3,
         checkBox=4,
         select=5,
-        date=6
+        date=6,
+        tel=7,
     }
 }

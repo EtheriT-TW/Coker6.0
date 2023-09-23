@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Shared.Dto.enumType
+namespace EtheriT.Coker.Application.Shared.Dto.StoreSet
 {
-    public enum SeoSetGroupTypeEnum
+    public class StoreSetFrontDto
     {
-        SEO = 1
+        public string GA4 { get; set; }
     }
 }

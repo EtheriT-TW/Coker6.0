@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
     {
         public string Id { get; set; }
         public string Name { get; set; }
+        public string NickName { get; set; }
         public int? Sex { get; set; }
         public int? Status { get; set; }
         public int? Level { get; set; }
@@ -17,7 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public string? CellPhone { get; set; }
         public string? TelPhone { get; set; }
         public string? Address { get; set; }
-        public string Password { get; set; }
 
     }
 }

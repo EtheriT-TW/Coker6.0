@@ -16,9 +16,11 @@ namespace EtheriT.Coker.Core.Models
         public string name { get; set; }
         public string? memo { get; set; }
         public int? type { get; set; }
-        public int? groupType { get; set; }
+        public long FK_StoreSetGroupId { get; set; }
         public int? maxlength { get; set; }
         public string? pattern { get; set; }
+        public string jobID { get; set; }
         public List<StoreSetDetail> storeSetDetails { get; set; }
-    }
+        public StoreSetGroup storeSetGroup { get; set; }
+	}
 }

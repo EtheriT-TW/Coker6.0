@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,5 +38,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> Logout() {
             return await accountAppService.Logout();
         }
-    }
+		[HttpPost]
+		[Authorize]
+		public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto)
+		{
+			return await accountAppService.UpdatePassword(dto);
+		}
+	}
 }

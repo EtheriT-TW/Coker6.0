@@ -5,10 +5,12 @@ using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -28,6 +30,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IArticleAppService articleAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
         private readonly IProductAppService productAppService;
+
+        private readonly IStoreSetAppService storeSetAppService;
         private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
@@ -38,6 +42,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IArticleAppService articleAppService,
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
+            IStoreSetAppService storeSetAppService,
             StringHandler stringHandler
         )
         {
@@ -50,7 +55,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.htmlContentAppService = htmlContentAppService;
             this.productAppService = productAppService;
             this.stringHandler = stringHandler;
-
+            this.storeSetAppService = storeSetAppService;
         }
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
@@ -59,6 +64,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
+            var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             PageViewModel model = new PageViewModel
             {
@@ -67,6 +73,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 search = search ?? "".Trim(),
                 freightModels = freight,
                 enterAd = enterAds,
+                storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
+                {
+                    GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
+                }
             };
             string view;
             if (!string.IsNullOrEmpty(key))
@@ -146,13 +156,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                 }
-                if (view.IndexOf("Error/") < 0) {
+                if (view.IndexOf("Error/") < 0)
+                {
                     if (siteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
                         model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
                         model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
-                        model.PageData.Css = (model.PageData.Css??"").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                        model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
                 }
             }

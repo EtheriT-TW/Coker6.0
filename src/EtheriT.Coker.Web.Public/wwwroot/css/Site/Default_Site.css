@@ -11,15 +11,20 @@ a {
     color: black;
 }
 
-ul {
-    margin: 0;
-    padding: 0;
-}
-
 p {
     margin: 0;
 }
 
 .price::before {
     content: '$';
+}
+
+.navbar .dropdown-menu[data-bs-popper] {
+    top:92%;
+    border-radius:0;
+}
+.navbar-collapse ul{
+    list-style:none;
+    padding:0;
+    margin:0;
 }

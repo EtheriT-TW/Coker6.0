@@ -2000,6 +2000,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<long>("FK_StoreSetGroupId")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -2009,8 +2012,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("groupType")
-                        .HasColumnType("int");
+                    b.Property<string>("jobID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("key")
                         .IsRequired()
@@ -2036,22 +2040,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SeoSet");
+                    b.HasIndex("FK_StoreSetGroupId");
+
+                    b.ToTable("StoreSet");
 
                     b.HasData(
                         new
                         {
                             Id = 1L,
                             CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 2L,
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 1L,
                             IsDeleted = false,
-                            groupType = 1,
-                            key = "Google",
-                            maxlength = 8,
-                            memo = "請輸入GOOGLE提供之驗證碼：xxxxxx-x",
+                            jobID = "S001",
+                            key = "GA4",
+                            maxlength = 12,
+                            memo = "請輸入GOOGLE提供之驗證碼：G-xxxxxxxxxx",
                             name = "Google Analytics(4)",
                             pattern = "\\d6-\\d",
-                            type = 1
+                            type = 7
                         });
                 });
 
@@ -2075,7 +2082,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("FK_SeoSetId")
+                    b.Property<long>("FK_StoreSetId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("FK_WebsiteId")
@@ -2093,19 +2100,75 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<bool>("enable")
                         .HasColumnType("bit");
 
-                    b.Property<string>("job_id")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("value")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_SeoSetId");
+                    b.HasIndex("FK_StoreSetId");
 
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("StoreSetDetail");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSetGroup", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoreSetGroup");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            Description = "",
+                            Image = "/images/icon_google.png",
+                            IsDeleted = false,
+                            Title = "Google設定"
+                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag", b =>
@@ -2747,13 +2810,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<string>("Account")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("CellPhone")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
@@ -2769,7 +2835,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<int>("ErrorTimes")
                         .HasColumnType("int");
@@ -2791,7 +2858,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Nickname")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -2804,7 +2876,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("TelPhone")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("Total")
                         .HasColumnType("int");
@@ -3111,11 +3184,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Token");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSet", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.StoreSetGroup", "storeSetGroup")
+                        .WithMany("StoreSets")
+                        .HasForeignKey("FK_StoreSetGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("storeSetGroup");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSetDetail", b =>
                 {
-                    b.HasOne("EtheriT.Coker.Core.Models.StoreSet", "seoSet")
+                    b.HasOne("EtheriT.Coker.Core.Models.StoreSet", "StoreSet")
                         .WithMany("storeSetDetails")
-                        .HasForeignKey("FK_SeoSetId")
+                        .HasForeignKey("FK_StoreSetId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -3125,9 +3209,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Website");
+                    b.Navigation("StoreSet");
 
-                    b.Navigation("seoSet");
+                    b.Navigation("Website");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag", b =>
@@ -3275,6 +3359,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSet", b =>
                 {
                     b.Navigation("storeSetDetails");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSetGroup", b =>
+                {
+                    b.Navigation("StoreSets");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag", b =>

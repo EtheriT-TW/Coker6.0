@@ -1,0 +1,101 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Member
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+
+@{
+	ViewData["Title"] = "UserData";
+}
+
+<link rel="stylesheet" href="~/css/MemberManagement/SelfData.min.css" asp-append-version="true" />
+<script src="~/js/MemberManagement/SelfData.min.js" asp-append-version="true"></script>
+
+<div class="py-2 px-4 position-relative">
+		<div class="d-flex">
+			<button class="btn_back bg-transparent border-0 align-items-center d-none">
+				<span class="material-symbols-outlined">
+					keyboard_backspace
+				</span>
+			</button>
+			<div class="title fw-bold fs-4 w-100">個人資料修改</div>
+		</div>
+	<div class="w-100 h-auto p-5 body-interface d-flex justify-content-center align-item-center my-2">
+			<div class="d-flex col-12">
+			<div class="d-flex justify-content-start align-items-center col-md-3 flex-column">
+				<div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+					@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+				</div>
+				<div class="d-flex justify-content-end align-items-end">
+					<p class="changeAvatar">更換頭像</p>
+				</div>
+				<button class="btn revise-password mt-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTop" aria-controls="offcanvasTop">修改密碼</button>
+				<div class="offcanvas offcanvas-top" tabindex="-1" id="offcanvasTop" aria-labelledby="offcanvasTopLabel">
+					<div class="offcanvas-header d-flex">
+						<h5 id="offcanvasTopLabel" class="fw-bold">修改密碼</h5>
+						<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+					</div>
+					<form id="changPassword" class="offcanvas-body d-flex justify-content-center align-items-center flex-column">
+						<div class="form-floating mb-3">
+							<input id="password" name="password" class="form-control" type="password" placeholder="輸入密碼">
+							<label for="password" class="form-label">密碼</label>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="newPassword" name="newPassword" class="form-control" type="password" placeholder="輸入新密碼">
+							<label for="newPassword" class="form-label">新密碼</label>
+						</div>
+						<div class="form-floating mb-3">
+							<input id="newPasswordChecked" name="newPasswordChecked" class="form-control" type="password" placeholder="確認新密碼">
+							<label for="newPasswordChecked" class="form-label">新密碼確認</label>
+						</div>
+						<button class="btn submit">送出</button>
+					</form>
+				</div>
+			</div>
+				<form id="memberForm" class="d-flex flex-column justify-content-center align-item-center col-md-6">
+					<input type="hidden" name="id" />
+				<div class="form-floating mb-3">
+					<input id="nickName" name="nickName" class="form-control" type="text" placeholder="暱稱">
+					<label for="nickName" class="form-label">暱稱</label>
+				</div>
+				<div class="form-floating mb-3">
+					<input id="name" name="name" class="form-control" type="text" placeholder="姓名">
+					<label for="name" class="form-label">姓名</label>
+				</div>
+				<div class="form mb-3 d-flex">
+					<label for="RadioElse" class="form-label mr-4">姓名</label>
+					<div class="form-check pe-3">
+						<input id="RadioSir" class="form-check-input" type="radio" name="sex" value="1" required>
+						<label class="form-check-label" for="RadioSir">男</label>
+					</div>
+					<div class="form-check pe-3">
+						<input id="RadioMiss" class="form-check-input" type="radio" name="sex" value="2" required>
+						<label class="form-check-label" for="RadioMiss">女</label>
+					</div>
+					<div class="form-check">
+						<input id="RadioElse" class="form-check-input" type="radio" name="sex" value="3" required>
+						<label class="form-check-label" for="RadioElse">其他</label>
+					</div>
+				</div>
+				<div class="form-floating mb-3">
+					<input id="phone" name="cellPhone" class="form-control" type="text" placeholder="電話">
+					<label for="phone" class="form-label">電話</label>
+				</div>
+				<div class="form-floating mb-3">
+					<input id="email" name="email" class="form-control" type="email" placeholder="email">
+					<label for="email" class="form-label">email</label>
+				</div>
+				<div id="TWzipcode" class="row" name="address" data-form-type="zipcode">
+					<div class="form-floating mb-3 col-6 col-sm-3 county" data-role="county"></div>
+					<div class="form-floating mb-3 col-6 col-sm-3 district" data-role="district"></div>
+					<div class="form-floating mb-3 col-12 col-sm-6">
+						<input id="address3" class="form-control w31 address" type="text" placeholder="路段">
+						<label for="address3" class="form-label">路段</label>
+					</div>							
+				</div>	
+				<button class="btn submit" type="button">儲存</button>
+				</form>
+			</div>
+		<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
+	</div>
+
+</div>

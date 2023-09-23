@@ -170,7 +170,6 @@ namespace EtheriT.Coker.Application.Article
                     var output = await (from e in result
                                         where e.Id == Id
                                         where !e.IsDeleted
-                                        orderby e.SerNO
                                         select new ArticleGetDataDto
                                         {
                                             Id = e.Id,
@@ -224,7 +223,10 @@ namespace EtheriT.Coker.Application.Article
                                     .Where(e => e.FK_WebsiteId == WebsiteID)
                                     .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
-                                    .ToListAsync();
+									.OrderByDescending(a => a.NodeDate)
+								    .ThenBy(a => a.SerNO)
+								    .ThenByDescending(e => e.Id)
+									.ToListAsync();
                 if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();
                 int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
                 if (skip < 0) skip = 0;
@@ -232,11 +234,7 @@ namespace EtheriT.Coker.Application.Article
 
                 if (articleData != null)
                 {
-                    var articleDataSort = articleData
-                                .OrderByDescending(a => a.NodeDate)
-                                .ThenBy(a => a.SerNO)
-                                .ThenByDescending(e => e.Id);
-                    foreach (var data in articleDataSort)
+                    foreach (var data in articleData)
                     {
                         var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
                         {

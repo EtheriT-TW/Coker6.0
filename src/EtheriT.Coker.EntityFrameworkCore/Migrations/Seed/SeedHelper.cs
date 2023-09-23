@@ -389,20 +389,33 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
+            modelBuilder.Entity<StoreSetGroup>().HasData(
+                new StoreSetGroup
+                {
+                    Id = 1,
+                    Title = "Google設定",
+                    Image = "/images/icon_google.png",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }
+            );
 
             modelBuilder.Entity<StoreSet>().HasData(
                 new StoreSet
                 {
                     Id = 1,
-                    key = "Google",
+                    key = "GA4",
                     name = "Google Analytics(4)",
-                    memo = "請輸入GOOGLE提供之驗證碼：xxxxxx-x",
-                    groupType = 1,
-                    type = 1,
-                    maxlength = 8,
+                    memo = "請輸入GOOGLE提供之驗證碼：G-xxxxxxxxxx",
+                    FK_StoreSetGroupId = 1,
+                    type = 7,
+                    maxlength = 12,
                     pattern = $@"\d{6}-\d",
                     IsDeleted = false,
-                    CreatorUserId = 2,
+                    jobID = "S001",
+                    CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );

@@ -5,13 +5,15 @@ using EtheriT.Coker.Application.Dto.ObjectType;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Member;
 using EtheriT.Coker.Application.Shared.Dto.Product;
-using EtheriT.Coker.Application.Shared.Dto.SeoSet;
+using EtheriT.Coker.Application.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 
 namespace EtheriT.Coker.Application
 {
@@ -25,6 +27,11 @@ namespace EtheriT.Coker.Application
 			CreateMap<UserDto, User>()
 				.ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
 				.ReverseMap();
+			CreateMap<MemberGetAllDataDto, User>()
+				.ReverseMap();
+			CreateMap<MemberUpdateDto, User>()
+				.ReverseMap();
+
 
 			//WebMenu
 			CreateMap<SiteMapDto, WebMenu>().ReverseMap();
@@ -138,8 +145,17 @@ namespace EtheriT.Coker.Application
 				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
 				.ReverseMap();
 
-            //SeoSet
-            CreateMap<SeoSetOutputDto, Core.Models.StoreSet>().ReverseMap();
+			//StoreSet
+			CreateMap<StoreSetOutputDto, Core.Models.StoreSet>()
+                .ForMember(e => e.type, option => option.MapFrom(c => c.type))
+				.ReverseMap();
+			CreateMap<StoreSetDetailOutputDto, Core.Models.StoreSetDetail>()
+                .ForMember(e => e.IsDeleted, option => option.MapFrom(c => false))
+                .ForMember(e => e.CreationTime, option => option.MapFrom(c => DateTime.Now))
+                .ReverseMap()
+				.ForMember(e => e.key, option => option.MapFrom(c => c.StoreSet == null ? "" : c.StoreSet.key));
+            
+            CreateMap<StoreSetGroupOutputDto, StoreSetGroup>().ReverseMap();
 
             //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()

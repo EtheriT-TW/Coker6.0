@@ -33,8 +33,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await memberAppService.GetAllData(id);
         }
+		[HttpGet]
+		public async Task<MemberGetAllDataDto> GetSelfData()
+		{
+			return await memberAppService.GetSelfData();
+		}
 
-        [HttpPost]
+		[HttpPost]
         public async Task<ResponseMessageDto> Update(MemberUpdateDto dto)
         {
             return await memberAppService.Update(dto);

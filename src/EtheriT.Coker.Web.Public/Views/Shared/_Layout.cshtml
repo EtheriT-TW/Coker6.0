@@ -30,6 +30,17 @@
     <meta property="og:description" content="@ViewData["Description"]" />
     <meta property="og:locale" content="zh-tw" />
     <style id="frameCss"></style>
+    @if (ViewData["GA4"]!=null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? "")) {
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewData["GA4"]"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', @ViewData["GA4"]);
+        </script>
+    }
 </head>
 <body onload="ready()">
     <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="跳到主要內容區塊">

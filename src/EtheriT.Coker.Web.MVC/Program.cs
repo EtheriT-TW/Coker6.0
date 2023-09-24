@@ -35,10 +35,14 @@ using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Import;
+using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Common;
+using Microsoft.Extensions.Options;
+using MiniExcelLibs;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
-var configuration = provider.GetRequiredService<IConfiguration>();
+var configuration = provider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -120,12 +124,14 @@ builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertific
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ImportAppService>();
+builder.Services.AddTransient<StringHandler>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 builder.Services.AddTransient<IObjectTypeAppService, ObjectTypeAppService>();
 builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
 builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
+builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 
 //¦h»y¨t
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -137,8 +143,16 @@ builder.Services.Configure<VirtualDirectory>(builder.Configuration.GetSection("V
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<CokerDbContext>(item =>
-    item.UseSqlServer(configuration.GetConnectionString("Default"))
+//item.UseSqlServer(configuration.GetConnectionString("Default"))
+
+builder.Services.AddDbContext<CokerDbContext>(options =>
+    {
+        options.UseSqlServer(configuration.GetConnectionString("Default"),
+        sqlServerOptionsAction: sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure();
+        });
+    }
 );
 
 builder.Services.AddSwaggerGen(option =>

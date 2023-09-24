@@ -8,6 +8,23 @@ function SwiperInit(obj) {
         slidesPerView: 1,
         spaceBetween: 15,
     };
+    $.fn.extend({
+        swiperBindEven: function (swiper) {
+            const stop = function () {
+                console.log("stop");
+                swiper.autoplay.stop()
+            }
+            const start = function () {
+                console.log("start");
+                swiper.autoplay.start()
+            }
+            $(this).find(".swiper").prepend($(this).find(".swiper_button_prev"));
+            $(this).on("mouseover", stop);
+            $(this).find("a").on("focus", stop);
+            $(this).on("mouseout", start);
+            $(this).find("a").on("blob", start);
+        }
+    });
 
     $(".one_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
@@ -32,6 +49,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
+            $self.swiperBindEven(swiper);
         }
     });
 
@@ -69,6 +87,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
+            $self.swiperBindEven(swiper);
         }
     });
 
@@ -104,6 +123,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
+            $self.swiperBindEven(swiper);
         }
     });
 
@@ -128,6 +148,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
+            $self.swiperBindEven(swiper);
         }
     });
 }

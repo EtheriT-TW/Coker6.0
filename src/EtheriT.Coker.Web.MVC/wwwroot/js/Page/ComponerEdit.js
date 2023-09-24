@@ -143,8 +143,8 @@
                     co.ObjectType.getConten(data.id).done(function (result) {
                         if (result.success) {
                             var html = co.Data.HtmlDecode(result.conten.html);
-                            editor.setComponents(html);
                             editor.setStyle(result.conten.css);
+                            editor.setComponents(html);
                             $("body").addClass("grapesEdit");
                             $("#TopLine .title").text(data.text);
                             myOffcanvas.hide();

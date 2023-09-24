@@ -9,7 +9,7 @@
 
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">
-		<li class="breadcrumb-item"><a href="/lcb/home">首頁</a></li>
+		<li class="breadcrumb-item"><a href="/@ViewData["OrgName"]/home">首頁</a></li>
 		<li class="breadcrumb-item">Derek商品</li>
 		<li class="breadcrumb-item active" aria-current="page">馬桶</li>
 	</ol>
@@ -31,9 +31,11 @@
 			</button>
 		</div>
 		<div class="range col-auto row mt-1 mt-sm-0">
-			<input class="price_low col px-1 text-end" type="number" placeholder="最低價">
+			<label for="priceLow" class="d-none">最低價</label>
+			<input id="priceLow" class="price_low col px-1 text-end" type="number" placeholder="最低價">
 			<div class="text-center col-auto align-self-center">~</div>
-			<input class="price_high col px-1 text-end" type="number" placeholder="最高價">
+			<label for="priceHigh" class="d-none">最高價</label>
+			<input id="priceHigh" class="price_high col px-1 text-end" type="number" placeholder="最高價">
 			<button class="btn_confirm border-0 text-white col-auto ms-2" type="button">確認</button>
 		</div>
 	</div>
@@ -106,7 +108,7 @@
 			最新型錄
 			<span class="fa-stack fa-stack fs-6">
 				<i class="fa-solid fa-circle fa-stack-2x"></i>
-				<a href="/lcb/Catalog">
+				<a href="/@ViewData["OrgName"]/Catalog">
 					<i class="fa-solid fa-chevron-right fa-stack-1x fa-inverse"></i>
 				</a>
 			</span>
@@ -222,6 +224,7 @@
 				<i class="fa-solid fa-circle fa-stack-2x"></i>
 				<i class="fa-solid fa-chevron-left fa-stack-1x fa-inverse opacity-75"></i>
 			</span>
+			<span class="d-none">上一頁</span>
 		</button>
 
 		<button class="btn_swiper_next_relatedproducts bg-transparent border-0 p-0 fs-3">
@@ -229,6 +232,7 @@
 				<i class="fa-solid fa-circle fa-stack-2x"></i>
 				<i class="fa-solid fa-chevron-right fa-stack-1x fa-inverse opacity-75"></i>
 			</span>
+			<span class="d-none">下一頁</span>
 		</button>
 	</div>
 </div>
@@ -242,9 +246,11 @@
 					<div class="top_line position-absolute end-0">
 						<button class="btn_favorites bg-transparent border-0">
 							<i class="fs-5 fa-regular fa-heart"></i>
+							<span class="d-none">關注</span>
 						</button>
 						<button class="btn_share bg-transparent border-0">
 							<i class="fs-5 fa-solid fa-share"></i>
+							<span class="d-none">分享</span>
 						</button>
 					</div>
 					<h5 class="card-title price fw-bold"></h5>
@@ -256,6 +262,7 @@
 							<i class="fa-solid fa-circle fa-stack-2x"></i>
 							<i class="fa-solid fa-cart-shopping fa-stack-1x fa-inverse"></i>
 						</span>
+						<span class="d-none">放入購物車</span>
 					</button>
 				</div>
 			</figcaption>

@@ -11,11 +11,12 @@
             var home_target = Model.HomeTarget == true ? "_blank" : "_self";
             var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
         }
-        <a class="navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title">@Model.Title</a>
+        <a class="navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title"><h1>@Model.Title</h1></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                 {

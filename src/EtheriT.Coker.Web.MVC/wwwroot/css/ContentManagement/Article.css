@@ -37,7 +37,7 @@ input[type="number"] {
 }
 
 #ArticleContent > form .count::after {
-    content: '/50';
+    content: '/300';
 }
 
 #ArticleContent > form > .sort > input {

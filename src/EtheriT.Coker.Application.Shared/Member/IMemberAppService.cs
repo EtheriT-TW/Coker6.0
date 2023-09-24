@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Member
     {
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<MemberGetAllDataDto> GetAllData(long id);
-        public Task<ResponseMessageDto> Update(MemberUpdateDto dto);
+		public Task<MemberGetAllDataDto> GetSelfData();
+		public Task<ResponseMessageDto> Update(MemberUpdateDto dto);
     }
 }

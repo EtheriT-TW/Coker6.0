@@ -105,8 +105,10 @@ function PageReady() {
         co.Articles.GetConten({ Id: id }).done(function (result) {
             if (result.success) {
                 var html = co.Data.HtmlDecode(result.conten.saveHtml);
-                editor.setComponents(html);
+                $("body").addClass("grapesEdit");
                 editor.setStyle(result.conten.saveCss);
+                editor.setComponents(html);
+                if (!!result.title) $("#TopLine .title").text(result.title);
             } else {
                 co.sweet.error(result.error);
             }
@@ -375,7 +377,6 @@ function FormDataSet(result) {
 function paletteButtonClicked(e) {
     keyId = e.row.key;
     window.location.hash = keyId + "-1";
-    MoveToCanvas();
 }
 
 function deleteButtonClicked(e) {
@@ -392,7 +393,7 @@ function AddUp(success_text, error_text, place) {
     if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
         co.File.DeleteFileById({
             Sid: keyId,
-            Type: 5,
+            Type: 6,
             Fid: $("#ImageUpload").data("delectList")
         });
     }
@@ -471,23 +472,26 @@ function MoveToContent() {
     $("#ArticleList").addClass("d-none");
     $("#ArticleContent").removeClass("d-none");
     $("#ArticleCanvas").addClass("d-none");
+    $("body").removeClass("grapesEdit");
 }
 
 function MoveToCanvas() {
     UnValidated();
     $("#gjs").data("id", keyId);
     setPage(keyId);
-    $("#TopLine > a").removeClass("d-none");
+    $("#TopLine > div > a").removeClass("d-none");
     $("#ArticleList").addClass("d-none");
     $("#ArticleContent").addClass("d-none");
     $("#ArticleCanvas").removeClass("d-none");
 }
 
 function BackToList() {
-    $("#TopLine > a").addClass("d-none");
+    $("#TopLine > div > a").addClass("d-none");
     $("#ArticleList").removeClass("d-none");
     $("#ArticleContent").addClass("d-none");
     $("#ArticleCanvas").addClass("d-none");
+    $("body").removeClass("grapesEdit");
+    $("#TopLine .title").text("文章管理");
     window.location.hash = ""
 }
 

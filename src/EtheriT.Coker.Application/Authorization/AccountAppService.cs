@@ -20,6 +20,9 @@ using EtheriT.Coker.Core.Models;
 using Microsoft.Extensions.Primitives;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using EtheriT.Coker.Application.Shared.Dto.User;
+using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -185,5 +188,40 @@ namespace EtheriT.Coker.Application.Authorization
                 Success = await tokenAppService.DelToken()
             };
         }
-    }
+        public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto) {
+			LoginOutputDto output = new LoginOutputDto() { Success = false };
+            long userId = await loginUserData.GetUserId();
+			/*
+                至少有一個數字
+                至少有一個大寫或小寫英文字母
+                至少有一個特殊符號
+                字串長度在 6 ~ 30 個字母之間
+             */
+			Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{6,30}$");
+			var users = await db.Users
+                .Where(e => e.Id == userId)
+                .Where(e => !e.IsDeleted)
+                .Where(e => e.Status!=0)
+                .FirstOrDefaultAsync();
+            if (users == null) output.Message = "使用者已被登出";
+			else if (!passwordHasher.VerifyHashedPassword(users.Password, dto.Password)) output.Message = "原始密碼錯誤";
+            else if(!regex.IsMatch(dto.NewPassword)) output.Message = "密碼原則錯誤";
+			else
+			{
+                try
+                {
+					string HashedPassword = passwordHasher.HashPassword(dto.NewPassword);
+					users.Password = HashedPassword;
+					await loginUserData.SaveChanges(users);
+					output.Success = true;
+				}catch(Exception ex)
+                {
+                    output.Message = ex.Message;
+                }
+			}
+            await loginUserData.SetLogs("Account", "UpdatePassword",JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(output));
+			return output;
+		}
+
+	}
 }

@@ -7,6 +7,7 @@ var grapesInit = function (options) {
         showOffsets: 1,
         noticeOnUnload: 0,
         container: '#gjs',
+        height: '100vh',
         i18n: {
             locale: 'tw',
             localeFallback: 'tw',
@@ -43,13 +44,16 @@ var grapesInit = function (options) {
             'grapesjs-tui-image-editor',
             'grapesjs-blocks-table',
             'grapesjs-parser-postcss',
+            'grapesjs-plugin-ckeditor',
+            //'gjs-plugin-ckeditor5',
             'grapesjs-Coker6'
         ],
         pluginsOpts: {
             'gjs-blocks-basic': { flexGrid: true },
             'grapesjs-preset-webpage': {
-                modalImportTitle: 'Import Template',
-                modalImportLabel: '<div style="margin-bottom: 10px; font-size: 13px;">Paste here your HTML/CSS and click Import</div>',
+                modalImportButton: '匯入',
+                modalImportTitle: '匯入原始碼',
+                modalImportLabel: '<div style="margin-bottom: 10px; font-size: 1rem;">請輸入您的原始碼</div>',
                 modalImportContent: function (editor) {
                     return editor.getHtml() + '<style>' + editor.getCss() + '</style>'
                 },
@@ -70,7 +74,99 @@ var grapesInit = function (options) {
                 ]
             },
             'grapesjs-blocks-table': { containerId: '#gjs' },
-            'grapesjs-Coker6': options
+            'grapesjs-Coker6': options,
+            'grapesjs-preset-newsletter': {
+                modalLabelExport: 'Copy the code and use it wherever you want',
+                codeViewerTheme: 'material',
+                cellStyle: {
+                    'font-size': '1rem',
+                    'font-weight': 300,
+                    'vertical-align': 'top',
+                    color: 'rgb(111, 119, 125)',
+                    margin: 0,
+                    padding: 0,
+                }
+            },
+            'grapesjs-plugin-ckeditor': {
+                onToolbar: el => {
+                    el.style.minWidth = '350px';
+                },
+                ckeditor: "https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js",
+                options: {
+                    language: 'zh',
+                    startupFocus: true,
+                    extraAllowedContent: '*(*);*{*}', // Allows any class and any inline style
+                    allowedContent: true, // Disable auto-formatting, class removing, etc.
+                    enterMode: 2, // CKEDITOR.ENTER_BR,
+                    extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font,',
+                    fontSize_sizes: '0.8rem;1rem;1.2rem;1.5rem;2rem;2.5rem;3rem;',
+                    colorButton_enableMore: true,
+                    toolbar: [
+                        { name: 'styles', items: ['Font', 'FontSize'] },
+                        ['Bold', 'Italic', 'Underline', 'Strike'],
+                        { name: 'paragraph', items: ['NumberedList', 'BulletedList'] },
+                        { name: 'links', items: ['Link', 'Unlink'] },
+                        { name: 'colors', items: ['TextColor', 'BGColor'] },
+                    ],
+                }
+            },
+            'gjs-plugin-ckeditor5': {
+                position: 'left',
+                options: {
+                    trackChanges: {},
+                    toolbar: {
+                        items: [
+                            '|',
+                            'fontColor',
+                            'fontSize',
+                            'fontFamily',
+                            'fontBackgroundColor',
+                            'alignment',
+                            'bold',
+                            'italic',
+                            'underline',
+                            'strikethrough',
+                            'link',
+                            'bulletedList',
+                            'numberedList',
+                            'horizontalLine',
+                            '|',
+                            'outdent',
+                            'indent',
+                            '|',
+                            'blockQuote',
+                            'insertTable',
+                            '|',
+                            'undo',
+                            'redo'
+                        ]
+                    },
+                    language: 'zh',
+                    fontSize: {
+                        options: ['0.8rem', '1rem', '1.2rem', '1.5rem', '2rem', '2.5rem', '3rem']
+                    },
+                    table: {
+                        contentToolbar: [
+                            'tableColumn',
+                            'tableRow',
+                            'mergeTableCells',
+                            'tableCellProperties',
+                            'tableProperties'
+                        ]
+                    },
+                    htmlSupport: {
+                        allow: [
+                            {
+                                name: /.*/,
+                                attributes: true,
+                                classes: true,
+                                styles: true
+                            }
+                        ]
+                    },
+                    licenseKey: ''
+                }
+            }
         },
         canvas: {
             styles: [

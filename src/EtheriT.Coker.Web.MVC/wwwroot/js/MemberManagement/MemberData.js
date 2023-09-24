@@ -5,33 +5,11 @@ var $member_number, $name, $sex, $status, $level, $email_basic, $cellphone, $tel
 var member_list
 
 function PageReady() {
-    co.Member = {
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/Member/GetAllData/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
-            });
-        },
-        Update: function (data) {
-            return $.ajax({
-                url: "/api/Member/Update",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        }
-    };
-
     ManagementDataCollapse();
 
     OrderDetailsPosition();
 
-    TWZipCodeInit();
+    co.Zipcode.init("#TWzipcode");
 
     ElementInit();
 
@@ -201,12 +179,10 @@ function FormDataSet(result) {
         $telphone_ext.val(telphone_split[2]);
     }
     if (result.address != null) {
-        var address_split = result.address.split(" ");
-        $TWzipcode.twzipcode('set', {
-            'county': address_split[0],
-            'district': address_split[1],
+        co.Zipcode.setData({
+            el: $TWzipcode,
+            addr: result.address
         });
-        $address.val(address_split[2]);
     }
     $email_login.val(result.email);
 }
@@ -379,37 +355,4 @@ function OrderDetailsPosition() {
             $btn_details.addClass("position-absolute");
         });
     }
-}
-
-function TWZipCodeInit() {
-    $TWzipcode = $('#TWzipcode');
-
-    $TWzipcode.twzipcode({
-        'zipcodeIntoDistrict': true,
-    });
-
-    var $county, $district;
-
-    $county = $TWzipcode.children('.county');
-    $district = $TWzipcode.children('.district');
-
-    $county.children('select').attr({
-        id: "SelectCity",
-        class: "city form-select",
-        required: "required"
-    });
-    $county.append("<label class='px-4 required' for='SelectCity'>縣市</label>");
-    var $county_first_option = $county.children('select').children('option').first();
-    $county_first_option.text("請選擇縣市");
-    $county_first_option.attr('disabled', 'disabled');
-
-    $district.children('select').attr({
-        id: "SelectTown",
-        class: "town form-select",
-        required: "required"
-    });
-    $district.append("<label class='required' for='SelectTown'>鄉鎮</label>");
-    var $district_first_option = $district.children('select').children('option').first();
-    $district_first_option.text("請選擇鄉鎮");
-    $district_first_option.attr('disabled', 'disabled');
 }

@@ -8,17 +8,17 @@
 	<div class="modal-content">
 		<div class="modal-body position-relative">
 			<button class="btn_close bg-transparent border-0 fs-4 position-absolute top-0 end-0" data-bs-dismiss="modal">
-				<i class="fa-regular fa-circle-xmark"></i>
+				<i class="fa-regular fa-circle-xmark"><span class="d-none">關閉</span></i>
 			</button>
 
 			<div class="content py-3 py-md-0">
 				<figure class="row">
 					<div class="col-md-4 pb-2 pb-md-0 text-center align-self-center">
-						<img class="pro_image img-fluid border" src="" alt="" />
+						<img class="pro_image img-fluid border" src="" alt="商品圖" />
 					</div>
 
 					<figcaption class="pro_content col-md-8">
-						<div class="name fs-5 pe-md-4">C659NA德瑞克Smart III淨未來智慧馬桶</div>
+						<div class="name fs-5 pe-md-4">ProdName</div>
 
 						<div class="introduction"></div>
 
@@ -51,12 +51,14 @@
 						<div class="counter col-auto d-flex align-items-center my-2">
 							<button class="btn_count_minus bg-white">
 								<i class="fa-solid fa-minus"></i>
+								<span class="d-none">減少</span>
 							</button>
-
-							<input class="input_pro_quantity text-center" name="counter" type="number" value="1">
+							<label class="d-none" for="quantityInput2">數量</label>
+							<input id="quantityInput2" class="input_pro_quantity text-center" name="counter" type="number" value="1">
 
 							<button class="btn_count_plus bg-white">
 								<i class="fa-solid fa-plus"></i>
+								<span class="d-none">增加</span>
 							</button>
 						</div>
 

@@ -1,0 +1,29 @@
+﻿body {
+    background-color: #B6D3E1;
+}
+
+#ContainerBody > content > .container {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+#ContainerBody > .top_title > .title {
+    text-align: start;
+}
+
+#ContainerBody > .top_title li a {
+    color: #666666;
+}
+
+#ContainerBody > .top_title li:not(:first-child)::before {
+    content: '>';
+    padding-right: 0.25rem;
+    color: #666666;
+}
+
+@media only screen and (max-width: 768px) {
+    #ContainerBody > .top_title > .title {
+        text-align: center;
+    }
+}

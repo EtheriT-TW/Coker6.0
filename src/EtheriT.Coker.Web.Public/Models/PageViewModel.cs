@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
 namespace EtheriT.Coker.Web.Public.Models
@@ -9,9 +10,11 @@ namespace EtheriT.Coker.Web.Public.Models
 		public long? id { get; set; }
         public string? option { get; set; }
         public string? search { get; set; }
-		public List<HtmlContentDisplayDto>? enterAd { get; set; }
+        public string? orgName { get; set; }
+        public List<HtmlContentDisplayDto>? enterAd { get; set; }
 		public GetFrontContenOutputDto? PageData { get; set; }
         public List<FreightDisplayDto>? freightModels { get; set; }
         public List<GetMenuBreadDto>? MenuBread { get; set; }
+        public StoreSetFrontDto storeSet { get; set; }
     }
 }

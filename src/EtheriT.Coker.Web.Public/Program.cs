@@ -1,5 +1,6 @@
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
@@ -20,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.ShoppingCart;
 using EtheriT.Coker.Application.Specification;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.TechnicalCertificate;
 using EtheriT.Coker.Application.Token;
@@ -59,6 +61,7 @@ builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
+builder.Services.AddTransient<StringHandler>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
@@ -69,6 +72,7 @@ builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>
 builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<ImportAppService, ImportAppService>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
+builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

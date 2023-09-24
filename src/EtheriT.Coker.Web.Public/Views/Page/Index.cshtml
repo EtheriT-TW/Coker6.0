@@ -5,8 +5,10 @@
 @{
     ViewData["SideName"] = Model.PageData.SiteName;
     ViewData["PageName"] = Model.PageData.Title;
+    ViewData["OrgName"] = Model.orgName;
     ViewData["Description"] = Model.PageData.Description;
     ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["GA4"] = Model.storeSet.GA4;
 }
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
@@ -68,7 +70,7 @@
     case 4:
         @if (Model.PageData.CurrentUrl != "/home")
         {
-            <link rel="stylesheet" href="~/css/Page/Index_LayoutType4.min.css" asp-append-version="true" />
+            <link rel="stylesheet" href="~/css/Site/Page/Index_LayoutType4.min.css" asp-append-version="true" />
         }
         @if (Model.MenuBread.Count() > 0)
         {
@@ -141,6 +143,10 @@
 @{
     if (Model.PageData.LastModificationTime != null) {
         <div class="container editTime font_small text-end">最後編輯時間：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
+    }
+    if (Model.PageData.Popular != null && Model.PageData.Popular>0)
+    {
+        <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
     }
 }
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>

@@ -11,15 +11,6 @@ a {
     color: black;
 }
 
-ul {
-    margin: 0;
-    padding: 0;
-}
-
-li {
-    list-style: none;
-}
-
 p {
     margin: 0;
 }
@@ -28,4 +19,12 @@ p {
     content: '$';
 }
 
-a img{max-width:100%}
+.navbar .dropdown-menu[data-bs-popper] {
+    top:92%;
+    border-radius:0;
+}
+.navbar-collapse ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+}

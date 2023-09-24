@@ -31,12 +31,14 @@
                         var homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
                         }
                     <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink" target="@home_target" title="@homte_title">
-                        <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title">
+                        <img class="logo" src="@Model.LogoImageUrl" alt=" ">
+                        <h1 class="d-none">@Model.Title</h1>
                     </a>
                     <button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="material-symbols-outlined">expand_more</span>
                     </button>
                 </div>
+                <label accesskey="S" for="SearchInput" class="hide">:::</label>
                 <div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
                     @if (Model.Sitemap_Link != null)
                     {
@@ -45,12 +47,12 @@
                         <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target">網站導覽</a>
                     }
                     <div class="align-items-center bg-white d-flex rounded">
-                        <input class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
+                        <input id="SearchInput" class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
                         <div class="dropdown">
                             <a class="dropdown-toggle px-2 text-nowrap text-black" href="/epza/eplus" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 搜尋
                             </a>
-                            <ul class="dropdown-menu">
+                            <ul class="dropdown-menu" aria-labelledby="dLabel">
                                 <li><button class="btn_sear_all dropdown-item text-nowrap">全部</button></li>
                                 <li><button class="btn_sear_news dropdown-item text-nowrap">最新消息</button></li>
                             </ul>
@@ -60,6 +62,9 @@
             </div>
             <div class="collapse navbar-collapse" id="NavbarContent">
                 <ul class="img_ul">
+                    <li class="float-start">
+                        <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
+                    </li>
                     @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                     {
                         var target = menu.Target == true ? "_blank" : "_self";

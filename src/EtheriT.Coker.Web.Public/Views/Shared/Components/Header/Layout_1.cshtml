@@ -37,6 +37,7 @@
             </div>
 
             <!-- Menu Canvas Menu -->
+            <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
             <ul class="navbar-nav offcanvas-body w-100 m-0">
                 @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
                 {
@@ -49,24 +50,20 @@
                                     var iconclass = secItem.Icon == "" ? "d-none" : "";
                                     var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
                                     <li class="subtitle nav-item my-0 my-md-2">
-                                        @if (secItem.Link != "")
-                                        {
+                                        @{
                                             var target = secItem.Target == true ? "_blank" : "_self";
                                             var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
-                                            <a class="subtitle_title nav-link text-black py-1 text-nowrap text-start d-flex align-items-center" href="@secItem.Link" title="@title" target="@target">
-                                                <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
-                                                <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-                                                @secItem.Title
-                                            </a>
+                                            if (string.IsNullOrEmpty(secItem.Link))
+                                            {
+                                                secItem.Link = "#";
+                                                title = $"展開選單：{secItem.Title}";
+                                            }
                                         }
-                                        else
-                                        {
-                                            <div class="subtitle_title nav-link text-black py-1 text-nowrap text-start d-flex align-items-center">
-                                                <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
-                                                <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-                                                @secItem.Title
-                                            </div>
-                                        }
+                                        <a class="subtitle_title nav-link text-black py-1 text-nowrap text-start d-flex align-items-center" href="@secItem.Link" title="@title" target="@target">
+                                            <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                            <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                            @secItem.Title
+                                        </a>
                                         <ul class="row mx-0">
                                             @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
                                             {
@@ -75,8 +72,8 @@
                                                 <li class="px-0">
                                                     @if (secItem.Link != "")
                                                     {
-                                                        var target = thirdItem.Target == true ? "_blank" : "_self";
-                                                        var title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                        target = thirdItem.Target == true ? "_blank" : "_self";
+                                                        title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
                                                         <a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
                                                             <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                             <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
@@ -150,8 +147,8 @@
                             <template id="Template_Car_Dropdown">
                                 <li class="border-bottom me-4" data-scid="">
                                     <figure class="position-relative mb-0">
-                                        <a class="pro_link d-flex" href="" title="">
-                                            <img class="pro_image" src="" alt="" />
+                                        <a class="pro_link d-flex" href="" title="連結至：商品">
+                                            <img class="pro_image" src="" alt="商品" />
                                             <figcaption class="overflow-hidden">
                                                 <div class="pro_name h-auto"></div>
                                                 <div class="pro_spec h-auto my-1"></div>

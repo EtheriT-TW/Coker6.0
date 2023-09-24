@@ -864,6 +864,12 @@ namespace EtheriT.Coker.Application
 									db.SaveChanges();
 								}
 							}
+							else {
+                                fafile_binds.IsDeleted = true;
+                                fafile_binds.DeletionTime = DateTime.Now;
+                                fafile_binds.DeleterUserId = usetId;
+                                db.SaveChanges();
+                            }
 						}
 						await loginUserData.SetLogs(AppName, "deleteImgFile", dto.Fid.ToString(), JsonConvert.SerializeObject(response));
 

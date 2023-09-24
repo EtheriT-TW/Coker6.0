@@ -20,6 +20,17 @@ function ready() {
             IsFaPage = $self.data("isfapage");
         }
     });
+    $(".nav-link").on("focus", function () {
+        $(this).trigger("mouseover");
+    });
+    $(".dropdown-toggle").on("focus", function () {
+        new bootstrap.Dropdown($(this)[0], {}).show();
+    });
+    $(".accesskey[href]").on("click", function (e) {
+        const $self = $(this);
+        $($self.attr("href")).goTo();
+        return false;
+    });
 
     Coker.Token = {
         GetToken: function () {
@@ -43,7 +54,7 @@ function ready() {
         $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");
-        $(".editTime").appendTo($conten);
+        $(".editTime,.popular").appendTo($conten);
         if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) SwiperInit({ autoplay: true });
         if ($(".masonry").length > 0) FrameInit();
         if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
@@ -399,4 +410,9 @@ var Coker = {
         }
     }
 }
+$.fn.extend({
+    goTo: function () {
+        $('html, body').animate({ scrollTop: $(this).offset().top }, 0);
+    }
+});
 let _c = Coker;

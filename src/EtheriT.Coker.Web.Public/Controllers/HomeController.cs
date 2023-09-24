@@ -1,9 +1,11 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -21,14 +23,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IConfiguration Configuration;
         private readonly IWebsiteApplication websiteApplication;
         private readonly IWebMenuApplication webMenuApplication;
-
+        private readonly IStoreSetAppService storeSetAppService;
         public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
             IConfiguration Configuration,
             IWebsiteApplication websiteApplication,
-            IWebMenuApplication webMenuApplication
+            IWebMenuApplication webMenuApplication,
+            IStoreSetAppService storeSetAppService
             )
         {
             this._logger = logger;
@@ -37,6 +40,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.Configuration = Configuration;
             this.websiteApplication = websiteApplication;
             this.webMenuApplication = webMenuApplication;
+            this.storeSetAppService = storeSetAppService;
         }
 
         public async Task<IActionResult> IndexAsync(string key)
@@ -48,11 +52,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
+            var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput {key= "ga4",SiteId= siteId });
             HomeViewModel model = new HomeViewModel
             {
                 site_name = site_name,
-                enterAd = enterAds,
+                OrgName= defaultData.OrgName,
+				enterAd = enterAds,
                 guessLike = guessLike,
+                storeSet = new StoreSetFrontDto
+                {
+                    GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
+                }
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;

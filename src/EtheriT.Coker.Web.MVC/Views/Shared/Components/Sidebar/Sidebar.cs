@@ -74,7 +74,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                     },
                     new JobMenu{
                         PageName="MemberManagement",
-                        Title="會員管理",
+                        Title="使用者管理",
                         Controller="MemberManagement",
                         Action="Index",
                         Icon="people_alt",
@@ -86,8 +86,21 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Controller="MemberManagement",
                                 Action="Index",
                                 Icon="",
-                            }
-                        }
+                            },new JobMenu{
+								PageName="UserData",
+								Title="個人資料修改",
+								Controller="MemberManagement",
+								Action="SelfData",
+								Icon="",
+							},
+							new JobMenu{
+								PageName="PowerCtrl",
+								Title="權限控制",
+								Controller="PowerManagement",
+								Action="Index",
+								Icon=""
+							}
+						}
                     },
                     new JobMenu{
                         PageName="PageManagement",
@@ -230,29 +243,6 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 PageName="Theme",
                                 Title="後台配色設定",
                                 Controller="Theme",
-                                Action="Index",
-                                Icon=""
-                            }
-                        }
-                    },new JobMenu{
-                        PageName="UserManagement",
-                        Title="使用者管理",
-                        Controller="UserManagement",
-                        Action="Index",
-                        Icon="settings",
-                        CollapseId="#UserManagement",
-                        jobItemModels= new List<JobMenu> {
-                            new JobMenu{
-                                PageName="UserData",
-                                Title="個人資料修改",
-                                Controller="UserManagement",
-                                Action="Index",
-                                Icon="",
-                            },
-                            new JobMenu{
-                                PageName="PowerCtrl",
-                                Title="權限控制",
-                                Controller="PowerManagement",
                                 Action="Index",
                                 Icon=""
                             }

@@ -19,7 +19,7 @@
 
 [class*="swiper_button"] {
     width: fit-content;
-    z-index: 1;
+    z-index: 2;
 }
 
 .swiper_btn_circle {
@@ -70,6 +70,7 @@
     color: #3987B2;
     text-decoration: none;
 }
+.swiper a{display:block;}
 
 @media only screen and (max-width: 768px) {
     .swiper_btn_circle_hide_left {

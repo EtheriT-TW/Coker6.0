@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Dto.Member;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using System.Text.RegularExpressions;
+using AutoMapper;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -17,13 +18,16 @@ namespace EtheriT.Coker.Application.Member
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        public MemberAppService(
+		private readonly IMapper mapper;
+		public MemberAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
-        )
+            LoginUserData loginUserData,
+			IMapper mapper
+		)
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.mapper = mapper;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -67,20 +71,8 @@ namespace EtheriT.Coker.Application.Member
 
                 if (result != null)
                 {
-                    MemberGetAllDataDto output = new MemberGetAllDataDto()
-                    {
-                        Id = ("000000000" + result.Id).Substring(result.Id.ToString().Length),
-                        Name = result.Name,
-                        Sex = result.Sex,
-                        Status = result.Status,
-                        Level = result.Level,
-                        Email = result.Email,
-                        CellPhone = result.CellPhone,
-                        TelPhone = result.TelPhone,
-                        Address = result.Address,
-                        Password = result.Password,
-                    };
-
+					MemberGetAllDataDto output = mapper.Map<MemberGetAllDataDto>(result);
+                    output.Id = ("000000000" + result.Id).Substring(result.Id.ToString().Length);
                     return output;
                 }
                 else throw new Exception("查無會員資料");
@@ -92,7 +84,12 @@ namespace EtheriT.Coker.Application.Member
 
             return null;
         }
-        public async Task<ResponseMessageDto> Update(MemberUpdateDto dto)
+        public async Task<MemberGetAllDataDto> GetSelfData() { 
+            long userId = await loginUserData.GetUserId();
+            return await GetAllData(userId);
+		}
+
+		public async Task<ResponseMessageDto> Update(MemberUpdateDto dto)
         {
             long usetId = await loginUserData.GetUserId();
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -103,21 +100,11 @@ namespace EtheriT.Coker.Application.Member
 
                 if (result != null)
                 {
-                    result.Name = dto.Name;
-                    result.Sex = dto.Sex;
-                    result.Status = dto.Status;
-                    result.Level = dto.Level;
-                    result.Email = dto.Email;
-                    result.CellPhone = dto.CellPhone;
-                    result.TelPhone = dto.TelPhone;
-                    result.Address = dto.Address;
-                    result.LastModifierUserId = usetId;
-                    result.LastModificationTime = DateTime.Now;
-                    //if (dto.Password != null)
-                    //{
-                    //    result.Password = dto.Password;
-                    //}
-                    db.SaveChanges();
+                    if (dto.Status == null) dto.Status = result.Status;
+					if (dto.TelPhone == null) dto.TelPhone = result.TelPhone;
+
+					mapper.Map(dto,result);
+                    await loginUserData.SaveChanges(result);
                     output.Success = true;
                 }
                 else throw new Exception("查無會員資料");

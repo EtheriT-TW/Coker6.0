@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
 {
@@ -337,10 +338,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }
             );
             modelBuilder.Entity<ObjectType>().HasData(
-                new ObjectType { 
-                    Id=1,
+                new ObjectType
+                {
+                    Id = 1,
                     Title = "目錄",
-                    SerNo= 500,
+                    SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new ObjectType
@@ -385,6 +387,36 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 500,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+            modelBuilder.Entity<StoreSetGroup>().HasData(
+                new StoreSetGroup
+                {
+                    Id = 1,
+                    Title = "Google設定",
+                    Image = "/images/icon_google.png",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }
+            );
+
+            modelBuilder.Entity<StoreSet>().HasData(
+                new StoreSet
+                {
+                    Id = 1,
+                    key = "GA4",
+                    name = "Google Analytics(4)",
+                    memo = "請輸入GOOGLE提供之驗證碼：G-xxxxxxxxxx",
+                    FK_StoreSetGroupId = 1,
+                    type = 7,
+                    maxlength = 12,
+                    pattern = $@"\d{6}-\d",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

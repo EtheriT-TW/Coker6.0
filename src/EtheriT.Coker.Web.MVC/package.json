@@ -23,6 +23,9 @@
     "grapesjs-blocks-table": "^0.0.118",
     "grapesjs-custom-code": "^1.0.1",
     "grapesjs-parser-postcss": "^1.0.1",
+    "grapesjs-plugin-ckeditor": "^1.0.1",
+    "grapesjs-plugin-ckeditor5": "^0.0.33",
+    "grapesjs-preset-newsletter": "^1.0.2",
     "grapesjs-preset-webpage": "^1.0.2",
     "grapesjs-style-bg": "^1.0.5",
     "grapesjs-tabs": "^1.0.6",
@@ -45,6 +48,7 @@
     "postcss-url": "^9.0.0",
     "sweetalert2": "^11.6.7",
     "swiper": "^8.3.2",
+    "twzipcode.js": "^3.0.1",
     "yarn": "^1.22.19"
   },
   "devDependencies": {

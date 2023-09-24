@@ -22,6 +22,21 @@
         }
     });
 
+    // Wait for CKEDITOR load
+    setInterval(() => {
+        if (typeof (CKEDITOR) != "undefined") {
+            CKEDITOR.dtd.$editable.a = 1;
+            CKEDITOR.dtd.$editable.p = 1;
+            CKEDITOR.dtd.$editable.span = 1;
+            CKEDITOR.dtd.$editable.li = 1;
+            CKEDITOR.dtd.$editable.strong = 1;
+            CKEDITOR.dtd.$editable.div = 1;
+        }
+    }, 200);
+    editor.on("run:modal-open:modalckeditor", function () {
+        console.log("in");
+    });
+
     editor.on('asset:add', (option) => {
         //console.log(option);
     });
@@ -89,6 +104,37 @@
      * 注意事項
      * 元件名稱需為小寫，否則欄位會無法對應
      * ********************************************************************* */
+    /*元件浮動控制項*/
+    const commands = editor.Commands;
+    commands.add('tlb-settime', editor => {
+        myModal.show();
+    });
+
+    editor.on('component:selected', () => {
+
+        // whenever a component is selected in the editor
+
+        // set your command and icon here
+        const commandToAdd = 'tlb-settime';
+        const commandIcon = 'fa fa-star';
+
+        // get the selected componnet and its default toolbar
+        const selectedComponent = editor.getSelected();
+        const defaultToolbar = selectedComponent.get('toolbar');
+
+        // check if this command already exists on this component toolbar
+        const commandExists = defaultToolbar.some(item => item.command === commandToAdd);
+
+        // if it doesn't already exist, add it
+        if (!commandExists) {
+            selectedComponent.set({
+                toolbar: [...defaultToolbar, { attributes: { class: commandIcon }, command: commandToAdd }]
+            });
+        }
+
+    });
+
+    /*連結 */
     editor.DomComponents.addType('link', {
         isComponent: el => el.tagName == 'A',
         model: {
@@ -119,7 +165,7 @@
             }
         },
     });
-
+    /*檔案下載*/
     editor.DomComponents.addType('linkWithIcon', {
         isComponent: el => el.classList?.contains('link_with_icon'),
         model: {
@@ -152,7 +198,7 @@
             }
         },
     });
-
+    //輪播
     editor.DomComponents.addType('輪播', {
         isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
         model: {
@@ -239,7 +285,7 @@
             }
         },
     });
-
+    //QA元件
     editor.DomComponents.addType('QA元件', {
         isComponent: el => el.classList?.contains('qa'),
         model: {
@@ -248,21 +294,29 @@
                 copyable: false
             },
             init() {
-                const self = this;
-                const ccid = self.ccid;
-                console.log("in");
-                self.components().models.forEach(function (item) {
-                    if (item.getClasses().indexOf("qa-bg") >= 0) {
-                        item.setAttributes({ "href": `#${ccid}_content`, "Title": "展開QA", "aria-controls": `${ccid}_content`, "data-bs-toggle":"collapse" })
-                    }
-                    if (item.getClasses().indexOf("collapse") >= 0) {
-                        item.setAttributes({ "id": `${ccid}_content` })
-                    }
-                });
+                const ccid = this.ccid;
+                const c = $(".gjs-frame")[0].contentWindow.$;
+                window.setTimeout(function () {
+                    c(`#${ccid} a`).attr({ "href": `#${ccid}_content`, "Title": "展開QA" });
+                    c(`#${ccid} .collapse`).attr("id", `${ccid}_content`);
+                }, 200)
             }
         },
     });
-
+    //名片
+    editor.DomComponents.addType('名片介紹', {
+        isComponent: el => el.classList?.contains('frame_type_2'),
+        model: {
+            defaults: {
+                droppable: false,
+                copyable: false
+            },
+            init() {
+             
+            }
+        },
+    });
+    //目錄切換控制
     editor.DomComponents.addType('格列切換控制', {
         isComponent: el => el.classList?.contains('switch_control'),
         model: {
@@ -300,21 +354,21 @@
                     const myClass = list[i];
                     
                     self.on(`change:attributes:${myClass}`, () => {
-                        editor.getSelected().components().models.forEach(function (item) {
+                        self.components().models.forEach(function (item) {
                             if (item.getClasses().indexOf(myClass) >= 0) {
   
                                 if (item.getClasses().indexOf('d-none') >= 0) {
                                     item.removeClass("d-none");
                                     setTimeout(() => {
                                         var content = $(".gjs-frame")[0].contentWindow.namecontrol;
-                                        content(editor.getSelected().getId());
+                                        content(self.getId());
                                     }, 200);
                                 }
                                 else {
                                     item.addClass("d-none");
                                     setTimeout(() => {
                                         var content = $(".gjs-frame")[0].contentWindow.namecontrol;
-                                        content(editor.getSelected().getId());
+                                        content(self.getId());
                                     }, 200);
                                 }
                             }
@@ -337,6 +391,7 @@
             }
         },
     });
+    //活動
     editor.DomComponents.addType('活動列表', {
         isComponent: el => el.classList?.contains('articletype'),
         model: {
@@ -364,6 +419,7 @@
             }
         }
     });
+    //日期區間型態
     editor.TraitManager.addType("date-range", {
         
         createInput({ trait }) {
@@ -385,8 +441,7 @@
             component.addAttributes({ "date-date-strat-date": inputstrat.value,"data-date-end": inputsend.value })
         }
     });
-
-
+    //子頁內容區
     editor.DomComponents.addType('子頁內容', {
         isComponent: el => el.classList?.contains('subpage_content'),
         model: {
@@ -398,6 +453,7 @@
         },
     });
     var PopupDirectory = null;
+    //目錄
     editor.DomComponents.addType('目錄', {
         isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame'),
         model: {
@@ -436,12 +492,40 @@
                             }
                             PopupDirectory.show();
                         }
-                    }
+                    },
+
+                    { name: 'data-maxlen', type: 'text', label: '最大筆數', placeholder: '該目錄僅抓幾筆資料' },
+                    { name: 'data-shownum', type: 'text', label: '分頁筆數', placeholder: '一個分頁幾筆資料' },
                 ],
             },
+            init() {
+                var self = this;
+                self.on(`change:attributes:data-shownum`, component => {
+                    setTimeout(() => {
+                        const fWindow = $(".gjs-frame")[0].contentWindow;
+                        let attr = component.getAttributes();
+                        fWindow.$(`#${component.getId()}`).data({
+                            "prevdirid": attr["data-prevdirid"],
+                            "shownum": attr["data-shownum"]
+                        });
+                        fWindow.DirectoryGetDataInit();
+                    }, 200);
+                });
+                self.on(`change:attributes:data-maxlen`, component => {
+                    setTimeout(() => {
+                        const fWindow = $(".gjs-frame")[0].contentWindow;
+                        let attr = component.getAttributes();
+                        fWindow.$(`#${component.getId()}`).data({
+                            "prevdirid": attr["data-prevdirid"],
+                            "maxlen": attr["data-maxlen"]
+                        });
+                        fWindow.DirectoryGetDataInit();
+                    }, 200);
+                });
+            }
         },
     });
-
+    //目錄內容
     editor.DomComponents.addType('目錄內容', {
         isComponent: el => el.parentElement.classList?.contains('menu_directory') || el.classList?.contains('catalog'),
         model: {
@@ -454,11 +538,10 @@
             }
         },
     });
-
+    //輪播容器
     editor.DomComponents.addType('輪播容器', {
         isComponent: el => el.classList?.contains('image_link_slide'),
     });
-
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {
         $(categories.models).each(function (index, category) {
@@ -478,42 +561,6 @@
             blockControl();
         }
     }, 500);
-
-    /*元件浮動控制項*/
-    var linkCommandId = function () {
-        myModal.show();
-    }; // Id to use to create the button and anchor tag editor command
-    var toolbarIcon = '<i class="fa fa-star"></i>'; // Icon used in the component toolbar
-    var setType = "default";
-    var linkType = editor.DomComponents.getType(setType);
-    var linkTypeModel = editor.DomComponents.getType(setType).model;
-    editor.DomComponents.addType(setType, {
-        model: {
-            initToolbar() {
-                linkTypeModel.prototype.initToolbar.apply(this, arguments);
-                const tb = this.get('toolbar');
-                const tbExists = tb.some(item => item.command === linkCommandId);
-                // Add link icon in case user click on anchor tag
-                if (!tbExists) {
-                    tb.unshift({
-                        command: linkCommandId,
-                        label: toolbarIcon,
-                    });
-                    this.set('toolbar', tb);
-                }
-            }
-        },
-        // Double click on link open link editor
-        view: linkType.view.extend({
-            events: {
-                "dblclick": "editLink"
-            },
-            editLink: function (e) {
-                e.stopImmediatePropagation(); // prevent the RTE from opening
-                editor.runCommand(linkCommandId, {});
-            }
-        })
-    });
 
     //載入儲存的元件
     settings.getComponer().done(function (result) {
@@ -881,6 +928,7 @@
     });
 
     // 挪動事件監聽
+
     editor.on('component:drag:end', (obj) => {
         const classList = obj.target.getClasses();
         const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;

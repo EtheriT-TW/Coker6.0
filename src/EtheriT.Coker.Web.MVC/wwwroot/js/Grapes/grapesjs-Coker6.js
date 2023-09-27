@@ -31,6 +31,8 @@
             CKEDITOR.dtd.$editable.li = 1;
             CKEDITOR.dtd.$editable.strong = 1;
             CKEDITOR.dtd.$editable.div = 1;
+            CKEDITOR.dtd.$removeEmpty.span = 0;
+            CKEDITOR.dtd.$removeEmpty.i = 0;
         }
     }, 200);
     editor.on("run:modal-open:modalckeditor", function () {
@@ -294,11 +296,16 @@
                 copyable: false
             },
             init() {
-                const ccid = this.ccid;
+                const self = this;
+                const ccid = self.ccid;
                 const c = $(".gjs-frame")[0].contentWindow.$;
+
                 window.setTimeout(function () {
-                    c(`#${ccid} a`).attr({ "href": `#${ccid}_content`, "Title": "展開QA" });
-                    c(`#${ccid} .collapse`).attr("id", `${ccid}_content`);
+                    const a = self.find("a.btn")[0];
+                    const collapse = self.find(".collapse")[0];
+                    a.addAttributes({ "href": `#${ccid}_content`, "Title": "展開QA" })
+                    collapse.addAttributes({ "id": `${ccid}_content`});
+                    c(`#${ccid} a`).attr({ "data-bs-toggle": `` });
                 }, 200)
             }
         },

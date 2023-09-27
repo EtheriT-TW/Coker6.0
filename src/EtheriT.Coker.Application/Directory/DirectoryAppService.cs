@@ -166,7 +166,7 @@ namespace EtheriT.Coker.Application.Directory
             {
                 var tags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => dto.Ids.Contains(e.FK_AId))
-                    .Where(e=> !e.IsDeleted)
+                    .Where(e => !e.IsDeleted)
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
                     .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
                     .ToListAsync();
@@ -198,23 +198,23 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                         case DirectoryTypeEnum.文章:
                             var FKTIds = tags.Select(e => e.FK_TId).ToList();
-							var db_as = await db.Tag_Associates
+                            var db_as = await db.Tag_Associates
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
                                     .Where(e => FKTIds.Contains(e.FK_TId))
                                     .ToListAsync();
-							if (db_as != null)
-							{
-								var allIds = db_as.Select(e => e.FK_AId).ToList();
-								DataIds = db.Article
-									.Where(e => allIds.Contains(e.Id))
-									.Where(e => !e.IsDeleted)
-                                    .Where (e => e.Visible)
-                                    .Where(e => e.FK_WebsiteId== WebsiteID)
-									.Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
-									.Select(e => e.Id).ToList();
-							}
-							break;
+                            if (db_as != null)
+                            {
+                                var allIds = db_as.Select(e => e.FK_AId).ToList();
+                                DataIds = db.Article
+                                    .Where(e => allIds.Contains(e.Id))
+                                    .Where(e => !e.IsDeleted)
+                                    .Where(e => e.Visible)
+                                    .Where(e => e.FK_WebsiteId == WebsiteID)
+                                    .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
+                                    .Select(e => e.Id).ToList();
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -222,7 +222,7 @@ namespace EtheriT.Coker.Application.Directory
                     var page = (int)dto.Page;
                     var shownum = (int)dto.ShowNum;
                     if (dto.MaxLen == null) dto.MaxLen = 0;
-                    if (DataIds.Count < dto.MaxLen || dto.MaxLen==0) output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
+                    if (DataIds.Count < dto.MaxLen || dto.MaxLen == 0) output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
                     else output.TotalPage = (int)Math.Ceiling(dto.MaxLen.Value / (double)shownum);
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
@@ -243,7 +243,7 @@ namespace EtheriT.Coker.Application.Directory
                             {
                                 Ids = DataIds,
                                 Page = page,
-                                ShowNum = shownum, 
+                                ShowNum = shownum,
                                 SiteId = WebsiteID,
                                 MaxLen = dto.MaxLen
                             });
@@ -282,7 +282,7 @@ namespace EtheriT.Coker.Application.Directory
                 if (result != null)
                 {
                     var dataQuery = from e in result
-                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID && new List<int> { 1, 2, 3 }.Contains(e.Type)
                                     select new DirectoryGetListDto
                                     {
                                         Id = e.Id,

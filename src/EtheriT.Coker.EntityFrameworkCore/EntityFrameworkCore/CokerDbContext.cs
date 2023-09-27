@@ -55,7 +55,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 		public DbSet<StoreSetGroup> StoreSetGroup { get; set; }
 		public DbSet<StoreSet> StoreSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
-
+        public DbSet<CustSearch> CustSearch { get; set; }
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
@@ -182,9 +182,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<StoreSetGroup>(o => {
                 o.HasMany(f => f.StoreSets).WithOne(u => u.storeSetGroup).HasForeignKey(f => f.FK_StoreSetGroupId);
 			});
+            modelBuilder.Entity<CustSearch>(o => {
+                o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
+            });
 
 
-			base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }
     }

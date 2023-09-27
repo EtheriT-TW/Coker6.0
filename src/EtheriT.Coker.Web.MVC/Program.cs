@@ -39,6 +39,7 @@ using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Common;
 using Microsoft.Extensions.Options;
 using MiniExcelLibs;
+using EtheriT.Coker.Application.Search;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -132,6 +133,9 @@ builder.Services.AddTransient<IObjectTypeAppService, ObjectTypeAppService>();
 builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
 builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
+builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
+
+
 
 //¦h»y¨t
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

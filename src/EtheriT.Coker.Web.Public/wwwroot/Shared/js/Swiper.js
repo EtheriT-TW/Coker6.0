@@ -74,8 +74,8 @@ function SwiperInit(obj) {
                     nextEl: Id + " > .swiper_button_next > button",
                     prevEl: Id + " > .swiper_button_prev > button",
                 }, breakpoints: {
-                    375: {
-                        slidesPerView: 2,
+                    400: {
+                        slidesPerView: 1,
                     }
                 }
             }, obj.autoplay ? {
@@ -105,7 +105,7 @@ function SwiperInit(obj) {
                     prevEl: Id + " > .swiper_button_prev > button",
                 }, breakpoints: {
                     375: {
-                        slidesPerView: 2,
+                        slidesPerView: 1,
                     },
                     576: {
                         slidesPerView: 3,
@@ -137,8 +137,20 @@ function SwiperInit(obj) {
                 navigation: {
                     nextEl: Id + " > .swiper_button_next > button",
                     prevEl: Id + " > .swiper_button_prev > button",
-                },
-                slidesPerView: 6,
+                },breakpoints: {
+                    400: {
+                        slidesPerView: 2,
+                    },
+                    576: {
+                        slidesPerView: 3,
+                    },
+                    769: {
+                        slidesPerView: 4,
+                    },
+                    1024: {
+                        slidesPerView: 6,
+                    }
+                }
             }, obj.autoplay ? {
                 autoplay: {
                     delay: 5000,

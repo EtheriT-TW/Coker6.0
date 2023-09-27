@@ -201,6 +201,7 @@ function DirectoryDataInsert($item, result) {
             var noteDate = new Date(data.nodeDate);
             content.find(".date").text(`${noteDate.getFullYear()}/${noteDate.getMonth() + 1}/${noteDate.getDate()}`);
             content.find(".date-month").text(`${noteDate.getMonth() + 1}月`);
+            content.find(".date-monthyear").text(`${noteDate.getMonth() + 1}/${noteDate.getFullyear()}`);
             if (noteDate.getDate() < 10) {
                 content.find(".date-day").text(`0${noteDate.getDate()}`);
             } else {

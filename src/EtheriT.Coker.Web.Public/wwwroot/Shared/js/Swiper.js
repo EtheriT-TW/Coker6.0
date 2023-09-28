@@ -76,6 +76,9 @@ function SwiperInit(obj) {
                 }, breakpoints: {
                     400: {
                         slidesPerView: 1,
+                    },
+                    1024: {
+                        slidesPerView: 2,
                     }
                 }
             }, obj.autoplay ? {
@@ -138,7 +141,7 @@ function SwiperInit(obj) {
                     nextEl: Id + " > .swiper_button_next > button",
                     prevEl: Id + " > .swiper_button_prev > button",
                 },breakpoints: {
-                    400: {
+                    375: {
                         slidesPerView: 2,
                     },
                     576: {

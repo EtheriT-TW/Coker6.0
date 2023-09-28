@@ -150,6 +150,7 @@ namespace EtheriT.Coker.Application.StoreSet
             var updateItems = await db.StoreSetDetail.Include(e => e.StoreSet)
                 .Where(e => !e.IsDeleted)
                 .Where(e => keys.Contains(e.StoreSet.key))
+                .Where(e => e.FK_WebsiteId == websiteId)
                 .ToListAsync();
             try
             {

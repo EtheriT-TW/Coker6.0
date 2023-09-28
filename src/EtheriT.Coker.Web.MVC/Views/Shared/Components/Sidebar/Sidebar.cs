@@ -210,6 +210,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         }
                     },
                     new JobMenu{
+                        PageName="CustSearch",
+                        Title="搜尋設定",
+                        Controller="SearchManagement",
+                        Action="CustSearch",
+                        Icon="search",
+                    },
+                    new JobMenu{
                         PageName="TypographyTheme",
                         Title="版型主題",
                         Controller="Dashboard",

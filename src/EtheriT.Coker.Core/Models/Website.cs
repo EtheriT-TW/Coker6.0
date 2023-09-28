@@ -32,5 +32,6 @@ namespace EtheriT.Coker.Core.Models
         public List<Article> Articles { get; set; }
         public List<Directory> Directory { get; set; }
         public List<StoreSetDetail> StoreSetDetails { get; set; }
+        public List<CustSearch> CustSearchs { get; set; }
     }
 }

@@ -1,0 +1,152 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Article;
+@using EtheriT.Coker.Application.Shared.Dto.Directory
+@using EtheriT.Coker.Application.Shared.Dto.EnterAd
+@using EtheriT.Coker.Application.Shared.Dto.Search;
+@using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@{
+    ViewData["Title"] = "CustSearch";
+}
+
+<link rel="stylesheet" href="~/css/SearchManagement/CustSearch.min.css" asp-append-version="true" />
+<script src="~/js/SearchManagement/CustSearch.min.js" asp-append-version="true"></script>
+
+<div class="">
+    <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+        <div class="title fw-bold fs-3">自訂搜尋</div>
+    </div>
+
+    <div id="" class="py-2">
+        <div id="DirectoryList" class="card border-0">
+            <div class="card-body position-relative">
+                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+                @(
+                    Html.DevExtreme().DataGrid<CuseSearchListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Search/GetAll").LoadMethod("Get")
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("ID").Visible(false);
+                        c.AddFor(e => e.Title).Caption("標題");
+                        c.AddFor(e => e.SerNO).Caption("排序").Width(80);
+                        c.AddFor(e => e.Visible).Caption("是否顯示").Width(100);
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
+                        {
+                            b.Add().Name("edit").OnClick("editButtonClicked");
+                            b.Add().Name("delete").OnClick("deleteButtonClicked");
+                        });
+                    })
+                    .ColumnAutoWidth(true)
+                    .Paging(paging => paging.PageSize(30))
+                    .Pager(pager =>
+                    {
+                        pager.Visible(true);
+                        pager.ShowPageSizeSelector(true);
+                        pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                        pager.ShowInfo(true);
+                    })
+                    .Editing(editing =>
+                    {
+                        editing.AllowDeleting(true);
+                        editing.AllowUpdating(true);
+                        editing.UseIcons(true);
+                    })
+                    .OnContentReady("contentReady")
+                    )
+            </div>
+        </div>
+
+        <div id="DirectoryContent" class="card border-0 d-none">
+            <div class="card-header d-flex justify-content-between">
+                <div class="fw-bold fs-5 d-flex align-items-center">
+                    <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                        <span class="material-symbols-outlined">
+                            keyboard_backspace
+                        </span>
+                    </button>
+                    <div class="lh-lg">編輯搜尋</div>
+                </div>
+                <div class="d-flex">
+                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 save" form="DirectorytForm">儲　存</button>
+                </div>
+            </div>
+
+            <form id="DirectorytForm" class="card-body needs-validation">
+                <div class="d-flex align-self-center mb-3 justify-content-between">
+                    <input id="Visible" type="checkbox" name="Visible" class="d-none selectedItem visibe" value="true" />
+                    <label for="Visible" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
+                        <span class="material-symbols-outlined fs-2">visibility</span>
+                        <span class="material-symbols-outlined fs-2">visibility_off</span>
+                    </label>
+                </div>
+
+                <div class="title border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0">分類</span>
+                        <div class="count">0</div>
+                    </div>
+                    <textarea class="form-control border-0" aria-label="With textarea" maxlength="60" placeholder="輸入分類名稱"></textarea>
+                </div>
+
+                <div class="description border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0">描述</span>
+                        <div class="count">0</div>
+                    </div>
+                    <textarea class="form-control border-0" name="" aria-label="With textarea" maxlength="150" placeholder="輸入搜尋描述"></textarea>
+                </div>
+                <div class="d-flex align-self-center mb-3 justify-content-between">
+                    <div class="bind_type d-flex w-100">
+                        <label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="BindType">要被搜尋的商品</label>
+                        <div class="tag input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                <span class="material-symbols-outlined me-1">alternate_email</span>標籤
+                            </div>
+                            <input class="form-control rounded text-start InputTag" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
+                        </div>
+                    </div>
+                    <input id="SearchAllArticle" type="checkbox" name="SearchAllProd" class="d-none selectedItem" value="true" />
+                    <label for="SearchAllArticle" class="bg-transparent border-0 d-flex align-self-center noselect" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="搜尋所有商品">
+                        <span class="material-symbols-outlined fs-2">done_all</span>
+                    </label>
+                </div>
+                <div class="d-flex align-self-center mb-3 justify-content-between">
+                    <div class="bind_type d-flex w-100">
+                        <label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="BindType">要被搜尋的文章</label>
+                        <div class="tag input-group">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                <span class="material-symbols-outlined me-1">alternate_email</span>標籤
+                            </div>
+                            <input class="form-control rounded text-start InputTag" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
+                        </div>
+                    </div>
+                    <input id="SearchAllProd" type="checkbox" name="SearchAllProd" class="d-none selectedItem" value="true" />
+                    <label for="SearchAllProd" class="bg-transparent border-0 d-flex align-self-center noselect" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="搜尋所有文章">
+                        <span class="material-symbols-outlined fs-2">done_all</span>
+                    </label>
+                </div>
+                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagSelectModal"})
+                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "WebmenuListModal"})
+            </form>
+        </div>
+    </div>
+</div>

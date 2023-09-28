@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.Search;
 
 namespace EtheriT.Coker.Application
 {
@@ -157,6 +158,9 @@ namespace EtheriT.Coker.Application
             
             CreateMap<StoreSetGroupOutputDto, StoreSetGroup>().ReverseMap();
 
+            //CustSearch
+            CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
+            
             //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
             //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))

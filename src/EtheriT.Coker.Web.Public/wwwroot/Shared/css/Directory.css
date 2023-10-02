@@ -452,7 +452,7 @@
                 color: #fff;
             }
 
-    .e-info .about .card h1 {
+    .e-info .about .card h3 {
         margin-top: 100px;
         font-size: 1rem;
         font-weight: bold;
@@ -465,7 +465,16 @@
         font-size: .8rem;
         text-align: center;
     }
-
+    .e-info .about p {
+        color: #3f3f3f;
+        font-size: 1.1rem;
+    }
+    .e-info .about .w90 {
+        width: 80%;
+    }
+    .e-info .about .about-img img {
+        width: 40%;
+    }
 .e-info .news {
     width: 100%;
     height: 100%;
@@ -479,6 +488,7 @@
         padding: 4px;
         border-radius: 6px;
         margin-left: -60px;
+        box-shadow: 3px 3px 3px #d8d8d883;
     }
 
         .e-info .news .announcement:hover, .e-info .news .announcement:hover .datetype2 {
@@ -508,8 +518,18 @@
 
 .e-info .service {
     background-color: #999999;
+    height: 628px;
+}
+.e-info .resource .mb6 {
+    margin-top: -8%;
+}
+.e-info .resource .catalog {
+    margin-top: 8%;
 }
 
+.e-info .news .w90 {
+    width: 90%;
+}
     .e-info .service .circle-bg {
         background-color: #fff;
         border-radius: 50%;
@@ -524,11 +544,14 @@
 
     .e-info .service .service-size {
         width: 90%;
+        padding-right: 12.5px;
     }
 
     .e-info .service .circle-column {
         flex-direction: column;
         padding-left: 12.5px;
+        margin: 0px 7.5px;
+        padding-left: 0px ;
     }
 
         .e-info .service .circle-column p {
@@ -593,7 +616,7 @@
             height: 200px;
         }
 
-        .e-info .resource .card h1 {
+        .e-info .resource .card h3 {
             font-size: 20px;
             font-weight: bold;
             text-align: justify;
@@ -669,7 +692,7 @@
     }
 
     .e-info .hot-activity .title {
-        font-size: 18px;
+        font-size: 1.3rem;
         text-align: justify;
     }
 
@@ -685,7 +708,9 @@
         border-radius: 25px;
         font-weight: bold;
     }
-
+.e-info .w40 {
+    width: 40%;
+}
 .e-info-footer {
     width: 100%;
     height: 70px;
@@ -708,7 +733,18 @@
 
 @media (max-width: 1000px) {
     .e-info .about {
-        flex-direction:column;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+        .e-info .about p {
+            color: #3f3f3f;
+            font-size: 1.1rem;
+            padding: 1rem;
+        }
+    .e-info .hot-activity .col-md-7, .e-info .hot-activity .col-md-3 {
+        padding: 1rem;
     }
     .e-info .about .col-5 {
         width: 100%;
@@ -750,13 +786,13 @@
     .e-info .about .card-circle {
         width: 115px;
         height: 115px;
-        margin-top: -250px;
+        margin-top: -225px;
     }
 
     .e-info .about .card-circle-img {
         width: 110px;
         height: 110px;
-        margin-top: -250px;
+        margin-top: -225px;
     }
 
     .e-info .about .card img {
@@ -769,7 +805,7 @@
         height: 190px;
     }
 
-    .e-info .about .card h1 {
+    .e-info .about .card h3 {
         font-size: 12px;
         margin: 0;
     }
@@ -789,17 +825,17 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        box-shadow: 3px 3px 3px #d8d8d883;
     }
 
     .e-info .news .datetype1 {
         text-align: center;
     }
-
-    .e-info .news .announcement .w90 {
+    .e-info .news .w90 {
         width: 90%;
     }
 
-    .e-info .news .announcement .w10 {
+    .e-info .news .w10 {
         width: 10%;
     }
 

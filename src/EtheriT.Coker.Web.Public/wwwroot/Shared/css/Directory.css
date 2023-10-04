@@ -731,6 +731,223 @@
         margin-left: 2rem;
     }
 
+.eplus .eplus-title {
+    background: #0d7f87;
+}
+
+    .eplus .eplus-title .nav-item .nav-link {
+        color: #fff;
+    }
+
+        .eplus .eplus-title .nav-item .nav-link:hover {
+            color: #fff;
+            font-weight: bold;
+        }
+
+.eplus .story .title-bg {
+    position: relative;
+}
+
+.eplus .story .title-content {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 60px;
+    background: rgba(40, 40, 40, 0.5);
+    z-index: 3;
+    color: #fff;
+    font-size: 2rem;
+}
+
+.eplus .story .more {
+    width: 150px;
+    height: auto;
+    padding: 3px;
+    margin: 10px 0;
+    background: #fff;
+    color: #2959b4;
+    border-radius: 20px;
+}
+
+.eplus .news {
+    background: rgba(234,234,234,1);
+}
+
+    .eplus .news ul {
+        list-style-type: square;
+    }
+
+        .eplus .news ul li {
+            text-align: start;
+            padding: 5px;
+        }
+
+            .eplus .news ul li:hover {
+                color: #206dac;
+                font-weight: bold;
+                border: 2px solid #206dac;
+            }
+
+.eplus .featured .card {
+    border-radius: 20px;
+    flex-direction: column;
+}
+
+    .eplus .featured .card:hover {
+        background: #e4edf4;
+    }
+
+.eplus .featured .line {
+    width: 90%;
+    height: 1px;
+    background: lightgray;
+}
+
+.eplus .featured .title {
+    height: 90px;
+    overflow: hidden;
+}
+
+.eplus .featured .date {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #4f4f4f;
+    height: 80px;
+}
+
+.eplus .featured .location {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    padding: 10px 0;
+    background: #688cef;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.eplus .featured a:hover {
+    text-decoration: none;
+    color: #000;
+}
+
+.eplus .featured .fas {
+    padding-right: 5px;
+}
+
+.eplus .support .col-md-5 {
+    flex-direction: column;
+}
+
+.eplus .support .text-justify {
+    text-align: justify;
+    font-size: 1.5rem;
+}
+
+.eplus .support .resource .card {
+    height: 300px;
+    background: #f7f7eb;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius:0px;
+    border: none;
+}
+
+.eplus .support .resource .poster {
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+    position: relative;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+.eplus .support .resource .card-title {
+    height: 69%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #222222;
+}
+
+.eplus .support .resource .card-text {
+    height: 24%;
+    display: flex;
+    justify-content: center;
+    color: #4c4c4c;
+}
+
+.eplus .support .resource .p3 {
+    padding: 1rem 1rem 0 1rem;
+}
+
+.eplus .support .resource .card:hover .poster-text {
+    bottom: 0;
+}
+
+.eplus .support .resource .top {
+    position: absolute;
+    bottom: 6.5%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 7.5px solid transparent;
+    border-right: 7.5px solid transparent;
+    border-bottom: 10px solid rgba(58, 94, 171, 0.9);
+    width: 0;
+    height: 0;
+}
+
+.eplus .support .resource .poster-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    background: rgba(58, 94, 171, 0.9);
+    bottom: -90%;
+    width: 95%;
+    height: 96.5%;
+    color: #fff;
+    transition: .3s linear;
+    z-index: 2;
+    overflow: hidden;
+    padding: 1rem;
+    text-align: justify;
+    flex-direction: column;
+}
+
+    .eplus .support .resource .poster-text p {
+        height: 85%;
+    }
+
+.eplus .support .resource .more {
+    width: 50%;
+    height: 15%;
+    background: #749fe2;
+    border-radius: 20px;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.eplus .footer .fas {
+    margin: 10px;
+    color: #fff;
+    font-size: 2.2rem;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 @media (max-width: 1000px) {
     .e-info .about {
         display: flex;
@@ -750,61 +967,49 @@
         width: 100%;
         padding: 1rem 0;
     }
-
-        .e-info .about .col-6 {
-            width: 100%;
-        }
-
-            .e-info .about .col-6 p {
-                padding: 1rem 2rem;
-            }
-
-        .e-info .about .card-t {
-            margin-top: 70px;
-        }
-
+    .e-info .about .col-6 {
+        width: 100%;
+    }
+    .e-info .about .col-6 p {
+        padding: 1rem 2rem;
+    }
+    .e-info .about .card-t {
+        margin-top: 70px;
+    }
     #iivu {
         background: #fff;
     }
-
     .e-info .about .about-img {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
-
-        .e-info .about .about-img img {
-            max-width: 70%;
-        }
-
+    .e-info .about .about-img img {
+        max-width: 70%;
+    }
     .e-info .about .card {
         width: 100px;
         height: 190px;
         border: 4px solid #8766ac;
     }
-
     .e-info .about .card-circle {
         width: 115px;
         height: 115px;
         margin-top: -225px;
     }
-
     .e-info .about .card-circle-img {
         width: 110px;
         height: 110px;
         margin-top: -225px;
     }
-
     .e-info .about .card img {
         width: 110px;
         height: 110px;
     }
-
     .e-info .about .describe {
         margin-top: 40px;
         height: 190px;
     }
-
     .e-info .about .card h3 {
         font-size: 12px;
         margin: 0;
@@ -903,7 +1108,6 @@
     .e-info .hot-activity {
         flex-direction: column;
     }
-
         .e-info .hot-activity .col-4 {
             width: 60%;
         }
@@ -927,8 +1131,7 @@
         justify-content: center;
         align-items: center;
     }
-
-        .e-info .news img {
+    .e-info .news img {
             width: 85%;
         }
 

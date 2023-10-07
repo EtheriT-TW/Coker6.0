@@ -485,7 +485,6 @@
         background: #fff;
         width: 95%;
         height: auto;
-        padding: 4px;
         border-radius: 6px;
         margin-left: -60px;
         box-shadow: 3px 3px 3px #d8d8d883;
@@ -762,39 +761,56 @@
 }
 
 .eplus .story .more {
-    width: 150px;
+    width: 180px;
     height: auto;
-    padding: 3px;
-    margin: 10px 0;
+    padding: 4px;
+    margin: 1.5rem 0 2rem 0;
     background: #fff;
     color: #2959b4;
     border-radius: 20px;
 }
-
-.eplus .news {
-    background: rgba(234,234,234,1);
-}
-
-    .eplus .news ul {
-        list-style-type: square;
+    .eplus .story .more:hover {
+        border: 1px solid #fff;
+        background: none;
+        color: #fff;
     }
 
-        .eplus .news ul li {
-            text-align: start;
-            padding: 5px;
-        }
+.eplus .story .p5 {
+    padding: 5rem !important;
+}
+.eplus .news {
+    background: rgba(234,234,234,1);
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+    .eplus .news .row {
+        display: flex;
+    }
+    .eplus .news li {
+        list-style-type: square;
+        text-align: start;
+        padding: 5px 8px;
+        margin: 0.8rem 0;
+    }
 
-            .eplus .news ul li:hover {
-                color: #206dac;
-                font-weight: bold;
-                border: 2px solid #206dac;
-            }
+        .eplus .news li:hover {
+            color: #206dac ;
+            font-weight: bold ;
+            border: 2px solid #206dac ;
+        }
 
 .eplus .featured .card {
     border-radius: 20px;
     flex-direction: column;
-}
 
+}
+.eplus .featured .card-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
     .eplus .featured .card:hover {
         background: #e4edf4;
     }
@@ -846,6 +862,9 @@
     font-size: 1.5rem;
 }
 
+.eplus .support .column {
+    display: flex;
+}
 .eplus .support .resource .card {
     height: 300px;
     background: #f7f7eb;
@@ -853,7 +872,7 @@
     width: 100%;
     position: relative;
     overflow: hidden;
-    border-radius:0px;
+    border-radius: none;
     border: none;
 }
 
@@ -873,6 +892,7 @@
     justify-content: center;
     align-items: center;
     color: #222222;
+    font-size: 1.25rem;
 }
 
 .eplus .support .resource .card-text {
@@ -1082,7 +1102,7 @@
       margin-top:2rem;
     }
     .e-info .hot-activity .card{
-      width:100%;
+      width:90%;
       height:350px;
     }
     .e-info .hot-activity .more{
@@ -1134,8 +1154,28 @@
     .e-info .news img {
             width: 85%;
         }
+    .eplus .featured .mt-5 {
+        margin: 0 !important;
+    }
+
+    .eplus .navbar .justify-content-end {
+        justify-content: center !important;
+    }
+
+    .eplus .navbar .px-5 {
+        padding: 0px !important;
+    }
 
    
+}
+@media (max-width: 768px) {
+    .gjs-row {
+        flex-wrap: wrap;
+    }
+
+    .eplus .story .p5 {
+        padding: 2rem !important;
+    }
 }
 @media only screen and (max-width: 576px) {
     .type_change_frame > .catalog .title {
@@ -1148,5 +1188,45 @@
         font-size: 0.8rem !important;
         line-height: 1rem;
         max-height: 2rem;
+    }
+    .eplus .story .p5 {
+        padding: 0rem !important;
+    }
+
+    .eplus .story {
+        padding: 0rem !important;
+    }
+    .eplus .support .p-4 {
+        padding: 0 !important;
+    }
+
+    .eplus .support .column {
+        flex-direction: column;
+    }
+
+    .eplus .support .p1 {
+        padding: 1rem;
+    }
+
+    .eplus .support .w50 .row > * {
+        width: 50% !important;
+    }
+
+    .sx {
+        flex: 0 0 auto;
+        width: 50% !important;
+    }
+
+    .eplus .featured .date {
+        font-size: 1.2rem !important;
+    }
+
+    .eplus .support .resource .card-title {
+        height: 40% !important;
+        font-size: 1rem;
+    }
+
+    .eplus .news {
+        height: 550px;
     }
 }

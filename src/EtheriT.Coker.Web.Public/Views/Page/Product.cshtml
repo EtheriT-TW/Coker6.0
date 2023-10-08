@@ -1,4 +1,14 @@
 ﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@model PageViewModel
+@{
+	ViewData["SideName"] = Model.PageData.SiteName;
+	ViewData["PageName"] = Model.PageData.Title;
+	ViewData["OrgName"] = Model.orgName;
+	ViewData["Description"] = Model.PageData.Description;
+	ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+}
 
 <link rel="stylesheet" href="~/css/Page/Product.css" asp-append-version="true" />
 <script src="~/js/Page/Product.js" asp-append-version="true"></script>

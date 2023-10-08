@@ -79,17 +79,29 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
             };
             string view;
+            if (key == "article" && int.TryParse(option,out id))
+            {
+                option = key;
+            }
             if (!string.IsNullOrEmpty(key))
             {
                 switch (option)
                 {
                     case "article":
-                        model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                        model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                        var PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                        model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
-
+                        if (key == "article") {
+                            model.PageData.VisibleHeader = true;
+                            model.PageData.VisibleFooter = true;
+                        }
+                        else
+                        {
+                            model.PageData.VisibleHeader = PageData.VisibleHeader;
+                            model.PageData.VisibleFooter = PageData.VisibleFooter;
+                        }
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {

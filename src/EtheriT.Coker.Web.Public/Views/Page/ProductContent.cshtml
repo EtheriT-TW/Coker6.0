@@ -1,5 +1,15 @@
 ﻿@using System.Web;
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+@model PageViewModel
+@{
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = Model.PageData.Title;
+    ViewData["OrgName"] = Model.orgName;
+    ViewData["Description"] = Model.PageData.Description;
+    ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+}
 <link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Page/ProductContent.min.js" asp-append-version="true"></script>

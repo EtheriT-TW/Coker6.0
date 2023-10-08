@@ -158,7 +158,9 @@ namespace EtheriT.Coker.Application.Directory
         {
             var DataIds = new List<long>();
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
-            var output = new DirectoryReleInfoGetDto();
+			List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+			siteIds.Add(WebsiteID);
+			var output = new DirectoryReleInfoGetDto();
 
             var db_d = db.Directory.Where(e => e.Id == dto.Ids[0] && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
 
@@ -168,7 +170,7 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => dto.Ids.Contains(e.FK_AId))
                     .Where(e => !e.IsDeleted)
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
-                    .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
+                    .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
 
                 if (tags != null)
@@ -210,7 +212,7 @@ namespace EtheriT.Coker.Application.Directory
                                     .Where(e => allIds.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.Visible)
-                                    .Where(e => e.FK_WebsiteId == WebsiteID)
+                                    .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
                                     .Select(e => e.Id).ToList();
                             }

@@ -176,14 +176,19 @@ namespace EtheriT.Coker.Application.Tag
             try
             {
                 long webid = await loginUserData.GetWebsiteId();
+                List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == webid).Where(e => !e.IsDeleted).Select( e=> e.Id).ToListAsync();
+                siteIds.Add(webid);
 
-                var dataQuery = from t in db.Tags
-                                where !t.IsDeleted && t.FK_WebsiteId == webid
-                                select new TagGetAllListDto
+				var dataQuery = from t in db.Tags
+                                join s in db.Websites on t.FK_WebsiteId equals s.Id
+                                where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
+                                orderby t.FK_WebsiteId
+								select new TagGetAllListDto
                                 {
                                     Id = t.Id,
                                     Title = t.Title,
-                                };
+									SiteNameTitle = s.Title
+								};
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -300,11 +305,13 @@ namespace EtheriT.Coker.Application.Tag
                 {
                     WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 }
+				List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+				siteIds.Add(WebsiteID);
 
-                var output = from ta in db.Tag_Associates
+				var output = from ta in db.Tag_Associates
                              where ta.FK_AId == dto.Fk_Aid && ta.Type == dto.Type && !ta.IsDeleted
                              join t in db.Tags on ta.FK_TId equals t.Id
-                             where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
+                             where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
                              select new TagGetSelectedDto
                              {
                                  Id = ta.Id,

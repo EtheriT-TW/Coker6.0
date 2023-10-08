@@ -65,18 +65,35 @@
                             </div>
                             <input type="hidden" name="icon" class="item-menu">
                         </div>
-                        <div class="form-group form-check">
-                            <label for="pageType" class="form-label">頁面類型</label>
-                            <select name="pageType" id="pageType" class="form-select item-menu"></select>
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-around align-item-center my-3">
+                                <div class="col-4 form-group form-check px-1">
+                                    <label for="pageType" class="form-label">頁面類型</label>
+                                    <select name="pageType" id="pageType" class="form-select item-menu"></select>
+                                </div>
+                                <div class="col-4 form-group form-check px-1">
+                                    <label for="visibleHeader">顯示版頭</label>
+                                    <select name="visibleHeader" id="visibleHeader" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
+                                <div class="col-4 form-group form-check pl-1">
+                                    <label for="visibleFooter">顯示頁尾</label>
+                                    <select name="visibleFooter" id="visibleFooter" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div id="RouterNameBlock" class="form-floating mb-3">
-                            <input type="text" class="form-control item-menu" id="routerName" name="routerName" placeholder="請輸入路徑名稱" required>
-                            <label for="RouterName" class="form-label">*路徑名稱*</label>
-                            <div class="invalid-feedback">路徑名稱為必填</div>
+                            <input type="text" class="form-control item-menu" id="routerName" name="routerName" placeholder="請輸入路徑名稱">
+                            <label for="RouterName" class="form-label">*路徑名稱*※連結僅能擇一</label>
                         </div>
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control item-menu" id="linkUrl" name="linkUrl" placeholder="請輸入連結">
-                            <label for="linkUrl">連結</label>
+                            <label for="linkUrl">連結※路徑名稱僅能擇一</label>
                         </div>
                         <div class="row mx-0">
                             <div class="col-12 col-md-5 px-0 border1 p-2">

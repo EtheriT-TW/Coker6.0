@@ -214,13 +214,16 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
+                List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID || e.Id == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+                var sites = await db.Websites.Where(e => siteIds.Contains(e.Id)).Where(e => !e.IsDeleted).ToListAsync();
+
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleGetDataDto>();
 
                 var result = await db.Article
                                     .Where(e => dto.Ids.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
-                                    .Where(e => e.FK_WebsiteId == WebsiteID)
+                                    .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
 									.OrderByDescending(a => a.NodeDate)
@@ -244,13 +247,18 @@ namespace EtheriT.Coker.Application.Article
                         });
 
                         var output_data = new DirectoryReleInfoDto();
-                        output_data.type = DirectoryTypeEnum.文章;
-                        output_data = mapper.Map(data, output_data);
-                        output_data.Link = $"/article/{data.Id}";
-                        output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
-                        output_data.NodeDate = data.NodeDate;
+                        var website = sites.Find(e => e.Id == data.FK_WebsiteId);
+                        if (website != null)
+                        {
+                            output_data.type = DirectoryTypeEnum.文章;
+                            output_data = mapper.Map(data, output_data);
+                            output_data.Link = $"/article/{data.Id}";
+                            output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+                            output_data.NodeDate = data.NodeDate;
+                            output_data.OrgName = website.OrgName;
 
-                        output.Add(output_data);
+                            output.Add(output_data);
+                        }
                     }
                 }
 

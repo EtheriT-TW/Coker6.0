@@ -40,6 +40,8 @@ namespace EtheriT.Coker.Core.Models
         public long? FK_TopNodeId { get; set; }
         public long? FK_RootNodeId { get; set; }
         public long FK_WebsiteId { get; set; }
+        public bool VisibleHeader { get; set; }
+        public bool VisibleFooter { get; set; }
         public WebMenu? FK_TopNode { get; set; }
         public WebMenu? FK_RootNode { get; set; }
         public List<WebMenu>? FK_ChildNodes { get; set; }

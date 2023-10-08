@@ -1396,15 +1396,19 @@ function MenuEditor(idSelector, options) {
         if ($cEl===null){
             return;
         }
-        var oldIcon = $cEl.data('icon');
-        $form.find('.item-menu').each(function() {
-            $cEl.data($(this).attr('name'), $(this).val());
-        });
-        $cEl.data('text', $cEl.data('title'));
-        $cEl.children().children('i').removeClass(oldIcon).addClass($cEl.data('icon'));
-        $cEl.find('span.txt').first().text($cEl.data('text'));
-        !!settings.on.update && settings.on.update($cEl.data());
-        resetForm();
+        if (!$form[0].checkValidity()) {
+            $form.addClass("was-validated");
+        } else {
+            var oldIcon = $cEl.data('icon');
+            $form.find('.item-menu').each(function () {
+                $cEl.data($(this).attr('name'), $(this).val());
+            });
+            $cEl.data('text', $cEl.data('title'));
+            $cEl.children().children('i').removeClass(oldIcon).addClass($cEl.data('icon'));
+            $cEl.find('span.txt').first().text($cEl.data('text'));
+            !!settings.on.update && settings.on.update($cEl.data());
+        }
+        //resetForm();
     };
    
     self.add = function(){

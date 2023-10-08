@@ -409,6 +409,8 @@ namespace EtheriT.Coker.Application
                         result.LastModificationTime = null;
                         result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                         result.CurrentUrl = $"/{menu.RouterName}";
+                        result.VisibleFooter = menu.VisibleFooter;
+                        result.VisibleHeader = menu.VisibleHeader;
                     }
                 }
             }

@@ -77,8 +77,8 @@ function ready() {
     $.cookie('Member_Name', "會員一", { path: '/' });
 
     typeof (PageReady) === "function" && PageReady();
-    HeaderInit();
-    FooterInit();
+    typeof (HeaderInit) === "function" &&HeaderInit();
+    typeof (FooterInit) === "function" &&FooterInit();
     SideFloatingInit();
 
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");

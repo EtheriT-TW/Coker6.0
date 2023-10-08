@@ -30,7 +30,8 @@
     <meta property="og:description" content="@ViewData["Description"]" />
     <meta property="og:locale" content="zh-tw" />
     <style id="frameCss"></style>
-    @if (ViewData["GA4"]!=null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? "")) {
+    @if (ViewData["GA4"] != null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? ""))
+    {
         <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewData["GA4"]"></script>
         <script>
@@ -46,9 +47,22 @@
     <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="跳到主要內容區塊">
         <span title="跳到主要內容區塊">跳到主要內容區塊</span>
     </a>
-    <header class="">
-        @await Component.InvokeAsync(nameof(Header))
-    </header>
+    @{
+        if (ViewData["VisibleHeader"]==null)
+        {
+            ViewData["VisibleHeader"] = "true";
+        }
+        if (ViewData["VisibleFooter"]==null)
+        {
+            ViewData["VisibleFooter"] = "true";
+        }
+    }
+    @if (bool.Parse(ViewData["VisibleHeader"].ToString()))
+    {
+        <header class="">
+            @await Component.InvokeAsync(nameof(Header))
+        </header>
+    }
     <noscript>
         <p id="noscript">
             <span>你的瀏覽器並未啟動 Javascript!</span><br />
@@ -59,10 +73,12 @@
         <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="中間區域">:::</a>
         @RenderBody()
     </div>
-    <footer>
-        @await Component.InvokeAsync(nameof(Footer))
-    </footer>
-
+    @if (bool.Parse(ViewData["VisibleFooter"].ToString()))
+    {
+        <footer>
+            @await Component.InvokeAsync(nameof(Footer))
+        </footer>
+    }
     <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered justify-content-center">
             <div class="modal-content">

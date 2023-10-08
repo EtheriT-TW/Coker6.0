@@ -98,7 +98,8 @@ var grapesInit = function (options) {
                     extraAllowedContent: '*(*);*{*}', // Allows any class and any inline style
                     allowedContent: true, // Disable auto-formatting, class removing, etc.
                     enterMode: 2, // CKEDITOR.ENTER_BR,
-                    extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font,',
+                    extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font',
+                    removePlugins:'exportpdf',
                     fontSize_sizes: '0.8rem;1rem;1.2rem;1.5rem;2rem;2.5rem;3rem;',
                     colorButton_enableMore: true,
                     toolbar: [

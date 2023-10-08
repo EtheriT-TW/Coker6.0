@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? Title { get; set; }
 
         public string? Description { get; set; }
+        public string? OrgName { get; set; }
 
     }
 }

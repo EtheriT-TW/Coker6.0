@@ -31,6 +31,8 @@ namespace EtheriT.Coker.Application.Dto
         public string? LinkUrl { get; set; }
         public bool? Target { get; set; }
         public bool LanBar { get; set; }
+        public bool VisibleHeader { get; set; }
+        public bool VisibleFooter { get; set; }
         public long? FK_TopNodeId { get; set; }
         public long? FK_RootNodeId { get; set; }
         public List<MenuItemDto>? Children { get; set; }

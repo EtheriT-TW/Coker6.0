@@ -5,8 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Views\UserManagement\**" />
+    <Content Remove="Views\UserManagement\**" />
+    <EmbeddedResource Remove="Views\UserManagement\**" />
+    <None Remove="Views\UserManagement\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Resources\" />
-    <Folder Include="Views\UserManagement\" />
     <Folder Include="wwwroot\css\Dashboard\" />
     <Folder Include="wwwroot\lib\fortawesome\css\" />
     <Folder Include="wwwroot\lib\jquery-menu-editor\" />

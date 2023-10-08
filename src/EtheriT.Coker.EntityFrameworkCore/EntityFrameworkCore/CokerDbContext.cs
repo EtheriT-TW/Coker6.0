@@ -79,6 +79,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Website).WithMany(u => u.WebMenus).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(t => t.FK_TopNode).WithMany(u => u.FK_ChildNodes).HasForeignKey(f => f.FK_TopNodeId).IsRequired(false);
+                o.Property(m => m.VisibleHeader).HasDefaultValue(true);
+                o.Property(m => m.VisibleFooter).HasDefaultValue(true);
             });
             modelBuilder.Entity<Order_Details>(o =>
             {

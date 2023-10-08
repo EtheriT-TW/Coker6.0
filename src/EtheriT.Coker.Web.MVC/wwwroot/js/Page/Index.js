@@ -162,117 +162,125 @@
                     });
                 },
                 update: function (data) {
-                    co.WebMesnus.createOrEdit(data).done(function (result) {
-                        if (!result.success) co.sweet.error(result.error);
-                        else {
-                            var iconimg_success = 0, img_success = 0, overimg_success = 0, deliconimg_success = 0, delimg_success = 0, deloverimg_success = 0;
+                    let check = false;
+                    let massage = "";
+                    if (data.linkUrl == "" && data.routerName == "") {
+                        massage = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>必須</span>填寫其中之一";
+                    } else if (data.linkUrl != "" && data.routerName != "") {
+                        massage = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>僅能</span>填寫其中之一";
+                    } else check = true;
+                    if (check) {
+                        co.WebMesnus.createOrEdit(data).done(function (result) {
+                            if (!result.success) co.sweet.error(result.error);
+                            else {
+                                var iconimg_success = 0, img_success = 0, overimg_success = 0, deliconimg_success = 0, delimg_success = 0, deloverimg_success = 0;
 
-                            var $icon_del_list = $("#IconImageUpload .img_input_frame").data("delectList");
-                            if ($icon_del_list != null) {
-                                co.File.DeleteFileById({
-                                    sid: data.id,
-                                    type: 9,
-                                    fid: $icon_del_list,
-                                }).done(function (result) {
-                                    if (result.success) deliconimg_success = 1
-                                    else deliconimg_success = -1
-                                    data.IconUrl = "";
-                                    data.IconId = "";
-                                });
-                            } else deliconimg_success = 1
+                                var $icon_del_list = $("#IconImageUpload .img_input_frame").data("delectList");
+                                if ($icon_del_list != null) {
+                                    co.File.DeleteFileById({
+                                        sid: data.id,
+                                        type: 9,
+                                        fid: $icon_del_list,
+                                    }).done(function (result) {
+                                        if (result.success) deliconimg_success = 1
+                                        else deliconimg_success = -1
+                                        data.IconUrl = "";
+                                        data.IconId = "";
+                                    });
+                                } else deliconimg_success = 1
 
-                            var $del_list = $("#ImageUpload .img_input_frame").data("delectList");
-                            if ($del_list != null) {
-                                co.File.DeleteFileById({
-                                    sid: data.id,
-                                    type: 2,
-                                    fid: $del_list,
-                                }).done(function (result) {
-                                    if (result.success) delimg_success = 1
-                                    else delimg_success = -1
-                                });
-                            } else delimg_success = 1
+                                var $del_list = $("#ImageUpload .img_input_frame").data("delectList");
+                                if ($del_list != null) {
+                                    co.File.DeleteFileById({
+                                        sid: data.id,
+                                        type: 2,
+                                        fid: $del_list,
+                                    }).done(function (result) {
+                                        if (result.success) delimg_success = 1
+                                        else delimg_success = -1
+                                    });
+                                } else delimg_success = 1
 
-                            var $over_del_list = $("#OverImageUpload .img_input_frame").data("delectList");
-                            if ($over_del_list != null) {
-                                co.File.DeleteFileById({
-                                    sid: data.id,
-                                    type: 3,
-                                    fid: $over_del_list,
-                                }).done(function (result) {
-                                    if (result.success) deloverimg_success = 1
-                                    else deloverimg_success = -1
-                                });
-                            } else deloverimg_success = 1
-                            const del_timmer = function () {
-                                if (deliconimg_success != 0 && delimg_success != 0 && deloverimg_success != 0) {
-                                    if (deliconimg_success == 1) {
-                                        var $file = $("#IconImageUpload .img_input_frame > .img_input");
-                                        if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
-                                            var formData = new FormData();
-                                            formData.append("files", $file.data("file").File);
-                                            formData.append("type", 9);
-                                            formData.append("sid", data.id);
-                                            formData.append("serno", 500);
-                                            co.File.Upload(formData).done(function (result) {
-                                                if (result.success) iconimg_success = 1;
-                                                else iconimg_success = -1;
-                                            });
-                                        } else iconimg_success = 1;
-                                    } else iconimg_success = -1;
+                                var $over_del_list = $("#OverImageUpload .img_input_frame").data("delectList");
+                                if ($over_del_list != null) {
+                                    co.File.DeleteFileById({
+                                        sid: data.id,
+                                        type: 3,
+                                        fid: $over_del_list,
+                                    }).done(function (result) {
+                                        if (result.success) deloverimg_success = 1
+                                        else deloverimg_success = -1
+                                    });
+                                } else deloverimg_success = 1
+                                const del_timmer = function () {
+                                    if (deliconimg_success != 0 && delimg_success != 0 && deloverimg_success != 0) {
+                                        if (deliconimg_success == 1) {
+                                            var $file = $("#IconImageUpload .img_input_frame > .img_input");
+                                            if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
+                                                var formData = new FormData();
+                                                formData.append("files", $file.data("file").File);
+                                                formData.append("type", 9);
+                                                formData.append("sid", data.id);
+                                                formData.append("serno", 500);
+                                                co.File.Upload(formData).done(function (result) {
+                                                    if (result.success) iconimg_success = 1;
+                                                    else iconimg_success = -1;
+                                                });
+                                            } else iconimg_success = 1;
+                                        } else iconimg_success = -1;
 
-                                    if (delimg_success == 1) {
-                                        var $file = $("#ImageUpload .img_input_frame > .img_input");
-                                        if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
-                                            var formData = new FormData();
-                                            formData.append("files", $file.data("file").File);
-                                            formData.append("type", 2);
-                                            formData.append("sid", data.id);
-                                            formData.append("serno", 500);
-                                            co.File.Upload(formData).done(function (result) {
-                                                if (result.success) img_success = 1;
-                                                else img_success = -1;
-                                            });
-                                        } else img_success = 1;
-                                    } else img_success = -1;
+                                        if (delimg_success == 1) {
+                                            var $file = $("#ImageUpload .img_input_frame > .img_input");
+                                            if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
+                                                var formData = new FormData();
+                                                formData.append("files", $file.data("file").File);
+                                                formData.append("type", 2);
+                                                formData.append("sid", data.id);
+                                                formData.append("serno", 500);
+                                                co.File.Upload(formData).done(function (result) {
+                                                    if (result.success) img_success = 1;
+                                                    else img_success = -1;
+                                                });
+                                            } else img_success = 1;
+                                        } else img_success = -1;
 
-                                    if (deloverimg_success == 1) {
-                                        var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
-                                        if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
-                                            var formData = new FormData();
-                                            formData.append("files", $over_file.data("file").File);
-                                            formData.append("type", 3);
-                                            formData.append("sid", data.id);
-                                            formData.append("serno", 500);
-                                            co.File.Upload(formData).done(function (result) {
-                                                if (result.success) overimg_success = 1;
-                                                else overimg_success = -1;
-                                            });
-                                        } else overimg_success = 1;
-                                    } else overimg_success = -1;
+                                        if (deloverimg_success == 1) {
+                                            var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
+                                            if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
+                                                var formData = new FormData();
+                                                formData.append("files", $over_file.data("file").File);
+                                                formData.append("type", 3);
+                                                formData.append("sid", data.id);
+                                                formData.append("serno", 500);
+                                                co.File.Upload(formData).done(function (result) {
+                                                    if (result.success) overimg_success = 1;
+                                                    else overimg_success = -1;
+                                                });
+                                            } else overimg_success = 1;
+                                        } else overimg_success = -1;
 
-                                    const timmer = function () {
-                                        if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
-                                            menuReload(menuEditor, myOffcanvas);
-                                            $("#IconImageUpload").ImageUploadModalClear();
-                                            $("#ImageUpload").ImageUploadModalClear();
-                                            $("#OverImageUpload").ImageUploadModalClear();
-                                            if (!result.success) co.sweet.error(result.error);
-                                            else {
-                                                if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
-                                                else co.sweet.success("新增成功");
-                                            }
-                                        } else setTimeout(timmer, 100);
-                                    }
-                                    setTimeout(timmer, 100);
-                                } else setTimeout(del_timmer, 100);
+                                        const timmer = function () {
+                                            if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
+                                                menuReload(menuEditor, myOffcanvas);
+                                                $("#IconImageUpload").ImageUploadModalClear();
+                                                $("#ImageUpload").ImageUploadModalClear();
+                                                $("#OverImageUpload").ImageUploadModalClear();
+                                                if (!result.success) co.sweet.error(result.error);
+                                                else {
+                                                    if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
+                                                    else co.sweet.success("新增成功");
+                                                }
+                                            } else setTimeout(timmer, 100);
+                                        }
+                                        setTimeout(timmer, 100);
+                                    } else setTimeout(del_timmer, 100);
+                                }
+                                setTimeout(del_timmer, 100);
                             }
-                            setTimeout(del_timmer, 100);
-                        }
-                    });
-
-                    //editor.setComponents("<span>Hi<span>");
-                    //editor.setStyle("");
+                        });
+                    } else {
+                        co.sweet.error("資料錯誤", massage);     
+                    }
                 },
                 save: function () {
 

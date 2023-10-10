@@ -723,6 +723,31 @@
         margin-left: 2rem;
     }
 
+.eplus .row > * {
+    padding: 0.25rem !important;
+}
+.eplus .logo {
+    display: none;
+}
+.eplus .news li {
+    text-indent: 4px;
+}
+
+.eplus .navbar > .container {
+    justify-content: end !important;
+    width: 100% !important;
+}
+
+.eplus .navbar .w40 {
+    width: 40% !important;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+}
+
+.eplus .font1 {
+    font-weight: 600;
+}
 .eplus .eplus-title {
     background: #0d7f87;
 }
@@ -735,7 +760,16 @@
             color: #fff;
             font-weight: bold;
         }
+.eplus .story {
+    flex-direction: column;
+}
+    .eplus .story p {
+        padding: 0 4rem;
+    }
 
+    .eplus .story .p5 {
+        padding: 5rem 5rem 2rem 5rem;
+    }
 .eplus .story .title-bg {
     position: relative;
 }
@@ -768,9 +802,6 @@
         color: #fff;
     }
 
-.eplus .story .p5 {
-    padding: 5rem !important;
-}
 .eplus .news {
     background: rgba(234,234,234,1);
     height: 400px;
@@ -794,6 +825,12 @@
             border: 2px solid #206dac ;
         }
 
+.eplus .featured figure {
+    margin: 0 0 0.1rem 0;
+}
+.eplus .featured .col-md-3 {
+    margin: 0 !important;
+}
 .eplus .featured .card {
     border-radius: 20px;
     flex-direction: column;
@@ -877,8 +914,13 @@
     top: 0;
     left: 0;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-
+.eplus .support .resource .shadow {
+    box-shadow: 0.4rem 0.4rem 0 rgba(28,85,144,.2) !important;
+}
 .eplus .support .resource .card-title {
     height: 69%;
     display: flex;
@@ -920,7 +962,7 @@
     justify-content: center;
     align-items: center;
     position: absolute;
-    background: rgba(58, 94, 171, 0.9);
+    background:rgba(58,94,171,1);
     bottom: -90%;
     width: 95%;
     height: 96.5%;
@@ -947,21 +989,46 @@
     justify-content: center;
     align-items: center;
 }
-
+    .eplus .support .resource .more a {
+        color: #fff !important;
+    }
+    .eplus .support .resource .more a:hover {
+        font-weight: bold;
+     }
 .eplus .footer .fas {
     margin: 10px;
     color: #fff;
-    font-size: 2.2rem;
+    font-size: 1.6rem;
     border: 1px solid #fff;
     border-radius: 50%;
-    width: 55px;
-    height: 55px;
+    width: 40px;
+    height:40px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
+.eplus .footer .fa-line {
+    margin: 10px;
+    color: #fff;
+    font-size: 1.6rem;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+@media (min-width: 992px) {
+    .navbar-expand-lg .navbar-collapse {
+        flex-basis: none;
+        display: flex !important;
+        justify-content: end !important;
+    }
+}
 
-@media (max-width: 1000px) {
+@media (max-width: 992px) {
+  
     .e-info .about {
         display: flex;
         justify-content: center;
@@ -1148,7 +1215,11 @@
             width: 85%;
         }
     .eplus .featured .mt-5 {
-        margin: 0 !important;
+        margin: 0 ;
+    }
+
+    .eplus .navbar .navbar-collapse {
+        flex-direction: column;
     }
 
     .eplus .navbar .justify-content-end {
@@ -1158,16 +1229,57 @@
     .eplus .navbar .px-5 {
         padding: 0px !important;
     }
+    .eplus .title-none {
+        display: block;
+    }
+    .eplus .story .title-content {
+        width: 150px ;
+        height: 45px ;
+        background: rgba(40,40,40,.5) ;
+        font-size: 1.2rem ;
+    }
+    .eplus .logo {
+        display: block;
+        width: 60%;
+    }
+    .eplus .logo2 {
+        display: none;
+    }
+    .eplus .navbar-dark .navbar-toggler {
+        border-color: rgba(255,255,255,0);
+    }
+    .eplus .support .resource .card {
+        height: 260px ;
+    }
+    .eplus .support .resource .poster {
+        justify-content: space-around !important;
+    }
 
-   
+    .eplus .support .resource .card-text {
+        height: 42% !important;
+        font-size: 0.9rem;
+    }
+
+    .eplus .support .resource .poster-text {
+        font-size: 0.7rem;
+    }
+
+    .eplus .support .resource .more {
+        margin-top: 20px;
+        padding: 5px;
+        width: 70% !important;
+    }
+    .eplus .support .resource .container {
+        padding: 0px 0.25rem !important;
+    }
+
+    .eplus .footer {
+        font-size: 0.75rem;
+    }
 }
 @media (max-width: 768px) {
     .gjs-row {
         flex-wrap: wrap;
-    }
-
-    .eplus .story .p5 {
-        padding: 2rem !important;
     }
 }
 @media only screen and (max-width: 576px) {
@@ -1218,8 +1330,22 @@
         height: 40% !important;
         font-size: 1rem;
     }
-
+    .eplus .custom_h3 {
+        margin-top: 1rem;
+    }
     .eplus .news {
-        height: 550px;
+        height: 560px;
+    }
+    .eplus .story .p5 {
+        padding: 0rem !important;
+    }
+
+    .eplus .story p {
+        padding: 0 2rem;
+    }
+
+    .eplus .featured .title {
+        height: 150px !important;
+        margin: 0 !important;
     }
 }

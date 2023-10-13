@@ -1,4 +1,7 @@
-﻿.font_small {
+﻿.footer_menu ul {
+    padding-left: 0;
+}
+.font_small {
     font-size: 0.8rem;
 }
 

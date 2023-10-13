@@ -192,7 +192,7 @@ var grapesInit = function (options) {
                 if (!!obj.classes) {
                     const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
                     let checkClass = [
-                        { key: "SwiperInit", state: false, run: true, class: [], parameter: {} },
+                        { key: "SwiperInit", state: false, run: true, class: [], parameter: { autoplay: false } },
                         { key: "FrameInit", state: false, run: true, class: [], parameter: {} },
                         { key: "ViewTypeChangeInit", state: false, run: true, class: [], parameter: {} },
                         { key: "SitemapInit", state: false, run: true, class: [], parameter: {} },

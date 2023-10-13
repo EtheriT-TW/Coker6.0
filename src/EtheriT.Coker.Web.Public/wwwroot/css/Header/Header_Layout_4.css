@@ -32,18 +32,32 @@
 .input_sear {
     min-width: 120px;
 }
-
-@media only screen and (max-width: 768px) {
-    .img_ul > li {
-        height: 0;
-        transition: 0.35s ease;
-        overflow: hidden;
-    }
+.img_ul a > img + h2 {
+    display: none
 }
 
-
-@media only screen and (max-width: 576px) {
-    .img_ul > li {
-        min-width: 70px;
+@media only screen and (max-width: 992px) {
+    .img_ul {
+        position: relative;
+        background: #0d7f87;
+        width: 100%;
+        position: relative;
+        top: unset;
+        text-align: center;
     }
+        .img_ul > li:not(:first-child) {
+            transition: 0.35s ease;
+            overflow: hidden;
+            display:block;
+            padding:0.3rem;
+            width:100%;
+        }
+        .img_ul a > img {
+            display: none
+        }
+            .img_ul a > img + h2 {
+                display: block;
+                color: #fff;
+                font-size: 1rem;
+            }
 }

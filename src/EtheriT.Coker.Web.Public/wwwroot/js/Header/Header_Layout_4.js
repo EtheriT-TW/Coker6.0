@@ -10,31 +10,11 @@ var $header, $img_ul;
 function HeaderInit() {
     ElementInit();
 
-    if ($(window).width() <= 768) {
-        $img_ul.css("top", $header.height() - 26);
-    } else if ($(window).width() <= 576) {
-        $img_ul.css("top", $header.height() - 20);
-    } else {
-        $img_ul.css("top", "87px");
-    }
-
-    $(window).resize(function () {
-        if ($(window).width() <= 768) {
-            $img_ul.css("top", $header.height() - 26);
-        } else if ($(window).width() <= 576) {
-            $img_ul.css("top", $header.height() - 20);
-        } else {
-            $img_ul.css("top", "87px");
-        }
-    });
-
     $btn_expand.on("click", function () {
         if ($btn_expand.hasClass("collapsed")) {
             $btn_expand.children("span").text("expand_more");
-            $img_ul.children("li").css("height", 0);
         } else {
             $btn_expand.children("span").text("close");
-            $img_ul.children("li").css("height", "145px");
         }
     })
 

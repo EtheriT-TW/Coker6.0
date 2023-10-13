@@ -1348,4 +1348,7 @@
         height: 150px !important;
         margin: 0 !important;
     }
+    .two-column-width .catalog > div {
+        width:100%;
+    }
 }

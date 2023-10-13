@@ -1,4 +1,7 @@
-﻿.swiper_pagination {
+﻿[class*="_swiper"] {
+    position:relative;
+}
+.swiper_pagination {
     z-index: 2;
 }
 

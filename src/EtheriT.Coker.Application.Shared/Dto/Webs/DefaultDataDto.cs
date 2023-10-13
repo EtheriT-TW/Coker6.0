@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
     {
         public long Id { get; set; }
         public string OrgName { get; set; }
+        public string ParntOrgNames { get; set; }
         public int Layout_Type { get; set; }
         public string View { get; set; }
     }

@@ -52,7 +52,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             },
                             new FooterViewModel { Title = "園區資訊", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
                                 new FooterViewModel { Title = "園區介紹", Link = "/ksp/Introdece" },
-                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/Trafficlnfo" },
+                                new FooterViewModel { Title = "交通資訊", Link = "/ksp/TrafficInfo" },
                                 new FooterViewModel { Title = "休閒設施", Link = "/ksp/Facilities" },
                                 new FooterViewModel { Title = "會議室租借", Link = "/ksp/MeetingRoomRental" },
                             },
@@ -65,7 +65,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             },
                             },
                             new FooterViewModel { Title = "園區廠商", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "產業分類查詢", Link = "/ksp/CategoryQuery" },
+                                new FooterViewModel { Title = "產業分類查詢", Link = "/ksp/firm_all" },
                                 new FooterViewModel { Title = "地理位置查詢", Link = "/ksp/Locationinquire" }
                             },
                             },
@@ -85,21 +85,21 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>
                         {
-                            "經濟部加工出口區管理處 版權所有© 2020 EPZA ALL Rights Reserved."
+                            "經濟部產業園區管理局 版權所有© 2023 BIP ALL Rights Reserved."
                         }
                     };
                     break;
                 case 3:
                     footerViewModel = new FooterViewModel
                     {
-                        Sitemap_Link = "#",
+                        Sitemap_Link = $"/{defaultData.OrgName}/Website",
                         Privacy_Link = $"/{defaultData.OrgName}/Privacy",
                         Accessibility_Link = "#",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>
                         {
                             "Tel：07-3611212 分機 317 / Fax：07-3612751 地址：811636高雄市楠梓區加昌路600號",
-                            "經濟部加工出口區管理處 版權所有 © 2020 EPZA ALL Rights Reserved"
+                            "經濟部產業園區管理局 版權所有 © 2023 BIP ALL Rights Reserved"
                         }
                     };
                     break;

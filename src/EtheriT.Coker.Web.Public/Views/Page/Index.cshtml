@@ -6,6 +6,8 @@
     ViewData["SideName"] = Model.PageData.SiteName;
     ViewData["PageName"] = Model.PageData.Title;
     ViewData["OrgName"] = Model.orgName;
+    ViewData["Layout"] = Model.layout;
+    ViewData["PageTagNameName"] = $"{Model.PageData.Title} - 【{Model.PageData.SiteName}】";
     ViewData["Description"] = Model.PageData.Description;
     ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
@@ -39,10 +41,12 @@
             </div>
         }
         break;
+    case 2:
     case 3:
-        @if (Model.MenuBread.Count() > 0)
+        @if (Model.MenuBread.Count() > 0 && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle))
         {
             <div class="top_title_3 p-3">
+                @if (Model.ParentData.VisibleHeader){
                 <nav class="bread d-none d-md-block container">
                     <ol class="list-unstyled d-flex">
                         @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
@@ -58,9 +62,10 @@
                         }
                     </ol>
                 </nav>
+                }
                 <div class="title fs-1 fw-bold text-white container">@Model.MenuBread.Last().Title</div>
             </div>
-            @if (Model.PageData != null && Model.PageData.holdPage == EtheriT.Coker.Application.Shared.Dto.enumType.HoldPageNameEnum.Article)
+            @if (Model.ParentData.VisibleTitle && Model.PageData != null && Model.PageData.holdPage == EtheriT.Coker.Application.Shared.Dto.enumType.HoldPageNameEnum.Article)
             {
                 <div class="container">
                     <h2 class="p-2">@Model.PageData.Title</h2>
@@ -73,9 +78,11 @@
         {
             <link rel="stylesheet" href="~/css/Site/Page/Index_LayoutType4.min.css" asp-append-version="true" />
         }
-        @if (Model.MenuBread.Count() > 0)
+        @if (Model.MenuBread.Count() > 0 && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle))
         {
             <div class="top_title p-3 bg-white container">
+                @if (Model.ParentData.VisibleHeader)
+                {
                 <nav class="bread d-none d-md-block container">
                     <ol class="list-unstyled d-flex">
                         @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
@@ -91,7 +98,11 @@
                         }
                     </ol>
                 </nav>
-                <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
+                }
+                @if (Model.ParentData.VisibleTitle)
+                {
+                    <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
+                }
             </div>
         }
         break;
@@ -130,7 +141,6 @@
                                         <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
                                     }
                                 </ul>
-
                             }
                         </div>
                     </div>
@@ -140,7 +150,7 @@
     }
 }
 
-<Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+<Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 @{
     if (Model.PageData.LastModificationTime != null) {
         <div class="container editTime font_small text-end">最後編輯時間：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
@@ -150,4 +160,12 @@
         <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
     }
 }
-<div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
+<div id="PostCSS" class="d-none">
+    @HttpUtility.HtmlEncode(Model.PageData.Css)
+    @if (Model.ParentData!=null) @HttpUtility.HtmlEncode(Model.ParentData.Css)
+</div>
+
+@if (Model.ParentData != null)
+{
+    <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
+}

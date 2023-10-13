@@ -2,9 +2,9 @@
 
 function ready() {
 
-    const $conten = $("Content");
+    const $conten = $("#main");
+    const $parentConten = $("#ParentNode");
     const $PostCSS = $("#PostCSS");
-
     $("link").each(function () {
         var $self = $(this);
         if ($self.data("orgname") != undefined) {
@@ -20,6 +20,43 @@ function ready() {
             IsFaPage = $self.data("isfapage");
         }
     });
+    if ($conten.length > 0) {
+        let s = Coker.stringManager.ReplaceAndSinge($conten.text());
+        let ele = document.createElement('span');
+        ele.innerHTML = s;
+        if ($parentConten.length > 0 && $parentConten.text().indexOf("subpage_content") >= 0) {
+            let p = Coker.stringManager.ReplaceAndSinge($parentConten.text());
+            let $pe = $('<div>');
+            $pe[0].innerHTML = p;
+            $pe.html($pe.text());
+            $pe.find("[data-dirid]").remove();
+            $pe.find(".subpage_content").replaceWith(ele.textContent || ele.innerText);
+            ele.textContent = $pe.html();
+        }
+        $conten.html(ele.textContent || ele.innerText);
+        $conten.find("[draggable]").removeAttr("draggable");
+        $conten.removeClass("d-none");
+        $(".editTime,.popular").appendTo($conten);
+        if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) SwiperInit({ autoplay: true });
+        if ($(".masonry").length > 0) FrameInit();
+        if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
+        if ($(".hover_mask").length > 0) HoverEffectInit();
+        if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0) DirectoryGetDataInit();
+        if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
+        if ($(".link_with_icon").length > 0) LinkWithIconInit();
+        if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
+        if ($(".shareBlock").length > 0) ShareBlockInit();
+        console.log($("#lanBar"));
+        if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
+    }
+    if ($PostCSS.length > 0) {
+        const $mainCss = $("#frameCss")
+        let s = Coker.stringManager.ReplaceAndSinge($PostCSS.text());
+        let ele = document.createElement('span');
+        ele.innerHTML = s;
+        $mainCss.text(ele.textContent || ele.innerText);
+        $PostCSS.remove();
+    }
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");
     });
@@ -30,6 +67,31 @@ function ready() {
         const $self = $(this);
         $($self.attr("href")).goTo();
         return false;
+    });
+    $("#videoModal").on("hidden.bs.modal", function () {
+        $(this).find("iframe").remove();
+    });
+    $(`[data-bs-target="#videoModal"]`).on("click", function () {
+        const self = this;
+        const $body = $("#videoModal .modal-body");
+        const rx = /^.*(?:(?:youtu.be\/|v\/|vi\/|u\/w\/|embed\/)|(?:(?:watch)??v(?:i)?=|&v(?:i)?=))([^#&?]*).*/;
+        let key = "";
+        let url = $(self).attr("data-model-target");
+        var r = url.match(rx);
+        $body.find(".fa-duotone").removeClass("d-none");
+        $body.find(".fa-3x").addClass("d-none");
+        if (r != null && r.length > 0) key = r[1];
+        if (key != "") {
+            if ($body.find("iframe").length == 0) {
+                const iframe = $(`<iframe allowfullscreen="allowfullscreen" rel="0" src="https://www.youtube.com/embed/${key}?autohide=1" class="h-100"></iframe>`);
+                iframe.appendTo($body);
+            }
+            $body.find(".fa-duotone").addClass("d-none");
+            $body.find(".fa-3x").addClass("d-none");
+        } else {
+            $body.find(".fa-duotone").addClass("d-none");
+            $body.find(".fa-3x").addClass("d-none");
+        }
     });
 
     Coker.Token = {
@@ -47,38 +109,12 @@ function ready() {
             });
         }
     };
-    if ($conten.length > 0) {
-        let s = Coker.stringManager.ReplaceAndSinge($conten.text());
-        let ele = document.createElement('span');
-        ele.innerHTML = s;
-        $conten.html(ele.textContent || ele.innerText);
-        $conten.find("[draggable]").removeAttr("draggable");
-        $conten.removeClass("d-none");
-        $(".editTime,.popular").appendTo($conten);
-        if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) SwiperInit({ autoplay: true });
-        if ($(".masonry").length > 0) FrameInit();
-        if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
-        if ($(".hover_mask").length > 0) HoverEffectInit();
-        if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0) DirectoryGetDataInit();
-        if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
-        if ($(".link_with_icon").length > 0) LinkWithIconInit();
-        if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
-        if ($(".shareBlock").length > 0) ShareBlockInit();
-    }
-    if ($PostCSS.length > 0) {
-        const $mainCss = $("#frameCss")
-        let s = Coker.stringManager.ReplaceAndSinge($PostCSS.text());
-        let ele = document.createElement('span');
-        ele.innerHTML = s;
-        $mainCss.text(ele.textContent || ele.innerText);
-        $PostCSS.remove();
-    }
 
     $.cookie('Member_Name', "會員一", { path: '/' });
 
     typeof (PageReady) === "function" && PageReady();
-    typeof (HeaderInit) === "function" &&HeaderInit();
-    typeof (FooterInit) === "function" &&FooterInit();
+    typeof (HeaderInit) === "function" && HeaderInit();
+    typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
 
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");

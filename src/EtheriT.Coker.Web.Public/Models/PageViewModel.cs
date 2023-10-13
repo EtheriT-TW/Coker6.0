@@ -11,8 +11,10 @@ namespace EtheriT.Coker.Web.Public.Models
         public string? option { get; set; }
         public string? search { get; set; }
         public string? orgName { get; set; }
+        public string layout { get; set; }
         public List<HtmlContentDisplayDto>? enterAd { get; set; }
-		public GetFrontContenOutputDto? PageData { get; set; }
+		public GetFrontContenOutputDto? ParentData { get; set; }
+        public GetFrontContenOutputDto? PageData { get; set; }
         public List<FreightDisplayDto>? freightModels { get; set; }
         public List<GetMenuBreadDto>? MenuBread { get; set; }
         public StoreSetFrontDto storeSet { get; set; }

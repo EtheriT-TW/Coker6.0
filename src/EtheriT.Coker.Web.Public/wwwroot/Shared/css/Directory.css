@@ -902,7 +902,7 @@
     width: 100%;
     position: relative;
     overflow: hidden;
-    border-radius: none;
+    border-radius:0px ;
     border: none;
 }
 

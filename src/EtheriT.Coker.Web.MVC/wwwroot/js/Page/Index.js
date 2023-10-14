@@ -61,7 +61,6 @@
                             });
                             $s.on("change", function () {
                                 const $self = $(this);
-                                console.log($self.val());
                                 if ($self.val() == 2) {
                                     $("#RouterNameBlock").addClass("d-none").val("Home");
                                 } else {

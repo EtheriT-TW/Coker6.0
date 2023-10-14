@@ -389,6 +389,36 @@ namespace EtheriT.Coker.Application
             }
             return results;
         }
+        public async Task<GetFrontContenOutputDto> GetParentConten(GetFrontContenInputDto dto)
+        {
+            if (dto.siteId == null)
+            {
+                dto.siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            }
+            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
+            try
+            {
+                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
+                var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
+                if (menu != null)
+                {
+                    var parent = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.Id == menu.FK_TopNodeId).FirstOrDefaultAsync();
+                    if (side != null)
+                    {
+                        result.SiteName = side.Title;
+                        if (parent != null)
+                        {
+                            mapper.Map(parent, result);
+                            result.LastModificationTime = null;
+                            result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                            result.CurrentUrl = $"/{parent.RouterName}";
+                        }
+                    }
+                }
+            }
+            catch { }
+            return result;
+        }
         public async Task<GetFrontContenOutputDto> GetFrontConten(GetFrontContenInputDto dto)
         {
             if (dto.siteId == null)
@@ -399,7 +429,7 @@ namespace EtheriT.Coker.Application
             try
             {
                 var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
-                var menu = await db.WebMenus.Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
+                var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
                 if (side != null)
                 {
                     result.SiteName = side.Title;

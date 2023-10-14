@@ -205,6 +205,10 @@
         isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
         model: {
             defaults: {
+                draggable: false,
+                droppable: false,
+                copyable: false,
+                editable: false,
                 traits: [
                     {
                         name: 'swiper-slide', type: 'button',
@@ -212,7 +216,7 @@
                         command: editor => {
                             var $selected = editor.getSelected();
                             var swiper = $selected.find(".swiper")[0].getEl().swiper;
-                            var new_slide = $("<div>").append($($selected.find(".template_slide")[0].find(".swiper-slide")[0].toHTML())).html();
+                            var new_slide = $("<div>").append($($selected.find(".template_slide>.swiper-slide")[0].toHTML())).html();
                             $selected.find(".swiper-wrapper")[0].append(new_slide);
                             swiper.update();
                         },
@@ -270,6 +274,7 @@
                                     datas.push(obj);
                                 }
                             });
+                            $body.empty();
                             $.each(datas, function (index, data) {
                                 var content = $($("#TemplateSwiperList").html()).clone();
                                 content.find("img").attr({ "src": data.src, "alt": data.alt });
@@ -286,6 +291,15 @@
                 ],
             }
         },
+    });
+    editor.DomComponents.addType('輪播容器', {
+        isComponent: el => el.classList?.contains('image_link_slide'),
+        model: {
+            defaults: {
+                removable: true,
+                editable: false,
+            }
+        }
     });
     //QA元件
     editor.DomComponents.addType('QA元件', {
@@ -323,69 +337,7 @@
             }
         },
     });
-    //目錄切換控制
-    editor.DomComponents.addType('格列切換控制', {
-        isComponent: el => el.classList?.contains('switch_control'),
-        model: {
-            defaults: {
-                droppable: false,
-                copyable: false,
-                traits: [
-                    {
-                        type: 'checkbox',
-                        label: '文字',
-                        name: 'btn_text',
-                        valueTrue: "1",
-                        valueFalse: "0"
-                    }, {
-                        type: 'checkbox',
-                        label: '圖片',
-                        name: 'btn_grid',
-                        valueTrue: "1",
-                        valueFalse: "0"
-                    }, {
-                        type: 'checkbox',
-                        label: '圖文',
-                        name: 'btn_list',
-                        valueTrue: "1",
-                        valueFalse: "0"
-                    }
-                ]
-            },
-            init() {
-
-                var self = this;
-
-                var list = ["btn_text", "btn_grid", "btn_list"];
-                for (var i = 0; i < list.length; i++){
-                    const myClass = list[i];
-                    
-                    self.on(`change:attributes:${myClass}`, () => {
-                        self.components().models.forEach(function (item) {
-                            if (item.getClasses().indexOf(myClass) >= 0) {
-  
-                                if (item.getClasses().indexOf('d-none') >= 0) {
-                                    item.removeClass("d-none");
-                                    setTimeout(() => {
-                                        var content = $(".gjs-frame")[0].contentWindow.namecontrol;
-                                        content(self.getId());
-                                    }, 200);
-                                }
-                                else {
-                                    item.addClass("d-none");
-                                    setTimeout(() => {
-                                        var content = $(".gjs-frame")[0].contentWindow.namecontrol;
-                                        content(self.getId());
-                                    }, 200);
-                                }
-                            }
-                        });
-
-                    });
-                }
-            }
-        },
-    });
+    //名片介紹
     editor.DomComponents.addType('名片介紹', {
         isComponent: el => el.classList?.contains('frame_type_2'),
         model: {
@@ -459,6 +411,7 @@
             }
         },
     });
+
     var PopupDirectory = null;
     //目錄
     editor.DomComponents.addType('目錄', {
@@ -467,9 +420,9 @@
             defaults: {
                 droppable: false,
                 editable: false,
+                copyable: false,
                 traits: [
                     { name: 'id', type: 'text', label: 'ID', placeholder: '元件ID名稱' },
-                    { name: 'data-shownum', type: 'text', label: '單頁筆數' },
                     { name: 'data-diridname', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
                     {
                         name: 'data-dirid', type: 'button',
@@ -500,9 +453,8 @@
                             PopupDirectory.show();
                         }
                     },
-
-                    { name: 'data-maxlen', type: 'text', label: '最大筆數', placeholder: '該目錄僅抓幾筆資料' },
-                    { name: 'data-shownum', type: 'text', label: '分頁筆數', placeholder: '一個分頁幾筆資料' },
+                    { name: 'data-shownum', type: 'text', label: '單頁筆數', placeholder: '一個分頁要抓幾筆資料' },
+                    { name: 'data-maxlen', type: 'text', label: '最大筆數', placeholder: '該目錄僅抓幾筆資料' }
                 ],
             },
             init() {
@@ -532,22 +484,68 @@
             }
         },
     });
-    //目錄內容
-    editor.DomComponents.addType('目錄內容', {
-        isComponent: el => el.parentElement.classList?.contains('menu_directory') || el.classList?.contains('catalog'),
+    //目錄切換控制
+    editor.DomComponents.addType('格列切換控制', {
+        isComponent: el => el.classList?.contains('switch_control'),
         model: {
             defaults: {
-                removable: false,
-                draggable: false,
                 droppable: false,
-                editable: false,
-                copyable: false
+                copyable: false,
+                traits: [
+                    {
+                        type: 'checkbox',
+                        label: '文字',
+                        name: 'btn_text',
+                        valueTrue: "1",
+                        valueFalse: "0"
+                    }, {
+                        type: 'checkbox',
+                        label: '圖片',
+                        name: 'btn_grid',
+                        valueTrue: "1",
+                        valueFalse: "0"
+                    }, {
+                        type: 'checkbox',
+                        label: '圖文',
+                        name: 'btn_list',
+                        valueTrue: "1",
+                        valueFalse: "0"
+                    }
+                ]
+            },
+            init() {
+
+                var self = this;
+
+                var list = ["btn_text", "btn_grid", "btn_list"];
+                for (var i = 0; i < list.length; i++) {
+                    const myClass = list[i];
+
+                    self.on(`change:attributes:${myClass}`, () => {
+                        self.components().models.forEach(function (item) {
+                            if (item.getClasses().indexOf(myClass) >= 0) {
+
+                                if (item.getClasses().indexOf('d-none') >= 0) {
+                                    item.removeClass("d-none");
+                                    setTimeout(() => {
+                                        var content = $(".gjs-frame")[0].contentWindow.namecontrol;
+                                        content(self.getId());
+                                    }, 200);
+                                }
+                                else {
+                                    item.addClass("d-none");
+                                    setTimeout(() => {
+                                        var content = $(".gjs-frame")[0].contentWindow.namecontrol;
+                                        content(self.getId());
+                                    }, 200);
+                                }
+                            }
+                        });
+
+                    });
+                }
             }
         },
-    });
-    //輪播容器
-    editor.DomComponents.addType('輪播容器', {
-        isComponent: el => el.classList?.contains('image_link_slide'),
     });
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {

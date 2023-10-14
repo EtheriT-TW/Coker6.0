@@ -32,7 +32,6 @@ function initElemntAndLoadDir($dir,page) {
         if (isNaN(hashPage) || hashPage=="") page = "1";
         else page = hashPage;
         $self.find(".catalog>.template").remove();
-        console.log(page);
         DirectoryDataGet($self,{
             Ids: [dirid],
             SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
@@ -186,9 +185,9 @@ function DirectoryDataGet($item, option) {
 }
 
 function DirectoryDataInsert($item, result) {
-    result!=null && result.forEach(function (data) {
-        console.log("in");
-        var content = $($item.find(".templatecontent").html()).clone();
+    const temp = $item.find(".templatecontent").html();
+    result != null && result.forEach(function (data) {
+        var content = $(temp).clone();
         var path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : '/' + data.orgName + window.location.pathname) + data.link;
         path = path.replace("//", "/");
         content.find("a").attr("href", path);

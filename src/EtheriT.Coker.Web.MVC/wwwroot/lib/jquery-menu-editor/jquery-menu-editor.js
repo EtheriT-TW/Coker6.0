@@ -1223,7 +1223,6 @@ function MenuEditor(idSelector, options) {
     /* PRIVATE METHODS */
     function editItem($item) {
         var data = $item.data();
-        console.log(data);
         $.each(data, function (p, v) {
             let element = $form.find("[name=" + p + "]");
             if (element.length <= 0) return;

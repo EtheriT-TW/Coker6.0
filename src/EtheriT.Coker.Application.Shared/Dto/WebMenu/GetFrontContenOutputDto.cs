@@ -21,6 +21,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public int? Popular { get; set; }
         public bool VisibleHeader { get; set; }
         public bool VisibleFooter { get; set; }
+        public bool VisibleTitle { get; set; }
         public DateTime? LastModificationTime { get; set; }
         public HoldPageNameEnum holdPage { get; set; }
     }

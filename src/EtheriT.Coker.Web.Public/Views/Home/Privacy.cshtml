@@ -1,6 +1,30 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+﻿@using System.Web;
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Web.Public.Models;
+@model PageViewModel
+@{
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = Model.PageData.Title;
+    ViewData["OrgName"] = Model.orgName;
+    ViewData["Layout"] = Model.layout;
+    ViewData["PageTagNameName"] = $"{Model.PageData.Title} - 【{Model.PageData.SiteName}】";
+    ViewData["Description"] = Model.PageData.Description;
+    ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
 }
-<h1>@ViewData["Title"]</h1>
-
-<p>Use this page to detail your site's privacy policy.</p>
+<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script src="~/Shared/shared.min.js" asp-append-version="true"></script>
+<Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+@{
+    if (Model.PageData.LastModificationTime != null)
+    {
+        <div class="container editTime font_small text-end">最後編輯時間：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
+    }
+    if (Model.PageData.Popular != null && Model.PageData.Popular > 0)
+    {
+        <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
+    }
+}
+<div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>

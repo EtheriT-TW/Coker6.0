@@ -73,6 +73,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 search = search ?? "".Trim(),
                 freightModels = freight,
                 enterAd = enterAds,
+                layout = $"layout{defaultData.Layout_Type}",
                 storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
@@ -91,17 +92,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         var PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
+                        model.ParentData = PageData;
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
-                        if (key == "article") {
-                            model.PageData.VisibleHeader = true;
-                            model.PageData.VisibleFooter = true;
-                        }
-                        else
-                        {
-                            model.PageData.VisibleHeader = PageData.VisibleHeader;
-                            model.PageData.VisibleFooter = PageData.VisibleFooter;
-                        }
+                        
+                        model.PageData.VisibleHeader = PageData.VisibleHeader;
+                        model.PageData.VisibleFooter = PageData.VisibleFooter;
+                        model.PageData.VisibleTitle = PageData.VisibleTitle;
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {
@@ -122,9 +119,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         view = "Product";
                         if (id != 0)
                         {
-                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                            model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
+                            var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
+                            model.ParentData = ProdPageData;
                             model.MenuBread.Add(new GetMenuBreadDto
                             {
                                 Title = model.PageData.Title,
@@ -140,14 +138,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             view = "ProductContent";
                         }
                         break;
+                    case "privacy":
+                        model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                        view = "Index";
+                        break;
+                    case "search":
+                        view = "Search";
+                        break;
                     default:
-                        if (key == "Search" || key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
+                        if (key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
                         {
                             view = key;
                         }
                         else
                         {
                             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.ParentData = await webMenuApplication.GetParentConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                             model.PageData.LayoutType = defaultData.Layout_Type;
 
@@ -173,9 +179,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     if (siteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
-                        model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
-                        model.PageData.Html = model.PageData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
+                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/",RegexOptions.IgnoreCase);
+                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"href=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
+                    }
+                    if (siteId != defaultData.Id && model.ParentData != null) {
+                        model.ParentData.Html = stringHandler.HtmlEncode(model.ParentData.Html);
+                        model.ParentData.Html = model.ParentData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                        model.ParentData.Html = model.ParentData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
+                        model.ParentData.Css = (model.ParentData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
                 }
             }

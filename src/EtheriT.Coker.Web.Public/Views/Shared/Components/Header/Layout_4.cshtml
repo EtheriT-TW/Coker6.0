@@ -39,7 +39,7 @@
                     </button>
                 </div>
                 <label accesskey="S" for="SearchInput" class="hide">:::</label>
-                <div class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
+                <div id="lanBar" class="d-flex align-items-center align-items-center d-flex flex-column flex-md-row">
                     @if (Model.Sitemap_Link != null)
                     {
                         var sitemap_target = Model.Sitemap_Target == true ? "_blank" : "_self";
@@ -73,11 +73,12 @@
                             <a class="nav-link p-0 text-black" aria-current="page" href="@menu.Link" title="@title" target="@target">
                                 @if (@menu.imageUrl == "")
                                 {
-                                    <div class="w-25 custom_h5 text-white mx-auto">@menu.Title</div>
+                                    <h2 class="w-25 custom_h5 text-white mx-auto">@menu.Title</h2>
                                 }
                                 else
                                 {
-                                    <img class="logo" src="@menu.imageUrl" alt="@menu.Title">
+                                    <img class="logo" src="@menu.imageUrl" alt=" ">
+                                    <h2 class="title">@menu.Title</h2>
                                 }
                             </a>
                         </li>

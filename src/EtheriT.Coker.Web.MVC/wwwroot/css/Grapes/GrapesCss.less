@@ -22,10 +22,21 @@
     .switch_control {
         display: flex !important;
     }
+
+    .subpage_content::after {
+        content: '\5b50\9801\9762\5167\5bb9';
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #CCC;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+    }
 }
 
-.edit_lock *:not(.allowedit) {
-    pointer-events: none;
+.edit_lock *:not(.allowedit), .swiper-wrapper {
+    pointer-events: none !important;
     outline: none !important;
 }
 
@@ -43,15 +54,4 @@
     height: 100%;
     width: 100%;
     position: relative;
-}
-
-.subpage_content::after {
-    content: '\5b50\9801\9762\5167\5bb9';
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #CCC;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
 }

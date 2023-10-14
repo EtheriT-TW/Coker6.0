@@ -1,10 +1,13 @@
-﻿using EtheriT.Coker.Application.Dto;
+﻿using AutoMapper;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System.Security.Claims;
@@ -18,22 +21,28 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly string ApplicationName;
+        private readonly IConfiguration Configuration;
         public WebsiteApplication(
             CokerDbContext db,
             LoginUserData loginUserData,
+            IConfiguration Configuration,
             IHttpContextAccessor httpContextAccessor
         )
         {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.loginUserData = loginUserData;
+            this.Configuration = Configuration;
             ApplicationName = "Website";
 
         }
         public async Task<DefaultDataDto> GetDefaultData(long siteId, string? website)
         {
+            long fid = siteId;
+            string ParntOrgNames = "";
             if (website != null && !website.Equals("upload"))
             {
+                ParntOrgNames = await GetParntOrgName(fid);
                 var tempid = await GetSiteId(siteId, website.ToString());
                 if (tempid != 0)
                 {
@@ -49,6 +58,7 @@ namespace EtheriT.Coker.Application
             {
                 Id = siteId,
                 OrgName = orgname,
+                ParntOrgNames = ParntOrgNames,
                 Layout_Type = Layout_Type,
                 View = view,
             };
@@ -70,6 +80,18 @@ namespace EtheriT.Coker.Application
                               select w.OrgName).FirstOrDefaultAsync();
 
             return data == null ? "Page" : data.ToString();
+        }
+        private async Task<string> GetParntOrgName(long Id)
+        {
+            var re = await db.MappingWebsiteRelationship
+                .Where(e => !e.IsDeleted)
+                .Where(e => e.FatherId== Id)
+                .Select(e => e.WebsiteId).ToListAsync();
+            var data = await (from w in db.Websites
+                              where w.Id == Id || re.Contains(w.Id)
+                              select w.OrgName).ToListAsync();
+
+            return data == null ? "" : String.Join("|", data.ToArray());
         }
         public async Task<long> GetSiteId(long father_id, string key)
         {
@@ -193,6 +215,28 @@ namespace EtheriT.Coker.Application
             }
             await loginUserData.SetLogs(ApplicationName, "Exchange", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
+        }
+        public async Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto) {
+            if (dto.siteId == null)
+            {
+                dto.siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            }
+            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
+            try
+            {
+                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
+                if (side != null)
+                {
+                    result.SiteName = side.Title;
+                    result.LastModificationTime = null;
+                    result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                    result.CurrentUrl = $"/Privacy";
+                    result.VisibleFooter = true;
+                    result.VisibleHeader = true;
+                }
+            }
+            catch { }
+            return result;
         }
     }
 }

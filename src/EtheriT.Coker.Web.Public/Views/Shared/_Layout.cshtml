@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["PageName"] 【@ViewData["SideName"]】</title>
+    <title>@ViewData["PageTagNameName"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
@@ -43,7 +43,7 @@
         </script>
     }
 </head>
-<body onload="ready()">
+<body onload="ready()" id="@ViewData["Layout"]">
     <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="跳到主要內容區塊">
         <span title="跳到主要內容區塊">跳到主要內容區塊</span>
     </a>
@@ -173,6 +173,19 @@
                         </div>
                     </div>
                     <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">註　冊</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="videoModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
+        <div class="modal-dialog modal-xl modal-dialog-centered h-75">
+            <div class="modal-content bg-black h-100">
+                <div class="modal-header">
+                    <button type="button" data-bs-dismiss="modal" aria-label="Close" class="btn-close rounded-circle bg-light"></button>
+                </div>
+                <div class="modal-body h-100 text-white text-center m-5">
+                    <i class="fa fa-duotone fa-spinner fa-spin-pulse fa-10x"></i>
+                    <div class="fa-3x massage d-none">影片連結設定錯誤</div>
                 </div>
             </div>
         </div>

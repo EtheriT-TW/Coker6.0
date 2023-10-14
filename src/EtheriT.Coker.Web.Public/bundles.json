@@ -83,6 +83,14 @@
         "wwwroot/Shared/css/Swiper.css",
         "wwwroot/Shared/css/Activity.less"
       ]
+    },
+    {
+      "output": "css/Layout/_Layout3.min.css",
+      "input": [
+        "wwwroot/css/Footer/Default_Footer.css",
+        "wwwroot/css/Footer/Footer_Layout_3.css",
+        "wwwroot/css/Header/Header_Layout_3.css"
+      ]
     }
   ],
   "scriptMappings": [

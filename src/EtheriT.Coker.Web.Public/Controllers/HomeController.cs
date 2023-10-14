@@ -59,6 +59,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 OrgName= defaultData.OrgName,
 				enterAd = enterAds,
                 guessLike = guessLike,
+                layout = $"layput{defaultData.Layout_Type}",
                 storeSet = new StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
@@ -81,7 +82,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 if (key != null)
                 {
-                    model.PageData.Html = model.PageData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
+                    model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
+                    model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"href=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                     model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                 }
 

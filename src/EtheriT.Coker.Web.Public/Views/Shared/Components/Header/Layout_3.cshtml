@@ -5,22 +5,6 @@
 <link rel="stylesheet" href="~/css/Header/Header_Layout_3.min.css" asp-append-version="true" />
 <script src="~/js/Header/Header_Layout_3.min.js" asp-append-version="true"></script>
 
-<div class="modal sear_modal fade" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">搜尋</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-            </div>
-            <div class="modal-footer d-flex justify-content-center">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">關閉</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="bg-white">
     <div class="d-flex flex-column p-3 px-md-0 container">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -72,7 +56,7 @@
             </div>
         </nav>
         <label accesskey="S" for="SearchInput" class="hide">:::</label>
-        <div class="d-flex lh-lg">
+        <div id="Search" class="d-flex lh-lg">
             <button class="btn_sear_text text_blue_middle fw-bold d-none d-md-flex text-nowrap fs-4 me-3 bg-transparent border-0">我想搜尋</button>
             <div class="d-flex border border-2  border-end-0 flex-grow-1">
                 <div class="dropdown">
@@ -80,8 +64,8 @@
                         找廠商
                     </a>
                     <ul class="dropdown-menu">
-                        <li><button class="btn_sear_firm dropdown-item text-nowrap">找廠商</button></li>
-                        <li><button class="btn_sear_all dropdown-item text-nowrap">找全部</button></li>
+                        <li><button class="btn_sear_firm dropdown-item text-nowrap" data-id="1">找廠商</button></li>
+                        <li><button class="btn_sear_all dropdown-item text-nowrap" data-id="0">找全部</button></li>
                     </ul>
                 </div>
                 <input id="SearchInput" class="input_sear form-control border-0 fs_change px-1 px-md-3" type="search" placeholder="請輸入廠商名稱或技術..." aria-label="Search">

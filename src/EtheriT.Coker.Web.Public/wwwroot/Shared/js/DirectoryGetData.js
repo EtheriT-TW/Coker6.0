@@ -109,8 +109,19 @@ function hashChangeDirectory(e) {
 function DirectoryDataGet($item, option) {
     const dirLength = $(".catalog_frame,.menu_directory").length;
     let page = parseInt(option.Page);
+    if ($item.data("type") == "search") {
+        $.extend(true, option, {
+            Type:"search",
+            SearchText: $item.data("search-text").toString(),
+            StartDate: $item.data("startDate"),
+            EndDate: $item.data("endDate"),
+        })
+    }
     Directory.getDirectoryData(option).done(function (result) {
         let loadPageRange = 2;
+        if (option.Type == "search") {
+            $(".searchCount").text(result.totalCount);
+        }
         $item.find(".page-item").each(function () {
             var $self = $(this);
             if (!$self.hasClass("btn_prev") && !$self.hasClass("btn_next")) $self.remove();
@@ -186,13 +197,42 @@ function DirectoryDataGet($item, option) {
 
 function DirectoryDataInsert($item, result) {
     const temp = $item.find(".templatecontent").html();
+    const isSearch = $item.data("type") == "search";
+    console.log(result.length);
+    if (result.length == 0) $item.find(".catalog").addClass("empty");
+    else $item.find(".catalog").removeClass("empty");
     result != null && result.forEach(function (data) {
         var content = $(temp).clone();
-        var path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : '/' + data.orgName + window.location.pathname) + data.link;
+        let path,target;
+        if (isSearch) {
+            switch (data.type) {
+                case 3:
+                    path = `/${data.orgName}/${data.link}/${$item.data("search-text")}`;
+                    break;
+                default:
+                    path = `/${data.orgName}/search/${data.link}/${$item.data("search-text")}`;
+                    break;
+            }
+           
+            target = "_blank";
+            if (data.mainImage.indexOf("youtu") > 0) {
+                var key = "";
+                var rx = /^.*(?:(?:youtu.be\/|v\/|vi\/|u\/w\/|embed\/)|(?:(?:watch)??v(?:i)?=|&v(?:i)?=))([^#&?]*).*/;
+                var r = data.mainImage.match(rx);
+                if (r != null && r.length > 0) key = r[1];
+                data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
+            }
+        } else {
+            path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : '/' + data.orgName + window.location.pathname) + data.link;
+            target = "_self";
+        }
         path = path.replace("//", "/");
-        content.find("a").attr("href", path);
-        content.find("a").attr("title", `連結至: ${data.title}`);
-        var imglink = data.mainImage;
+        content.find("a").attr({
+            "href": path,
+            "title": `連結至: ${data.title}${(target =="_blank"?"(另開視窗)":"")}`,
+            "target": target
+        });
+        var imglink = data.mainImage ||"/images/noImg.jpg";
         if ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName)) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
         }

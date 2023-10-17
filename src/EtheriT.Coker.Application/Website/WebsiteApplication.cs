@@ -229,7 +229,7 @@ namespace EtheriT.Coker.Application
                 {
                     result.SiteName = side.Title;
                     result.LastModificationTime = null;
-                    result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                    result.Html = (result.Html??"").Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
                     result.CurrentUrl = $"/Privacy";
                     result.VisibleFooter = true;
                     result.VisibleHeader = true;

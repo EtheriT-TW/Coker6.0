@@ -19,6 +19,10 @@ using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.Dto;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Html;
+using System.Linq;
+using EtheriT.Coker.Application.Common;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -31,19 +35,22 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IArticleAppService articleAppService;
         private readonly IProductAppService productAppService;
         private readonly IWebMenuApplication webMenuApplicationService;
+        private readonly StringHandler stringHandler;
         public DirectoryAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
+            StringHandler stringHandler,
             IMapper mapper,
             ITagAppService tagAppService,
             IArticleAppService articleAppService,
             IProductAppService productAppService,
-             IWebMenuApplication webMenuApplicationService,
-             IConfiguration configuration
+            IWebMenuApplication webMenuApplicationService,
+            IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.stringHandler = stringHandler;
             this.mapper = mapper;
             this.tagAppService = tagAppService;
             this.articleAppService = articleAppService;
@@ -154,14 +161,169 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
         }
+        private async Task<DirectoryReleInfoGetDto> SearchReleInfo(DirectoryReleInfoInputDto dto)
+        {
+            var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
+            long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
+            long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
+            int page = (int)dto.Page;
+            int shownum = (int)dto.ShowNum;
+            Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
+            var data1 = db.WebMenus.Include(e => e.Website).Where(e => !e.IsDeleted)
+                            .Where(e => e.FK_WebsiteId == WebsiteID)
+                            .Where(e => e.Visible)
+                            .Where(e => e.RouterName.ToLower() != "home")
+                            .Where(e =>
+                                (e.Title ?? "").Contains(dto.SearchText ?? "") ||
+                                (e.Html ?? "").Contains(dto.SearchText ?? "")
+                            );
+            var data2 = db.Article.Include(e => e.Website).Where(e => !e.IsDeleted)
+                            .Where(e => e.FK_WebsiteId == WebsiteID)
+                            .Where(e => e.Visible)
+                            .Where(e => 
+                                e.permanent||
+                                ( e.StartTime.Value <= DateTime.Now && e.EndTime.Value >= DateTime.Now)
+                            )
+                            .Where(e =>
+                                (e.Title ?? "").Contains(dto.SearchText ?? "") ||
+                                (e.Html ?? "").Contains(dto.SearchText ?? "")
+                            );
+            int skip = (page - 1) * shownum - 1;
+            if (skip < 0) skip = 0;
+            //Regex.Replace(m.Html, @"<(.|\n)*?>", "")
+            switch (SearchId)
+            {
+                case 1:
+                    var art1 = await (
+                        from a in data2
+                        join ta in db.Tag_Associates.Where(e => !e.IsDeleted) on a.Id equals ta.FK_AId
+                        join t in db.Tags.Where(e => !e.IsDeleted) on ta.FK_TId equals t.Id
+                        where t.FK_WebsiteId == WebsiteID && t.Id == 42
+                        select new DirectoryReleInfoDto
+                        {
+                            Id = a.Id,
+                            Title = a.Title,
+                            Link = $"/article/",
+                            type = DirectoryTypeEnum.文章,
+                            OrgName = a.Website.OrgName,
+                            SerNo = a.SerNO,
+                            Description = a.Description,
+                            MainImage = a.Html,
+                        }
+                    ).ToListAsync();
+                    var dataMargin1 = art1.OrderBy(e => e.NodeDate)
+                        .ThenBy(e => e.SerNo)
+                        .ThenByDescending(e => e.Id)
+                        .Skip(skip).Take(shownum);
+                    var list1 = dataMargin1.Select(e => new DirectoryReleInfoDto
+                    {
+                        Id = e.Id,
+                        Title = e.Title,
+                        Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
+                        OrgName = e.OrgName,
+                        type = e.type,
+                        SerNo = e.SerNo,
+                        Description = string.IsNullOrEmpty(e.Description) ? Regex.Replace(stringHandler.HtmlDecode(e.MainImage), @"<(.|\n)*?>", "") : e.Description,
+                        MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
+                    }).ToList();
+                    output.TotalCount = art1.Count();
+                    output.ReleInfos.AddRange(list1);
+                    break;
+                case 2:
+                    var art2 = await (
+                        from a in data2
+                        join ta in db.Tag_Associates.Where(e => !e.IsDeleted) on a.Id equals ta.FK_AId
+                        join t in db.Tags.Where(e => !e.IsDeleted) on ta.FK_TId equals t.Id
+                        where t.FK_WebsiteId == WebsiteID && t.Id == 46
+                        select new DirectoryReleInfoDto
+                        {
+                            Id = a.Id,
+                            Title = a.Title,
+                            Link = $"/article/",
+                            type = DirectoryTypeEnum.文章,
+                            OrgName = a.Website.OrgName,
+                            SerNo = a.SerNO,
+                            Description = a.Description,
+                            MainImage = a.Html,
+                        }
+                    ).ToListAsync();
+                    var dataMargin2 = art2.OrderBy(e => e.NodeDate)
+                        .ThenBy(e => e.SerNo)
+                        .ThenByDescending(e => e.Id)
+                        .Skip(skip).Take(shownum);
+                    var list2 = dataMargin2.Select(e => new DirectoryReleInfoDto
+                    {
+                        Id = e.Id,
+                        Title = e.Title,
+                        Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
+                        OrgName = e.OrgName,
+                        type = e.type,
+                        SerNo = e.SerNo,
+                        Description = string.IsNullOrEmpty(e.Description) ? Regex.Replace(stringHandler.HtmlDecode(e.MainImage), @"<(.|\n)*?>", "") : e.Description,
+                        MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
+                    }).ToList();
+                    output.TotalCount = art2.Count();
+                    output.ReleInfos.AddRange(list2);
+                    break;
+                default:
+                    var menu = await data1.Select(m => new DirectoryReleInfoDto
+                    {
+                        Id = m.Id,
+                        Title = m.Title,
+                        Link = Convert.ToString(m.RouterName),
+                        OrgName = m.Website.OrgName,
+                        type = DirectoryTypeEnum.選單,
+                        SerNo = m.SerNO,
+                        Description = m.Description,
+                        MainImage = m.Html,
+                    }).ToListAsync();
+                    var art = await data2.Select(a => new DirectoryReleInfoDto
+                    {
+                        Id = a.Id,
+                        Title = a.Title,
+                        Link = $"/article/",
+                        type = DirectoryTypeEnum.文章,
+                        OrgName = a.Website.OrgName,
+                        SerNo = a.SerNO,
+                        Description = a.Description,
+                        MainImage = a.Html,
+                    }).ToListAsync();
+
+                    var mCount = menu.Count();
+                    var aCount = art.Count();
+
+                    var dataMargin = menu.Union(art).OrderBy(e => e.NodeDate)
+                        .ThenBy(e => e.SerNo)
+                        .ThenByDescending(e => e.Id)
+                        .Skip(skip).Take(shownum);
+
+                    var list = dataMargin.Select(e => new DirectoryReleInfoDto
+                    {
+                        Id = e.Id,
+                        Title = e.Title,
+                        Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
+                        OrgName = e.OrgName,
+                        type = e.type,
+                        SerNo = e.SerNo,
+                        Description = string.IsNullOrEmpty(e.Description) ? Regex.Replace(stringHandler.HtmlDecode(e.MainImage), @"<(.|\n)*?>", "") : e.Description,
+                        MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
+                    }).ToList();
+
+                    output.TotalCount = mCount + aCount;
+                    output.ReleInfos.AddRange(list);
+                    break;
+            }
+            output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
+            return output;
+        }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
+            if ((dto.Type ?? "").ToLower() == "search") return await SearchReleInfo(dto);
             var DataIds = new List<long>();
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
-			List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
-			siteIds.Add(WebsiteID);
-			var output = new DirectoryReleInfoGetDto();
-
+            List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+            siteIds.Add(WebsiteID);
+            var output = new DirectoryReleInfoGetDto();
             var db_d = db.Directory.Where(e => e.Id == dto.Ids[0] && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
 
             if (db_d != null)
@@ -224,8 +386,16 @@ namespace EtheriT.Coker.Application.Directory
                     var page = (int)dto.Page;
                     var shownum = (int)dto.ShowNum;
                     if (dto.MaxLen == null) dto.MaxLen = 0;
-                    if (DataIds.Count < dto.MaxLen || dto.MaxLen == 0) output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
-                    else output.TotalPage = (int)Math.Ceiling(dto.MaxLen.Value / (double)shownum);
+                    if (DataIds.Count < dto.MaxLen || dto.MaxLen == 0)
+                    {
+                        output.TotalPage = (int)Math.Ceiling(DataIds.Count / (double)shownum);
+                        output.TotalCount = DataIds.Count;
+                    }
+                    else
+                    {
+                        output.TotalPage = (int)Math.Ceiling(dto.MaxLen.Value / (double)shownum);
+                        output.TotalCount = dto.MaxLen.Value;
+                    }
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
                         case DirectoryTypeEnum.商品:

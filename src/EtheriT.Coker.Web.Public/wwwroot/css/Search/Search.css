@@ -1,0 +1,237 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
+
+.search-input-block {
+    width: 25%
+}
+
+.search-category .catalog .type1 {
+    height: 80px;
+    border-left: solid 10px #919191;
+}
+
+.search-category .catalog .type2 {
+    height: auto;
+}
+
+.search-category .catalog .type3 {
+    height: auto;
+}
+
+    .search-category .catalog .type3 .img-h {
+        max-width: 200px;
+        height: max-content;
+    }
+
+.search-category .more-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #DEDEDE;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    color: #fff;
+    transform: translateY(-50%);
+}
+
+    .search-category .more-btn:hover {
+        background: #919191;
+    }
+
+.search-category .pr3 {
+    padding: 0.3rem 1rem 0.3rem 0.3rem;
+}
+
+.search-category .typeswitch_bg {
+    background: #EFEFEF;
+}
+
+    .search-category .typeswitch_bg input {
+        background: #F3F3F3;
+        border: none;
+    }
+
+.search-category .card-border {
+    box-shadow: 2px 3px 5px rgba(50,50,50,0.1);
+    height: 100%;
+}
+
+.search-category .card-border-rd {
+    border-radius: 10px;
+}
+
+.search-category .mergetag .check_btn {
+    display: block;
+    background: #919191;
+    border-radius: 20px;
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    text-align: center;
+    padding: 0.25rem;
+    margin-top: 1rem;
+}
+
+.search-category .check_btn-type3 {
+    width: 10%;
+}
+
+.typeswitch_bg {
+    background: #EFEFEF;
+}
+
+.search-category button {
+    border: none;
+    background: none;
+}
+
+.search-category .merge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row-reverse;
+}
+
+.search-category button:focus, .search-category button.active {
+    border-bottom: 2px solid #000;
+}
+
+.search-category .input-container {
+    position: relative;
+    display: inline-block;
+}
+
+.search-category .search-input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #000;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding-left: 30px;
+    box-sizing: border-box;
+}
+
+.search-category .searchbtn {
+    position: absolute;
+    right: 0.5rem;
+    color: #000;
+    font-size: 0;
+}
+
+.search-category .search-frame {
+    width: 80%;
+    height: 40px;
+}
+
+    .search-category .search-frame .theme {
+        width: 10%;
+        background: #444444;
+        color: #fff;
+    }
+
+    .search-category .search-frame .vice-theme {
+        width: 90%;
+        border: 1px solid #000;
+    }
+
+        .search-category .search-frame .vice-theme input {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+        }
+
+        .search-category .search-frame .vice-theme .option {
+            margin: 0px 1%;
+        }
+
+#Search_Title span:nth-child(1) {
+    color: #009bd7;
+    font-weight: 900;
+}
+
+#Search_Title span:nth-child(2) {
+    color: #009bd7;
+    font-size: 1.5em;
+    font-weight: 900;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#Search_Title p {
+    font-size: 1.2rem;
+}
+
+.search-category .related-tag span {
+    border-radius: 20px;
+    padding: 3px 6px;
+    background: #EFEFEF;
+    color: gray;
+    font-size: 10px;
+}
+
+.search-category .fs-gray {
+    color: gray;
+    font-size: 0.95rem;
+}
+
+.templatecontent {
+    display: none;
+}
+
+.search-category .catalog.type2 .image_frame {
+    height:250px;
+}
+
+    .search-category .catalog.type2 .image_frame > .img-fluid {
+        max-height: 100%;
+    }
+.search-category .switch_control {
+    padding-right:3rem;
+}
+
+header #Search {
+    display: none !important;
+}
+
+.type_change_frame .type2-title {
+    -webkit-line-clamp: 2;
+    max-height: calc(1.25rem * 2.6);
+    max-width: calc(100% - 2rem);
+}
+.type3 .image_frame {
+    max-width: 25%;
+    min-height: 220px;
+}
+.type3 figcaption {
+    max-width: 70%;
+}
+
+@media (max-width:576px) {
+    .search-input-block {
+        width: 75%
+    }
+    .search-category .catalog.type2 .image_frame {
+        height:150px;
+    }
+    .search-category .switch_control {
+        padding-right: 1rem;
+    }
+    .search-category .container {
+        padding: 0;
+    }
+    .catalog_frame .template {
+        padding: 0.5rem 0.5rem 0 0.5rem !important;
+    }
+        .catalog_frame .template:last-child {
+            padding-bottom: 0.5rem !important;
+        }
+    .type_change_frame .type1-title {
+        height: calc(1rem * 3.6);
+    }
+}

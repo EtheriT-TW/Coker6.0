@@ -57,7 +57,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    max-height: calc(1rem * 3.6);
+    height: calc(1rem * 3.6);
     position: relative;
 }
 .type_change_frame .type2-title {
@@ -105,6 +105,15 @@
 .type_change_frame .pb1 {
     padding-bottom:1rem;
 }
+.empty:before {
+    content: "查無資料";
+    padding: 2rem;
+    text-align: center;
+    width: 100%;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
 @media only screen and (max-width: 768px) {
     .type_change_frame > .catalog .title {
         line-height: 1.5rem;

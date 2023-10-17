@@ -8,6 +8,7 @@ using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -73,7 +74,7 @@ builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<ImportAppService, ImportAppService>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
-
+builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();

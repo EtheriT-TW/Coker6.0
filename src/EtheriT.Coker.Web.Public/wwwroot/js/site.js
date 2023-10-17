@@ -36,18 +36,6 @@ function ready() {
         $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");
-        $(".editTime,.popular").appendTo($conten);
-        if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) SwiperInit({ autoplay: true });
-        if ($(".masonry").length > 0) FrameInit();
-        if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
-        if ($(".hover_mask").length > 0) HoverEffectInit();
-        if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0) DirectoryGetDataInit();
-        if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
-        if ($(".link_with_icon").length > 0) LinkWithIconInit();
-        if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
-        if ($(".shareBlock").length > 0) ShareBlockInit();
-        console.log($("#lanBar"));
-        if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
     }
     if ($PostCSS.length > 0) {
         const $mainCss = $("#frameCss")
@@ -57,6 +45,18 @@ function ready() {
         $mainCss.text(ele.textContent || ele.innerText);
         $PostCSS.remove();
     }
+    $(".editTime,.popular").appendTo($conten);
+    if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
+    if ($(".masonry").length > 0) FrameInit();
+    if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
+    if ($(".hover_mask").length > 0) HoverEffectInit();
+    if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0) DirectoryGetDataInit();
+    if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
+    if ($(".link_with_icon").length > 0) LinkWithIconInit();
+    if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
+    if ($(".shareBlock").length > 0) ShareBlockInit();
+    if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
+    _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");
     });
@@ -444,6 +444,25 @@ var Coker = {
                 else return s
             }
         }
+    }, Search: {
+        Init: function (id) {
+            const $e = $(id);
+            const $b = $e.find(".dropdown-menu button");
+            const $t = $e.find(".input_sear");
+            $e.data("sid", $b.first().data("id"));
+            $b.on("click", function () {
+                $e.data("sid", $(this).data("id"));
+                if ($t.val() != "") window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
+            });
+            $e.find(".btn_sear").on("click", function () {
+                if ($t.val() == "") {
+                    co.sweet.error("錯誤", "請輸入搜尋文字", null, false);
+                } else {
+                    window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
+                }
+                return false;
+            });
+        }
     }
 }
 $.fn.extend({
@@ -452,3 +471,4 @@ $.fn.extend({
     }
 });
 let _c = Coker;
+let co = _c;

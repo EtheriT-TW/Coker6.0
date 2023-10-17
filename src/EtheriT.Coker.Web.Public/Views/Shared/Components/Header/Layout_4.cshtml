@@ -5,22 +5,6 @@
 <link rel="stylesheet" href="~/css/Header/Header_Layout_4.min.css" asp-append-version="true" />
 <script src="~/js/Header/Header_Layout_4.min.js" asp-append-version="true"></script>
 
-<div class="modal sear_modal fade" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">搜尋</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-            </div>
-            <div class="modal-footer d-flex justify-content-center">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">關閉</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="header bg_cyan_blue">
     <div class="d-flex flex-column p-3 container">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -46,15 +30,15 @@
                         var sitemap_title = Model.Sitemap_Target == true ? "連結至：網站導覽(另開視窗)" : "連結至：網站導覽";
                         <a class="text-nowrap text-white px-3 mt-3 mb-2 mb-lg-auto mt-lg-auto font_small" aria-current="page" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target">網站導覽</a>
                     }
-                    <div class="align-items-center bg-white d-flex rounded">
+                    <div id="Search" class="align-items-center bg-white d-flex rounded">
                         <input id="SearchInput" class="input_sear form-control rounded-0 rounded-start" type="search" placeholder="站內搜尋" aria-label="Search">
                         <div class="dropdown">
                             <a class="dropdown-toggle px-2 text-nowrap text-black" href="/epza/eplus" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 搜尋
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="dLabel">
-                                <li><button class="btn_sear_all dropdown-item text-nowrap">全部</button></li>
-                                <li><button class="btn_sear_news dropdown-item text-nowrap">最新消息</button></li>
+                                <li><button class="btn_sear_all dropdown-item text-nowrap" data-id="0">全部</button></li>
+                                <li><button class="btn_sear_news dropdown-item text-nowrap" data-id="2">最新消息</button></li>
                             </ul>
                         </div>
                     </div>

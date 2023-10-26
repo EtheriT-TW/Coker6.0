@@ -911,7 +911,7 @@
     width: 100%;
     position: relative;
     overflow: hidden;
-    border-radius: none;
+    border-radius:unset;
     border: none;
 }
 
@@ -1030,7 +1030,7 @@
 }
 @media (min-width: 992px) {
     .navbar-expand-lg .navbar-collapse {
-        flex-basis: none;
+        flex-basis:unset;
         display: flex !important;
         justify-content: end !important;
     }

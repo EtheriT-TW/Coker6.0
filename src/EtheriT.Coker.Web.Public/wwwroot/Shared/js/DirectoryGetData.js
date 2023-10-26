@@ -196,9 +196,9 @@ function DirectoryDataGet($item, option) {
 }
 
 function DirectoryDataInsert($item, result) {
+    if (result == null) return;
     const temp = $item.find(".templatecontent").html();
     const isSearch = $item.data("type") == "search";
-    console.log(result.length);
     if (result.length == 0) $item.find(".catalog").addClass("empty");
     else $item.find(".catalog").removeClass("empty");
     result != null && result.forEach(function (data) {

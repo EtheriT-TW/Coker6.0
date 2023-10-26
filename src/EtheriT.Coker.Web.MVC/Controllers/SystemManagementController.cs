@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.StoreSet;
+﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.StoreSet;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
@@ -6,12 +7,22 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 	public class SystemManagementController : Controller
     {
         private readonly IStoreSetAppService _storeSetAppService;
-        public SystemManagementController(IStoreSetAppService _storeSetAppService) { 
+        private readonly IWebsiteApplication _WebsiteApplication;
+        public SystemManagementController(IStoreSetAppService _storeSetAppService, IWebsiteApplication _WebsiteApplication) { 
             this._storeSetAppService = _storeSetAppService;
+            this._WebsiteApplication = _WebsiteApplication;
 		}
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View("WebData");
+            var response = await _WebsiteApplication.GetWebsiteData();
+            if (response.Success)
+            {
+                return View("WebData", response);
+            }
+            else {
+                return Redirect("/Welcome");
+            }
+            
         }
         public async Task<IActionResult> SEO()
         {

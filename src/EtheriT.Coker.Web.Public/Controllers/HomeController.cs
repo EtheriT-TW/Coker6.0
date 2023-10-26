@@ -15,6 +15,7 @@ using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
+    [AutoValidateAntiforgeryToken]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -24,6 +25,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IWebsiteApplication websiteApplication;
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IStoreSetAppService storeSetAppService;
+        private readonly IHttpContextAccessor httpContextAccessor;
         public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
@@ -31,7 +33,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IConfiguration Configuration,
             IWebsiteApplication websiteApplication,
             IWebMenuApplication webMenuApplication,
-            IStoreSetAppService storeSetAppService
+            IStoreSetAppService storeSetAppService,
+            IHttpContextAccessor httpContextAccessor
             )
         {
             this._logger = logger;
@@ -41,6 +44,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.websiteApplication = websiteApplication;
             this.webMenuApplication = webMenuApplication;
             this.storeSetAppService = storeSetAppService;
+            this.httpContextAccessor= httpContextAccessor;
         }
 
         public async Task<IActionResult> IndexAsync(string key)
@@ -60,6 +64,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 				enterAd = enterAds,
                 guessLike = guessLike,
                 layout = $"layput{defaultData.Layout_Type}",
+                token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
                 storeSet = new StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""

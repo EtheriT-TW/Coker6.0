@@ -16,5 +16,7 @@ namespace EtheriT.Coker.Application
         public Task<long> GetSiteId(long father_id, string key);
         public Task<ResponseMessageDto> Exchange(WebExchangeDto dto);
         public Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto);
+        public Task<WebsiteEditOutputDto> GetWebsiteData();
+        public Task<ResponseMessageDto> Save(WebsiteEditDto dto);
     }
 }

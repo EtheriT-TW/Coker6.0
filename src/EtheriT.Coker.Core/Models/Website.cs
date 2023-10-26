@@ -33,5 +33,7 @@ namespace EtheriT.Coker.Core.Models
         public List<Directory> Directory { get; set; }
         public List<StoreSetDetail> StoreSetDetails { get; set; }
         public List<CustSearch> CustSearchs { get; set; }
+        public List<AuditLog> AuditLogs { get; set; }
+        public List<MappingCompanyAndWebsites> Company { get; set; }
     }
 }

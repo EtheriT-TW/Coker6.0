@@ -248,7 +248,7 @@
                                               </div>
                                               <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                                <button type="button" class="btn btn-primary">完成編輯</button>
+                                                <button type="button" class="btn btn-primary sava">完成編輯</button>
                                               </div>
                                             </div>
                                           </div>
@@ -281,11 +281,24 @@
                                 content.find(".img_alt").text(data.alt);
                                 content.find(".a_href").text(data.href);
                                 content.find(".a_title").text(data.title);
+                                content.data("order", index);
                                 $body.append(content)
                             })
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
+                            $("#SwiperModal .sava").on("click", function () {
+                                const $s = $selected.clone();
+                                const $slides = $s.find(".swiper-slide").clone();
+                                const $b = $s.find(".swiper-wrapper");
+                                $b.empty();
+                                $("#SwiperList li").each(function (index, element) {
+                                    $b.append($slides[$(element).data("order")]);
+                                });
+                                
+                                //editor.getSelected().components($b.html());
+                                SwiperModal.hide();
+                            });
                         },
                     }
                 ],

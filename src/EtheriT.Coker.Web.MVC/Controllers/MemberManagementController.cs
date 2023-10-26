@@ -15,5 +15,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         public IActionResult SelfData() {
 			return View("SelfData");
 		}
+        public IActionResult ManagerList(int id)
+        {
+            return View("ManagerList");
+        }
     }
 }

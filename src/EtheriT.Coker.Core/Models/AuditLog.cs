@@ -22,8 +22,9 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(256)] public string? MethodName { get; set; }
         public string? Parameters { get; set; }
         [StringLength(256)] public string? ServiceName { get; set; }
-        public int WebId { get; set; }
-        public long UserId { get; set; }
+        public long? FK_WebsiteId { get; set; }
+        public long? UserId { get; set; }
         public string? ReturnValue { get; set; }
+        public Website? Website { get; set; }
     }
 }

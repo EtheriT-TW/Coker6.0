@@ -13,14 +13,17 @@
 			{
 				@if (item.jobItemModels == null)
 				{
-					string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
-					<li class="@myClass">
-						<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
-							<span class="nav-icon material-icons">@item.Icon</span>@item.Title
-						</a>
-					</li>
+					if (item.Enable)
+					{
+						string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
+						<li class="@myClass">
+								<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
+								<span class="nav-icon material-icons">@item.Icon</span>@item.Title
+							</a>
+						</li>
+					}
 				}
-				else
+				else if (item.Enable)
 				{
 					string brighten = "";
 					if (item.jobItemModels.Exists(e => e.PageName == ViewData["Title"].ToString()))
@@ -36,12 +39,15 @@
 						<ul class="sub-nav">
 							@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
 							{
-								string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
-								<li class="@myClass">
-									<a title="@subJob.Title" asp-controller="@subJob.Controller" asp-action="@subJob.Action">
-										<span class="nav-icon material-icons">@subJob.Icon</span>@subJob.Title
-									</a>
-								</li>
+								if (subJob.Enable)
+								{
+									string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
+									<li class="@myClass">
+										<a title="@subJob.Title" asp-controller="@subJob.Controller" asp-action="@subJob.Action">
+											<span class="nav-icon material-icons">@subJob.Icon</span>@subJob.Title
+										</a>
+									</li>
+								}
 							}
 						</ul>
 					</li>

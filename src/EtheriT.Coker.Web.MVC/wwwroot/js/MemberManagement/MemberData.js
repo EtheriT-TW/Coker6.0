@@ -172,11 +172,14 @@ function FormDataSet(result) {
     $level.val(result.level)
     $email_basic.val(result.email);
     $cellphone.val(result.cellPhone);
-    if (result.telphone != null) {
-        var telphone_split = result.telphone.split("-");
+    if (result.telPhone != null) {
+        var telphone_split = result.telPhone.split("-");
         $telphone_area.val(telphone_split[0]);
-        $telphone.val(telphone_split[1]);
-        $telphone_ext.val(telphone_split[2]);
+        if (telphone_split.length > 1) {
+            var telphone_split2 = telphone_split[1].split("#");
+            $telphone.val(telphone_split2[0]);
+            if (telphone_split2.length > 1) $telphone_ext.val(telphone_split2[1]);
+        }
     }
     if (result.address != null) {
         co.Zipcode.setData({
@@ -202,9 +205,8 @@ function Update(success_text, error_text) {
         Level: $level.val(),
         Email: $email_basic.val(),
         CellPhone: $cellphone.val(),
-        TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + "-" + $telphone_ext.val(),
-        Address: $address_city.val() + " " + $address_town.val() + " " + $address.val(),
-        /*Password: $newpass*/
+        TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + ($telphone_ext.val() ==""?"":"#" + $telphone_ext.val()),
+        Address: $address_city.val() + " " + $address_town.val() + " " + $address.val()
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () {

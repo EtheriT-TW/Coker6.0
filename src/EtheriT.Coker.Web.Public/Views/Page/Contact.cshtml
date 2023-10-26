@@ -1,7 +1,22 @@
-﻿
+﻿@using System.Web;
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Web.Public.Models;
+@model PageViewModel
+@{
+	ViewData["SideName"] = Model.PageData.SiteName;
+	ViewData["PageName"] = Model.PageData.Title;
+	ViewData["OrgName"] = Model.orgName;
+	ViewData["Layout"] = Model.layout;
+	ViewData["PageTagNameName"] = $"{Model.PageData.Title} - 【{Model.PageData.SiteName}】";
+	ViewData["Description"] = Model.PageData.Description;
+	ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+	ViewData["XSRF-TOKEN"] = Model.token;
+}
 <link rel="stylesheet" href="~/css/Page/Contact.min.css" asp-append-version="true" />
 <script src="~/js/Page/Contact.min.js" asp-append-version="true"></script>
-
+@Html.AntiForgeryToken()
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">
 		<li class="breadcrumb-item"><a href="/@ViewData["OrgName"]/home">首頁</a></li>
@@ -12,7 +27,8 @@
 
 <div class="fs-2 text-center bigtitle">聯絡我們</div>
 
-<form id="ContactForm" class="col-12 col-lg-6 col-sm-8 container bg-white rounded shadow p-5 mt-3 mb-5 needs-validation" novalidate>
+<form id="ContactForm" class="col-12 col-lg-6 col-sm-8 container bg-white rounded shadow p-5 mt-3 mb-5 needs-validation" method="post" novalidate>
+	<input type="hidden" name="authentiity_token" value="@Model.token" />
 	<div class="form-floating mb-3 col-12 col-sm-6">
 		<select class="form-select" id="SelectType" aria-label="Select the problem location" required>
 			<option selected disabled value="">問題分類</option>

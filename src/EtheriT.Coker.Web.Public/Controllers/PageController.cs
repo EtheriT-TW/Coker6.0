@@ -22,6 +22,7 @@ using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
+    [AutoValidateAntiforgeryToken]
     public class PageController : Controller
     {
         private readonly ILogger<PageController> _logger;
@@ -34,7 +35,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IProductAppService productAppService;
         private readonly ICustSearchAppService custSearchAppService;
         private readonly IStoreSetAppService storeSetAppService;
-        private readonly StringHandler stringHandler;
+		private readonly IHttpContextAccessor httpContextAccessor;
+		private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -46,7 +48,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IProductAppService productAppService,
             IStoreSetAppService storeSetAppService,
             ICustSearchAppService custSearchAppService,
-            StringHandler stringHandler
+			IHttpContextAccessor httpContextAccessor,
+			StringHandler stringHandler
         )
         {
             this._logger = logger;
@@ -60,6 +63,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.stringHandler = stringHandler;
             this.storeSetAppService = storeSetAppService;
             this.custSearchAppService = custSearchAppService;
+            this.httpContextAccessor = httpContextAccessor;
         }
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
@@ -78,7 +82,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 freightModels = freight,
                 enterAd = enterAds,
                 layout = $"layout{defaultData.Layout_Type}",
-                storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
+                token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+				storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
                 }
@@ -99,9 +104,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData = PageData;
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
-                        model.PageData.VisibleHeader = PageData.VisibleHeader;
-                        model.PageData.VisibleFooter = PageData.VisibleFooter;
-                        model.PageData.VisibleTitle = PageData.VisibleTitle;
+                        if (key == "article")
+                        {
+                            model.PageData.VisibleHeader = true;
+                            model.PageData.VisibleFooter = true;
+                            model.PageData.VisibleTitle = true;
+                        }
+                        else
+                        {
+                            model.PageData.VisibleHeader = PageData.VisibleHeader;
+                            model.PageData.VisibleFooter = PageData.VisibleFooter;
+                            model.PageData.VisibleTitle = PageData.VisibleTitle;
+                        }
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {

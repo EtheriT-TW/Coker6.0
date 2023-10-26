@@ -13,7 +13,8 @@ namespace EtheriT.Coker.Web.Public.Models
         public string? search { get; set; }
         public string? orgName { get; set; }
         public string layout { get; set; }
-        public List<HtmlContentDisplayDto>? enterAd { get; set; }
+		public string? token { get; set; }
+		public List<HtmlContentDisplayDto>? enterAd { get; set; }
 		public GetFrontContenOutputDto? ParentData { get; set; }
         public GetFrontContenOutputDto? PageData { get; set; }
         public FrontSearchPalameterDro? SearchPalameter { get; set; }

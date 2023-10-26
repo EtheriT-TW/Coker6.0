@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Authentication;
 using EtheriT.Coker.Application.Shared.Dto.User;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Serialization;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -50,6 +51,7 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
         {
             LoginOutputDto output = new LoginOutputDto() { Success = false };
+            long? userId=null, websiteId=null;
             try
             {
                 if (string.IsNullOrEmpty(dto.UserName)) throw new Exception("使用者名稱不可為空");
@@ -59,6 +61,7 @@ namespace EtheriT.Coker.Application.Authorization
                 {
                     var user = await users.FirstOrDefaultAsync();
                     string password = user.Password;
+                    userId = user.Id;
                     if (passwordHasher.VerifyHashedPassword(password, dto.Password))
                     {
                         DateTime dateTime = DateTime.Now;
@@ -70,7 +73,10 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                         if (!await loginUserData.CheckedWebSiteId(user.Id, bindID)) {
                             var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
-                            if (defaultWeb != null) bindID = defaultWeb.UserId;
+                            if (defaultWeb != null) { 
+                                bindID = defaultWeb.UserId;
+                                websiteId = defaultWeb.WebsiteId;
+                            }
                         }
                         Core.Models.Token t = new Core.Models.Token
                         {
@@ -96,7 +102,8 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Success = false;
                 output.Error = e.Message;
             }
-
+            dto.Password = "******";
+			await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         [Authorize]

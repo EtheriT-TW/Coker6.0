@@ -8,6 +8,7 @@
         public string Controller { get; set; }
         public string Action { get; set; }
         public string? CollapseId { get; set; }
+        public bool Enable { get; set; } = true;
         public List<JobMenu>? jobItemModels { get; set; }
     }
 }

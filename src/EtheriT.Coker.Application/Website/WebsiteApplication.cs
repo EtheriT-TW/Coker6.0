@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -22,17 +23,20 @@ namespace EtheriT.Coker.Application
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly string ApplicationName;
         private readonly IConfiguration Configuration;
+        private readonly IMapper mapper;
         public WebsiteApplication(
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration Configuration,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IMapper mapper
         )
         {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.loginUserData = loginUserData;
             this.Configuration = Configuration;
+            this.mapper = mapper;
             ApplicationName = "Website";
 
         }
@@ -237,6 +241,46 @@ namespace EtheriT.Coker.Application
             }
             catch { }
             return result;
+        }
+        public async Task<WebsiteEditOutputDto> GetWebsiteData() {
+            WebsiteEditOutputDto result = new WebsiteEditOutputDto { Success=false, Website = new WebsiteEditDto(), Company = new Company.CompanyDto() };
+            long siteId = await loginUserData.GetWebsiteId();
+            try
+            {
+                var data = await db.Websites.Include(e => e.Company).Where(e => e.Id == siteId).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                if (data != null)
+                {
+                    var cid = data.Company.Select(e => e.FK_CompanyId).ToList();
+                    var com = await db.Companies.Where(e => cid.Contains(e.Id)).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                    mapper.Map(data, result.Website);
+                    mapper.Map(com, result.Company);
+                    result.Success=true;
+                }
+                else throw new Exception("網站不存在");
+            }
+            catch (Exception e) {
+                result.Error = e.Message;
+            }
+            return result;
+        }
+        public async Task<ResponseMessageDto> Save(WebsiteEditDto dto) {
+            var response = new ResponseMessageDto() { Success = false };
+            var websiteid = await loginUserData.GetWebsiteId();
+            try
+            {
+                if (websiteid == 0) throw new Exception("未再登入狀態");
+                var data = await db.Websites.Where(e => e.Id == websiteid).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+
+                if (data == null) throw new Exception("網站不存在");
+                mapper.Map(dto,data);
+                await loginUserData.SaveChanges(data);
+                response.Success = true;
+            }catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+            await loginUserData.SetLogs(ApplicationName, "Save", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
         }
     }
 }

@@ -57,7 +57,7 @@
             ViewData["VisibleFooter"] = "true";
         }
     }
-    @if (bool.Parse(ViewData["VisibleHeader"].ToString()))
+    @if (bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true"))
     {
         <header class="">
             @await Component.InvokeAsync(nameof(Header))
@@ -73,7 +73,7 @@
         <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="中間區域">:::</a>
         @RenderBody()
     </div>
-    @if (bool.Parse(ViewData["VisibleFooter"].ToString()))
+    @if (bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true"))
     {
         <footer>
             @await Component.InvokeAsync(nameof(Footer))
@@ -87,7 +87,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="text-center fs-4 fw-bold">會員登入</div>
-                    <form id="LoginForm" class="card-body needs-validation">
+                    <form id="LoginForm" class="card-body needs-validation" method="post">
+                        <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                         <div class="login_mail input-group mb-3">
                             <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                 <span class="material-symbols-outlined text-black-50">mail</span>
@@ -131,7 +132,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="text-center fs-4 fw-bold">加入會員</div>
-                    <form id="RegisterForm" class="card-body needs-validation">
+                    <form id="RegisterForm" class="card-body needs-validation" method="post">
+                        <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                         <div class="register_mail input-group mb-3">
                             <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                 <span class="material-symbols-outlined text-black-50">mail</span>

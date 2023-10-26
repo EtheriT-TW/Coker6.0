@@ -14,9 +14,10 @@
 	ViewData["Description"] = Model.PageData.Description;
 	ViewData["GA4"] = Model.storeSet.GA4;
 	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
-	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["XSRF-TOKEN"] = Model.token;
 }
-
+@Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>

@@ -131,10 +131,14 @@ function PageReady() {
 
     $("#CompanyInfo > .form_btn > .btn_exit").on("click", CompanyInfoExit);
     $("#CompanyInfo > .form_btn > .btn_save").on("click", CompanyInfoSave);
+    $("#WebsiteInfo > .form_btn > .btn_save").on("click", WebsiteInfoSave);
 
-
-
-    TWZipCodeInit();
+    let addr = $("#TWzipcode .address").val()
+    co.Zipcode.init("#TWzipcode");
+    co.Zipcode.setData({
+        el: $("#TWzipcode"),
+        addr: addr
+    });
 
     HashDataEdit();
     if ("onhashchange" in window) {
@@ -205,45 +209,35 @@ function CompanyInfoExit() {
     CompanyInfoEdit();
 }
 
-function CompanyInfoSave() {
+function CompanyInfoSave(event) {
     companyInfoIsEdit = false;
-    CompanyInfoEdit();
+    const form = document.getElementById("CompnyData");
+    if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+    } else {
+        co.Company.Save(co.Form.getJson("CompnyData")).done(function (resut) {
+            if (resut.success) co.sweet.success("儲存成功");
+            else co.sweet.error(resut.error);
+        });
+        CompanyInfoEdit();
+    }
+    form.classList.add('was-validated');
+}
+function WebsiteInfoSave(event) {
+    const form = document.getElementById("WebsiteData");
+    if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+    } else {
+        co.WebSite.Save(co.Form.getJson("WebsiteData")).done(function (resut) {
+            if (resut.success) co.sweet.success("儲存成功");
+            else co.sweet.error(resut.error);
+        });
+    }
+    form.classList.add('was-validated');
 }
 
-function TWZipCodeInit() {
-    $TWzipcode = $('#TWzipcode');
-
-    $TWzipcode.twzipcode({
-        'zipcodeIntoDistrict': true,
-        'countySel': '新北市',
-        'districtSel': '鶯歌區'
-    });
-
-    var $county, $district;
-
-    $county = $TWzipcode.children('.county');
-    $district = $TWzipcode.children('.district');
-
-    $county.children('select').attr({
-        id: "SelectCity",
-        class: "city form-select",
-        disabled: "disabled"
-    });
-    $county.append("<label class='px-4 required' for='SelectCity'>縣市</label>");
-    var $county_first_option = $county.children('select').children('option').first();
-    $county_first_option.text("請選擇縣市");
-    $county_first_option.attr('disabled', 'disabled');
-
-    $district.children('select').attr({
-        id: "SelectTown",
-        class: "town form-select",
-        disabled: "disabled"
-    });
-    $district.append("<label class='required' for='SelectTown'>鄉鎮</label>");
-    var $district_first_option = $district.children('select').children('option').first();
-    $district_first_option.text("請選擇鄉鎮");
-    $district_first_option.attr('disabled', 'disabled');
-}
 function MoveToCanvas(id) {
     $("#gjs").data("id", id);
     setPage(id);

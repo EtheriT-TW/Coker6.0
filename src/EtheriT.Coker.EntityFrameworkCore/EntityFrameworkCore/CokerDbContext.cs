@@ -56,6 +56,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 		public DbSet<StoreSet> StoreSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
         public DbSet<CustSearch> CustSearch { get; set; }
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<MappingCompanyAndWebsites> MappingCompanyAndWebsites { get; set; }
+
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
@@ -188,7 +191,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<CustSearch>(o => {
                 o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
             });
-
+            modelBuilder.Entity<AuditLog>(o => {
+                o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<MappingCompanyAndWebsites>(o => {
+                o.HasOne(f => f.Website).WithMany(w => w.Company).HasForeignKey(e => e.FK_WebsiteId);
+                o.HasOne(f => f.Company).WithMany(w => w.Websites).HasForeignKey(e => e.FK_CompanyId);
+            });
 
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

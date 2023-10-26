@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Web.Public.Models
         public String site_name { get; set; }
 		public String OrgName { get; set; }
         public string layout { get; set; }
+        public string? token { get; set; }
 		public GetFrontContenOutputDto? PageData { get; set; }
         public List<GetMenuBreadDto>? MenuBread { get; set; }
         public StoreSetFrontDto storeSet { get; set; }

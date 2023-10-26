@@ -1,10 +1,19 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Freight
 @using EtheriT.Coker.Web.Public.Models
 @model PageViewModel
-
+@{
+	ViewData["SideName"] = Model.PageData.SiteName;
+	ViewData["PageName"] = Model.PageData.Title;
+	ViewData["OrgName"] = Model.orgName;
+	ViewData["Description"] = Model.PageData.Description;
+	ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+	ViewData["XSRF-TOKEN"] = Model.token;
+}
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
-
+@Html.AntiForgeryToken()
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
@@ -200,7 +209,8 @@
 				</div>
 
 				<div class="card-body px-0">
-					<form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" novalidate>
+					<form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" method="post" novalidate>
+						<input type="hidden" name="authentiity_token" value="@Model.token" />
 						<div class="row gx-0">
 							@if (Model.freightModels.Count > 0)
 							{
@@ -234,7 +244,8 @@
 						<div class="fs-5 my-2">付款方式</div>
 					</div>
 
-					<form id="RadioPayment" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" novalidate>
+					<form id="RadioPayment" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" method="post" novalidate>
+						<input type="hidden" name="authentiity_token" value="@Model.token" />
 						<div class="form-check py-2">
 							<input id="radio_payment_atm" class="form-check-input" type="radio" name="RadioPayment" value="1" required>
 							<label class="form-check-label" for="radio_payment_atm">ATM</label>
@@ -314,7 +325,8 @@
 							</div>
 						</div>
 
-						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
+						<form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+							<input type="hidden" name="authentiity_token" value="@Model.token" />
 							<div class="row mx-0">
 								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
 									<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
@@ -406,7 +418,8 @@
 							</div>
 						</div>
 
-						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
+						<form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+							<input type="hidden" name="authentiity_token" value="@Model.token" />
 							<div class="row mx-0">
 								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
 									<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="" minlength="2" required>
@@ -502,7 +515,8 @@
 							</div>
 						</div>
 
-						<form class="px-3 px-sm-5 d-none needs-validation" novalidate>
+						<form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+							<input type="hidden" name="authentiity_token" value="@Model.token" />
 							<div class="form-floating mb-3 col-12 col-sm-6">
 								<input id="InvoiceInputTitle" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
 								<label class="required" for="InvoiceInputTitle">發票抬頭</label>

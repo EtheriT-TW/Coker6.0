@@ -15,6 +15,11 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Search;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
+using EtheriT.Coker.Application.Company;
+using System.Security.AccessControl;
+using EtheriT.Coker.Application.Dto.AuditLog;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 
 namespace EtheriT.Coker.Application
 {
@@ -25,14 +30,27 @@ namespace EtheriT.Coker.Application
 		public CustomDtoMapper()
 		{
 			//Users
-			CreateMap<UserDto, User>()
+			CreateMap<UserSimplifyDto, User>()
 				.ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
 				.ReverseMap();
 			CreateMap<MemberGetAllDataDto, User>()
 				.ReverseMap();
 			CreateMap<MemberUpdateDto, User>()
 				.ReverseMap();
+			CreateMap<ManagerAllListDto, User>()
+				.ReverseMap();
 
+			//Website
+			CreateMap<Website, WebsiteEditDto>()
+                .ReverseMap();
+
+            //Company
+            CreateMap<Core.Models.Company, CompanyDto>()
+                .ReverseMap();
+
+			//AuditLog
+			CreateMap<Core.Models.AuditLog, AuditLogListDto>()
+				.ReverseMap();
 
 			//WebMenu
 			CreateMap<SiteMapDto, WebMenu>().ReverseMap();

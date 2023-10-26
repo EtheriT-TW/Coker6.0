@@ -22,7 +22,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Controller="Dashboard",
                         Action="Index",
                         Icon="public",
-                        CollapseId=""
+                        CollapseId="",
+                        Enable=false
                     },
                     new JobMenu{
                         PageName="OrderManagement",
@@ -31,6 +32,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Action="Index",
                         Icon="receipt_long",
                         CollapseId="#OrderManagement",
+                        Enable=false,
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="OrderList",
@@ -48,6 +50,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Action="Index",
                         Icon="local_mall",
                         CollapseId="#ProductManagement",
+                        Enable=false,
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="ProductList",
@@ -85,6 +88,13 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Title="會員管理",
                                 Controller="MemberManagement",
                                 Action="Index",
+                                Icon="",
+                                Enable=false
+                            },new JobMenu{
+                                PageName="ManagerList",
+                                Title="使用者名單",
+                                Controller="MemberManagement",
+                                Action="ManagerList",
                                 Icon="",
                             },new JobMenu{
 								PageName="UserData",
@@ -182,6 +192,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Controller="ContentManagement",
                                 Action="ContactUs",
                                 Icon="",
+                                Enable=false
                             }
                         }
                     },
@@ -192,6 +203,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Action="Index",
                         Icon="store",
                         CollapseId="#StoreSettings",
+                        Enable=false,
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="FreightSettings",
@@ -215,6 +227,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Controller="SearchManagement",
                         Action="CustSearch",
                         Icon="search",
+                        Enable=false,
                     },
                     new JobMenu{
                         PageName="TypographyTheme",
@@ -222,7 +235,8 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                         Controller="Dashboard",
                         Action="Index",
                         Icon="palette",
-                        CollapseId=""
+                        CollapseId="",
+                        Enable=false
                     },
                     new JobMenu{
                         PageName="SystemManagement",
@@ -237,23 +251,30 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
                                 Title="網站資料",
                                 Controller="SystemManagement",
                                 Action="Index",
-                                Icon="",
+                                Icon="wysiwyg",
                             },
                             new JobMenu{
                                 PageName="SEO",
                                 Title="SEO設定",
                                 Controller="SystemManagement",
                                 Action="SEO",
-                                Icon="",
+                                Icon="manage_search",
                             },
                             new JobMenu{
                                 PageName="Theme",
                                 Title="後台配色設定",
                                 Controller="Theme",
                                 Action="Index",
-                                Icon=""
-                            }
-                        }
+                                Icon="web"
+                            },
+							new JobMenu{
+								PageName="AuditLogs",
+								Title="操作紀錄",
+								Controller="AuditLogs",
+								Action="Index",
+								Icon="psychology"
+							}
+						}
                     }
                 }
             };

@@ -5,7 +5,7 @@
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
 }
-
+@Html.AntiForgeryToken()
 <!--導入menuEditor-->
 <script type="text/javascript" src="/lib/jquery-menu-editor/jquery-menu-editor.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/fontawesome6-2-1.min.js" asp-append-version="true"></script>

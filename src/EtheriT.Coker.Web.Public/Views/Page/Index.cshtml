@@ -1,5 +1,6 @@
 ﻿@using System.Web;
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Models;
 @model PageViewModel
 @{
@@ -13,6 +14,20 @@
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
     ViewData["XSRF-TOKEN"] = Model.token;
+    switch (Model.Level)
+    {
+        case WebsiteLevelEnum.會員:
+            ViewData["LoginEnable"] = true;
+            break;
+        case WebsiteLevelEnum.購物:
+            ViewData["LoginEnable"] = true;
+            ViewData["ShoppingEnable"] = true;
+            break;
+        default:
+            ViewData["LoginEnable"] = false;
+            ViewData["ShoppingEnable"] = false;
+            break;
+    }
 }
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />

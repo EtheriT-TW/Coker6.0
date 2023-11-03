@@ -58,6 +58,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<CustSearch> CustSearch { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<MappingCompanyAndWebsites> MappingCompanyAndWebsites { get; set; }
+        public DbSet<Recipient> Recipients { get; set; }
+        
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -65,7 +67,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<MappingUserAndWebsite>(o =>
+			modelBuilder.Entity<Website>(o =>
+			{
+                o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+			});
+			modelBuilder.Entity<MappingUserAndWebsite>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
@@ -198,7 +204,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Website).WithMany(w => w.Company).HasForeignKey(e => e.FK_WebsiteId);
                 o.HasOne(f => f.Company).WithMany(w => w.Websites).HasForeignKey(e => e.FK_CompanyId);
             });
-
+            modelBuilder.Entity<Recipient>(o => {
+                o.HasOne(f => f.Website).WithMany(u => u.Recipients).HasForeignKey(f => f.FK_WebsiteId);
+            });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }

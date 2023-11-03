@@ -53,8 +53,6 @@
             border-bottom: 1px solid #180202;
         }
     }
-
- 
 }
 .offcanvas {
     .w31 {
@@ -69,9 +67,10 @@
 }
 .offcanvas-top {
     width: 30%;
-    height: 70vh;
-    top:15%;
-    left:35%;
+    height: auto;
+    top: unset;
+    bottom: unset;
+    margin: auto;
 }
 .fa-chevron-right, .fa-chevron-left {
     margin: 3px 0;
@@ -82,5 +81,24 @@
 
     p {
         font-size: 14px;
+    }
+}
+.item {
+    color: #333;
+    .title{
+        font-weight:bold;
+        font-style:italic;
+    }
+    .row {
+        margin-bottom: 4rem;
+    }
+
+    .item {
+        margin-left: 3rem;
+        color: darkorange;
+
+        .row {
+            margin-bottom: 1rem;
+        }
     }
 }

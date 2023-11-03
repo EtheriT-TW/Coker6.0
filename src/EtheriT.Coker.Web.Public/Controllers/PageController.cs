@@ -82,7 +82,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 freightModels = freight,
                 enterAd = enterAds,
                 layout = $"layout{defaultData.Layout_Type}",
-                token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+                Level = defaultData.Level,
+				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
 				storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""

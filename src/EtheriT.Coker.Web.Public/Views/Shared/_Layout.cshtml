@@ -19,6 +19,7 @@
 
     <meta name="author" content="易碩網際科技股份有限公司" />
     <meta name="copyright" content="易碩網際科技股份有限公司" />
+    <meta name="description" content="@ViewData["Description"]">
     <meta itemprop="name" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
     <meta itemprop="description" content="@ViewData["Description"]" />
     <meta name="twitter:title" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
@@ -56,13 +57,13 @@
         {
             ViewData["VisibleFooter"] = "true";
         }
+        string VisibleHeader = bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true")?"":"d-none";
+        string VisibleFooter = bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true") ? "" : "d-none";
+
     }
-    @if (bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true"))
-    {
-        <header class="">
-            @await Component.InvokeAsync(nameof(Header))
-        </header>
-    }
+    <header class="@VisibleHeader">
+        @await Component.InvokeAsync(nameof(Header))
+    </header>
     <noscript>
         <p id="noscript">
             <span>你的瀏覽器並未啟動 Javascript!</span><br />
@@ -73,12 +74,9 @@
         <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="中間區域">:::</a>
         @RenderBody()
     </div>
-    @if (bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true"))
-    {
-        <footer>
-            @await Component.InvokeAsync(nameof(Footer))
-        </footer>
-    }
+    <footer class="@VisibleFooter">
+        @await Component.InvokeAsync(nameof(Footer))
+    </footer>
     <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered justify-content-center">
             <div class="modal-content">
@@ -124,8 +122,10 @@
             </div>
         </div>
     </div>
-    <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered justify-content-center">
+    @if (ViewData["LoginEnable"]!=null && bool.Parse(ViewData["LoginEnable"].ToString()) == true)
+    {
+        <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered justify-content-center">
             <div class="modal-content">
                 <div class="modal-header border-0">
                     <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -179,6 +179,7 @@
             </div>
         </div>
     </div>
+    }
     <div id="videoModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
         <div class="modal-dialog modal-xl modal-dialog-centered h-75">
             <div class="modal-content bg-black h-100">

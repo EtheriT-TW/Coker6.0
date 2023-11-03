@@ -83,8 +83,8 @@ function PageReady() {
         co.Product.Content.GetConten({ Id: id }).done(function (result) {
             if (result.success) {
                 var html = co.Data.HtmlDecode(result.conten.saveHtml);
-                editor.setStyle(result.conten.saveCss);
                 editor.setComponents(html);
+                editor.setStyle(result.conten.saveCss);
             } else {
                 co.sweet.error(result.error);
             }

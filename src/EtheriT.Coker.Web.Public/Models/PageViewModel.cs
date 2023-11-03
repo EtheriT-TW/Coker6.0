@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Freight;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -14,6 +15,7 @@ namespace EtheriT.Coker.Web.Public.Models
         public string? orgName { get; set; }
         public string layout { get; set; }
 		public string? token { get; set; }
+        public WebsiteLevelEnum Level { get; set; }
 		public List<HtmlContentDisplayDto>? enterAd { get; set; }
 		public GetFrontContenOutputDto? ParentData { get; set; }
         public GetFrontContenOutputDto? PageData { get; set; }

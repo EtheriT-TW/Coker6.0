@@ -207,6 +207,30 @@ namespace EtheriT.Coker.Application
             }
             return results;
         }
+        public async Task<HtmlContentGetHtmlDto> GetNewsletterConten()
+        {
+            HtmlContentGetHtmlDto results = new HtmlContentGetHtmlDto();
+            try
+            {
+                var content = await db.Html_Contents
+                                    .Where(e => e.Type == 4)
+                                    .Where(e => !e.IsDeleted)
+                                    .FirstOrDefaultAsync();
+                if (content != null)
+                {
+                    results.Conten = mapper.Map<HtmlContentDetailDto>(content);
+                    results.Conten.Html = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.Html));
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
         public async Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto) {
             ResponseMessageDto response = new ResponseMessageDto();
             try {

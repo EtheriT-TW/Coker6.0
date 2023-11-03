@@ -934,7 +934,7 @@ namespace EtheriT.Coker.Application
 					else
 					{
 						response.Error = "Fid為0";
-						response.Success = false;
+						response.Success = true;
 						return response;
 					}
 				}

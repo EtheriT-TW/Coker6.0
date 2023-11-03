@@ -64,9 +64,9 @@ let tw = {
         layer: '階層',
         fileButton: '圖片',
         sectors: {
-            general: '常規',
+            general: '常見',
             layout: '排版',
-            typography: '版祥',
+            typography: '版面',
             decorations: '設計',
             extra: '擴展',
             flex: '模型',

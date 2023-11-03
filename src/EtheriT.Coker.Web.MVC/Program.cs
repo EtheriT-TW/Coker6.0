@@ -43,6 +43,8 @@ using EtheriT.Coker.Application.Search;
 using Microsoft.AspNetCore.Antiforgery;
 using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.AuditLog;
+using EtheriT.Coker.Web.MVC.Startup;
+using EtheriT.Coker.Application.Newsletter;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -137,6 +139,8 @@ builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<ImportAppService>();
 builder.Services.AddTransient<StringHandler>();
+builder.Services.AddTransient<NavigationProvider>();
+builder.Services.AddTransient<MailAppService>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
@@ -147,6 +151,8 @@ builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddTransient<ICompanyAppService, CompanyAppService>();
 builder.Services.AddTransient<IAuditLogAppService, AuditLogAppService>();
+builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
+
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

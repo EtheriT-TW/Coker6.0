@@ -1,0 +1,82 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Dto.Newsletter;
+@{
+    ViewData["Title"] = "Recipient";
+}
+<script src="~/js/Newsletter/Recipient.min.js" asp-append-version="true"></script>
+<div class="">
+    <div id="Recipient" class="card py-2 border-0">
+        @(Html.DevExtreme().DataGrid<RecipientsListDto>()
+            .DataSource(d => d.RemoteController().Key("Id")
+            .LoadUrl("/api/Newsletter/GetRecipients").LoadMethod("Get")
+            .InsertUrl("/api/Newsletter/SaveRecipients").InsertMethod("Post")
+            .UpdateUrl("/api/Newsletter/SaveRecipients").UpdateMethod("Post")
+            )
+            .ID("RecipientList")
+            .RemoteOperations(true)
+            .ShowBorders(true)
+            .FilterRow(filterRow => filterRow
+            .Visible(true)
+            .ApplyFilter(GridApplyFilterMode.Auto)
+            )
+            .HeaderFilter(headerFilter => headerFilter.Visible(true))
+            .SearchPanel(searchPanel => searchPanel
+            .Visible(true)
+            .Placeholder("請輸入要搜尋的資料")
+            )
+            .ShowRowLines(true)
+            .Paging(paging => paging.PageSize(30))
+            .Pager(pager =>
+            {
+                pager.Visible(true);
+                pager.ShowPageSizeSelector(true);
+                pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                pager.ShowInfo(true);
+            })
+            .Editing(editing =>
+            {
+                editing.Mode(GridEditMode.Row);
+                editing.AllowAdding(true);
+                editing.AllowDeleting(true);
+                editing.AllowUpdating(true);
+                editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+                editing.UseIcons(true);
+            })
+            .Columns(c =>
+            {
+                c.AddFor(e => e.Id).Caption("編號").Width(90).AllowEditing(false);
+                c.AddFor(e => e.Email).Caption("信箱");
+                c.AddFor(e => e.Name).Caption("姓名");
+                c.Add()
+                .Type(GridCommandColumnType.Buttons)
+                .Buttons(b =>
+                {
+                    b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
+                    b.Add().Name("save");
+                    b.Add().Name("cancel");
+                    b.Add().Name("delete").OnClick("RecipientDeleteButtonClicked");
+                });
+            })
+            .Toolbar(toolbar =>
+            {
+                toolbar.Items(i =>
+                {
+                    i.Add()
+                .Name(DataGridToolbarItem.AddRowButton)
+                .ShowText(ToolbarItemShowTextMode.Always)
+                .Location(ToolbarItemLocation.Before);
+                });
+
+                toolbar.Items(i =>
+                {
+                    i.Add()
+                .Name(DataGridToolbarItem.SearchPanel)
+                .ShowText(ToolbarItemShowTextMode.Always)
+                .Location(ToolbarItemLocation.After);
+                });
+            })
+            .OnContentReady("contentReady")
+            .OnRowInserting("dataSaving")
+            .OnRowUpdating("dataSaving"))
+    </div>
+</div>

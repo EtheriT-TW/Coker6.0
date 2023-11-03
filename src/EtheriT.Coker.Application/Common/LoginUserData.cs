@@ -167,6 +167,17 @@ namespace EtheriT.Coker.Application
             catch {}
             return name;
         }
+        public async Task<string> GetWebsiteUrl()
+        {
+            Guid s = GetSecret();
+            string url = "";
+            var t = from token in db.Tokens.Where(o => o.id == s)
+                    join web in db.Websites on token.websiteId equals web.Id
+                    select web;
+            var myWeb = await t.FirstOrDefaultAsync();
+            if (myWeb != null) url = myWeb.DefaultUrl??"";
+            return url;
+        }
         public string GetAuthorization() {
             if (httpContextAccessor.HttpContext == null) return StringValues.Empty;
             var authorizationHeader = httpContextAccessor

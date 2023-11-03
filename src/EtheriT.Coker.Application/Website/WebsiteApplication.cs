@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
@@ -42,7 +43,9 @@ namespace EtheriT.Coker.Application
         }
         public async Task<DefaultDataDto> GetDefaultData(long siteId, string? website)
         {
-            long fid = siteId;
+            DefaultDataDto defaultData = new DefaultDataDto();
+
+			long fid = siteId;
             string ParntOrgNames = "";
             if (website != null && !website.Equals("upload"))
             {
@@ -53,20 +56,21 @@ namespace EtheriT.Coker.Application
                     siteId = tempid;
                 }
             }
-            var orgname = await GetOrgName(siteId);
-            orgname = (orgname == null || orgname == "") ? "Page" : orgname;
-            var Layout_Type = await GetLayoutType(siteId);
-            var view = Layout_Type == 0 ? "Default" : $"Layout_{Layout_Type}";
-
-            DefaultDataDto defaultData = new DefaultDataDto
+            var site = await db.Websites.Where(e => e.Id == siteId).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+            if (site != null)
             {
-                Id = siteId,
-                OrgName = orgname,
-                ParntOrgNames = ParntOrgNames,
-                Layout_Type = Layout_Type,
-                View = view,
-            };
+                defaultData = new DefaultDataDto
+				{
+					Id = site.Id,
+					OrgName = site.OrgName,
+					ParntOrgNames = ParntOrgNames,
+					Layout_Type = site.LayoutType??0,
+					Level = (WebsiteLevelEnum)site.Level
+				};
+                defaultData.View = defaultData.Layout_Type == 0 ? "Default" : $"Layout_{defaultData.Layout_Type}";
+				defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;
 
+			}
             return defaultData;
         }
         public async Task<int> GetLayoutType(long Id)

@@ -20,6 +20,8 @@ using EtheriT.Coker.Application.Company;
 using System.Security.AccessControl;
 using EtheriT.Coker.Application.Dto.AuditLog;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Dto.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
 
 namespace EtheriT.Coker.Application
 {
@@ -178,12 +180,16 @@ namespace EtheriT.Coker.Application
 
             //CustSearch
             CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
-            
+
+            //Recipients
+            CreateMap<RecipientsListDto, Recipient>().ReverseMap();
+            CreateMap<MailUserDataDto, Recipient>().ReverseMap();
+
             //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
             //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
             //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
             //    .ReverseMap();
         }
-	}
+    }
 }

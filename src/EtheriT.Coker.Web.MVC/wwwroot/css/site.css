@@ -38,6 +38,59 @@ a {
     text-decoration: none;
     color: black;
 }
+.memo {
+    color: var(--theme-colors-danger) !important;
+    font-weight: bold;
+}
+.memo:before {
+    content: "※";
+}
+.ConfirmDanger {
+    color: var(--colors-red-text);
+    font-weight: bold;
+    font-style: italic;
+    font-size: 1.5rem;
+}
+
+.selectedItem + label {
+    cursor: pointer;
+    color: gray;
+}
+
+.selectedItem:checked + label {
+    color: #4B89FC;
+}
+
+.selectedItem + label {
+    color: gray;
+}
+
+    .selectedItem + label > span:first-child {
+        display: none;
+    }
+
+    .selectedItem + label > span:last-child {
+        display: initial;
+    }
+
+.selectedItem:checked + label {
+    color: #4B89FC;
+}
+
+    .selectedItem:checked + label > span:first-child {
+        display: initial;
+    }
+
+    .selectedItem:checked + label > span:last-child {
+        display: none;
+    }
+
+#switchApp .small.weight-300.text-muted {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    overflow: hidden;
+}
 
 .noselect {
     -webkit-touch-callout: none; /* iOS Safari */

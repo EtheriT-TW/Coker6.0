@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,5 +14,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
         public string ParntOrgNames { get; set; }
         public int Layout_Type { get; set; }
         public string View { get; set; }
-    }
+        public WebsiteLevelEnum Level { get; set; }
+	}
 }

@@ -64,7 +64,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
 				enterAd = enterAds,
                 guessLike = guessLike,
                 layout = $"layput{defaultData.Layout_Type}",
-                token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+                Level = defaultData.Level,
+				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
                 storeSet = new StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""

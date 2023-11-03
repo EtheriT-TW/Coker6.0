@@ -3,143 +3,158 @@
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Application.Shared.Dto.Tag
 @{
-	ViewData["Title"] = "PowerCtrl";
+    ViewData["Title"] = "PowerCtrl";
 }
 
 <link rel="stylesheet" href="~/css/PowerManagement/Index.min.css" asp-append-version="true" />
 <script src="~/js/PowerManagement/Index.min.js" asp-append-version="true"></script>
 <div class="py-3 px-4 position-relative">
-	<div class="title fw-bold fs-4 w-100 ">權限控制</div>
-	<div class="powerctrl w-100 h-auto p-5 d-flex justify-content-center align-item-center my-3">
-		<div class="card1 p-4 col-4">
-			<div class="card-title d-flex justify-content-around align-items-center ">
-				角色列表
-				<button class="btn addbtn"><span class="fas fa-plus"></span>新增</button>
-			</div>
-			<div class="card-content d-flex flex-column my-3">
-				<div class="list-s d-flex align-items-center role-item ">
-					<div class="d-flex justify-content-center align-items-center col-12">
-						<div class="col-lg-7 d-flex">角色一一一一一一一角色</div>
-						<div class="col-lg-5 d-flex justify-content-center align-items-center">
-							<button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvasExample"></button>
-							<button class="btn fas fa-user-cog"></button>
-							<button class="btn fas fa-trash-alt"></button>
-						</div>
-					</div>
-				</div>
-				<div class="list-s d-flex align-items-center role-item ">
-					<div class="d-flex  justify-content-center align-items-center col-12">
-						<div class="col-lg-7 d-flex">角色222222222222</div>
-						<div class="col-lg-5 d-flex justify-content-center align-items-center">
-							<button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvasExample"></button>
-							<button class="btn fas fa-user-cog"></button>
-							<button class="btn fas fa-trash-alt"></button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvas1" aria-labelledby="offcanvasExampleLabel">
-			<div class="offcanvas-header">
-				1
-			</div>
-		</div>
-		<div class="card1 p-4 col-4">
-			<div class="card-title d-flex justify-content-around align-items-center ">
-				角色成員
-				<button class="btn addbtn"><span class="fas fa-plus"></span>新增</button>
-			</div>
-			<div class="card-content d-flex flex-column my-3" id="roleMember">
-				<div class="list-s d-flex align-items-center justify-content-center member-item">
-					<div class="d-flex align-items-center justify-content-center col-12">
-						<div class="col-lg-7 d-flex">成員1</div>
-						<div class="col-lg-5 d-flex justify-content-center align-items-center">
-							<button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"></button>
-							<button class="btn fas fa-user-cog"></button>
-							<button class="btn fas fa-trash-alt"></button>
-						</div>
-					</div>
-				</div>
-				<div class="list-s d-flex align-items-center justify-content-center member-item">
-					<div class="d-flex align-items-center  justify-content-center col-12">
-						<div class="col-lg-7 d-flex">成員2</div>
-						<div class="col-lg-5 d-flex justify-content-center align-items-center">
-							<button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"></button>
-							<button class="btn fas fa-user-cog"></button>
-							<button class="btn fas fa-trash-alt"></button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="col-1 d-flex justify-content-center align-items-center flex-column">
-			
-			<button id="left-btn" class="btn fas fa-chevron-left "><p>加入群組</p></button>
-			<button id="right-btn" class="btn fas fa-chevron-right "><p>離開群組</p></></button>
-		</div>
-		<div class="card1 p-4 col-3">
-			<div class="card-title d-flex justify-content-around align-items-center ">
-				無群組成員
-				<button class="btn addbtn"><span class="fas fa-plus"></span>新增</button>
-			</div>
-			<div class="card-content d-flex flex-column my-3" id="noGroupMember">
-				<div class="list-s d-flex align-items-center justify-content-center  member-item ">
-					<div class="d-flex  align-items-center justify-content-center col-12">
-						<div class="col-lg-7 d-flex">成員3</div>
-						<div class="col-lg-5 d-flex justify-content-center align-items-center">
-							<button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"></button>
-							<button class="btn fas fa-user-cog"></button>
-							<button class="btn fas fa-trash-alt"></button>
-						</div>
-					</div>
-				</div>
-				<div class="list-s d-flex align-items-center  justify-content-center member-item">
-					<div class="d-flex align-items-center  justify-content-center col-12">
-						<div class="col-lg-7 d-flex">成員4</div>
-						<div class="col-lg-5 d-flex justify-content-center align-items-center">
-							<button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"></button>
-							<button class="btn fas fa-user-cog"></button>
-							<button class="btn fas fa-trash-alt"></button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastop" aria-labelledby="offcanvasTopLabel">
-			<form class="d-flex flex-column justify-content-center align-item-center p-3">
-				<div class="form-floating mb-3">
-					<input id="s-name" class="form-control " type="text" placeholder="暱稱">
-					<label for="s-name" class="form-label">暱稱</label>
-				</div>
-				<div class="form-floating mb-3">
-					<input id="name" class="form-control" type="text" placeholder="姓名">
-					<label for="name" class="form-label">姓名</label>
-				</div>
-				<div class="form-floating mb-3">
-					<input id="phone" class="form-control" type="text" placeholder="電話">
-					<label for="phone" class="form-label">電話</label>
-				</div>
-				<div class="form-floating mb-3">
-					<input id="email" class="form-control" type="email" placeholder="email">
-					<label for="email" class="form-label">email</label>
-				</div>
-				<div class=" w-100 d-flex justify-content-center align-items-center">
-					<div class="form-floating mb-3 mr-2">
-						<input id="address" class="form-control w31" type="text" placeholder="縣市">
-						<label for="address" class="form-label ">縣市</label>
-					</div>
-					<div class="form-floating mb-3">
-						<input id="address" class="form-control w31" type="text" placeholder="鄉鎮市區">
-						<label for="address" class="form-label">鄉鎮市區</label>
-					</div>
-					<div class="form-floating mb-3 ml-2">
-						<input id="address" class="form-control w31" type="text" placeholder="路段">
-						<label for="address" class="form-label ">路段</label>
-					</div>
-				</div>
-				<button class="btn submit" type="button">儲存</button>
-			</form>
-		</div>
-	</div>
+    <div class="title fw-bold fs-4 w-100 ">權限控制</div>
+    <div class="powerctrl w-100 h-auto p-5 d-flex justify-content-center align-item-center my-3">
+        <div class="card1 p-4 col-4">
+            <div class="card-title d-flex justify-content-around align-items-center ">
+                角色列表
+                <button class="btn addbtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByRole" aria-controls="offcanvastopByRole"><span class="fas fa-plus"></span>新增</button>
+            </div>
+            <div class="card-content d-flex flex-column my-3" id="RoleList"></div>
+        </div>
+        <div class="card1 p-4 col-4">
+            <div class="card-title d-flex justify-content-around align-items-center ">
+                角色成員
+                <button class="btn addbtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"><span class="fas fa-plus"></span>新增</button>
+            </div>
+            <div class="card-content d-flex flex-column my-3" id="roleMember"></div>
+        </div>
+        <div class="col-1 d-flex justify-content-center align-items-center flex-column">
+
+            <button id="left-btn" class="btn fas fa-chevron-left "><p>加入群組</p></button>
+            <button id="right-btn" class="btn fas fa-chevron-right "><p>離開群組</p></></button>
+        </div>
+        <div class="card1 p-4 col-3">
+            <div class="card-title d-flex justify-content-around align-items-center ">
+                無群組成員
+                <button class="btn addbtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"><span class="fas fa-plus"></span>新增</button>
+            </div>
+            <div class="card-content d-flex flex-column my-3" id="noGroupMember"></div>
+        </div>
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByRole" aria-labelledby="offcanvasTopLabel">
+            <form class="d-flex flex-column justify-content-center align-item-center p-3">
+                <div class="form-floating mb-3">
+                    <input id="s-name" class="form-control " type="text" placeholder="角色名稱">
+                    <label for="s-name" class="form-label">角色名稱</label>
+                </div>
+                <button class="btn submit" type="button">儲存</button>
+            </form>
+        </div>
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastop" aria-labelledby="offcanvasTopLabel">
+            <form class="d-flex flex-column justify-content-center align-item-center p-3">
+                <div class="form-floating mb-3">
+                    <input id="s-name" class="form-control " type="text" placeholder="暱稱">
+                    <label for="s-name" class="form-label">暱稱</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="name" class="form-control" type="text" placeholder="姓名">
+                    <label for="name" class="form-label">姓名</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="phone" class="form-control" type="text" placeholder="電話">
+                    <label for="phone" class="form-label">電話</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="email" class="form-control" type="email" placeholder="email">
+                    <label for="email" class="form-label">email</label>
+                </div>
+                <div class=" w-100 d-flex justify-content-center align-items-center">
+                    <div class="form-floating mb-3 mr-2">
+                        <input id="address" class="form-control w31" type="text" placeholder="縣市">
+                        <label for="address" class="form-label ">縣市</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input id="address" class="form-control w31" type="text" placeholder="鄉鎮市區">
+                        <label for="address" class="form-label">鄉鎮市區</label>
+                    </div>
+                    <div class="form-floating mb-3 ml-2">
+                        <input id="address" class="form-control w31" type="text" placeholder="路段">
+                        <label for="address" class="form-label ">路段</label>
+                    </div>
+                </div>
+                <button class="btn submit" type="button">儲存</button>
+            </form>
+        </div>
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvas1" aria-labelledby="offcanvasExampleLabel">
+            <div class="offcanvas-header">
+                <h3><span class="siteName"></span>權限設定</h3>
+            </div>
+            <div class="d-flex justify-content-end p-2">
+                <button class="btn btn-danger save">
+                    <i class="material-symbols-outlined">save_as</i>儲存
+                </button>
+            </div>
+            <div class="offcanvas-body"></div>
+        </div>
+        <template id="RoleData">
+            <div class="list-s d-flex align-items-center item role-item ">
+                <div class="d-flex justify-content-center align-items-center col-12">
+                    <div class="col-lg-7 d-flex title">角色</div>
+                    <div class="col-lg-5 d-flex justify-content-center align-items-center">
+                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvastop"></button>
+                        <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
+                        <button class="btn fas fa-trash-alt"></button>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template id="MemberData">
+            <div class="list-s d-flex align-items-center  justify-content-center item member-item">
+                <div class="d-flex align-items-center  justify-content-center col-12">
+                    <div class="col-lg-7 d-flex title">成員4</div>
+                    <div class="col-lg-5 d-flex justify-content-center align-items-center">
+                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"></button>
+                        <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
+                        <button class="btn fas fa-trash-alt"></button>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template id="PowerData">
+            <div class="item mb-3 border-bottom">
+                <div class="title"></div>
+                <div class="row align-items-center  justify-content-center">
+                    <div class="col">
+                        <input id="new" type="checkbox" name="new" class="d-none selectedItem" value="true">
+                        <label for="new" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="新增" data-bs-original-title="" title="">
+                            <span class="material-symbols-outlined fs-2">check</span>
+                            <span class="material-symbols-outlined fs-2">block</span>
+                        </label>
+                        <div>新增</div>
+                    </div>
+                    <div class="col">
+                        <input id="del" type="checkbox" name="del" class="d-none selectedItem" value="true">
+                        <label for="del" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="刪除" data-bs-original-title="" title="">
+                            <span class="material-symbols-outlined fs-2">check</span>
+                            <span class="material-symbols-outlined fs-2">block</span>
+                        </label>
+                        <div>刪除</div>
+                    </div>
+                    <div class="col">
+                        <input id="edit" type="checkbox" name="edit" class="d-none selectedItem" value="true">
+                        <label for="edit" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="修改" data-bs-original-title="" title="">
+                            <span class="material-symbols-outlined fs-2">check</span>
+                            <span class="material-symbols-outlined fs-2">block</span>
+                        </label>
+                        <div>修改</div>
+                    </div>
+                    <div class="col">
+                        <input id="view" type="checkbox" name="view" class="d-none selectedItem" value="true">
+                        <label for="view" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="檢視" data-bs-original-title="" title="">
+                            <span class="material-symbols-outlined fs-2">check</span>
+                            <span class="material-symbols-outlined fs-2">block</span>
+                        </label>
+                        <div>檢視</div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
 </div>
 

@@ -4,66 +4,6 @@ var article_list;
 var setPage;
 
 function PageReady() {
-    co.Articles = {
-        AddUp: function (data) {
-            return $.ajax({
-                url: "/api/Article/AddUp",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        GetDataOne: function (Id) {
-            return $.ajax({
-                url: "/api/Article/GetDataOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { Id: Id },
-            });
-        },
-        Delete: function (Id) {
-            return $.ajax({
-                url: "/api/Article/Delete/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { Id: Id },
-            });
-        },
-        GetConten: function (data) {
-            return $.ajax({
-                url: "/api/Article/GetConten",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        SaveConten: function (data) {
-            return $.ajax({
-                url: "/api/Article/SaveConten",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        ImportConten: function (data) {
-            return $.ajax({
-                url: "/api/Article/ImportConten",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        }
-    };
     // 啟動
     const editor = grapesInit({
         save: function (html, css) {
@@ -106,8 +46,8 @@ function PageReady() {
             if (result.success) {
                 var html = co.Data.HtmlDecode(result.conten.saveHtml);
                 $("body").addClass("grapesEdit");
-                editor.setStyle(result.conten.saveCss);
                 editor.setComponents(html);
+                editor.setStyle(result.conten.saveCss);
                 if (!!result.title) $("#TopLine .title").text(result.title);
             } else {
                 co.sweet.error(result.error);
@@ -424,8 +364,8 @@ function AddUp(success_text, error_text, place) {
                         setTimeout(function () {
                             if (place == "canvas") {
                                 setTimeout(function () {
-                                    window.location.hash += "-1";
-                                    MoveToCanvas();
+                                    if (keyId == 0) window.location.hash = `${result.message}-1`;
+                                    else window.location.hash += "-1";
                                 }, 1000);
                             } else {
                                 setTimeout(function () {
@@ -441,8 +381,8 @@ function AddUp(success_text, error_text, place) {
                 setTimeout(function () {
                     if (place == "canvas") {
                         setTimeout(function () {
-                            window.location.hash += "-1";
-                            MoveToCanvas();
+                            if (keyId == 0) window.location.hash = `${result.message}-1`;
+                            else window.location.hash += "-1";
                         }, 1000);
                     } else {
                         setTimeout(function () {

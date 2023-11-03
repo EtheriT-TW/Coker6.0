@@ -7,7 +7,7 @@
         <li class="nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Switch Application">
             <a data-bs-toggle="modal" href="#" data-bs-target="#switchApp" class="nav-link"><span class="material-icons align-middle">apps</span></a>
         </li>
-        <li class="nav-item notification">
+        <li class="nav-item notification d-none">
             <a href="#" id="notificationDropdown" class="nav-link" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="material-icons align-middle">notifications_none</span>
             </a>
@@ -35,11 +35,9 @@
                 <span id="UserName">@Model.User.Account</span>
             </a>
             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userLogedinDropdown">
-                <a class="dropdown-item" href="profile.html">My Account</a>
-                <a class="dropdown-item" href="profile.html">Account Settings</a>
-                <a class="dropdown-item" target="_blank" href="https://themeforest.net/item/brio-web-app-bootstrap-admin-template-dashboard/9529051/support">Help & Support</a>
+                <a class="dropdown-item" href="/MemberManagement/SelfData">我的帳號</a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item logout" href="#">Log Out</a>
+                <a class="dropdown-item logout" href="#">登出</a>
             </div>
         </li>
     </ul>

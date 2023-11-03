@@ -20,6 +20,7 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> DeleteHtmlContent(DataDelectDto dto);
         public Task<ResponseMessageDto> UpdateSerNo(UpdateSerNoListDto dto);
         public Task<HtmlContentGetHtmlDto> GetConten(SearchIDDto dto);
+        public Task<HtmlContentGetHtmlDto> GetNewsletterConten(); 
         public Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto);
     }
 }

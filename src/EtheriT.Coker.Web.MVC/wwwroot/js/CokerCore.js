@@ -195,7 +195,7 @@ var Coker = {
                     _c.sweet.success("密碼變更成功");
                     _dfr.resolve();
                 } else { 
-                    _c.sweet.error(result.message);
+                    _c.sweet.error(result.message,"密碼請包含英文大小寫、數字及特殊符號且密碼長度達十二碼以上!!");
                     _dfr.resolve();
                 }
             });
@@ -211,6 +211,58 @@ var Coker = {
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
                 dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    Recipient : {
+        DeleteRecipients: function (id) {
+            return $.ajax({
+                url: "/api/Newsletter/DeleteRecipients/",
+                type: "DELETE",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id }),
+            });
+        },
+        GetRecipientsTag: function () {
+            return $.ajax({
+                url: "/api/Newsletter/GetRecipientsTag/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    Newsletter: {
+        send: function (id) {
+            return $.ajax({
+                url: "/api/Newsletter/Send/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ id: id }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    PowerManagement: {
+        GetAll: function () {
+            return $.ajax({
+                url: "/api/PowerManagement/AllMenus/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("requestverificationtoken",
                         $('input:hidden[name="AntiforgeryFieldname"]').val());
@@ -577,6 +629,18 @@ var Coker = {
                         $('input:hidden[name="AntiforgeryFieldname"]').val());
                 }
             });
+        }, GetNewsletterConten: function () {
+            return $.ajax({
+                url: "/api/ObjectType/GetNewsletterConten",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
         }, SaveConten: function (data) {
             return $.ajax({
                 url: "/api/ObjectType/saveConten",
@@ -589,6 +653,66 @@ var Coker = {
                     xhr.setRequestHeader("requestverificationtoken",
                         $('input:hidden[name="AntiforgeryFieldname"]').val());
                 }
+            });
+        }
+    },
+    Articles : {
+        AddUp: function (data) {
+            return $.ajax({
+                url: "/api/Article/AddUp",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        GetDataOne: function (Id) {
+            return $.ajax({
+                url: "/api/Article/GetDataOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: Id },
+            });
+        },
+        Delete: function (Id) {
+            return $.ajax({
+                url: "/api/Article/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: Id },
+            });
+        },
+        GetConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/GetConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        SaveConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/SaveConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        ImportConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/ImportConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         }
     },
@@ -936,7 +1060,6 @@ var Coker = {
                 data: JSON.stringify({ type: type }),
                 dataType: "json",
                 beforeSend: function (xhr) {
-                    console.log($('input:hidden[name="AntiforgeryFieldname"]'));
                     xhr.setRequestHeader("requestverificationtoken",
                         $('input:hidden[name="AntiforgeryFieldname"]').val());
                 }

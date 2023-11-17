@@ -24,6 +24,10 @@ using EtheriT.Coker.Application.Shared.Dto.User;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Serialization;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto;
+using System.Xml.Linq;
+using AutoMapper;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -34,12 +38,15 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly ITokenAppService tokenAppService;
         private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IMapper mapper;
+        private readonly string controllerName;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
             LoginUserData loginUserData,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor, 
+            IMapper mapper
         )
         {
             this.db = db;
@@ -47,6 +54,8 @@ namespace EtheriT.Coker.Application.Authorization
             this.tokenAppService = tokenAppService;
             this.loginUserData = loginUserData;
             this.httpContextAccessor = httpContextAccessor;
+            this.mapper = mapper;
+            controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
         {
@@ -73,10 +82,12 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                         if (!await loginUserData.CheckedWebSiteId(user.Id, bindID)) {
                             var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
-                            if (defaultWeb != null) { 
+                            if (defaultWeb != null)
+                            {
                                 bindID = defaultWeb.UserId;
                                 websiteId = defaultWeb.WebsiteId;
                             }
+                            else throw new Exception("無可管理的網站");
                         }
                         Core.Models.Token t = new Core.Models.Token
                         {
@@ -204,7 +215,7 @@ namespace EtheriT.Coker.Application.Authorization
                 至少有一個特殊符號
                 字串長度在 6 ~ 30 個字母之間
              */
-			Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{6,30}$");
+			Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{8,30}$");
 			var users = await db.Users
                 .Where(e => e.Id == userId)
                 .Where(e => !e.IsDeleted)
@@ -229,6 +240,34 @@ namespace EtheriT.Coker.Application.Authorization
             await loginUserData.SetLogs("Account", "UpdatePassword",JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(output));
 			return output;
 		}
-
-	}
+        public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto) {
+            ResponseUserEditDto output = new ResponseUserEditDto();
+            try
+            {
+                var siteId = await loginUserData.GetWebsiteId();
+                var theUser = await db.Users.Include(e => e.Webs)
+                    .Where(e => e.Id == dto.Id)
+                    .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                if (theUser != null)
+                {
+                    var webMap = theUser.Webs.Where(e => e.WebsiteId == siteId);
+                    if (webMap.Any())
+                    {
+                        mapper.Map(theUser, output.data);
+                    }else throw new Exception("該使用者並未授權管理該網站");
+                }
+                else throw new Exception("使用者不存在");
+                output.Success = true;
+            }
+            catch(Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "GetEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            return output;
+        }
+        public async Task<ResponseMessageDto> saveEditUser(AddUserDto dto) { 
+            throw new NotImplementedException();
+        }
+    }
 }

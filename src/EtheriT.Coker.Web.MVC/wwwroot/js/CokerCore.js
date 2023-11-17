@@ -194,8 +194,8 @@ var Coker = {
                 if (result.success) {
                     _c.sweet.success("密碼變更成功");
                     _dfr.resolve();
-                } else { 
-                    _c.sweet.error(result.message,"密碼請包含英文大小寫、數字及特殊符號且密碼長度達十二碼以上!!");
+                } else {
+                    _c.sweet.error(result.message, "密碼請包含英文大小寫、數字及特殊符號且密碼長度達十二碼以上!!");
                     _dfr.resolve();
                 }
             });
@@ -218,7 +218,7 @@ var Coker = {
             });
         }
     },
-    Recipient : {
+    Recipient: {
         DeleteRecipients: function (id) {
             return $.ajax({
                 url: "/api/Newsletter/DeleteRecipients/",
@@ -263,6 +263,68 @@ var Coker = {
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        getAllUsers: function () {
+            return $.ajax({
+                url: "/api/PowerManagement/AllUsers/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        GetUser: (id) => {
+            return $.ajax({
+                url: "/api/PowerManagement/GetUser/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ id: id }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        RemoveMappingUserAndWebsite: (id) => {
+            return $.ajax({
+                url: "/api/PowerManagement/RemoveMappingUserAndWebsite/",
+                type: "DELETE",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id }),
+            });
+        },
+        MappingUserAndWebsite: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/MappingUserAndWebsite",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        AddRole: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/AddRole",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("requestverificationtoken",
                         $('input:hidden[name="AntiforgeryFieldname"]').val());
@@ -339,7 +401,7 @@ var Coker = {
                 timePicker: true,
                 timePicker24Hour: true,
                 autoUpdateInput: true,
-                showDropdowns:true,
+                showDropdowns: true,
                 locale: {
                     format: 'YYYY/MM/DD HH:mm',
                     separator: " ~ ",
@@ -656,7 +718,7 @@ var Coker = {
             });
         }
     },
-    Articles : {
+    Articles: {
         AddUp: function (data) {
             return $.ajax({
                 url: "/api/Article/AddUp",
@@ -1285,8 +1347,38 @@ var Coker = {
             return array;
         }
     },
+    Array: {
+        Search: function (array, obj, rejectID) {
+            var index = -1
+            var i = 0;
+            if (Array.isArray(array)) {
+                array.forEach(function (element) {
+                    var m = true;
+                    if (element.ID != rejectID || typeof (rejectID) == "undefined") {
+                        for (var key in obj) {
+                            if (element[key] != obj[key]) {
+                                m = false;
+                                break;
+                            }
+                        }
+                        if (m) {
+                            index = i;
+                            return;
+                        }
+                    }
+                    i++;
+                });
+            }
+            return index;
+        },
+        Delete: function (array, obj) {
+            const index = _c.Array.Search(array, obj);
+            if(index >0) array.splice(index, 1);
+        }
+    },
     Zipcode: {
         init: function (id) {
+            const reandomStr = co.String.generateRandomString(5);
             $TWzipcode = $(id);
 
             $TWzipcode.twzipcode({
@@ -1299,48 +1391,55 @@ var Coker = {
             $district = $TWzipcode.children('.district');
 
             $county.children('select').attr({
-                id: "SelectCity",
+                id: `SelectCity_${reandomStr}`,
                 class: "city form-select",
                 required: "required"
             });
-            $county.append("<label class='px-4 required' for='SelectCity'>縣市</label>");
+            $county.append(`<label class='px-4 required' for='SelectCity_${reandomStr}'>縣市</label>`);
             var $county_first_option = $county.children('select').children('option').first();
             $county_first_option.text("請選擇縣市");
             $county_first_option.attr('disabled', 'disabled');
 
             $district.children('select').attr({
-                id: "SelectTown",
+                id: `SelectTown_${reandomStr}`,
                 class: "town form-select",
                 required: "required"
             });
-            $district.append("<label class='required' for='SelectTown'>鄉鎮</label>");
+            $district.append(`<label class='required' for='SelectTown_${reandomStr}'>鄉鎮</label>`);
             var $district_first_option = $district.children('select').children('option').first();
             $district_first_option.text("請選擇鄉鎮");
             $district_first_option.attr('disabled', 'disabled');
         },
         setData: function (obj) {
             const $addr = obj.el.find(".address");
-            var address_split = obj.addr.split(" ");
-            obj.el.twzipcode('set', {
-                'county': address_split[0],
-                'district': address_split[1],
-            });
-            $addr.val(address_split[2]);
+            if (co.String.isNullOrEmpty(obj.addr)) {
+                obj.el.twzipcode('reset');
+                obj.el.find(".address").val("");
+            } else {
+                var address_split = obj.addr.split(" ");
+                obj.el.twzipcode('set', {
+                    'county': address_split[0],
+                    'district': address_split[1],
+                });
+                $addr.val(address_split[2]);
+            }
         },
         getData: function ($e) {
             return $e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()
         }
     },
     Form: {
-        insertData: function (obj) {
+        insertData: function (obj, $self) {
+            if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
+            else if (typeof ($self) == "string") $self = $($self);
             for (const key in obj) {
-                const $e = $(`[name="${key}"]`);
+                const $e = $self.find(`[name="${key}"]`);
                 if ($e.length > 0) {
                     switch ($e[0].tagName) {
                         case "INPUT":
                             switch ($e.attr("type").toLowerCase()) {
                                 case "radio":
-                                    $(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
+                                    $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
                                     break;
                                 default:
                                     $e.val(obj[key]);
@@ -1375,6 +1474,31 @@ var Coker = {
                 }
             });
             return formDataObject;
+        }
+    }, String: {
+        generateRandomString: function (num) {
+            const characters =
+                'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result1 = ' ';
+            const charactersLength = characters.length;
+            for (let i = 0; i < num; i++) {
+                result1 +=
+                    characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+
+            return result1;
+        },
+        isNullOrEmpty: function (str) {
+            if (typeof (str) == "undefined" || str == null || str.trim() == "") return true;
+            else return false;
+        }
+    }, Grapes: {
+        setEditor: (editor,html,css) => {
+            editor.DomComponents.clear(); // Clear components
+            editor.CssComposer.clear();  // Clear styles
+            editor.UndoManager.clear(); // Clear undo history
+            editor.setStyle(css);
+            editor.setComponents(html);
         }
     }
 }

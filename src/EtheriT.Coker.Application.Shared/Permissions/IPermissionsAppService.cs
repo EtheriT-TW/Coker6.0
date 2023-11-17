@@ -1,0 +1,20 @@
+﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Permissions;
+using EtheriT.Coker.Application.Shared.Dto.Role;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace EtheriT.Coker.Application.Permissions
+{
+    public interface IPermissionsAppService
+    {
+        public Task<GetPermissionsOutputDto> GetPermissionsUserData();
+        public Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto);
+        public Task<ResponseMessageDto> MappingUserAndWebsite(AddMapingUserAndWebsiteDto dto);
+        public Task<ResponseMessageDto> AddRole(AddRoleDto dto);
+    }
+}

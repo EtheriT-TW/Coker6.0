@@ -1,4 +1,11 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.Permissions;
+using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +19,40 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 	public class PowerManagementController
 	{
 		private readonly NavigationProvider navigation;
-		public PowerManagementController(NavigationProvider navigation)
+		private readonly IPermissionsAppService permissionsAppService;
+		private readonly IAccountAppService accountAppService;
+        public PowerManagementController(NavigationProvider navigation, IPermissionsAppService permissionsAppService, IAccountAppService accountAppService)
 		{
 			this.navigation = navigation;
-		}
+			this.permissionsAppService = permissionsAppService;
+			this.accountAppService = accountAppService;
+        }
 		[HttpGet]
 		public async Task<Site> AllMenus() {
 			return await navigation.getMenus();
 		}
-	}
+        [HttpGet]
+        public async Task<GetPermissionsOutputDto> AllUsers()
+        {
+            return await permissionsAppService.GetPermissionsUserData();
+        }
+		[HttpPost]
+		public async Task<ResponseUserEditDto> GetUser(DataDelectDto dto) {
+			return await accountAppService.GetEditUser(dto);
+
+        }
+		[HttpDelete]
+		public async Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto) {
+            return await permissionsAppService.RemoveMappingUserAndWebsite(dto);
+        }
+		[HttpPost]
+		public async Task<ResponseMessageDto> MappingUserAndWebsite(AddMapingUserAndWebsiteDto dto) {
+            return await permissionsAppService.MappingUserAndWebsite(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> AddRole(AddRoleDto dto)
+        {
+            return await permissionsAppService.AddRole(dto);
+        }
+    }
 }

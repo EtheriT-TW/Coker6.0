@@ -134,19 +134,32 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     case "product":
-                        view = "Product";
                         if (id != 0)
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
                             model.ParentData = ProdPageData;
+                            model.PageData.LayoutType = defaultData.Layout_Type;
+                            model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+                            if (key == "product")
+                            {
+                                model.PageData.VisibleHeader = true;
+                                model.PageData.VisibleFooter = true;
+                                model.PageData.VisibleTitle = true;
+                            }
+                            else
+                            {
+                                model.PageData.VisibleHeader = ProdPageData.VisibleHeader;
+                                model.PageData.VisibleFooter = ProdPageData.VisibleFooter;
+                                model.PageData.VisibleTitle = ProdPageData.VisibleTitle;
+                            }
+
                             model.MenuBread.Add(new GetMenuBreadDto
                             {
                                 Title = model.PageData.Title,
                                 Link = "",
                             });
-                            model.PageData.LayoutType = defaultData.Layout_Type;
 
                             if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
                             {
@@ -155,6 +168,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             }
                             view = "ProductContent";
                         }
+                        else view = "Error/404";
                         break;
                     case "privacy":
                         model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
@@ -176,8 +190,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
                         }
-                        else if (key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
+                        else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
                         {
+                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             view = key;
                         }
                         else

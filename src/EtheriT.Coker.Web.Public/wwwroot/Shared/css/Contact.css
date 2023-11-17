@@ -1,9 +1,4 @@
-﻿
-body {
-    background-color: var(--gray-bg-light);
-}
-
-.bigtitle {
+﻿.bigtitle {
     color: var(--red-text);
 }
 
@@ -18,7 +13,7 @@ body {
     font-size: 0.5rem;
 }
 
-#ContactForm > .title > .call {
+.ContactForm > .title > .call {
     padding: 1rem 0.75rem;
 }
 
@@ -32,7 +27,7 @@ body {
 }
 
 #Explanation > .content {
-    height: 150px;
+    height: 120px;
     font-size: 0.8rem;
 }
 
@@ -49,3 +44,43 @@ body {
         font-family: 'Font Awesome 6 Free';
         content: "\f0e0";
     }
+
+.ContactForm {
+    font-size: 0.9rem;
+}
+
+    .ContactForm .d-flex > .form-floating {
+        flex: 1 1;
+        margin: 0.5rem;
+    }
+
+    .ContactForm .form-floating label {
+        padding: 0.5rem 0.75rem;
+    }
+
+.d-flex > .form-floating:last-child {
+    margin-right: 0;
+}
+
+.d-flex > .form-floating:first-child {
+    margin-left: 0;
+}
+
+.ContactForm .form-floating > input.form-control {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    padding: 0.75rem 0.75rem 0;
+    height: calc(2.5rem + 2px);
+    font-size: 0.9rem;
+}
+
+.ContactForm .form-floating > .form-control:focus {
+    border-color: burlywood;
+    box-shadow: none;
+}
+.ContactForm .title {
+    padding: 0 0.75rem;
+}
+

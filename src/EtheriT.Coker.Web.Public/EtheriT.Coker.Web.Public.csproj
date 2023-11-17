@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="appsettings.EPZA.json" />
     <Content Remove="Views\Page\OrderManagement.cshtml" />
     <Content Remove="wwwroot\css\Page\OrderManagement.css" />
     <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -32,6 +33,12 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.EPZA.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

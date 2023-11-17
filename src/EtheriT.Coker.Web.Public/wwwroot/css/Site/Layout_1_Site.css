@@ -25,6 +25,7 @@
     --black-text-trans: #4F4F4F80;
     --black-bottom-line: #333333;
     --black-top-line: #1E1E1E;
+    --gray-path: #bababa;
 }
 
 .gray_text {
@@ -55,20 +56,24 @@ html {
 }
 
 .top_title_1 li {
-    color: gray;
+    color: var(--gray-path);
     cursor: default;
+    font-size:0.9rem;
 }
 
     .top_title_1 li a {
-        color: gray;
+        color: var(--gray-path);
     }
 
     .top_title_1 li:not(:first-child)::before {
         content: '/';
         padding-right: 0.25rem;
-        color: gray;
+        color: var(--gray-path);
     }
-
+.editTime {
+    color: var(--gray-path);
+    font-size:0.9rem;
+}
 /* Breadcrumb */
 #Breadcrumb {
     --bs-breadcrumb-divider: '/';

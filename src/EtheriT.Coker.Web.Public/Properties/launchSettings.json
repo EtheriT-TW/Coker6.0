@@ -1,21 +1,41 @@
-﻿{
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:42719",
-      "sslPort": 44363
-    }
-  },
+{
   "profiles": {
     "EtheriT.Coker.Web.Public": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:7193;http://localhost:5193",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7193;http://localhost:5193"
+    },
+    "EtheriT.Coker.Web.Public.EPZA": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "EPZA"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7194;http://localhost:5194"
+    },
+    "EtheriT.Coker.Web.Public.Haoguang": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Haoguang"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7195;http://localhost:5195"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "launchBrowser": true,
+      "launchUrl": "https://localhost:7193",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7193;http://localhost:5193"
+      },
+      "distributionName": ""
     },
     "IIS Express": {
       "commandName": "IISExpress",
@@ -23,6 +43,14 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:42719",
+      "sslPort": 44363
     }
   }
 }

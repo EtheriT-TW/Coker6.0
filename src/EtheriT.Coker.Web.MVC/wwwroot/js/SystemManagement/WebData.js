@@ -42,8 +42,7 @@ function PageReady() {
         co.WebMesnus.getConten(id).done(function (result) {
             if (result.success) {
                 var html = co.Data.HtmlDecode(result.conten.saveHtml);
-                editor.setComponents(html);
-                editor.setStyle(result.conten.saveCss);
+                co.Grapes.setEditor(editor, html, result.conten.saveCss);
             } else {
                 co.sweet.error(result.error);
             }

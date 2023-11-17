@@ -21,7 +21,7 @@
         <div class="card1 p-4 col-4">
             <div class="card-title d-flex justify-content-around align-items-center ">
                 角色成員
-                <button class="btn addbtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"><span class="fas fa-plus"></span>新增</button>
+                <button id="addUserInRole" class="btn addbtn"><span class="fas fa-plus"></span>新增</button>
             </div>
             <div class="card-content d-flex flex-column my-3" id="roleMember"></div>
         </div>
@@ -33,53 +33,92 @@
         <div class="card1 p-4 col-3">
             <div class="card-title d-flex justify-content-around align-items-center ">
                 無群組成員
-                <button class="btn addbtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"><span class="fas fa-plus"></span>新增</button>
+                <button id="addUser" class="btn addbtn" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByAddUserSelect" aria-controls="offcanvasTop"><span class="fas fa-plus"></span>新增</button>
             </div>
             <div class="card-content d-flex flex-column my-3" id="noGroupMember"></div>
         </div>
         <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByRole" aria-labelledby="offcanvasTopLabel">
             <form class="d-flex flex-column justify-content-center align-item-center p-3">
                 <div class="form-floating mb-3">
-                    <input id="s-name" class="form-control " type="text" placeholder="角色名稱">
-                    <label for="s-name" class="form-label">角色名稱</label>
+                    <input id="role-name" name="name" class="form-control " type="text" placeholder="角色名稱">
+                    <label for="role-name" class="form-label">角色名稱</label>
                 </div>
                 <button class="btn submit" type="button">儲存</button>
             </form>
         </div>
-        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastop" aria-labelledby="offcanvasTopLabel">
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByNewMember" aria-labelledby="offcanvasTopLabel">
             <form class="d-flex flex-column justify-content-center align-item-center p-3">
                 <div class="form-floating mb-3">
-                    <input id="s-name" class="form-control " type="text" placeholder="暱稱">
-                    <label for="s-name" class="form-label">暱稱</label>
+                    <input id="new-account" name="account" class="form-control" type="email" placeholder="請輸入帳號" required>
+                    <label for="new-account" class="form-label">帳號</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input id="name" class="form-control" type="text" placeholder="姓名">
-                    <label for="name" class="form-label">姓名</label>
+                    <input id="new-s-name" name="nickName" class="form-control " type="text" placeholder="暱稱" required>
+                    <label for="new-s-name" class="form-label">暱稱</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input id="phone" class="form-control" type="text" placeholder="電話">
-                    <label for="phone" class="form-label">電話</label>
+                    <input id="new-name" name="name" class="form-control" type="text" placeholder="姓名">
+                    <label for="new-name" class="form-label">姓名</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input id="email" class="form-control" type="email" placeholder="email">
-                    <label for="email" class="form-label">email</label>
+                    <input id="new-phone" name="telPhone" class="form-control" type="text" placeholder="電話">
+                    <label for="new-phone" class="form-label">電話</label>
                 </div>
-                <div class=" w-100 d-flex justify-content-center align-items-center">
-                    <div class="form-floating mb-3 mr-2">
-                        <input id="address" class="form-control w31" type="text" placeholder="縣市">
-                        <label for="address" class="form-label ">縣市</label>
+                <div class="form-floating mb-3">
+                    <input id="new-email" name="email" class="form-control" type="email" placeholder="email" required>
+                    <label for="new-email" class="form-label">email</label>
+                </div>
+                <div id="new-TWzipcode" class="row" name="address" data-form-type="zipcode">
+                    <div class="form-floating mb-3 col-6 col-sm-3 county" data-role="county"></div>
+                    <div class="form-floating mb-3 col-6 col-sm-3 district" data-role="district"></div>
+                    <div class="form-floating mb-3 col-12 col-sm-6">
+                        <input id="new-address" class="form-control w31 address" type="text" placeholder="路段">
+                        <label for="new-address" class="form-label">路段</label>
                     </div>
-                    <div class="form-floating mb-3">
-                        <input id="address" class="form-control w31" type="text" placeholder="鄉鎮市區">
-                        <label for="address" class="form-label">鄉鎮市區</label>
-                    </div>
-                    <div class="form-floating mb-3 ml-2">
-                        <input id="address" class="form-control w31" type="text" placeholder="路段">
-                        <label for="address" class="form-label ">路段</label>
-                    </div>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="password" name="password" class="form-control" type="password" placeholder="請輸入密碼" required>
+                    <label for="password" class="form-label">密碼</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="PasswordConfirm" name="PasswordConfirm" class="form-control" type="password" placeholder="請在一次輸入密碼" required>
+                    <label for="PasswordConfirm" class="form-label">密碼確認</label>
                 </div>
                 <button class="btn submit" type="button">儲存</button>
             </form>
+        </div>
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByMember" aria-labelledby="offcanvasTopLabel">
+            <form class="d-flex flex-column justify-content-center align-item-center p-3 readonly">
+                <div class="form-floating mb-3">
+                    <input id="nickname" name="nickname" class="form-control " type="text" placeholder="暱稱">
+                    <label for="nickname" class="form-label">暱稱</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="name" name="name" class="form-control" type="text" placeholder="姓名">
+                    <label for="name" class="form-label">姓名</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="telPhone" name="telPhone" class="form-control" type="text" placeholder="電話">
+                    <label for="telPhone" class="form-label">電話</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input id="email" name="email" class="form-control" type="email" placeholder="email">
+                    <label for="email" class="form-label">email</label>
+                </div>
+                <div id="TWzipcode" class="row" name="address" data-form-type="zipcode">
+                    <div class="form-floating mb-3 col-6 col-sm-3 county" data-role="county"></div>
+                    <div class="form-floating mb-3 col-6 col-sm-3 district" data-role="district"></div>
+                    <div class="form-floating mb-3 col-12 col-sm-6">
+                        <input id="address" class="form-control w31 address" type="text" placeholder="路段">
+                        <label for="address" class="form-label">路段</label>
+                    </div>
+                </div>
+            </form>
+            <div class="d-flex justify-content-center btns">
+                <button class="btn delete" type="button">移除管理者</button>
+                <button class="btn submit" type="button">發送忘記密碼</button>
+                <button class="btn cancel" type="button">取消</button>
+            </div>
         </div>
         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvas1" aria-labelledby="offcanvasExampleLabel">
             <div class="offcanvas-header">
@@ -92,12 +131,27 @@
             </div>
             <div class="offcanvas-body"></div>
         </div>
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByAddUser" aria-labelledby="offcanvasTopLabel">
+            <form class="d-flex flex-column justify-content-center align-item-center p-3">
+                <div class="form-floating mb-3">
+                    <input id="add-email" name="email" class="form-control " type="text" placeholder="請輸入使用者帳號或信箱" required>
+                    <label for="add-email" class="form-label">使用者帳號或信箱</label>
+                </div>
+                <button class="btn submit" type="button">儲存</button>
+            </form>
+        </div>
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByAddUserSelect" aria-labelledby="offcanvasTopLabel">
+            <div class="d-flex flex-column justify-content-around text-center">
+                <a class="newMember p-3 m-3 border badge-success" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByNewMember" aria-controls="offcanvasTop">加入新使用者</a>
+                <a class="addPermissions p-3 m-3 border badge-info" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByAddUser" aria-controls="offcanvasTop">加入現有使用者</a>
+            </div>
+        </div>
         <template id="RoleData">
             <div class="list-s d-flex align-items-center item role-item ">
                 <div class="d-flex justify-content-center align-items-center col-12">
                     <div class="col-lg-7 d-flex title">角色</div>
                     <div class="col-lg-5 d-flex justify-content-center align-items-center">
-                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvastop"></button>
+                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByMember" aria-controls="offcanvastopByMember"></button>
                         <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
                         <button class="btn fas fa-trash-alt"></button>
                     </div>
@@ -109,7 +163,7 @@
                 <div class="d-flex align-items-center  justify-content-center col-12">
                     <div class="col-lg-7 d-flex title">成員4</div>
                     <div class="col-lg-5 d-flex justify-content-center align-items-center">
-                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastop" aria-controls="offcanvasTop"></button>
+                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByMember" aria-controls="offcanvasTop"></button>
                         <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
                         <button class="btn fas fa-trash-alt"></button>
                     </div>

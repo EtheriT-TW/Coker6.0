@@ -21,7 +21,7 @@ function ready() {
         }
     });
     if ($conten.length > 0) {
-        let s = Coker.stringManager.ReplaceAndSinge($conten.text());
+        let s = $conten.text().indexOf("&amp;") >= 0 ? Coker.stringManager.ReplaceAndSinge($conten.text()) : co.stringManager.htmlEncode($conten.html());
         let ele = document.createElement('span');
         ele.innerHTML = s;
         if ($parentConten.length > 0 && $parentConten.text().indexOf("subpage_content") >= 0) {
@@ -29,7 +29,7 @@ function ready() {
             let $pe = $('<div>');
             $pe[0].innerHTML = p;
             $pe.html($pe.text());
-            $pe.find("[data-dirid]").remove();
+            $pe.find(".catalog_frame").remove();
             $pe.find(".subpage_content").replaceWith(ele.textContent || ele.innerText);
             ele.textContent = $pe.html();
         }
@@ -55,7 +55,21 @@ function ready() {
     if ($(".link_with_icon").length > 0) LinkWithIconInit();
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
     if ($(".shareBlock").length > 0) ShareBlockInit();
+    if ($(".ContactForm").length > 0) setContact();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
+    if ($(".container .qa").length > 0) {
+        $(".container").each((i, e) => {
+            var $c = $(e);
+            if (typeof ($c.attr("id")) == "undefined" && $c.find("qa").length>0) {
+                $c.setRandenId();
+            }
+            $c.find(".qa .collapse").each((j, c) => {
+                $(c).attr("data-bs-parent", `#${$c.attr("id")}`);
+                if (j != 0 || $c.find(".qa .collapse").length == 1) $(c).collapse("hide");
+            });
+        });
+    }
+    if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo();
     _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");
@@ -149,13 +163,14 @@ function ready() {
     })
 
     var RegisterModal = document.getElementById('RegisterModal')
-    RegisterModal.addEventListener('show.bs.modal', function (event) {
-        NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
-    })
-    RegisterModal.addEventListener('hidden.bs.modal', function (event) {
-        FormClear(RegisterForms, $InputRegisterVCode)
-    })
-
+    if (RegisterModal != null) {
+        RegisterModal.addEventListener('show.bs.modal', function (event) {
+            NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
+        })
+        RegisterModal.addEventListener('hidden.bs.modal', function (event) {
+            FormClear(RegisterForms, $InputRegisterVCode)
+        })
+    }
     $(".btn_login").on("click", function () {
         if (SiteFormCheck(LoginForms, $InputLoginVCode)) {
             CaptchaVerify($LoginImgCaptcha, $InputLoginVCode, LoginAction)
@@ -239,7 +254,8 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
         if (!result.success) {
-            CheckToken();
+            $.cookie("Token", null, { path: '/' });
+            CreateToken();
         }
     })
 }
@@ -443,6 +459,11 @@ var Coker = {
                 if (s.indexOf("&amp;") > 0) return _c.stringManager.ReplaceAndSinge(s);
                 else return s
             }
+        },
+        htmlEncode: function (text) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
         }
     }, Search: {
         Init: function (id) {
@@ -468,6 +489,15 @@ var Coker = {
 $.fn.extend({
     goTo: function () {
         $('html, body').animate({ scrollTop: $(this).offset().top }, 0);
+    },
+    setRandenId: function(i) {
+        const $self = $(this);
+        let className = typeof ($self.attr('class')) != "undefined" && $self.attr('class') != "" ? $self.attr('class').split(/\s+/)[0]+"Id" : "";
+        let order = !!i ? i : 0;
+        if (className == "") className = "RandenId";
+        let id = className + (order == 0 ? "" : order);
+        if ($(`#${id}`).length == 0) $self.attr("id", id);
+        else $self.setRandenId(order+1);
     }
 });
 let _c = Coker;

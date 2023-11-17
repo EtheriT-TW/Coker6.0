@@ -137,7 +137,7 @@
     });
 
     /*連結 */
-    editor.DomComponents.addType('link', {
+    editor.DomComponents.addType('連結', {
         isComponent: el => el.tagName == 'A',
         model: {
             defaults: {
@@ -168,7 +168,7 @@
         },
     });
     /*檔案下載*/
-    editor.DomComponents.addType('linkWithIcon', {
+    editor.DomComponents.addType('檔案下載', {
         isComponent: el => el.classList?.contains('link_with_icon'),
         model: {
             defaults: {

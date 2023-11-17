@@ -372,14 +372,14 @@
     border-bottom: 1px solid #888;
 }
 
-.two-column-width .catalog > div {
+.two-column-width .catalog > div, .two-column-width .catalog > a {
     width: 49%;
     margin: 0 1%;
 }
-.two-column-width .catalog > div:nth-child(even) {
-    margin-left: 0%;
-}
-    .two-column-width .catalog > div:nth-child(odd) {
+    .two-column-width .catalog > div:nth-child(even), .two-column-width .catalog > a:nth-child(even) {
+        margin-left: 0%;
+    }
+    .two-column-width .catalog > div:nth-child(odd), .two-column-width .catalog > a:nth-child(odd) {
         margin-right: 0%;
     }
 /*eplus首頁目錄*/
@@ -1357,7 +1357,7 @@
         height: 150px !important;
         margin: 0 !important;
     }
-    .two-column-width .catalog > div {
-        width:100%;
+    .two-column-width .catalog > div, .two-column-width .catalog > a {
+        width: 100%;
     }
 }

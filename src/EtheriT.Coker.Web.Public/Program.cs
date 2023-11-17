@@ -99,6 +99,11 @@ builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+if (builder.Environment.EnvironmentName == "EPZA")
+{
+    builder.WebHost.UseStaticWebAssets();
+}
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

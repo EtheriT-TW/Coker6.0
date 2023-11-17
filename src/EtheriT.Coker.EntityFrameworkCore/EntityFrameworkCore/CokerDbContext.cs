@@ -59,7 +59,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Company> Companies { get; set; }
         public DbSet<MappingCompanyAndWebsites> MappingCompanyAndWebsites { get; set; }
         public DbSet<Recipient> Recipients { get; set; }
-        
+        public DbSet<Permissions> Permissions { get; set; }
+
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -151,6 +152,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId);
                 o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
             });
+            modelBuilder.Entity<Role>(o =>
+            {
+                o.Property(w => w.Type).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+            });
             modelBuilder.Entity<MappingUserAndRole>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
@@ -206,6 +211,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Recipient>(o => {
                 o.HasOne(f => f.Website).WithMany(u => u.Recipients).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<Permissions>(o => {
+                o.HasOne(f => f.User).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_UserId);
+                o.HasOne(f => f.Role).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_RoleId);
+                o.HasOne(f => f.Website).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_WebsiteId);
             });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();

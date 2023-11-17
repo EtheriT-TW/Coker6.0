@@ -37,5 +37,6 @@ namespace EtheriT.Coker.Core.Models
         public List<AuditLog> AuditLogs { get; set; }
         public List<MappingCompanyAndWebsites> Company { get; set; }
         public List<Recipient>? Recipients { get; set; }
+        public List<Permissions> Permissions { get; set; }
     }
 }

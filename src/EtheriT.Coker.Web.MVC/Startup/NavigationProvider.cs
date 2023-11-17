@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 
 namespace EtheriT.Coker.Web.MVC.Startup
@@ -302,6 +303,74 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 }
             };
             return site;
+        }
+        public async Task SetPower(Site site)
+        {
+            WebsiteLevelEnum level = await loginUserData.GetWebsiteLevel();
+            List<JobMenu> seting = new List<JobMenu>();
+            switch (level)
+            {
+                case WebsiteLevelEnum.會員:
+                case WebsiteLevelEnum.購物:
+                    seting.AddRange(new List<JobMenu> {
+                        new JobMenu{
+                            PageName="Dashboard",
+                            Enable=true
+                        },
+                        new JobMenu{
+                            PageName="OrderManagement",
+                            Enable=true,
+                        },
+                        new JobMenu
+                        {
+                            PageName="ProductManagement",
+                            Enable=true
+                        },new JobMenu{
+                            PageName="OrderManagement",
+                            Enable=true,
+                        }, new JobMenu
+                        {
+                            PageName="ProductManagement",
+                            Enable=true
+                        },new JobMenu{
+                            PageName="ContactUs",
+                            Enable=true
+                        }, new JobMenu{
+                             PageName="MemberData",
+                             Enable=true
+                        },new JobMenu{
+                            PageName="ManagerList",
+                            Enable=true
+                        }, new JobMenu
+                        {
+                            PageName="StoreSettings",
+                            Enable=true,
+                        },new JobMenu{
+                            PageName="CustSearch",
+                            Enable=true,
+                        },
+                        new JobMenu{
+                            PageName="TypographyTheme",
+                            Enable=true
+                        }
+                    });
+                    break;
+            }
+            SetJobs(site.Jobs, seting);
+        }
+        private void SetJobs(List<JobMenu> jobs, List<JobMenu> seting)
+        {
+            if (seting.Count() == 0) return;
+            jobs.ForEach(job =>
+            {
+                JobMenu? menu = seting.Find(e => e.PageName == job.PageName);
+                if (menu != null) { 
+                    job.Enable = menu.Enable;
+                    seting.Remove(menu);
+                }
+                if (job.jobItemModels != null && job.jobItemModels.Count() > 0)
+                    SetJobs(job.jobItemModels, seting);
+            });
         }
     }
 }

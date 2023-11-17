@@ -207,10 +207,10 @@ function DirectoryDataInsert($item, result) {
         if (isSearch) {
             switch (data.type) {
                 case 3:
-                    path = `/${data.orgName}/${data.link}/${$item.data("search-text")}`;
+                    path = `${data.orgName == null ? "" : `/${data.orgName}`}/${data.link}/${$item.data("search-text")}`;
                     break;
                 default:
-                    path = `/${data.orgName}/search/${data.link}/${$item.data("search-text")}`;
+                    path = `${data.orgName == null ? "" : `/${data.orgName}`}/search/${data.link}/${$item.data("search-text")}`;
                     break;
             }
            
@@ -223,17 +223,22 @@ function DirectoryDataInsert($item, result) {
                 data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
             }
         } else {
-            path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : '/' + data.orgName + window.location.pathname) + data.link;
+            path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : `${data.orgName == null ? "" : `/${data.orgName}`}${window.location.pathname}`) + data.link;
             target = "_self";
         }
         path = path.replace("//", "/");
-        content.find("a").attr({
+        const linkData = {
             "href": path,
-            "title": `連結至: ${data.title}${(target =="_blank"?"(另開視窗)":"")}`,
+            "title": `連結至: ${data.title}${(target == "_blank" ? "(另開視窗)" : "")}`,
             "target": target
-        });
-        var imglink = data.mainImage ||"/images/noImg.jpg";
-        if ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName)) {
+        }
+        if (content[0].tagName == "A") {
+            content.attr(linkData);
+        } else {
+            content.find("a").attr(linkData);
+        }
+        var imglink = data.mainImage || "/images/noImg.jpg";
+        if (data.orgName!=null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
         }
         content.find("img").attr("src", imglink);
@@ -241,6 +246,14 @@ function DirectoryDataInsert($item, result) {
         content.find(".title").text(data.title);
         content.find(".description").text(data.description);
         $item.find(".catalog").append(content);
+        if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
+        else content.find(".location").text(data.location);
+        if (content.find(".address").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
+        else content.find(".address").text(data.address);
+        if (data.startTime != null && data.startTime != "") {
+            var startTime = new Date(data.startTime);
+            content.find(".startTime").text(`${startTime.getFullYear()}/${startTime.getMonth() + 1}/${startTime.getDate()}`);
+        }
         if (data.nodeDate != null && data.nodeDate != "") {
             var noteDate = new Date(data.nodeDate);
             content.find(".date").text(`${noteDate.getFullYear()}/${noteDate.getMonth() + 1}/${noteDate.getDate()}`);
@@ -251,7 +264,6 @@ function DirectoryDataInsert($item, result) {
             } else {
                 content.find(".date-day").text(`${noteDate.getDate()}`);
             }
- 
         }
     });
 

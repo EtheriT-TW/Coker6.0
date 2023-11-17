@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Dto.Directory;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Common;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -122,6 +123,7 @@ namespace EtheriT.Coker.Application.Article
                 {
                     var dataQuery = await (from e in result
                                     where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                    orderby e.Id descending
                                     select new ArticleListGetDto
                                     {
                                         Id = e.Id,
@@ -170,6 +172,7 @@ namespace EtheriT.Coker.Application.Article
                 {
                     var data = await (from e in result
                         where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                        orderby e.Id descending
                         select new ArticleListGetDto
                         {
                             Id = e.Id,
@@ -264,10 +267,11 @@ namespace EtheriT.Coker.Application.Article
             {
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
                 List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID || e.Id == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+                if(siteIds.Count ==0) siteIds.Add(WebsiteID);
                 var sites = await db.Websites.Where(e => siteIds.Contains(e.Id)).Where(e => !e.IsDeleted).ToListAsync();
 
                 var output = new List<DirectoryReleInfoDto>();
-                var articleData = new List<ArticleGetDataDto>();
+                var articleData = new List<ArticleListGetDto>();
 
                 var result = await db.Article
                                     .Where(e => dto.Ids.Contains(e.Id))
@@ -305,7 +309,20 @@ namespace EtheriT.Coker.Application.Article
                             output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
                             output_data.NodeDate = data.NodeDate;
                             output_data.OrgName = website.OrgName;
-
+                            if (data.Html!=null && data.Html.IndexOf("activity_start_time") > 0) {
+                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_start_time\">(.*?)<").Groups;
+                                if(!string.IsNullOrEmpty(g[0].Value)) output_data.StartTime = DateTime.Parse(g[1].Value);
+                            }
+                            if (data.Html != null && data.Html.IndexOf("activity_addr") > 0)
+                            {
+                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_addr\">(.*?)<").Groups;
+                                if (!string.IsNullOrEmpty(g[0].Value)) output_data.Address = g[1].Value;
+                            }
+                            if (data.Html != null && data.Html.IndexOf("activity_location") > 0)
+                            {
+                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_location\">(.*?)<").Groups;
+                                if (!string.IsNullOrEmpty(g[0].Value)) output_data.Location = g[1].Value;
+                            }
                             output.Add(output_data);
                         }
                     }

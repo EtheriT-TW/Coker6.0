@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
@@ -177,6 +178,11 @@ namespace EtheriT.Coker.Application
             var myWeb = await t.FirstOrDefaultAsync();
             if (myWeb != null) url = myWeb.DefaultUrl??"";
             return url;
+        }
+        public async Task<WebsiteLevelEnum> GetWebsiteLevel() {
+            long id = await GetWebsiteId();
+            if (id != 0) return (WebsiteLevelEnum)await db.Websites.Where(e => e.Id == id).Select(e => e.Level).FirstOrDefaultAsync();
+            else return WebsiteLevelEnum.形象;
         }
         public string GetAuthorization() {
             if (httpContextAccessor.HttpContext == null) return StringValues.Empty;

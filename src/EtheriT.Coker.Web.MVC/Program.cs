@@ -45,6 +45,7 @@ using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.AuditLog;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Application.Newsletter;
+using EtheriT.Coker.Application.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -152,6 +153,7 @@ builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddTransient<ICompanyAppService, CompanyAppService>();
 builder.Services.AddTransient<IAuditLogAppService, AuditLogAppService>();
 builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
+builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
 
 
 //多語系
@@ -165,6 +167,11 @@ builder.Services.Configure<VirtualDirectory>(builder.Configuration.GetSection("V
 builder.Services.AddControllersWithViews();
 
 //item.UseSqlServer(configuration.GetConnectionString("Default"))
+
+if (builder.Environment.EnvironmentName == "EPZA")
+{
+    builder.WebHost.UseStaticWebAssets();
+}
 
 builder.Services.AddDbContext<CokerDbContext>(options =>
     {

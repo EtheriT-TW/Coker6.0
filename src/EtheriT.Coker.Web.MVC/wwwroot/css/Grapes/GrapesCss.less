@@ -8,6 +8,10 @@
         min-height: 5rem;
     }
 
+    a {
+        padding: 5px;
+    }
+
     .edit_lock {
         *:not(.allowedit) {
             padding: initial;
@@ -35,7 +39,7 @@
     }
 }
 
-.edit_lock *:not(.allowedit), .swiper-wrapper {
+.edit_lock *:not(.allowedit), .swiper-wrapper, .catalog_frame *:not(.allowedit) {
     pointer-events: none !important;
     outline: none !important;
 }

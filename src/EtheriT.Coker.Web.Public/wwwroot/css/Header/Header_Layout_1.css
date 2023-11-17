@@ -134,7 +134,6 @@
         background-color: #e0e0e0;
         padding: 2% 10% 2% 10%;
         box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
-        min-height: 100px;
     }
 
 .subtitle > .subtitle_title {
@@ -150,13 +149,79 @@
     height: 1.5rem;
 }
 
+.navbar-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+    .navbar-nav ul > li {
+        padding: 0.5rem;
+    }
+
+.collapse_menus {
+    width: 100%;
+    left: 50%;
+}
+
+.metaMenu .collapse_menus > ul {
+    display: flex;
+    flex-wrap: wrap;
+    width: 1100px;
+    margin: auto;
+}
+
+    .metaMenu .collapse_menus > ul > li {
+        margin-left: 0.5rem;
+        margin-right: 1.5rem;
+        min-width: 175px;
+    }
+
+    .metaMenu .collapse_menus > ul ul {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        height: 180px;
+    }
+
+        .metaMenu .collapse_menus > ul ul > li {
+            width: 175px;
+        }
+
+.listMenu {
+    position: relative;
+}
+
+    .listMenu .collapse_menus {
+        padding: 0.5rem 0;
+    }
+
+        .listMenu .collapse_menus > ul {
+            flex-direction: column;
+        }
+
+            .listMenu .collapse_menus > ul > li {
+                padding: 0;
+                margin: 0;
+                transition: margin 0.3s;
+                display: flex;
+                align-items: center;
+            }
+
+                .listMenu .collapse_menus > ul > li:hover {
+                    margin-left: 0.5rem;
+                }
+
+                    .listMenu .collapse_menus > ul > li:hover:before {
+                        content: "➤"
+                    }
 /*RWD*/
 @media (min-width: 992px) {
     #Mega_Menu .mega_menu_canvas, .mega_menu_canvas .dropdown {
         position: initial;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > div:first-child {
+    #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: center;
     }
 }
@@ -176,7 +241,7 @@
         font-weight: bold;
     }
 
-        #Offcanvas_Mega_Menu > ul > .title > div:first-child {
+        #Offcanvas_Mega_Menu > ul > .title > .text-black {
             color: unset;
         }
 
@@ -184,7 +249,7 @@
             background-color: unset;
         }
 
-            #Offcanvas_Mega_Menu > ul > .title:hover > div:first-child {
+            #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
                 color: unset;
                 font-weight: unset;
             }
@@ -230,7 +295,7 @@
         left: 50%;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title:hover > div:first-child {
+    #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
         background-color: #e0e0e0;
         color: var(--red-main) !important;
         font-weight: bold;
@@ -243,7 +308,7 @@
 
 @media only screen and (max-width: 768px) {
 
-    #Offcanvas_Mega_Menu > ul > .title > div:first-child {
+    #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: start;
     }
 

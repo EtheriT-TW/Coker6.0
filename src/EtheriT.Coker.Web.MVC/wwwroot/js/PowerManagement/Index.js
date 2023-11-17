@@ -1,33 +1,34 @@
 ﻿function PageReady() {
-    const data = [
+    let nItem = null,RoleID=0;
+    let data = [
         {
-            Id: 1,
-            Name: "總管理者",
-            menubar: [{
-                Id: 1,
-                Name: "易碩網際科技"
+            id: 1,
+            name: "總管理者",
+            members: [{
+                id: 1,
+                name: "易碩網際科技"
             }, {
-                Id: 2,
-                Name: "黃小姐"
+                id: 2,
+                name: "黃小姐"
             }, {
-                Id: 3,
-                Name: "章小姐"
+                id: 3,
+                name: "章小姐"
             }]
         },
         {
-            Id: 2,
-            Name: "網站維護者",
-            menubar: [{
-                Id: 4,
-                Name: "張小姐"
+            id: 2,
+            name: "網站維護者",
+            members: [{
+                id: 4,
+                name: "張小姐"
             }]
         },
         {
-            Id: 0,
-            Name: "無群組",
-            menubar: [{
-                Id: 5,
-                Name: "黃先生"
+            id: 0,
+            name: "無群組",
+            members: [{
+                id: 5,
+                name: "黃先生"
             }]
         }
     ];
@@ -36,11 +37,16 @@
     const powerHtml = $("#PowerData").html();
     const init = function () {
         $(data).each(function (index, element) {
-            if (element.Id != 0) addRole(element);
-            else setNoGroup(element);
+            if (element.id != 0) addRole(element);
+            else {
+                $("#noGroupMember").data(element);
+                setNoGroup();
+            }
         });
         $(".powerctrl .role-item").first().trigger("click");
         loadMenus();
+        co.Zipcode.init("#TWzipcode");
+        co.Zipcode.init("#new-TWzipcode");
     }
     const loadMenus = function () {
         co.PowerManagement.GetAll().done(function (result) {
@@ -78,57 +84,165 @@
         $(".powerctrl .role-item").removeClass("roleChecked");
         $self.addClass("roleChecked");
         $("#roleMember").empty();
-        $(data.menubar).each((i,e) => {
+        $(data.members).each((i,e) => {
             addItem("#roleMember", e);
         });
-        console.log($self.data())
     }
-    const setNoGroup = function (e) {
-        $(e.menubar).each(function () {
+    const setNoGroup = function () {
+        var members = $("#noGroupMember").data("members");
+        $("#noGroupMember").empty();
+        $(members).each(function () {
             addItem("#noGroupMember", this)
         })
     }
     const addItem = function (id, element) {
         const $item = $(html).data(element);
-        $item.find(".title").text(element.Name);
+        $item.find(".title").text(element.name);
+        $item.on("click", function (event) {
+            event.stopPropagation();
+            if ($(this).hasClass("checked")) $(this).removeClass("checked");
+            else $(this).addClass("checked");
+        });
+        $item.find(".fa-trash-alt").on("click", function (event) {
+            event.stopPropagation();
+            const m = $(this).closest(".item");
+            const s = `是否確認刪除使用者<span class="ConfirmDanger">${$(m).text()}</span>`;
+            co.sweet.confirm("確認刪除?", s, "確認", "取消", function () {
+                co.PowerManagement.RemoveMappingUserAndWebsite($(m).data("id")).done((result) => {
+                    if (result.success) {
+                        co.sweet.success("已刪除授權");
+                        if (RoleID == 0) {
+                            var members = $("#noGroupMember").data("members");
+                            co.Array.Delete(members, $(m).data());
+                            $("#noGroupMember").data("members", members);
+                            setNoGroup();
+                            $('.offcanvas').offcanvas('hide');
+                        }
+                    } else co.sweet.error(result.error);
+                });
+            });
+        });
+        $item.find(".fa-edit").on("click", function (event) {
+            event.stopPropagation();
+            const self = $(this).parents(".member-item").first();
+            nItem = self;
+            co.PowerManagement.GetUser(self.data("id")).done((result) => {
+                if (result.success) {
+                    var $form = $("#offcanvastopByMember form");
+                    co.Form.insertData(result.data, $form);
+                } else co.sweet.error("資料錯誤", result.error);
+            });
+        });
+        $item.find(".fa-user-cog").on("click", function (event) {
+            event.stopPropagation();
+            const self = $(this).parents(".member-item").first();
+            nItem = self;
+        });
         $item.appendTo(id);
     }
     const addRole = function (element) {
         const $item = $(roleHtml).data(element);
-        $item.find(".title").text(element.Name);
+        $item.find(".title").text(element.name);
         $item.on("click", setMember);
+        $item.find(".fa-trash-alt").on("click", function (event) {
+            event.stopPropagation();
+            const m = $(this).closest(".item");
+            const s = `是否確認刪除角色<span class="rad">${$(m).text()}</span>`;
+            co.sweet.confirm("確認刪除?", s, "確認", "取消", function () {
+                /*co.PowerManagement.RemoveMappingUserAndWebsite($(m).data("id")).done((result) => {
+                    if (result.success) co.sweet.success("已刪除授權");
+                    else co.sweet.error(result.error);
+                });*/
+                $(m).remove();
+                $('.offcanvas').offcanvas('hide');
+            });
+        });
         $item.appendTo("#RoleList");
     }
-    init();
-    $(".powerctrl .member-item").on("click", function () {
-        if ($(this).hasClass("checked")) $(this).removeClass("checked");
-        else $(this).addClass("checked");
+    co.PowerManagement.getAllUsers().done((result) => {
+        if (result.success) {
+            data = result.data;
+            init();
+        }
     });
+    
 
     $("#right-btn").on("click", function () {
-        $("#roleMember .member-item").each(function () {
-            if ($(this).hasClass("checked")) {
+        const $items = $("#roleMember .member-item.checked");
+        if ($items.length > 0) {
+            $items.each(function () {
                 $(this).appendTo("#noGroupMember");
                 $(this).removeClass("checked");
-            }
-        });
+            });
+        } else co.sweet.error("請選擇要退出群組的使用者");
     });
 
     $("#left-btn").on("click", function () {
-        $("#noGroupMember .member-item.checked").each(function () {
-            if ($(this).hasClass("checked")) {
+        const $items = $("#noGroupMember .member-item.checked");
+        const $Role = $("#RoleList .role-item.roleChecked");
+        if ($items.length <= 0) co.sweet.error("加入失敗","請選擇要加入角色的使用者");
+        else if ($Role.length <= 0) co.sweet.error("加入失敗", "請選擇或新增使用者要加入的角色");
+        else {
+            $items.each(function () {
+                $Role.data("members").push($(this).data());
                 $(this).appendTo("#roleMember");
                 $(this).removeClass("checked");
-            }
-        });
+            });
+        } 
     });
-
-    $(".fa-trash-alt").on("click", function () {
-        const m = $(this).closest(".item");
-        const s = $(m).hasClass("member-item") ? `是否確認刪除使用者<span class="ConfirmDanger">${$(m).text()}</span>` : `是否確認刪除角色<span class="rad">${$(m).text()}</span>`;
-        co.sweet.confirm("確認刪除?", s, "確認", "取消", function () {
-            $(m).remove();
-        });
+    $("#offcanvastopByMember .cancel").on("click", () => {
+        $('.offcanvas').offcanvas('hide');
     });
-
+    $("#offcanvastopByMember .delete").on("click", () => {
+        $(nItem).find(".fa-trash-alt").trigger("click");
+    });
+    $("#offcanvastopByMember .submit").on("click", () => {
+        $('.offcanvas').offcanvas('hide');
+    });
+    $("#offcanvastopByAddUser .submit").on("click", () => {
+        const text = $(`#offcanvastopByAddUser [name="email"]`).val();
+        if (text.trim()=="") co.sweet.error("請輸入要加入管理的使用者帳號或電子信箱");
+        else {
+            co.PowerManagement.MappingUserAndWebsite({
+                emailOrAccount: text,
+                RoleId: RoleID
+            }).done((result) => {
+                if (result.success) {
+                    var obj = JSON.parse(result.message);
+                    $('.offcanvas').offcanvas('hide');
+                    if (RoleID == 0) {
+                        var data = $("#noGroupMember").data();
+                        data.members.push({ id: obj.Id, name: obj.Name });
+                        $("#noGroupMember").data("members", data.members);
+                        setNoGroup();
+                    }
+                } else co.sweet.error("新增失敗",result.error);
+            });
+        }
+    });
+    $("#offcanvastopByRole .submit").on("click", () => {
+        const text = $(`#offcanvastopByRole [name="name"]`).val();
+        if (text.trim() == "") co.sweet.error("角色名稱不可為空");
+        else {
+            co.PowerManagement.AddRole({ Name: text }).done(function (result) {
+                if (result.success) {
+                    var obj = JSON.parse(result.message);
+                    $('.offcanvas').offcanvas('hide');
+                    addRole({ id: obj.Id, name: obj.Name, members:[]});
+                } else co.sweet.error("新增失敗", result.error);
+            });
+        }
+    });
+    $("#addUserInRole").on("click", () => {
+        if ($("#RoleList .roleChecked").length == 0) {
+            co.sweet.error("請選擇欲讓使用者加入的角色");
+            $('.offcanvas').offcanvas('hide');
+        } else {
+            $('#offcanvastopByAddUserSelect').offcanvas('show');
+            RoleID = $("#RoleList .roleChecked").data("id");
+        }
+    });
+    $("#addUser").on("click", () => {
+        RoleID = 0;
+    });
 }

@@ -210,6 +210,12 @@
       "input": [
         "node_modules/grapesjs-plugin-ckeditor5/dist/*"
       ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-rte-extensions",
+      "input": [
+        "node_modules/grapesjs-rte-extensions/dist/*"
+      ]
     }
   ]
 }

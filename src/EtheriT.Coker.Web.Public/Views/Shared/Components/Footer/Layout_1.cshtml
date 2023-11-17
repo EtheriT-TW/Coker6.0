@@ -8,102 +8,38 @@
 	<i class="fa-solid fa-chevron-down text-black"></i>
 </div>
 <div id="Footer_Menu" class="abreast">
-	<div class="paging_frame_big">
-		<p style="font-weight:bold;font-size:1.1rem;">商品分類</p>
-		<div class="abreast">
-			<ul class="paging_frame_big_left">
-				<li><a href="" class="text-white">微電腦馬桶座</a></li>
-				<li><a href="" class="text-white">馬桶</a></li>
-				<li><a href="" class="text-white">面盆</a></li>
-				<li><a href="" class="text-white">便斗</a></li>
-				<li><a href="" class="text-white">龍頭</a></li>
-			</ul>
-			<ul class="paging_frame_big_right">
-				<li><a href="" class="text-white">配件</a></li>
-				<li><a href="" class="text-white">浴缸</a></li>
-				<li><a href="" class="text-white">三機</a></li>
-				<li><a href="" class="text-white">無障礙設施　</a></li>
-				<li><a href="/@ViewData["OrgName"]/Catalog" class="text-white">線上型錄</a></li>
-				<li><a href="" class="text-white">清倉品</a></li>
-			</ul>
-		</div>
-	</div>
-	<div class="paging_frame_small_1">
-		<p style="font-weight:bold;font-size:1.1rem;">關於Derek</p>
-		<ul>
-			<li><a href="" class="text-white">企業理念</a></li>
-			<li><a href="" class="text-white">企業沿革</a></li>
-			<li><a href="" class="text-white">企業設備</a></li>
-			<li><a href="" class="text-white">媒體專區</a></li>
-			<li><a href="" class="text-white">品牌故事</a></li>
-			<li><a href="/@ViewData["OrgName"]/ExhibitionCenter" class="text-white">展示中心</a></li>
-			<li><a href="" class="text-white">實績列舉</a></li>
-		</ul>
-	</div>
-	<div class="paging_frame_small_2">
-		<p style="font-weight:bold;font-size:1.1rem;">標章認證</p>
-		<ul>
-			<li><a href="" class="text-white">省水標章</a></li>
-			<li><a href="" class="text-white">環保標章</a></li>
-			<li><a href="" class="text-white">能源分級</a></li>
-			<li><a href="" class="text-white">ISO/CNS</a></li>
-			<li><a href="" class="text-white">其他</a></li>
-		</ul>
-	</div>
-	<div class="paging_frame_small_3">
-		<p style="font-weight:bold;font-size:1.1rem;">銷售據點</p>
-		<ul>
-			<li><a href="" class="text-white">分公司</a></li>
-			<li><a href="" class="text-white">花東總經銷</a></li>
-			<li><a href="" class="text-white">-百健行</a></li>
-			<li><a href="" class="text-white">經銷據點</a></li>
-			<li><a href="" class="text-white">公共專案經銷</a></li>
-		</ul>
-	</div>
-	<div class="paging_frame_small_4">
-		<p style="font-weight:bold;font-size:1.1rem;">我們的服務</p>
-		<ul>
-			<li><a href="" class="text-white">清潔小幫手</a></li>
-			<li><a href="" class="text-white">維修服務</a></li>
-			<li><a href="" class="text-white">常見問題</a></li>
-			<li><a href="" class="text-white">使用須知</a></li>
-			<li><a href="/@ViewData["OrgName"]/Contact" class="text-white">聯絡我們</a></li>
-		</ul>
-	</div>
-</div>
-
-@*<div id="Footer_Menu" class="container">
-	<ul class="d-flex flex-wrap w-100">
-		@foreach (var menu in Model.footerViewModels ?? new List<FooterViewModel>())
-		{
-			<li class="title my-2 col-auto">
-				<a class="fs-6 fw-bold text-white" href="@menu.Link">@menu.Title</a>
-				<ul class="d-flex flex-column flex-wrap">
+	@foreach (var menu in Model.footerViewModels ?? new List<FooterViewModel>())
+	{
+		<div class="paging_frame">
+			<p style="font-weight:bold;font-size:1.1rem;">@menu.Title</p>
+			<div class="abreast">
+				<ul>
 					@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
 					{
-						<li class=""><a class="text-white" href="@sub_menu.Link">@sub_menu.Title</a></li>
+						<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
 					}
 				</ul>
-			</li>
-		}
-	</ul>
-</div>*@
-
-
+			</div>
+		</div>	
+	}
+</div>
 <div id="Footer_Bottom" class="center">
 	<div id="Logo_Bottom">
 		<div></div>
-		<span><img src="~/upload/derek_logo.png" width="150" alt="Derek" /></span>
+		<span><img src="@Model.Logo_Image" width="120" alt="Derek" /></span>
 	</div>
 	<div id="Other_Web_Button" class=" center">
-		<i class="fa-brands fa-facebook-f"></i>
-		<i class="fa-brands fa-youtube"></i>
-		<i class="fa-brands fa-instagram"></i>
+		<a href="@Model.Facebook_Link" title="連結至:粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+		<a href="@Model.YoutubeChannel_Link" title="連結至:YT頻道(另開新視窗)" target="_blank">
+			<i class="fa-brands fa-youtube"></i>
+		</a>
+		<a href="@Model.IG_Link" title="連結至:IG粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-instagram"></i></a>
 	</div>
 	<div id="Copyright" class="abreast">
-		<p>Copyright © 2022</p>
-		<p>隆昌窯業股份有限公司</p>
-		<p>版權所有</p>
+		@for (int i = 0; i < Model.Content.Count; i++)
+		{
+			<p>@Model.Content[i]</p>
+		}
 	</div>
 </div>
 

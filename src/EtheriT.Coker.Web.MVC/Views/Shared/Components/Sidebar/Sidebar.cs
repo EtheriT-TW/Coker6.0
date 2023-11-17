@@ -13,7 +13,9 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            return View(await navigation.getMenus());
+            var site = await navigation.getMenus();
+            await navigation.SetPower(site);
+            return View(site);
         }
     }
 }

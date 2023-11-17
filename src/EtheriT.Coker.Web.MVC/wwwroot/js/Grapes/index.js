@@ -44,8 +44,9 @@ var grapesInit = function (options) {
             'grapesjs-tui-image-editor',
             'grapesjs-blocks-table',
             'grapesjs-parser-postcss',
-            'grapesjs-plugin-ckeditor',
+            //'grapesjs-plugin-ckeditor',
             //'gjs-plugin-ckeditor5',
+            //'grapesjs-rte-extensions',
             'grapesjs-Coker6'
         ],
         pluginsOpts: {
@@ -167,6 +168,54 @@ var grapesInit = function (options) {
                     },
                     licenseKey: ''
                 }
+            },
+            'grapesjs-rte-extensions': {
+                // default options
+                base: {
+                    bold: true,
+                    italic: true,
+                    underline: true,
+                    strikethrough: true,
+                    link: true,
+                },
+                //fonts: {
+                //  fontName: ['font1',...,'fontn'],
+                //  fontSize: true,
+                //  //An array of strings representing colors
+                //  fontColor: ['#fff',...],
+                //  //An array of strings representing colors
+                //  hilite: ['#fff',...],
+                //}
+                fonts: {
+                    fontColor: true,
+                    hilite: true,
+                },
+                format: {
+                    //heading1: true,
+                    heading2: true,
+                    heading3: true,
+                    heading4: false,
+                    //heading5: false,
+                    //heading6: false,
+                    paragraph: true,
+                    //quote: false,
+                    clearFormatting: true,
+                },
+                subscriptSuperscript: false,//|true
+                indentOutdent: false,//|true
+                list: false,//|true
+                align: true,//|true
+                //actions: {
+                //  copy: true,
+                //  cut: true,
+                //  paste: true,
+                //  delete: true,
+                //},
+                actions: false,//|true
+                undoredo: false,//|true
+                extra: false,//|true
+                darkColorPicker: true,//|false
+                maxWidth: '600px'
             }
         },
         canvas: {

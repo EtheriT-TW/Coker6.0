@@ -3,7 +3,7 @@
     co.Zipcode.init("#TWzipcode");
     co.Member.GetSelf().done(function (result) {
         if (result != null) {
-            co.Form.insertData(result);
+            co.Form.insertData(result,"#memberForm");
         }
     });
     $("#memberForm .submit").on("click", function () {

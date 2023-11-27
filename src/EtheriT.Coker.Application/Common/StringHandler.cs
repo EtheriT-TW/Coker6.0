@@ -27,5 +27,8 @@ namespace EtheriT.Coker.Application.Common
             string output = HtmlDecode(html);
             return HttpUtility.HtmlEncode(output);
         }
+        public string privacyName(string Name) {
+            return Name.Substring(0, 1) + "○" + Name.Substring(Name.Length - 1);
+        }
     }
 }

@@ -80,6 +80,40 @@ iframe {
     width: auto;
 }
 
+/*Table*/
+table {
+    width: 100% !important;
+    height: unset !important;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+}
+
+    table tr {
+        display: flex;
+        flex-wrap: nowrap;
+        flex-direction: row;
+    }
+
+        table tr > td {
+            flex: 1 1 33%;
+            min-height: 30px;
+            border: #000 solid 1px;
+            border-bottom-width: 0;
+            border-right-width: 0
+        }
+            table tr > td:last-child {
+                border-right-width: 1px;
+            }
+            table tr:last-child > td {
+                border-bottom-width: 1px;
+            }
+
+
+        table td div {
+            min-height: unset !important;
+        }
+
 /*no script*/
 #noscript {
     padding: 1rem;

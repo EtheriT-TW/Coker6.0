@@ -29,17 +29,28 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 		[HttpGet]
 		public async Task<Site> AllMenus() {
-			return await navigation.getMenus();
+            var site = await navigation.getMenus();
+            await navigation.SetPower(site);
+            return site;
 		}
         [HttpGet]
         public async Task<GetPermissionsOutputDto> AllUsers()
         {
             return await permissionsAppService.GetPermissionsUserData();
         }
-		[HttpPost]
+        [HttpPost]
+        public async Task<GetUserPermissionsRsponseDto> GetPermissions(SavePermissionsDto dto)
+        {
+            return await permissionsAppService.GetPermissions(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
+        {
+            return await permissionsAppService.SavePermissions(dto);
+        }
+        [HttpPost]
 		public async Task<ResponseUserEditDto> GetUser(DataDelectDto dto) {
 			return await accountAppService.GetEditUser(dto);
-
         }
 		[HttpDelete]
 		public async Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto) {
@@ -50,9 +61,28 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await permissionsAppService.MappingUserAndWebsite(dto);
         }
         [HttpPost]
+        public async Task<ResponseMessageDto> AddUserToRole(AddUserToRoleDto dto)
+        {
+            return await permissionsAppService.AddUserToRole(dto);
+        }
+        [HttpDelete]
+        public async Task<ResponseMessageDto> RemoveUserToRole(AddUserToRoleDto dto) {
+            return await permissionsAppService.RemoveUserToRole(dto);
+        }
+        [HttpPost]
         public async Task<ResponseMessageDto> AddRole(AddRoleDto dto)
         {
             return await permissionsAppService.AddRole(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> EditRole(AddRoleDto dto)
+        {
+            return await permissionsAppService.EditRole(dto);
+        }
+        [HttpDelete]
+		public async Task<ResponseMessageDto> DeleteRole(DataDelectDto dto)
+		{
+			return await permissionsAppService.DeleteRole(dto);
+		}
     }
 }

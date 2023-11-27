@@ -4,7 +4,6 @@ var $imgCaptcha;
 var form_correct = false;
 
 function setContact() {
-    console.log("in");
     $captcha_input = $("#InputCaptcha");
     $imgCaptcha = $('#imgCaptcha');
     NewCaptcha($imgCaptcha, $captcha_input);

@@ -69,7 +69,7 @@ function ready() {
             });
         });
     }
-    if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo();
+    if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo(45);
     _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");
@@ -487,8 +487,8 @@ var Coker = {
     }
 }
 $.fn.extend({
-    goTo: function () {
-        $('html, body').animate({ scrollTop: $(this).offset().top }, 0);
+    goTo: function (offset) {
+        $('html, body').animate({ scrollTop: $(this).offset().top + (!!offset ? offset : 0) }, 0);
     },
     setRandenId: function(i) {
         const $self = $(this);

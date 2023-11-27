@@ -1,4 +1,6 @@
-﻿using AutoMapper.Execution;
+﻿using AutoMapper;
+using AutoMapper.Execution;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -21,14 +23,20 @@ namespace EtheriT.Coker.Application.Permissions
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly StringHandler stringHandler;
+        private readonly IMapper mapper;
         private readonly string controllerName;
         public PermissionsAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            StringHandler stringHandler,
+            LoginUserData loginUserData,
+            IMapper mapper
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.stringHandler = stringHandler;
+            this.mapper = mapper;
             controllerName = "Permissions";
         }
         public async Task<GetPermissionsOutputDto> GetPermissionsUserData()
@@ -48,11 +56,11 @@ namespace EtheriT.Coker.Application.Permissions
                             from u in db.Users.Where(e => !e.IsDeleted)
                             join m in db.MappingUserAndRoles.Where(e => !e.IsDeleted) on u.Id equals m.UserId
                             join web in db.MappingUserAndWebsites on u.Id equals web.UserId
-                            where o.Id == m.RoleId && web.Id == websideId
+                            where o.Id == m.RoleId && web.WebsiteId == websideId
                             select new PermissionsUserDto
                             {
                                 Id = u.Id,
-                                Name = u.Name,
+                                Name = stringHandler.privacyName(u.Name),
                             }
                         ).ToList()
                     }).ToListAsync();
@@ -74,7 +82,7 @@ namespace EtheriT.Coker.Application.Permissions
                         select new PermissionsUserDto
                         {
                             Id = u.Id,
-                            Name = u.Name,
+                            Name = stringHandler.privacyName(u.Name),
                         }
                     ).ToListAsync()
                 };
@@ -88,6 +96,103 @@ namespace EtheriT.Coker.Application.Permissions
             }
             await loginUserData.SetLogs(controllerName, "GetPermissionsUserData", "", JsonConvert.SerializeObject(output));
             return output;
+        }
+        public async Task<GetUserPermissionsRsponseDto> GetPermissions(SavePermissionsDto dto) {
+            GetUserPermissionsRsponseDto response = new GetUserPermissionsRsponseDto();
+            try {
+                long SiteId = await loginUserData.GetWebsiteId();
+                var uadateItems = await db.Permissions
+                    .Where(e => e.FK_UserId == dto.FK_UserId)
+                    .Where(e => e.FK_RoleId == dto.FK_RoleId)
+                    .Where(e => e.FK_WebsiteId == SiteId)
+                    .ToListAsync();
+                response.items = mapper.Map<List<SavePermissionsItem>>(uadateItems);
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "GetPermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<List<SavePermissionsItem>> GetLoginUserPermissionsByView() {
+            long SiteId = await loginUserData.GetWebsiteId();
+            long UserId = await loginUserData.GetUserId();
+            var UserItems = await (from p in db.Permissions
+                        join u in db.Users on p.FK_UserId equals u.Id
+                        where p.FK_WebsiteId == SiteId && u.Id == UserId && p.Name.Contains(".View")
+                        select p).ToListAsync();
+            var RoleItems = await( from p in db.Permissions
+                            join r in db.Roles on p.FK_RoleId equals r.Id
+                            join m in db.MappingUserAndRoles on r.Id equals m.RoleId
+                            join u in db.Users on m.UserId equals u.Id
+                            where p.FK_WebsiteId == SiteId && u.Id == UserId && p.Name.Contains(".View")
+                                   select p).ToListAsync();
+            List<Core.Models.Permissions> Items = new List<Core.Models.Permissions>();
+            if (UserItems != null && RoleItems == null) Items.AddRange(UserItems);
+            else if (UserItems == null && RoleItems != null) Items.AddRange(RoleItems);
+            else if (UserItems != null && RoleItems != null) {
+                Items.AddRange(RoleItems);
+                Items.AddRange(UserItems);
+            }
+            return mapper.Map<List<SavePermissionsItem>>(Items);
+        }
+        public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                long SiteId = await loginUserData.GetWebsiteId();
+                var Names = dto.Items.Select(x => x.Name).ToList()??new List<string>();
+                var uadateItems = await db.Permissions
+                            .Where(e => e.FK_UserId == dto.FK_UserId)
+                            .Where(e => e.FK_RoleId == dto.FK_RoleId)
+                            .Where(e => e.FK_WebsiteId == SiteId)
+                            .Where(e => Names.Contains(e.Name))
+                            .Select(e=> new SavePermissionsItem { Name=e.Name,IsGranted =e.IsGranted }).ToListAsync();
+                var updateName = uadateItems.Select(x => x.Name).ToList()?? new List<string>();
+                var addItems = dto.Items.FindAll(e => !updateName.Contains(e.Name));
+                if (uadateItems.Any())
+                    await UpdatePermissions(new SavePermissionsDto { FK_UserId = dto.FK_UserId, FK_RoleId = dto.FK_RoleId, SiteId = SiteId, Items = uadateItems });
+                if (addItems.Any()) 
+                    await AddPermissions(new SavePermissionsDto { FK_UserId = dto.FK_UserId, FK_RoleId = dto.FK_RoleId, SiteId = SiteId, Items = addItems });
+                response.Success= true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "SavePermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        private async Task AddPermissions(SavePermissionsDto dto) {
+            long userId = await loginUserData.GetUserId();
+            List<Core.Models.Permissions> permissions = new List<Core.Models.Permissions>();
+            dto.Items.ForEach(e => {
+                permissions.Add(new Core.Models.Permissions
+                {
+                    Name = e.Name,
+                    IsGranted = e.IsGranted,
+                    FK_UserId = dto.FK_UserId,
+                    FK_RoleId = dto.FK_RoleId,
+                    FK_WebsiteId = dto.SiteId??0,
+                    CreationTime = DateTime.Now,
+                    CreatorUserId = userId
+                });
+            });
+            db.Permissions.AddRange(permissions);
+            await db.SaveChangesAsync();
+        }
+        private async Task UpdatePermissions(SavePermissionsDto dto)
+        {
+            long userId = await loginUserData.GetUserId();
+            List<string> Names = dto.Items.Select(e => e.Name).ToList();
+            var date = db.Permissions
+                        .Where(e => e.FK_UserId == dto.FK_UserId)
+                        .Where(e => e.FK_RoleId == dto.FK_RoleId)
+                        .Where(e => Names.Contains(e.Name))
+                        .Where(e => e.FK_WebsiteId == dto.SiteId);
+            db.Permissions.RemoveRange(date);
+            await db.SaveChangesAsync();
         }
         public async Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto)
         {
@@ -106,14 +211,14 @@ namespace EtheriT.Coker.Application.Permissions
                     .Where(e => e.Role != null && e.Role.FK_WebsiteId == siteId);
                 if (mapRole.Any())
                 {
-                    db.Remove(mapRole);
+                    db.RemoveRange(mapRole);
                     await db.SaveChangesAsync();
                 }
 
                 var permissions = db.Permissions.Where(e => e.FK_WebsiteId == siteId).Where(e => e.FK_UserId == dto.Id);
                 if (permissions.Any())
                 {
-                    db.Remove(permissions);
+                    db.RemoveRange(permissions);
                     await db.SaveChangesAsync();
                 }
                 response.Success = true;
@@ -159,7 +264,7 @@ namespace EtheriT.Coker.Application.Permissions
                         {
                             MappingUserAndRole mappingUserAndRole = new MappingUserAndRole
                             {
-                                Id = dto.RoleId,
+                                RoleId = dto.RoleId,
                                 UserId = dto.UsetId.Value,
                             };
                             db.MappingUserAndRoles.Add(mappingUserAndRole);
@@ -175,6 +280,71 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
+            await loginUserData.SetLogs(controllerName, "MappingUserAndWebsite", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> AddUserToRole(AddUserToRoleDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var userId = await loginUserData.GetUserId();
+                var all = await (
+                    from m in db.MappingUserAndRoles.Where(x => !x.IsDeleted)
+                    join r in db.Roles.Where(x => !x.IsDeleted).Where(e => e.FK_WebsiteId==websiteId) on m.RoleId equals r.Id
+                    where r.Id == dto.RoleId && dto.Users.Contains(m.UserId)
+                    select m
+                ).Select(e => e.UserId).ToListAsync();
+                var addUser = dto.Users.FindAll(e => !all.Contains(e));
+                if (addUser != null)
+                {
+                    List<MappingUserAndRole> mappings = new List<MappingUserAndRole>();
+                    addUser.ForEach(x =>
+                    {
+                        mappings.Add(new MappingUserAndRole { 
+                            RoleId = dto.RoleId,
+                            UserId = x
+                        });
+                    });
+                    db.AddRange(mappings);
+                    mappings.ForEach(e => {
+                        loginUserData.setOptionParameter(e, userId);
+                    });
+                    db.SaveChanges();
+                }
+                else throw new Exception("沒有可加入的使用者");
+                response.Success = true;
+            }
+            catch(Exception ex) {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "AddUserToRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> RemoveUserToRole(AddUserToRoleDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var userId = await loginUserData.GetUserId();
+                var all = await (
+                    from m in db.MappingUserAndRoles.Where(x => !x.IsDeleted)
+                    join r in db.Roles.Where(x => !x.IsDeleted).Where(e => e.FK_WebsiteId == websiteId) on m.RoleId equals r.Id
+                    where r.Id == dto.RoleId && dto.Users.Contains(m.UserId)
+                    select m
+                ).ToListAsync();
+                if (all != null)
+                {
+                    db.RemoveRange(all);
+                    db.SaveChanges();
+                }
+                else throw new Exception("沒有可加入的使用者");
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "AddUserToRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> AddRole(AddRoleDto dto) {
@@ -203,5 +373,46 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "AddRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-    }
+        public async Task<ResponseMessageDto> EditRole(AddRoleDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
+                if (role == null) throw new Exception("該角色不存在!");
+                else
+                {
+                    role.Name = dto.Name;
+                    await loginUserData.SaveChanges(role);
+                    response.Success = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "EditRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> DeleteRole(DataDelectDto dto)
+		{
+			ResponseMessageDto response = new ResponseMessageDto();
+            try {
+				var websiteId = await loginUserData.GetWebsiteId();
+				var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
+                if (role == null) throw new Exception("該角色不存在!");
+                else
+                {
+                    role.IsDeleted = true;
+                    await loginUserData.SaveChanges(role);
+                    response.Success = true;
+                }
+			} catch (Exception ex) {
+				response.Error = ex.Message;
+			}
+			await loginUserData.SetLogs(controllerName, "DeleteRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+			return response;
+		}
+	}
 }

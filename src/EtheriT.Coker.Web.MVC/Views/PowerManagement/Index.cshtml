@@ -46,6 +46,16 @@
                 <button class="btn submit" type="button">儲存</button>
             </form>
         </div>
+        <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByRoleEdit" aria-labelledby="offcanvasTopLabel">
+            <form id="offcanvastopByRoleEditForm" class="d-flex flex-column justify-content-center align-item-center p-3">
+                <input type="hidden" id="edit-role-id" name="id" />
+                <div class="form-floating mb-3">
+                    <input id="edit-role-name" name="name" class="form-control " type="text" placeholder="角色名稱">
+                    <label for="edit-role-name" class="form-label">角色名稱</label>
+                </div>
+                <button class="btn submit" type="button">儲存</button>
+            </form>
+        </div>
         <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByNewMember" aria-labelledby="offcanvasTopLabel">
             <form class="d-flex flex-column justify-content-center align-item-center p-3">
                 <div class="form-floating mb-3">
@@ -129,7 +139,9 @@
                     <i class="material-symbols-outlined">save_as</i>儲存
                 </button>
             </div>
-            <div class="offcanvas-body"></div>
+            <div class="offcanvas-body">
+                <form id="Permissions"></form>
+            </div>
         </div>
         <div class="offcanvas offcanvas-top d-flex justify-content-center align-item-center" tabindex="-1" id="offcanvastopByAddUser" aria-labelledby="offcanvasTopLabel">
             <form class="d-flex flex-column justify-content-center align-item-center p-3">
@@ -151,7 +163,7 @@
                 <div class="d-flex justify-content-center align-items-center col-12">
                     <div class="col-lg-7 d-flex title">角色</div>
                     <div class="col-lg-5 d-flex justify-content-center align-items-center">
-                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByMember" aria-controls="offcanvastopByMember"></button>
+                        <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByRoleEdit" aria-controls="offcanvastopByRoleEdit"></button>
                         <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
                         <button class="btn fas fa-trash-alt"></button>
                     </div>

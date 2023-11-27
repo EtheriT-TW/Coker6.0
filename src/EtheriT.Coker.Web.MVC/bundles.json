@@ -140,12 +140,6 @@
       ]
     },
     {
-      "outputFolder": "lib/grapesjs/fonts",
-      "input": [
-        "node_modules/grapesjs/dist/fonts/*"
-      ]
-    },
-    {
       "outputFolder": "lib/grapesjs/plugin/grapesjs-preset-webpage",
       "input": [
         "node_modules/grapesjs-preset-webpage/dist/*"
@@ -215,6 +209,12 @@
       "outputFolder": "lib/grapesjs/plugin/grapesjs-rte-extensions",
       "input": [
         "node_modules/grapesjs-rte-extensions/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/grapesjs/plugin/grapesjs-table",
+      "input": [
+        "node_modules/grapesjs-table/dist/*"
       ]
     }
   ]

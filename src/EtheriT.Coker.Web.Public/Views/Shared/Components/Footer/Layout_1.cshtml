@@ -7,8 +7,10 @@
 <div id="Collapse_Button" class="center">
 	<i class="fa-solid fa-chevron-down text-black"></i>
 </div>
+@if (Model.footerViewModels!=null && Model.footerViewModels.Count > 0)
+{
 <div id="Footer_Menu" class="abreast">
-	@foreach (var menu in Model.footerViewModels ?? new List<FooterViewModel>())
+	@foreach (var menu in Model.footerViewModels)
 	{
 		<div class="paging_frame">
 			<p style="font-weight:bold;font-size:1.1rem;">@menu.Title</p>
@@ -23,17 +25,27 @@
 		</div>	
 	}
 </div>
+}
 <div id="Footer_Bottom" class="center">
 	<div id="Logo_Bottom">
 		<div></div>
 		<span><img src="@Model.Logo_Image" width="120" alt="Derek" /></span>
 	</div>
 	<div id="Other_Web_Button" class=" center">
-		<a href="@Model.Facebook_Link" title="連結至:粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
-		<a href="@Model.YoutubeChannel_Link" title="連結至:YT頻道(另開新視窗)" target="_blank">
-			<i class="fa-brands fa-youtube"></i>
-		</a>
-		<a href="@Model.IG_Link" title="連結至:IG粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+		@if (!string.IsNullOrEmpty(Model.Facebook_Link))
+		{
+			<a href="@Model.Facebook_Link" title="連結至:粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+		}
+		@if (!string.IsNullOrEmpty(Model.YoutubeChannel_Link))
+		{
+			<a href="@Model.YoutubeChannel_Link" title="連結至:YT頻道(另開新視窗)" target="_blank">
+				<i class="fa-brands fa-youtube"></i>
+			</a>
+		}
+		@if (!string.IsNullOrEmpty(Model.IG_Link))
+		{
+			<a href="@Model.IG_Link" title="連結至:IG粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+		}
 	</div>
 	<div id="Copyright" class="abreast">
 		@for (int i = 0; i < Model.Content.Count; i++)

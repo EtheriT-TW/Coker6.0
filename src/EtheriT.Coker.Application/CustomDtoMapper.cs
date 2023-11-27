@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Dto.AuditLog;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.Permissions;
 
 namespace EtheriT.Coker.Application
 {
@@ -191,6 +192,8 @@ namespace EtheriT.Coker.Application
             CreateMap<RecipientsListDto, Recipient>().ReverseMap();
             CreateMap<MailUserDataDto, Recipient>().ReverseMap();
 
+            //Permissions
+            CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();
             //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
             //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))

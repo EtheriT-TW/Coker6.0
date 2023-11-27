@@ -21,6 +21,7 @@ function SwiperInit(obj) {
             $(this).find("a").on("focus", stop);
             $(this).on("mouseout", start);
             $(this).find("a").on("blob", start);
+            $(this).find("button").prop("disabled",false);
         }
     });
 

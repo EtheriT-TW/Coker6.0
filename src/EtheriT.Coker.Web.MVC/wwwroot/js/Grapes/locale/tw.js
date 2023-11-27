@@ -63,7 +63,8 @@ let tw = {
             'link-block': "區塊連結",
             'quote': "引用",
             'text-section': "段落",
-            'table': "表格"
+            'table': "表格",
+            'nColumns':"欄位數"
         },
     },
     selectorManager: {

@@ -38,13 +38,16 @@ a {
     text-decoration: none;
     color: black;
 }
+
 .memo {
     color: var(--theme-colors-danger) !important;
     font-weight: bold;
 }
-.memo:before {
-    content: "※";
-}
+
+    .memo:before {
+        content: "※";
+    }
+
 .ConfirmDanger {
     color: var(--colors-red-text);
     font-weight: bold;
@@ -101,6 +104,21 @@ a {
     user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
 }
+/*行數限制*/
+.webkit-box {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+    .webkit-box.line-3 {
+        -webkit-line-clamp: 3;
+    }
+
+    .webkit-box.line-6 {
+        -webkit-line-clamp: 6;
+    }
 
 /* line 21, ../../scss/bootstrap/_reboot.scss */
 .ConfirmKeyWord {

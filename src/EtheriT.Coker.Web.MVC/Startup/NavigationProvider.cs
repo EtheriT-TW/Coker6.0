@@ -1,15 +1,19 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace EtheriT.Coker.Web.MVC.Startup
 {
     public class NavigationProvider
     {
         private readonly LoginUserData loginUserData;
-        public NavigationProvider(LoginUserData loginUserData)
+        private readonly IPermissionsAppService permissionsAppService;
+        public NavigationProvider(LoginUserData loginUserData, IPermissionsAppService permissionsAppService)
         {
             this.loginUserData = loginUserData;
+            this.permissionsAppService = permissionsAppService;
         }
         public async Task<Site> getMenus()
         {
@@ -357,6 +361,21 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     break;
             }
             SetJobs(site.Jobs, seting);
+        }
+        public async Task setUserJob(Site site) {
+            var data = await permissionsAppService.GetLoginUserPermissionsByView();
+            if (data != null)
+            {
+                List<JobMenu> jobs= new List<JobMenu>();
+                data.ForEach(x => { 
+                    string name = x.Name.Split(".")[0];
+                    jobs.Add(new JobMenu {
+                        PageName = name,
+                        Enable = x.IsGranted
+                    });
+                });
+                SetJobs(site.Jobs, jobs);
+            }
         }
         private void SetJobs(List<JobMenu> jobs, List<JobMenu> seting)
         {

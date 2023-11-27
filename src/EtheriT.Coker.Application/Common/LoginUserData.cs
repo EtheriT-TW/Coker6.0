@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -238,21 +239,24 @@ namespace EtheriT.Coker.Application
                 db.SaveChangesAsync();
             });
         }
-        private async Task setOptionParameter(FullAuditedEntity entity) {
+        public async Task setOptionParameter(FullAuditedEntity entity) {
             var user = await GetUser();
+            setOptionParameter(entity,user.Id);
+        }
+        public void setOptionParameter(FullAuditedEntity entity,long userId) {
             if (entity.Id == 0)
             {
-                entity.CreatorUserId = user.Id;
+                entity.CreatorUserId = userId;
                 entity.CreationTime = DateTime.Now;
             }
             else if (entity.IsDeleted)
             {
-                entity.DeleterUserId = user.Id;
+                entity.DeleterUserId = userId;
                 entity.DeletionTime = DateTime.Now;
             }
             else
             {
-                entity.LastModifierUserId = user.Id;
+                entity.LastModifierUserId = userId;
                 entity.LastModificationTime = DateTime.Now;
             }
         }

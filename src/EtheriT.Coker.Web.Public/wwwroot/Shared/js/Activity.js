@@ -20,6 +20,8 @@
     if (location == "" ) {
         $(parentlocation).addClass("d-none");
     } else {
+        $(parentlocation).find("a")
+            .attr({ href: `https://maps.google.com.tw/maps?f=q&hl=zh-TW&geocode=&q=${location}&z=16&output=embed&t=`, title: `連結至：${location}(另開新視窗)`, target: "_blank" });
         $(parentlocation).removeClass("d-none");
     }
     var parentaddr = $self.find(".activity_addr").parents("div").eq(0);
@@ -27,6 +29,7 @@
     if (addr == "") {
         $(parentaddr).addClass("d-none");
     } else {
+        $(parentaddr).find("a").attr({ href: `https://maps.google.com.tw/maps?f=q&hl=zh-TW&geocode=&q=${addr}&z=16&output=embed&t=`, title: `連結至：${addr}(另開新視窗)`, target: "_blank" });
         $(parentaddr).removeClass("d-none");
     }
     var parentorganizer = $self.find(".activity-organizer").parent("div").eq(0);

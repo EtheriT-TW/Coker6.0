@@ -38,65 +38,84 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
             switch (defaultData.Layout_Type)
             {
                 case 1:
-                    footerViewModel = new FooterViewModel
+                    switch (defaultData.Id)
                     {
-                        footerViewModels = new List<FooterViewModel> {
-                            new FooterViewModel { Title = "產品專區", Link = "", footerViewModels = new List<FooterViewModel> {
-                                    new FooterViewModel { Title = "馬桶 ", Link = "/lcb/toilet" },
-                                    new FooterViewModel { Title = "溫水洗淨便座", Link = "/lcb/electric_cover" },
-                                    new FooterViewModel { Title = "面盆&面盆浴櫃組", Link = "basin_cabinet" },
-                                    new FooterViewModel { Title = "浴室龍頭", Link = "/lcb/faucet" },
-                                    new FooterViewModel { Title = "沐浴龍頭", Link = "/lcb/shower_faucet" },
-                                    new FooterViewModel { Title = "無障礙設備", Link = "/lcb/barrier_free" },
-                                    new FooterViewModel { Title = "浴缸", Link = "/lcb/tub" },
-                                    new FooterViewModel { Title = "配件(暖房機)", Link = "/lcb/accessories" },
-                                    new FooterViewModel { Title = "小便斗", Link = "/lcb/urinal" },
-                                    new FooterViewModel { Title = "停產專區", Link = "/lcb/discontinue" },
+                        case 2:
+                            footerViewModel = new FooterViewModel
+                            {
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "產品專區", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "馬桶 ", Link = "/lcb/toilet" },
+                                            new FooterViewModel { Title = "溫水洗淨便座", Link = "/lcb/electric_cover" },
+                                            new FooterViewModel { Title = "面盆&面盆浴櫃組", Link = "basin_cabinet" },
+                                            new FooterViewModel { Title = "浴室龍頭", Link = "/lcb/faucet" },
+                                            new FooterViewModel { Title = "沐浴龍頭", Link = "/lcb/shower_faucet" },
+                                            new FooterViewModel { Title = "無障礙設備", Link = "/lcb/barrier_free" },
+                                            new FooterViewModel { Title = "浴缸", Link = "/lcb/tub" },
+                                            new FooterViewModel { Title = "配件(暖房機)", Link = "/lcb/accessories" },
+                                            new FooterViewModel { Title = "小便斗", Link = "/lcb/urinal" },
+                                            new FooterViewModel { Title = "停產專區", Link = "/lcb/discontinue" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "關於DEREK", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "品牌故事", Link = "/lcb/brand_story" },
+                                            new FooterViewModel { Title = "標章認證", Link = "/lcb/mark_certification" },
+                                            new FooterViewModel { Title = "實績案件", Link = "/lcb/actual_cases" },
+                                            new FooterViewModel { Title = "最新消息", Link = "/lcb/recruiting" },
+                                            new FooterViewModel { Title = "加入Derek ", Link = "/lcb/recruiting" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "智慧科技", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "淨未來全自動智慧馬桶", Link = "/lcb/smart3plus" },
+                                            new FooterViewModel { Title = "Clean極淨", Link = "/lcb/Pro_Clean" },
+                                            new FooterViewModel { Title = "Speed極瞬", Link = "/lcb/Pro_Speed" },
+                                            new FooterViewModel { Title = "Smart極智", Link = "/lcb/Pro_smart" },
+                                            new FooterViewModel { Title = "Comfort極悅", Link = "/lcb/Pro_Comfort" },
+                                            new FooterViewModel { Title = "Other其他", Link = "/lcb/Pro_other" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "銷售據點", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "旗艦門市", Link = "lcb/distribution" },
+                                            new FooterViewModel { Title = "經銷據點", Link = "lcb/flagship" }
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "常見問題", Link = "/lcb/faq" },
+                                            new FooterViewModel { Title = "清潔保養", Link = "/lcb/clean_mainte" },
+                                            new FooterViewModel { Title = "維修服務", Link = "/lcb/repair_service" },
+                                            new FooterViewModel { Title = "商品需求表單", Link = "/lcb/request_form" },
+                                            new FooterViewModel { Title = " 聯絡我們", Link = "/lcb/contact_us" },
+                                            new FooterViewModel { Title = " 產品型錄下載", Link = "/lcb/catalog" }
+                                        }
+                                    }
+                                },
+                                Logo_Image = "/upload/derek_logo.png",
+                                Facebook_Link = "https://www.facebook.com/LCB.TW",
+                                IG_Link = "https://www.instagram.com/tw_derek/?igshid=YmMyMTA2M2Y%3D",
+                                YoutubeChannel_Link = "https://www.youtube.com/@derek6494",
+                                Content = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2022 隆昌窯業股份有限公司",
+                                    "版權所有"
                                 }
-                            },
-                            new FooterViewModel { Title = "關於DEREK", Link = "", footerViewModels = new List<FooterViewModel> {
-                                    new FooterViewModel { Title = "品牌故事", Link = "/lcb/brand_story" },
-                                    new FooterViewModel { Title = "標章認證", Link = "/lcb/mark_certification" },
-                                    new FooterViewModel { Title = "實績案件", Link = "/lcb/actual_cases" },
-                                    new FooterViewModel { Title = "最新消息", Link = "/lcb/recruiting" },
-                                    new FooterViewModel { Title = "加入Derek ", Link = "/lcb/recruiting" },
+                            };
+                            break;
+                        case 3:
+                            footerViewModel = new FooterViewModel {
+                                footerViewModels = new List<FooterViewModel>(),
+                                Content = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2023 濠廣國際企業有限公司",
+                                    "版權所有"
                                 }
-                            },
-                            new FooterViewModel { Title = "智慧科技", Link = "", footerViewModels = new List<FooterViewModel> {
-                                    new FooterViewModel { Title = "淨未來全自動智慧馬桶", Link = "/lcb/smart3plus" },
-                                    new FooterViewModel { Title = "Clean極淨", Link = "/lcb/Pro_Clean" },
-                                    new FooterViewModel { Title = "Speed極瞬", Link = "/lcb/Pro_Speed" },
-                                    new FooterViewModel { Title = "Smart極智", Link = "/lcb/Pro_smart" },
-                                    new FooterViewModel { Title = "Comfort極悅", Link = "/lcb/Pro_Comfort" },
-                                    new FooterViewModel { Title = "Other其他", Link = "/lcb/Pro_other" },
-                                }
-                            },
-							new FooterViewModel { Title = "銷售據點", Link = "", footerViewModels = new List<FooterViewModel> {
-								    new FooterViewModel { Title = "旗艦門市", Link = "lcb/distribution" },
-								    new FooterViewModel { Title = "經銷據點", Link = "lcb/flagship" }
-							    }
-							},
-							new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
-                                    new FooterViewModel { Title = "常見問題", Link = "/lcb/faq" },
-                                    new FooterViewModel { Title = "清潔保養", Link = "/lcb/clean_mainte" },
-                                    new FooterViewModel { Title = "維修服務", Link = "/lcb/repair_service" },
-                                    new FooterViewModel { Title = "商品需求表單", Link = "/lcb/request_form" },
-                                    new FooterViewModel { Title = " 聯絡我們", Link = "/lcb/contact_us" },
-                                    new FooterViewModel { Title = " 產品型錄下載", Link = "/lcb/catalog" }
-                                }
-                            }
-                        },
-                        Logo_Image = "/upload/derek_logo.png",
-                        Facebook_Link = "https://www.facebook.com/LCB.TW",
-                        IG_Link = "https://www.instagram.com/tw_derek/?igshid=YmMyMTA2M2Y%3D",
-                        YoutubeChannel_Link = "https://www.youtube.com/@derek6494",
-                        Content = new List<string>
-                        {
-                            "Copyright©",
-							"2022 隆昌窯業股份有限公司",
-							"版權所有"
-						}
-                    };
+                            };
+                            break;
+                        default:
+                            footerViewModel = new FooterViewModel();
+                            break;
+                    }
                     break;
                 case 3:
                     footerViewModel = new FooterViewModel

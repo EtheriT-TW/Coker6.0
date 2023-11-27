@@ -1,37 +1,6 @@
 ﻿function PageReady() {
     let nItem = null,RoleID=0;
-    let data = [
-        {
-            id: 1,
-            name: "總管理者",
-            members: [{
-                id: 1,
-                name: "易碩網際科技"
-            }, {
-                id: 2,
-                name: "黃小姐"
-            }, {
-                id: 3,
-                name: "章小姐"
-            }]
-        },
-        {
-            id: 2,
-            name: "網站維護者",
-            members: [{
-                id: 4,
-                name: "張小姐"
-            }]
-        },
-        {
-            id: 0,
-            name: "無群組",
-            members: [{
-                id: 5,
-                name: "黃先生"
-            }]
-        }
-    ];
+    let data,setMenu=[],type;
     const html = $("#MemberData").html();
     const roleHtml = $("#RoleData").html();
     const powerHtml = $("#PowerData").html();
@@ -50,10 +19,32 @@
     }
     const loadMenus = function () {
         co.PowerManagement.GetAll().done(function (result) {
-            const $view = $("#offcanvas1");
-            const $body = $view.find(".offcanvas-body");
+            const $view = $("#offcanvas1").data("init", result.jobs);
+            const $body = $view.find("#Permissions");
             $view.find(".siteName").text(result.title);
-            insetMenu($body,result.jobs)
+            insetMenu($body, result.jobs);
+            $("#offcanvas1 .selectedItem").off("change.save").on("change.save", function () {
+                const $self = $(this)
+                const data = {
+                    name: $self.data("name"),
+                    IsGranted: $(this).prop("checked")
+                };
+                if (co.Array.Search(setMenu, { name: data.name }) > -1) co.Array.Delete(setMenu, { name: data.name });
+                else setMenu.push(data);
+            });
+            $("#offcanvas1 .save").off("click").on("click", function () {
+                const obj = {
+                    Items:setMenu
+                }
+                obj[type] = $(nItem).data("id");
+                co.PowerManagement.SavePermissions(obj).done(function (result) {
+                    if (result.success) {
+                        co.sweet.success("儲存成功");
+                    } else {
+                        co.sweet.error("儲存失敗", result.error);
+                    }
+                });
+            });
         });
     }
     const insetMenu = function ($body, jobs) {
@@ -61,22 +52,66 @@
             if (self.enable) {
                 const $item = $(powerHtml);
                 $item.find(".title").text(self.title);
+                const newItem = $item.find("#new");
                 $item.find("#new+label").attr({ for: `${self.pageName}_new` });
-                $item.find("#new").attr({ id: `${self.pageName}_new`, name: `${self.pageName}_new` }).prop("checked", self.canCreate)
+                newItem.attr({ id: `${self.pageName}_new`, name: `${self.pageName}_new` }).data({ "name": `${self.pageName}.Create`}).prop("checked", self.canCreate)
 
+                const delItem = $item.find("#del");
                 $item.find("#del+label").attr({ for: `${self.pageName}_del` });
-                $item.find("#del").attr({ id: `${self.pageName}_del`, name: `${self.pageName}_del` }).prop("checked", self.canRemove)
+                delItem.attr({ id: `${self.pageName}_del`, name: `${self.pageName}_del` }).data({ "name": `${self.pageName}.Delete` }).prop("checked", self.canRemove)
 
+                const editItem = $item.find("#edit");
                 $item.find("#edit+label").attr({ for: `${self.pageName}_edit` });
-                $item.find("#edit").attr({ id: `${self.pageName}_edit`, name: `${self.pageName}_edit` }).prop("checked", self.canUpdate)
+                editItem.attr({ id: `${self.pageName}_edit`, name: `${self.pageName}_edit` }).data({ "name": `${self.pageName}.Edit` }).prop("checked", self.canUpdate)
 
+                const viewItem = $item.find("#view");
                 $item.find("#view+label").attr({ for: `${self.pageName}_view` });
-                $item.find("#view").attr({ id: `${self.pageName}_view`, name: `${self.pageName}_view` }).prop("checked", self.canVisble)
+                viewItem.attr({ id: `${self.pageName}_view`, name: `${self.pageName}_view` }).data({ "name": `${self.pageName}.View` }).prop("checked", self.canVisble);
+                viewItem.on("change", function () {
+                    if (!$(this).prop("checked")) {
+                        editItem.prop("checked", false).trigger('change');
+                        delItem.prop("checked", false).trigger('change');
+                        newItem.prop("checked", false).trigger('change');
+                    }
+                });
                 $item.appendTo($body);
                 if (self.jobItemModels != null && self.jobItemModels.length > 0) insetMenu($item, self.jobItemModels);
             }
         });
-        
+    }
+    const setMenuInitPermissions = function (data) {
+        $(data).each(function () {
+            setMenuItemPermissions(this);
+            if (this.jobItemModels != null) {
+                setMenuInitPermissions(this.jobItemModels);
+            }
+        });
+    }
+    const setMenuUserPermissions = function (data) {
+        $(data).each(function () {
+            const self = this;
+            const items = self.name.split(".");
+            switch (items[1]) {
+                case "Edit":
+                    $(`[name="${items[0]}_edit"]`).prop("checked", self.isGranted);
+                    break;
+                case "Delete":
+                    $(`[name="${items[0]}_del"]`).prop("checked", self.isGranted);
+                    break;
+                case "Create":
+                    $(`[name="${items[0]}_new"]`).prop("checked", self.isGranted);
+                    break;
+                case "View":
+                    $(`[name="${items[0]}_view"]`).prop("checked", self.isGranted);
+                    break;
+            }
+        });
+    }
+    const setMenuItemPermissions = function (self) {
+        $(`[name="${self.pageName}_new"]`).prop("checked", self.canCreate);
+        $(`[name="${self.pageName}_del"]`).prop("checked", self.canRemove);
+        $(`[name="${self.pageName}_edit"]`).prop("checked", self.canUpdate);
+        $(`[name="${self.pageName}_view"]`).prop("checked", self.canVisble);
     }
     const setMember = function () {
         const $self = $(this);
@@ -117,6 +152,12 @@
                             $("#noGroupMember").data("members", members);
                             setNoGroup();
                             $('.offcanvas').offcanvas('hide');
+                        } else {
+                            var members = $("#noGroupMember").data("members");
+                            co.Array.Delete(members, $(m).data());
+                            $("#noGroupMember").data("members", members);
+                            setNoGroup();
+                            $('.offcanvas').offcanvas('hide');
                         }
                     } else co.sweet.error(result.error);
                 });
@@ -137,6 +178,7 @@
             event.stopPropagation();
             const self = $(this).parents(".member-item").first();
             nItem = self;
+            type = "FK_UserId";
         });
         $item.appendTo(id);
     }
@@ -149,13 +191,25 @@
             const m = $(this).closest(".item");
             const s = `是否確認刪除角色<span class="rad">${$(m).text()}</span>`;
             co.sweet.confirm("確認刪除?", s, "確認", "取消", function () {
-                /*co.PowerManagement.RemoveMappingUserAndWebsite($(m).data("id")).done((result) => {
-                    if (result.success) co.sweet.success("已刪除授權");
-                    else co.sweet.error(result.error);
-                });*/
-                $(m).remove();
-                $('.offcanvas').offcanvas('hide');
+                co.PowerManagement.DeleteRole($(m).data("id")).done((result) => {
+                    if (result.success) {
+                        co.sweet.success("已刪除角色");
+                        $(m).remove();
+                    } else co.sweet.error(result.error);
+                });
             });
+        });
+        $item.find(".fa-edit").on("click", function (event) {
+            event.stopPropagation();
+            const m = $(this).closest(".item");
+            nItem = m;
+            co.Form.insertData($(m).data(), $("#offcanvastopByRoleEdit"));
+        });
+        $item.find(".fa-user-cog").on("click", function (event) {
+            event.stopPropagation();
+            const self = $(this).parents(".role-item").first();
+            nItem = self;
+            type = "FK_RoleId";
         });
         $item.appendTo("#RoleList");
     }
@@ -169,10 +223,21 @@
 
     $("#right-btn").on("click", function () {
         const $items = $("#roleMember .member-item.checked");
+        const $Role = $("#RoleList .role-item.roleChecked");
         if ($items.length > 0) {
+            const removeitems = [];
+            const moveItems = [];
             $items.each(function () {
-                $(this).appendTo("#noGroupMember");
-                $(this).removeClass("checked");
+                removeitems.push($(this).data("id"));
+                moveItems.push(this);
+            });
+            co.PowerManagement.RemoveUserToRole({ Users: removeitems, RoleId: $Role.data("id") }).done((result) => {
+                if (result.success) {
+                    $(moveItems).each(function () {
+                        $(this).appendTo("#noGroupMember");
+                        $(this).removeClass("checked");
+                    });
+                }
             });
         } else co.sweet.error("請選擇要退出群組的使用者");
     });
@@ -183,10 +248,20 @@
         if ($items.length <= 0) co.sweet.error("加入失敗","請選擇要加入角色的使用者");
         else if ($Role.length <= 0) co.sweet.error("加入失敗", "請選擇或新增使用者要加入的角色");
         else {
+            const additems = [];
+            const moveItems = [];
             $items.each(function () {
-                $Role.data("members").push($(this).data());
-                $(this).appendTo("#roleMember");
-                $(this).removeClass("checked");
+                additems.push($(this).data("id"));
+                moveItems.push(this);
+            });
+            co.PowerManagement.AddUserToRole({ Users: additems, RoleId: $Role.data("id") }).done((result) => {
+                if (result.success) {
+                    $(moveItems).each(function () {
+                        $Role.data("members").push($(this).data());
+                        $(this).appendTo("#roleMember");
+                        $(this).removeClass("checked");
+                    });
+                }
             });
         } 
     });
@@ -215,6 +290,11 @@
                         data.members.push({ id: obj.Id, name: obj.Name });
                         $("#noGroupMember").data("members", data.members);
                         setNoGroup();
+                    } else {
+                        var data = $("#roleMember").data();
+                        data.members.push({ id: obj.Id, name: obj.Name });
+                        $("#noGroupMember").data("members", data.members);
+                        setMember();
                     }
                 } else co.sweet.error("新增失敗",result.error);
             });
@@ -233,6 +313,21 @@
             });
         }
     });
+    $("#offcanvastopByRoleEdit .submit").on("click", () => {
+        const text = $(`#offcanvastopByRoleEdit [name="name"]`).val();
+        if (text.trim() == "") co.sweet.error("角色名稱不可為空");
+        else {
+            const data = co.Form.getJson("offcanvastopByRoleEditForm");
+            co.PowerManagement.EditRole(data).done(function (result) {
+                if (result.success) {
+                    $('.offcanvas').offcanvas('hide');
+                    $(nItem).find(".title").text(data.name);
+                    $(nItem).data(data);
+                    co.sweet.success("修改成功");
+                } else co.sweet.error("修改失敗", result.error);
+            });
+        }
+    });
     $("#addUserInRole").on("click", () => {
         if ($("#RoleList .roleChecked").length == 0) {
             co.sweet.error("請選擇欲讓使用者加入的角色");
@@ -241,6 +336,17 @@
             $('#offcanvastopByAddUserSelect').offcanvas('show');
             RoleID = $("#RoleList .roleChecked").data("id");
         }
+    });
+    $("#offcanvas1").on("shown.bs.offcanvas", function () {
+        setMenu.length = 0;
+        setMenuInitPermissions($("#offcanvas1").data("init"));
+        const obj = {};
+        obj[type] = $(nItem).data("id");
+        co.PowerManagement.GetPermissions(obj).done(function (result) {
+            if (result.success) {
+                setMenuUserPermissions(result.items)
+            } else co.sweet.error("權限抓取失敗", result.error);
+        });
     });
     $("#addUser").on("click", () => {
         RoleID = 0;

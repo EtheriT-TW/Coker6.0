@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EtheriT.Coker.Application.Shared.Dto.Role
+namespace EtheriT.Coker.Application.Shared.Dto.Permissions
 {
-    public class AddRoleDto
+    public class SavePermissionsItem
     {
-        public long? Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public bool IsGranted { get; set; }
     }
 }

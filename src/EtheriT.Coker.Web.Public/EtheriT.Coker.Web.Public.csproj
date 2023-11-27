@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Content Remove="appsettings.EPZA.json" />
+    <Content Remove="appsettings.Haoguang.json" />
     <Content Remove="Views\Page\OrderManagement.cshtml" />
     <Content Remove="wwwroot\css\Page\OrderManagement.css" />
     <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -39,6 +40,7 @@
     <None Include="appsettings.EPZA.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Include="appsettings.Haoguang.json" />
   </ItemGroup>
 
 </Project>

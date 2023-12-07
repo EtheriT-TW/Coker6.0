@@ -1,8 +1,8 @@
 ﻿a:focus {
     outline: #000 dashed 1px;
     text-decoration: none;
-    z-index:999999;
-    position:relative;
+    z-index: 999999;
+    position: relative;
 }
 
 img {
@@ -81,7 +81,7 @@ iframe {
 }
 
 /*Table*/
-table {
+table:not(.table) {
     width: 100% !important;
     height: unset !important;
     display: flex;
@@ -89,30 +89,32 @@ table {
     flex-direction: column;
 }
 
-    table tr {
+    table:not(.table) tr {
         display: flex;
         flex-wrap: nowrap;
         flex-direction: row;
     }
 
-        table tr > td {
-            flex: 1 1 33%;
+        table:not(.table) tr > td, table:not(.table) tr > th {
+            flex: 1 1 100%;
             min-height: 30px;
             border: #000 solid 1px;
             border-bottom-width: 0;
             border-right-width: 0
         }
-            table tr > td:last-child {
+
+            table:not(.table) tr > td:last-child, table:not(.table) tr > th:last-child {
                 border-right-width: 1px;
             }
-            table tr:last-child > td {
-                border-bottom-width: 1px;
-            }
 
-
-        table td div {
-            min-height: unset !important;
+        table:not(.table) tr:last-child > td, table:not(.table) tr:last-child > th {
+            border-bottom-width: 1px;
         }
+
+
+    table:not(.table) td div, table:not(.table) th div {
+        min-height: unset !important;
+    }
 
 /*no script*/
 #noscript {
@@ -134,10 +136,11 @@ table {
 
     .hide:focus {
         opacity: 1;
-        pointer-events:auto;
+        pointer-events: auto;
     }
+
 #ContainerBody {
-    position:relative;
+    position: relative;
 }
 
 .accesskey {
@@ -158,8 +161,9 @@ table {
         display: inline-block;
         color: #333;
     }
+
 .collapse_menus {
-    position:relative;
+    position: relative;
 }
 
 
@@ -178,11 +182,6 @@ table {
 
     .custom_scale {
         font-size: 1rem;
-    }
-
-    .outpage_link a {
-        height: 36px;
-        padding: 3px;
     }
 
     .type_change_frame > .catalog .max-hei {

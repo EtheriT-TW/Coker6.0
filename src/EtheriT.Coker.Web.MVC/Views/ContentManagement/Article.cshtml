@@ -6,13 +6,9 @@
 }
 
 <link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
-<link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css">
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
 }
-<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
-<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
-
 <script src="~/js/ContentManagement/Article.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <div id="TopLine" class="py-2 px-4">

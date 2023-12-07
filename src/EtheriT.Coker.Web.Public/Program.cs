@@ -1,6 +1,8 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Contact;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
@@ -30,6 +32,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.EntityFrameworkCore;
+using SimpleCaptcha;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -85,6 +88,7 @@ builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<StringHandler>();
+builder.Services.AddTransient<MailAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
@@ -97,6 +101,8 @@ builder.Services.AddTransient<ImportAppService, ImportAppService>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
+builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
+builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (builder.Environment.EnvironmentName == "EPZA")

@@ -118,16 +118,21 @@
         const data = $self.data();
         $(".powerctrl .role-item").removeClass("roleChecked");
         $self.addClass("roleChecked");
-        $("#roleMember").empty();
-        $(data.members).each((i,e) => {
-            addItem("#roleMember", e);
-        });
+        $("#roleMember").data(data);
+        setRoleMember();
     }
     const setNoGroup = function () {
         var members = $("#noGroupMember").data("members");
         $("#noGroupMember").empty();
         $(members).each(function () {
             addItem("#noGroupMember", this)
+        })
+    }
+    const setRoleMember = function () {
+        var members = $("#roleMember").data("members");
+        $("#roleMember").empty();
+        $(members).each(function () {
+            addItem("#roleMember", this)
         })
     }
     const addItem = function (id, element) {
@@ -142,21 +147,22 @@
             event.stopPropagation();
             const m = $(this).closest(".item");
             const s = `是否確認刪除使用者<span class="ConfirmDanger">${$(m).text()}</span>`;
+            const l = $(this).closest(".card-content");
             co.sweet.confirm("確認刪除?", s, "確認", "取消", function () {
                 co.PowerManagement.RemoveMappingUserAndWebsite($(m).data("id")).done((result) => {
                     if (result.success) {
                         co.sweet.success("已刪除授權");
-                        if (RoleID == 0) {
+                        if ($(l).attr("id") == "noGroupMember") {
                             var members = $("#noGroupMember").data("members");
                             co.Array.Delete(members, $(m).data());
                             $("#noGroupMember").data("members", members);
                             setNoGroup();
                             $('.offcanvas').offcanvas('hide');
                         } else {
-                            var members = $("#noGroupMember").data("members");
+                            var members = $("#roleMember").data("members");
                             co.Array.Delete(members, $(m).data());
-                            $("#noGroupMember").data("members", members);
-                            setNoGroup();
+                            $("#roleMember").data("members", members);
+                            setRoleMember();
                             $('.offcanvas').offcanvas('hide');
                         }
                     } else co.sweet.error(result.error);
@@ -287,16 +293,43 @@
                     $('.offcanvas').offcanvas('hide');
                     if (RoleID == 0) {
                         var data = $("#noGroupMember").data();
-                        data.members.push({ id: obj.Id, name: obj.Name });
+                        data.members.unshift({ id: obj.Id, name: obj.Name });
                         $("#noGroupMember").data("members", data.members);
                         setNoGroup();
+                        $("#noGroupMember .item:first-child").trigger("click");
                     } else {
                         var data = $("#roleMember").data();
-                        data.members.push({ id: obj.Id, name: obj.Name });
-                        $("#noGroupMember").data("members", data.members);
-                        setMember();
+                        data.members.unshift({ id: obj.Id, name: obj.Name });
+                        $("#roleMember").data("members", data.members);
+                        setRoleMember();
+                        $("#roleMember .item:first-child").trigger("click");
                     }
                 } else co.sweet.error("新增失敗",result.error);
+            });
+        }
+    });
+    co.Form.init("offcanvastopByNewMemberForm", (id) => {
+        const data = co.Form.getJson(id);
+        const $password = document.getElementById("password");
+        const setPasswordError = (text) => {
+            $password.setCustomValidity(text)
+            $("#password ~ .invalid-feedback").text(text);
+            $("#PasswordConfirm").val("");
+        }
+        if (data.password.length < 8 || password > 30) setPasswordError("密碼長度需在8~30個字元");
+        else if (data.password != data.PasswordConfirm) setPasswordError("密碼與密碼驗證不相符");
+        else {
+            co.PowerManagement.AddUser(data).done(function (resule) {
+                if (resule.success) {
+                    $(`#offcanvastopByAddUser [name="email"]`).val(data.account);
+                    $("#offcanvastopByAddUser .submit").trigger("click");
+                } else {
+                    if (resule.error.indexOf("密碼") > -1) {
+                        $("#password").val("");
+                        setPasswordError(resule.error);
+                    }
+                    co.sweet.error("帳號新增失敗", resule.error);
+                }
             });
         }
     });
@@ -308,7 +341,8 @@
                 if (result.success) {
                     var obj = JSON.parse(result.message);
                     $('.offcanvas').offcanvas('hide');
-                    addRole({ id: obj.Id, name: obj.Name, members:[]});
+                    addRole({ id: obj.Id, name: obj.Name, members: [] });
+                    $("#RoleList .item:last-child").trigger("click");
                 } else co.sweet.error("新增失敗", result.error);
             });
         }
@@ -342,12 +376,18 @@
         setMenuInitPermissions($("#offcanvas1").data("init"));
         const obj = {};
         obj[type] = $(nItem).data("id");
+        $("#offcanvas1 .data>.type").text(type.indexOf("Role") > 0 ? "角色" : "使用者");
+        $("#offcanvas1 .data>.name").text($(nItem).data("name"));
         co.PowerManagement.GetPermissions(obj).done(function (result) {
             if (result.success) {
                 setMenuUserPermissions(result.items)
             } else co.sweet.error("權限抓取失敗", result.error);
         });
     });
+    $("#offcanvastopByNewMember").on("show.bs.offcanvas", function () {
+        $("#offcanvastopByNewMember form").get(0).reset();
+    });
+   
     $("#addUser").on("click", () => {
         RoleID = 0;
     });

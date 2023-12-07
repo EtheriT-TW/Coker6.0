@@ -13,6 +13,7 @@
     <PackageReference Include="MailKit" Version="4.2.0" />
     <PackageReference Include="MiniExcel" Version="1.30.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SimpleCaptcha" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

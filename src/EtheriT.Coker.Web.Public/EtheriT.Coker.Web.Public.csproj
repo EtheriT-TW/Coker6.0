@@ -23,7 +23,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="SimpleCaptcha" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

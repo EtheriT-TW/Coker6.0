@@ -1,10 +1,14 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -38,6 +42,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
             return await directoryAppService.GetReleInfo(dto);
+        }
+        [HttpGet]
+        public async Task<JsonResult> GetDirectoryDetailList(string type, long id, DataSourceLoadOptions loadOptions)
+        {
+            switch (type) {
+                case "Articles":
+                    return await directoryAppService.GetDirectoryArticlesList(id, loadOptions);
+                case "Products":
+                    return await directoryAppService.GetDirectoryProductsList(id, loadOptions);
+                case "Menus":
+                    return await directoryAppService.GetDirectoryMenusList(id, loadOptions);
+                default:
+                    return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
         }
         [HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)

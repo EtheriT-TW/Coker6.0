@@ -44,7 +44,7 @@ var grapesInit = function (options) {
             "grapesjs-style-bg",
             'grapesjs-tabs',
             'grapesjs-custom-code',
-            'grapesjs-tui-image-editor',
+            //'grapesjs-tui-image-editor',
             'grapesjs-blocks-table',
             //'grapesjs-table',
             'grapesjs-parser-postcss',

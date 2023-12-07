@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Company
 {
@@ -39,7 +40,7 @@ namespace EtheriT.Coker.Application.Company
             ResponseMessageDto responseMessageDto = new ResponseMessageDto { Success=false };
             try
             {
-                if (dto.Id == 0) throw new Exception("儲存資料錯誤");
+                if (dto.Id == 0) return await Insert(dto);
                 var data = await db.Companies.Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
                 if (data != null)
                 {
@@ -55,7 +56,32 @@ namespace EtheriT.Coker.Application.Company
             }
             await loginUserData.SetLogs(ApplicationName, "Save",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
-            
         }
-    }
+        private async Task<ResponseMessageDto> Insert(CompanyDto dto) {
+			ResponseMessageDto responseMessageDto = new ResponseMessageDto ();
+            try {
+                Core.Models.Company company = new Core.Models.Company();
+				mapper.Map(dto, company);
+				db.Companies.Add(company);
+				await loginUserData.SaveChanges(company);
+				await WebsiteMapping(company.Id);
+				responseMessageDto.Success = true;
+			}
+			catch (Exception ex)
+			{
+				responseMessageDto.Error = ex.Message;
+			}
+			await loginUserData.SetLogs(ApplicationName, "Insert", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
+			return responseMessageDto;
+		}
+        private async Task WebsiteMapping(long cid) { 
+            long siteId = await loginUserData.GetWebsiteId();
+			Core.Models.MappingCompanyAndWebsites mapping = new Core.Models.MappingCompanyAndWebsites { 
+                FK_CompanyId = cid,
+                FK_WebsiteId = siteId,
+            };
+            db.MappingCompanyAndWebsites.Add(mapping);
+			await loginUserData.SaveChanges(mapping);
+		}
+	}
 }

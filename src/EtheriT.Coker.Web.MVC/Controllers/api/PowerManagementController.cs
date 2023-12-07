@@ -52,7 +52,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		public async Task<ResponseUserEditDto> GetUser(DataDelectDto dto) {
 			return await accountAppService.GetEditUser(dto);
         }
-		[HttpDelete]
+        [HttpPost]
+        public async Task<ResponseMessageDto> AddUser(AddUser dto)
+        {
+            return await accountAppService.AddUser(dto);
+        }
+        [HttpDelete]
 		public async Task<ResponseMessageDto> RemoveMappingUserAndWebsite(DataDelectDto dto) {
             return await permissionsAppService.RemoveMappingUserAndWebsite(dto);
         }

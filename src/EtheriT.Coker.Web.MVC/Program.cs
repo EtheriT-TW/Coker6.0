@@ -56,6 +56,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews().AddNewtonsoftJson();
 builder.Services.AddSingleton<JwtHelpers>();
+builder.Services.AddMemoryCache()
+	.AddSimpleCaptcha(builder =>
+	{
+		builder.UseMemoryStore();
+	});
 
 builder.Services
     .AddAuthentication(options =>

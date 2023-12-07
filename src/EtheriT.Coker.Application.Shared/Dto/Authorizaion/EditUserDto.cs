@@ -8,12 +8,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Authorizaion
 {
     public class EditUserDto
     {
-        public long Id { get; set; }
+        public long Id { get; set; } = 0;
         public string Name { get; set; }
         public string Nickname { get; set; }
         public string TelPhone { get; set; }
         public string Email { get; set; }
         public string Address { get; set; }
-
+        public string Account { get; set; }
     }
 }

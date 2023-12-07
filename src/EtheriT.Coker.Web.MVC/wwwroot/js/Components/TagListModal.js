@@ -4,6 +4,19 @@ var $price_modal, priceModal, $techcert_body, techcertModal;
 var tag_changedBySelectBox, tag_clearSelectionButton;
 var tag_check_list = [], tag_text
 
+$.fn.extend({
+    TagListModalInit: function () {
+        const $tag = $(this).find(".InputTag");
+        const TagDataClear = function () {
+            tag_list = [];
+            tag_check_list = [];
+            tag_text = "";
+            $tag.val("");
+            getTagListDataGridInstance().clearSelection();
+        }
+    }
+});
+
 function TagListModalInit() {
     TagListModalElementInit();
 

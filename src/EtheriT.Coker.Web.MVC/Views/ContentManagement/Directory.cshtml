@@ -9,7 +9,12 @@
 }
 
 <link rel="stylesheet" href="~/css/ContentManagement/Directory.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
+}
 <script src="~/js/ContentManagement/Directory.min.js" asp-append-version="true"></script>
+@Html.AntiForgeryToken()
 
 <div class="">
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
@@ -145,36 +150,46 @@
                         </button>
                     </div>
                     @(
-                        Html.DevExtreme().DataGrid<ArticleListGetDto>()
-                            .DataSource(d => d.RemoteController().Key("Id")
-                            .LoadUrl("/api/Article/GetAllList").LoadMethod("Get")
-                        )
+                        Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
+                                .DataSource(d => d.RemoteController().Key("Id")
+                                    .LoadUrl("/api/Directory/GetDirectoryDetailList").LoadMethod("Get")
+                                    .LoadParams(new
+                                    {
+                                        id = new JS("GetDirectoryId"),
+                                        type = new JS("GetDirectoryType")
+                                    })
+                            )
+                        .OnContentReady("DirectoryDatailListReady")
                         .HeaderFilter(headerFilter => headerFilter.Visible(true))
                         .RemoteOperations(true)
                         .ColumnHidingEnabled(true)
                         .ShowBorders(true)
                         .FilterRow(filterRow => filterRow
-                        .Visible(true)
-                        .ApplyFilter(GridApplyFilterMode.Auto)
+                            .Visible(true)
+                            .ApplyFilter(GridApplyFilterMode.Auto)
                         )
                         .SearchPanel(searchPanel => searchPanel
-                        .Visible(true)
-                        .Width(480)
-                        .Placeholder("請輸入要搜尋的資料")
+                            .Visible(true)
+                            .Width(480)
+                            .Placeholder("請輸入要搜尋的資料")
                         )
                         .ShowRowLines(true)
                         .Columns(c =>
                         {
                             c.AddFor(e => e.Id).Caption("編號").Width(90);
                             c.AddFor(e => e.Title).Caption("標題");
-                            c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
                             c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
                             c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
                             c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                            c.AddFor(e => e.permanent).Caption("永久顯示").Width(110);
-                            c.AddFor(e => e.SerNO).Caption("排序").Width(90);
-                            c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
-                            c.AddFor(e => e.PopularVisible).Caption("是否顯示人氣值").Visible(false);
+                            c.AddFor(e => e.SerNo).Caption("排序").Width(90);
+                            c.Add()
+                            .Type(GridCommandColumnType.Buttons)
+                            .Buttons(b =>
+                            {
+                                b.Add().Name("edit").OnClick("editArticlesButtonClicked");
+                                b.Add().Icon("palette").Name("edit").OnClick("paletteArticlesButtonClicked");
+                                b.Add().Name("delete").OnClick("deleteArticlesButtonClicked");
+                            });
                         })
                         .ColumnAutoWidth(true)
                         .Paging(paging => paging.PageSize(30))
@@ -185,11 +200,109 @@
                             pager.AllowedPageSizes(new[] { 10, 20, 30 });
                             pager.ShowInfo(true);
                         })
+                        .Editing(editing =>
+                        {
+                            editing.AllowDeleting(true);
+                            editing.AllowUpdating(true);
+                            editing.UseIcons(true);
+                        })
                     )
                 </div>
             </div>
             <div class="products d-none"></div>
             <div class="menus d-none"></div>
+        </div>
+
+        <div id="ArticleContent" class="card py-2 border-0 d-none">
+            <div class="card-header d-flex justify-content-between">
+                <div class="fw-bold fs-5 d-flex align-items-center">
+                    <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                        <span class="material-symbols-outlined">
+                            keyboard_backspace
+                        </span>
+                    </button>
+                    <div class="lh-lg">返回文章目錄</div>
+                </div>
+                <div class="d-flex">
+                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="ArticletForm">儲　存</button>
+                    <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center" form="ArticletForm">
+                        進階編輯<span class="material-symbols-outlined ms-1">palette</span>
+                    </button>
+                </div>
+            </div>
+
+            <form id="ArticletForm" class="card-body needs-validation">
+                <input name="id" type="hidden" />
+                <input name="fK_WebsiteId" type="hidden" />
+                <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
+                    <div id="ImageUpload" name="ImageUpload" data-form-type="images" data-image-type="6" data-image-size="3" data-target="id" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+                        @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+                    </div>
+                    <div class="d-flex">
+                        <input type="checkbox" id="ArticletFormVisible" class="selectedItem" name="visible" value="true" />
+                        <label for="ArticletFormVisible">
+                            <span class="material-symbols-outlined fs-2">visibility</span>
+                            <span class="material-symbols-outlined fs-2">visibility_off</span>
+                        </label>
+                        <input type="checkbox" id="ArticletFormpoPularVisible" class="selectedItem" name="popularVisible" value="true" />
+                        <label for="ArticletFormpoPularVisible" class="mx-3">
+                            <span class="material-symbols-outlined fs-2">group</span>
+                            <span class="material-symbols-outlined fs-2">group_off</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="title border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                        <div class="count">0</div>
+                    </div>
+                    <textarea name="title" class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入文章標題" required></textarea>
+                </div>
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1">calendar_today</span>發布日期
+                    </div>
+                    <input id="NodeDate" name="nodeDate" data-form-type="date" class="form-control rounded" type="text" aria-label="Input Duration of Product" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off">
+                </div>
+
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                    </div>
+                    <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                        <input id="PermanentCheck" name="permanent" data-form-type="disabled" data-target="InputDate" class="form-check-input" type="checkbox" value="true">
+                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                    </div>
+                </div>
+
+                <div class="describe border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0">描述</span>
+                        <div class="count">0</div>
+                    </div>
+                    <textarea name="description" class="form-control border-0" aria-label="With textarea" maxlength="300" placeholder="輸入文章描述"></textarea>
+                </div>
+
+                <div class="tag input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1">alternate_email</span>標籤
+                    </div>
+                    <input class="form-control rounded text-start InputTag" name="tagDatas" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
+                </div>
+
+                <div class="sort input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
+                    </div>
+                    <input id="ArticleSerNO" class="form-control rounded" name="serNO" type="number" aria-label="Input Sort of Article" disabled="disabled" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                        <input id="ArticleSortCheck" class="form-check-input" name="sortCheckbox" data-form-type="disabled" data-direct="reverse" data-value="500" data-target="ArticleSerNO" type="checkbox" value="false">
+                        <label class="form-check-label fs-6 pe-2" for="ArticleSortCheck">自訂排序</label>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>

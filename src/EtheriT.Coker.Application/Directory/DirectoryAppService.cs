@@ -547,5 +547,102 @@ namespace EtheriT.Coker.Application.Directory
             }
             return output;
         }
+        public async Task<JsonResult> GetDirectoryArticlesList(long id, DataSourceLoadOptions loadOptions) {
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            string error = string.Empty;
+            try
+            {
+                var db_d = db.Directory.Where(e => e.Id == id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+                var DataIds = new List<long>();
+                if (db_d != null)
+                {
+                    var d_tags = await db.Tag_Associates.Include(e => e.Tag)
+                        .Where(e => e.FK_AId == id)
+                        .Where(e => !e.IsDeleted)
+                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
+                        .ToListAsync();
+                    
+
+                    if (d_tags != null)
+                    {
+                        var tlist = d_tags.Select(e => e.FK_TId).ToList();
+                        var a_tags = await db.Tag_Associates.Include(e => e.Tag)
+                            .Where(e => tlist.Contains(e.FK_TId))
+                            .Where(e => !e.IsDeleted)
+                            .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
+                            .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
+                            .ToListAsync();
+                        if (!a_tags.Any()) throw new Exception("資料不存在");
+                        var aids = a_tags.Select(e => e.FK_AId).ToList();
+                        var dataQuery = from p in db.Article.Where(e => !e.IsDeleted)
+                                        where aids.Contains(p.Id)
+                                        select new DirectoryReleInfoDto
+                                        {
+                                            Id = p.Id,
+                                            Title = p.Title,
+                                            Description = p.Description,
+                                            SerNo = p.SerNO,
+                                            NodeDate = p.NodeDate,
+                                        };
+                        var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                        return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                    }
+                    else new Exception("無綁定標籤");
+                }throw new Exception("目錄不存在");
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
+            return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetDirectoryProductsList(long id, DataSourceLoadOptions loadOptions) {
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var db_d = db.Directory.Where(e => e.Id == id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+                var DataIds = new List<long>();
+                if (db_d != null)
+                {
+                    var tags = await db.Tag_Associates.Include(e => e.Tag)
+                        .Where(e => e.FK_AId == id)
+                        .Where(e => !e.IsDeleted)
+                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
+                        .ToListAsync();
+
+                    if (tags != null)
+                    {
+                        var dataQuery = from p in db.Prods.Where(e => !e.IsDeleted)
+                                     join t in tags on p.Id equals t.FK_AId
+                                     select new DirectoryReleInfoDto
+                                     {
+                                         Id = p.Id,
+                                         Title = p.Title,
+                                         Description = p.Description,
+                                     };
+                        var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                        return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+            return new JsonResult(new List<DirectoryReleInfoDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetDirectoryMenusList(long id, DataSourceLoadOptions loadOptions) {
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+            }
+            catch (Exception e)
+            {
+
+            }
+            return new JsonResult(new List<DirectoryGetListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
     }
 }

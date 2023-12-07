@@ -28,6 +28,7 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto;
 using System.Xml.Linq;
 using AutoMapper;
+using EtheriT.Coker.Web.Core.Models;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -209,13 +210,6 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto) {
 			LoginOutputDto output = new LoginOutputDto() { Success = false };
             long userId = await loginUserData.GetUserId();
-			/*
-                至少有一個數字
-                至少有一個大寫或小寫英文字母
-                至少有一個特殊符號
-                字串長度在 6 ~ 30 個字母之間
-             */
-			Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{8,30}$");
 			var users = await db.Users
                 .Where(e => e.Id == userId)
                 .Where(e => !e.IsDeleted)
@@ -223,12 +217,14 @@ namespace EtheriT.Coker.Application.Authorization
                 .FirstOrDefaultAsync();
             if (users == null) output.Message = "使用者已被登出";
 			else if (!passwordHasher.VerifyHashedPassword(users.Password, dto.Password)) output.Message = "原始密碼錯誤";
-            else if(!regex.IsMatch(dto.NewPassword)) output.Message = "密碼原則錯誤";
 			else
 			{
                 try
                 {
-					string HashedPassword = passwordHasher.HashPassword(dto.NewPassword);
+                    string passwordError = checkPassword(dto.NewPassword);
+                    if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+
+                    string HashedPassword = passwordHasher.HashPassword(dto.NewPassword);
 					users.Password = HashedPassword;
 					await loginUserData.SaveChanges(users);
 					output.Success = true;
@@ -266,8 +262,68 @@ namespace EtheriT.Coker.Application.Authorization
             await loginUserData.SetLogs(controllerName, "GetEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
-        public async Task<ResponseMessageDto> saveEditUser(AddUserDto dto) { 
-            throw new NotImplementedException();
+        public async Task<ResponseMessageDto> AddUser(AddUser dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                var theUser = await db.Users
+                    .Where(e => e.Account == dto.Account || e.Email == dto.Email)
+                    .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                string passwordError = checkPassword(dto.Password);
+                if (theUser != null) throw new Exception("該使用者的帳號或信箱已存在");
+                else if (dto.Password != dto.PasswordConfirm) throw new Exception("該使用者的帳號或信箱已存在");
+                else if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+                else
+                {
+                    User user = mapper.Map<User>(dto);
+                    user.Password = passwordHasher.HashPassword(dto.Password);
+                    db.Users.Add(user);
+                    await loginUserData.SaveChanges(user);
+                    response.Success = true;
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            dto.Password = "*********";
+            dto.PasswordConfirm = "*********";
+            await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        private string checkPassword(string password)
+        {
+            string error = string.Empty;
+            int matchCount = 0;
+            /*
+                至少有一個數字
+                至少有一個大寫或小寫英文字母
+                至少有一個特殊符號
+                字串長度在 8 ~ 30 個字母之間
+                Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{8,30}$");
+             */
+            try
+            {
+                //密碼長度須為8-30之間
+                if (password.Length < 8 || password.Length > 30) throw new Exception("密碼長度須為8-30之間");
+                //密碼有數字
+                Regex regex1 = new Regex(@"^(?=.*\d).{8,30}$");
+                if (regex1.IsMatch(password)) matchCount++;
+                //密碼有英文小寫
+                Regex regex2 = new Regex(@"^(?=.*[a-z]).{8,30}$");
+                if (regex2.IsMatch(password)) matchCount++;
+                //密碼有英文大寫
+                Regex regex3 = new Regex(@"^(?=.*[A-Z]).{8,30}$");
+                if (regex3.IsMatch(password)) matchCount++;
+                //密碼有符號
+                Regex regex4 = new Regex(@"^(?=.*\W).{8,30}$");
+                if (regex4.IsMatch(password)) matchCount++;
+                if (matchCount < 3) throw new Exception("密碼須滿足有英文大寫、小寫、符號、數字中的三個");
+            }
+            catch(Exception ex)
+            {
+                error = ex.Message;
+            }
+            return error;
         }
     }
 }

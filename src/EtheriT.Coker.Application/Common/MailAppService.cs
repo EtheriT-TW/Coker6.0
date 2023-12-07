@@ -34,7 +34,7 @@ namespace EtheriT.Coker.Application.Common
             this.stringHandler = stringHandler;
         }
         public async Task sendMail(SenderDto dto) {
-            var webSiteName = await loginUserData.GetWebsiteName();
+            var webSiteName = string.IsNullOrEmpty(dto.Sender.Name)? await loginUserData.GetWebsiteName(): dto.Sender.Name;
             string webUrl = await loginUserData.GetWebsiteUrl();
             string OrgName = await loginUserData.GetWebsiteOrgName();
             // 建立郵件

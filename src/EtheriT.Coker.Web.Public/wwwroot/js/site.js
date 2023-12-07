@@ -293,7 +293,7 @@ function SiteFormCheck(Forms, $input) {
 function CaptchaVerify($self, $input, SuccessAction) {
     var code = $input.val();
     if (code != "") {
-        $.ajax('/api/Captcha/Validate?id=' + id + '&code=' + code, {
+        $.ajax('/api/Captcha/Validate?id=' + $self.data("id") + '&code=' + code, {
             dataType: "JSON",
             success: function (result) {
                 if (result.success) {
@@ -328,9 +328,18 @@ function RegisterAction() {
     registerModal.hide();
 }
 
-function NewCaptcha($self, $input) {
-    id = Math.floor(Math.random() * 10000);
-    $self.attr('src', '/api/Captcha/index?id=' + id);
+function NewCaptcha($self, $input, name = "") {
+    if (!!!$self.data("id")) {
+        $self.data("id", Math.floor(Math.random() * 10000));
+        const $form = $self.parents("form")
+        let captchaId = $form.find("[name='captchaId']");
+        if (captchaId.length == 0) {
+            captchaId = $(`<input type="hidden" name="captchaId" />`)
+            $form.append(captchaId);
+        }
+        captchaId.val(name + $self.data("id"));
+    }
+    $self.attr('src', `/api/Captcha/index?id=${name}${$self.data("id")}&v=${Math.floor(Math.random() * 10000)}`);
     $input.val("");
 }
 
@@ -498,6 +507,45 @@ $.fn.extend({
         let id = className + (order == 0 ? "" : order);
         if ($(`#${id}`).length == 0) $self.attr("id", id);
         else $self.setRandenId(order+1);
+    },
+    getFormJson: function () {
+        const form = $(this);
+        const formDataObject = $(form).serializeArray();
+        $(formDataObject).each(function(){
+            const obj = this;
+            const field = $(form).find(`[name="${obj.name}"]`);
+            switch (field.attr("name")) {
+                case "authentiity_token":
+                case "captcha":
+                    break;
+                default:
+                    switch (field.get(0).tagName) {
+                        case "SELECT":
+                            obj.title = field.nextAll("label").text().trim();
+                            obj.value = field.find(`option:selected`).text().trim();
+                            break;
+                        default:
+                            switch (field.attr("type")) {
+                                case "radio":
+                                case "checkbox":
+                                    obj.title = field.parents(".d-flex").prevAll(".title").text().trim();
+                                    obj.value = "";
+                                    $(form).find(`[name="${obj.name}"]:checked`).each(function () {
+                                        obj.value += $(this).nextAll("label").text().trim()+" ,";
+                                    });
+                                    obj.value = obj.value.substring(0, obj.value.length-2);
+                                    break;
+                                default:
+                                    obj.title = field.nextAll("label").text().trim();
+                                    break;
+                            }
+                            break;
+                    }
+                    break
+            }
+        });
+        console.log(formDataObject);
+        return formDataObject;
     }
 });
 let _c = Coker;

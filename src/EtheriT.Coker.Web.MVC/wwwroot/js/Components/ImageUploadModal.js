@@ -69,10 +69,10 @@ function ImageUploadModalDataInsert($select, id, link, name) {
 function ImageSetData($select, file) {
     var isSingle = $select.data("issinge");
     var needCompress = $select.data("needcompress")
+
     if (file != null && isSingle) var input_frame = $select.find(".img_input");
     else if ($select.hasClass("img_input")) var input_frame = $select;
     else input_frame = $($("#Template_Image_Preview").html()).clone();
-
     if (file != null) {
         input_frame.find(".btn_img_delete").removeClass("d-none");
 

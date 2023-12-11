@@ -17,16 +17,26 @@
             $('#ContactForm .btn_refresh').trigger("click");
             $forms.getFormJson();
             form.addEventListener('submit', event => {
+                event.preventDefault();
+                event.stopPropagation();
                 form.classList.add('was-validated')
                 if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
                     NewCaptcha($imgCaptcha, $captcha_input, "ContactUs");
                     Coker.sweet.error("錯誤", "須確實填寫表單資料才可送出", null, true);
                 } else {
                     event.preventDefault();
-                    const sender = $forms.find(`[name="sender"]>option:selected`);
-                    if (sender.length == 0) {
+                    const sender = { Email: "", Name: "" };
+                    const senderFiled = $forms.find(`[name="sender"]`);
+                    if (senderFiled.get(0).tagName == "SELECT") {
+                        const s = senderFiled.find("option:selected");
+                        sender.Email = s.val();
+                        sender.Name = s.text();
+                    } else {
+                        sender.Email = senderFiled.val();
+                        sender.Name = senderFiled.data("title");
+                    }
+
+                    if (sender.Email == "") {
                         co.sweet.error("資料錯誤", "請選擇寄件人");
                         return;
                     }
@@ -35,10 +45,7 @@
                         type: "POST",
                         contentType: 'application/json; charset=utf-8',
                         data: JSON.stringify({
-                            sender: {
-                                Email: sender.val(),
-                                Name: sender.text()
-                            },
+                            sender: sender,
                             forms: $forms.getFormJson()
                         }),
                         dataType: "json",

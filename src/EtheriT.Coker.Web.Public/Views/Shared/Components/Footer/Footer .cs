@@ -101,17 +101,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 }
                             };
                             break;
-                        case 3:
-                            footerViewModel = new FooterViewModel {
-                                footerViewModels = new List<FooterViewModel>(),
-                                Content = new List<string>
-                                {
-                                    "Copyright©",
-                                    "2023 濠廣國際企業有限公司",
-                                    "版權所有"
-                                }
-                            };
-                            break;
                         default:
                             footerViewModel = new FooterViewModel();
                             break;
@@ -181,7 +170,19 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         }
                     };
                     break;
-                default:
+				case 5:
+					footerViewModel = new FooterViewModel
+					{
+						footerViewModels = new List<FooterViewModel>(),
+						Content = new List<string>
+								{
+									"Copyright©",
+									"2023 濠廣國際企業有限公司",
+									"版權所有"
+								}
+					};
+					break;
+				default:
                     footerViewModel = new FooterViewModel();
                     break;
             }

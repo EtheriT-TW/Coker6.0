@@ -972,34 +972,147 @@ namespace EtheriT.Coker.Application.Product
         public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
-            List<ProductImportDto> allData = (await importAppService.ProdReplace(files)).FindAll(e => !string.IsNullOrEmpty(e.Title));
-            List<ProductImportDto> prods = new List<ProductImportDto>();
-            List<string> allTitles = allData.Select(p => p.Title).ToList();
-            var updateItems = db.Prods.Where(p => allTitles.Contains(p.Title)).Select(s => new { s.Id, s.Title }).ToList();
-            long WebsiteID = await loginUserData.GetWebsiteId();
-            ProductImportDto dto = null;
-            for (int i = 0; i < allData.Count; i++)
+            ProdImportAllDto fileData = await importAppService.ProdReplace(files);
+			long WebsiteID = await loginUserData.GetWebsiteId();
+            if (fileData.Products.Any())
             {
-                var item = updateItems.Find(e => e.Title == allData[i].Title);
-                allData[i].FK_WebsiteId = WebsiteID;
-                if (item != null) allData[i].Id = item.Id;
-                var preProds = prods.Find(e => e.Title == allData[i].Title);
-                if (preProds == null)
+                List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.Title));
+                List<ProductImportDto> prods = new List<ProductImportDto>();
+                List<string> allTitles = allData.Select(p => p.Title).ToList();
+                var updateItems = db.Prods.Where(p => allTitles.Contains(p.Title)).Select(s => new { s.Id, s.Title }).ToList();
+                ProductImportDto dto = null;
+                for (int i = 0; i < allData.Count; i++)
                 {
-                    dto = allData[i];
-                    dto.stocks = new List<ProductStockDto>();
-                    prods.Add(allData[i]);
+                    var item = updateItems.Find(e => e.Title == allData[i].Title);
+                    allData[i].FK_WebsiteId = WebsiteID;
+                    if (item != null) allData[i].Id = item.Id;
+                    var preProds = prods.Find(e => e.Title == allData[i].Title);
+                    if (preProds == null)
+                    {
+                        dto = allData[i];
+                        dto.stocks = new List<ProductStockDto>();
+                        prods.Add(allData[i]);
+                    }
+                    else dto = preProds;
+                    if (dto != null && dto.stocks != null) dto.stocks.Add(mapper.Map<ProductStockDto>(allData[i]));
                 }
-                else dto = preProds;
-                if (dto != null && dto.stocks != null) dto.stocks.Add(mapper.Map<ProductStockDto>(allData[i]));
+                try
+                {
+                    await InsertOrUpdateProd(prods, response.ErrorList);
+                    await ImportProdMediaLinks(prods, response.ErrorList);
+                    await ImportProdTags(prods, response.ErrorList);
+                    await importTechs(prods, response.ErrorList);
+                }
+                catch (Exception ex)
+                {
+                    response.ErrorList.Add(new ImportMassageItem { Name = "error", Description = ex.Message });
+                }
             }
-            await InsertOrUpdateProd(prods, response.ErrorList);
-            await ImportProdMediaLinks(prods, response.ErrorList);
-            await ImportProdTags(prods, response.ErrorList);
-            await importTechs(prods, response.ErrorList);
-            return response;
+            if (fileData.Directories.Any()) await imporDirectories(fileData.Directories);
+
+			return response;
         }
-        private async Task importTechs(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+        private async Task imporDirectories(List<DirectoryImportDto> directories) {
+			try
+			{
+				long WebsiteID = await loginUserData.GetWebsiteId();
+				List<string> manuNames = new List<string>();
+				manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level1)).Select(e => (e.Level1 ?? "").Trim()).ToList());
+				manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level2)).Select(e => (e.Level2 ?? "").Trim()).ToList());
+				manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level3)).Select(e => (e.Level3 ?? "").Trim()).ToList());
+
+				List<string> tagNames = new List<string>();
+				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag1)).Select(e => (e.Tag1 ?? "").Trim()).ToList());
+				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag2)).Select(e => (e.Tag2 ?? "").Trim()).ToList());
+				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => (e.Tag3 ?? "").Trim()).ToList());
+
+                await imporDirectoriesInit(manuNames, tagNames);
+
+                var menus = await db.WebMenus.Where(e => !e.IsDeleted)
+                                .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
+                                .Where(e => e.FK_WebsiteId == WebsiteID).ToListAsync();
+
+				var Tags = await db.Tags.Where(e => !e.IsDeleted)
+							   .Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
+							   .Where(e => e.FK_WebsiteId == WebsiteID).ToListAsync();
+
+                List<DirectoryArrangeImportDto> menuMap = new List<DirectoryArrangeImportDto>();
+				for (int i = 0; i < directories.Count; i++)
+				{
+                    var directory = directories[i];
+					DirectoryArrangeImportDto? item = menuMap.Find(e => e.Name == directory.Level1);
+                    if (string.IsNullOrEmpty(directory.Level1)) break;
+
+					var menu = menus.Where(e => e.Title == directory.Level1).FirstOrDefault();
+                    if (menu == null) break;
+
+                    if (item == null)
+                    {
+                        item = new DirectoryArrangeImportDto { Id = menu.Id, Name = directory.Level1 };
+                        menuMap.Add(item);
+					}
+                    else item.Id = menu.Id;
+                    
+                    if (string.IsNullOrEmpty(directory.Level2)) continue;
+					var menu2 = menus.Where(e => e.Title == directory.Level2).FirstOrDefault();
+                    if (menu2 != null)
+                    {
+                        menu2.FK_TopNodeId = menu.Id;
+                        DirectoryArrangeImportDto? item2 = item.Child.Find(e => e.Name == directory.Level2);
+                        if (item2 == null)
+                        {
+                            item2 = new DirectoryArrangeImportDto { Id = menu2.Id, Name = directory.Level2 };
+                            item.Child.Add(item2);
+
+                            if (string.IsNullOrEmpty(directory.Level3))
+                            {
+								item2.Tags = new List<TagGetSelectedDto> ();
+                                if (!string.IsNullOrEmpty(directory.Tag1)) {
+                                    var tag1 = Tags.Where(e => e.Title == directory.Tag1).FirstOrDefault();
+
+                                }
+								continue;
+                            }
+                            else { 
+                            
+                            }
+						}
+                    }
+				}
+			}
+			catch { }
+		}
+        private async Task imporDirectoriesInit(List<string> manuNames, List<string> tagNames) {
+			long WebsiteID = await loginUserData.GetWebsiteId();
+			var menus = await db.WebMenus.Where(e => !e.IsDeleted)
+					.Where(e => e.FK_WebsiteId == WebsiteID)
+					.Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
+					.ToListAsync();
+			var hasMenusTitle = menus.Select(e => e.Title).ToArray();
+
+			var tags = await db.Tags.Where(e => !e.IsDeleted)
+				.Where(e => e.FK_WebsiteId == WebsiteID)
+				.Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
+				.ToListAsync();
+			var hasTagsTitle = tags.Select(e => e.Title).ToArray();
+
+			var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
+			List<SelectDto> addMmenus = new List<SelectDto>();
+			needAddMenus.ForEach(e => addMmenus.Add(new SelectDto { Name = e }));
+
+			var newMenus = mapper.Map<WebMenu>(addMmenus);
+			await db.WebMenus.AddRangeAsync(newMenus);
+			await loginUserData.SaveChanges(newMenus);
+
+			var needAddTagss = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
+			List<SelectDto> addTags = new List<SelectDto>();
+			needAddTagss.ForEach(e => addTags.Add(new SelectDto { Name = e }));
+
+			var newTags = mapper.Map<Core.Models.Tag>(addTags);
+			await db.Tags.AddRangeAsync(newTags);
+			await loginUserData.SaveChanges(newTags);
+		}
+		private async Task importTechs(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
             List<TechCertDto> allTech = new List<TechCertDto>();
             for (int i = 0; i < prods.Count; i++)
@@ -1237,7 +1350,8 @@ namespace EtheriT.Coker.Application.Product
                     else
                     {
                         myStore = mapper.Map<Prod_Stock>(stock);
-                        stockDto.Add(myStore);
+                        myStore.Id = 0;
+						stockDto.Add(myStore);
                     }
                 }
                 else

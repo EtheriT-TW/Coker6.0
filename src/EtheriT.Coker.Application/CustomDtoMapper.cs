@@ -23,6 +23,7 @@ using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Permissions;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application
 {
@@ -151,6 +152,10 @@ namespace EtheriT.Coker.Application
 			CreateMap<TagSelectedDto, Core.Models.Tag>()
 				.ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
 				.ReverseMap();
+			CreateMap<SelectDto, Core.Models.Tag>()
+				.ForMember(e => e.Title, option => option.MapFrom(c => c.Name))
+				.ReverseMap();
+			
 
 			//Article
 			CreateMap<ArticleDto, Core.Models.Article>()

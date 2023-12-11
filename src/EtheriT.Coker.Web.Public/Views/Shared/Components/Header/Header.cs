@@ -44,6 +44,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             switch (defaultData.Layout_Type)
             {
                 case 1:
+                case 5:
                     webmenus_data = webmenus_data.ToList();
                     headerViewModel = new HeaderViewModel
                     {

@@ -80,6 +80,17 @@ iframe {
     width: auto;
 }
 
+/*card*/
+.padding-card .card {
+    padding:0.5rem;
+}
+[class*="col-"] .card {
+    margin-bottom: 0;
+}
+[class*="col-"] .card-text {
+    padding-bottom: 1rem;
+}
+
 /*Table*/
 table:not(.table) {
     width: 100% !important;

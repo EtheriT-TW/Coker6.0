@@ -56,13 +56,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 		public DbSet<StoreSet> StoreSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
         public DbSet<CustSearch> CustSearch { get; set; }
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<MappingCompanyAndWebsites> MappingCompanyAndWebsites { get; set; }
+        public DbSet<Recipient> Recipients { get; set; }
+        public DbSet<Permissions> Permissions { get; set; }
+
+
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<MappingUserAndWebsite>(o =>
+			modelBuilder.Entity<Website>(o =>
+			{
+                o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+			});
+			modelBuilder.Entity<MappingUserAndWebsite>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
@@ -142,6 +152,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId);
                 o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
             });
+            modelBuilder.Entity<Role>(o =>
+            {
+                o.Property(w => w.Type).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+            });
             modelBuilder.Entity<MappingUserAndRole>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
@@ -188,8 +202,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<CustSearch>(o => {
                 o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
             });
-
-
+            modelBuilder.Entity<AuditLog>(o => {
+                o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<MappingCompanyAndWebsites>(o => {
+                o.HasOne(f => f.Website).WithMany(w => w.Company).HasForeignKey(e => e.FK_WebsiteId);
+                o.HasOne(f => f.Company).WithMany(w => w.Websites).HasForeignKey(e => e.FK_CompanyId);
+            });
+            modelBuilder.Entity<Recipient>(o => {
+                o.HasOne(f => f.Website).WithMany(u => u.Recipients).HasForeignKey(f => f.FK_WebsiteId);
+            });
+            modelBuilder.Entity<Permissions>(o => {
+                o.HasOne(f => f.User).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_UserId);
+                o.HasOne(f => f.Role).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_RoleId);
+                o.HasOne(f => f.Website).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_WebsiteId);
+            });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }

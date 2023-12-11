@@ -2,7 +2,7 @@
 
 var $modal_title, sear_text = "", $modal_body;
 
-var $sear_modal, $input_sear;
+var $input_sear;
 
 var $header, $img_ul;
 
@@ -17,11 +17,6 @@ function HeaderInit() {
             $btn_expand.children("span").text("close");
         }
     })
-
-    $btn_sear_news.on("click", Search)
-
-    $btn_sear_all.on("click", Search)
-
 }
 
 function ElementInit() {
@@ -35,20 +30,5 @@ function ElementInit() {
     $modal_title = $(".modal-title");
     $modal_body = $(".modal-body");
 
-    $sear_modal = $(".sear_modal")
-
     $input_sear = $(".input_sear");
-}
-
-function Search() {
-    var sear_target = $(this).text();
-    if ($input_sear.val() == "") {
-        Coker.sweet.error("錯誤", "請輸入搜尋字元", null, false);
-    } else {
-        $modal_title.text();
-        $sear_modal.modal("show");
-        sear_text = $input_sear.val();
-        $modal_title.text(`搜尋-${sear_target}`)
-        $modal_body.text(`搜尋值：${sear_text}`)
-    }
 }

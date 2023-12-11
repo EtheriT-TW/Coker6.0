@@ -12,7 +12,9 @@
     ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["XSRF-TOKEN"] = Model.token;
 }
+@Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>

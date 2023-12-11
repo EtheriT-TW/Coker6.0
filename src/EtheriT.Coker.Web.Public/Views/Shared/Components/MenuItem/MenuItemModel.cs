@@ -11,6 +11,7 @@
         public string? Icon { get; set; }
         public string? IconClass { get; set; }
         public string? ImageIcon { get; set; }
+        public int Length { get; set; } = 0;
         public List<MenuItemModel>? menuItemModels { get; set; }
     }
 }

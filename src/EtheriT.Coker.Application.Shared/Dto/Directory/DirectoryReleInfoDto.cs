@@ -10,9 +10,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? MainImage { get; set; }
         public string? Link { get; set; }
         public DateTime? NodeDate { get; set; }
+        public DateTime? StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
         public int SerNo { get; set; }
         public string? Title { get; set; }
-
+        public string? Address { get; set; }
+        public string? Location { get; set; }
         public string? Description { get; set; }
         public string? OrgName { get; set; }
 

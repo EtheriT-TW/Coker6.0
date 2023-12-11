@@ -1,4 +1,4 @@
-﻿var $btn_expand, $btn_sear_text, $btn_sear_firm, $btn_sear_all, $btn_sear;
+﻿var $btn_expand, $btn_sear_text, $btn_sear_firm, $btn_sear_all;
 
 var $modal_title, sear_text = "", $modal_body;
 
@@ -24,18 +24,6 @@ function HeaderInit() {
     $btn_sear_all.on("click", function () {
         $sear_target.text($btn_sear_all.text());
         $input_sear.attr("placeholder", "請輸入想尋找的關鍵字...");
-    })
-
-    $btn_sear.on("click", function () {
-        if ($input_sear.val() == "") {
-            Coker.sweet.error("錯誤", "請輸入搜尋文字", null, false);
-        } else {
-            $modal_title.text();
-            $sear_modal.modal("show");
-            sear_text = $input_sear.val();
-            $modal_title.text(`搜尋-${$sear_target.text()}`)
-            $modal_body.text(`搜尋值：${sear_text}`)
-        }
     })
 }
 
@@ -65,7 +53,6 @@ function ElementInit() {
     $btn_sear_text = $(".btn_sear_text");
     $btn_sear_firm = $(".btn_sear_firm");
     $btn_sear_all = $(".btn_sear_all");
-    $btn_sear = $(".btn_sear");
 
     $modal_title = $(".modal-title");
     $modal_body = $(".modal-body");

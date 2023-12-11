@@ -1313,6 +1313,8 @@ function MenuEditor(idSelector, options) {
             if (!v.canEdit) $divbtn.find(".btnEdit ,.btnRemove, .btnPage").addClass("d-none");
             if ($i.hasClass("material-symbols-outlined")) $i.text(v.icon.replace("material-symbols-outlined", "").trim());
             $divTitle.append($i).append("&nbsp;").append($span);
+            if (v.visible) $divTitle.append(`<span class="material-symbols-outlined">visibility</span>`);
+            else $divTitle.append(`<span class="material-symbols-outlined">visibility_off</span>`);
             $div.append($divTitle).append($divbtn);
             $li.append($div);
             if (isParent) {

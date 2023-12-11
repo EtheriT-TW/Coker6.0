@@ -1,6 +1,8 @@
-using EtheriT.Coker.Application;
+﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Contact;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
@@ -8,6 +10,7 @@ using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -27,11 +30,34 @@ using EtheriT.Coker.Application.TechnicalCertificate;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.EntityFrameworkCore;
+using SimpleCaptcha;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<IConfiguration>();
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
+    options.HttpsPort = 5001;
+});
+builder.Services.AddAntiforgery(options =>
+{
+    // Set Cookie properties using CookieBuilder properties†.
+    options.FormFieldName = "AntiforgeryFieldname";
+    options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
+    options.SuppressXFrameOptionsHeader = false;
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -62,6 +88,7 @@ builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<StringHandler>();
+builder.Services.AddTransient<MailAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
@@ -73,8 +100,15 @@ builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<ImportAppService, ImportAppService>();
 builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
-
+builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
+builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
+builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+if (builder.Environment.EnvironmentName == "EPZA")
+{
+    builder.WebHost.UseStaticWebAssets();
+}
 
 var app = builder.Build();
 
@@ -85,6 +119,22 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
+
+app.Use((context, next) =>
+{
+    var requestPath = context.Request.Path.Value;
+
+    if (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(requestPath, "/home", StringComparison.OrdinalIgnoreCase))
+    {
+        var tokenSet = antiforgery.GetAndStoreTokens(context);
+        context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
+            new CookieOptions { HttpOnly = false });
+    }
+
+    return next(context);
+});
 
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 List<string> childOrgNames = new List<string>();

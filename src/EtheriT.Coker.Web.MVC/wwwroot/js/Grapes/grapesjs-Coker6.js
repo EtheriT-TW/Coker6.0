@@ -137,7 +137,7 @@
     });
 
     /*連結 */
-    editor.DomComponents.addType('link', {
+    editor.DomComponents.addType('連結', {
         isComponent: el => el.tagName == 'A',
         model: {
             defaults: {
@@ -168,7 +168,7 @@
         },
     });
     /*檔案下載*/
-    editor.DomComponents.addType('linkWithIcon', {
+    editor.DomComponents.addType('檔案下載', {
         isComponent: el => el.classList?.contains('link_with_icon'),
         model: {
             defaults: {
@@ -189,26 +189,31 @@
                         },
                     }
                 ],
-            },
-            init() {
+            }, init() {
                 this.on('change:attributes:download', function () {
-                    setTimeout(() => {
+                    setTimeout(function () {
                         var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
                         LinkWithIconInit();
-                    }, "100");
+                    }, 100);
                 });
             }
         },
+        view: {
+            init() {
+                this.setLink();
+            }, setLink: function () {
+                setTimeout(function () {
+                    var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
+                    LinkWithIconInit();
+                }, 100);
+            }
+        }
     });
     //輪播
     editor.DomComponents.addType('輪播', {
         isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
         model: {
             defaults: {
-                draggable: false,
-                droppable: false,
-                copyable: false,
-                editable: false,
                 traits: [
                     {
                         name: 'swiper-slide', type: 'button',
@@ -248,7 +253,7 @@
                                               </div>
                                               <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                                <button type="button" class="btn btn-primary">完成編輯</button>
+                                                <button type="button" class="btn btn-primary sava">完成編輯</button>
                                               </div>
                                             </div>
                                           </div>
@@ -281,11 +286,24 @@
                                 content.find(".img_alt").text(data.alt);
                                 content.find(".a_href").text(data.href);
                                 content.find(".a_title").text(data.title);
+                                content.data("order", index);
                                 $body.append(content)
                             })
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
+                            $("#SwiperModal .sava").on("click", function () {
+                                const $s = $selected.clone();
+                                const $slides = $s.find(".swiper-slide").clone();
+                                const $b = $s.find(".swiper-wrapper");
+                                $b.empty();
+                                $("#SwiperList li").each(function (index, element) {
+                                    $b.append($slides[$(element).data("order")]);
+                                });
+                                
+                                //editor.getSelected().components($b.html());
+                                SwiperModal.hide();
+                            });
                         },
                     }
                 ],
@@ -368,13 +386,16 @@
                 ]
             },
             init() {
-                var self = this;
-                self.on(`change:attributes`, () => {
+                const self = this;
+                const setting = function () {
+                    console.log(self);
                     setTimeout(() => {
                         var content = $(".gjs-frame")[0].contentWindow.date_input_change;
-                        editor.getSelected().components(content(editor.getSelected().getId()));
+                        self.components(content(self.getId()));
                     }, 200);
-                });
+                }
+                self.on(`change:attributes`, setting);
+                setting();
             }
         }
     });
@@ -560,12 +581,9 @@
         });
     }
     //檢驗元件是否已載入，若載入成功則設定關閉控制
-    var checkLoadTimer = setInterval(function () {
-        if (categories.models.length > 1) {
-            clearInterval(checkLoadTimer);
-            blockControl();
-        }
-    }, 500);
+    editor.on('load', () => {
+        blockControl();
+    })
 
     //載入儲存的元件
     settings.getComponer().done(function (result) {
@@ -943,6 +961,13 @@
             swiper.update();
         } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) iframe.SwiperInit({ autoplay: false });
     });
+
+    /*editor.on('selector:add', selector => {
+        selector.set({
+            // Can't be seen by the style manager, therefore even by the user
+            private: true,
+        })
+    });*/
     /**************
      * 指令參考
      * ***********/

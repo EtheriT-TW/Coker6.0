@@ -15,6 +15,14 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Search;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
+using EtheriT.Coker.Application.Company;
+using System.Security.AccessControl;
+using EtheriT.Coker.Application.Dto.AuditLog;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Dto.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.Permissions;
 
 namespace EtheriT.Coker.Application
 {
@@ -25,14 +33,26 @@ namespace EtheriT.Coker.Application
 		public CustomDtoMapper()
 		{
 			//Users
-			CreateMap<UserDto, User>()
+			CreateMap<UserSimplifyDto, User>()
 				.ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
 				.ReverseMap();
-			CreateMap<MemberGetAllDataDto, User>()
-				.ReverseMap();
-			CreateMap<MemberUpdateDto, User>()
-				.ReverseMap();
+			CreateMap<MemberGetAllDataDto, User>().ReverseMap();
+			CreateMap<MemberUpdateDto, User>().ReverseMap();
+			CreateMap<ManagerAllListDto, User>().ReverseMap();
+            CreateMap<EditUserDto, User>().ReverseMap();
+            CreateMap<AddUser, User>().ReverseMap();
 
+            //Website
+            CreateMap<Website, WebsiteEditDto>()
+                .ReverseMap();
+
+            //Company
+            CreateMap<Core.Models.Company, CompanyDto>()
+                .ReverseMap();
+
+			//AuditLog
+			CreateMap<Core.Models.AuditLog, AuditLogListDto>()
+				.ReverseMap();
 
 			//WebMenu
 			CreateMap<SiteMapDto, WebMenu>().ReverseMap();
@@ -139,9 +159,13 @@ namespace EtheriT.Coker.Application
                 .ReverseMap()
                 .ForMember(e => e.NodeDate, option => option.MapFrom(c => c.NodeDate==null?null: c.NodeDate.Value.ToString("yyyy/MM/dd")));
 			CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
+            CreateMap<ArticleListGetDto, DirectoryReleInfoDto>().ReverseMap();
+            CreateMap<ArticleListGetDto, Core.Models.Article>()
+                .ReverseMap()
+                .ForMember(e => e.NodeDate, option => option.MapFrom(c => c.NodeDate == null ? null : c.NodeDate.Value.ToString("yyyy/MM/dd")));
 
-			//Directory
-			CreateMap<DirectoryAddUpDto, Core.Models.Directory>().ReverseMap();
+            //Directory
+            CreateMap<DirectoryAddUpDto, Core.Models.Directory>().ReverseMap();
 			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
 				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
 				.ReverseMap();
@@ -160,12 +184,18 @@ namespace EtheriT.Coker.Application
 
             //CustSearch
             CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
-            
+
+            //Recipients
+            CreateMap<RecipientsListDto, Recipient>().ReverseMap();
+            CreateMap<MailUserDataDto, Recipient>().ReverseMap();
+
+            //Permissions
+            CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();
             //FileUpload
             //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
             //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
             //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
             //    .ReverseMap();
         }
-	}
+    }
 }

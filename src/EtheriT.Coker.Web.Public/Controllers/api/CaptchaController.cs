@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.Dto;
+using Microsoft.AspNetCore.Mvc;
 using SimpleCaptcha;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
@@ -7,22 +9,20 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     [ApiController]
     public class CaptchaController : Controller
     {
-        private readonly ICaptcha _captcha;
-        public CaptchaController(ICaptcha captcha)
+		private readonly ICaptchaAppService captchaAppService;
+		public CaptchaController(ICaptchaAppService captchaAppService)
         {
-            _captcha = captcha;
+            this.captchaAppService = captchaAppService;
         }
         public IActionResult Index(string id)
         {
-            var info = _captcha.Generate(id);
-            var stream = new MemoryStream(info.CaptchaByteData);
-            return File(stream, "image/png");
+            return File(captchaAppService.Captcha(id), "image/png");
         }
 
-        public IActionResult Validate(string id, string code)
+        public ResponseMessageDto Validate(string id, string code)
         {
-            var result = _captcha.Validate(id, code);
-            return Json(new { success = result });
-        }
+            return captchaAppService.Validate(id, code);
+
+		}
     }
 }

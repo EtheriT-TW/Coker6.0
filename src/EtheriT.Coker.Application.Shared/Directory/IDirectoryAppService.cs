@@ -14,5 +14,8 @@ namespace EtheriT.Coker.Application.Shared.Directory
         public Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<ResponseMessageDto> Delete(long Id);
+        public Task<JsonResult> GetDirectoryArticlesList(long id, DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetDirectoryProductsList(long id, DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetDirectoryMenusList(long id, DataSourceLoadOptions loadOptions);
     }
 }

@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Dto.Directory;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Common;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -122,6 +123,7 @@ namespace EtheriT.Coker.Application.Article
                 {
                     var dataQuery = await (from e in result
                                     where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                                    orderby e.Id descending
                                     select new ArticleListGetDto
                                     {
                                         Id = e.Id,
@@ -158,6 +160,56 @@ namespace EtheriT.Coker.Application.Article
             }
 
             return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetNewsletterList(DataSourceLoadOptions loadOptions)
+        {
+            string msg;
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                var result = db.Article;
+                if (result != null)
+                {
+                    var data = await (from e in result
+                        where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
+                        orderby e.Id descending
+                        select new ArticleListGetDto
+                        {
+                            Id = e.Id,
+                            Title = e.Title,
+                            Description = e.Description,
+                            Visible = e.Visible,
+                            SerNO = e.SerNO,
+                            Popular = e.Popular,
+                            PopularVisible = e.PopularVisible,
+                            SaveHtml = e.SaveHtml,
+                            Html = e.Html,
+                            SaveCss = e.SaveCss,
+                            Css = e.Css,
+                            Tags = String.Join("、", (
+                                        from ta in db.Tag_Associates
+                                        where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
+                                        join t in db.Tags on ta.FK_TId equals t.Id
+                                        where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
+                                        select t.Title
+                                    ).ToList()),
+                            StartTime = e.StartTime,
+                            EndTime = e.EndTime,
+                            permanent = e.permanent,
+                            NodeDate = e.NodeDate,
+                    }).ToListAsync();
+                    var dataQuery = data.Where(e => e.Tags.Contains("電子報")).ToList();
+                    var output = DataSourceLoader.Load(dataQuery, loadOptions);
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                else throw new Exception("查無電子報資料");
+            }
+            catch (Exception e)
+            {
+                msg = e.Message;
+            }
+
+            return new JsonResult(new List<ArticleListGetDto>() { new ArticleListGetDto { Title=msg } }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ArticleGetDataDto> GetDataOne(long Id)
         {
@@ -215,10 +267,11 @@ namespace EtheriT.Coker.Application.Article
             {
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
                 List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID || e.Id == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+                if(siteIds.Count ==0) siteIds.Add(WebsiteID);
                 var sites = await db.Websites.Where(e => siteIds.Contains(e.Id)).Where(e => !e.IsDeleted).ToListAsync();
 
                 var output = new List<DirectoryReleInfoDto>();
-                var articleData = new List<ArticleGetDataDto>();
+                var articleData = new List<ArticleListGetDto>();
 
                 var result = await db.Article
                                     .Where(e => dto.Ids.Contains(e.Id))
@@ -256,7 +309,20 @@ namespace EtheriT.Coker.Application.Article
                             output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
                             output_data.NodeDate = data.NodeDate;
                             output_data.OrgName = website.OrgName;
-
+                            if (data.Html!=null && data.Html.IndexOf("activity_start_time") > 0) {
+                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_start_time\">(.*?)<").Groups;
+                                if(!string.IsNullOrEmpty(g[0].Value)) output_data.StartTime = DateTime.Parse(g[1].Value);
+                            }
+                            if (data.Html != null && data.Html.IndexOf("activity_addr") > 0)
+                            {
+                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_addr\">(.*?)<").Groups;
+                                if (!string.IsNullOrEmpty(g[0].Value)) output_data.Address = g[1].Value;
+                            }
+                            if (data.Html != null && data.Html.IndexOf("activity_location") > 0)
+                            {
+                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_location\">(.*?)<").Groups;
+                                if (!string.IsNullOrEmpty(g[0].Value)) output_data.Location = g[1].Value;
+                            }
                             output.Add(output_data);
                         }
                     }

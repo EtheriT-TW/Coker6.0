@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
     public class ArticleListGetDto
     {
         public long Id { get; set; }
+        public long FK_WebsiteId { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
         public bool Visible { get; set; }

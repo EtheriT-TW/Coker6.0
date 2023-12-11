@@ -38,5 +38,6 @@ namespace EtheriT.Coker.Web.Core.Models
         public List<MappingUserAndWebsite> Webs { get; set; }
         public List<MappingUserAndRole> Roles { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }
+		public List<Permissions> Permissions { get; set; }
     }
 }

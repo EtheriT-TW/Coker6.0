@@ -5,7 +5,7 @@
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
 }
-
+@Html.AntiForgeryToken()
 <!--導入menuEditor-->
 <script type="text/javascript" src="/lib/jquery-menu-editor/jquery-menu-editor.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/fontawesome6-2-1.min.js" asp-append-version="true"></script>
@@ -129,7 +129,7 @@
                                     <label for="Visible">是否顯示</label>
                                     <select name="visible" id="visible" class="form-select item-menu">
                                         <option value="true">是</option>
-                                        <option value="false">否</option>
+                                        <option value="false" selected>否</option>
                                     </select>
                                 </div>
                                 <div class="col-4 form-group form-check px-1">

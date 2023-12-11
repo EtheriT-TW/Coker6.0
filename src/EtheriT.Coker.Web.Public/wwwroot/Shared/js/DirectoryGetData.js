@@ -109,8 +109,19 @@ function hashChangeDirectory(e) {
 function DirectoryDataGet($item, option) {
     const dirLength = $(".catalog_frame,.menu_directory").length;
     let page = parseInt(option.Page);
+    if ($item.data("type") == "search") {
+        $.extend(true, option, {
+            Type:"search",
+            SearchText: $item.data("search-text").toString(),
+            StartDate: $item.data("startDate"),
+            EndDate: $item.data("endDate"),
+        })
+    }
     Directory.getDirectoryData(option).done(function (result) {
         let loadPageRange = 2;
+        if (option.Type == "search") {
+            $(".searchCount").text(result.totalCount);
+        }
         $item.find(".page-item").each(function () {
             var $self = $(this);
             if (!$self.hasClass("btn_prev") && !$self.hasClass("btn_next")) $self.remove();
@@ -185,15 +196,49 @@ function DirectoryDataGet($item, option) {
 }
 
 function DirectoryDataInsert($item, result) {
+    if (result == null) return;
     const temp = $item.find(".templatecontent").html();
+    const isSearch = $item.data("type") == "search";
+    if (result.length == 0) $item.find(".catalog").addClass("empty");
+    else $item.find(".catalog").removeClass("empty");
     result != null && result.forEach(function (data) {
         var content = $(temp).clone();
-        var path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : '/' + data.orgName + window.location.pathname) + data.link;
+        let path,target;
+        if (isSearch) {
+            switch (data.type) {
+                case 3:
+                    path = `${data.orgName == null ? "" : `/${data.orgName}`}/${data.link}/${$item.data("search-text")}`;
+                    break;
+                default:
+                    path = `${data.orgName == null ? "" : `/${data.orgName}`}/search/${data.link}/${$item.data("search-text")}`;
+                    break;
+            }
+           
+            target = "_blank";
+            if (data.mainImage.indexOf("youtu") > 0) {
+                var key = "";
+                var rx = /^.*(?:(?:youtu.be\/|v\/|vi\/|u\/w\/|embed\/)|(?:(?:watch)??v(?:i)?=|&v(?:i)?=))([^#&?]*).*/;
+                var r = data.mainImage.match(rx);
+                if (r != null && r.length > 0) key = r[1];
+                data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
+            }
+        } else {
+            path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : `${data.orgName == null ? "" : `/${data.orgName}`}${window.location.pathname}`) + data.link;
+            target = "_self";
+        }
         path = path.replace("//", "/");
-        content.find("a").attr("href", path);
-        content.find("a").attr("title", `連結至: ${data.title}`);
-        var imglink = data.mainImage;
-        if ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName)) {
+        const linkData = {
+            "href": path,
+            "title": `連結至: ${data.title}${(target == "_blank" ? "(另開視窗)" : "")}`,
+            "target": target
+        }
+        if (content[0].tagName == "A") {
+            content.attr(linkData);
+        } else {
+            content.find("a").attr(linkData);
+        }
+        var imglink = data.mainImage || "/images/noImg.jpg";
+        if (data.orgName!=null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
         }
         content.find("img").attr("src", imglink);
@@ -201,6 +246,14 @@ function DirectoryDataInsert($item, result) {
         content.find(".title").text(data.title);
         content.find(".description").text(data.description);
         $item.find(".catalog").append(content);
+        if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
+        else content.find(".location").text(data.location);
+        if (content.find(".address").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
+        else content.find(".address").text(data.address);
+        if (data.startTime != null && data.startTime != "") {
+            var startTime = new Date(data.startTime);
+            content.find(".startTime").text(`${startTime.getFullYear()}/${startTime.getMonth() + 1}/${startTime.getDate()}`);
+        }
         if (data.nodeDate != null && data.nodeDate != "") {
             var noteDate = new Date(data.nodeDate);
             content.find(".date").text(`${noteDate.getFullYear()}/${noteDate.getMonth() + 1}/${noteDate.getDate()}`);
@@ -211,7 +264,6 @@ function DirectoryDataInsert($item, result) {
             } else {
                 content.find(".date-day").text(`${noteDate.getDate()}`);
             }
- 
         }
     });
 

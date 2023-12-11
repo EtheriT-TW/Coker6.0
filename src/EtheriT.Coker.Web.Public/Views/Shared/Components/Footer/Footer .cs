@@ -33,13 +33,91 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
 
-            FooterViewModel footerViewModel = new FooterViewModel();
+            FooterViewModel footerViewModel;
 
-            switch (defaultData.Id)
+            switch (defaultData.Layout_Type)
             {
                 case 1:
+                    switch (defaultData.Id)
+                    {
+                        case 2:
+                            footerViewModel = new FooterViewModel
+                            {
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "產品專區", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "馬桶 ", Link = "/lcb/toilet" },
+                                            new FooterViewModel { Title = "溫水洗淨便座", Link = "/lcb/electric_cover" },
+                                            new FooterViewModel { Title = "面盆&面盆浴櫃組", Link = "basin_cabinet" },
+                                            new FooterViewModel { Title = "浴室龍頭", Link = "/lcb/faucet" },
+                                            new FooterViewModel { Title = "沐浴龍頭", Link = "/lcb/shower_faucet" },
+                                            new FooterViewModel { Title = "無障礙設備", Link = "/lcb/barrier_free" },
+                                            new FooterViewModel { Title = "浴缸", Link = "/lcb/tub" },
+                                            new FooterViewModel { Title = "配件(暖房機)", Link = "/lcb/accessories" },
+                                            new FooterViewModel { Title = "小便斗", Link = "/lcb/urinal" },
+                                            new FooterViewModel { Title = "停產專區", Link = "/lcb/discontinue" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "關於DEREK", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "品牌故事", Link = "/lcb/brand_story" },
+                                            new FooterViewModel { Title = "標章認證", Link = "/lcb/mark_certification" },
+                                            new FooterViewModel { Title = "實績案件", Link = "/lcb/actual_cases" },
+                                            new FooterViewModel { Title = "最新消息", Link = "/lcb/recruiting" },
+                                            new FooterViewModel { Title = "加入Derek ", Link = "/lcb/recruiting" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "智慧科技", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "淨未來全自動智慧馬桶", Link = "/lcb/smart3plus" },
+                                            new FooterViewModel { Title = "Clean極淨", Link = "/lcb/Pro_Clean" },
+                                            new FooterViewModel { Title = "Speed極瞬", Link = "/lcb/Pro_Speed" },
+                                            new FooterViewModel { Title = "Smart極智", Link = "/lcb/Pro_smart" },
+                                            new FooterViewModel { Title = "Comfort極悅", Link = "/lcb/Pro_Comfort" },
+                                            new FooterViewModel { Title = "Other其他", Link = "/lcb/Pro_other" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "銷售據點", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "旗艦門市", Link = "lcb/distribution" },
+                                            new FooterViewModel { Title = "經銷據點", Link = "lcb/flagship" }
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "常見問題", Link = "/lcb/faq" },
+                                            new FooterViewModel { Title = "清潔保養", Link = "/lcb/clean_mainte" },
+                                            new FooterViewModel { Title = "維修服務", Link = "/lcb/repair_service" },
+                                            new FooterViewModel { Title = "商品需求表單", Link = "/lcb/request_form" },
+                                            new FooterViewModel { Title = " 聯絡我們", Link = "/lcb/contact_us" },
+                                            new FooterViewModel { Title = " 產品型錄下載", Link = "/lcb/catalog" }
+                                        }
+                                    }
+                                },
+                                Logo_Image = "/upload/derek_logo.png",
+                                Facebook_Link = "https://www.facebook.com/LCB.TW",
+                                IG_Link = "https://www.instagram.com/tw_derek/?igshid=YmMyMTA2M2Y%3D",
+                                YoutubeChannel_Link = "https://www.youtube.com/@derek6494",
+                                Content = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2022 隆昌窯業股份有限公司",
+                                    "版權所有"
+                                }
+                            };
+                            break;
+                        case 3:
+                            footerViewModel = new FooterViewModel {
+                                footerViewModels = new List<FooterViewModel>(),
+                                Content = new List<string>
+                                {
+                                    "Copyright©",
+                                    "2023 濠廣國際企業有限公司",
+                                    "版權所有"
+                                }
+                            };
+                            break;
+                        default:
+                            footerViewModel = new FooterViewModel();
+                            break;
+                    }
                     break;
-                case 2:
+                case 3:
                     footerViewModel = new FooterViewModel
                     {
                         footerViewModels = new List<FooterViewModel> {
@@ -81,7 +159,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         line_title = "KSP高雄軟體園區\r\n官方LINE@",
                         line_describe = "即時的掌握園區第一手資訊\r\n快點加入高軟官方Line@",
                         Privacy_Link = $"/{defaultData.OrgName}/Privacy",
-                        Accessibility_Link = "#",
+                        Accessibility_Link = "https://accessibility.moda.gov.tw/Applications/Detail?category=20231110163027",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>
                         {
@@ -89,12 +167,12 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         }
                     };
                     break;
-                case 3:
+                case 4:
                     footerViewModel = new FooterViewModel
                     {
                         Sitemap_Link = $"/{defaultData.OrgName}/Website",
                         Privacy_Link = $"/{defaultData.OrgName}/Privacy",
-                        Accessibility_Link = "#",
+                        Accessibility_Link = "https://accessibility.moda.gov.tw/Applications/Detail?category=20231110163027",
                         Accessibility_Badge = "/upload/accessibility_badge.png",
                         Content = new List<string>
                         {
@@ -104,58 +182,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     };
                     break;
                 default:
-                    footerViewModel = new FooterViewModel
-                    {
-                        footerViewModels = new List<FooterViewModel>{
-                            new FooterViewModel {Title="商品分類",Link="", footerViewModels = new List<FooterViewModel>{
-                                    new FooterViewModel {Title="微電腦馬桶座", Link=""},
-                                    new FooterViewModel {Title="馬桶", Link=$"{defaultData.OrgName}/Toilet"},
-                                    new FooterViewModel {Title="面盆", Link=""},
-                                    new FooterViewModel {Title="便斗", Link=""},
-                                    new FooterViewModel {Title="龍頭", Link=""},
-                                    new FooterViewModel {Title="配件", Link=""},
-                                    new FooterViewModel {Title="浴缸", Link=""},
-                                    new FooterViewModel {Title="三機", Link=""},
-                                    new FooterViewModel {Title="無障礙設備", Link=""},
-                                    new FooterViewModel {Title="線上型錄", Link=$"{defaultData.OrgName}/Catalog"},
-                                    new FooterViewModel {Title="清倉品", Link=""},
-                                },
-                            },
-                            new FooterViewModel {Title="關於Derek",Link="", footerViewModels = new List<FooterViewModel>{
-                                    new FooterViewModel {Title="企業理念", Link=""},
-                                    new FooterViewModel {Title="企業沿革", Link=""},
-                                    new FooterViewModel {Title="企業設備", Link=""},
-                                    new FooterViewModel {Title="媒體專區", Link=""},
-                                    new FooterViewModel {Title="品牌故事", Link=""},
-                                    new FooterViewModel {Title="展示中心", Link=$"{defaultData.OrgName}/ExhibitionCenter"},
-                                    new FooterViewModel {Title="實績列舉", Link=""},
-                                }
-                            },
-                            new FooterViewModel {Title="標章認證",Link="", footerViewModels = new List<FooterViewModel>{
-                                    new FooterViewModel {Title="省水標章", Link=""},
-                                    new FooterViewModel {Title="環保標章", Link=""},
-                                    new FooterViewModel {Title="能源分級", Link=""},
-                                    new FooterViewModel {Title="ISO/CNS", Link=""},
-                                    new FooterViewModel {Title="其他", Link=""},
-                                }
-                            },
-                            new FooterViewModel {Title="銷售據點",Link="", footerViewModels = new List<FooterViewModel>{
-                                    new FooterViewModel {Title="分公司", Link=""},
-                                    new FooterViewModel {Title="花東總經銷-百健行", Link=""},
-                                    new FooterViewModel {Title="經銷據點", Link=""},
-                                    new FooterViewModel {Title="公共專案經銷", Link=""},
-                                }
-                            },
-                            new FooterViewModel {Title="我們的服務",Link="", footerViewModels = new List<FooterViewModel>{
-                                    new FooterViewModel {Title="清潔小幫手", Link=""},
-                                    new FooterViewModel {Title="維修服務", Link=""},
-                                    new FooterViewModel {Title="常見問題", Link=""},
-                                    new FooterViewModel {Title="使用須知", Link=""},
-                                    new FooterViewModel {Title="聯絡我們", Link=$"{defaultData.OrgName}/Contact"},
-                                }
-                            }
-                        }
-                    };
+                    footerViewModel = new FooterViewModel();
                     break;
             }
 

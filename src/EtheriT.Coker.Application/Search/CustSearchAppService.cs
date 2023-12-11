@@ -66,5 +66,34 @@ namespace EtheriT.Coker.Application.Search
 
             return new JsonResult(new List<CuseSearchListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
+        public async Task<List<SearchItemDto>> GetSearchList(long sid)
+        {
+            List<SearchItemDto> list = new List<SearchItemDto> {
+                new SearchItemDto{
+                    Id = 0,
+                    Name = "找全部"
+                }
+            };
+            switch (sid) {
+                case 2:
+                    list.Add(
+                        new SearchItemDto {
+                            Id = 1,
+                            Name = "找廠商"
+                        }
+                    );
+                    break;
+                case 3:
+                    list.Add(
+                        new SearchItemDto
+                        {
+                            Id = 2,
+                            Name = "最新消息"
+                        }
+                    );
+                    break;
+            }
+            return list;
+        }
     }
 }

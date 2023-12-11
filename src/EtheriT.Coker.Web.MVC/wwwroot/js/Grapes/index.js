@@ -12,6 +12,9 @@ var grapesInit = function (options) {
             locale: 'tw',
             localeFallback: 'tw',
         },
+        selectorManager: {
+            componentFirst: true,
+        },
         assetManager: {
             custom: false,
             uploadFile: function (e) {
@@ -41,15 +44,18 @@ var grapesInit = function (options) {
             "grapesjs-style-bg",
             'grapesjs-tabs',
             'grapesjs-custom-code',
-            'grapesjs-tui-image-editor',
+            //'grapesjs-tui-image-editor',
             'grapesjs-blocks-table',
+            //'grapesjs-table',
             'grapesjs-parser-postcss',
-            'grapesjs-plugin-ckeditor',
+            //'grapesjs-plugin-ckeditor',
             //'gjs-plugin-ckeditor5',
+            //'grapesjs-rte-extensions',
             'grapesjs-Coker6'
         ],
         pluginsOpts: {
             'gjs-blocks-basic': { flexGrid: true },
+            "grapesjs-table": {},
             'grapesjs-preset-webpage': {
                 modalImportButton: '匯入',
                 modalImportTitle: '匯入原始碼',
@@ -73,7 +79,7 @@ var grapesInit = function (options) {
                     '/lib/tui-code/css/tui-image-editor.min.css', // v3.15.2
                 ]
             },
-            'grapesjs-blocks-table': { containerId: '#gjs' },
+            'grapesjs-blocks-table': { containerId: '#gjs', componentCell:".test" },
             'grapesjs-Coker6': options,
             'grapesjs-preset-newsletter': {
                 modalLabelExport: 'Copy the code and use it wherever you want',
@@ -167,6 +173,54 @@ var grapesInit = function (options) {
                     },
                     licenseKey: ''
                 }
+            },
+            'grapesjs-rte-extensions': {
+                // default options
+                base: {
+                    bold: true,
+                    italic: true,
+                    underline: true,
+                    strikethrough: true,
+                    link: true,
+                },
+                //fonts: {
+                //  fontName: ['font1',...,'fontn'],
+                //  fontSize: true,
+                //  //An array of strings representing colors
+                //  fontColor: ['#fff',...],
+                //  //An array of strings representing colors
+                //  hilite: ['#fff',...],
+                //}
+                fonts: {
+                    fontColor: true,
+                    hilite: true,
+                },
+                format: {
+                    //heading1: true,
+                    heading2: true,
+                    heading3: true,
+                    heading4: false,
+                    //heading5: false,
+                    //heading6: false,
+                    paragraph: true,
+                    //quote: false,
+                    clearFormatting: true,
+                },
+                subscriptSuperscript: false,//|true
+                indentOutdent: false,//|true
+                list: false,//|true
+                align: true,//|true
+                //actions: {
+                //  copy: true,
+                //  cut: true,
+                //  paste: true,
+                //  delete: true,
+                //},
+                actions: false,//|true
+                undoredo: false,//|true
+                extra: false,//|true
+                darkColorPicker: true,//|false
+                maxWidth: '600px'
             }
         },
         canvas: {

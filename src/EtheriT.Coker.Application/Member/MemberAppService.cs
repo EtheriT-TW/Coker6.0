@@ -11,6 +11,8 @@ using EtheriT.Coker.Application.Shared.Dto.Member;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using System.Text.RegularExpressions;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -63,7 +65,42 @@ namespace EtheriT.Coker.Application.Member
 
             return new JsonResult(new List<MemberGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<MemberGetAllDataDto> GetAllData(long id)
+		public async Task<JsonResult> GetAllManagerList(DataSourceLoadOptions loadOptions)
+		{
+			try
+			{
+				var result = db.Users;
+
+				if (result != null)
+				{
+					var dataQuery = from e in db.Users.Include(n => n.Roles)
+									where !e.IsDeleted
+									select new ManagerAllListDto
+									{
+										Id = e.Id,
+										Name = e.Name.Substring(0, 1) + "○" + e.Name.Substring(e.Name.Length - 1),
+										TelPhone = e.TelPhone == "" ? "" : e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6),
+										Email = e.Email.Substring(0, 2) + "***" + e.Email.Substring(e.Email.IndexOf("@") - 1),
+                                        Status = (UserStatusEnum)(e.Status??0),
+										Roles = String.Join("、",(
+                                            from o in db.Roles
+                                            join ur in e.Roles on o.Id equals ur.RoleId
+                                            select o.Name
+                                        ).ToList())
+									};
+					var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+					return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+				}
+				else throw new Exception("查無會員資料");
+			}
+			catch (Exception e)
+			{
+
+			}
+
+			return new JsonResult(new List<MemberGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+		}
+		public async Task<MemberGetAllDataDto> GetAllData(long id)
         {
             try
             {

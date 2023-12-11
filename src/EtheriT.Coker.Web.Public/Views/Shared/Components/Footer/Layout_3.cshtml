@@ -41,29 +41,29 @@
 </script>
 
 <div class="bg_gray_dark d-flex justify-content-center align-items-center text-white font_small">
-	<div class="px-4">
+	<div class="align-items-baseline d-flex ju px-4 gap-3">
 		@for (int i = 0; i < Model.Content.Count; i++)
 		{
 			@if (i == Model.Content.Count - 1)
 			{
 				<div class="text-center text-md-start">
 					@Model.Content[i]
-					@if (Model.Privacy_Link != null)
-					{
-						<a class="text-white text-decoration-underline" href="@Model.Privacy_Link" title="連結至:隱私權聲明">隱私權聲明</a>
-					}
-					@if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
-					{
-						<a href="@Model.Accessibility_Link" title="連結至:無障礙網站AA認證">
-							<img class="px-3 my-3" alt="無障礙網站AA認證" src="@Model.Accessibility_Badge" />
-						</a>
-					}
 				</div>
 			}
 			else
 			{
 				<div class="">@Model.Content[i]</div>
 			}
+		}
+		@if (Model.Privacy_Link != null)
+		{
+			<a class="text-white text-decoration-underline" href="@Model.Privacy_Link" title="連結至:隱私權聲明">隱私權聲明</a>
+		}
+		@if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
+		{
+			<a href="@Model.Accessibility_Link" title="連結至:無障礙網站AA認證">
+				<img class="px-3 my-3" alt=" " src="@Model.Accessibility_Badge" />
+			</a>
 		}
 	</div>
 </div>

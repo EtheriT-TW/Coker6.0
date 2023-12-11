@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
     {
         public long Id { get; set; }
         public string Name { get; set; }
-        public string NickName { get; set; }
+        public string? NickName { get; set; }
         public int? Sex { get; set; }
         public int? Status { get; set; }
         public string Email { get; set; }

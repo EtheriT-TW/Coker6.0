@@ -9,6 +9,16 @@
         background-color: #FFD700;
     }
 }
+.siteName {
+    font-size: 1rem;
+    &:before{
+        content:"("
+    }
+    &:after{
+        content:")"
+    }
+}
+
 .powerctrl {
     border-radius: 20px;
     font-weight: bold;
@@ -53,26 +63,48 @@
             border-bottom: 1px solid #180202;
         }
     }
-
- 
 }
+
 .offcanvas {
     .w31 {
         width: 100%;
         padding: 20px;
     }
 
+    .btns {
+        .delete {
+            background-color: var(--theme-colors-danger);
+            color: #fff;
+        }
+
+        .cancel {
+            background-color: var(--bs-gray-300);
+        }
+
+        .btn {
+            margin: 0 1rem;
+            font-weight: 600;
+            width:150px;
+        }
+
+        padding-bottom: 20px;
+    }
+
     .submit {
         background: #FFD700;
-        
     }
 }
+#offcanvastopByNewMember{top:10%;}
+
 .offcanvas-top {
     width: 30%;
-    height: 70vh;
-    top:15%;
-    left:35%;
+    min-width: 660px;
+    height: auto;
+    top: unset;
+    bottom: unset;
+    margin: auto;
 }
+
 .fa-chevron-right, .fa-chevron-left {
     margin: 3px 0;
     width: 60px;
@@ -82,5 +114,33 @@
 
     p {
         font-size: 14px;
+    }
+}
+
+.item {
+    color: #333;
+
+    .title {
+        font-weight: bold;
+        font-style: italic;
+    }
+
+    .row {
+        margin-bottom: 4rem;
+    }
+
+    .item {
+        margin-left: 3rem;
+        color: darkorange;
+
+        .row {
+            margin-bottom: 1rem;
+        }
+    }
+}
+form.readonly {
+    input, select {
+        background:#ccc;
+        pointer-events: none;
     }
 }

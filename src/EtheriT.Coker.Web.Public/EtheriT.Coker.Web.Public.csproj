@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="appsettings.EPZA.json" />
+    <Content Remove="appsettings.Haoguang.json" />
     <Content Remove="Views\Page\OrderManagement.cshtml" />
     <Content Remove="wwwroot\css\Page\OrderManagement.css" />
     <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -21,7 +23,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="SimpleCaptcha" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +33,13 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.EPZA.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="appsettings.Haoguang.json" />
   </ItemGroup>
 
 </Project>

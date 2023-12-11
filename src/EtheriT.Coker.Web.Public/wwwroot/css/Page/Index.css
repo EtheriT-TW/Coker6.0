@@ -26,10 +26,6 @@
 }
 
 @media only screen and (max-width: 768px) {
-    .top_title_3 {
-        background-color: #000;
-    }
-
         .top_title_3 > .title {
             text-align: center;
         }

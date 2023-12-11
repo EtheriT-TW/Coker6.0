@@ -19,6 +19,7 @@
 
     <meta name="author" content="易碩網際科技股份有限公司" />
     <meta name="copyright" content="易碩網際科技股份有限公司" />
+    <meta name="description" content="@ViewData["Description"]">
     <meta itemprop="name" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
     <meta itemprop="description" content="@ViewData["Description"]" />
     <meta name="twitter:title" content="@ViewData["PageName"]｜@ViewData["SideName"]" />
@@ -56,13 +57,13 @@
         {
             ViewData["VisibleFooter"] = "true";
         }
+        string VisibleHeader = bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true")?"":"d-none";
+        string VisibleFooter = bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true") ? "" : "d-none";
+
     }
-    @if (bool.Parse(ViewData["VisibleHeader"].ToString()))
-    {
-        <header class="">
-            @await Component.InvokeAsync(nameof(Header))
-        </header>
-    }
+    <header class="@VisibleHeader">
+        @await Component.InvokeAsync(nameof(Header))
+    </header>
     <noscript>
         <p id="noscript">
             <span>你的瀏覽器並未啟動 Javascript!</span><br />
@@ -73,12 +74,9 @@
         <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="中間區域">:::</a>
         @RenderBody()
     </div>
-    @if (bool.Parse(ViewData["VisibleFooter"].ToString()))
-    {
-        <footer>
-            @await Component.InvokeAsync(nameof(Footer))
-        </footer>
-    }
+    <footer class="@VisibleFooter">
+        @await Component.InvokeAsync(nameof(Footer))
+    </footer>
     <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered justify-content-center">
             <div class="modal-content">
@@ -87,7 +85,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="text-center fs-4 fw-bold">會員登入</div>
-                    <form id="LoginForm" class="card-body needs-validation">
+                    <form id="LoginForm" class="card-body needs-validation" method="post">
+                        <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                         <div class="login_mail input-group mb-3">
                             <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                 <span class="material-symbols-outlined text-black-50">mail</span>
@@ -123,15 +122,18 @@
             </div>
         </div>
     </div>
-    <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered justify-content-center">
+    @if (ViewData["LoginEnable"]!=null && bool.Parse(ViewData["LoginEnable"].ToString()) == true)
+    {
+        <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered justify-content-center">
             <div class="modal-content">
                 <div class="modal-header border-0">
                     <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="text-center fs-4 fw-bold">加入會員</div>
-                    <form id="RegisterForm" class="card-body needs-validation">
+                    <form id="RegisterForm" class="card-body needs-validation" method="post">
+                        <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                         <div class="register_mail input-group mb-3">
                             <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                 <span class="material-symbols-outlined text-black-50">mail</span>
@@ -177,6 +179,7 @@
             </div>
         </div>
     </div>
+    }
     <div id="videoModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
         <div class="modal-dialog modal-xl modal-dialog-centered h-75">
             <div class="modal-content bg-black h-100">
@@ -186,6 +189,26 @@
                 <div class="modal-body h-100 text-white text-center m-5">
                     <i class="fa fa-duotone fa-spinner fa-spin-pulse fa-10x"></i>
                     <div class="fa-3x massage d-none">影片連結設定錯誤</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="SwiperModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen">
+            <div class="modal-content bg-black h-100">
+                <div class="modal-header">
+                    <button type="button" data-bs-dismiss="modal" aria-label="Close" class="btn-close rounded-circle bg-light"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="pictureSwiper" class="swiper">
+                        <div class="swiper-button-prev"></div>
+                        <div class="swiper-wrapper"></div>
+                        <div class="swiper-pagination"></div>
+                        <div class="swiper-button-next"></div>
+                    </div>
+                    <div id="pictureSwiperThumbs" thumbsSlider="" class="swiper">
+                        <div class="swiper-wrapper"></div>
+                    </div>
                 </div>
             </div>
         </div>

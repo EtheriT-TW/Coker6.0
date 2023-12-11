@@ -23,6 +23,12 @@ using Microsoft.AspNetCore.Authentication;
 using EtheriT.Coker.Application.Shared.Dto.User;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Serialization;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto;
+using System.Xml.Linq;
+using AutoMapper;
+using EtheriT.Coker.Web.Core.Models;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -33,12 +39,15 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly ITokenAppService tokenAppService;
         private readonly LoginUserData loginUserData;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IMapper mapper;
+        private readonly string controllerName;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
             LoginUserData loginUserData,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor, 
+            IMapper mapper
         )
         {
             this.db = db;
@@ -46,10 +55,13 @@ namespace EtheriT.Coker.Application.Authorization
             this.tokenAppService = tokenAppService;
             this.loginUserData = loginUserData;
             this.httpContextAccessor = httpContextAccessor;
+            this.mapper = mapper;
+            controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
         {
             LoginOutputDto output = new LoginOutputDto() { Success = false };
+            long? userId=null, websiteId=null;
             try
             {
                 if (string.IsNullOrEmpty(dto.UserName)) throw new Exception("使用者名稱不可為空");
@@ -59,6 +71,7 @@ namespace EtheriT.Coker.Application.Authorization
                 {
                     var user = await users.FirstOrDefaultAsync();
                     string password = user.Password;
+                    userId = user.Id;
                     if (passwordHasher.VerifyHashedPassword(password, dto.Password))
                     {
                         DateTime dateTime = DateTime.Now;
@@ -70,7 +83,12 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                         if (!await loginUserData.CheckedWebSiteId(user.Id, bindID)) {
                             var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
-                            if (defaultWeb != null) bindID = defaultWeb.UserId;
+                            if (defaultWeb != null)
+                            {
+                                bindID = defaultWeb.UserId;
+                                websiteId = defaultWeb.WebsiteId;
+                            }
+                            else throw new Exception("無可管理的網站");
                         }
                         Core.Models.Token t = new Core.Models.Token
                         {
@@ -96,7 +114,8 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Success = false;
                 output.Error = e.Message;
             }
-
+            dto.Password = "******";
+			await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         [Authorize]
@@ -191,13 +210,6 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto) {
 			LoginOutputDto output = new LoginOutputDto() { Success = false };
             long userId = await loginUserData.GetUserId();
-			/*
-                至少有一個數字
-                至少有一個大寫或小寫英文字母
-                至少有一個特殊符號
-                字串長度在 6 ~ 30 個字母之間
-             */
-			Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{6,30}$");
 			var users = await db.Users
                 .Where(e => e.Id == userId)
                 .Where(e => !e.IsDeleted)
@@ -205,12 +217,14 @@ namespace EtheriT.Coker.Application.Authorization
                 .FirstOrDefaultAsync();
             if (users == null) output.Message = "使用者已被登出";
 			else if (!passwordHasher.VerifyHashedPassword(users.Password, dto.Password)) output.Message = "原始密碼錯誤";
-            else if(!regex.IsMatch(dto.NewPassword)) output.Message = "密碼原則錯誤";
 			else
 			{
                 try
                 {
-					string HashedPassword = passwordHasher.HashPassword(dto.NewPassword);
+                    string passwordError = checkPassword(dto.NewPassword);
+                    if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+
+                    string HashedPassword = passwordHasher.HashPassword(dto.NewPassword);
 					users.Password = HashedPassword;
 					await loginUserData.SaveChanges(users);
 					output.Success = true;
@@ -222,6 +236,94 @@ namespace EtheriT.Coker.Application.Authorization
             await loginUserData.SetLogs("Account", "UpdatePassword",JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(output));
 			return output;
 		}
-
-	}
+        public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto) {
+            ResponseUserEditDto output = new ResponseUserEditDto();
+            try
+            {
+                var siteId = await loginUserData.GetWebsiteId();
+                var theUser = await db.Users.Include(e => e.Webs)
+                    .Where(e => e.Id == dto.Id)
+                    .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                if (theUser != null)
+                {
+                    var webMap = theUser.Webs.Where(e => e.WebsiteId == siteId);
+                    if (webMap.Any())
+                    {
+                        mapper.Map(theUser, output.data);
+                    }else throw new Exception("該使用者並未授權管理該網站");
+                }
+                else throw new Exception("使用者不存在");
+                output.Success = true;
+            }
+            catch(Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "GetEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            return output;
+        }
+        public async Task<ResponseMessageDto> AddUser(AddUser dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                var theUser = await db.Users
+                    .Where(e => e.Account == dto.Account || e.Email == dto.Email)
+                    .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                string passwordError = checkPassword(dto.Password);
+                if (theUser != null) throw new Exception("該使用者的帳號或信箱已存在");
+                else if (dto.Password != dto.PasswordConfirm) throw new Exception("該使用者的帳號或信箱已存在");
+                else if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+                else
+                {
+                    User user = mapper.Map<User>(dto);
+                    user.Password = passwordHasher.HashPassword(dto.Password);
+                    db.Users.Add(user);
+                    await loginUserData.SaveChanges(user);
+                    response.Success = true;
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            dto.Password = "*********";
+            dto.PasswordConfirm = "*********";
+            await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        private string checkPassword(string password)
+        {
+            string error = string.Empty;
+            int matchCount = 0;
+            /*
+                至少有一個數字
+                至少有一個大寫或小寫英文字母
+                至少有一個特殊符號
+                字串長度在 8 ~ 30 個字母之間
+                Regex regex = new Regex(@"^(?=.*\d)(?=.*[a-zA-Z])(?=.*\W).{8,30}$");
+             */
+            try
+            {
+                //密碼長度須為8-30之間
+                if (password.Length < 8 || password.Length > 30) throw new Exception("密碼長度須為8-30之間");
+                //密碼有數字
+                Regex regex1 = new Regex(@"^(?=.*\d).{8,30}$");
+                if (regex1.IsMatch(password)) matchCount++;
+                //密碼有英文小寫
+                Regex regex2 = new Regex(@"^(?=.*[a-z]).{8,30}$");
+                if (regex2.IsMatch(password)) matchCount++;
+                //密碼有英文大寫
+                Regex regex3 = new Regex(@"^(?=.*[A-Z]).{8,30}$");
+                if (regex3.IsMatch(password)) matchCount++;
+                //密碼有符號
+                Regex regex4 = new Regex(@"^(?=.*\W).{8,30}$");
+                if (regex4.IsMatch(password)) matchCount++;
+                if (matchCount < 3) throw new Exception("密碼須滿足有英文大寫、小寫、符號、數字中的三個");
+            }
+            catch(Exception ex)
+            {
+                error = ex.Message;
+            }
+            return error;
+        }
+    }
 }

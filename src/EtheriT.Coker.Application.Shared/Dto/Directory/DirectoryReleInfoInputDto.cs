@@ -9,5 +9,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public int? ShowNum { get; set; }
         public int? MaxLen { get; set; }
         public int? TotalPage { get; set; }
+        public string? SearchText { get; set; }
+        public string? Type { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public List<long>? FilterTagId { get; set; }
     }
 }

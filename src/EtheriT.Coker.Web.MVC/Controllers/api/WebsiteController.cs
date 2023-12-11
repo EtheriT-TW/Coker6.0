@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> GetPrivacyAndTerms()
         {
             return await websiteApplication.GetPrivacyAndTerms();
+        }
+        [HttpPost]
+        [Authorize]
+        public async Task<ResponseMessageDto> Save(WebsiteEditDto dto)
+        {
+            return await websiteApplication.Save(dto);
         }
     }
 }

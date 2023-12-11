@@ -2,7 +2,7 @@
 var MonthSecond = 30 * 24 * 60 * 60 * 1000;
 var Coker = {
     Data: {
-        DefauleUrl: "/Dashboard/index",
+        DefauleUrl: "/Welcome/index",
         Header: {
             Authorization: 'Bearer ' + $.cookie("token"),
             Secret: $.cookie("secret")
@@ -71,7 +71,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ Id: id }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             }).done(function (result) {
                 if (result.success) {
                     co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
@@ -88,6 +92,24 @@ var Coker = {
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        Save: function (data) {
+            return $.ajax({
+                url: "/api/Website/Save",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }
     },
@@ -134,7 +156,11 @@ var Coker = {
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             }).done(function (result) {
                 co.Cookie.AddAll({
                     token: result.token,
@@ -159,17 +185,240 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(para),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             }).done(function (result) {
                 if (result.success) {
                     _c.sweet.success("密碼變更成功");
                     _dfr.resolve();
-                } else { 
-                    _c.sweet.error(result.message);
+                } else {
+                    _c.sweet.error(result.message, "密碼請包含英文大小寫、數字及特殊符號且密碼長度達十二碼以上!!");
                     _dfr.resolve();
                 }
             });
             return _dfr.promise();
+        }
+    },
+    Company: {
+        Save: function (data) {
+            return $.ajax({
+                url: "/api/Company/Save",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    Recipient: {
+        DeleteRecipients: function (id) {
+            return $.ajax({
+                url: "/api/Newsletter/DeleteRecipients/",
+                type: "DELETE",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id }),
+            });
+        },
+        GetRecipientsTag: function () {
+            return $.ajax({
+                url: "/api/Newsletter/GetRecipientsTag/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    Newsletter: {
+        send: function (id) {
+            return $.ajax({
+                url: "/api/Newsletter/Send/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ id: id }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    PowerManagement: {
+        GetAll: function () {
+            return $.ajax({
+                url: "/api/PowerManagement/AllMenus/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        getAllUsers: function () {
+            return $.ajax({
+                url: "/api/PowerManagement/AllUsers/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        GetUser: (id) => {
+            return $.ajax({
+                url: "/api/PowerManagement/GetUser/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ id: id }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        AddUser: function (data) {
+            return $.ajax({
+                url: "/api/PowerManagement/AddUser/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        RemoveMappingUserAndWebsite: (id) => {
+            return $.ajax({
+                url: "/api/PowerManagement/RemoveMappingUserAndWebsite/",
+                type: "DELETE",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id }),
+            });
+        },
+        MappingUserAndWebsite: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/MappingUserAndWebsite",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        AddRole: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/AddRole",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, AddUserToRole: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/AddUserToRole",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, RemoveUserToRole: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/RemoveUserToRole",
+                type: "DELETE",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        EditRole: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/EditRole",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, DeleteRole: (id) => {
+            return $.ajax({
+                url: "/api/PowerManagement/DeleteRole/",
+                type: "DELETE",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify({ Id: id }),
+            });
+        },
+        GetPermissions: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/GetPermissions",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        SavePermissions: (data) => {
+            return $.ajax({
+                url: "/api/PowerManagement/SavePermissions",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
         }
     },
     sweet: {
@@ -241,7 +490,7 @@ var Coker = {
                 timePicker: true,
                 timePicker24Hour: true,
                 autoUpdateInput: true,
-                showDropdowns:true,
+                showDropdowns: true,
                 locale: {
                     format: 'YYYY/MM/DD HH:mm',
                     separator: " ~ ",
@@ -252,7 +501,6 @@ var Coker = {
                 }
             }, setting || {})
             $picker.daterangepicker(target);
-
             $picker.on('cancel.daterangepicker', function (ev, picker) {
                 $(this).val("");
             });
@@ -266,7 +514,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         Get: function (id) {
@@ -276,6 +528,10 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { id: id },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         Delete: function (id) {
@@ -286,6 +542,10 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ Id: myId }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         GetTypeList: function () {
@@ -294,7 +554,11 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         GetAllComponent: function () {
@@ -303,7 +567,11 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         GetComponent: function (type) {
@@ -313,7 +581,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ type: type }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }
     },
@@ -324,7 +596,11 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         getAllList: function () {
@@ -333,7 +609,11 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         createOrEdit: function (data) {
@@ -343,7 +623,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         getConten: function (id) {
@@ -353,7 +637,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         saveConten: function (data) {
@@ -363,7 +651,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         importConten: function (data) {
@@ -373,7 +665,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         delete: function (id) {
@@ -383,7 +679,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         updateLevelAndSerNo: function (list) {
@@ -393,7 +693,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ list: list }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         GetPageTypeList: function () {
@@ -402,7 +706,11 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
     },
@@ -413,7 +721,11 @@ var Coker = {
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }, createOrEdit: function (data) {
             return $.ajax({
@@ -422,7 +734,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }, delete: function (id) {
             return $.ajax({
@@ -431,7 +747,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }, updateSerNo: function (list) {
             return $.ajax({
@@ -440,7 +760,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ list: list }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }, getConten: function (id) {
             return $.ajax({
@@ -449,12 +773,92 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, GetNewsletterConten: function () {
+            return $.ajax({
+                url: "/api/ObjectType/GetNewsletterConten",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }, SaveConten: function (data) {
             return $.ajax({
                 url: "/api/ObjectType/saveConten",
                 type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
+    Articles: {
+        AddUp: function (data) {
+            return $.ajax({
+                url: "/api/Article/AddUp",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        GetDataOne: function (Id) {
+            return $.ajax({
+                url: "/api/Article/GetDataOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: Id },
+            });
+        },
+        Delete: function (Id) {
+            return $.ajax({
+                url: "/api/Article/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Id: Id },
+            });
+        },
+        GetConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/GetConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        SaveConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/SaveConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        ImportConten: function (data) {
+            return $.ajax({
+                url: "/api/Article/ImportConten",
+                type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
@@ -471,7 +875,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             Stock: function (data) {
@@ -481,7 +889,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             ProdTechCert: function (data) {
@@ -491,7 +903,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             ProdPrice: function (data) {
@@ -501,7 +917,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             Import: function (formData) {
@@ -514,7 +934,11 @@ var Coker = {
                     crossDomain: true,
                     dataType: 'json',
                     mimeType: "multipart/form-data",
-                    processData: false
+                    processData: false,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             }
         },
@@ -526,6 +950,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { id: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             ProdStock: function (id) {
@@ -535,6 +963,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { PId: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             ProdTechCert: function (id) {
@@ -544,6 +976,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { PId: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             ProdPrice: function (id) {
@@ -553,6 +989,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { PSId: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
         },
@@ -564,6 +1004,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { Id: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             Stock: function (id) {
@@ -573,6 +1017,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { Id: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             Price: function (id) {
@@ -582,6 +1030,10 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: { Id: id },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             }
         },
@@ -593,7 +1045,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             SaveConten: function (data) {
@@ -603,7 +1059,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             },
             ImportConten: function (data) {
@@ -613,7 +1073,11 @@ var Coker = {
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json"
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("requestverificationtoken",
+                            $('input:hidden[name="AntiforgeryFieldname"]').val());
+                    }
                 });
             }
         }
@@ -626,6 +1090,10 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { id: id },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         Update: function (data) {
@@ -635,7 +1103,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         GetSelf: function () {
@@ -644,6 +1116,10 @@ var Coker = {
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }
     },
@@ -655,7 +1131,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         Get: function (id) {
@@ -665,6 +1145,10 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { PId: id },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }
     },
@@ -679,7 +1163,11 @@ var Coker = {
                 crossDomain: true,
                 dataType: 'json',
                 mimeType: "multipart/form-data",
-                processData: false
+                processData: false,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         Upload360: function (formData) {
@@ -692,7 +1180,11 @@ var Coker = {
                 crossDomain: true,
                 dataType: 'json',
                 mimeType: "multipart/form-data",
-                processData: false
+                processData: false,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         UploadYTLink: function (data) {
@@ -702,7 +1194,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         getFileList: function (type) {
@@ -712,7 +1208,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ type: type }),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         getImgFile: function (data) {
@@ -722,7 +1222,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         fileSortChange: function (data) {
@@ -732,7 +1236,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         Delete: function (data) {
@@ -742,7 +1250,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         DeleteFileById: function (data) {
@@ -752,7 +1264,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         UploadImageInit: function (elementId, label_text) {
@@ -812,7 +1328,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         TypeDelect: function (id) {
@@ -822,6 +1342,10 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { Id: id },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         SpecDelect: function (id) {
@@ -831,6 +1355,10 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { Id: id },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         GetPickSpecList: function () {
@@ -839,6 +1367,10 @@ var Coker = {
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
     },
@@ -850,7 +1382,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         },
         SaveValues: function (data) {
@@ -860,7 +1396,11 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json"
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
             });
         }
     },
@@ -895,8 +1435,38 @@ var Coker = {
             return array;
         }
     },
+    Array: {
+        Search: function (array, obj, rejectID) {
+            var index = -1
+            var i = 0;
+            if (Array.isArray(array)) {
+                array.forEach(function (element) {
+                    var m = true;
+                    if (element.ID != rejectID || typeof (rejectID) == "undefined") {
+                        for (var key in obj) {
+                            if (element[key] != obj[key]) {
+                                m = false;
+                                break;
+                            }
+                        }
+                        if (m) {
+                            index = i;
+                            return;
+                        }
+                    }
+                    i++;
+                });
+            }
+            return index;
+        },
+        Delete: function (array, obj) {
+            const index = _c.Array.Search(array, obj);
+            if(index >-1) array.splice(index, 1);
+        }
+    },
     Zipcode: {
         init: function (id) {
+            const reandomStr = co.String.generateRandomString(5);
             $TWzipcode = $(id);
 
             $TWzipcode.twzipcode({
@@ -909,64 +1479,124 @@ var Coker = {
             $district = $TWzipcode.children('.district');
 
             $county.children('select').attr({
-                id: "SelectCity",
+                id: `SelectCity_${reandomStr}`,
                 class: "city form-select",
                 required: "required"
             });
-            $county.append("<label class='px-4 required' for='SelectCity'>縣市</label>");
+            $county.append(`<label class='px-4 required' for='SelectCity_${reandomStr}'>縣市</label>`);
             var $county_first_option = $county.children('select').children('option').first();
             $county_first_option.text("請選擇縣市");
             $county_first_option.attr('disabled', 'disabled');
 
             $district.children('select').attr({
-                id: "SelectTown",
+                id: `SelectTown_${reandomStr}`,
                 class: "town form-select",
                 required: "required"
             });
-            $district.append("<label class='required' for='SelectTown'>鄉鎮</label>");
+            $district.append(`<label class='required' for='SelectTown_${reandomStr}'>鄉鎮</label>`);
             var $district_first_option = $district.children('select').children('option').first();
             $district_first_option.text("請選擇鄉鎮");
             $district_first_option.attr('disabled', 'disabled');
         },
         setData: function (obj) {
             const $addr = obj.el.find(".address");
-            var address_split = obj.addr.split(" ");
-            obj.el.twzipcode('set', {
-                'county': address_split[0],
-                'district': address_split[1],
-            });
-            $addr.val(address_split[2]);
+            if (co.String.isNullOrEmpty(obj.addr)) {
+                obj.el.twzipcode('reset');
+                obj.el.find(".address").val("");
+            } else {
+                var address_split = obj.addr.split(" ");
+                obj.el.twzipcode('set', {
+                    'county': address_split[0],
+                    'district': address_split[1],
+                });
+                $addr.val(address_split[2]);
+            }
         },
         getData: function ($e) {
             return $e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()
         }
     },
     Form: {
-        insertData: function (obj) {
+        insertData: function (obj, $self) {
+            if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
+            else if (typeof ($self) == "string") $self = $($self);
+            const formTypeSet = (type, $e, value) => {
+                switch (type) {
+                    case "zipcode":
+                        co.Zipcode.setData({
+                            el: $e,
+                            addr: value
+                        });
+                        break;
+                    case "date_range":
+                        if (!!!$e.data('daterangepicker')) _c.Picker.Init($e);
+                        if (!!obj[$e.data("start")] || !!obj[$e.data("end")]) {
+                            $e.data('daterangepicker').setStartDate(obj[$e.data("start")]);
+                            $e.data('daterangepicker').setEndDate(obj[$e.data("end")]);
+                        } else $e.val("");
+                        break;
+                    case "date":
+                        if (!!!$e.data('daterangepicker'))
+                            _c.Picker.Init($e, { singleDatePicker: true, timePicker: false, locale: { format: 'YYYY/MM/DD' } });
+                        $e.data('daterangepicker').setStartDate(value||"");
+                        break;
+                    case "disabled":
+                        $e.on("change", function () {
+                            const checked = $(this).data("direct") == "reverse" ? !$(this).prop("checked") : $(this).prop("checked");
+                            if (checked) $(`#${$(this).data("target")}`).attr("disabled", "disabled").val("");
+                            else $(`#${$(this).data("target")}`).removeAttr("disabled")
+                        });
+
+                        if (!!$e.data("value")) {
+                            let _v = $(`#${$e.data("target")}`).val();
+                            if (typeof ($e.data("value")) == "number") _v = parseInt(_v);
+                            else if (typeof ($e.data("value")) == "string") _v = _v.toString();
+                            value = $e.data("direct") == "reverse" ? !($e.data("value") == _v) : $e.data("value") == _v;
+                        }
+                        $e.prop("checked", value);
+                        $e.trigger("change");
+                        break;
+                    case "images":
+                        if (!!!$e.data("init")) {
+                            $e.ImageUploadModalClear();
+                            $e.data("init",true)
+                        }
+                        co.File.getImgFile({ Sid: obj[$e.data("target")], Type: $e.data("image-type"), Size: $e.data("image-size") }).done(function (file) {
+                            if (file.length > 0)
+                                ImageUploadModalDataInsert($e, file[0].id, file[0].link, file[0].name)
+                        });
+                        break;
+                    default:
+                        $e.val(value);
+                        break;
+                }
+            }
             for (const key in obj) {
-                const $e = $(`[name="${key}"]`);
+                const $e = $self.find(`[name="${key}"]`);
                 if ($e.length > 0) {
-                    switch ($e[0].tagName) {
-                        case "INPUT":
-                            switch ($e.attr("type").toLowerCase()) {
-                                case "radio":
-                                    $(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
-                                    break;
-                                default:
-                                    $e.val(obj[key]);
-                                    break;
-                            }
-                            break;
-                        case "DIV":
-                            switch ($e.data("formType")) {
-                                case "zipcode":
-                                    co.Zipcode.setData({
-                                        el: $e,
-                                        addr: obj[key]
-                                    });
-                                    break;
-                            }
-                            break;
+                    if (!!$e.data("form-type")) formTypeSet($e.data("form-type"), $e, obj[key])
+                    else {
+                        switch ($e[0].tagName) {
+                            case "INPUT":
+                                switch ($e.attr("type").toLowerCase()) {
+                                    case "radio":
+                                        $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
+                                        break;
+                                    case "checkbox":
+                                        $e.prop("checked", obj[key]);
+                                        break;
+                                    default:
+                                        $e.val(obj[key]);
+                                        break;
+                                }
+                                break;
+                            case "TEXTAREA":
+                                $e.text(obj[key]);
+                                break;
+                            default:
+                                $e.val(obj[key]);
+                                break;
+                        }
                     }
                 } else console.log(key);
             }
@@ -978,13 +1608,52 @@ var Coker = {
             let exItems = $(`#${id}`).find(`div[name]`);
             exItems.each(function () {
                 const $e = $(this);
-                switch ($e.data("formType")) {
+                switch ($e.data("form-type")) {
                     case "zipcode":
                         formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
                         break;
                 }
             });
             return formDataObject;
+        },
+        init: function (id, fun) {
+            const form = document.getElementById(id);
+            form.addEventListener('submit', event => {
+                $(form).find(".customValidity").get(0).setCustomValidity("");
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    fun && fun(id);
+                }
+                form.classList.add('was-validated');
+            }, false)
+        }
+    }, String: {
+        generateRandomString: function (num) {
+            const characters =
+                'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result1 = ' ';
+            const charactersLength = characters.length;
+            for (let i = 0; i < num; i++) {
+                result1 +=
+                    characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+
+            return result1;
+        },
+        isNullOrEmpty: function (str) {
+            if (typeof (str) == "undefined" || str == null || str.trim() == "") return true;
+            else return false;
+        }
+    }, Grapes: {
+        setEditor: (editor,html,css) => {
+            editor.DomComponents.clear(); // Clear components
+            editor.CssComposer.clear();  // Clear styles
+            editor.UndoManager.clear(); // Clear undo history
+            editor.setStyle(css);
+            editor.setComponents(html);
         }
     }
 }

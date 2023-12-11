@@ -11,11 +11,19 @@
     <None Remove="Views\UserManagement\**" />
   </ItemGroup>
   <ItemGroup>
+    <Content Remove="appsettings.EPZA.json" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Resources\" />
     <Folder Include="wwwroot\css\Dashboard\" />
     <Folder Include="wwwroot\lib\fortawesome\css\" />
     <Folder Include="wwwroot\lib\jquery-menu-editor\" />
     <Folder Include="wwwroot\lib\tui-code\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.EPZA.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
@@ -35,7 +43,7 @@
     <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Update="appsettings2.json">
+    <Content Update="appsettings.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

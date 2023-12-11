@@ -64,11 +64,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             if (data_f.Children != null)
                             {
                                 var secitemModels = new List<MenuItem.MenuItemModel> { };
+                                int length = 0;
                                 data_f.Children.ForEach(data_s =>
                                 {
                                     if (data_s.Children != null)
                                     {
                                         var thirditemModels = new List<MenuItem.MenuItemModel> { };
+                                        length+= data_s.Children.Count();
                                         data_s.Children.ForEach(data_t =>
                                         {
                                             thirditemModels.Add(new MenuItem.MenuItemModel
@@ -109,6 +111,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 {
                                     Title = data_f.Title,
                                     menuItemModels = secitemModels,
+                                    Length = length
                                 });
                             }
                             else

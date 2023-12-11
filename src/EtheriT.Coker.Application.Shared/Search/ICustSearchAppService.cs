@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Shared.Dto.Search;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -11,5 +12,6 @@ namespace EtheriT.Coker.Application.Search
     public interface ICustSearchAppService
     {
         public Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions);
+        public Task<List<SearchItemDto>> GetSearchList(long sid);
     }
 }

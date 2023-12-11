@@ -1,5 +1,5 @@
 ﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text
-var keyId, disp_opt = true
+var keyId, disp_opt = true, DirectoryId = 0, DirectoryType="n";
 var directory_list;
 
 function PageReady() {
@@ -142,7 +142,8 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
             if (!!hash && isNaN(hash)) {
-                MoveToItemList();
+                if (hash.indexOf("Editor") > -1) MoveToItemEdit();
+                else MoveToItemList();
             }else if (parseInt(hash) == 0) {
                 window.location.hash = 0;
                 keyId = 0;
@@ -170,6 +171,9 @@ function contentReady(e) {
     directory_list = e;
     HashDataEdit();
 }
+function DirectoryDatailListReady(e) {
+    directoryDatailList = e;
+}
 
 function editButtonClicked(e) {
     MoveToContent();
@@ -196,6 +200,12 @@ function reladataButtonClicked(e) {
     keyId = `${type}_${e.row.key}`;
     window.location.hash = keyId;
 }
+function GetDirectoryId() {
+    return DirectoryId;
+}
+function GetDirectoryType() {
+    return DirectoryType;
+}
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
@@ -219,7 +229,6 @@ function FormDataClear() {
 }
 
 function FormDataSet(result) {
-    console.log(result)
     FormDataClear();
     keyId = result.id;
     disp_opt = result.visible;
@@ -285,6 +294,7 @@ function MoveToContent() {
     $("#DirectoryContent").removeClass("d-none");
     $("#DirectoryCanvas").addClass("d-none");
     $("#DirectoryItemps").addClass("d-none");
+    $("#ArticleContent").addClass("d-none");
 }
 
 function BackToList() {
@@ -293,6 +303,9 @@ function BackToList() {
     $("#DirectoryContent").addClass("d-none");
     $("#DirectoryCanvas").addClass("d-none");
     $("#DirectoryItemps").addClass("d-none");
+    $("#ArticleContent").addClass("d-none");
+    DirectoryId = 0;
+    DirectoryType = "n";
     window.location.hash = ""
 }
 
@@ -303,6 +316,57 @@ function MoveToItemList() {
     $("#DirectoryCanvas").addClass("d-none");
     $("#DirectoryItemps").removeClass("d-none");
     $("#DirectoryItemps>div").addClass("d-none");
+    $("#ArticleContent").addClass("d-none");
     const items = $(`#DirectoryItemps>.${para[0].toLowerCase()}`).removeClass("d-none");
     if (items.length == 0) BackToList();
+    else if (para.length > 1 && !isNaN(para[1])) {
+        DirectoryId = parseInt(para[1]);
+        DirectoryType = para[0];
+        switch (para[0]) {
+            case "Articles":
+                directoryDatailList.component.refresh();
+                break
+            default:
+                BackToList();
+                break
+        }
+       
+    }
+}
+function MoveToItemEdit() {
+    const para = window.location.hash.replace("#", "").split("_");
+    $("#DirectoryList").addClass("d-none");
+    $("#DirectoryContent").addClass("d-none");
+    $("#DirectoryCanvas").addClass("d-none");
+    $("#DirectoryItemps").addClass("d-none");
+    $("#DirectoryItemps>div").addClass("d-none");
+    $("#ArticleContent").removeClass("d-none");
+    if (para.length > 1 && !isNaN(para[1])) {
+        switch (para[0]) {
+            case "ArticlesEditor":
+                co.Articles.GetDataOne(parseInt(para[1])).done(function (result) {
+                    if (result != null) {
+                        result.startEndDate = 0;
+                        result.sortCheckbox = 1;
+                        result.ImageUpload = 1;
+                        co.Form.insertData(result, "#ArticletForm")
+                        TagDataSet(result.tagDatas);
+                    } else BackToList();
+                })
+                break
+            default:
+                BackToList();
+                break
+        }
+
+    }
+}
+function editArticlesButtonClicked(e) {
+    window.location.hash = "ArticlesEditor_" + e.row.key;
+}
+function paletteArticlesButtonClicked() {
+
+}
+function deleteArticlesButtonClicked() {
+
 }

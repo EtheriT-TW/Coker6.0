@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -54,8 +57,8 @@ namespace EtheriT.Coker.Application
             }
             return id;
         }
-        public async Task<UserDto> GetUser() {
-            UserDto user = new UserDto { Id = 0 };
+        public async Task<UserSimplifyDto> GetUser() {
+			UserSimplifyDto user = new UserSimplifyDto { Id = 0 };
             try
             {
                 if (httpContextAccessor.HttpContext == null) throw new Exception();
@@ -70,8 +73,21 @@ namespace EtheriT.Coker.Application
             }
             return user;
         }
-
-        public async Task<long> GetWebsiteId()
+        public async Task<UserSimplifyDto> GetUser(long id)
+		{
+			UserSimplifyDto user = new UserSimplifyDto { Id = 0 };
+			try
+			{
+				var detail = await db.Users.Where(e => e.Id == id).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+				mapper.Map(detail, user);
+			}
+			catch (Exception ex)
+			{
+				user.Id = 0;
+			}
+			return user;
+		}
+		public async Task<long> GetWebsiteId()
         {
             if (httpContextAccessor.HttpContext == null) return 0;
 
@@ -153,6 +169,22 @@ namespace EtheriT.Coker.Application
             catch {}
             return name;
         }
+        public async Task<string> GetWebsiteUrl()
+        {
+            Guid s = GetSecret();
+            string url = "";
+            var t = from token in db.Tokens.Where(o => o.id == s)
+                    join web in db.Websites on token.websiteId equals web.Id
+                    select web;
+            var myWeb = await t.FirstOrDefaultAsync();
+            if (myWeb != null) url = myWeb.DefaultUrl??"";
+            return url;
+        }
+        public async Task<WebsiteLevelEnum> GetWebsiteLevel() {
+            long id = await GetWebsiteId();
+            if (id != 0) return (WebsiteLevelEnum)await db.Websites.Where(e => e.Id == id).Select(e => e.Level).FirstOrDefaultAsync();
+            else return WebsiteLevelEnum.形象;
+        }
         public string GetAuthorization() {
             if (httpContextAccessor.HttpContext == null) return StringValues.Empty;
             var authorizationHeader = httpContextAccessor
@@ -207,26 +239,31 @@ namespace EtheriT.Coker.Application
                 db.SaveChangesAsync();
             });
         }
-        private async Task setOptionParameter(FullAuditedEntity entity) {
+        public async Task setOptionParameter(FullAuditedEntity entity) {
             var user = await GetUser();
+            setOptionParameter(entity,user.Id);
+        }
+        public void setOptionParameter(FullAuditedEntity entity,long userId) {
             if (entity.Id == 0)
             {
-                entity.CreatorUserId = user.Id;
+                entity.CreatorUserId = userId;
                 entity.CreationTime = DateTime.Now;
             }
             else if (entity.IsDeleted)
             {
-                entity.DeleterUserId = user.Id;
+                entity.DeleterUserId = userId;
                 entity.DeletionTime = DateTime.Now;
             }
             else
             {
-                entity.LastModifierUserId = user.Id;
+                entity.LastModifierUserId = userId;
                 entity.LastModificationTime = DateTime.Now;
             }
         }
         public async Task SetLogs(string Controller, string Action, string Paramater, string response) {
-            db.AuditLogs.Add(new AuditLog { 
+            var user = await GetUser();
+
+			db.AuditLogs.Add(new Core.Models.AuditLog { 
                 ClientIpAddress = GetClientIP(),
                 BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
                 ExecutionTime = DateTime.Now,
@@ -234,8 +271,28 @@ namespace EtheriT.Coker.Application
                 Parameters = Paramater,
                 ServiceName = Controller,
                 ReturnValue= response,
-                UserId = await GetUserId()
+                UserId = user.Id,
+                ClientName = user.UserName,
+                FK_WebsiteId = await GetWebsiteId()
             });
+            db.SaveChanges();
+        }
+        public async Task SetLogs(string Controller, string Action,long? UsetId,long? WebsiteId, string Paramater, string response)
+        {
+			var user = await GetUser(UsetId.Value);
+			db.AuditLogs.Add(new Core.Models.AuditLog
+            {
+                ClientIpAddress = GetClientIP(),
+                BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
+                ExecutionTime = DateTime.Now,
+                MethodName = Action,
+                Parameters = Paramater,
+                ServiceName = Controller,
+                ReturnValue = response,
+                UserId = UsetId,
+                FK_WebsiteId = WebsiteId,
+				ClientName = user.UserName
+			});
             db.SaveChanges();
         }
     }

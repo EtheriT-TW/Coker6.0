@@ -1,5 +1,6 @@
 ﻿@using System.Web;
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Models;
 @model PageViewModel
 @{
@@ -12,11 +13,26 @@
     ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["XSRF-TOKEN"] = Model.token;
+    switch (Model.Level)
+    {
+        case WebsiteLevelEnum.會員:
+            ViewData["LoginEnable"] = true;
+            break;
+        case WebsiteLevelEnum.購物:
+            ViewData["LoginEnable"] = true;
+            ViewData["ShoppingEnable"] = true;
+            break;
+        default:
+            ViewData["LoginEnable"] = false;
+            ViewData["ShoppingEnable"] = false;
+            break;
+    }
 }
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
-
+@Html.AntiForgeryToken()
 
 @switch (Model.PageData.LayoutType)
 {
@@ -43,10 +59,11 @@
         break;
     case 2:
     case 3:
-        @if (Model.MenuBread.Count() > 0 && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle))
+        @if (Model.MenuBread.Count() > 0 || Model.PageData.VisibleTitle)
         {
             <div class="top_title_3 p-3">
-                @if (Model.ParentData.VisibleHeader){
+                @if (Model.MenuBread.Count() > 0 && Model.ParentData.VisibleHeader)
+                {
                 <nav class="bread d-none d-md-block container">
                     <ol class="list-unstyled d-flex">
                         @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
@@ -63,7 +80,10 @@
                     </ol>
                 </nav>
                 }
-                <div class="title fs-1 fw-bold text-white container">@Model.MenuBread.Last().Title</div>
+                @if (Model.PageData.VisibleTitle)
+                {
+                    <div class="title fs-1 fw-bold text-white container">@(Model.MenuBread.Count() > 0 ? Model.MenuBread.Last().Title : @Model.PageData.Title)</div>
+                }
             </div>
             @if (Model.ParentData.VisibleTitle && Model.PageData != null && Model.PageData.holdPage == EtheriT.Coker.Application.Shared.Dto.enumType.HoldPageNameEnum.Article)
             {

@@ -21,7 +21,7 @@ function ready() {
         }
     });
     if ($conten.length > 0) {
-        let s = Coker.stringManager.ReplaceAndSinge($conten.text());
+        let s = $conten.text().indexOf("&amp;") >= 0 ? Coker.stringManager.ReplaceAndSinge($conten.text()) : co.stringManager.htmlEncode($conten.html());
         let ele = document.createElement('span');
         ele.innerHTML = s;
         if ($parentConten.length > 0 && $parentConten.text().indexOf("subpage_content") >= 0) {
@@ -29,25 +29,13 @@ function ready() {
             let $pe = $('<div>');
             $pe[0].innerHTML = p;
             $pe.html($pe.text());
-            $pe.find("[data-dirid]").remove();
+            $pe.find(".catalog_frame").remove();
             $pe.find(".subpage_content").replaceWith(ele.textContent || ele.innerText);
             ele.textContent = $pe.html();
         }
         $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");
-        $(".editTime,.popular").appendTo($conten);
-        if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper").length > 0) SwiperInit({ autoplay: true });
-        if ($(".masonry").length > 0) FrameInit();
-        if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
-        if ($(".hover_mask").length > 0) HoverEffectInit();
-        if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0) DirectoryGetDataInit();
-        if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
-        if ($(".link_with_icon").length > 0) LinkWithIconInit();
-        if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
-        if ($(".shareBlock").length > 0) ShareBlockInit();
-        console.log($("#lanBar"));
-        if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
     }
     if ($PostCSS.length > 0) {
         const $mainCss = $("#frameCss")
@@ -57,6 +45,32 @@ function ready() {
         $mainCss.text(ele.textContent || ele.innerText);
         $PostCSS.remove();
     }
+    $(".editTime,.popular").appendTo($conten);
+    if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
+    if ($(".masonry").length > 0) FrameInit();
+    if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
+    if ($(".hover_mask").length > 0) HoverEffectInit();
+    if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0) DirectoryGetDataInit();
+    if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
+    if ($(".link_with_icon").length > 0) LinkWithIconInit();
+    if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
+    if ($(".shareBlock").length > 0) ShareBlockInit();
+    if ($(".ContactForm").length > 0) setContact();
+    if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
+    if ($(".container .qa").length > 0) {
+        $(".container").each((i, e) => {
+            var $c = $(e);
+            if (typeof ($c.attr("id")) == "undefined" && $c.find("qa").length>0) {
+                $c.setRandenId();
+            }
+            $c.find(".qa .collapse").each((j, c) => {
+                $(c).attr("data-bs-parent", `#${$c.attr("id")}`);
+                if (j != 0 || $c.find(".qa .collapse").length == 1) $(c).collapse("hide");
+            });
+        });
+    }
+    if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo(45);
+    _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");
     });
@@ -149,13 +163,14 @@ function ready() {
     })
 
     var RegisterModal = document.getElementById('RegisterModal')
-    RegisterModal.addEventListener('show.bs.modal', function (event) {
-        NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
-    })
-    RegisterModal.addEventListener('hidden.bs.modal', function (event) {
-        FormClear(RegisterForms, $InputRegisterVCode)
-    })
-
+    if (RegisterModal != null) {
+        RegisterModal.addEventListener('show.bs.modal', function (event) {
+            NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
+        })
+        RegisterModal.addEventListener('hidden.bs.modal', function (event) {
+            FormClear(RegisterForms, $InputRegisterVCode)
+        })
+    }
     $(".btn_login").on("click", function () {
         if (SiteFormCheck(LoginForms, $InputLoginVCode)) {
             CaptchaVerify($LoginImgCaptcha, $InputLoginVCode, LoginAction)
@@ -239,7 +254,8 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
         if (!result.success) {
-            CheckToken();
+            $.cookie("Token", null, { path: '/' });
+            CreateToken();
         }
     })
 }
@@ -277,7 +293,7 @@ function SiteFormCheck(Forms, $input) {
 function CaptchaVerify($self, $input, SuccessAction) {
     var code = $input.val();
     if (code != "") {
-        $.ajax('/api/Captcha/Validate?id=' + id + '&code=' + code, {
+        $.ajax('/api/Captcha/Validate?id=' + $self.data("id") + '&code=' + code, {
             dataType: "JSON",
             success: function (result) {
                 if (result.success) {
@@ -312,9 +328,18 @@ function RegisterAction() {
     registerModal.hide();
 }
 
-function NewCaptcha($self, $input) {
-    id = Math.floor(Math.random() * 10000);
-    $self.attr('src', '/api/Captcha/index?id=' + id);
+function NewCaptcha($self, $input, name = "") {
+    if (!!!$self.data("id")) {
+        $self.data("id", Math.floor(Math.random() * 10000));
+        const $form = $self.parents("form")
+        let captchaId = $form.find("[name='captchaId']");
+        if (captchaId.length == 0) {
+            captchaId = $(`<input type="hidden" name="captchaId" />`)
+            $form.append(captchaId);
+        }
+        captchaId.val(name + $self.data("id"));
+    }
+    $self.attr('src', `/api/Captcha/index?id=${name}${$self.data("id")}&v=${Math.floor(Math.random() * 10000)}`);
     $input.val("");
 }
 
@@ -443,12 +468,85 @@ var Coker = {
                 if (s.indexOf("&amp;") > 0) return _c.stringManager.ReplaceAndSinge(s);
                 else return s
             }
+        },
+        htmlEncode: function (text) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
+    }, Search: {
+        Init: function (id) {
+            const $e = $(id);
+            const $b = $e.find(".dropdown-menu button");
+            const $t = $e.find(".input_sear");
+            $e.data("sid", $b.first().data("id"));
+            $b.on("click", function () {
+                $e.data("sid", $(this).data("id"));
+                if ($t.val() != "") window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
+            });
+            $e.find(".btn_sear").on("click", function () {
+                if ($t.val() == "") {
+                    co.sweet.error("錯誤", "請輸入搜尋文字", null, false);
+                } else {
+                    window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
+                }
+                return false;
+            });
         }
     }
 }
 $.fn.extend({
-    goTo: function () {
-        $('html, body').animate({ scrollTop: $(this).offset().top }, 0);
+    goTo: function (offset) {
+        $('html, body').animate({ scrollTop: $(this).offset().top + (!!offset ? offset : 0) }, 0);
+    },
+    setRandenId: function(i) {
+        const $self = $(this);
+        let className = typeof ($self.attr('class')) != "undefined" && $self.attr('class') != "" ? $self.attr('class').split(/\s+/)[0]+"Id" : "";
+        let order = !!i ? i : 0;
+        if (className == "") className = "RandenId";
+        let id = className + (order == 0 ? "" : order);
+        if ($(`#${id}`).length == 0) $self.attr("id", id);
+        else $self.setRandenId(order+1);
+    },
+    getFormJson: function () {
+        const form = $(this);
+        const formDataObject = $(form).serializeArray();
+        $(formDataObject).each(function(){
+            const obj = this;
+            const field = $(form).find(`[name="${obj.name}"]`);
+            switch (field.attr("name")) {
+                case "authentiity_token":
+                case "captcha":
+                    break;
+                default:
+                    switch (field.get(0).tagName) {
+                        case "SELECT":
+                            obj.title = field.nextAll("label").text().trim();
+                            obj.value = field.find(`option:selected`).text().trim();
+                            break;
+                        default:
+                            switch (field.attr("type")) {
+                                case "radio":
+                                case "checkbox":
+                                    obj.title = field.parents(".d-flex").prevAll(".title").text().trim();
+                                    obj.value = "";
+                                    $(form).find(`[name="${obj.name}"]:checked`).each(function () {
+                                        obj.value += $(this).nextAll("label").text().trim()+" ,";
+                                    });
+                                    obj.value = obj.value.substring(0, obj.value.length-2);
+                                    break;
+                                default:
+                                    obj.title = field.nextAll("label").text().trim();
+                                    break;
+                            }
+                            break;
+                    }
+                    break
+            }
+        });
+        console.log(formDataObject);
+        return formDataObject;
     }
 });
 let _c = Coker;
+let co = _c;

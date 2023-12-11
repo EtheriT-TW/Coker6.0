@@ -11,8 +11,11 @@
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
 }
 <link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Page/ProductContent.min.js" asp-append-version="true"></script>
+<script src="~/Shared/shared.min.js" asp-append-version="true"></script>
 
 <div id="ProDisplayModal" class="modal fade" tabindex="-1" aria-labelledby="Product Display Modal" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -208,7 +211,7 @@
         <img class="img-fluid" src="~/upload/product/pro_pic_04.jpg" alt="" />
     </div>
 </template>
-
+<Content id="main" class="d-none">
 <div id="Product" class="container row m-auto my-3">
     <div class="image col-md-6 col-sm-12">
         <div class="container-fluid position-relative">
@@ -337,3 +340,8 @@
         <div class="techcert_list"></div>
     </div>
 </div>
+</Content>
+@if (Model.ParentData != null)
+{
+    <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
+}

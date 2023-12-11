@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -176,19 +177,19 @@ namespace EtheriT.Coker.Application.Tag
             try
             {
                 long webid = await loginUserData.GetWebsiteId();
-                List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == webid).Where(e => !e.IsDeleted).Select( e=> e.Id).ToListAsync();
+                List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == webid).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 siteIds.Add(webid);
 
-				var dataQuery = from t in db.Tags
+                var dataQuery = from t in db.Tags
                                 join s in db.Websites on t.FK_WebsiteId equals s.Id
                                 where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
                                 orderby t.FK_WebsiteId
-								select new TagGetAllListDto
+                                select new TagGetAllListDto
                                 {
                                     Id = t.Id,
                                     Title = t.Title,
-									SiteNameTitle = s.Title
-								};
+                                    SiteNameTitle = s.Title
+                                };
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -257,17 +258,17 @@ namespace EtheriT.Coker.Application.Tag
 
             try
             {
-				long usetId = await loginUserData.GetUserId();
-				List<Core.Models.Tag_Associate> TagBindings = new List<Core.Models.Tag_Associate>();
-                var all = db.Tag_Associates.Select(e =>new { e.Id,e.FK_AId,e.FK_TId }).ToList();
+                long usetId = await loginUserData.GetUserId();
+                List<Core.Models.Tag_Associate> TagBindings = new List<Core.Models.Tag_Associate>();
+                var all = db.Tag_Associates.Select(e => new { e.Id, e.FK_AId, e.FK_TId }).ToList();
 
-				for (int i = 0; i < dto.Count; i++)
+                for (int i = 0; i < dto.Count; i++)
                 {
-					var data = dto[i];
+                    var data = dto[i];
                     var ass = await db.Tag_Associates.Where(e => e.FK_AId == data.FK_AId && e.FK_TId == data.FK_TId && e.Type == data.Type).FirstOrDefaultAsync();
-                    if(ass!=null) data.Id = ass.Id;
+                    if (ass != null) data.Id = ass.Id;
                     else data.Id = 0;
-					if (data.Id == 0 && !data.IsDeleted)
+                    if (data.Id == 0 && !data.IsDeleted)
                     {
                         Core.Models.Tag_Associate ta = new Core.Models.Tag_Associate
                         {
@@ -276,16 +277,16 @@ namespace EtheriT.Coker.Application.Tag
                             Type = data.Type,
                             CreatorUserId = usetId,
                         };
-						TagBindings.Add(ta);
+                        TagBindings.Add(ta);
                     }
                     else if (data.Id > 0 && data.IsDeleted)
                     {
                         await this.TagAssociateDelete((long)data.Id);
                     }
                 }
-				db.Tag_Associates.AddRange(TagBindings);
-				await db.SaveChangesAsync();
-				output.Success = true;
+                db.Tag_Associates.AddRange(TagBindings);
+                await db.SaveChangesAsync();
+                output.Success = true;
             }
             catch (Exception e)
             {
@@ -305,10 +306,10 @@ namespace EtheriT.Coker.Application.Tag
                 {
                     WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 }
-				List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
-				siteIds.Add(WebsiteID);
+                List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
+                siteIds.Add(WebsiteID);
 
-				var output = from ta in db.Tag_Associates
+                var output = from ta in db.Tag_Associates
                              where ta.FK_AId == dto.Fk_Aid && ta.Type == dto.Type && !ta.IsDeleted
                              join t in db.Tags on ta.FK_TId equals t.Id
                              where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
@@ -340,6 +341,29 @@ namespace EtheriT.Coker.Application.Tag
                                         FK_TId = ta.FK_TId,
                                         Title = t.Title
                                     }).ToListAsync();
+
+                return output;
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<TagGetAllListDto?> GetTagByName(string name)
+        {
+            try
+            {
+                var siteId = await loginUserData.GetWebsiteId();
+                var output = await (from ta in db.Tags.Include(e => e.Website)
+                                    where !ta.IsDeleted && ta.Title.Contains(name) && ta.FK_WebsiteId == siteId
+                                    select new TagGetAllListDto
+                                    {
+                                        Id = ta.Id,
+                                        Title = ta.Title,
+                                        SiteNameTitle = ta.Website == null ? "" : ta.Website.Title
+                                    }).FirstOrDefaultAsync();
 
                 return output;
             }

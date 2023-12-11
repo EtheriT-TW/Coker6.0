@@ -1,6 +1,7 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.HtmlContent
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.Public.Models
 @using System.Web;
@@ -14,9 +15,24 @@
 	ViewData["Description"] = Model.PageData.Description;
 	ViewData["GA4"] = Model.storeSet.GA4;
 	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
-	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["XSRF-TOKEN"] = Model.token;
+    switch (Model.Level)
+    {
+        case WebsiteLevelEnum.會員:
+            ViewData["LoginEnable"] = true;
+            break;
+        case WebsiteLevelEnum.購物:
+            ViewData["LoginEnable"] = true;
+            ViewData["ShoppingEnable"] = true;
+            break;
+        default:
+            ViewData["LoginEnable"] = false;
+            ViewData["ShoppingEnable"] = false;
+            break;
+    }
 }
-
+@Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>

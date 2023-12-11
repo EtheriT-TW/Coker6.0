@@ -4,6 +4,19 @@ var $price_modal, priceModal, $techcert_body, techcertModal;
 var tag_changedBySelectBox, tag_clearSelectionButton;
 var tag_check_list = [], tag_text
 
+$.fn.extend({
+    TagListModalInit: function () {
+        const $tag = $(this).find(".InputTag");
+        const TagDataClear = function () {
+            tag_list = [];
+            tag_check_list = [];
+            tag_text = "";
+            $tag.val("");
+            getTagListDataGridInstance().clearSelection();
+        }
+    }
+});
+
 function TagListModalInit() {
     TagListModalElementInit();
 
@@ -112,4 +125,19 @@ function TagDataSet(datas) {
         getTagListDataGridInstance().selectRows(temp_list);
     }
     $tag.val(text == "" ? "無" : text);
+}
+function TagInitSet(datas) {
+    tag_check_list = [];
+    if (datas.length > 0) {
+        tag_text = datas.map((value) => `${value.title}`).join("、");
+        datas.forEach(function (item) {
+            tag_check_list.push(item.id)
+        })
+    } else {
+        tag_text = "無";
+    }
+
+    tag_changedBySelectBox = false;
+    tag_clearSelectionButton.option('disabled', !datas.length);
+    $btn_tag_save.trigger("click");
 }

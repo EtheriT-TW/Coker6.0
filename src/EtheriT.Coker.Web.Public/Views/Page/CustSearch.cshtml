@@ -1,0 +1,165 @@
+﻿@using System.Web;
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Web.Public.Models
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@model PageViewModel
+@{
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = Model.PageData.Title;
+    ViewData["OrgName"] = Model.orgName;
+    ViewData["Layout"] = Model.layout;
+    ViewData["PageTagNameName"] = $"{Model.PageData.Title} - 【{Model.PageData.SiteName}】";
+    ViewData["Description"] = Model.PageData.Description;
+    ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+}
+<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Search/Search.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script src="~/Shared/shared.min.js" asp-append-version="true"></script>
+<script src="~/js/Search/Search.min.js" asp-append-version="true"></script>
+@switch (Model.PageData.LayoutType){
+    case 2:
+    case 3:
+        <div class="top_title_3 p-3">
+            <div class="title fs-1 fw-bold text-white container">@Model.PageData.Title</div>
+        </div>
+        break;
+    case 4:
+        <div class="top_title p-3 bg-white container">
+            <div class="title fs-1 fw-bold text-black container">@Model.PageData.Title</div>
+        </div>
+        break;
+}
+<div class="search-category">
+    <div class="container d-flex justify-content-center mt-5">
+        @foreach (var e in Model.SearchPalameter.Class)
+        {
+            <button class="mx-1@( Model.SearchPalameter.SearchId == e.Id ? " active": "")" data-id="@e.Id">@e.Name</button>
+        }
+    </div>
+    <div class="d-flex justify-content-center align-items-center my-2 search-input-block container">
+        <div class="input-container w-100 d-flex justify-content-center align-items-center">
+            <input type="text" value="@Model.SearchPalameter.SearchText" class="search-input p-2" />
+            <a class="searchbtn" title="搜尋" href="#">
+                <i class="fas fa-search"></i>.
+            </a>
+        </div>
+    </div>
+    <div class="container d-flex justify-content-center my-4 d-none">
+        <div class="search-frame d-flex">
+            <div class="theme d-flex justify-content-center align-items-center">
+                廠商園區
+            </div>
+            <div class="vice-theme d-flex justify-content-strat align-items-center">
+                <div class="option">
+                    <lable class="d-flex justify-content-center align-items-center">
+                        <input type="checkbox" value="" />
+                        全部
+                    </lable>
+                </div>
+                <div class="option">
+                    <lable class="d-flex justify-content-center align-items-center">
+                        <input type="checkbox" value="" />
+                        智慧應用(30)
+                    </lable>
+                </div>
+                <div class="option">
+                    <lable class="d-flex justify-content-center align-items-center">
+                        <input type="checkbox" value="" />
+                        智慧應用(30)
+                    </lable>
+                </div>
+                <div class="option">
+                    <lable class="d-flex justify-content-center align-items-center">
+                        <input type="checkbox" value="" />
+                        智慧應用(30)
+                    </lable>
+                </div>
+                <div class="option">
+                    <lable class="d-flex justify-content-center align-items-center">
+                        <input type="checkbox" value="" />
+                        智慧應用(30)
+                    </lable>
+                </div>
+                <div class="option">
+                    <lable class="d-flex justify-content-center align-items-center">
+                        <input type="checkbox" value="" />其他(10)
+                    </lable>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="Search_Title" data-key="" class="container d-flex justify-content-center my-4">
+        <p>
+            搜尋
+            <span class="px-1 searchText">@Model.SearchPalameter.SearchText</span>共
+            <span class="px-1 searchCount">0</span>筆 資料
+        </p>
+    </div>
+    <div class="container">
+        <div class="catalog_frame typeswitch_bg type_change_frame" data-type="search" data-ShowNum="24" data-dirid="@Model.SearchPalameter.SearchId" data-search-text="@Model.SearchPalameter.SearchText">
+            <div class="d-flex justify-content-end switch_control typeswitch_bg text-black-50 border-bottom">
+                <div class="justify-content-center align-items-center d-none">
+                    <p>
+                        發布日期
+                    </p>
+                    <input type="date" name="startDate" class="text-black-50" />
+                    <p class="px-2 fs-3"> ~ </p>
+                    <input type="date" name="endDate" class="text-black-50" />
+                </div>
+                <button id="iehyi" draggable="true" data-key="" class="btn_text d-flex bg-transparent border-0 align-items-center mx-1 text-black-50">
+                    <span id="ie48d" draggable="true" data-key="" class="material-symbols-outlined fs-5 me-1">list</span>文字
+                </button>
+                <button id="isbo9" draggable="true" data-key="" class="btn_grid d-flex bg-transparent border-0 align-items-center mx-1">
+                    <span id="ip5r4" draggable="true" data-key="" class="material-symbols-outlined fs-5 me-1">grid_on</span>圖片
+                </button>
+                <button id="imbic" draggable="true" data-key="" class="btn_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50">
+                    <span id="i314g" draggable="true" data-key="" class="material-symbols-outlined fs-5 me-1">view_list</span>圖文
+                </button>
+            </div>
+            <div class="container">
+                <div class="catalog type2 content row row-cols-sm-4 hover-outside hover_mask gx-0">
+                    <div class="templatecontent d-none">
+                        <div class="template p-2 py-3">
+                            <div class="col hover_protrude_scale bg-white p-2 position-sticky box-shadow type2 hover-dark">
+                                <a class="text-black">
+                                    <figure class="d-flex justify-content-center flex-column mb-0 h-100 max-h">
+                                        <div class="image_frame d-flex flex-grow-1 justify-content-center align-items-center w-100">
+                                            <img class="image gjs-plh-image img-fluid"/>
+                                        </div>
+                                        <figcaption class="w-100 position-relative pb1">
+                                            <div class="title m-0 fs-5 fw-bold p-2 align-itmes-center type1-title"></div>
+                                            <p class="description mt-1 overflow-hidden p-2 type2-content d-none"></p>
+                                            <div class="more-btn position-absolute d-none d-flex justify-content-center align-items-center">
+                                                <div class="fas fa-angle-right">
+                                                </div>
+                                            </div>
+                                            <div class="date d-flex justify-content-end align-items-center p-2 d-none"></div>
+                                            <div class="more text-end mt-1 d-none">詳細介紹</div>
+                                        </figcaption>
+                                    </figure>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <nav draggable="true" aria-label="Page">
+                <ul draggable="true" class="page_btn d-flex justify-content-center my-5 pagination">
+                    <li draggable="true" class="page-item btn_prev">
+                        <button draggable="true" class="page-link text-black">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                    </li>
+                    <li draggable="true" class="page-item btn_next">
+                        <button draggable="true" class="page-link text-black">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>

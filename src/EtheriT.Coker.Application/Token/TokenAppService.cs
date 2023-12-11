@@ -62,7 +62,9 @@ namespace EtheriT.Coker.Application.Token
             TokenResponseDto output = new TokenResponseDto();
             try
             {
-                var tokens = db.Tokens.Where(e => e.id == Guid.Parse(id)).First();
+                Guid guid;
+                if (Guid.TryParse(id, out guid)) throw new Exception("Token type error");
+                var tokens = db.Tokens.Where(e => e.id == guid).First();
                 if (tokens == null)
                 {
                     output.Success = false;

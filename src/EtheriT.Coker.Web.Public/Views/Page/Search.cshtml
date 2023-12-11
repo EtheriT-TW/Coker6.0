@@ -9,10 +9,11 @@
 	ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
 	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
 	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+	ViewData["XSRF-TOKEN"] = Model.token;
 }
 <link rel="stylesheet" href="~/css/Page/Search.css" asp-append-version="true" />
 <script src="~/js/Page/Search.js" asp-append-version="true"></script>
-
+@Html.AntiForgeryToken()
 <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
 	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
 </div>

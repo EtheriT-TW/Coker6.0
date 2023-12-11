@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Core.Models
         public virtual DateTime? EndDate { get; set; }
         public string? Statement { get; set; }
         public string? Contract { get; set; }
+        public int Level{ get; set; }
         public List<MappingUserAndWebsite> Users { get; set; }
         public List<Marquee> Marquees { get; set; }
         public List<WebMenu> WebMenus { get; set; }
@@ -33,5 +34,9 @@ namespace EtheriT.Coker.Core.Models
         public List<Directory> Directory { get; set; }
         public List<StoreSetDetail> StoreSetDetails { get; set; }
         public List<CustSearch> CustSearchs { get; set; }
+        public List<AuditLog> AuditLogs { get; set; }
+        public List<MappingCompanyAndWebsites> Company { get; set; }
+        public List<Recipient>? Recipients { get; set; }
+        public List<Permissions> Permissions { get; set; }
     }
 }

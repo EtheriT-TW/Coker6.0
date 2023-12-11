@@ -75,6 +75,19 @@
 }
 .swiper a{display:block;}
 
+#pictureSwiper {
+    height: 75%;
+}
+    #pictureSwiper > .swiper-wrapper > .swiper-slide {
+        display: flex;
+        align-items: center; /* add this will all relevant prefixes */
+        justify-content: space-evenly;
+    }
+    #pictureSwiper > .swiper-wrapper > .swiper-slide img {
+        max-height:100%;
+        max-width:100%;
+    }
+
 @media only screen and (max-width: 768px) {
     .swiper_btn_circle_hide_left {
         left: 0rem;

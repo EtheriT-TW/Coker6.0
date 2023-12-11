@@ -44,7 +44,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                 var menuSub = dbContext.MenuSubs.Where(e => menuSubs.Contains(e.id));
 
 
-                var TagAssociates = dbContext.ProdTag.Where(e => menusIdStr.Contains(e.prod_id)).Where(e => e.type == "cont").ToList();
+                var TagAssociates = dbContext.ProdTag.Where(e => menusIdStr.Contains(e.prod_id??"")).Where(e => e.type == "cont").ToList();
                 var TagIds = TagAssociates.Select(e => e.tag_id).ToList();
                 var Tags = dbContext.Tag.Where(e => TagIds.Contains(e.id.ToString())).ToList();
                 for (int i = 0; i < Tags.Count(); i++)

@@ -44,6 +44,7 @@ function typeChange($self, $brother ,$brother2, $content, type) {
         case "List":
             $content.each(function () {
                 var $self = $(this)
+                $self.addClass("type3").removeClass("type1 type2");
                 /*$self.removeClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
                 $self.removeClass("row row-cols-sm-4");
                 $self.find("figure").removeClass("flex-column");
@@ -80,6 +81,7 @@ function typeChange($self, $brother ,$brother2, $content, type) {
         case "Grid":
             $content.each(function () {
                 var $self = $(this)
+                $self.addClass("type2").removeClass("type1 type3");
                 /* $self.addClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
                 $self.addClass("row row-cols-sm-4");
                 $self.find("figure").addClass("flex-column");
@@ -115,6 +117,7 @@ function typeChange($self, $brother ,$brother2, $content, type) {
         case "Text":
             $content.each(function () {
                 var $self = $(this)
+                $self.addClass("type2").removeClass("type2 type3");
                 $self.addClass("row row-cols-sm-4");
                 $self.find("figure").addClass("flex-column");
                 $self.find(".image_frame").removeClass("w-100 ");

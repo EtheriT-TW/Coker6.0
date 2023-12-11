@@ -1182,17 +1182,23 @@ namespace EtheriT.Coker.Application.Product
             var items = db.Prods.Where(e => titles.Contains(e.Title));
             foreach (var prod in items)
             {
-                ProductImportDto? item = prods.Find(e => e.Title == prod.Title);
-                if (item != null)
+                try
                 {
-                    mapper.Map(mapper.Map<ProductImportUpateDto>(item), prod);
-                    if (item.stocks != null)
+                    ProductImportDto? item = prods.Find(e => e.Title == prod.Title);
+                    if (item != null)
                     {
-                        prod.Prod_Stocks = await InsertOrUpdateStore(item);
+                        mapper.Map(mapper.Map<ProductImportUpateDto>(item), prod);
+                        if (item.stocks != null)
+                        {
+                            prod.Prod_Stocks = await InsertOrUpdateStore(item);
+                        }
                     }
+                    prod.LastModifierUserId = userId;
+                    prod.LastModificationTime = DateTime.Now;
+                }catch (Exception ex)
+                {
+                    errors.Add(new ImportMassageItem { Name = prod.Title,Description=ex.Message });
                 }
-                prod.LastModifierUserId = userId;
-                prod.LastModificationTime = DateTime.Now;
             }
             await db.SaveChangesAsync();
         }

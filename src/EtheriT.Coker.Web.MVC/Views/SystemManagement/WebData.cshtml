@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal;
+@model EtheriT.Coker.Application.Shared.Dto.Webs.WebsiteEditOutputDto;
 @{
     ViewData["Title"] = "WebData";
 }
@@ -42,29 +43,35 @@
                         <button class="btn_company_info_edit bg-transparent border-0 fs-5"><i class="fa-regular fa-pen-to-square"></i></button>
                     </div>
 
-                    <form class="needs-validation" novalidate>
+                    <form id="CompnyData" class="needs-validation" novalidate>
+                        <input name="Id" type="hidden" value="@Model.Company.Id" />
                         <div class="form-floating mb-3">
-                            <input id="InputCustomerInfo" class="customer_info form-control" type="text" placeholder="name" value="客戶資料" disabled="disabled" required>
-                            <label class="required" for="InputCustomerInfo">客戶資料</label>
+                            <input id="Name" name="Name" class="customer_info form-control" type="text" placeholder="name" value="@Model.Company.Name" disabled="disabled" required>
+                            <label class="required required_all" for="Name">公司名稱</label>
+                            <div class="invalid-feedback">請輸入公司名稱!</div>
                         </div>
                         <div class="form-floating mb-3">
-                            <input id="InputGUINum" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="00000000" pattern="\d{8}" maxlength="8" disabled="disabled" required>
-                            <label class="required" for="InputGUINum">統　　編</label>
+                            <input id="TaxID" name="TaxID" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="@Model.Company.TaxID" pattern="\d{8}" maxlength="8" disabled="disabled" required>
+                            <label class="required required_all" for="TaxID">統　　編</label>
+                            <div class="invalid-feedback">請輸入統編!</div>
                         </div>
                         <div class="form-floating mb-3">
-                            <input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="聯絡人" minlength="2" disabled="disabled" required>
-                            <label class="required" for="OrdererInputName">聯絡人</label>
+                            <input id="Contact" name="Contact" class="orderer_name form-control" type="text" placeholder="name" value="@Model.Company.Contact" minlength="2" disabled="disabled" required>
+                            <label class="required required_all" for="Contact">聯絡人</label>
+                            <div class="invalid-feedback">請輸入聯絡人!</div>
                         </div>
                         <div class="form-floating mb-3">
-                            <input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com" disabled="disabled" required>
-                            <label class="required" for="OrdererInputMail">聯絡人信箱</label>
+                            <input id="Email" name="Email" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="@Model.Company.Email" disabled="disabled" required>
+                            <label class="required required_all" for="Email">聯絡人信箱</label>
+                            <div class="invalid-feedback">聯絡人信箱格式錯誤!</div>
                         </div>
-                        <div id="TWzipcode" class="row">
+                        <div id="TWzipcode" class="row" data-form-type="zipcode" name="Address">
                             <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
                             <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
                             <div class="form-floating mb-3 col-12 col-sm-6">
-                                <input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="鶯桃路41號" value="鶯桃路41號" disabled="disabled" required>
-                                <label class="px-4 required" for="OrdererInputAddress">地址</label>
+                                <input id="Address" class="address form-control required_all" type="text" placeholder="請輸入您的地址" value="@Model.Company.Address" disabled="disabled" required>
+                                <label class="px-4 required" for="Address">地址</label>
+                                <div class="invalid-feedback">聯絡人信箱格式錯誤!</div>
                             </div>
                         </div>
                     </form>
@@ -73,16 +80,18 @@
                         <button class="btn_exit btn-danger border-0 px-3 py-1">離開</button>
                         <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
                     </div>
-
-                    <div class="website_deadline d-flex">
-                        <div class="title bg-danger fs-5 fw-bold px-3 text-white d-flex">
-                            <div class="align-self-center">智慧電商系統</div>
+                    @if (Model.Website.StartDate != null && Model.Website.EndDate != null)
+                    {
+                        <div class="website_deadline d-flex">
+                            <div class="title bg-danger fs-5 fw-bold px-3 text-white d-flex">
+                                <div class="align-self-center">智慧電商系統</div>
+                            </div>
+                            <div class="deadline_date fw-bold text-danger py-2 px-4">
+                                <div class="start_date">@Model.Website.StartDate.Value.ToString("yyyy/MM/dd")</div>
+                                <div class="end_date">@Model.Website.EndDate.Value.ToString("yyyy/MM/dd")</div>
+                            </div>
                         </div>
-                        <div class="deadline_date fw-bold text-danger py-2 px-4">
-                            <div class="start_date">2022/01/07</div>
-                            <div class="end_date">2023/01/07</div>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -93,27 +102,26 @@
                 <div id="WebsiteInfo" class="card-body">
                     <div class="fs-5 fw-bold pb-2">網站資訊</div>
 
-                    <form class="needs-validation" novalidate>
+                    <form id="WebsiteData" class="needs-validation" novalidate>
                         <div class="form-floating mb-3">
-                            <input id="InputWebsiteURL" class="website_URL form-control" type="text" placeholder="網址" value="">
-                            <label class="required" for="InputWebsiteURL">網址</label>
+                            <input id="InputWebsiteURL" name="DefaultUrl" class="website_URL form-control" type="text" placeholder="網址" value="@Model.Website.DefaultUrl" required>
+                            <label class="required required_all" for="InputWebsiteURL">網址</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input id="InputWebsiteName" class="website_name form-control" type="text" placeholder="網站名稱" value="">
-                            <label class="required" for="InputWebsiteName">網站名稱</label>
+                            <input id="InputWebsiteName" name="Title" class="website_name form-control" type="text" placeholder="網站名稱" value="@Model.Website.Title" required>
+                            <label class="required required_all" for="InputWebsiteName">網站名稱</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <textarea id="InputWebsiteDescription" class="website_description form-control col" type="text" placeholder="META網站描述"></textarea>
+                            <textarea id="InputWebsiteDescription" name="Description" class="website_description form-control col" type="text" placeholder="META網站描述">@Model.Website.Description</textarea>
                             <label class="required" for="InputWebsiteDescription">META網站描述</label>
                             <div class="textarea_placeholder">簡單描述網站主要內容，將有助於搜尋結果。建議不超過100個中文字。</div>
                         </div>
                         <div class="form-floating mb-3">
-                            <input id="InputWebsiteContact" class="website_contact form-control" type="text" placeholder="網站聯絡人" value="">
+                            <input id="InputWebsiteContact" name="Contact" class="website_contact form-control" type="text" placeholder="網站聯絡人" value="@Model.Website.Contact">
                             <label class="required" for="InputWebsiteContact">網站聯絡人</label>
                         </div>
                     </form>
-
-                    <div class="image_upload d-flex align-items-center">
+                    <div class="image_upload align-items-center d-none">
                         <div id="IconImageUpload" class="d-flex image_upload flex-column" data-issinge="true" data-needcompress="false">
                             <div class="title mb-2">新增頁籤Icon</div>
                             @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
@@ -125,13 +133,16 @@
                         </button>
                         <div class="px-2 fw-bold">新增Logo</div>
                     </div>
+                    <div class="form_btn justify-content-end mb-2">
+                        <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Value-added service -->
-    <div class="py-2">
+    <div class="py-2 d-none">
         <div class="card border-0">
             <div class="card-body">
                 <div class="fs-5 fw-bold pb-2">加值服務</div>
@@ -143,7 +154,7 @@
     </div>
 
     <!-- Privacy Statement -->
-    <div class="py-2">
+    <div class="py-2 d-none">
         <div class="card border-0">
             <div id="PrivacyStatement" class="card-body" data-id="">
                 <div class="d-flex align-items-center pb-2">
@@ -155,7 +166,7 @@
     </div>
 
     <!-- Membership Terms -->
-    <div class="py-2">
+    <div class="py-2 d-none">
         <div class="card border-0">
             <div id="MembershipTerms" class="card-body" data-id="">
                 <div class="d-flex align-items-center pb-2">

@@ -8,6 +8,11 @@
         public string Controller { get; set; }
         public string Action { get; set; }
         public string? CollapseId { get; set; }
+        public bool Enable { get; set; } = true;
+        public bool CanCreate { get; set; } = true;
+        public bool CanRemove { get; set; } = true;
+        public bool CanUpdate { get; set; } = true;
+        public bool CanVisble { get; set; } = true;
         public List<JobMenu>? jobItemModels { get; set; }
     }
 }

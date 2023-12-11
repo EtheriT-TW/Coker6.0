@@ -1,10 +1,12 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -20,6 +22,7 @@ using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
+    [AutoValidateAntiforgeryToken]
     public class PageController : Controller
     {
         private readonly ILogger<PageController> _logger;
@@ -30,9 +33,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IArticleAppService articleAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
         private readonly IProductAppService productAppService;
-
+        private readonly ICustSearchAppService custSearchAppService;
         private readonly IStoreSetAppService storeSetAppService;
-        private readonly StringHandler stringHandler;
+		private readonly IHttpContextAccessor httpContextAccessor;
+		private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -43,7 +47,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
             IStoreSetAppService storeSetAppService,
-            StringHandler stringHandler
+            ICustSearchAppService custSearchAppService,
+			IHttpContextAccessor httpContextAccessor,
+			StringHandler stringHandler
         )
         {
             this._logger = logger;
@@ -56,6 +62,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.productAppService = productAppService;
             this.stringHandler = stringHandler;
             this.storeSetAppService = storeSetAppService;
+            this.custSearchAppService = custSearchAppService;
+            this.httpContextAccessor = httpContextAccessor;
         }
         public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
@@ -74,13 +82,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 freightModels = freight,
                 enterAd = enterAds,
                 layout = $"layout{defaultData.Layout_Type}",
-                storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
+                Level = defaultData.Level,
+				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+				storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
                 }
             };
             string view;
-            if (key == "article" && int.TryParse(option,out id))
+            if (key == "article" && int.TryParse(option, out id))
             {
                 option = key;
             }
@@ -95,10 +105,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData = PageData;
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
-                        
-                        model.PageData.VisibleHeader = PageData.VisibleHeader;
-                        model.PageData.VisibleFooter = PageData.VisibleFooter;
-                        model.PageData.VisibleTitle = PageData.VisibleTitle;
+                        if (key == "article")
+                        {
+                            model.PageData.VisibleHeader = true;
+                            model.PageData.VisibleFooter = true;
+                            model.PageData.VisibleTitle = true;
+                        }
+                        else
+                        {
+                            model.PageData.VisibleHeader = PageData.VisibleHeader;
+                            model.PageData.VisibleFooter = PageData.VisibleFooter;
+                            model.PageData.VisibleTitle = PageData.VisibleTitle;
+                        }
 
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {
@@ -116,19 +134,32 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     case "product":
-                        view = "Product";
                         if (id != 0)
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
                             model.ParentData = ProdPageData;
+                            model.PageData.LayoutType = defaultData.Layout_Type;
+                            model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+                            if (key == "product")
+                            {
+                                model.PageData.VisibleHeader = true;
+                                model.PageData.VisibleFooter = true;
+                                model.PageData.VisibleTitle = true;
+                            }
+                            else
+                            {
+                                model.PageData.VisibleHeader = ProdPageData.VisibleHeader;
+                                model.PageData.VisibleFooter = ProdPageData.VisibleFooter;
+                                model.PageData.VisibleTitle = ProdPageData.VisibleTitle;
+                            }
+
                             model.MenuBread.Add(new GetMenuBreadDto
                             {
                                 Title = model.PageData.Title,
                                 Link = "",
                             });
-                            model.PageData.LayoutType = defaultData.Layout_Type;
 
                             if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
                             {
@@ -137,17 +168,31 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             }
                             view = "ProductContent";
                         }
+                        else view = "Error/404";
                         break;
                     case "privacy":
                         model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         view = "Index";
                         break;
-                    case "search":
-                        view = "Search";
-                        break;
                     default:
-                        if (key == "ShoppingCar" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
+                        if (key.ToLower() == "search")
                         {
+                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData.Title = "站內搜尋";
+                            model.SearchPalameter = new FrontSearchPalameterDro
+                            {
+                                SearchId = id,
+                                SearchText = search ?? "",
+                                Class = await custSearchAppService.GetSearchList(defaultData.Id)
+                            };
+                            view = "CustSearch";
+                            int c;
+                            int.TryParse(model.layout.Replace("layout", ""), out c);
+                            if (c != 0) model.PageData.LayoutType = c;
+                        }
+                        else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
+                        {
+                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             view = key;
                         }
                         else
@@ -174,16 +219,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                 }
+                if (key.ToLower() == "search") {
+                    model.PageData.VisibleHeader= true;
+                    model.PageData.VisibleFooter = true;
+                    model.PageData.VisibleTitle = true;
+                }
                 if (view.IndexOf("Error/") < 0)
                 {
                     if (siteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
-                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/",RegexOptions.IgnoreCase);
+                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"href=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
-                    if (siteId != defaultData.Id && model.ParentData != null) {
+                    if (siteId != defaultData.Id && model.ParentData != null)
+                    {
                         model.ParentData.Html = stringHandler.HtmlEncode(model.ParentData.Html);
                         model.ParentData.Html = model.ParentData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
                         model.ParentData.Html = model.ParentData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");

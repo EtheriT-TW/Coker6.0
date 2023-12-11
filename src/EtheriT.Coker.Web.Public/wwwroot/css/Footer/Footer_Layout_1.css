@@ -50,52 +50,39 @@ footer {
     transition: all 1s;
 }
 
-
-/* Footer Menu */
-/*#Footer_Menu > ul {
-    justify-content: space-evenly;
-}
-
-    #Footer_Menu > ul > li > ul {
-        height: 9rem;
-    }
-
-        #Footer_Menu > ul > li > ul > li {
-            width: fit-content;
-        }*/
-
 #Footer_Menu {
     height: 210px;
-    padding-top: 20px;
     transition: all 1s;
     justify-content: center;
     overflow: hidden;
 }
 
-.paging_frame_big {
-    width: calc(200px + 3%);
-    margin-top: 1%;
-    margin-left: 1.5%;
-    margin-right: 100px;
+.paging_frame {
+    margin: 2rem 1rem 1rem;
 }
 
-    .paging_frame_big > div {
+    .paging_frame > div {
         justify-content: space-between;
     }
-
-[class*=paging_frame_big_] {
-    width: 100px;
+    .paging_frame > p {
+        padding: 0 5px;
+    }
+.abreast > ul {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 150px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
-
-[class*=paging_frame_small] {
-    width: 100px;
-    margin-top: 1%;
-    margin-left: 1.5%;
-    margin-right: 1.5%;
+.abreast > ul > li {
+    padding: 2px 5px;
+    width: 150px;
 }
 /* Footer Bottom */
 #Footer_Bottom {
-    margin-top: 100px;
+    margin-top: 90px;
 }
 
 #Logo_Line {
@@ -119,7 +106,7 @@ footer {
 }
 
 #Logo_Bottom > span {
-    width: 200px;
+    width: 180px;
     height: 50px;
     position: absolute;
     left: 50%;
@@ -129,7 +116,7 @@ footer {
     margin-top: -45px;
 }
 
-#Other_Web_Button > i {
+#Other_Web_Button > a {
     cursor: pointer;
     font-size: 1rem;
     width: 32px;
@@ -140,6 +127,8 @@ footer {
     margin-left: 5px;
     margin-right: 5px;
     margin-bottom: 20px;
+    color: #fff;
+    display: inline-block;
 }
 
 /* Copyright */
@@ -201,23 +190,23 @@ footer {
         height: 400px;
     }
 
-    .paging_frame_big {
+    .paging_frame {
         width: calc(10% + 200px);
         margin-left: 22.5%;
         margin-right: 5%;
     }
 
-    .paging_frame_small_1, .paging_frame_small_4 {
+    .abreast > ul > li:nth-child(1), .abreast > ul > li:nth-child(4) {
         margin-left: 5%;
         margin-right: 20%;
     }
 
-    .paging_frame_small_2 {
+    .abreast > ul > li:nth-child(2) {
         margin-left: 22.5%;
         margin-right: 5%;
     }
 
-    .paging_frame_small_3 {
+    .abreast > ul > li:nth-child(3) {
         margin-left: 5%;
         margin-right: 5%;
     }
@@ -228,23 +217,23 @@ footer {
         justify-content: center;
     }*/
 
-    .paging_frame_big {
+    .paging_frame {
         width: calc(10% + 200px);
         margin-left: 15%;
         margin-right: 5%;
     }
 
-    .paging_frame_small_1, .paging_frame_small_4 {
+    .abreast > ul > li:nth-child(2), .abreast > ul > li:nth-child(5) {
         margin-left: 5%;
         margin-right: 10%;
     }
 
-    .paging_frame_small_2 {
+    .abreast > ul > li:nth-child(3) {
         margin-left: 15%;
         margin-right: 5%;
     }
 
-    .paging_frame_small_3 {
+    .abreast > ul > li:nth-child(4) {
         margin-left: 5%;
         margin-right: 5%;
     }
@@ -260,18 +249,18 @@ footer {
         height: 600px;
     }
 
-    .paging_frame_big {
+    .paging_frame {
         width: calc(10% + 200px);
         margin-left: 20%;
         margin-right: 15%;
     }
 
-    .paging_frame_small_1, .paging_frame_small_3 {
+    .abreast > ul > li:nth-child(2), .abreast > ul > li:nth-child(4) {
         margin-left: 20%;
         margin-right: 5%;
     }
 
-    .paging_frame_small_2, .paging_frame_small_4 {
+    .abreast > ul > li:nth-child(3), .abreast > ul > li:nth-child(5) {
         margin-left: 5%;
         margin-right: 15%;
     }
@@ -283,18 +272,18 @@ footer {
 
 @media only screen and (max-width: 368px) {
 
-    .paging_frame_big {
+    .paging_frame {
         width: calc(5% + 200px);
         margin-left: 18%;
         margin-right: 2.5%;
     }
 
-    .paging_frame_small_1, .paging_frame_small_3 {
+    .abreast > ul > li:nth-child(2), .abreast > ul > li:nth-child(4) {
         margin-left: 18%;
         margin-right: 2.5%;
     }
 
-    .paging_frame_small_2, .paging_frame_small_4 {
+    .abreast > ul > li:nth-child(3), .abreast > ul > li:nth-child(5) {
         margin-left: 2.5%;
         margin-right: 5%;
     }

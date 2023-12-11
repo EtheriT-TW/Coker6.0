@@ -1,0 +1,176 @@
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Article
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@{
+    ViewData["Title"] = "Newsletter";
+}
+
+<link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css">
+@{
+    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
+}
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
+
+<script src="~/js/Newsletter/Index.min.js" asp-append-version="true"></script>
+@Html.AntiForgeryToken()
+<div id="TopLine" class="py-2 px-4">
+    <div class="d-flex">
+        <div class="title fw-bold fs-3">電子報管理</div>
+        <a class="btn btn-primary text-decoration-none align-self-center d-none" href="#" role="button">返回選單</a>
+    </div>
+</div>
+<div class="">
+    <div id="ArticleList" class="card py-2 border-0">
+        <div class="card-body position-relative">
+            <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+                <span class="material-symbols-outlined">add</span>
+            </button>
+            @(
+                Html.DevExtreme().DataGrid<ArticleListGetDto>()
+                .DataSource(d => d.RemoteController().Key("Id")
+                .LoadUrl("/api/Newsletter/GetNewsletters").LoadMethod("Get")
+                )
+                .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                .RemoteOperations(true)
+                .ColumnHidingEnabled(true)
+                .ShowBorders(true)
+                .FilterRow(filterRow => filterRow
+                .Visible(true)
+                .ApplyFilter(GridApplyFilterMode.Auto)
+                )
+                .SearchPanel(searchPanel => searchPanel
+                .Visible(true)
+                .Width(480)
+                .Placeholder("請輸入要搜尋的資料")
+                )
+                .ShowRowLines(true)
+                .Columns(c =>
+                {
+                    c.AddFor(e => e.Id).Caption("編號").Width(90);
+                    c.AddFor(e => e.Title).Caption("標題");
+                    c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
+                    c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
+                    c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
+                    c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
+                    c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
+                    c.AddFor(e => e.SerNO).Caption("排序").Width(90);
+                    c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
+                    c.AddFor(e => e.PopularVisible).Caption("是否顯示人氣值").Width(150);
+                    c.Add()
+                    .Type(GridCommandColumnType.Buttons)
+                    .Buttons(b =>
+                    {
+                        b.Add().Name("edit").OnClick("editButtonClicked");
+                        b.Add().Icon("palette").Name("edit").OnClick("paletteButtonClicked");
+                        b.Add().Icon("email").Name("sand").OnClick("sendButtonClicked");
+                        b.Add().Name("delete").OnClick("deleteButtonClicked");
+                    });
+                })
+                .ColumnAutoWidth(true)
+                .Paging(paging => paging.PageSize(30))
+                .Pager(pager =>
+                {
+                    pager.Visible(true);
+                    pager.ShowPageSizeSelector(true);
+                    pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                    pager.ShowInfo(true);
+                })
+                .Editing(editing =>
+                {
+                    editing.AllowDeleting(true);
+                    editing.AllowUpdating(true);
+                    editing.UseIcons(true);
+                })
+                .OnContentReady("contentReady")
+                )
+        </div>
+    </div>
+
+    <div id="ArticleContent" class="card py-2 border-0 d-none">
+        <div class="card-header d-flex justify-content-between">
+            <div class="fw-bold fs-5 d-flex align-items-center">
+                <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                    <span class="material-symbols-outlined">
+                        keyboard_backspace
+                    </span>
+                </button>
+                <div class="lh-lg">編輯電子報</div>
+            </div>
+            <div class="d-flex">
+                <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="ArticletForm">儲　存</button>
+                <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center" form="ArticletForm">
+                    進階編輯<span class="material-symbols-outlined ms-1">palette</span>
+                </button>
+            </div>
+        </div>
+
+        <form id="ArticletForm" class="card-body needs-validation">
+            <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
+                <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
+                    @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+                </div>
+                <div class="d-flex">
+                    <button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
+                        <span class="material-symbols-outlined fs-2">visibility_off</span>
+                    </button>
+
+                    <button class="btn_pop_visible bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
+                        <span class="material-symbols-outlined fs-2">group_off</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="title border mb-3 p-2 rounded">
+                <div class="d-flex justify-content-between w-100">
+                    <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                    <div class="count">0</div>
+                </div>
+                <textarea class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入文章標題" required></textarea>
+            </div>
+            <div class="date input-group mb-3">
+                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                    <span class="material-symbols-outlined me-1">calendar_today</span>發布日期
+                </div>
+                <input id="NodeDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off">
+            </div>
+
+            <div class="date input-group mb-3">
+                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                    <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                </div>
+                <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                    <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
+                    <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                </div>
+            </div>
+
+            <div class="describe border mb-3 p-2 rounded">
+                <div class="d-flex justify-content-between w-100">
+                    <span class="input-group-text bg-transparent border-0 p-0">描述</span>
+                    <div class="count">0</div>
+                </div>
+                <textarea class="form-control border-0" aria-label="With textarea" maxlength="300" placeholder="輸入文章描述"></textarea>
+            </div>
+
+            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+
+            <div class="sort input-group mb-3">
+                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                    <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
+                </div>
+                <input class="form-control rounded" type="number" aria-label="Input Sort of Article" disabled="disabled" required>
+                <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                    <input class="form-check-input" type="checkbox" value="">
+                    <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="ArticleCanvas" class="border-0 d-none">
+        <div id="gjs"></div>
+    </div>
+</div>

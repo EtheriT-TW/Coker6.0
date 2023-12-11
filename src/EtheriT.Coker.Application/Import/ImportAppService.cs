@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto.Files;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
@@ -10,6 +12,7 @@ using MiniExcelLibs;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -31,21 +34,22 @@ namespace EtheriT.Coker.Application.Import
 			_folder = VirtualDirectory.Value.upload;
 			this.mapper = mapper;
 		}
-		public async Task<List<ProductImportDto>> ProdReplace(IList<IFormFile> files)
+		public async Task<ProdImportAllDto> ProdReplace(IList<IFormFile> files)
 		{
+			ProdImportAllDto output = new ProdImportAllDto ();
 			UploadFileOutputDto upload = await fileUploadAppService.uploadTempFiles(files);
-			List<ProductImportDto> products = new List<ProductImportDto>();
 			if (upload.Files != null)
 			{
 				for (int i = 0; i < upload.Files.Count; i++)
 				{
 					var file = upload.Files[i];
 					string path = $"{_folder.Replace("\\", "/")}{(file.Path??"").Replace("/upload", "")}";
-					products.AddRange(readProdExcel(path));
+					output.Products.AddRange(readProdExcel(path));
+					output.Directories.AddRange(readDirectoryExcel(path));
 					await fileUploadAppService.deleteFile(path);
 				}
 			}
-			return products;
+			return output;
 		}
 		private List<ProductImportDto> readProdExcel(string path)
 		{
@@ -67,6 +71,10 @@ namespace EtheriT.Coker.Application.Import
 			catch (Exception ex) { }
 
 			return data;
+		}
+		public List<DirectoryImportDto> readDirectoryExcel(string path) {
+			var rows = MiniExcel.Query<DirectoryImportDto>(path, sheetName: "目錄分類", startCell: "A3").ToList();
+			return rows;
 		}
 	}
 }

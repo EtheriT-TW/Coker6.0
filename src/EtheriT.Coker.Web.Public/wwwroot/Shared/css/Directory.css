@@ -911,11 +911,7 @@
     width: 100%;
     position: relative;
     overflow: hidden;
-<<<<<<< HEAD
-    border-radius:0px ;
-=======
-    border-radius:unset;
->>>>>>> bf01e955f6d831d5efc23dacc1f63164ae3d68ec
+    border-radius:0;
     border: none;
 }
 

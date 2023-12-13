@@ -189,13 +189,23 @@ footer {
     #Footer_Menu {
         height: 400px;
     }
-
+    .paging_frame {
+        margin:0px;
+        padding:2rem;
+    }
+    .abreast .paging_frame:nth-child(1) {
+        width: 100% ;
+    }
+        /*
     .paging_frame {
         width: calc(10% + 200px);
         margin-left: 22.5%;
         margin-right: 5%;
     }
-
+    .abreast > ul > li {
+        width: auto;
+    }
+    
     .abreast > ul > li:nth-child(1), .abreast > ul > li:nth-child(4) {
         margin-left: 5%;
         margin-right: 20%;
@@ -209,20 +219,20 @@ footer {
     .abreast > ul > li:nth-child(3) {
         margin-left: 5%;
         margin-right: 5%;
+    }*/
     }
-}
 
 @media only screen and (max-width: 768px) {
     /*#Footer_Menu > ul {
         justify-content: center;
     }*/
-
+    /*
     .paging_frame {
         width: calc(10% + 200px);
         margin-left: 15%;
         margin-right: 5%;
     }
-
+    
     .abreast > ul > li:nth-child(2), .abreast > ul > li:nth-child(5) {
         margin-left: 5%;
         margin-right: 10%;
@@ -237,7 +247,7 @@ footer {
         margin-left: 5%;
         margin-right: 5%;
     }
-
+    */
     #Logo_Bottom::before, #Logo_Bottom::after {
         width: 25%;
     }
@@ -246,15 +256,15 @@ footer {
 @media only screen and (max-width: 576px) {
 
     #Footer_Menu {
-        height: 600px;
+        height: 700px;
     }
-
+    /*
     .paging_frame {
         width: calc(10% + 200px);
         margin-left: 20%;
         margin-right: 15%;
     }
-
+    
     .abreast > ul > li:nth-child(2), .abreast > ul > li:nth-child(4) {
         margin-left: 20%;
         margin-right: 5%;
@@ -264,20 +274,20 @@ footer {
         margin-left: 5%;
         margin-right: 15%;
     }
-
+    */
     #Logo_Bottom::before, #Logo_Bottom::after {
         width: 12.5%;
     }
 }
 
 @media only screen and (max-width: 368px) {
-
+    /*
     .paging_frame {
         width: calc(5% + 200px);
         margin-left: 18%;
         margin-right: 2.5%;
     }
-
+    
     .abreast > ul > li:nth-child(2), .abreast > ul > li:nth-child(4) {
         margin-left: 18%;
         margin-right: 2.5%;
@@ -287,4 +297,5 @@ footer {
         margin-left: 2.5%;
         margin-right: 5%;
     }
+        */
 }

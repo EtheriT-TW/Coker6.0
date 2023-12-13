@@ -1,0 +1,61 @@
+﻿.navbar-expand-lg {
+    background: rgba(100,128,108,.9) !important;
+    flex-direction: column;
+}
+#Search {
+    top: 50%;
+    right:-200px;
+    transform: translateY(-50%);
+}
+#SearchInput {
+    border: solid 1px rgba(100,128,108,.9);
+    border-radius: 20px;
+    width: 200px;
+   
+}
+.material-symbols-outlined {
+    color: rgba(100,128,108,.9);
+    top: 50%;
+    left: 3%;
+    transform: translateY(-50%);
+}
+
+#Mega_Menu {
+    padding: 0;
+}
+#Offcanvas_Mega_Menu > *{
+    color:#ffffff;
+}
+#Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
+    background: rgba(100,128,108,.9);
+}
+
+#Offcanvas_Mega_Menu > ul > .title > .content {
+    background: rgba(100,128,108,.9);
+    padding: 0;
+}
+#Offcanvas_Mega_Menu > ul > .title > .content li{
+    padding: 2% 10% 2% 10%;
+}
+#Offcanvas_Mega_Menu > ul > .title:hover > .text-black :hover {
+    background: #4e6354;
+    margin-left: 0;
+}
+
+#Offcanvas_Mega_Menu > ul > .title > .content li:hover {
+    background: #4e6354;
+    margin-left: 0;
+}
+
+
+.fa-earth-americas {
+    font-size: 20px;
+    color: rgba(100,128,108,.9);
+}
+.switch-button {
+    width: 60px;
+    color: rgba(100,128,108,.9);
+}
+.offcanvas-body {
+    width:60%;
+}

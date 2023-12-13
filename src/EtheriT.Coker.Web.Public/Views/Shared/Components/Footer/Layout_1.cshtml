@@ -9,10 +9,11 @@
 </div>
 @if (Model.footerViewModels!=null && Model.footerViewModels.Count > 0)
 {
-<div id="Footer_Menu" class="abreast">
+	<div class=" container d-flex justify-content-center align-items-center">
+	<div id="Footer_Menu" class="abreast row row-cols-2 row-cols-sm-6">
 	@foreach (var menu in Model.footerViewModels)
 	{
-		<div class="paging_frame">
+		<div class="paging_frame col">
 			<p style="font-weight:bold;font-size:1.1rem;">@menu.Title</p>
 			<div class="abreast">
 				<ul>
@@ -24,7 +25,8 @@
 			</div>
 		</div>	
 	}
-</div>
+		</div>
+	</div>
 }
 <div id="Footer_Bottom" class="center">
 	<div id="Logo_Bottom">
@@ -46,6 +48,9 @@
 		{
 			<a href="@Model.IG_Link" title="連結至:IG粉絲團(另開新視窗)" target="_blank"><i class="fa-brands fa-instagram"></i></a>
 		}
+			<a href="https://page.line.me/derektw" title="連結至:Line粉絲團(另開新視窗)" target="_blank">
+				<i class="fa-brands fa-line"> </i>
+			</a>
 	</div>
 	<div id="Copyright" class="abreast">
 		@for (int i = 0; i < Model.Content.Count; i++)

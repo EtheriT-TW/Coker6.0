@@ -17,7 +17,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public Footer(
             IWebsiteApplication websiteApplication,
             IConfiguration Configuration
-            )
+
+			)
         {
             this.websiteApplication = websiteApplication;
             this.Configuration = Configuration;
@@ -173,12 +174,39 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 				case 5:
 					footerViewModel = new FooterViewModel
 					{
-						footerViewModels = new List<FooterViewModel>(),
+						footerViewModels = new List<FooterViewModel> {
+									new FooterViewModel { Title = "關於濠廣", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "公司介紹", Link = "/haoguang/introduce" },
+											new FooterViewModel { Title = "聯絡我們", Link = "/haoguang/team" },
+										}
+									},
+									new FooterViewModel { Title = "服務項目", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "風力發電服務工程", Link = "/haoguang/Windpowergeneration" },
+											new FooterViewModel { Title = "散裝/貨輪船體維修", Link = "/haoguang/repair02" },
+											new FooterViewModel { Title = "船舶主機、輔機維修", Link = "/haoguang/repair01" },
+											new FooterViewModel { Title = "更多服務", Link = "/haoguang/moreservice" },
+										}
+									},
+									new FooterViewModel { Title = "實績展示", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "水閥換新", Link = "/haoguang/watervalve" },
+											new FooterViewModel { Title = "吊桿前端滑輪", Link = "/haoguang/pulley" },
+											new FooterViewModel { Title = "船舶吊桿維修", Link = "/haoguang/shipboomd" },
+											new FooterViewModel { Title = "進口錨鍊吊掛更換安裝", Link = "/haoguang/anchorchain" },
+											new FooterViewModel { Title = "絞纜機離合器更換", Link = "/haoguang/winchclutch" },
+											new FooterViewModel { Title = "艙蓋板整形", Link = "/haoguang/Hatchcover" },
+											new FooterViewModel { Title = "開艙液壓缸", Link = "/haoguang/cylinder" },
+											new FooterViewModel { Title = "發電機吊缸保養", Link = "/haoguang/Generator" },
+											new FooterViewModel { Title = "駕駛台警報系統", Link = "/haoguang/alert" },
+											new FooterViewModel { Title = "駕駛台玻璃防水工程", Link = "/haoguang/waterproof" },
+											new FooterViewModel { Title = "其他工程", Link = "/haoguang/Otherprojects" },
+										}
+									}
+								},
 						Content = new List<string>
 								{
-									"Copyright©",
-									"2023 濠廣國際企業有限公司",
-									"版權所有"
+									"© HAO GUANG",
+									"International Enterprise Co, Ltd.",
+									" ALL RIGHTS RESERVED. Design by EtheriT"
 								}
 					};
 					break;

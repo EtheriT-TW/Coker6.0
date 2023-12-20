@@ -587,5 +587,33 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+        public async Task insertMenus(List<SelectDto> menus)
+        {
+            long webSite = await loginUserData.GetWebsiteId();
+            long userId = await loginUserData.GetUserId();
+            List<WebMenu> newMenus = new List<WebMenu>();
+            menus.ForEach(e =>
+            {
+                WebMenu menu = new WebMenu
+                {
+                    Title = e.Name,
+                    RouterName = e.Name,
+                    Visible = true,
+                    SerNO = 500,
+                    Popular = 0,
+                    PageType = 1,
+                    icon = "empty",
+                    PopularVisible = false,
+                    LanBar = false,
+                    FK_WebsiteId = webSite,
+                    CreationTime = DateTime.Now,
+                    CreatorUserId = userId,
+                    IsDeleted = false,
+                };
+                newMenus.Add(menu);
+            });
+            db.WebMenus.AddRange(newMenus);
+            await db.SaveChangesAsync();
+        }
     }
 }

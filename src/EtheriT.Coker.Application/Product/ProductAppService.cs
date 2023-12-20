@@ -26,6 +26,7 @@ using EtheriT.Coker.Application.Shared.Specification;
 using System.Web;
 using System.Data;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using System.IO;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -37,6 +38,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
+        private readonly IWebMenuApplication webMenuApplication;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ISpecificationAppService specificationAppService;
         private readonly ImportAppService importAppService;
@@ -49,6 +51,7 @@ namespace EtheriT.Coker.Application.Product
             ITechnicalCertificateAppService technicalCertificateAppService,
             IFileUploadAppService fileUploadAppService,
             ISpecificationAppService specificationAppService,
+            IWebMenuApplication webMenuApplication,
             ImportAppService importAppService
         )
         {
@@ -60,6 +63,7 @@ namespace EtheriT.Coker.Application.Product
             this.importAppService = importAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.specificationAppService = specificationAppService;
+            this.webMenuApplication = webMenuApplication;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -1026,7 +1030,8 @@ namespace EtheriT.Coker.Application.Product
 				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag2)).Select(e => (e.Tag2 ?? "").Trim()).ToList());
 				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => (e.Tag3 ?? "").Trim()).ToList());
 
-                await imporDirectoriesInit(manuNames, tagNames);
+                await importMenus(WebsiteID, manuNames);
+                await importTags(WebsiteID, tagNames);
 
                 var menus = await db.WebMenus.Where(e => !e.IsDeleted)
                                 .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
@@ -1058,6 +1063,7 @@ namespace EtheriT.Coker.Application.Product
                     if (menu2 != null)
                     {
                         menu2.FK_TopNodeId = menu.Id;
+                        menu2.FK_RootNodeId = menu.Id;
                         DirectoryArrangeImportDto? item2 = item.Child.Find(e => e.Name == directory.Level2);
                         if (item2 == null)
                         {
@@ -1066,53 +1072,229 @@ namespace EtheriT.Coker.Application.Product
 
                             if (string.IsNullOrEmpty(directory.Level3))
                             {
-								item2.Tags = new List<TagGetSelectedDto> ();
-                                if (!string.IsNullOrEmpty(directory.Tag1)) {
-                                    var tag1 = Tags.Where(e => e.Title == directory.Tag1).FirstOrDefault();
-
+                                await addDirectoryToTags(directory, item2, Tags);
+                            }
+                            else
+                            {
+                                var menu3 = menus.Where(e => e.Title == directory.Level3).FirstOrDefault();
+                                if (menu3 != null) {
+                                    menu3.FK_TopNodeId = menu2.Id;
+                                    menu3.FK_RootNodeId = menu.Id;
+                                    DirectoryArrangeImportDto? item3 = item.Child.Find(e => e.Name == directory.Level3);
+                                    if (item3 == null)
+                                    {
+                                        item3 = new DirectoryArrangeImportDto { Id = menu3.Id, Name = directory.Level3 };
+                                    }
+                                    item2.Child.Add(item3);
+                                    await addDirectoryToTags(directory, item3, Tags);
                                 }
-								continue;
                             }
-                            else { 
-                            
+                        }
+                        else {
+                            if (string.IsNullOrEmpty(directory.Level3))
+                            {
+                                await addDirectoryToTags(directory, item2, Tags);
                             }
-						}
+                            else
+                            {
+                                var menu3 = menus.Where(e => e.Title == directory.Level3).FirstOrDefault();
+                                if (menu3 != null)
+                                {
+                                    menu3.FK_TopNodeId = menu2.Id;
+                                    menu3.FK_RootNodeId = menu.Id;
+                                    DirectoryArrangeImportDto? item3 = item.Child.Find(e => e.Name == directory.Level3);
+                                    if (item3 == null)
+                                    {
+                                        item3 = new DirectoryArrangeImportDto { Id = menu3.Id, Name = directory.Level3 };
+                                    }
+                                    item2.Child.Add(item3);
+                                    await addDirectoryToTags(directory, item3, Tags);
+                                }
+                            }
+                        }
                     }
 				}
-			}
+                await db.SaveChangesAsync();
+                await createDirectory(menuMap);
+            }
 			catch { }
 		}
-        private async Task imporDirectoriesInit(List<string> manuNames, List<string> tagNames) {
-			long WebsiteID = await loginUserData.GetWebsiteId();
-			var menus = await db.WebMenus.Where(e => !e.IsDeleted)
-					.Where(e => e.FK_WebsiteId == WebsiteID)
-					.Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
-					.ToListAsync();
-			var hasMenusTitle = menus.Select(e => e.Title).ToArray();
+        private string getMenuInitHtml(SelectDto dto) {
+            return HttpUtility.HtmlEncode($@"<div id=""in4v"" class=""container"">
+                <div id=""in4v-3"" class=""container edit_lock"">
+                    <div data-dirid=""{dto.Id}"" data-diridname=""{dto.Name}"" id=""igmm"" class=""frame type_change_frame catalog_frame my-5 allowedit"">
+                        <div id=""i5z9"" btn_text=""1"" btn_grid=""1"" btn_list=""1"" class=""d-flex justify-content-end switch_control allowedit"">
+                            <button class=""btn_text d-flex bg-transparent border-0 align-items-center mx-1 text-black-50 allowedit"">
+                                <span class=""material-symbols-outlined fs-5 me-1"">list</span>文字
+                            </button>
+                            <button class=""btn_grid d-flex bg-transparent border-0 align-items-center mx-1 allowedit"">
+                                <span class=""material-symbols-outlined fs-5 me-1"">grid_on</span>圖片
+                            </button>
+                            <button class=""btn_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50 allowedit"">
+                                <span class=""material-symbols-outlined fs-5 me-1"">view_list</span>圖文
+                            </button>
+                        </div>
+                        <div class=""catalog content row row-cols-sm-4 hover-outside hover_mask gx-0"">
+                            <div class=""templatecontent d-none"">
+                                <div class=""template p-2 py-3"">
+                                    <div class=""col hover_protrude_scale bg-white p-2 position-sticky box-shadow type2 hover-dark"">
+                                        <a class=""text-black"">
+                                            <figure class=""d-flex justify-content-center flex-column mb-0 h-100 max-h"">
+                                                <div class=""image_frame d-flex flex-grow-1 justify-content-center align-items-center w-100"">
+                                                    <img src="""" class=""image gjs-plh-image img-fluid"" />
+                                                </div>
+                                                <figcaption class=""w-100 position-relative pb1"">
+                                                    <div class=""title m-0 fs-5 fw-bold p-2 align-itmes-center type1-title"">
+                                                    </div>
+                                                    <p class=""description mt-1 overflow-hidden p-2 type2-content d-none"">
+                                                    </p>
+                                                    <div class=""more-btn position-absolute d-none d-flex justify-content-center align-items-center"">
+                                                        <div class=""fas fa-angle-right"">
+                                                        </div>
+                                                    </div>
+                                                    <div class=""date d-flex justify-content-end align-items-center p-2 d-none"">
+                                                    </div>
+                                                    <div class=""more text-end mt-1 d-none"">
+                                                        詳細介紹
+                                                    </div>
+                                                </figcaption>
+                                            </figure>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <nav aria-label=""Catalog Page"">
+                            <ul class=""page_btn d-flex justify-content-center my-5 pagination"">
+                                <li class=""page-item btn_prev"">
+                                    <button class=""page-link text-black"">
+                                        <i class=""fa-solid fa-angle-left"">
+                                        </i>
+                                    </button>
+                                </li>
+                                <li class=""page-item btn_next"">
+                                    <button class=""page-link text-black"">
+                                        <i class=""fa-solid fa-angle-right"">
+                                        </i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>");
+        }
+        private async Task createDirectory(List<DirectoryArrangeImportDto> menuMap) {
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            List<string> strings = menuMap.Where(e => !string.IsNullOrEmpty(e.Name)).Select(e => e.Name).ToList();
+            List<Core.Models.Directory> Directory = new List<Core.Models.Directory>();
+            List<Tag_Associate> associates = new List<Tag_Associate>();
+            List<Core.Models.Directory> oldDirectory = await db.Directory
+                .Where(e => !e.IsDeleted)
+                .Where(e => e.FK_WebsiteId == WebsiteID)
+                .Where(e => strings.Contains(e.Title)).ToListAsync();
+            var webMenu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
+                .Where(e => !string.IsNullOrEmpty(e.Title) && strings.Contains(e.Title)).ToListAsync();
+            for(int i=0; i< menuMap.Count; i++) {
+                var menu = menuMap[i];
+                if (menu.Child.Any()) await createDirectory(menu.Child);
+                else {
+                    var dir = oldDirectory.Where(e => e.Title == menu.Name).FirstOrDefault();
+                    if (dir == null)
+                    {
+                        dir = new Core.Models.Directory
+                        {
+                            FK_WebsiteId = WebsiteID,
+                            Title = menu.Name,
+                            Type = (int)DirectoryTypeEnum.商品
+                        };
+                        db.Directory.Add(dir);
+                        await loginUserData.SaveChanges(dir);
+                    }
+                    if (menu.Tags != null && menu.Tags.Any()) {
+                        menu.Tags.ForEach(async tag => {
+                            if (tag.Id != null) {
+                                Tag_Associate associate = new Tag_Associate
+                                {
+                                    FK_AId = dir.Id,
+                                    FK_TId = tag.Id.Value,
+                                    Type = (int)TagAssociateTypeEnum.目錄
+                                };
+                                await loginUserData.setOptionParameter(associate);
+                                associates.Add(associate);
+                            }
+                        });
+                    }
+                    var myMenu = webMenu.Where(e => e.Title == menu.Name).FirstOrDefault();
+                    if (myMenu != null && string.IsNullOrEmpty(myMenu.SaveHtml) && !string.IsNullOrEmpty(dir.Title))
+                    {
+                        myMenu.Html = getMenuInitHtml(new SelectDto { Id = dir.Id, Name = dir.Title });
+                        myMenu.SaveHtml = myMenu.Html;
+                    }
+                }
+            };
+            db.Tag_Associates.AddRange(associates);
+            await db.SaveChangesAsync();
+        }
+        private async Task addDirectoryToTags(DirectoryImportDto directory, DirectoryArrangeImportDto item,List<Core.Models.Tag> Tags) {
+            item.Tags = new List<TagGetSelectedDto>();
+            if (!string.IsNullOrEmpty(directory.Tag1))
+            {
+                var tag1 = Tags.Where(e => e.Title == directory.Tag1).FirstOrDefault();
+                if (tag1 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag1.Id, Tag_Name = tag1.Title });
+            }
+            if (!string.IsNullOrEmpty(directory.Tag2))
+            {
+                var tag2 = Tags.Where(e => e.Title == directory.Tag2).FirstOrDefault();
+                if (tag2 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag2.Id, Tag_Name = tag2.Title });
+            }
+            if (!string.IsNullOrEmpty(directory.Tag3))
+            {
+                var tag3 = Tags.Where(e => e.Title == directory.Tag3).FirstOrDefault();
+                if (tag3 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag3.Id, Tag_Name = tag3.Title });
+            }
+        }
+        private async Task importMenus(long WebsiteID, List<string> manuNames) {
+            var menus = await db.WebMenus.Where(e => !e.IsDeleted)
+                        .Where(e => e.FK_WebsiteId == WebsiteID)
+                        .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
+                        .ToListAsync();
+            var hasMenusTitle = menus.Select(e => e.Title).ToArray();
 
-			var tags = await db.Tags.Where(e => !e.IsDeleted)
-				.Where(e => e.FK_WebsiteId == WebsiteID)
-				.Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
-				.ToListAsync();
-			var hasTagsTitle = tags.Select(e => e.Title).ToArray();
+            var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
+            List<SelectDto> addMmenus = new List<SelectDto>();
+            needAddMenus.ForEach(e => {
+                if (!addMmenus.Exists(m => m.Name == e))
+                    addMmenus.Add(new SelectDto { Name = e });
+            });
+            await webMenuApplication.insertMenus(addMmenus);
+        }
+        private async Task importTags(long WebsiteID, List<string> tagNames)
+        {
+            long userId = await loginUserData.GetUserId();
+            var tags = await db.Tags.Where(e => !e.IsDeleted)
+               .Where(e => e.FK_WebsiteId == WebsiteID)
+               .Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
+               .ToListAsync();
+            var hasTagsTitle = tags.Select(e => e.Title).ToArray();
+            var needAddTagss = tagNames.Where(e => !hasTagsTitle.Contains(e)).ToList();
+            List<SelectDto> addTags = new List<SelectDto>();
+            needAddTagss.ForEach(e => {
+                if (!addTags.Exists(m => m.Name == e))
+                    addTags.Add(new SelectDto { Name = e });
+            });
 
-			var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
-			List<SelectDto> addMmenus = new List<SelectDto>();
-			needAddMenus.ForEach(e => addMmenus.Add(new SelectDto { Name = e }));
-
-			var newMenus = mapper.Map<WebMenu>(addMmenus);
-			await db.WebMenus.AddRangeAsync(newMenus);
-			await loginUserData.SaveChanges(newMenus);
-
-			var needAddTagss = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
-			List<SelectDto> addTags = new List<SelectDto>();
-			needAddTagss.ForEach(e => addTags.Add(new SelectDto { Name = e }));
-
-			var newTags = mapper.Map<Core.Models.Tag>(addTags);
-			await db.Tags.AddRangeAsync(newTags);
-			await loginUserData.SaveChanges(newTags);
-		}
-		private async Task importTechs(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+            var newTags = mapper.Map<List<Core.Models.Tag>>(addTags);
+            newTags.ForEach(e => {
+                e.FK_WebsiteId = WebsiteID;
+                e.CreatorUserId = userId;
+                e.CreationTime = DateTime.Now;
+                e.IsDeleted = false;
+            });
+            db.Tags.AddRange(newTags);
+            db.SaveChanges();
+        }
+        private async Task importTechs(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
             List<TechCertDto> allTech = new List<TechCertDto>();
             for (int i = 0; i < prods.Count; i++)

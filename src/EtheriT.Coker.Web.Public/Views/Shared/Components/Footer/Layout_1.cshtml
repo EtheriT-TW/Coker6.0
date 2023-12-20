@@ -5,12 +5,12 @@
 <script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>
 
 <div id="Collapse_Button" class="center">
-	<i class="fa-solid fa-chevron-down text-black"></i>
+	<i class="fa-solid fa-chevron-down text-black" onclick="toggleFooterMenu()"></i>
 </div>
 @if (Model.footerViewModels!=null && Model.footerViewModels.Count > 0)
 {
-	<div class=" container d-flex justify-content-center align-items-center">
-	<div id="Footer_Menu" class="abreast row row-cols-2 row-cols-sm-6">
+	<div class=" container d-flex justify-content-center align-items-center footer_pack_up">
+		<div id="Footer_Menu" class="abreast row row-cols-2 row-cols-sm-6">
 	@foreach (var menu in Model.footerViewModels)
 	{
 		<div class="paging_frame col">

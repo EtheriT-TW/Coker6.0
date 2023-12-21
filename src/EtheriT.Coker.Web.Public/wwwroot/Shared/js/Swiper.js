@@ -181,7 +181,6 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-<<<<<<< HEAD
     var mySwiper = new Swiper('.scroll-bar', {
         direction: 'horizontal',
         slidesPerView: 'auto',
@@ -193,9 +192,6 @@ function SwiperInit(obj) {
     setTimeout(function () {
         mySwiper.update();
     }, 100);
-  
-=======
-
 
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
         const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
@@ -251,5 +247,4 @@ function SwiperInit(obj) {
             return false;
         });
     }
->>>>>>> bf01e955f6d831d5efc23dacc1f63164ae3d68ec
 }

@@ -23,5 +23,6 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> Delete(DataDelectDto dto);
         public Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto);
         public Task<PageTypeDto> GetPageTypeList();
+        public Task insertMenus(List<SelectDto> menus);
     }
 }

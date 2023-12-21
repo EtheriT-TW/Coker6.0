@@ -74,9 +74,17 @@ namespace EtheriT.Coker.Application
 			CreateMap<MenuItemDto, MenuGetAllListDto>()
 				.ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
 				.ReverseMap();
+			CreateMap<SelectDto, WebMenu>()
+				.ForMember(e => e.Title, option => option.MapFrom(c => c.Name))
+                .ForMember(e => e.Visible, option => option.MapFrom(c => true))
+                .ForMember(e => e.SerNO, option => option.MapFrom(c => 500))
+                .ForMember(e => e.Popular, option => option.MapFrom(c => 0))
+                .ForMember(e => e.PopularVisible, option => option.MapFrom(c => false))
+                .ForMember(e => e.LanBar, option => option.MapFrom(c => false))
+                .ReverseMap();
 
-			//Html_Content
-			CreateMap<HtmlContentDto, Html_Content>()
+            //Html_Content
+            CreateMap<HtmlContentDto, Html_Content>()
 				.ReverseMap()
 				.ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
 			CreateMap<ObjectTypeItemDto, Html_Content>()

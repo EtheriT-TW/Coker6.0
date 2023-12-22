@@ -366,6 +366,8 @@
         $("#btnRefresh,#btnAdd").removeClass("d-none");
         $("#btnUpdate").addClass("d-none");
         $("#btnRefresh").trigger("click");
+        $("#MenuEditorForm>.card-header>.title").text("新增選單");
+        $("#MenuEditorForm>.card-header>a").addClass("d-none");
     });
 
     menuReload(menuEditor, myOffcanvas);

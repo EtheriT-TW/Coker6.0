@@ -47,7 +47,7 @@ namespace EtheriT.Coker.Application.Contact
 					dto.forms.ForEach(e => {
 						if (!string.IsNullOrEmpty(e.Title)) {
 							html += $@"<tr>
-								<td class='title'>{e.Title}<td>
+								<td class='title'>{e.Title}</td>
 								<td>{e.Value.Replace(Environment.NewLine, "<br/>")}</td>
 							<tr>";
 						}
@@ -61,8 +61,8 @@ namespace EtheriT.Coker.Application.Contact
 						CC = new List<MailUserDataDto> { dto.Sender },
 						Subject = $"{site.Title}-客服中心",
 						Body = html,
-						Css = ".table{width:800px;} .table td{border-bottom: #ececec solid 1px; padding: 0.5rem 0.3rem;} .title{background-color: #ececec; width:175px; text-align: center; font-weight: bold;}"
-					};
+						Css = ".table{width:800px;} .table td{border-bottom: #ececec solid 1px; padding: 6px 3px;} .table td:last-child{padding-left: 9px;} .title{background-color: #ececec; width:22%; text-align: center; font-weight: bold;}"
+                    };
 					senderDto.Sender.Name = site.Contact?? site.Title??"";
 					await mailAppService.sendMail(senderDto);
 					response.Success = true;

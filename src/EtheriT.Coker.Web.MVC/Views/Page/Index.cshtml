@@ -40,8 +40,15 @@
         <div id="EditBlock" class="row d-flex justify-content-center">
             <ul id="myEditor" class="sortableLists list-group item-menu d-none"></ul>
             <div class="emptyList menu-bg"></div>
-            <div id="MenuEditorForm" class="card mb-3 item-menu menu-bg">
-                <div class="card-header text-white">選單資料</div>
+            <div id="MenuEditorForm" class="card item-menu menu-bg">
+                <div class="card-header text-white d-flex justify-content-between">
+                    <span class="title">選單資料</span>
+                    <a href="" class="text-white" target="_blank">
+                        <i class="material-symbols-outlined">
+                            captive_portal
+                        </i>
+                    </a>
+                </div>
                 <div class="card-body">
                     <form id="frmEdit" class="form-horizontal needs-validation d-flex justify-content-center align-item-center flex-column" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
@@ -136,7 +143,7 @@
                                     <label for="target">另開視窗</label>
                                     <select name="target" id="target" class="form-select item-menu">
                                         <option value="true">是</option>
-                                        <option value="false">否</option>
+                                        <option value="false" selected>否</option>
                                     </select>
                                 </div>
                                 <div class="col-4 form-group form-check pl-1">

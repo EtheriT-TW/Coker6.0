@@ -3,8 +3,8 @@
     background: #647f6c;
 }
 .footer-img {
-    width:200px;
-    height:150px;
+    width:150px;
+    height:auto;
 }
 .footer-bg {
     background:#000;
@@ -15,7 +15,7 @@
     background: #647f6c;
 }
 .footer_pack_up {
-    width:70%;
+   /* width:70%;*/
 }
 a{
     text-decoration:none;

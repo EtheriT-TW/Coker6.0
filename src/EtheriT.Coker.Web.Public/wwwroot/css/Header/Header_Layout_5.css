@@ -18,9 +18,10 @@
 }
 .icon {
     color: rgba(100,128,108,.9);
-    top: 50%;
+    top: 39%;
     left: 3%;
-    transform: translateY(-50%);
+    transform: translateY(-30%);
+    font-size:22px;
 }
 #Mega_Menu {
     padding: 0;
@@ -43,9 +44,9 @@
     background: rgba(100,128,108,.9);
     padding: 0;
 }
-#Offcanvas_Mega_Menu > ul > .title > .content li{
-    padding: 2%;
-}
+    #Offcanvas_Mega_Menu > ul > .title > .content li {
+        padding: 10px 20px;
+    }
 #Offcanvas_Mega_Menu > ul > .title:hover > .text-black :hover {
     background: #4e6354;
     margin-left: 0;
@@ -71,7 +72,10 @@
 .offcanvas-body {
     width:60%;
 }
-
+.collapse_menus > ul > li:hover::before  {
+    content: "➤";
+    display: inline-block;
+}
 
 
 .icon-search-bg {
@@ -125,7 +129,6 @@
 
 .haoguang .block1 {
     position: relative;
-    margin-top: 100px;
 }
     .haoguang .block1 .black-block {
         position: absolute;

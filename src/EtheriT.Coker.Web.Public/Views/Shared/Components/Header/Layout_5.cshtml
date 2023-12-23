@@ -109,7 +109,7 @@
                                     {
                                         var iconclass = secItem.Icon == "" ? "d-none" : "";
                                         var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
-                                        <li class="subtitle nav-item my-0">
+                                        <li class="subtitle nav-item my-0 d-flex justify-content-center align-items-center">
                                             @{
                                                 var target = secItem.Target == true ? "_blank" : "_self";
                                                 var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";

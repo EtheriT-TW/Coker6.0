@@ -244,7 +244,7 @@ function DirectoryDataInsert($item, result) {
         content.find("img").attr("src", imglink);
         content.find("img").attr("alt", `${data.title}的主要圖片`);
         content.find(".title").text(data.title);
-        content.find(".description").text(data.description);
+        content.find(".description").html(data.description);
         $item.find(".catalog").append(content);
         if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
         else content.find(".location").text(data.location);

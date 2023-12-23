@@ -479,6 +479,7 @@ var Coker = {
             const $e = $(id);
             const $b = $e.find(".dropdown-menu button");
             const $t = $e.find(".input_sear");
+            const $t2 = $("#SearchInput");
             $e.data("sid", $b.first().data("id"));
             $b.on("click", function () {
                 $e.data("sid", $(this).data("id"));
@@ -492,6 +493,13 @@ var Coker = {
                 }
                 return false;
             });
+            if ($t2.length != 0) {
+                $t2.on("keypress", function (e) {
+                    if (e.which == 13) {
+                        window.location.href = `/${OrgName}/Search/Get/0/${$t2.val()}`;
+                    }
+                });
+            }
         }
     }
 }

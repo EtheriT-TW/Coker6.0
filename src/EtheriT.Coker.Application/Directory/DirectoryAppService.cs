@@ -168,6 +168,12 @@ namespace EtheriT.Coker.Application.Directory
             long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
             int page = (int)dto.Page;
             int shownum = (int)dto.ShowNum;
+            if (string.IsNullOrEmpty(dto.SearchText))
+            {
+                output.TotalCount = 0;
+                output.TotalPage = 0;
+                return output;
+            }
             Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
             var data1 = db.WebMenus.Include(e => e.Website).Where(e => !e.IsDeleted)
                             .Where(e => e.FK_WebsiteId == WebsiteID)
@@ -223,7 +229,7 @@ namespace EtheriT.Coker.Application.Directory
                         OrgName = e.OrgName,
                         type = e.type,
                         SerNo = e.SerNo,
-                        Description = string.IsNullOrEmpty(e.Description) ? Regex.Replace(stringHandler.HtmlDecode(e.MainImage), @"<(.|\n)*?>", "") : e.Description,
+                        Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
                         MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
                     }).ToList();
                     output.TotalCount = art1.Count();
@@ -259,7 +265,7 @@ namespace EtheriT.Coker.Application.Directory
                         OrgName = e.OrgName,
                         type = e.type,
                         SerNo = e.SerNo,
-                        Description = string.IsNullOrEmpty(e.Description) ? Regex.Replace(stringHandler.HtmlDecode(e.MainImage), @"<(.|\n)*?>", "") : e.Description,
+                        Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
                         MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
                     }).ToList();
                     output.TotalCount = art2.Count();
@@ -305,7 +311,7 @@ namespace EtheriT.Coker.Application.Directory
                         OrgName = e.OrgName,
                         type = e.type,
                         SerNo = e.SerNo,
-                        Description = string.IsNullOrEmpty(e.Description) ? Regex.Replace(stringHandler.HtmlDecode(e.MainImage), @"<(.|\n)*?>", "") : e.Description,
+                        Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
                         MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
                     }).ToList();
 
@@ -315,6 +321,13 @@ namespace EtheriT.Coker.Application.Directory
             }
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
             return output;
+        }
+        private string getSearchDescription(string? conten,string findstr) {
+            string s = Regex.Replace(stringHandler.HtmlDecode(conten), @"<(.|\n)*?>", "");
+            int index = s.IndexOf(findstr) - 10;
+            if(index<0) index = 0;
+            s = s.Substring(index);
+            return s.Replace(findstr,$"<span class='text-bg-warning text-dark'>{findstr}</span>");
         }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {

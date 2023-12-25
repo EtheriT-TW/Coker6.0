@@ -1223,6 +1223,7 @@ function MenuEditor(idSelector, options) {
     /* PRIVATE METHODS */
     function editItem($item) {
         var data = $item.data();
+        const $card = $form.parents(".card");
         $.each(data, function (p, v) {
             let element = $form.find("[name=" + p + "]");
             if (element.length <= 0) return;
@@ -1243,6 +1244,13 @@ function MenuEditor(idSelector, options) {
                     break;
             }
         });
+        if (data.linkUrl != null) {
+            $card.find(".card-header>.title").text(data.text);
+            $card.find(".card-header>a")
+                .attr({
+                    "href": data.linkUrl == "" ? `${defaultUrl}/${OrgName}/${data.routerName}`.replace(`${defaultUrl}//`, `${defaultUrl}/`) : data.linkUrl
+                }).removeClass("d-none");
+        }
         $form.find(".item-menu").first().focus();
         if (data.hasOwnProperty('icon')) {
             iconPicker.iconpicker('setIcon', data.icon);

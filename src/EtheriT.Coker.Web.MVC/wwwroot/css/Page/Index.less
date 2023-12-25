@@ -74,11 +74,22 @@
 }
 
 #offcanvasSite {
-    &.offcanvas-lg {
-        #EditBlock > .item-menu {
-            width: 49%;
-            max-height: calc(100vh - 8.5rem);
-            overflow-y: auto;
+    &.menu-bg {
+        width: 600px;
+    }
+
+    &.offcanvas-lg.menu-bg {
+        width: 80%;
+
+        #EditBlock {
+            > .item-menu {
+                width: 49%;
+
+                .card-body {
+                    max-height: calc(100vh - 15rem);
+                    overflow-y: auto;
+                }
+            }
         }
     }
 
@@ -101,20 +112,15 @@
     max-width: 150px;
 }
 
-.offcanvas-lg {
-    width: 80%;
-}
-
 .input-group {
     .btn {
         border-color: #ccc;
     }
 }
-.menu-bg{
-    background-color: #2f4f4f;
-}
 
 .menu-bg {
+    background-color: #2f4f4f;
+
     input, select, textarea, button {
         color: #2f4f4f;
         border-color: none;

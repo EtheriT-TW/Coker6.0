@@ -20,6 +20,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
             Site site = new Site
             {
                 Title = await loginUserData.GetWebsiteName(),
+                WebRootLink = await loginUserData.GetWebsiteUrl(),
+                OrgName = await loginUserData.GetWebsiteOrgName(),
                 Jobs = new List<JobMenu> {
                     new JobMenu{
                         PageName="Dashboard",

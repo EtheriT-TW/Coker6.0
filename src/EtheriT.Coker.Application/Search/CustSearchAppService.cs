@@ -68,31 +68,38 @@ namespace EtheriT.Coker.Application.Search
         }
         public async Task<List<SearchItemDto>> GetSearchList(long sid)
         {
+            var site = await db.Websites.Where(e => !e.IsDeleted).Where(e => e.Id == sid).FirstOrDefaultAsync();
             List<SearchItemDto> list = new List<SearchItemDto> {
                 new SearchItemDto{
                     Id = 0,
                     Name = "找全部"
                 }
             };
-            switch (sid) {
-                case 2:
-                    list.Add(
-                        new SearchItemDto {
-                            Id = 1,
-                            Name = "找廠商"
-                        }
-                    );
-                    break;
-                case 3:
-                    list.Add(
-                        new SearchItemDto
-                        {
-                            Id = 2,
-                            Name = "最新消息"
-                        }
-                    );
-                    break;
-            }
+            if (site != null)
+            {
+				switch (site.OrgName)
+				{
+					case "ksp":
+						list.Add(
+							new SearchItemDto
+							{
+								Id = 1,
+								Name = "找廠商"
+							}
+						);
+						break;
+					case "eplus":
+						list.Add(
+							new SearchItemDto
+							{
+								Id = 2,
+								Name = "最新消息"
+							}
+						);
+						break;
+				}
+			}
+            
             return list;
         }
     }

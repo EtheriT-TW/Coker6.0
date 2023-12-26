@@ -41,7 +41,6 @@
 }
 
 #Offcanvas_Mega_Menu > ul > .title > .content {
-    background: rgba(100,128,108,.9);
     padding: 0;
 }
     #Offcanvas_Mega_Menu > ul > .title > .content li {
@@ -207,7 +206,7 @@
 .haoguang .service .img-out .img-text-text {
     width: 96%;
     position: absolute;
-    bottom: 20%;
+    bottom:0%;
     color: #fff;
     font-size: 1.2rem;
 }
@@ -232,8 +231,8 @@
     }
 
         .haoguang .leader-team .card-out .card {
-            width: 30%;
-            height: 240px;
+            width: 26%;
+            height: 260px;
             background: #fff;
             border-radius: 15px;
             margin: .5rem;
@@ -349,7 +348,7 @@
         .haoguang .service .img-out .img-text-text {
             width: 100%;
             font-size: .9rem;
-            bottom: 5px;
+            bottom: -8px;
         }
 
         .haoguang .leader-team .card-out .card .p-3 {

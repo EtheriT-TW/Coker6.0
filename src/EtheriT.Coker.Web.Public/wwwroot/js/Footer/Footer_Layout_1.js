@@ -27,7 +27,7 @@ function toggleFooterMenu() {
 
     if (window.innerWidth < 1000) {
      
-        footerMenu.style.height = '500px';
+        footerMenu.style.height = '400px';
     } else {
         if (footerMenu.style.height === '0px' || footerMenu.style.height === '') {
             footerMenu.style.height = '230px';

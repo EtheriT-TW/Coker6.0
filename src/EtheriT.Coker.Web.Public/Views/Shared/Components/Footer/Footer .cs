@@ -177,8 +177,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 						footerViewModels = new List<FooterViewModel> {
 									new FooterViewModel { Title = "關於濠廣", Link = "", footerViewModels = new List<FooterViewModel> {
 											new FooterViewModel { Title = "公司介紹", Link = "/haoguang/introduce" },
-											new FooterViewModel { Title = "聯絡我們", Link = "/haoguang/team" },
-										}
+											new FooterViewModel { Title = "聯絡我們", Link = "/haoguang/contactUs" },
+                                            new FooterViewModel { Title = "領導專業團隊", Link = "/haoguang/team" },
+                                        }
 									},
 									new FooterViewModel { Title = "服務項目", Link = "", footerViewModels = new List<FooterViewModel> {
 											new FooterViewModel { Title = "風力發電服務工程", Link = "/haoguang/Windpowergeneration" },

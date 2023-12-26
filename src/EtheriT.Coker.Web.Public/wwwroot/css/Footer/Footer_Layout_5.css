@@ -40,13 +40,13 @@ a{
             margin: 0px;
             padding: 2rem;
         }
-
         .abreast .paging_frame:nth-child(1) {
             width: 50%;
         }
 
         .abreast .paging_frame:nth-child(3) {
             width: 100%;
+            margin-top:-100px;
         }
     }
 

@@ -40,6 +40,9 @@ a{
             margin: 0px;
             padding: 2rem;
         }
+        .abreast  {
+            font-size:12px;
+        }
         .abreast .paging_frame:nth-child(1) {
             width: 50%;
         }

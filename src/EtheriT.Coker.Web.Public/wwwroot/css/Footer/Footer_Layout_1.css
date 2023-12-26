@@ -33,19 +33,19 @@ footer {
             animation-duration: 1s;
         }
 
-.footer_pack_up > #Collapse_Button > i {
+.footer_pack_up #Collapse_Button > i {
     transform: rotate(360deg);
     transition: all 1s;
 }
 
-    .footer_pack_up > #Collapse_Button > i:hover {
+    .footer_pack_up #Collapse_Button > i:hover {
         animation-iteration-count: infinite;
         animation-delay: 0.5s;
         animation-name: Bounce_down;
         animation-duration: 1s;
     }
 
-.footer_pack_up > #Footer_Menu {
+.footer_pack_up #Footer_Menu {
     height: 0px;
     transition: all 1s;
 }

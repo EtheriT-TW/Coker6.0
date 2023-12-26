@@ -177,8 +177,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 						footerViewModels = new List<FooterViewModel> {
 									new FooterViewModel { Title = "關於濠廣", Link = "", footerViewModels = new List<FooterViewModel> {
 											new FooterViewModel { Title = "公司介紹", Link = "/haoguang/introduce" },
-											new FooterViewModel { Title = "聯絡我們", Link = "/haoguang/contactUs" },
                                             new FooterViewModel { Title = "領導專業團隊", Link = "/haoguang/team" },
+                                            new FooterViewModel { Title = "聯絡我們", Link = "/haoguang/contactUs" },
                                         }
 									},
 									new FooterViewModel { Title = "服務項目", Link = "", footerViewModels = new List<FooterViewModel> {
@@ -191,7 +191,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 									new FooterViewModel { Title = "實績展示", Link = "", footerViewModels = new List<FooterViewModel> {
 											new FooterViewModel { Title = "水閥換新", Link = "/haoguang/watervalve" },
 											new FooterViewModel { Title = "吊桿前端滑輪", Link = "/haoguang/pulley" },
-											new FooterViewModel { Title = "船舶吊桿維修", Link = "/haoguang/shipboomd" },
+											new FooterViewModel { Title = "船舶吊桿維修", Link = "/haoguang/shipboom" },
 											new FooterViewModel { Title = "進口錨鍊吊掛更換安裝", Link = "/haoguang/anchorchain" },
 											new FooterViewModel { Title = "絞纜機離合器更換", Link = "/haoguang/winchclutch" },
 											new FooterViewModel { Title = "艙蓋板整形", Link = "/haoguang/Hatchcover" },

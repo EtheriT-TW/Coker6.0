@@ -159,6 +159,9 @@ function SwiperInit(obj) {
                     nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
                     prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
                 }, breakpoints: {
+                    320: {
+                        slidesPerView: 2,
+                    },
                     375: {
                         slidesPerView: 2,
                     },

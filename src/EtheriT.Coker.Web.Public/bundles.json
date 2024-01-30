@@ -51,7 +51,8 @@
         "wwwroot/Shared/js/Swiper.js",
         "wwwroot/Shared/js/ViewTypeChange.js",
         "wwwroot/Shared/js/Activity.js",
-        "wwwroot/Shared/js/Contact.js"
+        "wwwroot/Shared/js/Contact.js",
+        "wwwroot/Shared/js/BGCanvas.js"
       ]
     }
   ],
@@ -83,7 +84,8 @@
         "wwwroot/Shared/css/HoverEffect.css",
         "wwwroot/Shared/css/Swiper.css",
         "wwwroot/Shared/css/Contact.css",
-        "wwwroot/Shared/css/Activity.less"
+        "wwwroot/Shared/css/Activity.less",
+        "wwwroot/Shared/css/BGCanvas.css"
       ]
     },
     {

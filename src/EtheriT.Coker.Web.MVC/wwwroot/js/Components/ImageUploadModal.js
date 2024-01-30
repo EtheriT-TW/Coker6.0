@@ -14,7 +14,7 @@ function ImageUploadModalClear($select) {
     $select.find(".img_input_frame").children().each(function () {
         var $self = $(this);
         if (!$self.is("template")) $self.remove();
-    })
+    });
     ImageSetData($select, null);
 }
 var ImageUploadModalInit = ImageUploadModalClear;
@@ -22,10 +22,10 @@ var ImageUploadModalInit = ImageUploadModalClear;
 function ImageDelect($select) {
     var $img_btn = $select.find(".btn_input_pic");
     if ($img_btn.hasClass("has_image")) {
-        if ($select.data("file").Id > 0) {
+        if ($select.data("file").id > 0) {
             var delect_list = [];
             if (typeof ($select.parent(".img_input_frame").data("delectList")) != "undefined" && $select.parent(".img_input_frame").data("delectList") != null) delect_list = $select.parent(".img_input_frame").data("delectList");
-            delect_list.push($select.data("file").Id);
+            delect_list.push($select.data("file").id);
             $select.parent(".img_input_frame").data("delectList", delect_list);
         }
         ImageClear($select);
@@ -58,28 +58,27 @@ function ImageClear($select) {
 function ImageUploadModalDataInsert($select, id, link, name) {
     if (id != "") {
         var obj = {};
-        obj["Id"] = id;
+        obj["id"] = id;
         obj["File"] = null;
-        obj["Name"] = name;
-        obj["Link"] = link;
+        obj["name"] = name;
+        obj["link"] = link;
         ImageSetData($select, obj);
     }
 }
 
 function ImageSetData($select, file) {
     var isSingle = $select.data("issinge");
-    var needCompress = $select.data("needcompress")
+    var needCompress = $select.data("needcompress");
 
     if (file != null && isSingle) var input_frame = $select.find(".img_input");
     else if ($select.hasClass("img_input")) var input_frame = $select;
     else input_frame = $($("#Template_Image_Preview").html()).clone();
     if (file != null) {
         input_frame.find(".btn_img_delete").removeClass("d-none");
-
         if (typeof (input_frame.data("file")) != "undefined" && input_frame.data("file") != null) {
             var $parent_frame = input_frame.parent(".img_input_frame")
             var temp_delect_list = typeof ($parent_frame.data("delectList")) == "undefined" || $parent_frame.data("delectList") == null ? [] : $parent_frame.data("delectList");
-            temp_delect_list.push(input_frame.data("file").Id)
+            temp_delect_list.push(input_frame.data("file").id)
             $parent_frame.data("delectList", temp_delect_list);
         }
         input_frame.data("file", file);
@@ -88,13 +87,13 @@ function ImageSetData($select, file) {
         $img_preview.removeClass("d-none");
         $img_preview.siblings("span").addClass("d-none");
         $img_preview.parents("button").first().addClass("border-0");
-        $img_preview.attr("src", file.Link);
-        $img_preview.attr("alt", file.Name);
+        $img_preview.attr("src", !!file.link ? file.link: file.path);
+        $img_preview.attr("alt", file.name);
 
         var $img_btn = input_frame.find(".btn_input_pic");
         $img_btn.addClass("has_image");
 
-        input_frame.find(".file_name").text(file.Name);
+        input_frame.find(".file_name").text(file.name);
     }
 
     if (!isSingle || file == null) {
@@ -125,10 +124,10 @@ function ImageSetData($select, file) {
                             htmlImageCompress.then(function (result) {
                                 img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
                                 var obj = {};
-                                obj["Id"] = 0;
+                                obj["id"] = 0;
                                 obj["File"] = img_file;
-                                obj["Name"] = file.name;
-                                obj["Link"] = e.target.result
+                                obj["name"] = file.name;
+                                obj["link"] = e.target.result
                                 ImageSetData($select, obj)
                             }).catch(function (err) {
                                 console.log($`發生錯誤：${err}`);
@@ -146,10 +145,10 @@ function ImageSetData($select, file) {
                     reader.readAsDataURL(file);
                     reader.onload = function (e) {
                         var obj = {};
-                        obj["Id"] = 0;
+                        obj["id"] = 0;
                         obj["File"] = file;
-                        obj["Name"] = file.name;
-                        obj["Link"] = e.target.result
+                        obj["name"] = file.name;
+                        obj["link"] = e.target.result
                         ImageSetData($select, obj)
                     };
                 }

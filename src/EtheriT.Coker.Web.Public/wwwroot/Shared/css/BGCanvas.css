@@ -1,0 +1,12 @@
+﻿.BGCanvas {
+    position:relative;
+}
+    .BGCanvas > * {
+        z-index:1;
+    }
+    .BGCanvas > canvas {
+        position: absolute;
+        z-index: 0;
+        opacity: 0.5;
+        border-radius: 60%;
+    }

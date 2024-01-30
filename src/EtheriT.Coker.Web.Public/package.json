@@ -27,7 +27,7 @@
     "path": "^0.12.7",
     "postcss-url": "^9.0.0",
     "sweetalert2": "^11.4.32",
-    "swiper": "^8.3.2",
+    "swiper": "^8.4.7",
     "yarn": "^1.22.19"
   },
   "devDependencies": {

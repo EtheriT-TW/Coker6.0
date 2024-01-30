@@ -83,10 +83,14 @@ input[type="number"] {
     font-size: 0.8rem;
 }
 
-    #Product > .content > .describe > .introduce > li::before {
-        content: '\ff0e';
+    #Product > .content > .describe > .introduce, #ProductDescription {
+        list-style: none;
     }
-
+    /*
+        #Product > .content > .describe > .introduce > li::before {
+            content: '\ff0e';
+        }
+    */
     #Product > .content > .describe > .track > .btn_favorites > i {
         color: var(--gray-text);
         font-size: 3rem;
@@ -98,6 +102,7 @@ input[type="number"] {
     height: 2rem;
     margin: 0;
     overflow: hidden;
+    list-style:none;
 }
 
     #Product > .image > .pro_tag .round_tag {

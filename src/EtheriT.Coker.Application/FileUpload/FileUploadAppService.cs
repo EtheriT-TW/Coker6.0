@@ -438,7 +438,7 @@ namespace EtheriT.Coker.Application
 				long websiteId = await loginUserData.GetWebsiteId();
 				string orgName = await loginUserData.GetWebsiteOrgName();
 
-				var faids = await (db.FileBinds.Where(e => e.Sid == dto.Sid && e.type == dto.Type).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId)).ToListAsync();
+				var faids = await (db.FileBinds.Where(e => e.Sid == dto.Sid && e.type == dto.Type).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo).Select(e => e.FK_FileUploadId)).ToListAsync();
 
 				if (faids != null)
 				{
@@ -446,9 +446,9 @@ namespace EtheriT.Coker.Application
 					{
 						foreach (var faid in faids)
 						{
-							var fadata = await (db.FileUploads.Where(e => e.Id == faid)).FirstOrDefaultAsync();
+							var fadata = await db.FileUploads.Where(e => e.Id == faid).FirstOrDefaultAsync();
 
-							if (fadata.GuidKey != Guid.Empty)
+							if (fadata != null && fadata.GuidKey != Guid.Empty)
 							{
 								orgName = orgName == "" ? "" : $"/{orgName}";
 								result.Add(new FileGetImgDto
@@ -464,9 +464,9 @@ namespace EtheriT.Coker.Application
 					{
 						foreach (var faid in faids)
 						{
-							var fadata = await (db.FileUploads.Where(e => e.Id == faid)).FirstOrDefaultAsync();
+							var fadata = await db.FileUploads.Where(e => e.Id == faid).FirstOrDefaultAsync();
 
-							if (fadata.GuidKey != Guid.Empty)
+							if (fadata != null && fadata.GuidKey != Guid.Empty)
 							{
 								var chimg_ids = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fadata.GuidKey).Where(e => !e.IsDeleted).Select(e => e.FK_FileUploadId).ToListAsync());
 								if (chimg_ids.Count > 0)

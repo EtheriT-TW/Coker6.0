@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Data;
 
 namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 {
@@ -112,17 +113,34 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 {
                                     Title = data_f.Title,
                                     menuItemModels = secitemModels,
-                                    Length = length
+                                    Length = length,
+                                    imageUrl = (data_f.ImgUrl ?? ""),
+                                    hoverImageUrl = (data_f.OverImgUrl ?? ""),
                                 });
                             }
                             else
                             {
-                                headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                                if (data_f.LanBar)
                                 {
-                                    Title = data_f.Title,
-                                    Target = data_f.Target,
-                                    Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
-                                });
+                                    headerViewModel.langMenuItemModels.Add(new MenuItem.MenuItemModel
+                                    {
+                                        Title = data_f.Title,
+                                        Target = data_f.Target,
+                                        Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
+                                        imageUrl = (data_f.ImgUrl ?? ""),
+                                        hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                    });
+                                }
+                                else {
+                                    headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                                    {
+                                        Title = data_f.Title,
+                                        Target = data_f.Target,
+                                        Link = data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "",
+                                        imageUrl = (data_f.ImgUrl ?? ""),
+                                        hoverImageUrl = (data_f.OverImgUrl ?? ""),
+                                    });
+                                }
                             }
                         }
                     });

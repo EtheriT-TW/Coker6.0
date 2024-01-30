@@ -214,12 +214,62 @@ namespace EtheriT.Coker.Application
             {
                 var content = await db.Html_Contents
                                     .Where(e => e.Type == 4)
+                                    .Where(e => !(e.Title??"").Contains("email"))
+                                    .Where (e => !e.IsDeleted)
+                                    .FirstOrDefaultAsync();
+                if (content != null)
+                {
+                    results.Conten = mapper.Map<HtmlContentDetailDto>(content);
+                    results.Conten.Html = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.Html));
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+        public async Task<HtmlContentGetHtmlDto> GetNewsletterMailConten() {
+            HtmlContentGetHtmlDto results = new HtmlContentGetHtmlDto();
+            try
+            {
+                var content = await db.Html_Contents
+                                    .Where(e => e.Type == 4)
+                                    .Where(e => !(e.Title ?? "").Contains("email"))
                                     .Where(e => !e.IsDeleted)
                                     .FirstOrDefaultAsync();
                 if (content != null)
                 {
                     results.Conten = mapper.Map<HtmlContentDetailDto>(content);
                     results.Conten.Html = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(results.Conten.Html));
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+        public async Task<HtmlContentGetHtmlListDto> GetNewsletterAllConten() {
+            HtmlContentGetHtmlListDto results = new HtmlContentGetHtmlListDto();
+            try
+            {
+                var content = await db.Html_Contents
+                                    .Where(e => e.Type == 4)
+                                    .Where(e => !e.IsDeleted)
+                                    .ToListAsync();
+                if (content != null)
+                {
+                    results.Conten = mapper.Map<List<HtmlContentDetailDto>>(content);
+                    results.Conten.ForEach(e => {
+                        e.Html = HttpUtility.HtmlEncode(HttpUtility.HtmlDecode(e.Html));
+                    });
                     results.Success = true;
                 }
                 else throw new Exception("資料不存在");

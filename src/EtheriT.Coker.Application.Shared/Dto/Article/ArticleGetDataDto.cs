@@ -1,4 +1,5 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Article
@@ -16,6 +17,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public bool permanent { get; set; }
+        public bool RemovedFromShelves { get; set; }
+        public NewsletterFrameDto? DataJson { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
     }
 }

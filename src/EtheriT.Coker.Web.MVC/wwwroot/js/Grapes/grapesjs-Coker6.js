@@ -568,6 +568,47 @@
             }
         },
     });
+    const textType = editor.DomComponents.getType("text");
+    //文字
+    editor.DomComponents.addType('span', {
+        // Define the Model
+        model: textType.model.extend({},
+            {
+                isComponent(el) {
+                    if (el.tagName === 'SPAN') {
+                        return {
+                            type: 'text',
+                            src: el.src,
+                            tagName: el.tagName.toLowerCase(),
+                            content: el.innerHTML,
+                            editable: true
+
+                        }
+                    }
+                }
+            }),
+        view: textType.view
+    });
+    //BGCanvas 動畫
+    editor.DomComponents.addType('動畫背景', {
+        isComponent: el => el.classList?.contains('.BGCanvas'),
+        model: {
+            defaults: {
+                droppable: false,
+                copyable: false
+            },
+            init() {
+                const self = this;
+                const ccid = self.ccid;
+                const c = $(".gjs-frame")[0].contentWindow.$;
+
+                window.setTimeout(function () {
+                    console.log("in");
+                    c(`#${ccid}`).BGCanvas();
+                }, 200)
+            }
+        },
+    });
     //關閉所有元件分類夾，僅開啟一個
     var blockControl = function () {
         $(categories.models).each(function (index, category) {

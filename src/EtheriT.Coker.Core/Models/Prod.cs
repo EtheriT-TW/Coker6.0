@@ -10,6 +10,8 @@ namespace EtheriT.Coker.Core.Models
         public string Title { get; set; }
         public bool Disp_Opt { get; set; }
         public int Ser_No { get; set; }
+        [StringLength(100)]
+        public string? ItemNo { get; set; }
         [StringLength(3000)]
         public string Introduction { get; set; }
         [StringLength(3000)]

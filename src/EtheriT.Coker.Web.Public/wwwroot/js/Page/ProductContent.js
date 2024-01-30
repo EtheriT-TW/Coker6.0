@@ -87,7 +87,7 @@ function PageDefaultSet(result) {
     if (spec_height > $pro_specification.height()) {
         $btn_detailed.removeClass("d-none")
     }
-    $("#ProductDescription > Content").before("<li>■ " + result.introduction.replaceAll("\n", "</li><li>■ ") + "</li>");
+    $("#ProductDescription > Content").before("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>");
 
     result.techCertDatas.forEach(item => {
         if (item.img_small.length > 0) {
@@ -193,7 +193,7 @@ function PageDefaultSet(result) {
 
     var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper");
 
-    if (result.id == 1) {
+    if (result.id == 1 && false) {
         var demo_slide = $($("#TemplateDemoSlide").html()).clone();
         var demo_pre_slide = $($("#TemplateDemoPreviewSlide").html()).clone();
         $product_swiper.append(demo_slide);
@@ -202,18 +202,37 @@ function PageDefaultSet(result) {
         result.img_Medium.forEach(img_med => {
             var slide = $($("#TemplateImageSlide").html()).clone();
             var slide_image = slide.find(".pro_display");
-            slide_image.attr("alt", img_med.name);
-            slide_image.attr("src", img_med.link[0]);
-            slide_image.data("id", img_med.id);
+            slide_image.attr({
+                "alt": img_med.name,
+                "data-id": img_med.id
+            });
+            switch (img_med.fileType) {
+                case 4:
+                    slide_image.attr({
+                        "data-display-protype": "youtube",
+                        "data-youtube-link": img_med.name,
+                        src: `https://img.youtube.com/vi/${img_med.name}/0.jpg`
+                    })
+                    break;
+                default:
+                    slide_image.attr("src", img_med.link[0]);
+                    break;
+            }
             $product_swiper.append(slide);
-            slide_image.on("click", ShowBigPro);
         });
 
         result.img_Small.forEach(img_small => {
             var pre_slide = $($("#TemplatePreviewSlide").html()).clone();
             var pre_slide_image = pre_slide.find("img");
             pre_slide_image.attr("alt", img_small.name);
-            pre_slide_image.attr("src", img_small.link[0]);
+            switch (img_small.fileType) {
+                case 4:
+                    pre_slide_image.attr({ src: `https://img.youtube.com/vi/${img_small.name}/3.jpg` })
+                    break;
+                default:
+                    pre_slide_image.attr("src", img_small.link[0]);
+                    break;
+            }
             pre_slide_image.data("id", img_small.id);
             $preview_swiper.append(pre_slide);
         });
@@ -260,7 +279,7 @@ function PageDefaultSet(result) {
             swiper: preview_swiper,
         },
     });
-
+    $product_swiper.find(".pro_display").on("click", ShowBigPro);
     img_origin_list = result.img_Original;
 
     if (result.tagDatas.length > 0) {
@@ -391,6 +410,7 @@ function ShowBigPro() {
     pro_viewModalSpace.children(".pro_img").addClass("d-none");
     pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
     pro_viewModalSpace.children(".pro_360view").addClass("d-none");
+    console.log(pro_self.data("display-protype"));
     switch (pro_self.data("display-protype")) {
         case "image":
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");

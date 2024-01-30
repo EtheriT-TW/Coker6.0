@@ -228,7 +228,7 @@ function AddUp(display, success_text, error_text) {
             var file_num = 0, success_file_num = 0, error_file_num = 0;
             $("#ImageUpload .img_input_frame > .img_input").each(function () {
                 var $item = $(this);
-                if (typeof ($item.data("file")) != "undefined" && $item.data("file").Id == 0) {
+                if (typeof ($item.data("file")) != "undefined" && $item.data("file").id == 0) {
                     file_num++;
                     var formData = new FormData();
                     formData.append("type", 7);

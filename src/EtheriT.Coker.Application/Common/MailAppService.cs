@@ -74,6 +74,7 @@ namespace EtheriT.Coker.Application.Common
                 body = body.Replace("<body>", "").Replace("</body>", "");
                 body = Regex.Replace(body, $@"src=""/upload/(?!{OrgName})", $@"src=""{webUrl}/upload/{OrgName}/", RegexOptions.IgnoreCase);
                 body = Regex.Replace(body, $@"href=""/upload/(?!{OrgName})", $@"href=""{webUrl}/upload/{OrgName}/", RegexOptions.IgnoreCase);
+                body = Regex.Replace(body, $@"href=""/", $@"href=""{webUrl}/", RegexOptions.IgnoreCase);
                 body = Regex.Replace(body, $@"draggable[\s]?=""[\w]*""", "", RegexOptions.IgnoreCase);
                 body = Regex.Replace(body, $@"custom_block_template[\s]?=""[\w]*""", "", RegexOptions.IgnoreCase);
                 body = Regex.Replace(body, $@"block_id[\s]?=""[\w]*""", "", RegexOptions.IgnoreCase);

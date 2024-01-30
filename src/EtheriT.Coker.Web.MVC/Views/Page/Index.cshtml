@@ -74,25 +74,44 @@
                         </div>
                         <div class="row">
                             <div class="col-12 d-flex justify-content-around align-item-center my-3">
-                                <div class="col-3 form-group form-check px-1">
+                                <div class="col form-group form-check px-1">
                                     <label for="pageType" class="form-label">頁面類型</label>
                                     <select name="pageType" id="pageType" class="form-select item-menu"></select>
                                 </div>
-                                <div class="col-3 form-group form-check px-1">
+                                <div class="col form-group form-check px-1">
+                                    <label for="lanBar" class="form-label">顯示在語言列</label>
+                                    <select name="lanBar" id="lanBar" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false" selected>否</option>
+                                    </select>
+                                    <div class="memo">僅在有語言列的版型有效</div>
+                                </div>
+                                <div class="col form-group form-check px-1">
+                                    <label for="isFromShelves" class="form-label">上架中</label>
+                                    <select name="isFromShelves" id="lanBar" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-around align-item-center my-3">
+                                <div class="col form-group form-check px-1">
                                     <label for="visibleHeader">顯示版頭</label>
                                     <select name="visibleHeader" id="visibleHeader" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false">否</option>
                                     </select>
                                 </div>
-                                <div class="col-3 form-group form-check pl-1">
+                                <div class="col form-group form-check pl-1">
                                     <label for="visibleFooter">顯示頁尾</label>
                                     <select name="visibleFooter" id="visibleFooter" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false">否</option>
                                     </select>
                                 </div>
-                                <div class="col-3 form-group form-check pl-1">
+                                <div class="col form-group form-check pl-1">
                                     <label for="visibleTitle">顯示標題</label>
                                     <select name="visibleTitle" id="visibleTitle" class="form-select item-menu">
                                         <option value="true">是</option>

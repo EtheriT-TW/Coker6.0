@@ -1,4 +1,5 @@
-﻿using DevExtreme.AspNet.Mvc;
+﻿using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.AuditLog;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Newsletter;
@@ -8,6 +9,10 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -39,6 +44,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<TagGetAllListDto?> GetRecipientsTag() {
             return await tagAppService.GetTagByName("電子報");
         }
+        [HttpGet]
+        public JsonResult GetTargetLookup(DataSourceLoadOptions loadOptions)
+        {
+            List<TargetDto> dataQuery = new List<TargetDto> {
+                new TargetDto { Name="另開視窗", newWindow=true},
+                new TargetDto { Name="直接連結", newWindow=false}
+            };
+            var output = DataSourceLoader.Load(dataQuery, loadOptions);
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
         [HttpPost]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ResponseMessageDto> SaveRecipients([FromForm] DevExpressDto dto)
@@ -53,6 +68,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> Send(DataDelectDto dto) {
             return await newsletterAppService.Send(dto.Id);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> UpdateJson(NewsletterFrameDto dto) {
+            return await newsletterAppService.UpdateJson(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto) {
+            return await newsletterAppService.SaveConten(dto);
         }
     }
 }

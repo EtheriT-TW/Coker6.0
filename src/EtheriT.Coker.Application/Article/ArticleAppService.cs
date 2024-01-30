@@ -22,6 +22,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Common;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -234,7 +235,9 @@ namespace EtheriT.Coker.Application.Article
                                             StartTime = e.StartTime,
                                             EndTime = e.EndTime,
                                             NodeDate = e.NodeDate,
-                                            permanent = e.permanent
+                                            RemovedFromShelves = e.RemovedFromShelves,
+                                            permanent = e.permanent,
+                                            DataJson = string.IsNullOrEmpty(e.DataJson)? null: JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
                                         }).FirstOrDefaultAsync();
 
                     if (output != null)
@@ -276,6 +279,7 @@ namespace EtheriT.Coker.Application.Article
                 var result = await db.Article
                                     .Where(e => dto.Ids.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
+                                    .Where(e => !e.RemovedFromShelves)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
@@ -448,7 +452,6 @@ namespace EtheriT.Coker.Application.Article
             }
             catch (Exception ex)
             {
-                response.Success = false;
                 response.Error = ex.Message;
             }
             return response;
@@ -459,20 +462,19 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
-                var user = await loginUserData.GetUser();
                 var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
 
-                article.SaveHtml = dto.SaveHtml;
-                article.SaveCss = dto.SaveCss;
-                article.LastModificationTime = DateTime.Now;
-                article.LastModifierUserId = user.Id;
-
-                db.SaveChanges();
-                response.Success = true;
+                if (article != null)
+                {
+                    article.SaveHtml = dto.SaveHtml;
+                    article.SaveCss = dto.SaveCss;
+                    await loginUserData.SaveChanges(article);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
             }
             catch (Exception ex)
             {
-                response.Success = false;
                 response.Error = ex.Message;
             }
             return response;
@@ -487,7 +489,7 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
-                var articl = await db.Article.Where(e => e.Id == dto.articleId).Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).FirstOrDefaultAsync();
+                var articl = await db.Article.Where(e => e.Id == dto.articleId).Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).Where(e => e.FK_WebsiteId == dto.siteId).FirstOrDefaultAsync();
                 if (side != null)
                 {
                     result.SiteName = side.Title;

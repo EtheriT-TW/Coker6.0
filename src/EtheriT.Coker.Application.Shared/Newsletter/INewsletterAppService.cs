@@ -1,6 +1,8 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -16,5 +18,7 @@ namespace EtheriT.Coker.Application.Newsletter
         public Task<ResponseMessageDto> RecipientAddUp(DevExpressDto dto);
         public Task<ResponseMessageDto> DeleteRecipients(long Id);
         public Task<ResponseMessageDto> Send(long Id);
+        public Task<ResponseMessageDto> UpdateJson(NewsletterFrameDto dto);
+        public Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto);
     }
 }

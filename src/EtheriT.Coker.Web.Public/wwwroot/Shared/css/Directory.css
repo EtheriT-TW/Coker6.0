@@ -813,13 +813,14 @@
 
 .eplus .news {
     background: rgba(234,234,234,1);
-    height: 400px;
+    min-height: 400px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
     .eplus .news .row {
         display: flex;
+        align-items: center;
     }
     .eplus .news li {
         list-style-type: square;

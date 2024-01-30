@@ -1,18 +1,20 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Article
+@using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
     ViewData["Title"] = "Newsletter";
 }
 
 <link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="/lib/CokerMultiStepForm/css/Style.min.css" asp-append-version="true">
 <link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css">
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
 }
-<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
-<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
-
+<script src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
+<script src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
+<script src="/lib/CokerMultiStepForm/js/index.min.js" asp-append-version="true"></script>
 <script src="~/js/Newsletter/Index.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <div id="TopLine" class="py-2 px-4">
@@ -106,65 +108,428 @@
             </div>
         </div>
 
-        <form id="ArticletForm" class="card-body needs-validation">
-            <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
-                <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
-                    @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
-                </div>
-                <div class="d-flex">
-                    <button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
-                        <span class="material-symbols-outlined fs-2">visibility_off</span>
-                    </button>
-
-                    <button class="btn_pop_visible bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
-                        <span class="material-symbols-outlined fs-2">group_off</span>
-                    </button>
+        <form id="ArticletForm" class="card-body form-horizontal msf needs-validation">
+            <div class="progress">
+                <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                    <span class="sr-only">0% Complete</span>
                 </div>
             </div>
-
-            <div class="title border mb-3 p-2 rounded">
-                <div class="d-flex justify-content-between w-100">
-                    <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
-                    <div class="count">0</div>
-                </div>
-                <textarea class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入文章標題" required></textarea>
-            </div>
-            <div class="date input-group mb-3">
-                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                    <span class="material-symbols-outlined me-1">calendar_today</span>發布日期
-                </div>
-                <input id="NodeDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off">
-            </div>
-
-            <div class="date input-group mb-3">
-                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                    <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
-                </div>
-                <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
-                <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                    <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
-                    <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+            <div class="msf-header">
+                <div class="row text-center">
+                    <div class="msf-step col"><span>主要資料</span></div>
+                    <div class="msf-step col"><span>主選單</span></div>
+                    <div class="msf-step col"><span>內容區1</span></div>
+                    <div class="msf-step col"><span>最新消息</span></div>
+                    <div class="msf-step col"><span>活動公告</span></div>
+                    <div class="msf-step col"><span>內容區2</span></div>
+                    <div class="msf-step col"><span>內容區3</span></div>
+                    <div class="msf-step col"><span>頁尾資料</span></div>
                 </div>
             </div>
+            <div class="msf-content">
+                <div data-key="main" class="msf-view">
+                    <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
+                        <div class="d-flex">
+                            <div id="LogoImage" class="d-flex justify-content-center image_upload formItem" data-name="Logo" data-issinge="true" data-needcompress="false">
+                                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                                <h3>Logo圖<br />(301*207)</h3>
+                            </div>
+                            <div class="d-flex justify-content-center ms-5 image_upload formItem" data-name="LogoCompress" data-issinge="true" data-needcompress="false">
+                                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
+                                <h3>email使用Logo<br />(155*96)</h3>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                <input id="PageVisible" type="checkbox" name="Visible" class="d-none selectedItem formItem" value="false" />
+                                <label for="PageVisible" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
+                                    <span class="material-symbols-outlined fs-2">visibility</span>
+                                    <span class="material-symbols-outlined fs-2">visibility_off</span>
+                                </label>
+                            </div>
 
-            <div class="describe border mb-3 p-2 rounded">
-                <div class="d-flex justify-content-between w-100">
-                    <span class="input-group-text bg-transparent border-0 p-0">描述</span>
-                    <div class="count">0</div>
+                            <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                <input id="PopularVisible" type="checkbox" name="PopularVisible" class="d-none selectedItem formItem" value="false" />
+                                <label for="PopularVisible" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
+                                    <span class="material-symbols-outlined fs-2">group</span>
+                                    <span class="material-symbols-outlined fs-2">group_off</span>
+                                </label>
+                            </div>
+
+                            <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                <input id="RemovedFromShelves" type="checkbox" name="RemovedFromShelves" class="d-none selectedItem formItem" value="false" checked />
+                                <label for="RemovedFromShelves" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                                    <span class="material-symbols-outlined fs-2">open_in_new</span>
+                                    <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="title border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" aria-label="With textarea" name="Title" maxlength="50" placeholder="輸入文章標題" required></textarea>
+                    </div>
+                    <div class="no border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">期數</span>
+                        </div>
+                        <input type="number" class="form-control border-0 formItem" name="No" placeholder="輸入期數" required>
+                    </div>
+                    <div class="BGColor border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">背景色</span>
+                        </div>
+                        <input type="text" class="form-control border-0 formItem" name="BGColor" placeholder="輸入背景色" required>
+                    </div>
+                    <div class="date input-group mb-3">
+                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                            <span class="material-symbols-outlined me-1">calendar_today</span>發布日期
+                        </div>
+                        <input id="NodeDate" class="form-control rounded formItem" name="NodeDate" type="text" aria-label="Input Duration of Product" pattern="[1-9]\d{3}/\d{2}/\d{2}" autocomplete="off">
+                    </div>
+
+                    <div class="date input-group mb-3">
+                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                            <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                        </div>
+                        <input id="InputDate" class="form-control rounded formItem" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                        <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                            <input id="PermanentCheck" class="form-check-input formItem" name="Permanent" type="checkbox" value="">
+                            <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                        </div>
+                    </div>
+
+                    <div class="describe border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0">描述</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0" aria-label="With textarea formItem" name="Description" maxlength="300" placeholder="輸入文章描述"></textarea>
+                    </div>
+
+                    @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+
+                    <div class="sort input-group mb-3">
+                        <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                            <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
+                        </div>
+                        <input class="form-control rounded formItem" type="number" name="SerNO" data-default="500" aria-label="Input Sort of Article" disabled="disabled" required>
+                        <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                            <input class="form-check-input formItem" name="permanent" type="checkbox" value="">
+                            <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
+                        </div>
+                    </div>
                 </div>
-                <textarea class="form-control border-0" aria-label="With textarea" maxlength="300" placeholder="輸入文章描述"></textarea>
+                <div data-key="mainManu" class="msf-view">
+                    @(Html.DevExtreme().DataGrid<NewsletterLinkDto>()
+                        .ShowBorders(true)
+                        .OnContentReady("NewsletterReady")
+                        .Paging(paging => paging.Enabled(false))
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(true);
+                            editing.AllowDeleting(true);
+                            editing.AllowUpdating(true);
+                        }).Columns(c =>
+                        {
+                            c.AddFor(e => e.title).Caption("標題");
+                            c.AddFor(e => e.link).Caption("連結");
+                            c.AddFor(e => e.target).Lookup(lookup => lookup
+                            .DataSource("getTarget")
+                            .DisplayExpr("Name")
+                            .ValueExpr("newWindow")
+                            ).Caption("另開視窗");
+                        }).DataSource(new List<NewsletterLinkDto>())
+                        )
+                </div>
+                <div data-key="conten1" class="msf-view">
+                    <div class="d-flex align-self-center mb-3 flex-wrap-reverse flex-md-nowrap">
+                        <div id="ImageUpload" class="d-flex justify-content-center image_upload formItem" data-name="image" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadTemplateModal"})
+                            <h3>主要圖片(搜尋用圖片)<br />(1200*624)</h3>
+                        </div>
+                        <div class="d-flex justify-content-center image_upload formItem" data-name="imageCompress" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
+                            <h3>email使用圖片<br/>(800*416)</h3>
+                        </div>
+                    </div>
+                    <div class="title border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" aria-label="With textarea" name="Title" maxlength="50" placeholder="請輸入標題" required></textarea>
+                    </div>
+                    <div class="conten border mb-3 p-2 rounded">
+                        <span class="input-group-text bg-transparent border-0 p-0 mb-3 required_all">內文描述</span>
+                        <textarea class="form-control border-0 text h300 formItem" aria-label="With textarea" name="Conten" placeholder="請輸入內文" required></textarea>
+                    </div>
+                    <div class="more border mb-3 p-2 rounded formItem" data-name="More" data-type="object">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">查看更多</span>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control item-menu formItem" id="conten1LinkMoreTitle" name="title" placeholder="請輸入連結文字">
+                            <label for="conten1LinkMoreTitle">連結文字</label>
+                        </div>
+                        <div class="input-group">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control item-menu formItem" id="conten1LinkMoreUrl" name="link" placeholder="請輸入連結">
+                                <label for="conten1LinkMoreUrl">連結</label>
+                            </div>
+                            <div class="btn btn-outline-secondary">
+                                <input id="conten1LinkMoreTarget" type="checkbox" name="target" class="d-none selectedItem visibe formItem" value="true" />
+                                <label for="conten1LinkMoreTarget" class="bg-transparent border-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否另開視窗">
+                                    <span class="material-symbols-outlined">open_in_new</span>
+                                    <span class="material-symbols-outlined">open_in_new_off</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control item-menu formItem" id="conten1LinkMoreAlert" name="alert" placeholder="請輸入連結提示文字">
+                            <label for="conten1LinkMoreAlert">連結提示文字</label>
+                        </div>
+                    </div>
+                </div>
+                <div data-key="news" class="msf-view">
+                    <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
+                        <div id="ImageNews" class="d-flex justify-content-center image_upload formItem" data-name="image" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadTemplateModal"})
+                            <h3>左側圖片</h3>
+                        </div>
+                        <div class="d-flex">
+                            <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                <input id="VisibleNews" type="checkbox" name="Visible" class="d-none selectedItem formItem" value="false" />
+                                <label for="VisibleNews" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                                    <span class="material-symbols-outlined fs-2">open_in_new</span>
+                                    <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="memo">信箱最多截取前四筆</div>
+                    @(Html.DevExtreme().DataGrid<NewsletterLinkDto>()
+                        .ShowBorders(true)
+                        .ElementAttr("data-name","List")
+                        .OnContentReady("NewsletterReady")
+                        .Paging(paging => paging.Enabled(false))
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(true);
+                            editing.AllowDeleting(true);
+                            editing.AllowUpdating(true);
+                        }).Columns(c =>
+                        {
+                            c.AddFor(e => e.title).Caption("標題");
+                            c.AddFor(e => e.link).Caption("連結");
+                            c.AddFor(e => e.target).Lookup(lookup => lookup
+                            .DataSource("getTarget")
+                            .DisplayExpr("Name")
+                            .ValueExpr("newWindow")
+                            ).Caption("另開視窗");
+                            c.AddFor(e => e.alert).Caption("提醒文字");
+                        }).DataSource(new List<NewsletterLinkDto>())
+                        )
+                </div>
+                <div data-key="active" class="msf-view">
+                    <div class="d-flex flex-row-reverse mb-5 mt-3">
+                        <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                            <input id="VisibleActive" type="checkbox" name="Visible" class="d-none selectedItem formItem" value="false" />
+                            <label for="VisibleActive" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                                <span class="material-symbols-outlined fs-2">open_in_new</span>
+                                <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="title border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="Title" aria-label="With textarea" maxlength="50" placeholder="請輸入活動標題" required></textarea>
+                    </div>
+                    <div class="memo">信箱最多截取前兩筆</div>
+                    @(Html.DevExtreme().DataGrid<NewsletterLinkDto>()
+                        .ShowBorders(true)
+                        .ElementAttr("data-name", "List")
+                        .OnContentReady("NewsletterReady")
+                        .Paging(paging => paging.Enabled(false))
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(true);
+                            editing.AllowDeleting(true);
+                            editing.AllowUpdating(true);
+                        }).Columns(c =>
+                        {
+                            c.AddFor(e => e.title).Caption("標題");
+                            c.AddFor(e => e.date).Caption("日期");
+                            c.AddFor(e => e.local).Caption("區域");
+                            c.AddFor(e => e.link).Caption("連結");
+                            c.AddFor(e => e.target).Lookup(lookup => lookup
+                            .DataSource("getTarget")
+                            .DisplayExpr("Name")
+                            .ValueExpr("newWindow")
+                            ).Caption("另開視窗");
+                            c.AddFor(e => e.alert).Caption("提醒文字");
+                        }).DataSource(new List<NewsletterLinkDto>())
+                        )
+                </div>
+                <div data-key="conten2" class="msf-view">
+                    <div class="d-flex flex-row-reverse mb-5 mt-3">
+                        <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                            <input id="VisibleConten2" type="checkbox" name="Visible" class="d-none selectedItem formItem" value="false" />
+                            <label for="VisibleConten2" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                                <span class="material-symbols-outlined fs-2">open_in_new</span>
+                                <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mainTitle border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="mainTitle" aria-label="With textarea" maxlength="50" placeholder="請輸入標題" required></textarea>
+                    </div>
+                    <div class="d-flex align-self-center mb-3 flex-wrap-reverse flex-md-nowrap">
+                        <div id="Conten2Banner" class="d-flex justify-content-center image_upload formItem" data-name="image" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadTemplateModal"})
+                            <h3>圖片<br />(1241*722)</h3>
+                        </div>
+                        <div class="d-flex justify-content-center image_upload formItem" data-name="imageCompress" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
+                            <h3>mail使用圖片<br />(800*465)</h3>
+                        </div>
+                        <div id="Conten2icon" class="d-flex justify-content-center image_upload ico formItem" data-name="icon" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadTemplateModal"})
+                            <h3>icon圖片<br />(135*150)</h3>
+                        </div>
+                        <div class="d-flex justify-content-center image_upload formItem" data-name="iconCompress" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
+                            <h3>email使用icon圖片<br />(80*89)</h3>
+                        </div>
+                    </div>
+                    <div class="title border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">子標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="Title" aria-label="With textarea" maxlength="50" placeholder="請輸入子標題" required></textarea>
+                    </div>
+                    <div class="conten border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">內文</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="Conten" aria-label="With textarea" maxlength="300" placeholder="請輸入內文" required></textarea>
+                    </div>
+                </div>
+                <div data-key="conten3" class="msf-view">
+                    <div class="d-flex justify-content-between mb-5 mt-3">
+                        <div class="d-flex justify-content-center ms-5 image_upload formItem" data-name="image" data-issinge="true" data-needcompress="false">
+                            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadTemplateModal" })
+                            <h3>email使用title圖<br />(800*159)</h3>
+                        </div>
+                        <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                            <input id="VisibleConten3" type="checkbox" name="Visible" class="d-none selectedItem formItem" value="false" />
+                            <label for="VisibleConten3" class="bg-transparent border-0 mb-0 text-primary d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                                <span class="material-symbols-outlined fs-2">open_in_new</span>
+                                <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mainTitle border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="mainTitle" aria-label="With textarea" maxlength="50" placeholder="請輸入標題" required></textarea>
+                    </div>
+                    <div class="title border mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">子標題</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="Title" aria-label="With textarea" maxlength="50" placeholder="請輸入子標題" required></textarea>
+                    </div>
+                    <div class="memo">信箱最多截取前三筆</div>
+                    @(Html.DevExtreme().DataGrid<NewsletterLinkDto>()
+                        .ShowBorders(true)
+                        .ElementAttr("data-name","List")
+                        .OnContentReady("NewsletterReady")
+                        .Paging(paging => paging.Enabled(false))
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(true);
+                            editing.AllowDeleting(true);
+                            editing.AllowUpdating(true);
+                        }).Columns(c =>
+                        {
+                            c.AddFor(e => e.title).Caption("標題");
+                            c.AddFor(e => e.memo).Caption("備註");
+                            c.AddFor(e => e.conten).Caption("內文");
+                            c.AddFor(e => e.link).Caption("連結");
+                            c.AddFor(e => e.target).Lookup(lookup => lookup
+                            .DataSource("getTarget")
+                            .DisplayExpr("Name")
+                            .ValueExpr("newWindow")
+                            ).Caption("另開視窗");
+                            c.AddFor(e => e.alert).Caption("提醒文字");
+                        }).DataSource(new List<NewsletterLinkDto>())
+                        )
+                </div>
+                <div data-key="footer" class="msf-view">
+                    <div class="memo">固定兩個icon</div>
+                    @(Html.DevExtreme().DataGrid<NewsletterLinkDto>()
+                        .ShowBorders(true)
+                        .ElementAttr("data-name", "List")
+                        .OnContentReady("NewsletterReady")
+                        .Paging(paging => paging.Enabled(false))
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(false);
+                            editing.AllowDeleting(false);
+                            editing.AllowUpdating(true);
+                        }).Columns(c =>
+                        {
+                            c.AddFor(e => e.alert).Caption("提醒文字");
+                            c.AddFor(e => e.link).Caption("連結");
+                            c.AddFor(e => e.target).Lookup(lookup => lookup
+                            .DataSource("getTarget")
+                            .DisplayExpr("Name")
+                            .ValueExpr("newWindow")
+                            ).Caption("另開視窗");
+                            c.AddFor(e => e.className).Visible(false).Caption("icon");
+                        }).DataSource(new List<NewsletterLinkDto>())
+                        )
+                    <div class="conten border mt-3 mb-3 p-2 rounded">
+                        <div class="d-flex justify-content-between w-100">
+                            <span class="input-group-text bg-transparent border-0 p-0 required_all">內文</span>
+                            <div class="count">0</div>
+                        </div>
+                        <textarea class="form-control border-0 formItem" name="Conten" aria-label="With textarea" maxlength="300" placeholder="請輸入內文" required></textarea>
+                    </div>
+                </div>
             </div>
+            <div class="msf-navigation mt-3">
+                <div class="row justify-content-center">
+                    <div class="col-md-3">
+                        <button type="button" data-type="back" class="btn btn-default msf-nav-button"><i class="fa fa-chevron-left"></i> 上一步 </button>
+                    </div>
 
-            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+                    <div class="col-md-3 col-md-offset-6">
+                        <button type="button" data-type="next" class="btn btn-default msf-nav-button">下一步 <i class="fa fa-chevron-right"></i></button>
+                        <button type="submit" data-type="submit" class="btn btn-primary msf-nav-button">儲存</button>
+                    </div>
 
-            <div class="sort input-group mb-3">
-                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                    <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
-                </div>
-                <input class="form-control rounded" type="number" aria-label="Input Sort of Article" disabled="disabled" required>
-                <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                    <input class="form-check-input" type="checkbox" value="">
-                    <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
                 </div>
             </div>
         </form>

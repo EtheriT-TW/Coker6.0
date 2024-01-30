@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public bool? Sitemap_Target { get; set; }
         public bool? HasShoppingCar { get; set; }
         public List<MenuItemModel>? menuItemModels { get; set; }
+        public List<MenuItemModel> langMenuItemModels { get; set; } = new List<MenuItemModel>();
         public List<MarqueeDisplayDto>? marqueeModels { get; set; }
     }
 }

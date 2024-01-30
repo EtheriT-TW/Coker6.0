@@ -13,35 +13,35 @@
 
 <nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
     <!-- Mega Menu -->
-    <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100" >
+    <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
         <div class="d-flex justify-content-center align-items-center w-100 bg-white">
             <div class="btn_menu navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu" style="width:10%">
-           <div class="">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-            </div>
-           
-        </div>
+                <div class="">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
 
-        <!-- Logo -->
-         <div class="logo d-lg-none text-center py-lg-0 py-1" style="width:80%">
-            @{
-                var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
-                var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
-            }
-            <a href="/" target="@logo_target" title="@logo_title">
-                @if (string.IsNullOrEmpty(Model.Title))
-                {
-                    <h1>@Model.Title</h1>
+            </div>
+
+            <!-- Logo -->
+            <div class="logo d-lg-none text-center py-lg-0 py-1" style="width:80%">
+                @{
+                    var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
+                    var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
                 }
-                else
-                {
-                    <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
-                    <h1 class="d-none">@Model.Title</h1>
-                }
-            </a>
-        </div>
+                <a href="/" target="@logo_target" title="@logo_title">
+                    @if (string.IsNullOrEmpty(Model.Title))
+                    {
+                        <h1>@Model.Title</h1>
+                    }
+                    else
+                    {
+                        <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
+                        <h1 class="d-none">@Model.Title</h1>
+                    }
+                </a>
+            </div>
             <div class="" style="width:10%" id="icon-search">
                 <div class="icon-search-bg d-flex justify-content-center align-items-center">
                     <a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2"></a>
@@ -63,19 +63,23 @@
                     }
                     else
                     {
-                        <img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img"/>
+                        <img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" />
                         <h1 class="d-none">@Model.Title</h1>
                     }
                 </a>
             </div>
             <div class="position-relative">
                 <div id="Search" class="d-flex lh-lg position-absolute  justify-content-center align-items-center">
-                <input id="SearchInput" class="input_sear form-control   fs_change  input-pd" type="search" placeholder="" aria-label="Search">
+                    <input id="SearchInput" class="input_sear form-control   fs_change  input-pd" type="search" placeholder="" aria-label="Search">
                     <span class="material-symbols-outlined icon position-absolute">search</span>
-                <i class="fa-solid fa-earth-americas mx-2"></i>
-                <a class="mx-2 switch-button">English</a>
-                <a href="/" class="mx-2 switch-button">中文</a>
-            </div>
+                    <i class="fa-solid fa-earth-americas mx-2"></i>
+                    @foreach (var menu in Model.langMenuItemModels)
+                    {
+                        var target = menu.Target??false ? "_blank" : "_self";
+                        var targetStr = menu.Target ?? false ? $"連結至：{menu.Title}(另開新視窗)" : $"連結至：{menu.Title}";
+                        <a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target">@menu.Title</a>
+                    }
+                </div>
             </div>
         </div>
         @{
@@ -170,55 +174,54 @@
 
 
         <!-- Tool Bar -->
-        
         <!-- <div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2"> -->
-            <!-- Search Block -->
+        <!-- Search Block -->
         <!-- <button class="d-flex bg-transparent border-0">
                 <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
             </button>
             <button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
                 <div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
             </button>-->
-            @if (Model.HasShoppingCar == true)
-            {
-                <div id="Cart_Dropdown_Parent" class="d-flex px-1">
-                    <button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
-                        <span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
-                    </button>
+        @if (Model.HasShoppingCar == true)
+        {
+            <div id="Cart_Dropdown_Parent" class="d-flex px-1">
+                <button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
+                    <span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
+                </button>
 
-                    <div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
-                        <ul class="m-0">
-                            <template id="Template_Car_Dropdown">
-                                <li class="border-bottom me-4" data-scid="">
-                                    <figure class="position-relative mb-0">
-                                        <a class="pro_link d-flex" href="" title="連結至：商品">
-                                            <img class="pro_image" src="" alt="商品" />
-                                            <figcaption class="overflow-hidden">
-                                                <div class="pro_name h-auto"></div>
-                                                <div class="pro_spec h-auto my-1"></div>
-                                                <div class="number d-flex">
-                                                    <div class="pro_unit price fw-bold"></div>
-                                                    <div class="pro_quantity fw-bold"></div>
-                                                </div>
-                                            </figcaption>
-                                        </a>
-                                        <button class="btn_cart_delete bg-transparent border-0 position-absolute">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </figure>
-                                </li>
-                            </template>
-                        </ul>
+                <div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
+                    <ul class="m-0">
+                        <template id="Template_Car_Dropdown">
+                            <li class="border-bottom me-4" data-scid="">
+                                <figure class="position-relative mb-0">
+                                    <a class="pro_link d-flex" href="" title="連結至：商品">
+                                        <img class="pro_image" src="" alt="商品" />
+                                        <figcaption class="overflow-hidden">
+                                            <div class="pro_name h-auto"></div>
+                                            <div class="pro_spec h-auto my-1"></div>
+                                            <div class="number d-flex">
+                                                <div class="pro_unit price fw-bold"></div>
+                                                <div class="pro_quantity fw-bold"></div>
+                                            </div>
+                                        </figcaption>
+                                    </a>
+                                    <button class="btn_cart_delete bg-transparent border-0 position-absolute">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </figure>
+                            </li>
+                        </template>
+                    </ul>
 
-                        <div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
+                    <div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
 
-                        <button onclick="location.href='/ShoppingCar';" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</button>
-                    </div>
+                    <button onclick="location.href='/ShoppingCar';" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</button>
                 </div>
-            }
+            </div>
+        }
 
-            <!-- Login Button -->
+        <!-- Login Button -->
         <!--<div class="d-flex">
                 <button class="bg-transparent border-0 d-flex align-items-center" type="button">
                     <span class="material-symbols-outlined">person</span>

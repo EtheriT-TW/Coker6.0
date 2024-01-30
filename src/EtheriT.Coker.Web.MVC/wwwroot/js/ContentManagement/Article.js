@@ -1,4 +1,4 @@
-﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox, $picker, $nodeDate, $permanent;
+﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox, $picker, $nodeDate, $permanent, $removedFromShelves;
 var startDate, endDate, keyId, disp_opt = false, pop_visible = false;
 var article_list;
 var setPage;
@@ -195,6 +195,7 @@ function ElementInit() {
     $picker = $("#InputDate");
     $nodeDate = $("#NodeDate");
     $permanent = $("#PermanentCheck");
+    $removedFromShelves = $("#RemovedFromShelves");
 }
 
 function contentReady(e) {
@@ -262,6 +263,7 @@ function FormDataClear() {
     $sort_input.attr("disabled", "disabled");
     $sort_checkbox.prop("checked", false);
     $permanent.prop("checked", true);
+    $removedFromShelves.prop("checked", false);
     pop_visible = false;
     disp_opt = false;
 }
@@ -291,6 +293,7 @@ function FormDataSet(result) {
     endDate = result.endTime;
     pop_visible = result.popularVisible;
     disp_opt = result.visible;
+    $removedFromShelves.prop("checked", !result.removedFromShelves);
     
 
     if (result.serNO != 500) {
@@ -353,10 +356,11 @@ function AddUp(success_text, error_text, place) {
         permanent: $permanent.is(":checked"),
         StartTime: startDate,
         EndTime: endDate,
-        NodeDate: $nodeDate.val()
+        NodeDate: $nodeDate.val(),
+        RemovedFromShelves:$removedFromShelves.is(":checked") ? false : true
     }).done(function (result) {
         if (result.success) {
-            if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").Id == 0) {
+            if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
                 var formData = new FormData();
                 formData.append("files", $("#ImageUpload .img_input").data("file").File);
                 formData.append("type", 6);

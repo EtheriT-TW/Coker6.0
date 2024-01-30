@@ -8,8 +8,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Newsletter
 {
     public class NewsletterImageDto
     {
+        public long? Id { get; set; }
         public string? Path { get; set; }
         public string? Class { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

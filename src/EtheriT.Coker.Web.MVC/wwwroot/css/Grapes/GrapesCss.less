@@ -59,3 +59,47 @@
     width: 100%;
     position: relative;
 }
+
+.backstageType {
+    position: relative;
+
+    &:before {
+        content: "前台不顯示";
+        font-size: 2rem;
+        position: absolute;
+        background-color: rgba(88,88,88,0.7);
+        display: flex;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        pointer-events: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        color: #FFF;
+    }
+}
+
+.backstageLock {
+    pointer-events: none;
+    position: relative;
+
+    &:before {
+        font-family: 'Font Awesome 6 Free';
+        content: "\f023";
+        font-size: 2rem;
+        position: absolute;
+        background-color: rgba(88,88,88,0.7);
+        display: flex;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        pointer-events: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        color: #FFF;
+    }
+}

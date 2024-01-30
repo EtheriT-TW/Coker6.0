@@ -29,7 +29,7 @@ function ready() {
             let $pe = $('<div>');
             $pe[0].innerHTML = p;
             $pe.html($pe.text());
-            $pe.find(".catalog_frame").remove();
+            $pe.find(".catalog_frame,.noInherit").remove();
             $pe.find(".subpage_content").replaceWith(ele.textContent || ele.innerText);
             ele.textContent = $pe.html();
         }
@@ -46,6 +46,7 @@ function ready() {
         $PostCSS.remove();
     }
     $(".editTime,.popular").appendTo($conten);
+    $(".backstageType").remove();
     if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
     if ($(".masonry").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
@@ -56,6 +57,7 @@ function ready() {
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
     if ($(".shareBlock").length > 0) ShareBlockInit();
     if ($(".ContactForm").length > 0) setContact();
+    if ($(".BGCanvas").length > 0) setBGCanvas();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
     if ($(".container .qa").length > 0) {
         $(".container").each((i, e) => {
@@ -501,6 +503,16 @@ var Coker = {
                 });
             }
         }
+    },
+    isMobileDevice: function () {
+        let mobileDevices = ['Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 'Windows Phone']
+        for (var i = 0; i < mobileDevices.length; i++) {
+            if (navigator.userAgent.match(mobileDevices[i])) {
+                //console.log("isMobileDevice: match " + mobileDevices[i]);
+                return true;
+            }
+        }
+        return false
     }
 }
 $.fn.extend({
@@ -552,7 +564,6 @@ $.fn.extend({
                     break
             }
         });
-        console.log(formDataObject);
         return formDataObject;
     }
 });

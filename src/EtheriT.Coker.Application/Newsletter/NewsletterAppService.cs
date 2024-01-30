@@ -19,6 +19,9 @@ using EtheriT.Coker.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using System.Xml.Linq;
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
+using System.Security.Cryptography;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 
 namespace EtheriT.Coker.Application.Newsletter
 {
@@ -155,6 +158,51 @@ namespace EtheriT.Coker.Application.Newsletter
             var data = db.Recipients.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == sideId);
             var dataQuery = mapper.Map<List<MailUserDataDto>>(data);
             return dataQuery;
+        }
+        public async Task<ResponseMessageDto> UpdateJson(NewsletterFrameDto dto) {
+            ResponseMessageDto output = new ResponseMessageDto();
+            long sideId = await loginUserData.GetWebsiteId();
+            try
+            {
+                if (dto.Id == 0) throw new Exception("資料不存在");
+                var data = await db.Article
+                .Where(e => e.Id == dto.Id)
+                .Where(e => e.FK_WebsiteId == sideId)
+                .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                if (data != null)
+                {
+                    data.DataJson = JsonConvert.SerializeObject(dto);
+                    await loginUserData.SaveChanges(data);
+                    output.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }catch (Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "UpdateJson",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            return output;
+        }
+        public async Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto) { 
+            ResponseMessageDto output = new ResponseMessageDto();
+            long sideId = await loginUserData.GetWebsiteId();
+            try { 
+                var data = await db.Article.Where(e => e.Id == dto.Id).Where(e => !e.IsDeleted).Where( e=> e.FK_WebsiteId==sideId).FirstOrDefaultAsync();
+                if (data != null)
+                {
+                    string Orgname = await loginUserData.GetWebsiteOrgName();
+                    data.NewsletterCss = (dto.Css??"").Replace($"/upload/{Orgname}/", "/upload/");
+                    data.NewsletterHtml = (dto.Html??"").Replace($"/upload/{Orgname}/", "/upload/");
+                    await loginUserData.SaveChanges(data);
+                    output.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+            return output;
         }
     }
 }

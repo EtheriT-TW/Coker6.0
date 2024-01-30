@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Application.S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Application", "src\EtheriT.Coker.Application\EtheriT.Coker.Application.csproj", "{D8036602-9658-4AFA-B75A-322121A37006}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Web.ConsoleApp", "src\EtheriT.Coker.Web.ConsoleApp\EtheriT.Coker.Web.ConsoleApp.csproj", "{103ED6C9-24AB-4F0D-9910-4CF504F65E01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Web.ConsoleApp", "src\EtheriT.Coker.Web.ConsoleApp\EtheriT.Coker.Web.ConsoleApp.csproj", "{103ED6C9-24AB-4F0D-9910-4CF504F65E01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

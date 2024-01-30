@@ -30,7 +30,9 @@ using EtheriT.Coker.Application.TechnicalCertificate;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
+using EtheriT.Coker.Web.Public.Middlewares;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimpleCaptcha;
 using System.Net;
@@ -105,6 +107,14 @@ builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<ApiBehaviorOptions>(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    });
+}
+
 if (builder.Environment.EnvironmentName == "EPZA")
 {
     builder.WebHost.UseStaticWebAssets();
@@ -116,6 +126,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseMiddleware<CustomBadRequestMiddleware>();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

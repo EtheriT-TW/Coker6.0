@@ -12,6 +12,10 @@ var Coker = {
             DataRetentionLongTime: 3 * MonthSecond,
             ReCheckTime: 20 * MinutesSecond
         },
+        Target: [
+            { Id:1, Name: "另開新視窗", value: "_blank" },
+            { Id:0, Name: "直接連結", value: "_self" }
+        ],
         ReplaceAndSinge: function (str) {
             if (!!str) {
                 var s = str.replace(/&amp;/g, "&");
@@ -249,6 +253,32 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, UpdateJson: function (data) {
+            return $.ajax({
+                url: "/api/Newsletter/UpdateJson",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, SaveConten: function (data) {
+            return $.ajax({
+                url: "/api/Newsletter/SaveConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("requestverificationtoken",
                         $('input:hidden[name="AntiforgeryFieldname"]').val());
@@ -782,6 +812,18 @@ var Coker = {
         }, GetNewsletterConten: function () {
             return $.ajax({
                 url: "/api/ObjectType/GetNewsletterConten",
+                type: "Post",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }, GetNewsletterAllConten: function () {
+            return $.ajax({
+                url: "/api/ObjectType/GetNewsletterAllConten",
                 type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
@@ -1408,7 +1450,7 @@ var Coker = {
         merge: function (target, source) {
             // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
             for (const key of Object.keys(source)) {
-                if (source[key] instanceof Object) {
+                if (source[key] instanceof Object && !Array.isArray(source[key])) {
                     Object.assign(source[key], co.Object.merge(target[key], source[key]))
                 }
             }
@@ -1646,6 +1688,10 @@ var Coker = {
         isNullOrEmpty: function (str) {
             if (typeof (str) == "undefined" || str == null || str.trim() == "") return true;
             else return false;
+        },
+        getWeekNumber: function (i) {
+            const characters = "一二三四五六日";
+            return characters.charAt(i-1);
         }
     }, Grapes: {
         setEditor: (editor,html,css) => {
@@ -1660,3 +1706,12 @@ var Coker = {
 var _c = Coker;
 var co = Coker;
 co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
+const getTarget = (options) => {
+    return {
+        store: DevExpress.data.AspNet.createStore({
+            key: "ID",
+            loadUrl: '/api/Newsletter/GetTargetLookup'
+        }),
+        filter: null
+    };
+};

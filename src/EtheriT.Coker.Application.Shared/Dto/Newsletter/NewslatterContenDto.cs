@@ -9,11 +9,14 @@ namespace EtheriT.Coker.Application.Shared.Dto.Newsletter
     public class NewslatterContenDto
     {
         public NewsletterImageDto? image { get; set; }
-        public NewsletterImageDto? Icom { get; set; }
-        public string Title { get; set; }
-        public string MainTitle { get; set; }
-        public List<string> Conten { get; set; } = new List<string>();
+        public NewsletterImageDto? imageCompress { get; set; }
+        public NewsletterImageDto? Icon { get; set; }
+        public NewsletterImageDto? IconCompress { get; set; }
+        public string? Title { get; set; } = string.Empty;
+        public string? MainTitle { get; set; } = string.Empty;
+        public bool? Visible { get; set; } = true;
+        public string? Conten { get; set; } = string.Empty;
         public List<NewsletterLinkDto>? List { get; set; }
-        public NewsletterLinkDto? more { get; set; }
+        public NewsletterLinkDto? More { get; set; }
     }
 }

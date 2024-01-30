@@ -68,8 +68,9 @@ namespace EtheriT.Coker.Application
                 response.Maps = await GetDisplayChild(null, WebsiteID);
                 foreach (var map in response.Maps)
                 {
-                    var imgurl = await fileUploadAppService.getImgUrl(map.ImgId, (long)WebsiteID);
+                    var imgurl = await fileUploadAppService.getImgUrl(map.ImgId, WebsiteID);
                     map.ImgUrl = imgurl;
+                    if(map.OverImgId!=null) map.OverImgUrl = await fileUploadAppService.getImgUrl(map.OverImgId, WebsiteID);
                 }
                 response.Success = true;
             }
@@ -104,8 +105,11 @@ namespace EtheriT.Coker.Application
                             Type = 2,
                             Size = 1,
                         });
-                        m.ImgUrl = data[0].Link;
-                        m.ImgName = data[0].Name;
+                        if (data != null)
+                        {
+                            m.ImgUrl = data[0].Link;
+                            m.ImgName = data[0].Name;
+                        }
                     }
                     if (m.OverImgId != null)
                     {
@@ -153,6 +157,7 @@ namespace EtheriT.Coker.Application
                             .Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
                             .Where(m => !m.IsDeleted)
+                            .Where(m => !m.RemovedFromShelves)
                             .Where(m => m.Visible)
                             .OrderBy(m => m.SerNO)
                             .ThenBy(m => m.Id)
@@ -429,7 +434,7 @@ namespace EtheriT.Coker.Application
             try
             {
                 var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
-                var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
+                var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
                 if (side != null)
                 {
                     result.SiteName = side.Title;

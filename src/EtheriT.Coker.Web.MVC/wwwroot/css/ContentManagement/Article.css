@@ -21,7 +21,9 @@ input[type="number"] {
 .z-index-up {
     z-index: 10;
 }
-
+textarea.h300 {
+    height:300px;
+}
 /* Article List */
 .btn_back {
     color: #4E565A;
@@ -32,20 +34,23 @@ input[type="number"] {
 }
 
 /* Article Content */
-#ArticleContent > .card-header {
+#ArticleContent .card-header {
     background-color: var(--color-gray-bg-dark);
 }
 
-#ArticleContent > form .count::after {
+#ArticleContent .count::after {
     content: '/300';
 }
+#ArticleContent .count.l-150::after {
+    content: '/150';
+}
 
-#ArticleContent > form > .sort > input {
+#ArticleContent .sort > input {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
 
-#ArticleContent > form  .date > input {
+#ArticleContent .date > input {
     padding-left: 9.5rem;
 }
 /*

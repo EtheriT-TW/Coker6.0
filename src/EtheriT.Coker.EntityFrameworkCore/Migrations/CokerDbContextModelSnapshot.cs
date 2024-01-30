@@ -39,6 +39,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Css")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DataJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
 
@@ -81,6 +84,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<bool>("PopularVisible")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("RemovedFromShelves")
+                        .HasColumnType("bit");
+
                     b.Property<string>("SaveCss")
                         .HasColumnType("nvarchar(max)");
 
@@ -94,8 +100,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<bool>("Visible")
                         .HasMaxLength(50)
@@ -1483,6 +1489,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("ItemNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2957,6 +2967,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<bool>("PopularVisible")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("RemovedFromShelves")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("RouterName")
                         .IsRequired()

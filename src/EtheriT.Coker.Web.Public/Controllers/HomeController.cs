@@ -74,10 +74,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;
 
-            if (string.IsNullOrEmpty(model.PageData.Html))
+            if (string.IsNullOrEmpty(model.PageData.Html)|| (key!=null && key != defaultData.OrgName))
             {
                 Response.StatusCode = 404;
-                view = "Error/404";
+                view = "/Page/Error/404";
             }
             else
             {

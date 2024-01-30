@@ -46,6 +46,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await objectTypeAppService.GetNewsletterConten();
         }
         [HttpPost]
+        public async Task<HtmlContentGetHtmlListDto> GetNewsletterAllConten() {
+            return await objectTypeAppService.GetNewsletterAllConten();
+        }
+        [HttpPost]
         public async Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto) {
             return await objectTypeAppService.SaveConten(dto);
         }

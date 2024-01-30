@@ -92,6 +92,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(m => m.VisibleHeader).HasDefaultValue(true);
                 o.Property(m => m.VisibleFooter).HasDefaultValue(true);
                 o.Property(m => m.VisibleTitle).HasDefaultValue(true);
+                o.Property(m => m.RemovedFromShelves).HasDefaultValue(false);
             });
             modelBuilder.Entity<Order_Details>(o =>
             {

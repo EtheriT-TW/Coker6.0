@@ -57,7 +57,10 @@ namespace EtheriT.Coker.Application
 
 			//WebMenu
 			CreateMap<SiteMapDto, WebMenu>().ReverseMap();
-			CreateMap<MenuItemDto, WebMenu>().ReverseMap();
+			CreateMap<MenuItemDto, WebMenu>()
+                .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => !c.IsFromShelves))
+				.ReverseMap()
+                .ForMember(e => e.IsFromShelves, option => option.MapFrom(c => !c.RemovedFromShelves));
 			CreateMap<MenuContenDto, WebMenu>().ReverseMap();
 			CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();
 			CreateMap<GetFrontContenOutputDto, WebMenu>()

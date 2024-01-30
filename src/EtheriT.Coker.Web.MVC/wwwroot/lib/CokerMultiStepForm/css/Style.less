@@ -1,0 +1,107 @@
+﻿.msf-view {
+    display: none;
+    &.active{
+        display:block;
+    }
+}
+
+.msf-header {
+    position:relative;
+    margin: 1rem 3rem;
+
+    .msf-step {
+        background-color: var(--theme-colors-warning);
+        color: #fff;
+        padding: 0.5rem 0;
+        font-weight: bold;
+        position: relative;
+
+        :after {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: 0;
+            border: solid 20px;
+            border-color: transparent transparent transparent var(--theme-colors-warning);
+            height: 0;
+            display: block;
+            z-index: 1;
+        }
+
+        :before {
+            content: "";
+            position: absolute;
+            right: -61px;
+            top: -10px;
+            border: solid 30px;
+            border-color: transparent transparent transparent #fff;
+            height: 0;
+            display: block;
+            z-index: 1;
+        }
+
+        &.active {
+            background-color: var(--bs-success);
+
+            :after {
+                border-color: transparent transparent transparent var(--bs-success);
+            }
+        }
+    }
+
+    &:before {
+        content: "";
+        position: absolute;
+        left: -12px;
+        top: -10px;
+        border: solid 30px;
+        border-color: transparent transparent transparent #fff;
+        height: 0;
+        display: block;
+        z-index: 1;
+    }
+}
+.image_upload {
+    position: relative;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    > h3 {
+        font-size: 0.9rem;
+        pointer-events: none;
+        background-color: rgba(30,30,30,0.75);
+        color: #FFF;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        z-index: 1;
+    }
+}
+.part {
+    position: relative;
+
+    > .delete {
+        position: absolute;
+        right: -17px;
+        top: -40px;
+    }
+}
+.input-group {
+    > .form-floating {
+        width: calc(100% - 4rem);
+
+        > input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-color: #ced4da;
+        }
+    }
+
+    > .btn-outline-secondary {
+        border-color: #ced4da;
+        padding: 0px;
+
+        > label {
+            padding: 12px;
+        }
+    }
+}

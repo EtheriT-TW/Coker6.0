@@ -30,6 +30,6 @@ namespace EtheriT.Coker.Core.Models
         [MaxLength]
         public string? Css { get; set; }
         public Website? Website { get; set; }
-
-    }
+		public List<Remote> Remotes { get; set; } = new List<Remote>();
+	}
 }

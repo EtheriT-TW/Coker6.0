@@ -6,12 +6,14 @@ using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +38,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly ICustSearchAppService custSearchAppService;
         private readonly IStoreSetAppService storeSetAppService;
 		private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IRemoteAppService RemoteAppService;
 		private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
@@ -49,6 +52,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IStoreSetAppService storeSetAppService,
             ICustSearchAppService custSearchAppService,
 			IHttpContextAccessor httpContextAccessor,
+			IRemoteAppService RemoteAppService,
 			StringHandler stringHandler
         )
         {
@@ -64,15 +68,30 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.storeSetAppService = storeSetAppService;
             this.custSearchAppService = custSearchAppService;
             this.httpContextAccessor = httpContextAccessor;
+            this.RemoteAppService = RemoteAppService;
+
+		}
+        private bool UseLegacyPathHandling(string website, string key, string option) { 
+            bool check = true;
+            if (
+                ( !string.IsNullOrEmpty(website) && (website.IndexOf("..") >= 0|| website.IndexOf("//") >= 0)) ||
+				(!string.IsNullOrEmpty(key) && (key.IndexOf("..") >= 0 || key.IndexOf("//") >= 0)) ||
+				(!string.IsNullOrEmpty(option) && (option.IndexOf("..") >= 0 || option.IndexOf("//") >= 0))
+			)
+            {
+                check = false;
+            }
+            return check; 
         }
-        public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
+
+		public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
-
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
             var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
+            RemoteInputDto remoteInputDto = new RemoteInputDto{FK_WebsiteId = siteId};
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             PageViewModel model = new PageViewModel
             {
@@ -94,15 +113,21 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 option = key;
             }
-            if (!string.IsNullOrEmpty(key))
-            {
+            model.option = key;
+            if (!UseLegacyPathHandling(website, key, option)) {
+                model.PageData = new GetFrontContenOutputDto { SiteName = "路徑錯誤" };
+				Response.StatusCode = 404;
+				view = "Error/404";
+			}else if (!string.IsNullOrEmpty(key)){
                 switch (option)
                 {
                     case "article":
                         var PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                        model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
+                        remoteInputDto.FK_WebmenuId = PageData.Id;
+						model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
-                        model.ParentData = PageData;
+						remoteInputDto.FK_ArticleId = model.PageData.Id;
+						model.ParentData = PageData;
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
                         if (key == "article")
@@ -137,9 +162,11 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (id != 0)
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                            model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
+							remoteInputDto.FK_WebmenuId = ProdPageData.Id;
+							model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
-                            model.ParentData = ProdPageData;
+							remoteInputDto.FK_ArticleId = model.PageData.Id;
+							model.ParentData = ProdPageData;
                             model.PageData.LayoutType = defaultData.Layout_Type;
                             model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
                             if (key == "product")
@@ -172,13 +199,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         break;
                     case "privacy":
                         model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                        view = "Index";
+						remoteInputDto.FK_WebmenuId = model.PageData.Id;
+						view = "Index";
                         break;
                     default:
                         if (key.ToLower() == "search")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                            model.PageData.Title = "站內搜尋";
+							remoteInputDto.FK_WebmenuId = model.PageData.Id;
+							model.PageData.Title = "站內搜尋";
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {
                                 SearchId = id,
@@ -193,7 +222,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                            view = key;
+							remoteInputDto.FK_WebmenuId = model.PageData.Id;
+							view = key;
                         }
                         else
                         {
@@ -201,8 +231,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             model.ParentData = await webMenuApplication.GetParentConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                             model.PageData.LayoutType = defaultData.Layout_Type;
+							remoteInputDto.FK_WebmenuId = model.PageData.Id;
 
-                            if (string.IsNullOrEmpty(model.PageData.Html))
+							if (string.IsNullOrEmpty(model.PageData.Html))
                             {
                                 Response.StatusCode = 404;
                                 view = "Error/404";
@@ -246,7 +277,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 view = "index";
             }
-            return View(view, model);
+            await RemoteAppService.insertRemote(remoteInputDto);
+
+			return View(view, model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

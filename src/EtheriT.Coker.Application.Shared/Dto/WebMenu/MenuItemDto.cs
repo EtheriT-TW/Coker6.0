@@ -31,6 +31,7 @@ namespace EtheriT.Coker.Application.Dto
         public string? LinkUrl { get; set; }
         public bool? Target { get; set; }
         public bool LanBar { get; set; }
+        public bool hasContan { get; set; }
         public bool VisibleHeader { get; set; }
         public bool VisibleFooter { get; set; }
         public bool VisibleTitle { get; set; }

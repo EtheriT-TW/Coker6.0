@@ -127,6 +127,9 @@ a {
         -webkit-line-clamp: 6;
     }
 
+.pointer-event-none {
+    pointer-events:none !important;
+}
 /* line 21, ../../scss/bootstrap/_reboot.scss */
 .ConfirmKeyWord {
     color: #933;

@@ -40,18 +40,21 @@
             </div>
 
             <!-- Menu Canvas Menu -->
-            <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
             <ul class="navbar-nav offcanvas-body w-100 m-0">
+                <li class="">
+                    <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
+                </li>
                 @foreach (var menu in MenuItems)
                 {
-                    string headType = (menu.menuItemModels != null && menu.menuItemModels.Count() > 4) || menu.Length > 0 ? "metaMenu" : "listMenu";
+                    string headType =  "metaMenu";
                     <li class="title nav-item col-lg-2 @headType">
                         @{
                             List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
+                            string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
                         }
                         @if (subItems.Count() > 0)
                         {
-                            <div class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black">
+                            <a href="@menu.Link" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -60,12 +63,12 @@
                                     {
                                         <img src="@menu.imageUrl" alt="@menu.Title" />
                                     }else{
-                                        <img src="@menu.imageUrl" onmouseover="this.src='@menu.hoverImageUrl'" onmouseout="this.src='@menu.imageUrl'" alt="@menu.Title" />
+                                        <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
                                     }
                                 }
-                            </div>
+                            </a>
                             <div class="content collapse_menus translate-middle-x">
-                                <ul>
+                                <ul class="@jc">
                                     @foreach (var secItem in subItems)
                                     {
                                         var iconclass = secItem.Icon == "" ? "d-none" : "";

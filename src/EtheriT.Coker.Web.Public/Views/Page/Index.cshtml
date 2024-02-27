@@ -32,6 +32,9 @@
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
+<script>
+    const PageKey = "@Model.option";
+</script>
 @Html.AntiForgeryToken()
 
 @switch (Model.PageData.LayoutType)

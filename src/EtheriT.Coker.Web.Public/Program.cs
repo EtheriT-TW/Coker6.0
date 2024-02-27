@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Product;
+using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
@@ -18,6 +19,7 @@ using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Specification;
 using EtheriT.Coker.Application.Shared.Tag;
@@ -105,6 +107,7 @@ builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
+builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())
@@ -141,10 +144,10 @@ app.Use((context, next) =>
     {
         var tokenSet = antiforgery.GetAndStoreTokens(context);
         context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
-            new CookieOptions { HttpOnly = false });
+            new CookieOptions { HttpOnly = true });
     }
 
-    return next(context);
+	return next(context);
 });
 
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));

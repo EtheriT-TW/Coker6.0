@@ -388,7 +388,6 @@
             init() {
                 const self = this;
                 const setting = function () {
-                    console.log(self);
                     setTimeout(() => {
                         var content = $(".gjs-frame")[0].contentWindow.date_input_change;
                         self.components(content(self.getId()));

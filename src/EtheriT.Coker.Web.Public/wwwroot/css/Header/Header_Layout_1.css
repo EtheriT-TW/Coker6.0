@@ -117,6 +117,10 @@
 }
 
 /* Mega Menu Offcanvas */
+#Offcanvas_Mega_Menu > ul > li:first-child {
+    position: relative;
+}
+
 #Offcanvas_Mega_Menu > ul > .title {
     cursor: pointer;
 }
@@ -139,11 +143,15 @@
 .subtitle > .subtitle_title {
     width: fit-content;
     font-weight: bold;
+    opacity:0.8;
 }
+    .subtitle > .subtitle_title:hover {
+        opacity: 1;
+    }
 
-.subtitle .subtitle_title > i {
-    font-size: 1.5rem;
-}
+    .subtitle .subtitle_title > i {
+        font-size: 1.5rem;
+    }
 
 .subtitle .subtitle_title > img {
     height: 1.5rem;

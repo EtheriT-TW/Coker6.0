@@ -74,7 +74,7 @@
                     <div class="invalid-feedback">姓名必須填寫</div>
                 </div>
                 <div class="form-floating mb-3">
-                    <input id="new-phone" name="telPhone" class="form-control" type="text" placeholder="電話">
+                    <input id="new-phone" name="telPhone" class="form-control d-none" type="text" placeholder="電話">
                     <label for="new-phone" class="form-label">電話</label>
                 </div>
                 <div class="form-floating mb-3">
@@ -82,7 +82,7 @@
                     <label for="new-email" class="form-label required_all">email</label>
                     <div class="invalid-feedback">email必須填寫</div>
                 </div>
-                <div id="new-TWzipcode" class="row" name="address" data-form-type="zipcode">
+                <div id="new-TWzipcode" class="row d-none" name="address" data-form-type="zipcode">
                     <div class="form-floating mb-3 col-6 col-sm-3 county" data-role="county"></div>
                     <div class="form-floating mb-3 col-6 col-sm-3 district" data-role="district"></div>
                     <div class="form-floating mb-3 col-12 col-sm-6">
@@ -118,14 +118,14 @@
                     <label for="name" class="form-label">姓名</label>
                 </div>
                 <div class="form-floating mb-3">
-                    <input id="telPhone" name="telPhone" class="form-control" type="text" placeholder="電話">
+                    <input id="telPhone" name="telPhone" class="form-control d-none" type="text" placeholder="電話">
                     <label for="telPhone" class="form-label">電話</label>
                 </div>
                 <div class="form-floating mb-3">
                     <input id="email" name="email" class="form-control" type="email" placeholder="email">
                     <label for="email" class="form-label">email</label>
                 </div>
-                <div id="TWzipcode" class="row" name="address" data-form-type="zipcode">
+                <div id="TWzipcode" class="row d-none" name="address" data-form-type="zipcode">
                     <div class="form-floating mb-3 col-6 col-sm-3 county" data-role="county"></div>
                     <div class="form-floating mb-3 col-6 col-sm-3 district" data-role="district"></div>
                     <div class="form-floating mb-3 col-12 col-sm-6">
@@ -136,7 +136,7 @@
             </form>
             <div class="d-flex justify-content-center btns">
                 <button class="btn delete" type="button">移除管理者</button>
-                <button class="btn submit" type="button">發送忘記密碼</button>
+                <button class="btn submit d-none" type="button">發送忘記密碼</button>
                 <button class="btn cancel" type="button">取消</button>
             </div>
         </div>

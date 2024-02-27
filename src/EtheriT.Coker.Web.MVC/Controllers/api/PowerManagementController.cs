@@ -5,11 +5,14 @@ using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.Permissions;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -89,5 +92,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		{
 			return await permissionsAppService.DeleteRole(dto);
 		}
-    }
+        [HttpGet]
+        public JsonResult GetPermission() {
+            return new JsonResult(new {
+				ThePermission.CanCreate,
+				ThePermission.CanUpdate,
+				ThePermission.CanVisble,
+				ThePermission.CanRemove
+			}, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+		}
+	}
 }

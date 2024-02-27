@@ -204,5 +204,24 @@ namespace EtheriT.Coker.Application.Newsletter
             }
             return output;
         }
-    }
+        public async Task<ResponseMessageDto> UpdateText(NewsletterTextUpdateDto dto) {
+			ResponseMessageDto output = new ResponseMessageDto();
+			long sideId = await loginUserData.GetWebsiteId();
+            try { 
+                var art = await db.Article.Where(e => !e.IsDeleted).Where(e => e.Id==dto.Id).FirstOrDefaultAsync();
+                if (art != null)
+                {
+                    if (!string.IsNullOrEmpty(art.DataJson)) { 
+                        
+                    }
+                }
+                else throw new Exception("資料不存在");
+            }catch (Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+			return output;
+		}
+
+	}
 }

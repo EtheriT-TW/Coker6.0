@@ -10,5 +10,5 @@ namespace EtheriT.Coker.Application.Shared.Dto.Permissions
     {
         public string Name { get; set; } = string.Empty;
         public bool IsGranted { get; set; }
-    }
+	}
 }

@@ -39,5 +39,6 @@ namespace EtheriT.Coker.Core.Models
         public virtual DateTime? EndTime { get; set; }
         public bool permanent { get; set; }
         public Website? Website { get; set; }
-    }
+		public List<Remote> Remotes { get; set; } = new List<Remote>();
+	}
 }

@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public string? SaveCss { get; set; }
         public string? Html { get; set; }
         public string? Css { get; set; }
+        public string? DataJson { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public bool permanent { get; set; }

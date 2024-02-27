@@ -260,7 +260,7 @@ namespace EtheriT.Coker.Application
             {
                 var output = await (from w in db.WebMenus
                                     where w.Id == dto.Id
-                                    where !w.IsDeleted && w.FK_WebsiteId == dto.WebsiteId
+                                    where !w.IsDeleted && w.FK_WebsiteId == dto.WebsiteId && !w.RemovedFromShelves
                                     select new MenuItemDto
                                     {
                                         Id = w.Id,

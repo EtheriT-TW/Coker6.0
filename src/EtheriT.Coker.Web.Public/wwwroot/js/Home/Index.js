@@ -1,5 +1,5 @@
 ﻿function PageReady() {
-    ShoppingCarModalInit();
+    if (typeof (ShoppingCarModalInit) != "undefined") ShoppingCarModalInit();
 
     $(".btn_gonews").on("click", function () {
         $('html, body').animate({ scrollTop: $("#NewsSwiper").offset().top - ($("header").height() * 2) }, 0);

@@ -6,14 +6,103 @@ var tag_check_list = [], tag_text
 
 $.fn.extend({
     TagListModalInit: function () {
-        const $tag = $(this).find(".InputTag");
-        const TagDataClear = function () {
-            tag_list = [];
-            tag_check_list = [];
-            tag_text = "";
-            $tag.val("");
-            getTagListDataGridInstance().clearSelection();
+        const $self = $(this);
+        const $TagList = $("#TagList");
+        const myModal = document.getElementById('TagModal');
+        const $btnTagSave = $(myModal).find(".btn_tag_save");
+        const tagModal = new bootstrap.Modal(myModal);
+        $(this).data("tagOption", $self);
+        function getTagListDataGridInstance() {
+            var _dfr = $.Deferred();
+            const check = function () {
+                if ($TagList.hasClass("isReady")) {
+                    clearTimeout(timer)
+                    _dfr.resolve($TagList.dxDataGrid("instance"));
+                } else timer = setTimeout(check, 100);
+            }
+            let timer = setTimeout(check, 100);
+            return _dfr.promise();
         }
+        $self.TagDataClear = function () {
+            $self.data({
+                tagList: [],
+                tagCheckList:[],
+                tagText:""
+            });
+            $self.val("");
+            getTagListDataGridInstance().done(function (result) {
+                result.clearSelection()
+            });
+        }
+        $self.TagDataSet = function(datas) {
+            var text = ""
+            if (datas != null && datas.length > 0) {
+                var temp_list = [];
+                $self.data("tagCheckList");
+                datas.forEach(function (data) {
+                    var obj = {};
+                    obj["Id"] = data.id;
+                    obj["FK_TId"] = data.fK_TId;
+                    obj["IsDeleted"] = false;
+                    temp_list.push(data.fK_TId);
+                    text = text == "" ? data.tag_Name : text + "、" + data.tag_Name;
+                    $self.data("tagList").push(obj)
+                    $self.data("tagCheckList").push(data.id);
+                })
+                getTagListDataGridInstance().done(function (result) {
+                    result.selectRows(temp_list);
+                });
+            }
+            $self.data("tagText", text);
+            $self.val(text == "" ? "無" : text);
+        }
+       
+        if (!!!$(myModal).data("isSet")) {
+            $(myModal).data("isSet", true)
+            myModal.addEventListener("hidden.bs.modal", function () {
+                var temp_list = [];
+                $self.data("tagList").forEach(function (item) {
+                    if (!item.IsDeleted) {
+                        temp_list.push(item.FK_TId);
+                    }
+                })
+                getTagListDataGridInstance().done(function (result) {
+                    result.selectRows(temp_list);
+                });
+            });
+            myModal.addEventListener("shown.bs.modal", function () {
+                $(myModal).data("target", $self);
+            });
+        }
+        $btnTagSave.on("click", function () {
+            if ($self.data("tagCheckList").length > 0) {
+                $self.data("tagList").forEach(function (item) {
+                    var index = $self.data("tagCheckList").indexOf(item.FK_TId)
+                    if (index > -1) {
+                        item.IsDeleted = false;
+                        $self.data("tagCheckList").splice(index, 1)
+                    } else {
+                        item.IsDeleted = true;
+                    }
+                })
+                if ($self.data("tagCheckList").length > 0) {
+                    $self.data("tagCheckList").forEach(function (item) {
+                        var obj = {};
+                        obj["Id"] = 0;
+                        obj["FK_TId"] = item;
+                        obj["IsDeleted"] = false;
+                        $self.data("tagList").push(obj);
+                    })
+                }
+            } else {
+                $self.data("tagList").forEach(function (item) {
+                    item.IsDeleted = true;
+                })
+            }
+            $self.val($self.data("tagText"));
+            tagModal.hide();
+        })
+        return $self;
     }
 });
 
@@ -84,8 +173,8 @@ function TagList_ClearBtnClick() {
 }
 
 function TagList_SelectChange(selectedItems) {
-    var data = selectedItems.selectedRowsData;
-
+    const data = selectedItems.selectedRowsData;
+    const $self = $("#TagModal").data("target");
     tag_check_list = [];
     if (data.length > 0) {
         tag_text = data.map((value) => `${value.Title}`).join("、");
@@ -99,6 +188,12 @@ function TagList_SelectChange(selectedItems) {
 
     tag_changedBySelectBox = false;
     tag_clearSelectionButton.option('disabled', !data.length);
+    if (!!$self) {
+        $self.data({
+            tagCheckList: tag_check_list,
+            tagText: tag_text
+        });
+    }
 }
 
 function TagDataClear() {
@@ -140,4 +235,8 @@ function TagInitSet(datas) {
     tag_changedBySelectBox = false;
     tag_clearSelectionButton.option('disabled', !datas.length);
     $btn_tag_save.trigger("click");
+}
+
+function tagContentReady(e) {
+    $(e.element).addClass("isReady");
 }

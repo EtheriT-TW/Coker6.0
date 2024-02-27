@@ -37,6 +37,7 @@
 							c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
 						})
 						.OnSelectionChanged("TagList_SelectChange")
+						.OnContentReady("tagContentReady")
 						.Toolbar(toolbar =>
 						{
 							toolbar.Items(items =>

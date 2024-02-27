@@ -98,7 +98,6 @@ function PageReady() {
 
     $(window).on("fileUploadWithPreview:imagesAdded", function (event) {
         var cachedFile = upload_file.cachedFileArray;
-
         $("#ProductForm > .data_upload > ul > li").each(function () {
             var $self = $(this);
             if ($self.data("edit")) {
@@ -233,6 +232,7 @@ function PageReady() {
     })
 
     $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
+        console.log("2");
         //console.log("fileUploadWithPreview:imageDeleted")
         $("#ProductForm > .data_upload > ul > li").each(function () {
             var $self = $(this);
@@ -278,6 +278,7 @@ function PageReady() {
 
     $("#BtnConnect").on("click", function (e) {
         e.preventDefault();
+        console.log("in");
         var $self_list;
         $("#ProductForm > .data_upload > ul > .upload_list").each(function () {
             var $temp_self = $(this);
@@ -1025,146 +1026,7 @@ function ISpecRepect() {
     return isRepect;
 }
 
-/***************
- uploadtype：
-    1 = 圖片;
-    2 = 360;
-    3 = 影片;
-    4 = Youtube;
-***************/
-function UploadFile($self) {
-    UploadPreviewFrameClear();
-    var $parent = $self.parents(".data_upload").first();
-    if ($self.data("edit")) {
-        $self.data("edit", false)
-        if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
-            $self.remove();
-            file_num -= 1;
-        }
-    } else {
-        if ($self.hasClass("upload_list") && $self.find(".title").text() != "") {
-            $(".upload_list").each(function () {
-                var $li_self = $(this);
-                if ($li_self.hasClass("upload_list") && $li_self.find(".title").text() == "") {
-                    $li_self.remove();
-                    file_num = $self.siblings(".upload_list").length + 1;
-                }
-            })
-        }
-        upload_file = null;
-        $parent.find(".upload_frame").children("*").remove();
-        $(".upload_list").each(function () {
-            $(this).data("edit", false);
-        })
-        $self.data("edit", true)
-        $parent.find(".default_frame").removeClass("d-flex");
-
-        switch ($self.data("uploadtype")) {
-            case 0:
-                var $select_frame = $parent.find(".select_frame")
-                $select_frame.addClass("d-flex");
-                $select_frame.find("button").each(function () {
-                    $(this).on("click", function (e) {
-                        e.preventDefault();
-                        if ($self.data("uploadtype") == 0) {
-                            $self.data("uploadtype", $(this).data("uploadtype"));
-                            $self.data("edit", false);
-                            UploadFile($self);
-                        }
-                    })
-                })
-                break;
-            case 1:
-                if ($self.find(".title").text() == "") {
-                    upload_file = co.File.UploadImageInit("FileUpload");
-                    $parent.find(".upload_frame").removeClass("d-none");
-                } else {
-                    if (typeof ($self.data("id")) != "undefined") {
-                        var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
-                        var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
-                        $parent.find(".media_frame").addClass("d-flex");
-                        $parent.find(".media_frame").find("input").val(name);
-                        $parent.find(".media_preview > div").children().remove();
-                        $parent.find(".media_preview > div").children().remove();
-                        $parent.find(".media_preview > div").append(`<img src="${file}" class=""></img>`);
-                    } else if (typeof ($self.data("tempid")) != "undefined") {
-                        var data = total_files.find(item => item["TempId"] == $self.data("tempid"));
-                        if (typeof (data) != "undefined") {
-                            $parent.find(".upload_frame").find("span").text(data["File"].name);
-                            $parent.find(".media_frame").find("input").val(data["Name"]);
-                            $parent.find(".media_preview > div").children().remove();
-                            var link = data["Link"];
-                            $parent.find(".media_preview > div").append(`<img src="${link}" class=""></img>`);
-                        }
-                        $parent.find(".media_frame").addClass("d-flex");
-                    }
-                }
-                break;
-             /* ********** *****************
-            須重打，360顯示的部分
-            ***************************/
-            case 2:
-                upload_file = co.File.Upload360Init("FileUpload");
-                if ($self.data("file")) {
-                    upload_file.addFiles($self.data("file"));
-                    //console.log(upload_file);
-                    $parent.find(".upload_frame").find("span").text($self.data("file").length + " 張圖片已選擇");
-                }
-                $parent.find(".upload_frame").removeClass("d-none");
-                break;
-             /* ********** *****************
-           須重打，影片顯示的部分
-           ***************************/
-            case 3:
-                if ($self.find(".title").text() == "") {
-                    upload_file = co.File.UploadVideoInit("FileUpload");
-                    $parent.find(".upload_frame").removeClass("d-none");
-                } else {
-                    if (typeof ($self.data("id")) != "undefined") {
-                        var name = total_files.find(item => item["Id"] == $self.data("id"))["Name"];
-                        var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
-                        $parent.find(".media_frame").addClass("d-flex");
-                        $parent.find(".media_frame").find("input").val(name);
-                        $parent.find(".media_preview > div").children().remove();
-                        $parent.find(".media_preview > div").append(`<video src="${file}" class="h-100 w-100" controls preload="metadata"></video>`);
-                    } else if (typeof ($self.data("tempid")) != "undefined") {
-                        var data = total_files.find(item => item["TempId"] == $self.data("tempid"));
-                        var file;
-                        if (typeof (data) != "undefined") {
-                            file = total_files.find(item => item["TempId"] == $self.data("tempid"))["File"];
-                            $parent.find(".upload_frame").find("span").text(file.name);
-                            $parent.find(".media_frame").find("input").val(total_files.find(item => item["TempId"] == $self.data("tempid"))["Name"]);
-                        }
-                        $parent.find(".media_frame").addClass("d-flex");
-                    }
-                }
-                break;
-            case 4:
-                if (typeof (total_files.find(item => item["Id"] == $self.data("id"))) != "undefined") {
-                    var file = total_files.find(item => item["Id"] == $self.data("id"))["File"];
-                    var url = "https://www.youtube.com/watch?v=" + file;
-                    $parent.find(".youtube_frame").find("input").val(url);
-                    $("#BtnConnect").click();
-                } else if (typeof (total_files.find(item => item["TempId"] == $self.data("tempid"))) != "undefined") {
-                    var file = total_files.find(item => item["TempId"] == $self.data("tempid"))["File"];
-                    var url = "https://www.youtube.com/watch?v=" + file;
-                    $parent.find(".youtube_frame").find("input").val(url);
-                    $("#BtnConnect").click();
-                } else {
-                    $parent.find(".youtube_frame").find("input").val("https://www.youtube.com/watch?v=");
-                    var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
-                    $(".youtube_preview").children("*").remove();
-                    $(".youtube_preview").append(error_html);
-                }
-                $parent.find(".youtube_frame").addClass("d-flex");
-                break;
-        }
-    }
-}
-
 function UploadListAdd(result) {
-    //console.log("UploadListAdd");
-    //console.log(result);
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
@@ -1185,7 +1047,7 @@ function UploadListAdd(result) {
         item.data("uploadtype", 0);
         item.data("edit", false);
         item.on("click", function () {
-            UploadFile($(this));
+            co.File.ListFile($(this));
         })
     } else if (typeof (result.id) == "undefined") {
         file_num += 1;
@@ -1197,7 +1059,7 @@ function UploadListAdd(result) {
         item.find(".title").text(result.Name);
 
         item.on("click", function () {
-            UploadFile($(this));
+            co.File.ListFile($(this));
         })
     } else {
         file_num += 1;
@@ -1223,11 +1085,11 @@ function UploadListAdd(result) {
         total_files.push(obj);
 
         item.on("click", function () {
-            UploadFile($(this));
+            co.File.ListFile($(this));
         })
     }
 
-    item_serno.blur(function () {
+    item_serno.on("blur",function () {
         var $self = $(this);
         if ($self.val() < 1) {
             $self.val(1);
@@ -1267,7 +1129,7 @@ function UploadListAdd(result) {
 
     $("#ProductForm > .data_upload > ul > .btn_upload_add").before(item);
 
-    UploadFile(item);
+    co.File.ListFile(item);
 }
 
 function UploadPreviewFrameClear() {

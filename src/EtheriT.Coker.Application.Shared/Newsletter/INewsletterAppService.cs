@@ -20,5 +20,6 @@ namespace EtheriT.Coker.Application.Newsletter
         public Task<ResponseMessageDto> Send(long Id);
         public Task<ResponseMessageDto> UpdateJson(NewsletterFrameDto dto);
         public Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto);
+        public Task<ResponseMessageDto> UpdateText(NewsletterTextUpdateDto dto);
     }
 }

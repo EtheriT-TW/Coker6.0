@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Common;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
+using DevExtreme.AspNet.Data.ResponseModel;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -187,6 +188,7 @@ namespace EtheriT.Coker.Application.Article
                             Html = e.Html,
                             SaveCss = e.SaveCss,
                             Css = e.Css,
+                            DataJson = e.DataJson,
                             Tags = String.Join("、", (
                                         from ta in db.Tag_Associates
                                         where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
@@ -200,6 +202,17 @@ namespace EtheriT.Coker.Application.Article
                             NodeDate = e.NodeDate,
                     }).ToListAsync();
                     var dataQuery = data.Where(e => e.Tags.Contains("電子報")).ToList();
+                    
+                    if (dataQuery != null) {
+                        foreach (ArticleListGetDto item in dataQuery)
+                        {
+                            if (string.IsNullOrEmpty(item.DataJson)) continue;
+                            var myData = JsonConvert.DeserializeObject<NewsletterFrameDto>(item.DataJson??"");
+                            if (myData != null && myData.No!=0) {
+                                item.Title = $"第{myData.No}期 {myData.Title}";
+                            }
+                        }
+                    }
                     var output = DataSourceLoader.Load(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
@@ -302,6 +315,7 @@ namespace EtheriT.Coker.Application.Article
                             Type = (int)FileBindTypeEnum.文章管理,
                             Size = 3
                         });
+                        NewsletterFrameDto? DataJson = JsonConvert.DeserializeObject<NewsletterFrameDto>(data.DataJson ?? "{}");
 
                         var output_data = new DirectoryReleInfoDto();
                         var website = sites.Find(e => e.Id == data.FK_WebsiteId);
@@ -313,6 +327,7 @@ namespace EtheriT.Coker.Application.Article
                             output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
                             output_data.NodeDate = data.NodeDate;
                             output_data.OrgName = website.OrgName;
+                            output_data.Title = ((DataJson!=null && DataJson.No!=0)?$"第{DataJson.No}期 ":"")  + output_data.Title;
                             if (data.Html!=null && data.Html.IndexOf("activity_start_time") > 0) {
                                 var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_start_time\">(.*?)<").Groups;
                                 if(!string.IsNullOrEmpty(g[0].Value)) output_data.StartTime = DateTime.Parse(g[1].Value);

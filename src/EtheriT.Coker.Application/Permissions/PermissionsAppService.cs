@@ -116,26 +116,22 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "GetPermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<List<SavePermissionsItem>> GetLoginUserPermissionsByView() {
+        public async Task<List<SavePermissionsItem>> GetLoginUserPermissions() {
             long SiteId = await loginUserData.GetWebsiteId();
             long UserId = await loginUserData.GetUserId();
             var UserItems = await (from p in db.Permissions
                         join u in db.Users on p.FK_UserId equals u.Id
-                        where p.FK_WebsiteId == SiteId && u.Id == UserId && p.Name.Contains(".View")
+                        where p.FK_WebsiteId == SiteId && u.Id == UserId
                         select p).ToListAsync();
             var RoleItems = await( from p in db.Permissions
                             join r in db.Roles on p.FK_RoleId equals r.Id
                             join m in db.MappingUserAndRoles on r.Id equals m.RoleId
                             join u in db.Users on m.UserId equals u.Id
-                            where p.FK_WebsiteId == SiteId && u.Id == UserId && p.Name.Contains(".View")
+                            where p.FK_WebsiteId == SiteId && u.Id == UserId
                                    select p).ToListAsync();
             List<Core.Models.Permissions> Items = new List<Core.Models.Permissions>();
-            if (UserItems != null && RoleItems == null) Items.AddRange(UserItems);
-            else if (UserItems == null && RoleItems != null) Items.AddRange(RoleItems);
-            else if (UserItems != null && RoleItems != null) {
-                Items.AddRange(RoleItems);
-                Items.AddRange(UserItems);
-            }
+            if (UserItems.Any() && !RoleItems.Any()) Items.AddRange(UserItems);
+            if (!UserItems.Any() && RoleItems.Any()) Items.AddRange(RoleItems);
             return mapper.Map<List<SavePermissionsItem>>(Items);
         }
         public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto) {

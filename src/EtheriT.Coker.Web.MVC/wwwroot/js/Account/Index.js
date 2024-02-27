@@ -48,7 +48,7 @@ var PageReady = function () {
         $("#short-rule").css("display", "block");
         $("#rule").css("display", "none");
     });
-
+    /*
     newpassword.onkeyup = function () {
         //小寫
         var lower = /[a-z]/g;
@@ -95,7 +95,7 @@ var PageReady = function () {
             length.classList.add("invalid");
         }
         
-    }
+    }*/
 
 }
 

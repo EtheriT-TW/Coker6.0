@@ -1,21 +1,36 @@
 ﻿function PageReady() {
     let nItem = null,RoleID=0;
     let data,setMenu=[],type;
-    const html = $("#MemberData").html();
-    const roleHtml = $("#RoleData").html();
+    let html = $("#MemberData").html();
+    let roleHtml = $("#RoleData").html();
     const powerHtml = $("#PowerData").html();
+    let permission;
     const init = function () {
-        $(data).each(function (index, element) {
-            if (element.id != 0) addRole(element);
-            else {
-                $("#noGroupMember").data(element);
-                setNoGroup();
-            }
+        co.PowerManagement.GetPermission().done(function(result){
+            permission = result;
+            const $e = $("<div>").append(roleHtml);
+            const $m = $("<div>").append(html);
+            if (!permission.CanRemove) {
+                $e.find(".btn.fa-trash-alt").remove();
+                $m.find(".btn.fa-trash-alt").remove();
+                $(".delete").remove();
+            } 
+            if (!permission.CanUpdate) $e.find(".btn.fa-edit").remove();
+            if (!permission.CanCreate) $(".addbtn").remove();
+            roleHtml = $e.html();
+            html = $m.html();
+            $(data).each(function (index, element) {
+                if (element.id != 0) addRole(element);
+                else {
+                    $("#noGroupMember").data(element);
+                    setNoGroup();
+                }
+            });
+            $(".powerctrl .role-item").first().trigger("click");
+            loadMenus();
+            co.Zipcode.init("#TWzipcode");
+            co.Zipcode.init("#new-TWzipcode");
         });
-        $(".powerctrl .role-item").first().trigger("click");
-        loadMenus();
-        co.Zipcode.init("#TWzipcode");
-        co.Zipcode.init("#new-TWzipcode");
     }
     const loadMenus = function () {
         co.PowerManagement.GetAll().done(function (result) {
@@ -23,28 +38,33 @@
             const $body = $view.find("#Permissions");
             $view.find(".siteName").text(result.title);
             insetMenu($body, result.jobs);
-            $("#offcanvas1 .selectedItem").off("change.save").on("change.save", function () {
-                const $self = $(this)
-                const data = {
-                    name: $self.data("name"),
-                    IsGranted: $(this).prop("checked")
-                };
-                if (co.Array.Search(setMenu, { name: data.name }) > -1) co.Array.Delete(setMenu, { name: data.name });
-                else setMenu.push(data);
-            });
-            $("#offcanvas1 .save").off("click").on("click", function () {
-                const obj = {
-                    Items:setMenu
-                }
-                obj[type] = $(nItem).data("id");
-                co.PowerManagement.SavePermissions(obj).done(function (result) {
-                    if (result.success) {
-                        co.sweet.success("儲存成功");
-                    } else {
-                        co.sweet.error("儲存失敗", result.error);
-                    }
+            if (permission.CanUpdate) {
+                $("#offcanvas1 .selectedItem").off("change.save").on("change.save", function () {
+                    const $self = $(this)
+                    const data = {
+                        name: $self.data("name"),
+                        IsGranted: $(this).prop("checked")
+                    };
+                    if (co.Array.Search(setMenu, { name: data.name }) > -1) co.Array.Delete(setMenu, { name: data.name });
+                    else setMenu.push(data);
                 });
-            });
+                $("#offcanvas1 .save").off("click").on("click", function () {
+                    const obj = {
+                        Items: setMenu
+                    }
+                    obj[type] = $(nItem).data("id");
+                    co.PowerManagement.SavePermissions(obj).done(function (result) {
+                        if (result.success) {
+                            co.sweet.success("儲存成功");
+                        } else {
+                            co.sweet.error("儲存失敗", result.error);
+                        }
+                    });
+                });
+            } else {
+                $("#offcanvas1 .selectedItem + label").addClass("pointer-event-none");
+                $("#offcanvas1 .save").remove();
+            } 
         });
     }
     const insetMenu = function ($body, jobs) {
@@ -69,9 +89,9 @@
                 viewItem.attr({ id: `${self.pageName}_view`, name: `${self.pageName}_view` }).data({ "name": `${self.pageName}.View` }).prop("checked", self.canVisble);
                 viewItem.on("change", function () {
                     if (!$(this).prop("checked")) {
-                        editItem.prop("checked", false).trigger('change');
-                        delItem.prop("checked", false).trigger('change');
-                        newItem.prop("checked", false).trigger('change');
+                        editItem.prop("checked") && editItem.prop("checked", false).trigger('change');
+                        delItem.prop("checked") && delItem.prop("checked", false).trigger('change');
+                        newItem.prop("checked") && newItem.prop("checked", false).trigger('change');
                     }
                 });
                 $item.appendTo($body);
@@ -240,6 +260,7 @@
             co.PowerManagement.RemoveUserToRole({ Users: removeitems, RoleId: $Role.data("id") }).done((result) => {
                 if (result.success) {
                     $(moveItems).each(function () {
+                        co.Array.Delete($Role.data("members"), $(this).data());
                         $(this).appendTo("#noGroupMember");
                         $(this).removeClass("checked");
                     });

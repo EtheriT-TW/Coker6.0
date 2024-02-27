@@ -10,3 +10,9 @@
         opacity: 0.5;
         border-radius: 60%;
     }
+@media(max-width: 560px) {
+    .BGCanvas > canvas {
+        opacity: 0.2;
+        border-radius:unset;
+    }
+}

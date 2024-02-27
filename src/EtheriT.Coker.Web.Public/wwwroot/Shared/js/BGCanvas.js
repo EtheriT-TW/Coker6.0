@@ -4,7 +4,7 @@ const setBGCanvas = function () {
         "1500": [1,1.1,1.8],
         "1200": [0.8, 1.1, 2.2],
         "768": [0.9, 1.1, 2],
-        "else": [0.9, 1.1, 1.5]
+        "else": [1, 1.1, 1.5]
     };
     let setting = null;
     $.fn.extend({
@@ -21,7 +21,6 @@ const setBGCanvas = function () {
             }
             if ($self.height() == 0) {
                 $self.find("img").on("load", function () {
-                    console.log("in");
                     run();
                 });
             } else run();
@@ -50,7 +49,7 @@ const setBGCanvas = function () {
                     else setting = offset["else"];
                     W = $self.width() * setting[0];
                     H = $self.height() * setting[0];
-                    console.log($self.height());
+                    console.log(setting);
                     cnv.width = W;
                     cnv.height = H;
                     L = (W < H ? W : H) / 2;
@@ -62,7 +61,7 @@ const setBGCanvas = function () {
 
                 function Point() {
                     this.ang = 2 * PI * random();
-                    this.dang = (-0.5 + random()) / 10;
+                    this.dang = (-0.5 + random()) / 40;
                     this.r = 2 * L / setting[2];
                     this.x = W / 2 + this.r * cos(this.ang);
                     this.y = H / 2 + setting[1] * this.r * sin(this.ang);
@@ -110,5 +109,6 @@ const setBGCanvas = function () {
             return $self;
         }
     });
-    if (!co.isMobileDevice()) $(".BGCanvas").BGCanvas();
+    //if (!co.isMobileDevice()) $(".BGCanvas").BGCanvas();
+    $(".BGCanvas").BGCanvas();
 }

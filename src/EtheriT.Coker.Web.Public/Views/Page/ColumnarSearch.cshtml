@@ -1,13 +1,17 @@
 ﻿@using EtheriT.Coker.Web.Public.Models
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@using EtheriT.Coker.Application.Shared.Dto.enumType;
 @model PageViewModel
 
 <link rel="stylesheet" href="~/css/Page/Search.css" asp-append-version="true" />
 <script src="~/js/Page/Search.js" asp-append-version="true"></script>
 
-<div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+@if (Model.Level == WebsiteLevelEnum.購物)
+{
+	<div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
 	@await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
 </div>
+}
 
 <nav id="Breadcrumb" class="container mt-3" aria-label="breadcrumb">
 	<ol class="breadcrumb">

@@ -1,8 +1,10 @@
 ﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
+@using EtheriT.Coker.Web.MVC.Startup;
 @model Site;
 <script>
 	const defaultUrl = "@Model.WebRootLink";
 	const OrgName = "@Model.OrgName";
+	const PageName = `@ViewData["Title"].ToString()`;
 </script>
 <nav class="navbar navbar-dark bg-primary">
 	<a class="navbar-brand m-0 py-2 brand-title" href="#">@Model.Title</a>
@@ -12,13 +14,20 @@
 <nav class="navigation">
 	<ul>
 		@{
+			string PageName;
 			foreach (var item in Model.Jobs)
 			{
 				@if (item.jobItemModels == null)
 				{
-					if (item.Enable)
+					if (item.CanVisble)
 					{
 						string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
+						if (myClass == "active") {
+							ThePermission.CanVisble = item.CanVisble;
+							ThePermission.CanUpdate = item.CanUpdate;
+							ThePermission.CanRemove = item.CanRemove;
+							ThePermission.CanCreate = item.CanCreate;
+						}
 						<li class="@myClass">
 								<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
 								<span class="nav-icon material-icons">@item.Icon</span>@item.Title
@@ -26,11 +35,16 @@
 						</li>
 					}
 				}
-				else if (item.Enable)
+				else if (item.CanVisble)
 				{
 					string brighten = "";
 					if (item.jobItemModels.Exists(e => e.PageName == ViewData["Title"].ToString()))
 					{
+						var n = item.jobItemModels.Find(e => e.PageName == ViewData["Title"].ToString());
+						ThePermission.CanVisble = n.CanVisble;
+						ThePermission.CanUpdate = n.CanUpdate;
+						ThePermission.CanRemove = n.CanRemove;
+						ThePermission.CanCreate = n.CanCreate;
 						brighten = "active open";
 					}
 
@@ -42,7 +56,7 @@
 						<ul class="sub-nav">
 							@foreach (var subJob in item.jobItemModels ?? new List<JobMenu>())
 							{
-								if (subJob.Enable)
+								if (subJob.CanVisble)
 								{
 									string myClass = subJob.PageName == ViewData["Title"].ToString() ? "active" : "";
 									<li class="@myClass">

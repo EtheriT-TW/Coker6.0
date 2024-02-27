@@ -2162,6 +2162,53 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("Recipients");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Remote", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("BrowserInfo")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("ClientIpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("ExecutionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("FK_ArticleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_ProdId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebmenuId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_ArticleId");
+
+                    b.HasIndex("FK_ProdId");
+
+                    b.HasIndex("FK_UserId");
+
+                    b.HasIndex("FK_WebmenuId");
+
+                    b.ToTable("Remotes");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>
                 {
                     b.Property<long>("Id")
@@ -3578,6 +3625,35 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Remote", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Article", "Article")
+                        .WithMany("Remotes")
+                        .HasForeignKey("FK_ArticleId");
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
+                        .WithMany("Remotes")
+                        .HasForeignKey("FK_ProdId");
+
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
+                        .WithMany("Remotes")
+                        .HasForeignKey("FK_UserId");
+
+                    b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "WebMenu")
+                        .WithMany("Remotes")
+                        .HasForeignKey("FK_WebmenuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+
+                    b.Navigation("Prod");
+
+                    b.Navigation("User");
+
+                    b.Navigation("WebMenu");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Prod_Stock", "Prod_Stock")
@@ -3713,6 +3789,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
+                {
+                    b.Navigation("Remotes");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>
                 {
                     b.Navigation("Websites");
@@ -3748,6 +3829,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Prod_Logs");
 
                     b.Navigation("Prod_Stocks");
+
+                    b.Navigation("Remotes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec_Type", b =>
@@ -3813,6 +3896,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
                 {
                     b.Navigation("FK_ChildNodes");
+
+                    b.Navigation("Remotes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Website", b =>
@@ -3859,6 +3944,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Permissions");
 
                     b.Navigation("Prod_Logs");
+
+                    b.Navigation("Remotes");
 
                     b.Navigation("Roles");
 

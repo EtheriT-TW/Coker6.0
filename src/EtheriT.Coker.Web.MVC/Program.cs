@@ -46,6 +46,8 @@ using EtheriT.Coker.Application.AuditLog;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.Shared.Remote;
+using EtheriT.Coker.Application.Remote;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -159,6 +161,7 @@ builder.Services.AddTransient<ICompanyAppService, CompanyAppService>();
 builder.Services.AddTransient<IAuditLogAppService, AuditLogAppService>();
 builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
+builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
 
 
 //多語系

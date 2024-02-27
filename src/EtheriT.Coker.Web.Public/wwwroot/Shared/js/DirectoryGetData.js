@@ -61,22 +61,27 @@ function DirectoryGetDataInit() {
             Directory.getDirectoryMenuData({ Id: dirid, WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0 }).done(function (result) {
                 if (typeof (result) != "undefined") {
                     $self.find(".title").text(result.title)
+                    const groupId = `#${$self.find(".accordion").attr("id")}`;
                     $.each(result.children, function (index, SecIItem) {
                         $self.find('.title').text(result.title);
                         if (SecIItem.children != null) {
                             var item = $($("#TemplateAccordionItem").html()).clone();
                             item.find(".sectitle").text(SecIItem.title);
-                            item.find(".accordion-header").attr("id", `secheader${SecIItem.Id}`);
-                            item.find(".accordion-collapse").attr({
-                                "aria-labelledby": `secheader${SecIItem.Id}`,
-                                "id": `seccollapse${SecIItem.Id}`
+                            item.find(".accordion-header").attr("id", `secheader${SecIItem.id}`);
+                            const accordionCollapse= item.find(".accordion-collapse").attr({
+                                "aria-labelledby": `secheader${SecIItem.id}`,
+                                "id": `seccollapse${SecIItem.id}`,
+                                "data-bs-parent": `${groupId}`
                             });
                             item.find(".accordion-button").attr({
-                                "data-bs-target": `#seccollapse${SecIItem.Id}`,
-                                "aria-controls": `seccollapse${SecIItem.Id}`,
+                                "data-bs-target": `#seccollapse${SecIItem.id}`,
+                                "aria-controls": `seccollapse${SecIItem.id}`,
                             });
                             var $body = item.find(".accordion-body");
                             $.each(SecIItem.children, function (index, ThirdIItem) {
+                                if (PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
+                                    $(accordionCollapse).collapse('show'); 
+                                }
                                 $body.append(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`)
                             })
                             $self.find(".accordion").append(item);

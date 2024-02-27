@@ -24,6 +24,7 @@ using EtheriT.Coker.Application.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Remote;
 
 namespace EtheriT.Coker.Application
 {
@@ -59,8 +60,9 @@ namespace EtheriT.Coker.Application
 			CreateMap<SiteMapDto, WebMenu>().ReverseMap();
 			CreateMap<MenuItemDto, WebMenu>()
                 .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => !c.IsFromShelves))
-				.ReverseMap()
-                .ForMember(e => e.IsFromShelves, option => option.MapFrom(c => !c.RemovedFromShelves));
+                .ReverseMap()
+                .ForMember(e => e.IsFromShelves, option => option.MapFrom(c => !c.RemovedFromShelves))
+                .ForMember(e => e.hasContan, option => option.MapFrom(c => !string.IsNullOrEmpty(c.Html)));
 			CreateMap<MenuContenDto, WebMenu>().ReverseMap();
 			CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();
 			CreateMap<GetFrontContenOutputDto, WebMenu>()
@@ -207,11 +209,16 @@ namespace EtheriT.Coker.Application
 
             //Permissions
             CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();
-            //FileUpload
-            //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
-            //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
-            //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
-            //    .ReverseMap();
-        }
-    }
+			//FileUpload
+			//CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
+			//    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
+			//    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
+			//    .ReverseMap();
+
+			//remote
+			CreateMap<RemoteInputDto, Core.Models.Remote>()
+				.ForMember(e => e.ExecutionTime, option => option.MapFrom(c => DateTime.Now))
+				.ReverseMap();
+		}
+	}
 }

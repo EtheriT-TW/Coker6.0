@@ -42,9 +42,12 @@
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
 
 <!-- Shopping Car -->
-<div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-    @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ShoppingCarModal"})
-</div>
+@if (Model.Level == WebsiteLevelEnum.購物)
+{
+    <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ShoppingCarModal" })
+    </div>
+}
 
 <!-- EnterAdModal -->
 @if (Model.enterAd.Count > 0)

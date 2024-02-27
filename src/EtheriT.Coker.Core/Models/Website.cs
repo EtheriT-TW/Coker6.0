@@ -38,5 +38,6 @@ namespace EtheriT.Coker.Core.Models
         public List<MappingCompanyAndWebsites> Company { get; set; }
         public List<Recipient>? Recipients { get; set; }
         public List<Permissions> Permissions { get; set; }
-    }
+
+	}
 }

@@ -10,6 +10,21 @@ function PageReady() {
     const editor = grapesInit({
         save: function (html, css) {
             var _dfr = $.Deferred();
+            const e = $(html);
+            const contenText = function (c) {
+                $(c).find("br").replaceWith("\n");
+                return $(c).text();
+            }
+            const data = {
+                Id: $("#gjs").data("id"),
+                Title: $(html).find("#headerTitle").text(),
+                Conten1Title: $(html).find("#Conten1Title").text(),
+                Conten1Conten: contenText($(html).find("#Conten1Conten")),
+                Conten2MainTitle: contenText($(html).find("#support .mainTitle")),
+                Conten2Title: contenText($(html).find("#support .title")),
+                Conten2Conten: contenText($(html).find("#support .text-left"))
+            };
+            console.log(data);
             co.Articles.SaveConten({
                 Id: $("#gjs").data("id"),
                 SaveHtml: html,

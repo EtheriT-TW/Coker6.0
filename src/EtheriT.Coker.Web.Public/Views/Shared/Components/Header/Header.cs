@@ -112,6 +112,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                                 {
                                     Title = data_f.Title,
+                                    Link = data_f.hasContan? 
+                                        data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" : 
+                                        "javascript:void(0)",
                                     menuItemModels = secitemModels,
                                     Length = length,
                                     imageUrl = (data_f.ImgUrl ?? ""),

@@ -1,10 +1,12 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +28,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
-        public HomeController(
+		private readonly IRemoteAppService RemoteAppService;
+		public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
@@ -34,8 +37,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IWebsiteApplication websiteApplication,
             IWebMenuApplication webMenuApplication,
             IStoreSetAppService storeSetAppService,
-            IHttpContextAccessor httpContextAccessor
-            )
+            IHttpContextAccessor httpContextAccessor,
+			IRemoteAppService RemoteAppService
+			)
         {
             this._logger = logger;
             this.htmlContentAppService = htmlContentAppService;
@@ -45,6 +49,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.webMenuApplication = webMenuApplication;
             this.storeSetAppService = storeSetAppService;
             this.httpContextAccessor= httpContextAccessor;
+            this.RemoteAppService = RemoteAppService;
         }
 
         public async Task<IActionResult> IndexAsync(string key)
@@ -57,7 +62,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
             var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput {key= "ga4",SiteId= siteId });
-            HomeViewModel model = new HomeViewModel
+            await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
+            {
+                FK_WebsiteId = siteId,
+                FK_WebmenuId = defaultData.Id
+			});
+			HomeViewModel model = new HomeViewModel
             {
                 site_name = site_name,
                 OrgName= defaultData.OrgName,

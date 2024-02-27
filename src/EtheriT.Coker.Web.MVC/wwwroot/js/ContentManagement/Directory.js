@@ -1,8 +1,10 @@
 ﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text
 var keyId, disp_opt = true, DirectoryId = 0, DirectoryType="n";
 var directory_list;
+let DirectorytForms, $DirectorytTags;
 
 function PageReady() {
+    DirectorytForms = $('#DirectorytForm');
     co.Directory = {
         AddUp: function (data) {
             return $.ajax({
@@ -35,28 +37,27 @@ function PageReady() {
     };
 
     ElementInit();
-    TagListModalInit();
     WebmenuListModalInit();
+    $DirectorytTags = $(DirectorytForms).find(".InputTag").TagListModalInit();
 
     $bind_type.on("change", function () {
         switch (parseInt($bind_type.val())) {
             case 1:
             case 2:
-                $(".webmenu > input").attr("disabled", "disabled")
-                $(".tag > input").removeAttr("disabled");
+                $(DirectorytForms).find(".webmenu > input").attr("disabled", "disabled")
+                $(DirectorytForms).find(".tag > input").removeAttr("disabled");
                 WebmenuDataClear();
                 break;
             case 3:
-                $(".tag > input").attr("disabled", "disabled");
-                $(".webmenu > input").removeAttr("disabled", "disabled")
-                TagDataClear();
+                $(DirectorytForms).find(".tag > input").attr("disabled", "disabled");
+                $(DirectorytForms).find(".webmenu > input").removeAttr("disabled", "disabled")
+                $DirectorytTags.TagDataClear();
                 break;
         }
     });
 
-    const forms = $('#DirectorytForm');
     (() => {
-        Array.from(forms).forEach(form => {
+        Array.from(DirectorytForms).forEach(form => {
             form.addEventListener('submit', event => {
                 if (!form.checkValidity()) {
                     event.preventDefault()
@@ -123,8 +124,8 @@ function ElementInit() {
     $description = $(".description");
     $description_text = $description.children("textarea");
 
-    $(".tag > input").attr("disabled", "disabled")
-    $(".webmenu > input").attr("disabled", "disabled")
+    $(DirectorytForms).find(".tag > input").attr("disabled", "disabled")
+    $(DirectorytForms).find(".webmenu > input").attr("disabled", "disabled")
 }
 
 
@@ -219,7 +220,7 @@ function deleteButtonClicked(e) {
 }
 
 function FormDataClear() {
-    TagDataClear();
+    $DirectorytTags.TagDataClear();
     WebmenuDataClear();
     keyId = 0;
     $btn_display.children("span").text("visibility");
@@ -242,16 +243,16 @@ function FormDataSet(result) {
     switch (parseInt($bind_type.val())) {
         case 1:
         case 2:
-            $(".webmenu > input").attr("disabled", "disabled")
-            $(".tag > input").removeAttr("disabled")
-            TagDataSet(result.tagDatas);
+            $(DirectorytForms).find(".webmenu > input").attr("disabled", "disabled")
+            $(DirectorytForms).find(".tag > input").removeAttr("disabled")
+            $DirectorytTags.TagDataSet(result.tagDatas);
             WebmenuDataClear();
             break;
         case 3:
-            $(".tag > input").attr("disabled", "disabled")
-            $(".webmenu > input").removeAttr("disabled", "disabled")
+            $(DirectorytForms).find(".tag > input").attr("disabled", "disabled")
+            $(DirectorytForms).find(".webmenu > input").removeAttr("disabled", "disabled")
             WebmenuDataSet(result.fK_MId);
-            TagDataClear();
+            $DirectorytTags.TagDataClear();
             break;
     }
     $title_text.val(result.title);
@@ -280,7 +281,7 @@ function AddUp(success_text, error_text) {
 }
 
 function MoveToContent() {
-    $("#DirectorytForm").removeClass("was-validated");
+    $(DirectorytForms).removeClass("was-validated");
     if (!!keyId && isNaN(keyId)) {
 
     }if (keyId == 0) {
@@ -350,7 +351,7 @@ function MoveToItemEdit() {
                         result.sortCheckbox = 1;
                         result.ImageUpload = 1;
                         co.Form.insertData(result, "#ArticletForm")
-                        TagDataSet(result.tagDatas);
+                        $DirectorytTags.TagDataSet(result.tagDatas);
                     } else BackToList();
                 })
                 break

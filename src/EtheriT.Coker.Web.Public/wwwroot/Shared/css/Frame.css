@@ -203,18 +203,19 @@ table:not(.table) {
     .type_change_frame > .catalog .type3 {
         height: 300px;
     }
+
+    .two_three_block > .two {
+        width: 100%;
+        margin: 0 15px;
+    }
+
+    .two_three_block > .three {
+        width: 100%;
+    }
 }
 
 @media only screen and (max-width: 576px) {
     .masonry > .grid > .grid-item {
-        width: 100%;
-    }
-
-    .two_three_block > .two {
-        width: 100%;
-    }
-
-    .two_three_block > .three {
         width: 100%;
     }
 }

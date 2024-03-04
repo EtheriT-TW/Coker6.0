@@ -16,9 +16,14 @@
     height: 0;
 }
 
-    .swiper_pagination_water > .swiper-pagination-bullet.swiper-pagination-bullet-active {
-        color: #007AEA;
-    }
+.swiper_pagination_water > .swiper-pagination-bullet.swiper-pagination-bullet-active {
+    color: #007AEA;
+}
+
+.swiper_pagination_right .swiper_pagination {
+    text-align: end;
+    padding-right: 2em;
+}
 
 [class*="swiper_button"] {
     width: fit-content;

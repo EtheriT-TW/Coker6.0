@@ -1,4 +1,61 @@
-﻿function ViewTypeChangeInit() {
+﻿const newEnum = (descriptions) => {
+    const result = {};
+    Object.keys(descriptions).forEach((description) => {
+        result[result[description] = descriptions[description]] = description;
+    });
+    return result;
+};
+
+const list_type = newEnum({
+    grid: "Grid",
+    list: "List",
+    text: "Text",
+});
+
+const display_configurations = {
+    [list_type.list]: { ".box-shadow": "p-1 type3",
+        ".card-border": "card-border-rd type3",
+        ".check_btn":"check_btn-type3",
+        ".description": "type3-content",
+        ".image":"px-0",
+        ".image_frame":"h-100",
+        ".imgh":"img-h",
+        ".max-h":"max-hei",
+        ".mergetag":"merge",
+        ".more-btn":"d-none",
+        ".title":"type1-title fw-bold p-2",
+        "figcaption":"flex-grow-1 p-3 py-0 py-md-3 pb1",
+    },
+    [list_type.grid]: {
+        ".box-shadow": "p-1 type2",
+        ".card-border": "card-border-rd type2",
+        ".check_btn": "w-100",
+        ".date": "d-none",
+        ".description": "d-none type2-content",
+        ".image_frame": "w-100",
+        ".more": "d-none",
+        ".more-btn": "d-none",
+        ".title": "type1-title fw-bold p-2",
+        "figcaption": "pb1",
+        "figure": "flex-column",
+    },
+    [list_type.text]: {
+        ".box-shadow": "p-1 type1 text-border",
+        ".card-border": "pr3 type1",
+        ".check_btn": "w-100",
+        ".date": "d-none",
+        ".description": "d-none",
+        ".image": "d-none",
+        ".image_frame": "d-none",
+        ".more": "d-none",
+        ".related-tag": "d-none",
+        ".search-more": "d-none",
+        ".title": "type2-title pr3 h-100",
+        "figure": "flex-column",
+    },
+}
+
+function ViewTypeChangeInit() {
     $(".type_change_frame").each(function () {
         var $self = $(this)
         if (!!!$self.data("isInit")) {
@@ -9,19 +66,19 @@
 
             $btn_grid.on("click", function () {
                 if (!$btn_grid.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $btn_text, $content, "Grid");
+                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.grid);
                 }
             })
 
             $btn_list.on("click", function () {
                 if (!$btn_list.data("activate")) {
-                    typeChange($btn_list, $btn_grid,  $btn_text , $content, "List");
+                    typeChange($btn_list, $btn_grid,  $btn_text , $content, list_type.list);
                 }
             })
 
             $btn_text.on("click", function () {
                 if (!$btn_text.data("activate")) {
-                    typeChange($btn_text ,$btn_list, $btn_grid, $content, "Text");
+                    typeChange($btn_text ,$btn_list, $btn_grid, $content, list_type.text);
                 }
             })
             if ($btn_grid.hasClass("d-none") && !$btn_list.hasClass("d-none")) $btn_list.trigger("click");
@@ -33,6 +90,16 @@
     })
 }
 
+function updateStyle($self, configuration) {
+    for (const [_, config] of Object.entries(display_configurations)) {
+        for (const [selector, classes] of Object.entries(config)) {
+            $self.find(selector).removeClass(classes);
+        }
+    }
+    for (const [selector, classes] of Object.entries(configuration)) {
+        $self.find(selector).addClass(classes);
+    }
+}
 function typeChange($self, $brother ,$brother2, $content, type) {
     $self.data("activate", 1);
     $self.removeClass("text-black-50");
@@ -41,112 +108,31 @@ function typeChange($self, $brother ,$brother2, $content, type) {
     $brother2.data("activate", 0);
     $brother2.addClass("text-black-50");
     switch (type) {
-        case "List":
+        case list_type.list:
             $content.each(function () {
                 var $self = $(this)
                 $self.addClass("type3").removeClass("type1 type2");
-                /*$self.removeClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
                 $self.removeClass("row row-cols-sm-4");
-                $self.find("figure").removeClass("flex-column");
-                $self.find(".image_frame").removeClass("w-100");
-                $self.find(".image_frame").removeClass("d-none");
-                $self.find(".image").addClass("px-0");
-                $self.find(".image").removeClass("d-none");
-                $self.find(".max-h").addClass("max-hei");
-                $self.find("figcaption").addClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".description").removeClass("d-none");
-                $self.find(".more").removeClass("d-none");
-                $self.find(".date").removeClass("d-none");
-                $self.find(".box-shadow").removeClass("h_100");
-                $self.find(".box-shadow").removeClass("text-border");
-                $self.find(".box-shadow").addClass("type3").removeClass("type2 type1");
-                $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
-                $self.find(".card-border").removeClass("h_100");    
-                $self.find(".hover_protrude_scale").removeClass("text-border");
-                $self.find(".card-border").addClass("type3").removeClass("type2 type1");
-                $self.find(".card-border").addClass("card-border-rd");
-                $self.find(".more-btn").addClass("d-none");
-                $self.find(".related-tag").removeClass("d-none");
-                $self.find(".card-border").removeClass("pr3").addClass("p-3");
-                $self.find(".imgh").addClass("img-h");
-                $self.find(".mergetag").addClass("merge");
-                $self.find(".check_btn").removeClass("w-100").addClass("check_btn-type3");
-                $self.find(".search-more").removeClass("d-none"); 
-                $self.find(".description").addClass("type3-content").removeClass("type2-content");
-                $self.find(".image_frame").addClass("h-100");
-                $self.find(".title").removeClass("type2-title pr3 text-center h-100").addClass("type1-title  fw-bold");
-                $self.find("figcaption").addClass("pb1");
+                /*$self.removeClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
+                updateStyle($self, display_configurations[list_type.list])
+                
             })
             break;
-        case "Grid":
+        case list_type.grid:
             $content.each(function () {
                 var $self = $(this)
                 $self.addClass("type2").removeClass("type1 type3");
-                /* $self.addClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
                 $self.addClass("row row-cols-sm-4");
-                $self.find("figure").addClass("flex-column");
-                $self.find(".image_frame").addClass("w-100");
-                $self.find(".image_frame").removeClass("d-none");
-                $self.find(".image").removeClass("px-0");
-                $self.find(".image").removeClass("d-none");
-                $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".description").addClass("d-none");
-                $self.find(".more").addClass("d-none");
-                $self.find(".date").addClass("d-none");
-                $self.find(".more-btn").addClass("d-none");
-                $self.find(".box-shadow").removeClass("h_100");
-                $self.find(".box-shadow").removeClass("text-border");
-                $self.find(".box-shadow").addClass("type2").removeClass("type1 type3");
-                $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
-                $self.find(".card-border").addClass("type2").removeClass("type1 type3");
-                $self.find(".card-border").removeClass("h_100");
-                $self.find(".card-border").addClass("card-border-rd");
-                $self.find(".card-border").removeClass("pr3").addClass("p-3");
-                $self.find(".related-tag").removeClass("d-none");
-                $self.find(".imgh").removeClass("img-h");
-                $self.find(".mergetag").removeClass("merge");
-                $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
-                $self.find(".search-more").removeClass("d-none"); 
-                $self.find(".title").removeClass("p-2 pr3");
-                $self.find(".description").addClass("type2-content").removeClass("type3-content");
-                $self.find(".image_frame").removeClass("h-100");
-                $self.find(".title").removeClass("h-100 text-center type2-title").addClass("type1-title fw-bold p-2");
-                $self.find("figcaption").addClass("pb1");
+                /* $self.addClass("row row-cols-2 row-cols-sm-4 row-cols-lg-6");*/
+                updateStyle($self, display_configurations[list_type.grid])
             });
             break;
-        case "Text":
+        case list_type.text:
             $content.each(function () {
                 var $self = $(this)
-                $self.addClass("type2").removeClass("type2 type3");
+                $self.addClass("type1").removeClass("type2 type3");
                 $self.addClass("row row-cols-sm-4");
-                $self.find("figure").addClass("flex-column");
-                $self.find(".image_frame").removeClass("w-100 ");
-                $self.find(".image_frame").addClass("d-none");
-                $self.find(".image").removeClass("px-0");
-                $self.find(".image").addClass("d-none");
-                $self.find(".max-h").removeClass("max-hei");
-                $self.find("figcaption").removeClass("flex-grow-1 p-3 py-0 py-md-3");
-                $self.find(".description").addClass("d-none");
-                $self.find(".date").addClass("d-none");
-                $self.find(".more").addClass("d-none");
-                $self.find(".more-btn").removeClass("d-none");
-                $self.find(".title").addClass("pr3").removeClass("p-2");
-                $self.find(".box-shadow").removeClass("h_100");
-                $self.find(".box-shadow").addClass("text-border");
-                $self.find(".box-shadow").addClass("type1").removeClass("type2 type3");
-                $self.find(".box-shadow").addClass("p-1").removeClass("p-3");
-                $self.find(".related-tag").addClass("d-none");
-                $self.find(".card-border").removeClass("h_100");
-                $self.find(".card-border").addClass("type1").removeClass("type2 type3");
-                $self.find(".card-border").removeClass("card-border-rd");
-                $self.find(".card-border").removeClass("p-3").addClass("pr3");
-                $self.find(".imgh").removeClass("img-h");
-                $self.find(".mergetag").removeClass("merge ");
-                $self.find(".check_btn").addClass("w-100").removeClass("check_btn-type3");
-                $self.find(".search-more").addClass("d-none");
-                $self.find(".image_frame").removeClass("h-100");
-                $self.find(".title").removeClass("type1-title fw-bold text-center p-2").addClass("type2-title h-100");
-                $self.find("figcaption").removeClass("pb1");
+                updateStyle($self, display_configurations[list_type.text])
             });
             break;
     }

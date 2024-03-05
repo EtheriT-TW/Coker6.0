@@ -206,7 +206,7 @@ table:not(.table) {
 
     .two_three_block > .two {
         width: 100%;
-        margin: 0 15px;
+        padding: 0 15px;
     }
 
     .two_three_block > .three {

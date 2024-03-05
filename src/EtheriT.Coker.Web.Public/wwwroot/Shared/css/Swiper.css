@@ -24,6 +24,7 @@
 .swiper_pagination_right .swiper_pagination {
     text-align: end;
     padding-right: 2em;
+    bottom: unset;
 }
 
 [class*="swiper_button"] {

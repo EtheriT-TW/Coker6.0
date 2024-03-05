@@ -43,6 +43,10 @@
     height: 300px;
 }
 
+.type_change_frame .catalog .type5 {
+    height: 120px;
+}
+
 .type_change_frame .title-type2 {
     height:80px;
 }
@@ -101,6 +105,11 @@
 
 .type_change_frame .type4-caption {
     height: 40%;
+}
+
+.type_change_frame .price-discount {
+    text-decoration: line-through;
+    font-weight: lighter;
 }
 
 .type_change_frame .more-btn {

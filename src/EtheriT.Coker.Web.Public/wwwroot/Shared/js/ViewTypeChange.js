@@ -24,9 +24,11 @@ const display_configurations = {
         ".image_frame":"h-100",
         ".imgh":"img-h",
         ".item-header": "d-none",
+        ".like-and-share": "d-none",
         ".max-h":"max-hei",
         ".mergetag":"merge",
         ".more-btn": "d-none",
+        ".purchase": "d-none",
         ".related-tag": "d-none",
         ".tags": "d-none",
         ".title":"type1-title fw-bold p-2",
@@ -41,8 +43,10 @@ const display_configurations = {
         ".description": "d-none type2-content",
         ".image_frame": "w-100",
         ".item-header": "d-none",
+        ".like-and-share": "d-none",
         ".more": "d-none",
         ".more-btn": "d-none",
+        ".purchase": "d-none",
         ".related-tag": "d-none",
         ".tags": "d-none",
         ".title": "type1-title fw-bold p-2",
@@ -59,7 +63,9 @@ const display_configurations = {
         ".image": "d-none",
         ".image_frame": "d-none",
         ".item-header": "d-none",
+        ".like-and-share": "d-none",
         ".more": "d-none",
+        ".purchase": "d-none",
         ".related-tag": "d-none",
         ".search-more": "d-none",
         ".tags": "d-none",
@@ -75,12 +81,36 @@ const display_configurations = {
         ".description": "d-none type2-content",
         ".image_frame": "type4-image-frame w-100",
         ".item-header": "d-flex",
+        ".like-and-share": "d-none",
         ".more": "d-none",
         ".more-btn": "d-none",
+        ".purchase":"d-none",
         ".tags": "mt-auto align-text-bottom",
         ".title": "type4-title d-inline fs-6",
         "figcaption": "pb1 type4-caption d-flex flex-column",
         "figure": "flex-column",
+    }],
+    [list_type.product_list]: ["type1 bg-light px-2", {
+        ".card-border": "card-border-rd type2",
+        ".catalog-number": "type4-title d-inline",
+        ".check_btn": "check_btn-type3",
+        ".col": " type5 rounded-lg",
+        ".description": "d-none",
+        ".image": "px-0",
+        ".image_frame": "h-100 w-25",
+        ".imgh": "img-h",
+        ".item-header": "d-none",
+        ".item-title": "d-flex",
+        ".like-and-share":"d-inline ms-auto fs-5 p-2",
+        ".max-h": "max-hei",
+        ".mergetag": "merge",
+        ".more":"d-none",
+        ".more-btn": "d-none",
+        ".purchase": "ms-auto d-inline",
+        ".related-tag": "d-none",
+        ".tags": "mt-auto mb-2 align-text-bottom d-flex",
+        ".title": "type4-title d-inline fs-6 p-2",
+        "figcaption": "flex-grow-1 d-flex flex-column",
     }],
 }
 
@@ -101,7 +131,7 @@ function ViewTypeChangeInit() {
 
             $btn_list.on("click", function () {
                 if (!$btn_list.data("activate")) {
-                    typeChange($btn_list, $btn_grid,  $btn_text , $content, list_type.list);
+                    typeChange($btn_list, $btn_grid,  $btn_text , $content, list_type.product_list);
                 }
             })
 

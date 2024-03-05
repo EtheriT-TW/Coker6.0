@@ -43,6 +43,10 @@
     height: 300px;
 }
 
+.type_change_frame .catalog .type5 {
+    height: 120px;
+}
+
 .type_change_frame .title-type2 {
     height:80px;
 }
@@ -68,6 +72,16 @@
     max-height: calc(1rem * 5.1);
     position: relative;
 }
+
+.type_change_frame .type4-title {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    max-height: calc(1rem * 5.1);
+    position: relative;
+}
+
 .type_change_frame .type2-content {
     overflow: hidden;
     display: -webkit-box;
@@ -84,6 +98,20 @@
     max-height: calc(1em * 5);
     position: relative;
 }
+
+.type_change_frame .type4-image-frame {
+    height: 60%;
+}
+
+.type_change_frame .type4-caption {
+    height: 40%;
+}
+
+.type_change_frame .price-discount {
+    text-decoration: line-through;
+    font-weight: lighter;
+}
+
 .type_change_frame .more-btn {
     width: 30px;
     height: 30px;
@@ -94,6 +122,10 @@
     right: 10px;
     color: #fff;
     transform: translateY(-50%);
+}
+
+.type_change_frame .rounded-lg {
+    border-radius: 1em;
 }
 
     .type_change_frame > .catalog .more-btn:hover {

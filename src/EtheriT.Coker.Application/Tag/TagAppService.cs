@@ -279,6 +279,11 @@ namespace EtheriT.Coker.Application.Tag
                         };
                         TagBindings.Add(ta);
                     }
+                    else if (data.Id > 0 && !data.IsDeleted && ass!=null) {
+                        ass.IsDeleted = false;
+                        ass.DeleterUserId = null;
+                        ass.DeletionTime = null;
+                    }
                     else if (data.Id > 0 && data.IsDeleted)
                     {
                         await this.TagAssociateDelete((long)data.Id);

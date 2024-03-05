@@ -15,8 +15,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public string? Title { get; set; }
         public string? Description { get; set; }
         public bool Visible { get; set; }
-        public int SerNO { get; set; }
-        public int Popular { get; set; }
+        public int SerNO { get; set; } = 500;
         public bool PopularVisible { get; set; }
         public bool RemovedFromShelves { get; set; }
         public DateTime? NodeDate { get; set; }

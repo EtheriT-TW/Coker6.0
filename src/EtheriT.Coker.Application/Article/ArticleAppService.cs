@@ -69,6 +69,7 @@ namespace EtheriT.Coker.Application.Article
                 {
                     Core.Models.Article a = mapper.Map<Core.Models.Article>(dto);
                     a.FK_WebsiteId= WebsiteID;
+                    a.RemovedFromShelves = !a.RemovedFromShelves;
                     db.Article.Add(a);
                     await loginUserData.SaveChanges(a);
                     asoid = a.Id;
@@ -80,6 +81,7 @@ namespace EtheriT.Coker.Application.Article
                     if (result != null)
                     {
                         mapper.Map(dto,result);
+                        result.RemovedFromShelves = !result.RemovedFromShelves;
                         await loginUserData.SaveChanges(result);
                     }
                     else throw new Exception("查無文章資料");
@@ -248,7 +250,7 @@ namespace EtheriT.Coker.Application.Article
                                             StartTime = e.StartTime,
                                             EndTime = e.EndTime,
                                             NodeDate = e.NodeDate,
-                                            RemovedFromShelves = e.RemovedFromShelves,
+                                            RemovedFromShelves = !e.RemovedFromShelves,
                                             permanent = e.permanent,
                                             DataJson = string.IsNullOrEmpty(e.DataJson)? null: JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
                                         }).FirstOrDefaultAsync();

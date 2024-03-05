@@ -1,44 +1,17 @@
 ﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text
-var keyId, disp_opt = true, DirectoryId = 0, DirectoryType="n";
+var keyId, disp_opt = true, DirectoryId = 0, DirectoryType = "n";
 var directory_list;
 let DirectorytForms, $DirectorytTags;
+let ArticletForms, $ArticletTags;
 
 function PageReady() {
     DirectorytForms = $('#DirectorytForm');
-    co.Directory = {
-        AddUp: function (data) {
-            return $.ajax({
-                url: "/api/Directory/AddUp",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        Get: function (Id) {
-            return $.ajax({
-                url: "/api/Directory/GetDataOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { Id: Id },
-            });
-        },
-        Delete: function (Id) {
-            return $.ajax({
-                url: "/api/Directory/Delete/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { Id: Id },
-            });
-        }
-    };
+    ArticletForms = $('#ArticletForm');
 
     ElementInit();
     WebmenuListModalInit();
     $DirectorytTags = $(DirectorytForms).find(".InputTag").TagListModalInit();
+    $ArticletTags = $(ArticletForms).find(".InputTag").TagListModalInit();
 
     $bind_type.on("change", function () {
         switch (parseInt($bind_type.val())) {
@@ -57,6 +30,23 @@ function PageReady() {
     });
 
     (() => {
+        Array.from(ArticletForms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    Coker.sweet.confirm("即將儲存", "儲存後將顯示於文章列表", "儲存", "取消", function () {
+                        AddUpArticlet("已成功儲存", "儲存發生未知錯誤");
+                    });
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })();
+
+    (() => {
         Array.from(DirectorytForms).forEach(form => {
             form.addEventListener('submit', event => {
                 if (!form.checkValidity()) {
@@ -71,19 +61,29 @@ function PageReady() {
                 form.classList.add('was-validated')
             }, false)
         })
-    })()
+    })();
 
-    $(".btn_back").on("click", function () {
+    $("#DirectoryContent .btn_back").on("click", function () {
         Coker.sweet.confirm("返回目錄列表", "資料將不被保存", "確定", "取消", function () {
             directory_list.component.refresh();
             BackToList();
         });
+    });
+    $("#ArticleContent .btn_back").on("click", function () {
+        const dir = $("#DirectoryItemps").data("dir");
+        Coker.sweet.confirm(`返回${dir.title}文章列表`, "資料將不被保存", "確定", "取消", function () {
+            directoryDatailList.component.refresh();
+            location.hash = `Articles_${dir.id}`;
+        });
     })
 
-    $(".btn_add").on("click", function () {
+    $("#DirectoryList .btn_add").on("click", function () {
         FormDataClear();
         window.location.hash = 0;
         HashDataEdit();
+    });
+    $("#DirectoryItemps .btn_add").on("click", function () {
+        window.location.hash = `ArticlesEditor_${DirectoryId}_0`;
     });
     $("#DirectoryItemps .btn_back").off("click").on("click", function () {
         BackToList();
@@ -145,7 +145,7 @@ function HashDataEdit() {
             if (!!hash && isNaN(hash)) {
                 if (hash.indexOf("Editor") > -1) MoveToItemEdit();
                 else MoveToItemList();
-            }else if (parseInt(hash) == 0) {
+            } else if (parseInt(hash) == 0) {
                 window.location.hash = 0;
                 keyId = 0;
                 FormDataClear();
@@ -279,12 +279,41 @@ function AddUp(success_text, error_text) {
         Coker.sweet.error("錯誤", error_text, null, true);
     });
 }
+function AddUpArticlet(success_text, error_text) {
+    const data = co.Form.getJson($(ArticletForms).attr("id"));
+    if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
+        console.log($("#ImageUpload .img_input_frame").data("delectList"));
+        co.File.DeleteFileById({
+            Sid: keyId,
+            Type: 6,
+            Fid: $("#ImageUpload .img_input_frame").data("delectList")
+        });
+    }
+    co.Articles.AddUp(data).done((result) => {
+        const success = function () {
+            Coker.sweet.success(success_text, null, true);
+            directoryDatailList.component.refresh();
+            location.hash = `Articles_${DirectoryId}`;
+        }
+        
+        if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
+            var formData = new FormData();
+            formData.append("files", $("#ImageUpload .img_input").data("file").File);
+            formData.append("type", 6);
+            formData.append("sid", result.message);
+            formData.append("serno", 500);
+            co.File.Upload(formData).done(function () {
+                success();
+            });
+        } else success();
+    });
+}
 
 function MoveToContent() {
     $(DirectorytForms).removeClass("was-validated");
     if (!!keyId && isNaN(keyId)) {
 
-    }if (keyId == 0) {
+    } if (keyId == 0) {
         $(".btn_to_canvas").addClass("text-dark");
         $(".btn_to_canvas").attr('disabled', '');
     } else {
@@ -323,7 +352,8 @@ function MoveToItemList() {
     else if (para.length > 1 && !isNaN(para[1])) {
         DirectoryId = parseInt(para[1]);
         DirectoryType = para[0];
-        switch (para[0]) {
+
+        switch (DirectoryType) {
             case "Articles":
                 directoryDatailList.component.refresh();
                 break
@@ -331,7 +361,7 @@ function MoveToItemList() {
                 BackToList();
                 break
         }
-       
+
     }
 }
 function MoveToItemEdit() {
@@ -342,18 +372,26 @@ function MoveToItemEdit() {
     $("#DirectoryItemps").addClass("d-none");
     $("#DirectoryItemps>div").addClass("d-none");
     $("#ArticleContent").removeClass("d-none");
-    if (para.length > 1 && !isNaN(para[1])) {
+    $ArticletTags.TagDataClear();
+    if (para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
         switch (para[0]) {
             case "ArticlesEditor":
-                co.Articles.GetDataOne(parseInt(para[1])).done(function (result) {
-                    if (result != null) {
-                        result.startEndDate = 0;
-                        result.sortCheckbox = 1;
-                        result.ImageUpload = 1;
-                        co.Form.insertData(result, "#ArticletForm")
-                        $DirectorytTags.TagDataSet(result.tagDatas);
-                    } else BackToList();
-                })
+                const id = parseInt(para[2]);
+                DirectoryId = parseInt(para[1]);
+                co.Directory.Get(DirectoryId).done((result) => {
+                    $("#DirectoryItemps").data("dir", result);
+                });
+                if (id > 0) {
+                    co.Articles.GetDataOne(id).done(function (result) {
+                        if (result != null) {
+                            result.startEndDate = 0;
+                            result.sortCheckbox = 1;
+                            result.ImageUpload = 1;
+                            co.Form.insertData(result, "#ArticletForm");
+                            $ArticletTags.TagDataSet(result.tagDatas);
+                        } else BackToList();
+                    })
+                } else co.Form.clear("ArticletForm");
                 break
             default:
                 BackToList();
@@ -363,7 +401,7 @@ function MoveToItemEdit() {
     }
 }
 function editArticlesButtonClicked(e) {
-    window.location.hash = "ArticlesEditor_" + e.row.key;
+    window.location.hash = `ArticlesEditor_${DirectoryId}_${e.row.key}`;
 }
 function paletteArticlesButtonClicked() {
 

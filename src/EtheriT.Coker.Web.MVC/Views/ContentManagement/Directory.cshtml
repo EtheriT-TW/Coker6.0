@@ -20,7 +20,7 @@
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
         <div class="title fw-bold fs-3">目錄管理</div>
     </div>
-
+    @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagSelectModal" })
     <div id="" class="py-2">
         <div id="DirectoryList" class="card border-0">
             <div class="card-body position-relative">
@@ -81,7 +81,6 @@
                     )
             </div>
         </div>
-
         <div id="DirectoryContent" class="card border-0 d-none">
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 d-flex align-items-center">
@@ -129,8 +128,12 @@
                     </div>
                     <textarea class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入文章描述"></textarea>
                 </div>
-
-                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+                <div class="tag input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1">alternate_email</span>標籤
+                    </div>
+                    <input id="InputTag" class="form-control rounded text-start InputTag formItem" name="TagSelected" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
+                </div>
 
                 @await Component.InvokeAsync(nameof(Modal), new {dispaly = "WebmenuListModal"})
 
@@ -147,6 +150,9 @@
                     <div class="d-flex position-absolute z-index-up">
                         <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none">
                             <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                        <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded text-decoration-none ml-3">
+                            <span class="material-symbols-outlined">add</span>
                         </button>
                     </div>
                     @(
@@ -240,14 +246,19 @@
                     </div>
                     <div class="d-flex">
                         <input type="checkbox" id="ArticletFormVisible" class="selectedItem" name="visible" value="true" />
-                        <label for="ArticletFormVisible">
+                        <label for="ArticletFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
                             <span class="material-symbols-outlined fs-2">visibility</span>
                             <span class="material-symbols-outlined fs-2">visibility_off</span>
                         </label>
                         <input type="checkbox" id="ArticletFormpoPularVisible" class="selectedItem" name="popularVisible" value="true" />
-                        <label for="ArticletFormpoPularVisible" class="mx-3">
+                        <label for="ArticletFormpoPularVisible" class="mx-3" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示人氣值">
                             <span class="material-symbols-outlined fs-2">group</span>
                             <span class="material-symbols-outlined fs-2">group_off</span>
+                        </label>
+                        <input id="RemovedFromShelves" type="checkbox" name="removedFromShelves" class="selectedItem" checked value="true" />
+                        <label for="RemovedFromShelves" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架">
+                            <span class="material-symbols-outlined fs-2">open_in_new</span>
+                            <span class="material-symbols-outlined fs-2">open_in_new_off</span>
                         </label>
                     </div>
                 </div>
@@ -271,7 +282,7 @@
                         <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
                     </div>
                     <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up mr-4">
                         <input id="PermanentCheck" name="permanent" data-form-type="disabled" data-target="InputDate" class="form-check-input" type="checkbox" value="true">
                         <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
                     </div>
@@ -285,7 +296,7 @@
                     <textarea name="description" class="form-control border-0" aria-label="With textarea" maxlength="300" placeholder="輸入文章描述"></textarea>
                 </div>
 
-                <div class="tag input-group mb-3">
+                <div class="tag input-group mb-3" name="tagSelected" data-form-type="tags">
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1">alternate_email</span>標籤
                     </div>
@@ -297,7 +308,7 @@
                         <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
                     </div>
                     <input id="ArticleSerNO" class="form-control rounded" name="serNO" type="number" aria-label="Input Sort of Article" disabled="disabled" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up mr-4">
                         <input id="ArticleSortCheck" class="form-check-input" name="sortCheckbox" data-form-type="disabled" data-direct="reverse" data-value="500" data-target="ArticleSerNO" type="checkbox" value="false">
                         <label class="form-check-label fs-6 pe-2" for="ArticleSortCheck">自訂排序</label>
                     </div>

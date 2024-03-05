@@ -73,9 +73,6 @@
                                         break;
                                 }
                                 break;
-                            case "TEXTAREA":
-                                $e.text(obj[key]);
-                                break;
                             default:
                                 $e.val(obj[key]);
                                 break;
@@ -95,6 +92,9 @@
                     case "zipcode":
                         formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
                         break;
+                    case "tags":
+                        formDataObject[$e.attr("name")] = $e.find(".InputTag").data("tagList")
+                        break;
                 }
             });
             return formDataObject;
@@ -112,6 +112,21 @@
                 }
                 form.classList.add('was-validated');
             }, false)
+        }, clear: function (id) {
+            const form = document.getElementById(id);
+            const $items = $(`[data-form-type]`)
+            $items.each(function (i, e) {
+                const $e = $(e);
+                switch ($e.data("form-type")) {
+                    case "images":
+                        if (!!!$e.data("init")) {
+                            $e.ImageUploadModalClear();
+                            $e.data("init", true)
+                        } else $e.ImageUploadModalClear();
+                        break;
+                }
+            });
+            form.reset();
         }
     }
 });

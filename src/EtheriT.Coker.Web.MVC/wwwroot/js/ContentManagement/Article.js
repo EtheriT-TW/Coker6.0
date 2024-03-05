@@ -263,7 +263,7 @@ function FormDataClear() {
     $sort_input.attr("disabled", "disabled");
     $sort_checkbox.prop("checked", false);
     $permanent.prop("checked", true);
-    $removedFromShelves.prop("checked", false);
+    $removedFromShelves.prop("checked", true);
     pop_visible = false;
     disp_opt = false;
 }
@@ -293,7 +293,7 @@ function FormDataSet(result) {
     endDate = result.endTime;
     pop_visible = result.popularVisible;
     disp_opt = result.visible;
-    $removedFromShelves.prop("checked", !result.removedFromShelves);
+    $removedFromShelves.prop("checked", result.removedFromShelves);
     
 
     if (result.serNO != 500) {
@@ -357,7 +357,7 @@ function AddUp(success_text, error_text, place) {
         StartTime: startDate,
         EndTime: endDate,
         NodeDate: $nodeDate.val(),
-        RemovedFromShelves:$removedFromShelves.is(":checked") ? false : true
+        RemovedFromShelves:$removedFromShelves.is(":checked")
     }).done(function (result) {
         if (result.success) {
             if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {

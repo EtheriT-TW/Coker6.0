@@ -38,7 +38,10 @@ $.fn.extend({
             var text = ""
             if (datas != null && datas.length > 0) {
                 var temp_list = [];
-                $self.data("tagCheckList");
+                $self.data({
+                    "tagList": [],
+                    "tagCheckList": []
+                });
                 datas.forEach(function (data) {
                     var obj = {};
                     obj["Id"] = data.id;
@@ -48,7 +51,7 @@ $.fn.extend({
                     text = text == "" ? data.tag_Name : text + "、" + data.tag_Name;
                     $self.data("tagList").push(obj)
                     $self.data("tagCheckList").push(data.id);
-                })
+                });
                 getTagListDataGridInstance().done(function (result) {
                     result.selectRows(temp_list);
                 });
@@ -56,10 +59,13 @@ $.fn.extend({
             $self.data("tagText", text);
             $self.val(text == "" ? "無" : text);
         }
-       
+        $self.on("click", function () {
+            $(myModal).data("target", $self);
+        });
         if (!!!$(myModal).data("isSet")) {
             $(myModal).data("isSet", true)
             myModal.addEventListener("hidden.bs.modal", function () {
+                const $self = $(myModal).data("target");
                 var temp_list = [];
                 $self.data("tagList").forEach(function (item) {
                     if (!item.IsDeleted) {
@@ -70,28 +76,28 @@ $.fn.extend({
                     result.selectRows(temp_list);
                 });
             });
-            myModal.addEventListener("shown.bs.modal", function () {
-                $(myModal).data("target", $self);
-            });
         }
-        $btnTagSave.on("click", function () {
+        $btnTagSave.off("click").on("click", function () {
+            const $self = $(myModal).data("target");
             if ($self.data("tagCheckList").length > 0) {
                 $self.data("tagList").forEach(function (item) {
-                    var index = $self.data("tagCheckList").indexOf(item.FK_TId)
+                    var index = $self.data("tagCheckList").indexOf(item.FK_TId);
                     if (index > -1) {
                         item.IsDeleted = false;
-                        $self.data("tagCheckList").splice(index, 1)
                     } else {
                         item.IsDeleted = true;
                     }
                 })
                 if ($self.data("tagCheckList").length > 0) {
+                    
                     $self.data("tagCheckList").forEach(function (item) {
-                        var obj = {};
-                        obj["Id"] = 0;
-                        obj["FK_TId"] = item;
-                        obj["IsDeleted"] = false;
-                        $self.data("tagList").push(obj);
+                        if (!!!$self.data("tagList").find((element) => element.FK_TId === item)) {
+                            var obj = {};
+                            obj["Id"] = 0;
+                            obj["FK_TId"] = item;
+                            obj["IsDeleted"] = false;
+                            $self.data("tagList").push(obj);
+                        }
                     })
                 }
             } else {
@@ -180,12 +186,11 @@ function TagList_SelectChange(selectedItems) {
         tag_text = data.map((value) => `${value.Title}`).join("、");
 
         data.forEach(function (item) {
-            tag_check_list.push(item.Id)
+            tag_check_list.push(item.Id);
         })
     } else {
         tag_text = "無";
     }
-
     tag_changedBySelectBox = false;
     tag_clearSelectionButton.option('disabled', !data.length);
     if (!!$self) {

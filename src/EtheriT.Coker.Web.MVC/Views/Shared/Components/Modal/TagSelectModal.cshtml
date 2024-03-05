@@ -2,7 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.Tag
 
 <link rel="stylesheet" href="~/css/Components/TagListModal.min.css" asp-append-version="true" />
-<script src="~/js/Components/TagSelectModal.min.js" asp-append-version="true"></script>
+<script src="~/js/Components/TagListModal.min.js" asp-append-version="true"></script>
 
 <div id="TagModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
@@ -14,53 +14,55 @@
 			<div class="modal-body">
 				<div class="bg-white p-3">
 					@(Html.DevExtreme().DataGrid<TagGetAllListDto>()
-						.DataSource(d => d.RemoteController().Key("Id")
-						.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
-						)
-						.ID("TagList")
-						.Selection(s => s.Mode(SelectionMode.Multiple))
-						.RemoteOperations(true)
-						.ColumnHidingEnabled(false)
-						.ShowBorders(true)
-						.FilterRow(filterRow => filterRow
-						.Visible(true)
-						.ApplyFilter(GridApplyFilterMode.Auto)
-						)
-						.SearchPanel(searchPanel => searchPanel
-						.Visible(true)
-						.Placeholder("請輸入要搜尋的資料")
-						)
-						.Columns(c =>
+					.DataSource(d => d.RemoteController().Key("Id")
+					.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
+					)
+					.ID("TagList")
+					.Selection(s => s.Mode(SelectionMode.Multiple))
+					.RemoteOperations(true)
+					.ColumnHidingEnabled(false)
+					.ShowBorders(true)
+					.FilterRow(filterRow => filterRow
+					.Visible(true)
+					.ApplyFilter(GridApplyFilterMode.Auto)
+					)
+					.SearchPanel(searchPanel => searchPanel
+					.Visible(true)
+					.Placeholder("請輸入要搜尋的資料")
+					)
+					.Columns(c =>
+					{
+						c.AddFor(e => e.Id).Caption("編號").Visible(false);
+						c.AddFor(e => e.SiteNameTitle).Caption("網站名稱").Width(150);
+						c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
+					})
+					.OnSelectionChanged("TagList_SelectChange")
+					.OnContentReady("tagContentReady")
+					.Toolbar(toolbar =>
+					{
+						toolbar.Items(items =>
 						{
-							c.AddFor(e => e.Id).Caption("編號").Visible(false);
-							c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
-						})
-						.OnSelectionChanged("TagList_SelectChange")
-						.Toolbar(toolbar =>
-						{
-							toolbar.Items(items =>
-							{
-								items.Add()
-							.Location(ToolbarItemLocation.Before)
-							.Widget(w =>
-							w.Button()
-							.Text("選項清除")
-							.Disabled(true)
-							.OnClick("TagList_ClearBtnClick")
-							.OnInitialized("TagList_ClearBtnInit")
-							);
-							});
+							items.Add()
+						.Location(ToolbarItemLocation.Before)
+						.Widget(w =>
+						w.Button()
+						.Text("選項清除")
+						.Disabled(true)
+						.OnClick("TagList_ClearBtnClick")
+						.OnInitialized("TagList_ClearBtnInit")
+						);
+						});
 
-							toolbar.Items(i =>
-							{
-								i.Add()
-							.Name(DataGridToolbarItem.SearchPanel)
-							.ShowText(ToolbarItemShowTextMode.Always)
-							.Location(ToolbarItemLocation.After);
-							});
-						})
-						.Paging(paging => paging.PageSize(10))
-						)
+						toolbar.Items(i =>
+						{
+							i.Add()
+						.Name(DataGridToolbarItem.SearchPanel)
+						.ShowText(ToolbarItemShowTextMode.Always)
+						.Location(ToolbarItemLocation.After);
+						});
+					})
+					.Paging(paging => paging.PageSize(10))
+					)
 				</div>
 			</div>
 			<div class="modal-footer">

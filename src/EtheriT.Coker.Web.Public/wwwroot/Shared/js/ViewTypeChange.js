@@ -72,7 +72,7 @@ const display_configurations = {
         ".title": "type2-title pr3 h-100",
         "figure": "flex-column",
     }],
-    [list_type.product_grid]: ["type4 row row-cols-lg-4 bg-light px-2", {
+    [list_type.product_grid]: ["type4 row row-cols-lg-4 row-cols-md-2  bg-light px-2", {
         ".card-border": "card-border-rd type2",
         ".catalog-number": "type4-title d-inline",
         ".check_btn": "w-100",
@@ -100,7 +100,7 @@ const display_configurations = {
         ".image_frame": "h-100 w-25",
         ".imgh": "img-h",
         ".item-header": "d-none",
-        ".item-title": "d-flex",
+        ".item-title": "d-lg-flex",
         ".like-and-share":"d-inline ms-auto fs-5 p-2",
         ".max-h": "max-hei",
         ".mergetag": "merge",
@@ -108,7 +108,7 @@ const display_configurations = {
         ".more-btn": "d-none",
         ".purchase": "ms-auto d-inline",
         ".related-tag": "d-none",
-        ".tags": "mt-auto mb-2 align-text-bottom d-flex",
+        ".tags": "mt-auto mb-2 align-text-bottom d-lg-flex",
         ".title": "type4-title d-inline fs-6 p-2",
         "figcaption": "flex-grow-1 d-flex flex-column",
     }],
@@ -121,17 +121,19 @@ function ViewTypeChangeInit() {
             const $btn_grid = $self.find(".btn_grid");
             const $btn_list = $self.find(".btn_list");
             const $btn_text = $self.find(".btn_text");
+            const $btn_prod_grid = $self.find(".btn_prod_grid");
+            const $btn_prod_list = $self.find(".btn_prod_list");
             const $content = $self.find(".content").first();
 
             $btn_grid.on("click", function () {
                 if (!$btn_grid.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.product_grid);
+                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.grid);
                 }
             })
 
             $btn_list.on("click", function () {
                 if (!$btn_list.data("activate")) {
-                    typeChange($btn_list, $btn_grid,  $btn_text , $content, list_type.product_list);
+                    typeChange($btn_list, $btn_grid,  $btn_text , $content, list_type.list);
                 }
             })
 
@@ -140,9 +142,36 @@ function ViewTypeChangeInit() {
                     typeChange($btn_text ,$btn_list, $btn_grid, $content, list_type.text);
                 }
             })
-            if ($btn_grid.hasClass("d-none") && !$btn_list.hasClass("d-none")) $btn_list.trigger("click");
-            if ($btn_grid.hasClass("d-none") && $btn_list.hasClass("d-none") && !$btn_text.hasClass("d-none")) $btn_text.trigger("click");
-            if ($self.find(".btn_grid.d-none,.btn_list.d-none,.btn_text.d-none").length >= 2) $self.find(".switch_control").addClass("d-none");
+
+            $btn_prod_grid.on("click", function () {
+                if (!$btn_prod_grid.data("activate")) {
+                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.product_grid);
+                }
+            })
+
+            $btn_prod_list.on("click", function () {
+                if (!$btn_prod_list.data("activate")) {
+                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.product_list);
+                }
+            })
+
+            if (!$btn_grid.hasClass("d-none")){
+                $btn_grid.trigger("click");
+            } 
+            else if (!$btn_list.hasClass("d-none")) {
+                $btn_list.trigger("click");
+            }
+            else if (!$btn_text.hasClass("d-none")) {
+                $btn_text.trigger("click");
+            } 
+            else if (!$btn_prod_grid.hasClass("d-none")) {
+                $btn_prod_grid.trigger("click");
+            } 
+            else if (!$btn_prod_list.hasClass("d-none")) {
+                $btn_prod_list.trigger("click");
+            } 
+            
+            if ($self.find(".btn_grid.d-none,.btn_list.d-none,.btn_text.d-none,.btn_prod_grid.d-none,.btn_prod_list.d-none").length >= 4) $self.find(".switch_control").addClass("d-none");
             else $self.find(".switch_control").removeClass("d-none");
         }
         $self.data("isInit", true);

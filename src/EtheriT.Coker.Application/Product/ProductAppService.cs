@@ -608,6 +608,25 @@ namespace EtheriT.Coker.Application.Product
                             Type = (int)FileBindTypeEnum.產品,
                             Size = 1
                         });
+                        var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e=> e.Id).ToListAsync();
+                        var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
+                        double min = p.Min(e => e.Price)??0;
+                        double max = p.Max(e => e.Price) ?? 0;
+                        if (min == max) output_data.Price = $"{max}";
+                        else output_data.Price = $"{min} ~ {max}";
+                        var tagIds = await db.Tag_Associates.Where(e => !e.IsDeleted)
+                            .Where(e => e.FK_AId == data.Id)
+                            .Where(e => e.Type == 1)
+                            .Select(e => e.FK_TId).ToListAsync();
+                        output_data.tags = await (
+                            from t in db.Tags.Where(e => tagIds.Contains(e.Id))
+                            select new TagGetSelectedDto
+                            { 
+                                Id = data.Id,
+                                FK_TId = t.Id,
+                                Tag_Name = t.Title
+                            }
+                        ).ToListAsync();
                         output_data.type = DirectoryTypeEnum.商品;
                         output_data = mapper.Map(data, output_data);
                         output_data.Link = $"/product/{data.Id}";

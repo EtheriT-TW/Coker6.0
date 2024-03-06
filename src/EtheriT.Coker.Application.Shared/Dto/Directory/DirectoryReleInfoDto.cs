@@ -1,5 +1,6 @@
 ﻿
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Directory
 {
@@ -18,6 +19,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? Location { get; set; }
         public string? Description { get; set; }
         public string? OrgName { get; set; }
+        public string? Price { get; set; }
+        public string? ItemNo { get; set; }
+        public List<TagGetSelectedDto>? tags { get; set; }
 
     }
 }

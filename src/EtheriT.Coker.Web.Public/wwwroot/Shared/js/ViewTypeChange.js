@@ -11,6 +11,7 @@ const list_type = newEnum({
     list: "List",
     text: "Text",
     product_grid: "Product_Grid",
+    product_list: "Product_List",
 });
 
 const display_configurations = {
@@ -124,37 +125,22 @@ function ViewTypeChangeInit() {
             const $btn_prod_grid = $self.find(".btn_prod_grid");
             const $btn_prod_list = $self.find(".btn_prod_list");
             const $content = $self.find(".content").first();
+            const $btns = {
+                [list_type.grid]: $btn_grid,
+                [list_type.list]: $btn_list,
+                [list_type.text]: $btn_text,
+                [list_type.product_grid]: $btn_prod_grid,
+                [list_type.product_list]: $btn_prod_list,
+            }
 
-            $btn_grid.on("click", function () {
-                if (!$btn_grid.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.grid);
-                }
-            })
-
-            $btn_list.on("click", function () {
-                if (!$btn_list.data("activate")) {
-                    typeChange($btn_list, $btn_grid,  $btn_text , $content, list_type.list);
-                }
-            })
-
-            $btn_text.on("click", function () {
-                if (!$btn_text.data("activate")) {
-                    typeChange($btn_text ,$btn_list, $btn_grid, $content, list_type.text);
-                }
-            })
-
-            $btn_prod_grid.on("click", function () {
-                if (!$btn_prod_grid.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.product_grid);
-                }
-            })
-
-            $btn_prod_list.on("click", function () {
-                if (!$btn_prod_list.data("activate")) {
-                    typeChange($btn_grid, $btn_list, $btn_text, $content, list_type.product_list);
-                }
-            })
-
+            for (const [config, $btn] of Object.entries($btns)) {
+                $btn.on("click", function () {
+                    if (!$btn.data("activate")) {
+                        typeChange($btn, $btns, $content, config);
+                    }
+                })
+            }
+            
             if (!$btn_grid.hasClass("d-none")){
                 $btn_grid.trigger("click");
             } 
@@ -190,13 +176,15 @@ function updateStyle($self, configuration) {
         $self.find(selector).addClass(classes);
     }
 }
-function typeChange($self, $brother ,$brother2, $content, type) {
+function typeChange($self, $btns, $content, type) {
+    for (const [config, $btn] of Object.entries($btns)) {
+        $btn.data("activate", 0);
+        $btn.addClass("text-black-50");
+    }
+
     $self.data("activate", 1);
     $self.removeClass("text-black-50");
-    $brother.data("activate", 0);
-    $brother.addClass("text-black-50");
-    $brother2.data("activate", 0);
-    $brother2.addClass("text-black-50");
+
     $content.each(function () {
         var $self = $(this)
         updateStyle($self, display_configurations[type])

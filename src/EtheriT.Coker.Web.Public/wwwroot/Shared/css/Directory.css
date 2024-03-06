@@ -44,7 +44,7 @@
 }
 
 .type_change_frame .catalog .type5 {
-    height: 120px;
+    min-height: 120px;
 }
 
 .type_change_frame .title-type2 {
@@ -107,6 +107,14 @@
     height: 40%;
 }
 
+.type_change_frame .btn_favorites {
+    color: var(--gray-icon);
+}
+
+.type_change_frame .btn_share {
+    color: var(--gray-icon);
+}
+
 .type_change_frame .price-discount {
     text-decoration: line-through;
     font-weight: lighter;
@@ -144,6 +152,7 @@
     width: 100%;
     font-size: 2rem;
     font-weight: 600;
+    display: block;
 }
 
 @media only screen and (max-width: 768px) {

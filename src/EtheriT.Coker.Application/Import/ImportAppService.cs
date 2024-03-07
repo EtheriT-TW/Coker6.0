@@ -62,7 +62,7 @@ namespace EtheriT.Coker.Application.Import
 				{
 					if (rows[i] != null)
 					{
-						var t = Techs.FindAll(e => e.ProdName == rows[i].Title);
+						var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName);
 						rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
 						data.Add(rows[i]);
 					}

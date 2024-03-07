@@ -206,8 +206,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (key.ToLower() == "search")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-							remoteInputDto.FK_WebmenuId = model.PageData.Id;
-							model.PageData.Title = "站內搜尋";
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            model.PageData.Title = "站內搜尋";
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {
                                 SearchId = id,
@@ -219,11 +219,26 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
                         }
+                        else if (key.ToLower() == "demosearch") {
+                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            model.PageData.Title = "站內搜尋";
+                            model.SearchPalameter = new FrontSearchPalameterDro
+                            {
+                                SearchId = id,
+                                SearchText = search ?? "",
+                                Class = await custSearchAppService.GetSearchList(defaultData.Id)
+                            };
+                            view = "Search";
+                            int c;
+                            int.TryParse(model.layout.Replace("layout", ""), out c);
+                            if (c != 0) model.PageData.LayoutType = c;
+                        }
                         else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-							remoteInputDto.FK_WebmenuId = model.PageData.Id;
-							view = key;
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            view = key;
                         }
                         else
                         {
@@ -231,9 +246,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             model.ParentData = await webMenuApplication.GetParentConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                             model.PageData.LayoutType = defaultData.Layout_Type;
-							remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
 
-							if (string.IsNullOrEmpty(model.PageData.Html))
+                            if (string.IsNullOrEmpty(model.PageData.Html))
                             {
                                 Response.StatusCode = 404;
                                 view = "Error/404";

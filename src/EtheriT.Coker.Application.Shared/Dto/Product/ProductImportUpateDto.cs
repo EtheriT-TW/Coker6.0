@@ -9,8 +9,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
 	public class ProductImportUpateDto
 	{
-		public string Title { get; set; }
-		public string? ItemNo { get; set; }
+		public string ProdName { get; set; } = string.Empty;
+		public string ItemNo { get; set; } = string.Empty;
 		public string? Description { get; set; }
 		public string? Introduction { get; set; }
 		public string? Html { get; set; }

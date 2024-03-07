@@ -991,7 +991,7 @@ namespace EtheriT.Coker.Application.Product
             }
             return null;
         }
-        /* Product Log */
+        /* Product Import */
         public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
@@ -999,17 +999,17 @@ namespace EtheriT.Coker.Application.Product
 			long WebsiteID = await loginUserData.GetWebsiteId();
             if (fileData.Products.Any())
             {
-                List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.Title));
+                List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.ProdName));
                 List<ProductImportDto> prods = new List<ProductImportDto>();
-                List<string> allTitles = allData.Select(p => p.Title).ToList();
-                var updateItems = db.Prods.Where(p => allTitles.Contains(p.Title)).Select(s => new { s.Id, s.Title }).ToList();
+                List<string> allTitles = allData.Select(p => p.ItemNo + p.ProdName).ToList();
+                var updateItems = db.Prods.Where(p => allTitles.Contains(p.ItemNo??"" + p.Title)).Select(s => new { s.Id, s.ItemNo, s.Title }).ToList();
                 ProductImportDto dto = null;
                 for (int i = 0; i < allData.Count; i++)
                 {
-                    var item = updateItems.Find(e => e.Title == allData[i].Title);
+                    var item = updateItems.Find(e => e.Title == allData[i].ProdName && e.ItemNo== allData[i].ItemNo);
                     allData[i].FK_WebsiteId = WebsiteID;
                     if (item != null) allData[i].Id = item.Id;
-                    var preProds = prods.Find(e => e.Title == allData[i].Title);
+                    var preProds = prods.Find(e => e.ProdName == allData[i].ProdName && e.ItemNo == allData[i].ItemNo);
                     if (preProds == null)
                     {
                         dto = allData[i];
@@ -1025,6 +1025,7 @@ namespace EtheriT.Coker.Application.Product
                     await ImportProdMediaLinks(prods, response.ErrorList);
                     await ImportProdTags(prods, response.ErrorList);
                     await importTechs(prods, response.ErrorList);
+                    response.Success = true;
                 }
                 catch (Exception ex)
                 {
@@ -1326,15 +1327,17 @@ namespace EtheriT.Coker.Application.Product
         }
         private async Task importProdTech(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
-            var prodTitle = prods.GroupBy(x => x.Title).Select(e => e.Key);
-            var crrenProds = db.Prods.Where(e => !e.IsDeleted).Where(e => prodTitle.Contains(e.Title)).Select(e => new { e.Id, e.Title }).ToList();
+            var prodTitle = prods.GroupBy(x => x.ItemNo + x.ProdName).Select(e => e.Key);
+            var crrenProds = db.Prods.Where(e => !e.IsDeleted)
+                    .Where(e => prodTitle.Contains(e.ItemNo??"" + e.Title))
+                    .Select(e => new { e.Id, e.Title }).ToList();
             var techs = db.TechnicalCertificates.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
 
             List<TechCertProdAssociateDto> techCertProdAssociateDtos = new List<TechCertProdAssociateDto>();
             for (int i = 0; i < prods.Count; i++)
             {
                 var prod = prods[i];
-                var n = crrenProds.Find(e => e.Title == prod.Title);
+                var n = crrenProds.Find(e => e.Title == prod.ProdName);
                 for (int j = 0; j < prod.Techs.Count; j++)
                 {
                     var item = prod.Techs[j];
@@ -1361,7 +1364,7 @@ namespace EtheriT.Coker.Application.Product
             List<string?> TagStr3 = prods.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => e.Tag3).ToList();
             List<string?> TagStr4 = prods.Where(e => !string.IsNullOrEmpty(e.Tag4)).Select(e => e.Tag4).ToList();
             List<string?> TagStr5 = prods.Where(e => !string.IsNullOrEmpty(e.Tag5)).Select(e => e.Tag5).ToList();
-            List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.Title)).Select(e => e.Title).ToList();
+            List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
             TagStr.AddRange(TagStr2);
             TagStr.AddRange(TagStr3);
             TagStr.AddRange(TagStr4);
@@ -1406,7 +1409,7 @@ namespace EtheriT.Coker.Application.Product
             for (int i = 0; i < prods.Count; i++)
             {
                 var item = prods[i];
-                item.Id = allProd.Find(e => e.Title == item.Title).Id;
+                item.Id = allProd.Find(e => e.Title == item.ProdName).Id;
                 var tag = nowTags.FindAll(e => e.Title == item.Tag1 || e.Title == item.Tag2 || e.Title == item.Tag3 || e.Title == item.Tag4 || e.Title == item.Tag5);
                 if (tag != null)
                 {
@@ -1431,7 +1434,7 @@ namespace EtheriT.Coker.Application.Product
             List<string?> ImagStr3 = prods.Where(e => !string.IsNullOrEmpty(e.Image3)).Select(e => e.Image3).ToList();
             List<string?> ImagStr4 = prods.Where(e => !string.IsNullOrEmpty(e.Image4)).Select(e => e.Image4).ToList();
             List<string?> ImagStr5 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image5).ToList();
-            List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.Title)).Select(e => e.Title).ToList();
+            List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
             ImagStr.AddRange(ImagStr2);
             ImagStr.AddRange(ImagStr3);
             ImagStr.AddRange(ImagStr4);
@@ -1441,7 +1444,7 @@ namespace EtheriT.Coker.Application.Product
             var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();
             foreach (var prod in prods)
             {
-                var myProd = fileProds.Where(e => e.Title == prod.Title).FirstOrDefault();
+                var myProd = fileProds.Where(e => e.Title == prod.ProdName).FirstOrDefault();
                 if (myProd != null)
                 {
                     List<string?> fileName =
@@ -1479,7 +1482,7 @@ namespace EtheriT.Coker.Application.Product
             List<Prod> news = mapper.Map<List<Prod>>(prods);
             foreach (Prod prod in news)
             {
-                var item = prods.Find(p => p.Title == prod.Title);
+                var item = prods.Find(p => p.ProdName == prod.Title && p.ItemNo == (prod.ItemNo??""));
                 if (item != null && item.stocks != null)
                 {
                     prod.Prod_Stocks = await InsertOrUpdateStore(item);
@@ -1492,13 +1495,13 @@ namespace EtheriT.Coker.Application.Product
         private async Task UpdateProds(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
             long userId = await loginUserData.GetUserId();
-            List<string> titles = prods.Select(e => e.Title ?? "").ToList();
+            List<string> titles = prods.Select(e => e.ProdName ?? "").ToList();
             var items = db.Prods.Where(e => titles.Contains(e.Title));
             foreach (var prod in items)
             {
                 try
                 {
-                    ProductImportDto? item = prods.Find(e => e.Title == prod.Title);
+                    ProductImportDto? item = prods.Find(e => e.ProdName == prod.Title);
                     if (item != null)
                     {
                         mapper.Map(mapper.Map<ProductImportUpateDto>(item), prod);

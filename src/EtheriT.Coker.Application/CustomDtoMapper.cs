@@ -116,7 +116,8 @@ namespace EtheriT.Coker.Application
 
 			//Product
 			CreateMap<ProductImportDto, Prod>()
-				.ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
+                .ForMember(e => e.Title, option => option.MapFrom(c => c.ProdName ?? ""))
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
 				.ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
 				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
 				.ForMember(e => e.permanent, option => option.MapFrom(c => true))

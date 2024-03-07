@@ -203,6 +203,7 @@ function DirectoryDataGet($item, option) {
 function DirectoryDataInsert($item, result) {
     if (result == null) return;
     const temp = $item.find(".templatecontent").html();
+    const temp_tag = $item.find(".templatecontent-tag").html();
     const isSearch = $item.data("type") == "search";
     if (result.length == 0) $item.find(".catalog").addClass("empty");
     else $item.find(".catalog").removeClass("empty");
@@ -250,7 +251,6 @@ function DirectoryDataInsert($item, result) {
         content.find("img").attr("alt", `${data.title}的主要圖片`);
         content.find(".title").text(data.title);
         content.find(".description").html(data.description);
-        $item.find(".catalog").append(content);
         if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
         else content.find(".location").text(data.location);
         if (content.find(".address").length > 0 && (data.address == null || data.address == "")) content.find(".address").parents(".py-2").remove();
@@ -270,6 +270,38 @@ function DirectoryDataInsert($item, result) {
                 content.find(".date-day").text(`${noteDate.getDate()}`);
             }
         }
+        function convert_price(price) {
+            if (price.includes("~")) {
+                [price_low, price_mid, price_high] = price.split(" ");
+                return price_low + " " + price_mid + " $" + price_high
+            }
+            else return price;
+        }
+        content.find(".normal-price").text(convert_price(data.price));
+        content.find(".price-grid").text(convert_price(data.price));
+        content.find(".itemNo").text(data.itemNo);
+        $tags = content.find(".tags");
+        $tags.empty();
+        data.tags.slice(0, 2).forEach((tag) => {
+            var badge = $(temp_tag).clone();
+            badge.text(tag.tag_Name);
+            $tags.append(badge);
+        });
+        data.tags.slice(2, 5).forEach((tag) => {
+            var badge = $(temp_tag).clone();
+            badge.text(tag.tag_Name);
+            badge.addClass("more-tag d-none");
+            $tags.append(badge);
+        });
+        if (data.tags.length > 2) {
+            var badge = $(temp_tag).clone();
+            badge.text("...");
+            if (data.tags.length <= 5) {
+                badge.addClass("less-tag");
+            }
+            $tags.append(badge);
+        }
+        $item.find(".catalog").append(content);
     });
 
     HoverEffectInit();

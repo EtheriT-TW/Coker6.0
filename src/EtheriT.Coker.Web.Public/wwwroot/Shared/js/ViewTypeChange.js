@@ -104,7 +104,7 @@ const display_configurations = {
         ".catalog-number": "type4-title d-inline",
         ".check_btn": "check_btn-type3",
         ".col": " type5 rounded-lg",
-        ".description": "d-none",
+        ".description": "type3-content",
         ".image": "px-0",
         ".image_frame": "h-100 w-25",
         ".imgh": "img-h",

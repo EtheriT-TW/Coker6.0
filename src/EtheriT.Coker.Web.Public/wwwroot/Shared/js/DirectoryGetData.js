@@ -269,37 +269,46 @@ function DirectoryDataInsert($item, result) {
             } else {
                 content.find(".date-day").text(`${noteDate.getDate()}`);
             }
-        }
-        function convert_price(price) {
-            if (price.includes("~")) {
-                [price_low, price_mid, price_high] = price.split(" ");
-                return price_low + " " + price_mid + " $" + price_high
+            if (noteDate.getMonth() < 9) {
+                content.find(".date-month-number").text(`0${noteDate.getMonth() + 1}`);
+            } else {
+                content.find(".date-month-number").text(`${noteDate.getMonth() + 1}`);
             }
-            else return price;
+            content.find(".date-year").text(`${noteDate.getFullYear()}`);
         }
-        content.find(".normal-price").text(convert_price(data.price));
-        content.find(".price-grid").text(convert_price(data.price));
-        content.find(".itemNo").text(data.itemNo);
-        $tags = content.find(".tags");
-        $tags.empty();
-        data.tags.slice(0, 2).forEach((tag) => {
-            var badge = $(temp_tag).clone();
-            badge.text(tag.tag_Name);
-            $tags.append(badge);
-        });
-        data.tags.slice(2, 5).forEach((tag) => {
-            var badge = $(temp_tag).clone();
-            badge.text(tag.tag_Name);
-            badge.addClass("more-tag d-none");
-            $tags.append(badge);
-        });
-        if (data.tags.length > 2) {
-            var badge = $(temp_tag).clone();
-            badge.text("...");
-            if (data.tags.length <= 5) {
-                badge.addClass("less-tag");
+        
+        if (data.price != null) {
+            const convert_price = (price) => {
+                if (price.includes("~")) {
+                    [price_low, price_mid, price_high] = price.split(" ");
+                    return price_low + " " + price_mid + " $" + price_high
+                }
+                else return price;
             }
-            $tags.append(badge);
+            content.find(".normal-price").text(convert_price(data.price));
+            content.find(".price-grid").text(convert_price(data.price));
+            content.find(".itemNo").text(data.itemNo);
+            $tags = content.find(".tags");
+            $tags.empty();
+            data.tags.slice(0, 2).forEach((tag) => {
+                var badge = $(temp_tag).clone();
+                badge.text(tag.tag_Name);
+                $tags.append(badge);
+            });
+            data.tags.slice(2, 5).forEach((tag) => {
+                var badge = $(temp_tag).clone();
+                badge.text(tag.tag_Name);
+                badge.addClass("more-tag d-none");
+                $tags.append(badge);
+            });
+            if (data.tags.length > 2) {
+                var badge = $(temp_tag).clone();
+                badge.text("...");
+                if (data.tags.length <= 5) {
+                    badge.addClass("less-tag");
+                }
+                $tags.append(badge);
+            }
         }
         $item.find(".catalog").append(content);
     });

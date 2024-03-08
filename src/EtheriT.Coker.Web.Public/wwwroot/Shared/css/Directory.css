@@ -145,6 +145,54 @@
 .type_change_frame .pb1 {
     padding-bottom:1rem;
 }
+
+/* Button Share */
+.type_change_frame .shareBlock.type4 {
+    position: absolute;
+    top: 60%;
+    right: 0.5em;
+}
+.type_change_frame .shareBlock.type5 {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+}
+
+.type_change_frame .shareBlock > a {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0) !important;
+    transition: all 1s;
+}
+
+.type_change_frame .shareBlock.show > a {
+    top: calc(-100% - 0.5rem);
+    transform: translateY(0%) scale(1) !important;
+    transition: all 1s;
+}
+
+    .type_change_frame .shareBlock.show > a:nth-child(2) {
+        transform: translateX(-450%) !important;
+    }
+
+    .type_change_frame .shareBlock.show > a:nth-child(3) {
+        transform: translateX(-350%) !important;
+    }
+
+    .type_change_frame .shareBlock.show > a:nth-child(4) {
+        transform: translateX(-250%) !important;
+    }
+
+    .type_change_frame .shareBlock.show > a:nth-child(5) {
+        transform: translateX(-150%) !important;
+    }
+
+    .type_change_frame .shareBlock.show > a:nth-child(6) {
+        transform: translateX(-50%) !important;
+    }
+
+
 .empty:before {
     content: "查無資料";
     padding: 2rem;

@@ -243,6 +243,7 @@ function DirectoryDataInsert($item, result) {
         } else {
             content.find("a").attr(linkData);
         }
+
         var imglink = data.mainImage || "/images/noImg.jpg";
         if (data.orgName!=null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
@@ -281,7 +282,7 @@ function DirectoryDataInsert($item, result) {
             const convert_price = (price) => {
                 if (price.includes("~")) {
                     [price_low, price_mid, price_high] = price.split(" ");
-                    return price_low + " " + price_mid + " $" + price_high
+                    return price_high
                 }
                 else return price;
             }
@@ -292,26 +293,29 @@ function DirectoryDataInsert($item, result) {
             $tags.empty();
             data.tags.slice(0, 2).forEach((tag) => {
                 var badge = $(temp_tag).clone();
-                badge.text(tag.tag_Name);
+                badge.text(tag.tag_Name.slice(0, 4));
                 $tags.append(badge);
             });
-            data.tags.slice(2, 5).forEach((tag) => {
+            data.tags.slice(2).forEach((tag) => {
                 var badge = $(temp_tag).clone();
-                badge.text(tag.tag_Name);
+                badge.text(tag.tag_Name.slice(0, 4));
                 badge.addClass("more-tag d-none");
                 $tags.append(badge);
             });
             if (data.tags.length > 2) {
                 var badge = $(temp_tag).clone();
                 badge.text("...");
-                if (data.tags.length <= 5) {
-                    badge.addClass("less-tag");
-                }
+                badge.addClass("less-tag");
                 $tags.append(badge);
             }
         }
+        // Clear content of shareBlock and re-init
+        // because content.find("a").attr(linkData); will replace the initialized share buttons
+        content.find(".shareBlock > a").remove();
+
         $item.find(".catalog").append(content);
     });
 
     HoverEffectInit();
+    ShareBlockInit();
 }

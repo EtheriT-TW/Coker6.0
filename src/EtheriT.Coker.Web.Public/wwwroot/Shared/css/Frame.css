@@ -1,7 +1,7 @@
 ﻿a:focus {
     outline: #000 dashed 1px;
     text-decoration: none;
-    z-index: 999999;
+    z-index: 990;
     position: relative;
 }
 

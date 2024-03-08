@@ -31,12 +31,19 @@ function SwiperInit(obj) {
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
             const canNext = $(Id).find(".swiper-slide").length > 2;
+            var effect = $self.data("effect");
+            var speed = $self.data("effect-speed")
+            if (typeof effect === 'undefined' || effect === false) effect = "slide";
+            if (typeof speed === 'undefined' || speed === false) speed = 300;
+            else speed = parseInt(speed);
             var autoplay = obj.autoplay ? canNext : false;
             var selfConfig = Object.assign({}, config, {
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
                     clickable: true,
-                }
+                },
+                effect: effect,
+                speed: speed
             }, autoplay ? {
                 autoplay: {
                     delay: 5000,

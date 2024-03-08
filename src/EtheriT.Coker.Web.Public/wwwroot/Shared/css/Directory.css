@@ -166,8 +166,14 @@
     transition: all 1s;
 }
 
-.type_change_frame .shareBlock.show > a {
+.type_change_frame .shareBlock.type4.show > a {
     top: calc(-100% - 0.5rem);
+    transform: translateY(0%) scale(1) !important;
+    transition: all 1s;
+}
+
+.type_change_frame .shareBlock.type5.show > a {
+    top: calc(-2.5rem);
     transform: translateY(0%) scale(1) !important;
     transition: all 1s;
 }
@@ -190,6 +196,16 @@
 
     .type_change_frame .shareBlock.show > a:nth-child(6) {
         transform: translateX(-50%) !important;
+    }
+
+    .type_change_frame .shareBlock.show > a:nth-child(6)::before {
+        content: "";
+        position: absolute;
+        left: 10%;
+        height: 2em;
+        width: 2em;
+        background-color: white;
+        border-radius: 20%;
     }
 
 

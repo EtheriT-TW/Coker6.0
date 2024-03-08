@@ -3,9 +3,10 @@
         if (typeof ($(this).data("init")) == "undefined" || !$(this).data("init")) {
             $(this).cShare({
                 description: 'jQuery plugin - C Share buttons...',
-                showButtons: ['email', 'plurk', 'twitter', 'fb', 'line']
+                showButtons: ['email', 'plurk', 'twitter', 'fb', 'line'],
+                shareToText: "分享至"
             });
-            $(this).hover(ProShare)
+            $(this).hover(ProShare);
             $(this).data("init", true);
         }
     });

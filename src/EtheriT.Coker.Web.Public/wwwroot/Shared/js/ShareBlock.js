@@ -5,7 +5,12 @@
                 description: 'jQuery plugin - C Share buttons...',
                 showButtons: ['email', 'plurk', 'twitter', 'fb', 'line']
             });
+            $(this).hover(ProShare)
             $(this).data("init", true);
         }
     });
+}
+function ProShare() {
+    var $self = $(this);
+    $self.toggleClass('show');
 }

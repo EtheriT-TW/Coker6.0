@@ -309,8 +309,13 @@ function DirectoryDataInsert($item, result) {
                 $tags.append(badge);
             }
         }
+        // Clear content of shareBlock and re-init
+        // because content.find("a").attr(linkData); will replace the initialized share buttons
+        content.find(".shareBlock > a").remove();
+
         $item.find(".catalog").append(content);
     });
 
     HoverEffectInit();
+    ShareBlockInit();
 }

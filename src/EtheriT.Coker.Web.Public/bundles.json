@@ -21,12 +21,6 @@
       ]
     },
     {
-      "output": "lib/jquery-plugin-c-share/dist/jquery.c-share.min.js",
-      "input": [
-        "node_modules/jquery-plugin-c-share/dist/jquery.c-share.js"
-      ]
-    },
-    {
       "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
       "input": [
         "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
@@ -53,6 +47,12 @@
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/Contact.js",
         "wwwroot/Shared/js/BGCanvas.js"
+      ]
+    },
+    {
+      "output": "Shared/c-share.min.js",
+      "input": [
+        "wwwroot/Shared/js/CShare.js"
       ]
     }
   ],

@@ -171,8 +171,13 @@ function ViewTypeChangeInit() {
             else if (!$btn_prod_list.hasClass("d-none")) {
                 $btn_prod_list.trigger("click");
             } 
-            
-            if ($self.find(".btn_grid.d-none,.btn_list.d-none,.btn_text.d-none,.btn_prod_grid.d-none,.btn_prod_list.d-none").length >= 4) $self.find(".switch_control").addClass("d-none");
+
+            var visible_btns = 0;
+            for (const [config, $btn] of Object.entries($btns)) {
+                if ($btn.length === 0 || $btn.hasClass("d-none")) visible_btns += 1;
+            }
+
+            if (visible_btns >= 4) $self.find(".switch_control").addClass("d-none");
             else $self.find(".switch_control").removeClass("d-none");
         }
         $self.data("isInit", true);

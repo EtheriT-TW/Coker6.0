@@ -36,7 +36,7 @@
         <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-lg-8 col visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <!-- Menu Canvas Search Block -->
             <div class="offcanvas-header pt-2 ps-5">
-                <h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+                <h5 class="offcanvas-title fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
             </div>
 
             <!-- Menu Canvas Menu -->
@@ -62,8 +62,10 @@
                                     if (string.IsNullOrEmpty(menu.hoverImageUrl))
                                     {
                                         <img src="@menu.imageUrl" alt="@menu.Title" />
+                                        <span class="justify-content-center">@menu.Title</span>
                                     }else{
                                         <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                                        <span>@menu.Title</span>
                                     }
                                 }
                             </a>
@@ -83,7 +85,7 @@
                                                     title = $"展開選單：{secItem.Title}";
                                                 }
                                             }
-                                            <a class="subtitle_title nav-link text-black py-1 text-nowrap text-start d-flex align-items-center" href="@secItem.Link" title="@title" target="@target">
+                                            <a class="subtitle_title nav-link text-black py-0 text-nowrap text-start d-flex align-items-center" href="@secItem.Link" title="@title" target="@target">
                                                 <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
                                                 <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
                                                 @secItem.Title
@@ -100,7 +102,7 @@
                                                             {
                                                                 target = thirdItem.Target == true ? "_blank" : "_self";
                                                                 title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
-                                                                <a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                                <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
                                                                     <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                     <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                                     @thirdItem.Title
@@ -108,7 +110,7 @@
                                                             }
                                                             else
                                                             {
-                                                                <div class="subtitle_title ps-2 nav-link text-black py-1 text-nowrap text-start fw-normal d-flex align-items-center">
+                                                                <div class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center">
                                                                     <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                     <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
                                                                     @thirdItem.Title

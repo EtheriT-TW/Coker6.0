@@ -90,7 +90,7 @@
                 settings.data = $.extend({}, defaults.data, options.data);
             }
 
-            var href = encodeURIComponent(location.href.replace(/#\w/, ''));
+            var href = encodeURIComponent(location.origin.replace(/#\w/, ''));
             if (typeof (settings.href) == "string" && settings.href !== "") {
                 href += settings.href;
             }

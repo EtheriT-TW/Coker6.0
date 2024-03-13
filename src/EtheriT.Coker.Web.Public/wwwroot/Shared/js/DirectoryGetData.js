@@ -279,12 +279,15 @@ function DirectoryDataInsert($item, result) {
         }
         
         if (data.price != null) {
-            const convert_price = (price) => {
+            const get_high_price = (price) => {
                 if (price.includes("~")) {
                     [price_low, price_mid, price_high] = price.split(" ");
                     return price_high
                 }
                 else return price;
+            }
+            const convert_price = (price) => {
+                return "$"+Intl.NumberFormat().format(get_high_price(price));
             }
             content.find(".normal-price").text(convert_price(data.price));
             content.find(".price-grid").text(convert_price(data.price));

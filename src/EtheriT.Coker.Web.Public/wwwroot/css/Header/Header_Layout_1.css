@@ -140,6 +140,11 @@
         box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
     }
 
+    #Offcanvas_Mega_Menu > ul > .title > a > img + span{
+        display: none;
+    }
+
+
 .subtitle > .subtitle_title {
     width: fit-content;
     font-weight: bold;
@@ -276,6 +281,20 @@
             height: unset;
         }
 
+
+    #Offcanvas_Mega_Menu {
+        background: #999e;
+    }
+
+    #Offcanvas_Mega_Menu > ul > .title > a > img {
+        display: none; 
+    }
+    #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+        display: unset;
+        height: 2em;
+        font-size: 1.1em;
+    }
+
     #Offcanvas_Mega_Menu > ul > .title > .content {
         visibility: visible;
         position: relative;
@@ -287,6 +306,10 @@
         text-align: initial;
         width: 100%;
         text-align: center;
+    }
+
+    .metaMenu .collapse_menus > ul ul {
+        height: auto;
     }
 
     .smart-search {

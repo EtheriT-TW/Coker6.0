@@ -1,0 +1,5 @@
+﻿#PermissionDetailsModal .item {
+    padding: 0.5rem;
+    margin: 0.5rem 1rem;
+    width: calc(25% - 2rem);
+}

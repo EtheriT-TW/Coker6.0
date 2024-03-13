@@ -864,7 +864,8 @@ namespace EtheriT.Coker.Application
 									db.SaveChanges();
 								}
 							}
-							else {
+							else if(fafile_binds != null)
+                            {
                                 fafile_binds.IsDeleted = true;
                                 fafile_binds.DeletionTime = DateTime.Now;
                                 fafile_binds.DeleterUserId = usetId;

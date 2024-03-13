@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Core.Models
         public List<Prod_Price> Prod_Prices { get; set; }
         public List<MappingUserAndRole> Users { get; set; }
         public List<Permissions> Permissions { get; set; }
+        public List<PermissionDetail> PermissionDetails { get; set; }
     }
 }

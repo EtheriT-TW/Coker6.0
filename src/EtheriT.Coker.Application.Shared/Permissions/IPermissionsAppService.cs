@@ -23,5 +23,7 @@ namespace EtheriT.Coker.Application.Permissions
         public Task<ResponseMessageDto> RemoveUserToRole(AddUserToRoleDto dto);
         public Task<ResponseMessageDto> EditRole(AddRoleDto dto);
         public Task<ResponseMessageDto> DeleteRole(DataDelectDto dto);
-	}
+        public Task<ResponseMessageDto> GetPagePermission(GetPagePermissionInputDto dto);
+        public Task<ResponseMessageDto> SavePagePermission(SavePagePermissionInputDto dto);
+    }
 }

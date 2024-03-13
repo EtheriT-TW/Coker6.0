@@ -60,9 +60,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingCompanyAndWebsites> MappingCompanyAndWebsites { get; set; }
         public DbSet<Recipient> Recipients { get; set; }
         public DbSet<Permissions> Permissions { get; set; }
+        public DbSet<PermissionDetail> PermissionDetail { get; set; }
         public DbSet<Remote> Remotes { get; set; }
-
-
 
 		public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -219,6 +218,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.User).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_UserId);
                 o.HasOne(f => f.Role).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_RoleId);
                 o.HasOne(f => f.Website).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_WebsiteId);
+            });
+            modelBuilder.Entity<PermissionDetail>(o => {
+                o.HasOne(f => f.User).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_UserId);
+                o.HasOne(f => f.Role).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_RoleId);
+                o.HasOne(f => f.Website).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_WebsiteId);
             });
             modelBuilder.Entity<Remote>(o => {
 				o.HasOne(f => f.User).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_UserId);

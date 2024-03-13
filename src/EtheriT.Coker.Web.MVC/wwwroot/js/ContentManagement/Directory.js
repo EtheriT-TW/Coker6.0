@@ -1,18 +1,53 @@
 ﻿var $btn_display, $bind_type, title, $title_text, $description, $description_text
 var keyId, disp_opt = true, DirectoryId = 0, DirectoryType = "n";
-var directory_list;
+let directory_list, editor, permissionDetailsModal;
 let DirectorytForms, $DirectorytTags;
 let ArticletForms, $ArticletTags;
 
 function PageReady() {
     DirectorytForms = $('#DirectorytForm');
     ArticletForms = $('#ArticletForm');
+    permissionDetailsModal = new bootstrap.Modal(document.getElementById("PermissionDetailsModal"));
 
     ElementInit();
     WebmenuListModalInit();
     $DirectorytTags = $(DirectorytForms).find(".InputTag").TagListModalInit();
     $ArticletTags = $(ArticletForms).find(".InputTag").TagListModalInit();
 
+    editor = grapesInit({
+        save: function (html, css) {
+            var _dfr = $.Deferred();
+            co.Articles.SaveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        import: function (html, css) {
+            var _dfr = $.Deferred();
+            co.Articles.ImportConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        },
+        getComponer: function () {
+            var _dfr = $.Deferred();
+            co.HtmlContent.GetAllComponent().done(function (result) {
+                if (result.success) _dfr.resolve(result.list);
+                else co.sweet.error(resutlt.error);
+            });
+            return _dfr.promise();
+        }
+    });
     $bind_type.on("change", function () {
         switch (parseInt($bind_type.val())) {
             case 1:
@@ -143,7 +178,7 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
             if (!!hash && isNaN(hash)) {
-                if (hash.indexOf("Editor") > -1) MoveToItemEdit();
+                if (hash.indexOf("Editor") > -1) MoveToItemArticle();
                 else MoveToItemList();
             } else if (parseInt(hash) == 0) {
                 window.location.hash = 0;
@@ -282,9 +317,8 @@ function AddUp(success_text, error_text) {
 function AddUpArticlet(success_text, error_text) {
     const data = co.Form.getJson($(ArticletForms).attr("id"));
     if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
-        console.log($("#ImageUpload .img_input_frame").data("delectList"));
         co.File.DeleteFileById({
-            Sid: keyId,
+            Sid: data.id,
             Type: 6,
             Fid: $("#ImageUpload .img_input_frame").data("delectList")
         });
@@ -320,20 +354,13 @@ function MoveToContent() {
         $(".btn_to_canvas").removeClass("text-dark");
         $(".btn_to_canvas").removeAttr('disabled');
     }
-    $("#DirectoryList").addClass("d-none");
+    $("#pages>.card,#TopLine").addClass("d-none");
     $("#DirectoryContent").removeClass("d-none");
-    $("#DirectoryCanvas").addClass("d-none");
-    $("#DirectoryItemps").addClass("d-none");
-    $("#ArticleContent").addClass("d-none");
 }
 
 function BackToList() {
-    $("#TopLine > a").addClass("d-none");
+    $("#pages>.card,#TopLine").addClass("d-none");
     $("#DirectoryList").removeClass("d-none");
-    $("#DirectoryContent").addClass("d-none");
-    $("#DirectoryCanvas").addClass("d-none");
-    $("#DirectoryItemps").addClass("d-none");
-    $("#ArticleContent").addClass("d-none");
     DirectoryId = 0;
     DirectoryType = "n";
     window.location.hash = ""
@@ -341,12 +368,8 @@ function BackToList() {
 
 function MoveToItemList() {
     const para = window.location.hash.replace("#", "").split("_");
-    $("#DirectoryList").addClass("d-none");
-    $("#DirectoryContent").addClass("d-none");
-    $("#DirectoryCanvas").addClass("d-none");
+    $("#pages>.card,#TopLine").addClass("d-none");
     $("#DirectoryItemps").removeClass("d-none");
-    $("#DirectoryItemps>div").addClass("d-none");
-    $("#ArticleContent").addClass("d-none");
     const items = $(`#DirectoryItemps>.${para[0].toLowerCase()}`).removeClass("d-none");
     if (items.length == 0) BackToList();
     else if (para.length > 1 && !isNaN(para[1])) {
@@ -364,22 +387,19 @@ function MoveToItemList() {
 
     }
 }
-function MoveToItemEdit() {
+function MoveToItemArticle() {
     const para = window.location.hash.replace("#", "").split("_");
-    $("#DirectoryList").addClass("d-none");
-    $("#DirectoryContent").addClass("d-none");
-    $("#DirectoryCanvas").addClass("d-none");
-    $("#DirectoryItemps").addClass("d-none");
-    $("#DirectoryItemps>div").addClass("d-none");
-    $("#ArticleContent").removeClass("d-none");
+    $("#pages>.card,#TopLine").addClass("d-none");
     $ArticletTags.TagDataClear();
     if (para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
+        const id = parseInt(para[2]);
+        DirectoryId = parseInt(para[1]);
         switch (para[0]) {
             case "ArticlesEditor":
-                const id = parseInt(para[2]);
-                DirectoryId = parseInt(para[1]);
+                const _dfr = $.Deferred(); 
                 co.Directory.Get(DirectoryId).done((result) => {
                     $("#DirectoryItemps").data("dir", result);
+                    _dfr.resolve();
                 });
                 if (id > 0) {
                     co.Articles.GetDataOne(id).done(function (result) {
@@ -391,8 +411,19 @@ function MoveToItemEdit() {
                             $ArticletTags.TagDataSet(result.tagDatas);
                         } else BackToList();
                     })
-                } else co.Form.clear("ArticletForm");
+                } else {
+                    co.Form.clear("ArticletForm");
+                    _dfr.promise().done(function () {
+                        $ArticletTags.TagDataSet($("#DirectoryItemps").data("dir").tagDatas);
+                    });
+                }
+                $("#ArticleContent").removeClass("d-none");
                 break
+            case "ArticlesEditorView":
+                $("#DirectoryCanvas,#TopLine").removeClass("d-none");
+                $("#gjs").data("id", id);
+                setPage(id);
+                break;
             default:
                 BackToList();
                 break
@@ -400,12 +431,35 @@ function MoveToItemEdit() {
 
     }
 }
+//設定html資料
+setPage = function (id) {
+    $("body").addClass("grapesEdit");
+    co.Articles.GetConten({ Id: id }).done(function (result) {
+        if (result.success) {
+            var html = co.Data.HtmlDecode(result.conten.saveHtml);
+            co.Grapes.setEditor(editor, html, result.conten.saveCss);
+            $("#TopLine a").attr("href", `#Articles_${DirectoryId}`);
+            if (!!result.title) $("#TopLine .title").text(result.title);
+        } else {
+            co.sweet.error(result.error);
+        }
+    });
+}
 function editArticlesButtonClicked(e) {
     window.location.hash = `ArticlesEditor_${DirectoryId}_${e.row.key}`;
 }
-function paletteArticlesButtonClicked() {
-
+function paletteArticlesButtonClicked(e) {
+    window.location.hash = `ArticlesEditorView_${DirectoryId}_${e.row.key}`;
 }
-function deleteArticlesButtonClicked() {
-
+function groupArticlesButtonClicked(e) {
+    $("#PermissionDetailsModal").setData({ id: e.row.key, type: 3 }).modal("show");
+}
+function deleteArticlesButtonClicked(e) {
+    Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
+        co.Articles.Delete(e.row.key).done(function (result) {
+            if (result.success) {
+                e.component.refresh();
+            }
+        });
+    });
 }

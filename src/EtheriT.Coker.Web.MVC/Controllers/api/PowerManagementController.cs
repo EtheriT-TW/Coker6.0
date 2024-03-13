@@ -87,6 +87,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await permissionsAppService.EditRole(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> GetPagePermission(GetPagePermissionInputDto dto) {
+            return await permissionsAppService.GetPagePermission(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SavePagePermission(SavePagePermissionInputDto dto)
+        {
+            return await permissionsAppService.SavePagePermission(dto);
+        }
         [HttpDelete]
 		public async Task<ResponseMessageDto> DeleteRole(DataDelectDto dto)
 		{

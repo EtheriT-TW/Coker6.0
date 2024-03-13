@@ -24,6 +24,32 @@
                 }
             });
         },
+        GetPagePermission: function (data) {
+            return $.ajax({
+                url: "/api/PowerManagement/GetPagePermission/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
+        SavePagePermission: function (data) {
+            return $.ajax({
+                url: "/api/PowerManagement/SavePagePermission/",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        },
         getAllUsers: function () {
             return $.ajax({
                 url: "/api/PowerManagement/AllUsers/",

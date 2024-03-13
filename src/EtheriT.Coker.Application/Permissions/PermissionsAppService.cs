@@ -10,6 +10,7 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -97,9 +98,11 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "GetPermissionsUserData", "", JsonConvert.SerializeObject(output));
             return output;
         }
-        public async Task<GetUserPermissionsRsponseDto> GetPermissions(SavePermissionsDto dto) {
+        public async Task<GetUserPermissionsRsponseDto> GetPermissions(SavePermissionsDto dto)
+        {
             GetUserPermissionsRsponseDto response = new GetUserPermissionsRsponseDto();
-            try {
+            try
+            {
                 long SiteId = await loginUserData.GetWebsiteId();
                 var uadateItems = await db.Permissions
                     .Where(e => e.FK_UserId == dto.FK_UserId)
@@ -116,42 +119,45 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "GetPermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<List<SavePermissionsItem>> GetLoginUserPermissions() {
+        public async Task<List<SavePermissionsItem>> GetLoginUserPermissions()
+        {
             long SiteId = await loginUserData.GetWebsiteId();
             long UserId = await loginUserData.GetUserId();
             var UserItems = await (from p in db.Permissions
-                        join u in db.Users on p.FK_UserId equals u.Id
-                        where p.FK_WebsiteId == SiteId && u.Id == UserId
-                        select p).ToListAsync();
-            var RoleItems = await( from p in db.Permissions
-                            join r in db.Roles on p.FK_RoleId equals r.Id
-                            join m in db.MappingUserAndRoles on r.Id equals m.RoleId
-                            join u in db.Users on m.UserId equals u.Id
-                            where p.FK_WebsiteId == SiteId && u.Id == UserId
+                                   join u in db.Users on p.FK_UserId equals u.Id
+                                   where p.FK_WebsiteId == SiteId && u.Id == UserId
+                                   select p).ToListAsync();
+            var RoleItems = await (from p in db.Permissions
+                                   join r in db.Roles on p.FK_RoleId equals r.Id
+                                   join m in db.MappingUserAndRoles on r.Id equals m.RoleId
+                                   join u in db.Users on m.UserId equals u.Id
+                                   where p.FK_WebsiteId == SiteId && u.Id == UserId
                                    select p).ToListAsync();
             List<Core.Models.Permissions> Items = new List<Core.Models.Permissions>();
             if (UserItems.Any() && !RoleItems.Any()) Items.AddRange(UserItems);
             if (!UserItems.Any() && RoleItems.Any()) Items.AddRange(RoleItems);
             return mapper.Map<List<SavePermissionsItem>>(Items);
         }
-        public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto) {
+        public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 long SiteId = await loginUserData.GetWebsiteId();
-                var Names = dto.Items.Select(x => x.Name).ToList()??new List<string>();
+                var Names = dto.Items.Select(x => x.Name).ToList() ?? new List<string>();
                 var uadateItems = await db.Permissions
                             .Where(e => e.FK_UserId == dto.FK_UserId)
                             .Where(e => e.FK_RoleId == dto.FK_RoleId)
                             .Where(e => e.FK_WebsiteId == SiteId)
                             .Where(e => Names.Contains(e.Name))
-                            .Select(e=> new SavePermissionsItem { Name=e.Name,IsGranted =e.IsGranted }).ToListAsync();
-                var updateName = uadateItems.Select(x => x.Name).ToList()?? new List<string>();
+                            .Select(e => new SavePermissionsItem { Name = e.Name, IsGranted = e.IsGranted }).ToListAsync();
+                var updateName = uadateItems.Select(x => x.Name).ToList() ?? new List<string>();
                 var addItems = dto.Items.FindAll(e => !updateName.Contains(e.Name));
                 if (uadateItems.Any())
                     await UpdatePermissions(new SavePermissionsDto { FK_UserId = dto.FK_UserId, FK_RoleId = dto.FK_RoleId, SiteId = SiteId, Items = uadateItems });
-                if (addItems.Any()) 
+                if (addItems.Any())
                     await AddPermissions(new SavePermissionsDto { FK_UserId = dto.FK_UserId, FK_RoleId = dto.FK_RoleId, SiteId = SiteId, Items = addItems });
-                response.Success= true;
+                response.Success = true;
             }
             catch (Exception ex)
             {
@@ -160,17 +166,19 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "SavePermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        private async Task AddPermissions(SavePermissionsDto dto) {
+        private async Task AddPermissions(SavePermissionsDto dto)
+        {
             long userId = await loginUserData.GetUserId();
             List<Core.Models.Permissions> permissions = new List<Core.Models.Permissions>();
-            dto.Items.ForEach(e => {
+            dto.Items.ForEach(e =>
+            {
                 permissions.Add(new Core.Models.Permissions
                 {
                     Name = e.Name,
                     IsGranted = e.IsGranted,
                     FK_UserId = dto.FK_UserId,
                     FK_RoleId = dto.FK_RoleId,
-                    FK_WebsiteId = dto.SiteId??0,
+                    FK_WebsiteId = dto.SiteId ?? 0,
                     CreationTime = DateTime.Now,
                     CreatorUserId = userId
                 });
@@ -226,19 +234,22 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "RemoveMappingUserAndWebsite", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> MappingUserAndWebsite(AddMapingUserAndWebsiteDto dto) {
+        public async Task<ResponseMessageDto> MappingUserAndWebsite(AddMapingUserAndWebsiteDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
-                if (dto.UsetId == null || dto.UsetId == 0) {
+                if (dto.UsetId == null || dto.UsetId == 0)
+                {
                     var user = await db.Users.Where(e => !e.IsDeleted).Where(e => e.Account == dto.emailOrAccount || e.Email == dto.emailOrAccount).FirstOrDefaultAsync();
                     if (user != null)
                     {
                         dto.UsetId = user.Id;
                     }
                 }
-                if (dto.UsetId != null) {
+                if (dto.UsetId != null)
+                {
                     var theUser = await db.Users.Where(e => !e.IsDeleted).Where(e => e.Id == dto.UsetId).FirstOrDefaultAsync();
                     var mapWebsite = await db.MappingUserAndWebsites.Where(e => e.UserId == dto.UsetId).Where(e => e.WebsiteId == websiteId).FirstOrDefaultAsync();
                     if (theUser == null) throw new Exception("查無使用者");
@@ -267,7 +278,7 @@ namespace EtheriT.Coker.Application.Permissions
                             await loginUserData.SaveChanges(mappingUserAndRole);
                         }
                     }
-                    response.Message = JsonConvert.SerializeObject(new PermissionsUserDto { Id=theUser.Id,Name = theUser.Name });
+                    response.Message = JsonConvert.SerializeObject(new PermissionsUserDto { Id = theUser.Id, Name = theUser.Name });
                     response.Success = true;
                 }
                 else throw new Exception("查無使用者");
@@ -279,7 +290,8 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "MappingUserAndWebsite", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> AddUserToRole(AddUserToRoleDto dto) {
+        public async Task<ResponseMessageDto> AddUserToRole(AddUserToRoleDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
@@ -287,7 +299,7 @@ namespace EtheriT.Coker.Application.Permissions
                 var userId = await loginUserData.GetUserId();
                 var all = await (
                     from m in db.MappingUserAndRoles.Where(x => !x.IsDeleted)
-                    join r in db.Roles.Where(x => !x.IsDeleted).Where(e => e.FK_WebsiteId==websiteId) on m.RoleId equals r.Id
+                    join r in db.Roles.Where(x => !x.IsDeleted).Where(e => e.FK_WebsiteId == websiteId) on m.RoleId equals r.Id
                     where r.Id == dto.RoleId && dto.Users.Contains(m.UserId)
                     select m
                 ).Select(e => e.UserId).ToListAsync();
@@ -297,13 +309,15 @@ namespace EtheriT.Coker.Application.Permissions
                     List<MappingUserAndRole> mappings = new List<MappingUserAndRole>();
                     addUser.ForEach(x =>
                     {
-                        mappings.Add(new MappingUserAndRole { 
+                        mappings.Add(new MappingUserAndRole
+                        {
                             RoleId = dto.RoleId,
                             UserId = x
                         });
                     });
                     db.AddRange(mappings);
-                    mappings.ForEach(e => {
+                    mappings.ForEach(e =>
+                    {
                         loginUserData.setOptionParameter(e, userId);
                     });
                     db.SaveChanges();
@@ -311,15 +325,18 @@ namespace EtheriT.Coker.Application.Permissions
                 else throw new Exception("沒有可加入的使用者");
                 response.Success = true;
             }
-            catch(Exception ex) {
+            catch (Exception ex)
+            {
                 response.Error = ex.Message;
             }
             await loginUserData.SetLogs(controllerName, "AddUserToRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> RemoveUserToRole(AddUserToRoleDto dto) {
+        public async Task<ResponseMessageDto> RemoveUserToRole(AddUserToRoleDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var userId = await loginUserData.GetUserId();
                 var all = await (
@@ -343,13 +360,16 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "AddUserToRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> AddRole(AddRoleDto dto) {
+        public async Task<ResponseMessageDto> AddRole(AddRoleDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Name == dto.Name).FirstOrDefaultAsync();
                 if (role != null) throw new Exception("該角色名稱已存在!");
-                else {
+                else
+                {
                     Role myRole = new Role
                     {
                         Name = dto.Name,
@@ -369,7 +389,8 @@ namespace EtheriT.Coker.Application.Permissions
             await loginUserData.SetLogs(controllerName, "AddRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
-        public async Task<ResponseMessageDto> EditRole(AddRoleDto dto) {
+        public async Task<ResponseMessageDto> EditRole(AddRoleDto dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
@@ -392,11 +413,12 @@ namespace EtheriT.Coker.Application.Permissions
         }
 
         public async Task<ResponseMessageDto> DeleteRole(DataDelectDto dto)
-		{
-			ResponseMessageDto response = new ResponseMessageDto();
-            try {
-				var websiteId = await loginUserData.GetWebsiteId();
-				var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
                 if (role == null) throw new Exception("該角色不存在!");
                 else
                 {
@@ -404,11 +426,148 @@ namespace EtheriT.Coker.Application.Permissions
                     await loginUserData.SaveChanges(role);
                     response.Success = true;
                 }
-			} catch (Exception ex) {
-				response.Error = ex.Message;
-			}
-			await loginUserData.SetLogs(controllerName, "DeleteRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
-			return response;
-		}
-	}
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(controllerName, "DeleteRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> GetPagePermission(GetPagePermissionInputDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var items = await db.PermissionDetail.Where(e => e.FK_WebsiteId == websiteId).ToListAsync();
+                var userPerm = items.Where(e => e.FK_UserId != null).Select(e => e.FK_UserId).ToList();
+                var RoPerm = items.Where(e => e.FK_RoleId != null).Select(e => e.FK_RoleId).ToList();
+                response.Object = new PagePermissionOutputDto
+                {
+                    Users = await (from m in db.MappingUserAndWebsites
+                                   join u in db.Users on m.UserId equals u.Id
+                                   where m.WebsiteId == websiteId
+                                   select new PermissionsUserCheckDto
+                                   {
+                                       Id = u.Id,
+                                       Name = u.Name,
+                                       IsChecked = userPerm.Contains(u.Id)
+                                   }).ToListAsync(),
+                    Roles = await (from r in db.Roles
+                                   where r.FK_WebsiteId == websiteId
+                                   select new PermissionsRoleCheckDto
+                                   {
+                                       Id = r.Id,
+                                       Name = r.Name,
+                                       IsChecked = RoPerm.Contains(r.Id)
+                                   }
+                                   ).ToListAsync(),
+                };
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SavePagePermission(SavePagePermissionInputDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var userId = await loginUserData.GetUserId();
+                List<PermissionDetail> pagePermissions = new List<PermissionDetail>();
+                List<PermissionDetail> EditPagePermissions = new List<PermissionDetail>();
+                var n = await db.PermissionDetail
+                    .Where(e => e.FK_WebsiteId == websiteId)
+                    .Where(e => e.FK_TargetId == dto.PageId)
+                    .Where(e => e.Type == (int)dto.Type).ToListAsync();
+                if (n != null) {
+                    n.ForEach(e => {
+                        if (e.FK_UserId != null && dto.Users.Contains(e.FK_UserId.Value)) e.IsGranted = true;
+                        else if (e.FK_RoleId != null && dto.Users.Contains(e.FK_RoleId.Value)) e.IsGranted = true;
+                        else e.IsGranted = false;
+                        EditPagePermissions.Add(e);
+                    });
+                    await db.SaveChangesAsync();
+                }
+
+                dto.Users.ForEach(id => {
+                    string key = string.Empty;
+                    switch (dto.Type)
+                    {
+                        case PermissionDetailsTypeEnum.選單:
+                            key = "Menu";
+                            break;
+                        case PermissionDetailsTypeEnum.目錄:
+                            key = "Directory";
+                            break;
+                        case PermissionDetailsTypeEnum.產品:
+                            key = "Product";
+                            break;
+                        case PermissionDetailsTypeEnum.文章:
+                            key = "Article";
+                            break;
+                    }
+                    if (!EditPagePermissions.Exists(item => item.FK_UserId == id)) {
+                        pagePermissions.Add(new PermissionDetail
+                        {
+                            FK_UserId = id,
+                            FK_WebsiteId = websiteId,
+                            FK_TargetId= dto.PageId,
+                            CreationTime = DateTime.Now,
+                            CreatorUserId = userId,
+                            Type = (int)dto.Type,
+                            Name = $"{key}.Edit",
+                            IsGranted = true
+                        });
+                    }
+                });
+
+                dto.Roles.ForEach(id => {
+                    string key = string.Empty;
+                    switch (dto.Type)
+                    {
+                        case PermissionDetailsTypeEnum.選單:
+                            key = "Menu";
+                            break;
+                        case PermissionDetailsTypeEnum.目錄:
+                            key = "Directory";
+                            break;
+                        case PermissionDetailsTypeEnum.產品:
+                            key = "Product";
+                            break;
+                        case PermissionDetailsTypeEnum.文章:
+                            key = "Article";
+                            break;
+                    }
+                    if (!EditPagePermissions.Exists(item => item.FK_RoleId == id))
+                    {
+                        pagePermissions.Add(new PermissionDetail
+                        {
+                            FK_RoleId = id,
+                            FK_WebsiteId = websiteId,
+                            FK_TargetId = dto.PageId,
+                            CreationTime = DateTime.Now,
+                            CreatorUserId = userId,
+                            Type = (int)dto.Type,
+                            Name = $"{key}.Edit",
+                            IsGranted = true
+                        });
+                    }
+                });
+                db.PermissionDetail.AddRange(pagePermissions);
+                await db.SaveChangesAsync();
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }finally {
+                await loginUserData.SetLogs(controllerName, "SavePagePermission",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
+        }
+    }
 }

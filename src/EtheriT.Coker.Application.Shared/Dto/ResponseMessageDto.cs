@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.Dto;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,6 @@ namespace EtheriT.Coker.Application.Dto
         public bool Success { get; set; }
         public string? Error { get; set; }
         public string? Message { get; set; }
+        public ResponseObject? Object { get; set; }
     }
 }

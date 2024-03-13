@@ -462,12 +462,13 @@ namespace EtheriT.Coker.Application.Directory
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.Directory;
+                long UserID = await loginUserData.GetUserId();
+                var result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
 
                 if (result != null)
                 {
                     var dataQuery = from e in result
-                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID && new List<int> { 1, 2, 3 }.Contains(e.Type)
+                                    where new List<int> { 1, 2, 3 }.Contains(e.Type)
                                     select new DirectoryGetListDto
                                     {
                                         Id = e.Id,
@@ -597,6 +598,7 @@ namespace EtheriT.Coker.Application.Directory
                                             Description = p.Description,
                                             SerNo = p.SerNO,
                                             NodeDate = p.NodeDate,
+                                            LastModificationTime = p.LastModificationTime ?? p.CreationTime
                                         };
                         var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                         return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

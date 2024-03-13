@@ -39,6 +39,7 @@ namespace EtheriT.Coker.Web.Core.Models
         public List<MappingUserAndRole> Roles { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }
 		public List<Permissions> Permissions { get; set; }
-		public List<Remote> Remotes { get; set; } = new List<Remote>();
-	}
+		public List<Remote> Remotes { get; set; }
+        public List<PermissionDetail> PermissionDetails { get; set; }
+    }
 }

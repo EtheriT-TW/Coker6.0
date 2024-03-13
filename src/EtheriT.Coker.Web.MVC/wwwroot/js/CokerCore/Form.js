@@ -84,7 +84,10 @@
         getJson: function (id) {
             let form = document.getElementById(id);
             let formFields = new FormData(form);
-            let formDataObject = Object.fromEntries(formFields.entries());
+            let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
+                const val = formFields.getAll(key)
+                return [key, val.length > 1 ? val : val.pop()]
+            }));
             let exItems = $(`#${id}`).find(`div[name]`);
             exItems.each(function () {
                 const $e = $(this);
@@ -114,7 +117,8 @@
             }, false)
         }, clear: function (id) {
             const form = document.getElementById(id);
-            const $items = $(`[data-form-type]`)
+            const $items = $(`[data-form-type]`);
+            _c.Form.insertData(_c.Form.getJson(id), `#${id}`);
             $items.each(function (i, e) {
                 const $e = $(e);
                 switch ($e.data("form-type")) {

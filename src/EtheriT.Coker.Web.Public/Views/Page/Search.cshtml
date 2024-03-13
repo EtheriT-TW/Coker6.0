@@ -31,7 +31,7 @@
 		<label class="btn_search_place fs-5 mx-3" for="find_pro">找商品</label>
 
 		<input id="find_article" type="radio" class="btn-check" name="choose_color" autocomplete="off">
-		<label class="btn_search_place fs-5 mx-3" for="find_article">找文章</label>
+		<label class="btn_search_place fs-5 mx-3" for="find_article">找全部</label>
 	</div>
 	<div class="searchblock rounded-pill border border-dark fs-3 col-11 col-md-5 m-auto ps-4 pe-2 d-flex">
 		<input type="text" class="bg-transparent border-0 fw-bold flex-grow-1" value="@Model.search">
@@ -126,8 +126,8 @@
 </div>
 
 <div id="Filter" class="container-fluid border-bottom border-2">
-	<div class="container row m-auto px-sm-4 px-0 flex-wrap-reverse justify-content-center">
-		<div class="sort_radio container col d-flex justify-content-around justify-content-lg-start">
+	<div class="container row m-auto px-sm-4 px-0 flex-wrap-reverse justify-content-end">
+		<div class="sort_radio container col d-flex justify-content-around justify-content-lg-start d-none">
 			<input id="sort_complex" type="radio" class="btn-check" name="choose_sort" autocomplete="off" checked>
 			<label class="btn_sort_complex" for="sort_complex">綜合排序</label>
 
@@ -139,12 +139,12 @@
 		</div>
 
 		<div class="options col-auto row row-cols-sm-auto my-2 align-items-center justify-content-center">
-			<button class="btn_sort_hot col-3 mx-2 p-0 border-0 bg-transparent">熱門搜尋</button>
+			<button class="btn_sort_hot col-3 mx-2 p-0 border-0 bg-transparent d-none">熱門搜尋</button>
 			<button class="btn_sort_price col-2 mx-2 p-0 border-0 bg-transparent">
 				價格
 				<i class="fa-solid fa-arrows-up-down"></i>
 			</button>
-			<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">篩選</button>
+			<button class="btn_filter col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent d-none">篩選</button>
 			<button class="btn_typography col-2 order-sm-1 mx-2 p-0 border-0 bg-transparent">
 				<i class="fa-solid fa-table-list"></i>
 				<span class="d-none">切換</span>
@@ -530,8 +530,8 @@
 	</button>
 </div>
 
-<div class="fs-2 my-4 text-center">相關商品</div>
-<div id="RelatedProductsSwiper" class="swiper_four_grid container-fluid py-4 position-relative">
+<div class="fs-2 my-4 text-center d-none">相關商品</div>
+<div id="RelatedProductsSwiper" class="swiper_four_grid container-fluid py-4 position-relative d-none">
 	<div class="swiper container">
 		<div class="swiper-wrapper container px-0">
 			<figure class="card swiper-slide border-0"  data-pid="1">

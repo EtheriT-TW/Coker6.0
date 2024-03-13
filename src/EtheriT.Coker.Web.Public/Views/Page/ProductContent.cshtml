@@ -282,7 +282,7 @@
             </div>
         </template>
 
-        <div class="options px-3">
+        <div class="options px-3 d-none">
             <div class="counter d-flex align-items-center my-2">
                 <label class="title" for="quantityInput1">數量</label>
                 <div class="counter_input d-flex">
@@ -301,14 +301,19 @@
             </div>
         </div>
 
-        <div class="btn_addToCar d-flex align-items-center justify-content-center text-white" type="button">
+        <div class="btn_addToCar d-none align-items-center justify-content-center text-white" type="button">
             <div class="icon_plus">我要購買</div>
+        </div>
+        <div class="btn_addToCar d-flex align-items-center justify-content-center text-white" type="button">
+            <a href="/lcb/distribution">
+                <div class="icon_plus text-white">了解更多</div>
+            </a>
         </div>
     </div>
 </div>
 
 <div id="CenterLine" class="container d-flex pt-sm-0 pt-2 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
-    <div id="shareBlock" class="d-flex align-items-center justify-content-center justify-content-sm-end">
+    <div class="shareBlock d-flex align-items-center justify-content-center justify-content-sm-end">
         <div>分享：</div>
     </div>
     <ul id="btn_tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
@@ -316,7 +321,10 @@
             <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">產品說明</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">技術文件</button>
+            <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#Certifications" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">標章認證</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">檔案下載</button>
         </li>
     </ul>
 </div>
@@ -325,6 +333,19 @@
     <div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
         <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
         <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
+    </div>
+
+    <div id="Certifications" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+        <div id="FileDownload" class="filedownload d-flex pt-5 pb-3 flex-wrap">
+            @*<div class="file px-4 py-1 border border-dark">
+            <a href="/upload/badge/badge_03.jpg" download="施工圖.dwg"><div>施工圖.dwg</div></a>
+            </div>
+            <div class="file px-4 py-1 border border-dark">
+            <a href="/upload/badge/badge_03.jpg" download="施工圖.pdf"><div>施工圖.pdf</div></a>
+            </div>*@
+        </div>
+
+        <div class="techcert_list"></div>
     </div>
 
     <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">

@@ -9,6 +9,12 @@ img {
     max-width: 100%;
 }
 
+.banner-img-crop {
+    object-fit: cover;
+    width: 100%;
+    min-height: 10em;
+}
+
 iframe {
     width: 100%;
 }

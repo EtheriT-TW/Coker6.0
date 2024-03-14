@@ -36,11 +36,11 @@
         <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-lg-8 col visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <!-- Menu Canvas Search Block -->
             <div class="offcanvas-header pt-2 ps-5">
-                <h5 class="offcanvas-title fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+                <h5 class="offcanvas-title mx-auto fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
             </div>
 
             <!-- Menu Canvas Menu -->
-            <ul class="navbar-nav offcanvas-body w-100 m-0">
+            <ul class="navbar-nav offcanvas-body w-100 m-0" id="accordion-menu">
                 <li class="">
                     <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
                 </li>
@@ -50,11 +50,12 @@
                     <li class="title nav-item col-lg-2 @headType">
                         @{
                             List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
-                            string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
+                            string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-start";
                         }
                         @if (subItems.Count() > 0)
                         {
-                            <a href="@menu.Link" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item">
+                            <a id="collapse-header-@menu.Title" href="@menu.Link" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item collapsed"
+                               data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -69,7 +70,7 @@
                                     }
                                 }
                             </a>
-                            <div class="content collapse_menus translate-middle-x">
+                            <div class="content collapse_menus translate-middle-x collapse" id="collapse-@menu.Title" aria-labelledby="collapse-header-@menu.Title" data-bs-parent="#accordion-menu">
                                 <ul class="@jc">
                                     @foreach (var secItem in subItems)
                                     {

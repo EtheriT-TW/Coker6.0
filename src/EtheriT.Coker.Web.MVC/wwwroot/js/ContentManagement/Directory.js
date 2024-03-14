@@ -8,6 +8,9 @@ function PageReady() {
     DirectorytForms = $('#DirectorytForm');
     ArticletForms = $('#ArticletForm');
     permissionDetailsModal = new bootstrap.Modal(document.getElementById("PermissionDetailsModal"));
+    co.PowerManagement.GetPermission().done(function(){
+        if (!permission.CanCreate) $(".btn_add").remove();
+    });
 
     ElementInit();
     WebmenuListModalInit();

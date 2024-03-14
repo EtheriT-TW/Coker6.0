@@ -30,7 +30,7 @@ function SwiperInit(obj) {
 
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
-            const canNext = $(Id).find(".swiper-slide").length > 2;
+            const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed")
             if (typeof effect === 'undefined' || effect === false) effect = "slide";

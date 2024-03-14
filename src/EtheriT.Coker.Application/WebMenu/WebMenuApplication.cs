@@ -105,7 +105,7 @@ namespace EtheriT.Coker.Application
                             Type = 2,
                             Size = 1,
                         });
-                        if (data != null)
+                        if (data != null && data.Any())
                         {
                             m.ImgUrl = data[0].Link;
                             m.ImgName = data[0].Name;
@@ -119,8 +119,11 @@ namespace EtheriT.Coker.Application
                             Type = 3,
                             Size = 1,
                         });
-                        m.OverImgUrl = data[0].Link;
-                        m.OverImgName = data[0].Name;
+                        if (data != null && data.Any())
+                        {
+                            m.OverImgUrl = data[0].Link;
+                            m.OverImgName = data[0].Name;
+                        }
                     }
                     if (m.icon.StartsWith("IconId"))
                     {

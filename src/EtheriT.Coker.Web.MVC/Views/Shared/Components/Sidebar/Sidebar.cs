@@ -16,7 +16,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar
             var site = await navigation.getMenus();
             await navigation.SetPower(site);
             await navigation.setUserJob(site);
-            return View(site);
+			return View(site);
         }
     }
 }

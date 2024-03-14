@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace EtheriT.Coker.Web.MVC.Startup
 {
@@ -380,6 +381,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
 		public async Task setUserJob(Site site)
 		{
 			var data = await permissionsAppService.GetLoginUserPermissions();
+			ThePermission.superManager = await permissionsAppService.IsPowerUserPermissions();
 			if (data != null)
 			{
 				List<JobMenu> jobs = new List<JobMenu>();

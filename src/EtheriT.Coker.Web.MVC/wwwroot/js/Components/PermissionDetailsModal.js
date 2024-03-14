@@ -11,6 +11,8 @@
             const $Users = $self.find("#chooiceUsers .list");
             co.PowerManagement.GetPagePermission(o).done(function (result) {
                 if (result.success) {
+                    $Roles.empty();
+                    $Users.empty();
                     $(result.object.users).each(function (index, element) {
                         const $item = $($temp.html());
                         $item.find(".name").text(element.name);

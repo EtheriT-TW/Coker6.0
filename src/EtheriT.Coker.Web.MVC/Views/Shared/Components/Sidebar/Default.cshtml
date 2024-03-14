@@ -15,6 +15,7 @@
 	<ul>
 		@{
 			string PageName;
+			ThePermission.Initable = false;
 			foreach (var item in Model.Jobs)
 			{
 				@if (item.jobItemModels == null)
@@ -70,6 +71,7 @@
 					</li>
 				}
 			}
+			ThePermission.Initable = true;
 		}
 	</ul>
 </nav>

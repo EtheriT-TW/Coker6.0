@@ -138,7 +138,19 @@ namespace EtheriT.Coker.Application.Permissions
             if (!UserItems.Any() && RoleItems.Any()) Items.AddRange(RoleItems);
             return mapper.Map<List<SavePermissionsItem>>(Items);
         }
-        public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
+        public async Task<bool> IsPowerUserPermissions() {
+			long SiteId = await loginUserData.GetWebsiteId();
+			long UserId = await loginUserData.GetUserId();
+            List<long> Roles = await loginUserData.GetUserRoleIds();
+            var p = await db.Permissions.Where(e => e.IsGranted)
+                    .Where(e => e.FK_WebsiteId == SiteId)
+                    .Where(e => e.FK_UserId == UserId || Roles.Contains(e.FK_RoleId??0))
+                    .Where(e => e.Name == "PowerCtrl.Edit")
+                    .FirstOrDefaultAsync();
+            return p != null;
+		}
+
+		public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -441,8 +453,8 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var items = await db.PermissionDetail.Where(e => e.FK_WebsiteId == websiteId).ToListAsync();
-                var userPerm = items.Where(e => e.FK_UserId != null).Select(e => e.FK_UserId).ToList();
-                var RoPerm = items.Where(e => e.FK_RoleId != null).Select(e => e.FK_RoleId).ToList();
+                var userPerm = items.Where(e => e.FK_UserId != null && e.IsGranted).Select(e => e.FK_UserId).ToList();
+                var RoPerm = items.Where(e => e.FK_RoleId != null && e.IsGranted).Select(e => e.FK_RoleId).ToList();
                 response.Object = new PagePermissionOutputDto
                 {
                     Users = await (from m in db.MappingUserAndWebsites
@@ -486,7 +498,7 @@ namespace EtheriT.Coker.Application.Permissions
                 if (n != null) {
                     n.ForEach(e => {
                         if (e.FK_UserId != null && dto.Users.Contains(e.FK_UserId.Value)) e.IsGranted = true;
-                        else if (e.FK_RoleId != null && dto.Users.Contains(e.FK_RoleId.Value)) e.IsGranted = true;
+                        else if (e.FK_RoleId != null && dto.Roles.Contains(e.FK_RoleId.Value)) e.IsGranted = true;
                         else e.IsGranted = false;
                         EditPagePermissions.Add(e);
                     });

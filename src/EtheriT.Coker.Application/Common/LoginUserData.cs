@@ -57,6 +57,15 @@ namespace EtheriT.Coker.Application
             }
             return id;
         }
+        public async Task<List<long>> GetUserRoleIds() {
+            var uid = await GetUserId();
+            var wid = await GetWebsiteId();
+            var result = await (from rol in db.Roles.Where(e => !e.IsDeleted && e.FK_WebsiteId==wid)
+                    join map in db.MappingUserAndRoles on rol.Id equals map.RoleId
+                    where map.UserId == uid
+                    select rol).Select(e => e.Id).ToListAsync();
+            return result;
+        }
         public async Task<UserSimplifyDto> GetUser() {
 			UserSimplifyDto user = new UserSimplifyDto { Id = 0 };
             try

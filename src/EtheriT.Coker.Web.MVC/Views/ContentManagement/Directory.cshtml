@@ -4,6 +4,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.EnterAd
 @using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@using EtheriT.Coker.Web.MVC.Startup
 @{
     ViewData["Title"] = "Directory";
 }
@@ -61,10 +62,10 @@
                         .Type(GridCommandColumnType.Buttons)
                         .Buttons(b =>
                         {
-                            b.Add().Name("edit").OnClick("editButtonClicked");
-                            b.Add().Icon("verticalaligncenter").OnClick("reladataButtonClicked");
-                            b.Add().Icon("group").Name("group").OnClick("groupArticlesButtonClicked");
-                            b.Add().Name("delete").OnClick("deleteButtonClicked");
+                            b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editButtonClicked");
+                            b.Add().Icon("verticalaligncenter").Visible(ThePermission.CanVisble).OnClick("reladataButtonClicked");
+                            b.Add().Icon("group").Name("group").Visible(ThePermission.superManager).OnClick("groupArticlesButtonClicked");
+                            b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteButtonClicked");
                         });
                     })
                     .ColumnAutoWidth(true)
@@ -198,9 +199,9 @@
                             .Type(GridCommandColumnType.Buttons)
                             .Buttons(b =>
                             {
-                                b.Add().Name("edit").OnClick("editArticlesButtonClicked");
-                                b.Add().Icon("palette").Name("edit").OnClick("paletteArticlesButtonClicked");
-                                b.Add().Name("delete").OnClick("deleteArticlesButtonClicked");
+                                b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editArticlesButtonClicked");
+                                b.Add().Icon("palette").Visible(ThePermission.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
+                                b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteArticlesButtonClicked");
                             });
                         })
                         .ColumnAutoWidth(true)

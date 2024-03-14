@@ -23,6 +23,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Html;
 using System.Linq;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -463,8 +464,13 @@ namespace EtheriT.Coker.Application.Directory
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long UserID = await loginUserData.GetUserId();
-                var result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
-
+                List<long> RoleIds = await loginUserData.GetUserRoleIds();
+                var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
+                        .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
+                        .Where(e => e.Type == 3)
+                        .Where(e => e.IsGranted).Select(e => e.FK_TargetId).ToListAsync();
+                IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
+                if (per!= null && per.Any()) result = result.Where(e => per.Contains(e.Id));
                 if (result != null)
                 {
                     var dataQuery = from e in result

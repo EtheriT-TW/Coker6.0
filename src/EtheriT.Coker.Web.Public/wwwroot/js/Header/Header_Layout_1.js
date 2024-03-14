@@ -76,6 +76,14 @@ function MenuLiSize() {
         $(".subtitle").addClass("w-100")
         $(".subtitle li").addClass("w-100")
     }
+
+    if ($(window).width() > 992) {
+        $(".offcanvas-body").removeClass("accordion")
+        $(".offcanvas-body .collapse").addClass("show")
+    } else {
+        $(".offcanvas-body").addClass("accordion")
+        $(".offcanvas-body .collapse").removeClass("show")
+    }
 }
 
 function CartDropInit() {

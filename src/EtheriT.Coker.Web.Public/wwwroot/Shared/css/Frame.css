@@ -15,6 +15,10 @@ img {
     min-height: 10em;
 }
 
+.banner-img-crop span.subtitle {
+    font-size: 1.2em;
+}
+
 iframe {
     width: 100%;
 }

@@ -213,6 +213,11 @@ input:disabled + .btn_radio {
     line-height: 3;
 }
 
+#Product > .content > .btn_learnMore {
+    background-color: var(--red-main);
+    line-height: 3;
+}
+
 .icon_plus::before {
     font-family: 'Font Awesome 6 Free';
     font-weight: 400;

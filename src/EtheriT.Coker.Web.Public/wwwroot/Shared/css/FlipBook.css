@@ -1,0 +1,7 @@
+﻿.FlipBook {
+    height: 50em;
+}
+
+.FlipBook iframe {
+    height: 100%;
+}

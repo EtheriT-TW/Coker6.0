@@ -35,6 +35,7 @@ using EtheriT.Coker.Web.MVC.Resources;
 using EtheriT.Coker.Web.Public.Middlewares;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using SimpleCaptcha;
 using System.Net;
@@ -188,6 +189,17 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{key?}/{id?}",
     defaults: new { controller = "Home", action = "Index" });
+
+app.UseStaticFiles(new StaticFileOptions()
+{
+    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
+    {
+     {
+         ".properties",
+         "application/octet-stream"
+       }
+    })
+});
 
 //var options = new RewriteOptions()
 //        .AddRedirect("^Search/(.*)/(.*)", "Search?id=$&search=$2", 301);

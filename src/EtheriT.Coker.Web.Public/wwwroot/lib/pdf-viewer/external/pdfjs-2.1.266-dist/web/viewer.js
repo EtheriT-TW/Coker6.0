@@ -5197,11 +5197,11 @@ var defaultOptions = {
     kind: OptionKind.VIEWER
   },
   scrollModeOnLoad: {
-    value: -1,
+    value: 3,
     kind: OptionKind.VIEWER
   },
   spreadModeOnLoad: {
-    value: -1,
+    value: 2,
     kind: OptionKind.VIEWER
   },
   textLayerMode: {
@@ -9661,13 +9661,11 @@ var TempImageFactory = function TempImageFactoryClosure() {
 
       tempCanvas.width = width;
       tempCanvas.height = height;
-      tempCanvas.mozOpaque = true;
-      var ctx = tempCanvas.getContext('2d', {
-        alpha: false
-      });
+      tempCanvas.mozOpaque = false;
+      var ctx = tempCanvas.getContext('2d');
       ctx.save();
-      ctx.fillStyle = 'rgb(255, 255, 255)';
-      ctx.fillRect(0, 0, width, height);
+      // ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+      ctx.clearRect(0, 0, width, height);
       ctx.restore();
       return tempCanvas;
     },
@@ -9824,10 +9822,8 @@ function () {
       var noCtxScale = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       var canvas = document.createElement('canvas');
       this.canvas = canvas;
-      canvas.mozOpaque = true;
-      var ctx = canvas.getContext('2d', {
-        alpha: false
-      });
+      canvas.mozOpaque = false;
+      var ctx = canvas.getContext('2d');
       var outputScale = (0, _ui_utils.getOutputScale)(ctx);
       canvas.width = this.canvasWidth * outputScale.sx | 0;
       canvas.height = this.canvasHeight * outputScale.sy | 0;
@@ -9944,7 +9940,8 @@ function () {
 
       var renderContext = {
         canvasContext: ctx,
-        viewport: drawViewport
+        viewport: drawViewport,
+          background: 'rgba(0, 0, 0, 0)'
       };
       var renderTask = this.renderTask = this.pdfPage.render(renderContext);
       renderTask.onContinue = renderContinueCallback;
@@ -12014,10 +12011,8 @@ function () {
 
       canvasWrapper.appendChild(canvas);
       this.canvas = canvas;
-      canvas.mozOpaque = true;
-      var ctx = canvas.getContext('2d', {
-        alpha: false
-      });
+      canvas.mozOpaque = false;
+      var ctx = canvas.getContext('2d');
       var outputScale = (0, _ui_utils.getOutputScale)(ctx);
       this.outputScale = outputScale;
 
@@ -12057,7 +12052,8 @@ function () {
         transform: transform,
         viewport: this.viewport,
         enableWebGL: this.enableWebGL,
-        renderInteractiveForms: this.renderInteractiveForms
+        renderInteractiveForms: this.renderInteractiveForms,
+        background: 'rgba(0, 0, 0, 0)'
       };
       var renderTask = this.pdfPage.render(renderContext);
 
@@ -15292,8 +15288,8 @@ function renderPage(activeServiceOnEntry, pdfDocument, pageNumber, size) {
   var height = Math.floor(size.height * _ui_utils.CSS_UNITS) + 'px';
   var ctx = scratchCanvas.getContext('2d');
   ctx.save();
-  ctx.fillStyle = 'rgb(255, 255, 255)';
-  ctx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+  // ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+  ctx.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
   ctx.restore();
   return pdfDocument.getPage(pageNumber).then(function (pdfPage) {
     var renderContext = {
@@ -15303,7 +15299,8 @@ function renderPage(activeServiceOnEntry, pdfDocument, pageNumber, size) {
         scale: 1,
         rotation: size.rotation
       }),
-      intent: 'print'
+        intent: 'print',
+        background: 'rgba(0, 0, 0, 0)'
     };
     return pdfPage.render(renderContext).promise;
   }).then(function () {

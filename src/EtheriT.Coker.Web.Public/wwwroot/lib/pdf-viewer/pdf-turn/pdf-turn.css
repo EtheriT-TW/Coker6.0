@@ -4,14 +4,19 @@
 	margin: 5px auto 0 auto;
 }
 
-.bookViewer .page {
+	.bookViewer.shadow .page {
+		background: #fff;
+	}
+
+.bookViewer:not(.shadow) .page {
 	background-image: url("../external/pdfjs-2.1.266-dist/web/images/pages.png");
 	background-size: cover;
 }
 
 	.bookViewer .page.odd {
-		background-position: 100% 0;
+	background-position: 100% 0;
 	}
+
 	.bookViewer .page.even {
 		background-position: 0 0;
 	}

@@ -5,7 +5,7 @@
     if (typeof ($this.data("pdf")) == "undefined" || !$this.data("pdf")) {
         console.log("No PDF file specified for FlipBook");
         return
-    }
+}
 
     var target_pdf = $this.data('pdf');
     console.log(target_pdf)

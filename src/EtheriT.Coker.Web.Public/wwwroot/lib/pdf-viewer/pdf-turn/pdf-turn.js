@@ -48,12 +48,15 @@ var bookFlip = {
 			this._ready = true;
 			if(this.toStart){
 				this.toStart = false;
+				console.log("switch mode");
 				PDFViewerApplication.pdfViewer.scrollMode = 3;
+				$("#spreadEven").trigger("click");
+				PDFViewerApplication.pdfViewer.currentScaleValue = "page-fit";
 			}
 		});
 
 		$(document).on('baseviewerinit', () => {
-			PDFViewerApplicationOptions.set('scrollModeOnLoad',3);
+			PDFViewerApplicationOptions.set('scrollModeOnLoad', 3);
 			
 			this._intoView = PDFViewerApplication.pdfViewer.scrollPageIntoView;
 			this._visPages = PDFViewerApplication.pdfViewer._getVisiblePages;

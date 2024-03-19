@@ -1223,8 +1223,8 @@ var PDFViewerApplication = {
         scrollTop: '0',
         rotation: null,
         sidebarView: _pdf_sidebar.SidebarView.UNKNOWN,
-        scrollMode: _ui_utils.ScrollMode.UNKNOWN,
-        spreadMode: _ui_utils.SpreadMode.UNKNOWN
+        scrollMode: _ui_utils.ScrollMode.FLIP,
+        spreadMode: _ui_utils.SpreadMode.EVEN
       }).catch(function () {});
       Promise.all([storePromise, pageModePromise, openActionDestPromise]).then(
       /*#__PURE__*/
@@ -1264,11 +1264,11 @@ var PDFViewerApplication = {
                     }
 
                     if (scrollMode === _ui_utils.ScrollMode.UNKNOWN) {
-                      scrollMode = values.scrollMode | 0;
+                      scrollMode = _ui_utils.ScrollMode.FLIP;
                     }
 
                     if (spreadMode === _ui_utils.SpreadMode.UNKNOWN) {
-                      spreadMode = values.spreadMode | 0;
+                      spreadMode = _ui_utils.SpreadMode.EVEN;
                     }
                   }
 
@@ -1278,7 +1278,7 @@ var PDFViewerApplication = {
                     bookFlip.toStart = true;
                     $('#viewer').css({ opacity: 0 });
                   }
-
+                  
                   if (pageMode && sidebarView === _pdf_sidebar.SidebarView.UNKNOWN) {
                     sidebarView = apiPageModeToSidebarView(pageMode);
                   }
@@ -13841,8 +13841,8 @@ function getDefaultPreferences() {
       "enablePrintAutoRotate": false,
       "disablePageLabels": false,
       "historyUpdateUrl": false,
-      "scrollModeOnLoad": -1,
-      "spreadModeOnLoad": -1
+      "scrollModeOnLoad": 3,
+      "spreadModeOnLoad": 2
     });
   }
 

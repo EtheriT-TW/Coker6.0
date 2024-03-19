@@ -411,8 +411,8 @@ html {
 body {
   height: 100%;
   width: 100%;
-  background-color: #404040;
-  background-image: url(images/texture.png);
+  background-color: #0000;
+/*  background-image: url(images/texture.png); */
 }
 
 body,
@@ -583,12 +583,12 @@ html[dir='rtl'] #outerContainer.sidebarOpen #sidebarContainer {
 }
 
 #mainContainer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  min-width: 320px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-width: 320px;
 }
 
 #sidebarContent {
@@ -610,14 +610,15 @@ html[dir='rtl'] #sidebarContent {
 }
 
 #viewerContainer {
-  overflow: auto;
+  overflow: visible;
   -webkit-overflow-scrolling: touch;
   position: absolute;
-  top: 32px;
+  top: 0;
   right: 0;
   bottom: 0;
   left: 0;
   outline: none;
+  margin: 5em;
 }
 #viewerContainer:not(.pdfPresentationMode) {
   transition-duration: 200ms;
@@ -647,11 +648,12 @@ html[dir='rtl'] #outerContainer.sidebarOpen #viewerContainer:not(.pdfPresentatio
 }
 
 .toolbar {
-  position: relative;
-  left: 0;
-  right: 0;
-  z-index: 9999;
-  cursor: default;
+    display: none;
+    position: relative;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    cursor: default;
 }
 
 #toolbarContainer {

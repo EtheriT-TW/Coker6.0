@@ -163,10 +163,22 @@
                         }
                         else
                         {
-                            <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
-                                @menu.Title
-                            </a>
+                            <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
+                                <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                                    @menu.Title
+                                </a>
+                            </div>
                         }
+                    </li>
+                }
+                @foreach (var menu in Model.langMenuItemModels)
+                {
+                    var target = menu.Target ?? false ? "_blank" : "_self";
+                    var targetStr = menu.Target ?? false ? $"連結至：{menu.Title}(另開新視窗)" : $"連結至：{menu.Title}";
+                    <li class="title nav-item col-lg-3 listMenu langMenu">
+                        <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
+                            <a href="@menu.Link" class="text-white" title="@targetStr" target="@target">@menu.Title</a>
+                        </div>
                     </li>
                 }
             </ul>

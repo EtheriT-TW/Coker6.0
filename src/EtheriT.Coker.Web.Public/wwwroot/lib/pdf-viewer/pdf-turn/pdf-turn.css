@@ -1,0 +1,35 @@
+/* turn.js additional*/
+
+.bookViewer{
+	margin: 0 auto 0 auto;
+	overflow: visible !important;
+}
+
+	.bookViewer.shadow .page {
+		background: #fff;
+	}
+
+.bookViewer:not(.shadow) .page {
+	background-image: url("../external/pdfjs-2.1.266-dist/web/images/pages.png");
+	background-size: cover;
+}
+
+	.bookViewer .page.odd {
+	background-position: 100% 0;
+	}
+
+	.bookViewer .page.even {
+		background-position: 0 0;
+	}
+
+/* PDF.js additional */
+
+.secondaryToolbarButton.bookFlip::before {
+	content: url(secondaryToolbarButton-bookFlip.png);
+}
+
+@media screen and (-webkit-min-device-pixel-ratio: 1.1), screen and (min-resolution: 1.1dppx) {
+	.secondaryToolbarButton.bookFlip::before {
+		content: url(secondaryToolbarButton-bookFlip@2x.png);
+	}
+}

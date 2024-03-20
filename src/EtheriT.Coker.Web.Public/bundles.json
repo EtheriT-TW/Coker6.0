@@ -46,7 +46,8 @@
         "wwwroot/Shared/js/ViewTypeChange.js",
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/Contact.js",
-        "wwwroot/Shared/js/BGCanvas.js"
+        "wwwroot/Shared/js/BGCanvas.js",
+        "wwwroot/Shared/js/FlipBook.js"
       ]
     },
     {
@@ -85,7 +86,8 @@
         "wwwroot/Shared/css/Swiper.css",
         "wwwroot/Shared/css/Contact.css",
         "wwwroot/Shared/css/Activity.less",
-        "wwwroot/Shared/css/BGCanvas.css"
+        "wwwroot/Shared/css/BGCanvas.css",
+        "wwwroot/Shared/css/FlipBook.css"
       ]
     },
     {

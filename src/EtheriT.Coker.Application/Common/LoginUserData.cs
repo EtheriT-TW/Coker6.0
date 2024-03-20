@@ -148,6 +148,7 @@ namespace EtheriT.Coker.Application
                 var userDetail = await db.Users.Where(u => u.Id == token.UserID).FirstOrDefaultAsync();
                 if (userDetail == null) return 0;
                 var check = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
+                int c = check.Count();
                 if (check.Any()) return token.websiteId;
                 else return 0;
             }

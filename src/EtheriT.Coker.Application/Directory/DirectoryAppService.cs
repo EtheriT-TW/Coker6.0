@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Html;
 using System.Linq;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Permissions;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -36,6 +37,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IArticleAppService articleAppService;
         private readonly IProductAppService productAppService;
         private readonly IWebMenuApplication webMenuApplicationService;
+        private readonly IPermissionsAppService permissionsAppService;
         private readonly StringHandler stringHandler;
         public DirectoryAppService(
             CokerDbContext db,
@@ -46,6 +48,7 @@ namespace EtheriT.Coker.Application.Directory
             IArticleAppService articleAppService,
             IProductAppService productAppService,
             IWebMenuApplication webMenuApplicationService,
+            IPermissionsAppService permissionsAppService,
             IConfiguration configuration
         )
         {
@@ -57,6 +60,7 @@ namespace EtheriT.Coker.Application.Directory
             this.articleAppService = articleAppService;
             this.productAppService = productAppService;
             this.webMenuApplicationService = webMenuApplicationService;
+            this.permissionsAppService= permissionsAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -465,12 +469,16 @@ namespace EtheriT.Coker.Application.Directory
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long UserID = await loginUserData.GetUserId();
                 List<long> RoleIds = await loginUserData.GetUserRoleIds();
-                var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
+                bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
+                IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
+                if (!isSuperUser)
+                {
+                    var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
                         .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
                         .Where(e => e.Type == 3)
                         .Where(e => e.IsGranted).Select(e => e.FK_TargetId).ToListAsync();
-                IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
-                if (per!= null && per.Any()) result = result.Where(e => per.Contains(e.Id));
+                    if (per != null && per.Any()) result = result.Where(e => per.Contains(e.Id));
+                }
                 if (result != null)
                 {
                     var dataQuery = from e in result

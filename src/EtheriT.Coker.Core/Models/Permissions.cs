@@ -21,6 +21,6 @@ namespace EtheriT.Coker.Core.Models
         public DateTime CreationTime { get; set; } = DateTime.Now;
         public User? User { get; set; }
         public Role? Role { get; set; }
-        public Website Website { get; set; } = new Website();
+        public Website Website { get; set; }
     }
 }

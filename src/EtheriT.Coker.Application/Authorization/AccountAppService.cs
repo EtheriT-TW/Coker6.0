@@ -82,7 +82,7 @@ namespace EtheriT.Coker.Application.Authorization
                             long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"], out bindID);
                         }
                         if (!await loginUserData.CheckedWebSiteId(user.Id, bindID)) {
-                            var defaultWeb = await db.MappingUserAndWebsites.Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
+                            var defaultWeb = await db.MappingUserAndWebsites.Where(e => !e.IsDeleted).Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
                             if (defaultWeb != null)
                             {
                                 bindID = defaultWeb.UserId;
@@ -96,7 +96,7 @@ namespace EtheriT.Coker.Application.Authorization
                             UserID = user.Id,
                             StartTime = dateTime,
                             EndTime = EndDateTime,
-                            websiteId = bindID
+                            websiteId = websiteId??0
                         };
                         db.Tokens.Add(t);
                         db.SaveChanges();

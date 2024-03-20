@@ -135,7 +135,9 @@ namespace EtheriT.Coker.Application
 				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
 				.ForMember(e => e.Permanent, option => option.MapFrom(c => true))
 				.ReverseMap();
-			CreateMap<ProdGetDataDto, Prod>().ReverseMap();
+			CreateMap<ProdGetDataDto, Prod>()
+                .ForMember(e => e.permanent, option => option.MapFrom(c => c.Permanent))
+                .ReverseMap();
 			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
 				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
 				.ReverseMap();

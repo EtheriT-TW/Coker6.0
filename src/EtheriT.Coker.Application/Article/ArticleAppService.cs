@@ -36,6 +36,7 @@ namespace EtheriT.Coker.Application.Article
         private readonly IConfiguration configuration;
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly string ServiceName;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -53,6 +54,7 @@ namespace EtheriT.Coker.Application.Article
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.stringHandler = stringHandler;
+            ServiceName = "Article";
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -402,6 +404,10 @@ namespace EtheriT.Coker.Application.Article
                 output.Success = false;
                 output.Error = e.Message;
             }
+            finally
+            {
+                await loginUserData.SetLogs(ServiceName, "Delete", JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
+            }
             return output;
         }
         public async Task<GetArticleContenDto> GetConten(SearchIDDto dto)
@@ -471,6 +477,10 @@ namespace EtheriT.Coker.Application.Article
             {
                 response.Error = ex.Message;
             }
+            finally
+            {
+                await loginUserData.SetLogs(ServiceName, "ImportConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
             return response;
         }
         public async Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto)
@@ -493,6 +503,9 @@ namespace EtheriT.Coker.Application.Article
             catch (Exception ex)
             {
                 response.Error = ex.Message;
+            }
+            finally {
+                await loginUserData.SetLogs(ServiceName, "SaveConten",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

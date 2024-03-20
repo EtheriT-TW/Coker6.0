@@ -1,15 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EtheriT.Coker.Web.MVC.Startup;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class ContentManagementController : Controller
     {
+        private readonly NavigationProvider navigation;
+        public ContentManagementController(NavigationProvider navigation) {
+            this.navigation = navigation;
+        }
         public IActionResult Tag()
         {
             return View("Tag");
         }
-        public IActionResult Directory()
+        public async Task<IActionResult> Directory()
         {
+            var site = await navigation.getMenus();
+            await navigation.SetPower(site);
+            await navigation.setUserJob(site);
             return View("Directory");
         }
         public IActionResult Article()

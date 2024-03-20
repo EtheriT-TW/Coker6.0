@@ -1,5 +1,5 @@
 ﻿function HeaderInit() {
-    var mega_menu_height = $("nav").css("height");
+    var mega_menu_height = $("#Mega_Menu").css("height");
     $("body").css("padding-top", mega_menu_height);
 
     $(window).resize(function () {

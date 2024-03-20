@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Search;
@@ -108,6 +109,7 @@ builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
 builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
+builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())
@@ -173,6 +175,12 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "Verify",
+    pattern: ".well-known/{option}/{key}",
+    defaults: new { controller = "Verify", action = "Index" }
+);
 
 app.MapControllerRoute(
     name: "api",

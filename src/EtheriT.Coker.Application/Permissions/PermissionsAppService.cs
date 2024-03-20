@@ -53,6 +53,7 @@ namespace EtheriT.Coker.Application.Permissions
                     {
                         Id = o.Id,
                         Name = o.Name,
+                        IsSuperUser = o.IsSuperUser,
                         Members = (
                             from u in db.Users.Where(e => !e.IsDeleted)
                             join m in db.MappingUserAndRoles.Where(e => !e.IsDeleted) on u.Id equals m.UserId
@@ -139,13 +140,9 @@ namespace EtheriT.Coker.Application.Permissions
             return mapper.Map<List<SavePermissionsItem>>(Items);
         }
         public async Task<bool> IsPowerUserPermissions() {
-			long SiteId = await loginUserData.GetWebsiteId();
-			long UserId = await loginUserData.GetUserId();
             List<long> Roles = await loginUserData.GetUserRoleIds();
-            var p = await db.Permissions.Where(e => e.IsGranted)
-                    .Where(e => e.FK_WebsiteId == SiteId)
-                    .Where(e => e.FK_UserId == UserId || Roles.Contains(e.FK_RoleId??0))
-                    .Where(e => e.Name == "PowerCtrl.Edit")
+            var p = await db.Roles.Where(e => Roles.Contains(e.Id))
+                    .Where(e => e.IsSuperUser)
                     .FirstOrDefaultAsync();
             return p != null;
 		}
@@ -408,10 +405,13 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
+                var powerRole = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.IsSuperUser).FirstOrDefaultAsync();
                 if (role == null) throw new Exception("該角色不存在!");
+                else if(powerRole != null && powerRole.Id != dto.Id) throw new Exception("總管理者角色僅能唯一!");
                 else
                 {
                     role.Name = dto.Name;
+                    role.IsSuperUser = dto.IsSuperUser;
                     await loginUserData.SaveChanges(role);
                     response.Success = true;
                 }
@@ -467,7 +467,7 @@ namespace EtheriT.Coker.Application.Permissions
                                        IsChecked = userPerm.Contains(u.Id)
                                    }).ToListAsync(),
                     Roles = await (from r in db.Roles
-                                   where r.FK_WebsiteId == websiteId
+                                   where r.FK_WebsiteId == websiteId && !r.IsSuperUser
                                    select new PermissionsRoleCheckDto
                                    {
                                        Id = r.Id,

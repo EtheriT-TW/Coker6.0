@@ -1,4 +1,5 @@
-﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count, $marks, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent
+﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
+    $marks, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
 var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list
 var $price_modal, priceModal
@@ -498,6 +499,8 @@ function ElementInit() {
     $alert_number = $(".input_alert_number");
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
+    $itemNo = $("#InputItemNo");
+    $itemNo_count = $("#ProductForm > .itemNo .itemNo_count");
 
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
@@ -536,6 +539,8 @@ function FormDataClear() {
     disp_opt = true;
     $name.val("");
     $name_count.text(0);
+    $itemNo.val("");
+    $itemNo_count.text(0);
     $introduction.val("");
     $introduction_count.text(0);
     $illustrate.val("");
@@ -661,6 +666,8 @@ function FormDataSet(result) {
 
     $name.val(result.title);
     $name_count.text($name.val().length);
+    $itemNo.val(result.itemNo);
+    $itemNo_count.text($itemNo.val().length);
     $introduction.val(result.introduction);
     $introduction_count.text($introduction.val().length);
     $illustrate.val(result.description);
@@ -1212,6 +1219,7 @@ function AddUp(success_text, error_text, target) {
     co.Product.AddUp.Product({
         Id: keyId,
         Title: $name.val(),
+        ItemNo: $itemNo.val(),
         Disp_Opt: disp_opt,
         Ser_No: 500,
         Introduction: $introduction.val(),

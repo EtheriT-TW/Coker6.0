@@ -15,7 +15,6 @@
 	<ul>
 		@{
 			string PageName;
-			ThePermission.Initable = false;
 			foreach (var item in Model.Jobs)
 			{
 				@if (item.jobItemModels == null)
@@ -23,12 +22,6 @@
 					if (item.CanVisble)
 					{
 						string myClass = item.PageName == ViewData["Title"].ToString() ? "active" : "";
-						if (myClass == "active") {
-							ThePermission.CanVisble = item.CanVisble;
-							ThePermission.CanUpdate = item.CanUpdate;
-							ThePermission.CanRemove = item.CanRemove;
-							ThePermission.CanCreate = item.CanCreate;
-						}
 						<li class="@myClass">
 								<a title="@item.Title" asp-controller="@item.Controller" asp-action="@item.Action">
 								<span class="nav-icon material-icons">@item.Icon</span>@item.Title
@@ -42,10 +35,6 @@
 					if (item.jobItemModels.Exists(e => e.PageName == ViewData["Title"].ToString()))
 					{
 						var n = item.jobItemModels.Find(e => e.PageName == ViewData["Title"].ToString());
-						ThePermission.CanVisble = n.CanVisble;
-						ThePermission.CanUpdate = n.CanUpdate;
-						ThePermission.CanRemove = n.CanRemove;
-						ThePermission.CanCreate = n.CanCreate;
 						brighten = "active open";
 					}
 
@@ -71,7 +60,6 @@
 					</li>
 				}
 			}
-			ThePermission.Initable = true;
 		}
 	</ul>
 </nav>

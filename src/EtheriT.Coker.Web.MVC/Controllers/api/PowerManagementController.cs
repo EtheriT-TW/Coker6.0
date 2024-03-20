@@ -104,7 +104,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpGet]
         public JsonResult GetPermission() {
             return new JsonResult(new {
-				ThePermission.CanCreate,
+                ThePermission.Initable,
+                ThePermission.CanCreate,
 				ThePermission.CanUpdate,
 				ThePermission.CanVisble,
 				ThePermission.CanRemove

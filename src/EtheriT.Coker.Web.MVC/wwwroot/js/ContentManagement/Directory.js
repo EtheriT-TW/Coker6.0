@@ -8,7 +8,7 @@ function PageReady() {
     DirectorytForms = $('#DirectorytForm');
     ArticletForms = $('#ArticletForm');
     permissionDetailsModal = new bootstrap.Modal(document.getElementById("PermissionDetailsModal"));
-    co.PowerManagement.GetPermission().done(function(){
+    co.PowerManagement.GetPermission().done(function (permission) {
         if (!permission.CanCreate) $(".btn_add").remove();
     });
 
@@ -236,8 +236,10 @@ function reladataButtonClicked(e) {
             BackToList();
             break;
     }
-    keyId = `${type}_${e.row.key}`;
-    window.location.hash = keyId;
+    if (type == "Articles") {
+        keyId = `${type}_${e.row.key}`;
+        window.location.hash = keyId;
+    } else co.sweet.warn("尚未開放","目前僅文章可編輯查看");
 }
 function GetDirectoryId() {
     return DirectoryId;

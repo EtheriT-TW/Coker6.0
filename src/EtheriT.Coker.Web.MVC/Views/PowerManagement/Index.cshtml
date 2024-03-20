@@ -53,6 +53,14 @@
                     <input id="edit-role-name" name="name" class="form-control " type="text" placeholder="角色名稱">
                     <label for="edit-role-name" class="form-label">角色名稱</label>
                 </div>
+                <div class="mb-3">
+                    <input id="edit-role-IsSuperUser" name="isSuperUser" class="form-control selectedItem" type="checkbox" value="true">
+                    <label for="edit-role-IsSuperUser" class="form-label">
+                        <i class="material-symbols-outlined">check</i>
+                        <i class="material-symbols-outlined">block</i>
+                        總管理者
+                    </label>
+                </div>
                 <button class="btn submit" type="button">儲存</button>
             </form>
         </div>
@@ -63,8 +71,8 @@
                     <label for="new-account" class="form-label required_all">帳號</label>
                     <div class="invalid-feedback">帳號必須填寫</div>
                 </div>
-                <div class="form-floating mb-3">
-                    <input id="new-s-name" name="nickName" class="form-control " type="text" placeholder="暱稱">
+                <div class="form-floating mb-3 d-none">
+                    <input id="new-s-name" name="nickName" class="form-control" type="text" placeholder="暱稱">
                     <label for="new-s-name" class="form-label">暱稱</label>
                     <div class="invalid-feedback">暱稱必須填寫</div>
                 </div>
@@ -73,12 +81,12 @@
                     <label for="new-name" class="form-label required_all">姓名</label>
                     <div class="invalid-feedback">姓名必須填寫</div>
                 </div>
-                <div class="form-floating mb-3">
-                    <input id="new-phone" name="telPhone" class="form-control d-none" type="text" placeholder="電話">
+                <div class="form-floating mb-3 d-none">
+                    <input id="new-phone" name="telPhone" class="form-control" type="text" placeholder="電話">
                     <label for="new-phone" class="form-label">電話</label>
                 </div>
-                <div class="form-floating mb-3">
-                    <input id="new-email" name="email" class="form-control" type="email" placeholder="email" required>
+                <div class="form-floating mb-3 d-none">
+                    <input id="new-email" name="email" class="form-control" type="email" placeholder="email">
                     <label for="new-email" class="form-label required_all">email</label>
                     <div class="invalid-feedback">email必須填寫</div>
                 </div>
@@ -109,7 +117,7 @@
                     <input id="account" name="account" class="form-control" type="text" placeholder="請輸入帳號" required>
                     <label for="account" class="form-label">帳號</label>
                 </div>
-                <div class="form-floating mb-3">
+                <div class="form-floating mb-3 d-none">
                     <input id="nickname" name="nickname" class="form-control " type="text" placeholder="暱稱">
                     <label for="nickname" class="form-label">暱稱</label>
                 </div>
@@ -117,11 +125,11 @@
                     <input id="name" name="name" class="form-control" type="text" placeholder="姓名">
                     <label for="name" class="form-label">姓名</label>
                 </div>
-                <div class="form-floating mb-3">
-                    <input id="telPhone" name="telPhone" class="form-control d-none" type="text" placeholder="電話">
+                <div class="form-floating mb-3 d-none">
+                    <input id="telPhone" name="telPhone" class="form-control" type="text" placeholder="電話">
                     <label for="telPhone" class="form-label">電話</label>
                 </div>
-                <div class="form-floating mb-3">
+                <div class="form-floating mb-3 d-none">
                     <input id="email" name="email" class="form-control" type="email" placeholder="email">
                     <label for="email" class="form-label">email</label>
                 </div>
@@ -173,7 +181,7 @@
             <div class="list-s d-flex align-items-center item role-item ">
                 <div class="d-flex justify-content-center align-items-center col-12">
                     <div class="col-lg-7 d-flex title">角色</div>
-                    <div class="col-lg-5 d-flex justify-content-center align-items-center">
+                    <div class="col-lg-5 d-flex justify-content-end align-items-center">
                         <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByRoleEdit" aria-controls="offcanvastopByRoleEdit"></button>
                         <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
                         <button class="btn fas fa-trash-alt"></button>
@@ -185,7 +193,7 @@
             <div class="list-s d-flex align-items-center  justify-content-center item member-item">
                 <div class="d-flex align-items-center  justify-content-center col-12">
                     <div class="col-lg-7 d-flex title">成員4</div>
-                    <div class="col-lg-5 d-flex justify-content-center align-items-center">
+                    <div class="col-lg-5 d-flex justify-content-end align-items-center">
                         <button class="btn fas fa-edit" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvastopByMember" aria-controls="offcanvasTop"></button>
                         <button class="btn fas fa-user-cog" data-bs-toggle="offcanvas" data-bs-target="#offcanvas1" aria-controls="offcanvas1"></button>
                         <button class="btn fas fa-trash-alt"></button>

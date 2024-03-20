@@ -85,16 +85,9 @@ namespace EtheriT.Coker.Application.Product
                     Core.Models.Prod p = new Core.Models.Prod
                     {
                         FK_WebsiteId = WebsiteID,
-                        Title = dto.Title,
-                        Disp_Opt = dto.Disp_Opt,
-                        Ser_No = dto.Ser_No,
-                        Introduction = dto.Introduction ?? "",
-                        Description = dto.Description ?? "",
-                        StartTime = dto.StartTime,
-                        EndTime = dto.EndTime,
-                        permanent = dto.Permanent,
                         CreatorUserId = userId
                     };
+                    mapper.Map(dto,p);
                     db.Prods.Add(p);
                     db.SaveChanges();
                     asoid = p.Id;
@@ -105,6 +98,7 @@ namespace EtheriT.Coker.Application.Product
                     if (db_p != null)
                     {
                         db_p.Title = dto.Title;
+                        db_p.ItemNo = dto.ItemNo;
                         db_p.Disp_Opt = dto.Disp_Opt;
                         db_p.Ser_No = dto.Ser_No;
                         db_p.Introduction = dto.Introduction;
@@ -198,7 +192,6 @@ namespace EtheriT.Coker.Application.Product
                         foreach (var price in item.Prices)
                         {
                             price.FK_PSId = ps.Id;
-
                         }
                     }
                     else
@@ -315,6 +308,7 @@ namespace EtheriT.Coker.Application.Product
                                     Title = p.Title,
                                     Disp_Opt = p.Disp_Opt,
                                     Ser_No = p.Ser_No,
+                                    ItemNo = p.ItemNo??"",
                                     Price = "",
                                     StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
                                     EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
@@ -367,20 +361,12 @@ namespace EtheriT.Coker.Application.Product
                 {
                     ProdGetDataDto output = new ProdGetDataDto()
                     {
-                        Id = db_p.Id,
-                        Title = db_p.Title,
-                        Disp_Opt = db_p.Disp_Opt,
-                        Ser_No = db_p.Ser_No,
-                        Introduction = db_p.Introduction,
-                        Description = db_p.Description,
-                        StartTime = db_p.StartTime,
-                        EndTime = db_p.EndTime,
-                        Permanent = db_p.permanent,
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertGetSelectedDto>(),
                         Stocks = new List<ProductStockDto>(),
                         Files = new List<FileGetProdDisplayDto>(),
                     };
+                    mapper.Map(db_p, output);
 
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
@@ -1327,17 +1313,21 @@ namespace EtheriT.Coker.Application.Product
         }
         private async Task importProdTech(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
-            var prodTitle = prods.GroupBy(x => x.ItemNo + x.ProdName).Select(e => e.Key);
+            var prodGroup = prods.GroupBy(x => new { x.ItemNo, x.ProdName }).Select(e => new { e.Key.ItemNo,e.Key.ProdName }).ToList();
+            var prodTitles = prodGroup.Select(e => e.ProdName).ToList();
+            var prodItemNos = prodGroup.Select(e => e.ItemNo).ToList();
             var crrenProds = db.Prods.Where(e => !e.IsDeleted)
-                    .Where(e => prodTitle.Contains(e.ItemNo??"" + e.Title))
-                    .Select(e => new { e.Id, e.Title }).ToList();
+                    .Where(e => prodTitles.Contains(e.Title))
+                    .Where(e => prodItemNos.Contains(e.ItemNo??""))
+                    .Select(e => new { e.Id, e.Title,e.ItemNo }).ToList();
             var techs = db.TechnicalCertificates.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
 
             List<TechCertProdAssociateDto> techCertProdAssociateDtos = new List<TechCertProdAssociateDto>();
             for (int i = 0; i < prods.Count; i++)
             {
                 var prod = prods[i];
-                var n = crrenProds.Find(e => e.Title == prod.ProdName);
+                var n = crrenProds.Find(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo);
+                if (n == null || prod.Techs == null) continue;
                 for (int j = 0; j < prod.Techs.Count; j++)
                 {
                     var item = prod.Techs[j];
@@ -1364,11 +1354,13 @@ namespace EtheriT.Coker.Application.Product
             List<string?> TagStr3 = prods.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => e.Tag3).ToList();
             List<string?> TagStr4 = prods.Where(e => !string.IsNullOrEmpty(e.Tag4)).Select(e => e.Tag4).ToList();
             List<string?> TagStr5 = prods.Where(e => !string.IsNullOrEmpty(e.Tag5)).Select(e => e.Tag5).ToList();
+            List<string?> TagStr6 = prods.Where(e => !string.IsNullOrEmpty(e.Tag6)).Select(e => e.Tag6).ToList();
             List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
             TagStr.AddRange(TagStr2);
             TagStr.AddRange(TagStr3);
             TagStr.AddRange(TagStr4);
             TagStr.AddRange(TagStr5);
+            TagStr.AddRange(TagStr6);
             TagStr = TagStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
 
             List<string> nowTags = db.Tags.Where(e => e.FK_WebsiteId == WebsiteId)
@@ -1434,11 +1426,15 @@ namespace EtheriT.Coker.Application.Product
             List<string?> ImagStr3 = prods.Where(e => !string.IsNullOrEmpty(e.Image3)).Select(e => e.Image3).ToList();
             List<string?> ImagStr4 = prods.Where(e => !string.IsNullOrEmpty(e.Image4)).Select(e => e.Image4).ToList();
             List<string?> ImagStr5 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image5).ToList();
+            List<string?> ImagStr6 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image6).ToList();
+            List<string?> ImagStr7 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image7).ToList();
             List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
             ImagStr.AddRange(ImagStr2);
             ImagStr.AddRange(ImagStr3);
             ImagStr.AddRange(ImagStr4);
             ImagStr.AddRange(ImagStr5);
+            ImagStr.AddRange(ImagStr6);
+            ImagStr.AddRange(ImagStr7);
             ImagStr = ImagStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
             List<FileImageImportDto> importDtos = new List<FileImageImportDto>();
             var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();

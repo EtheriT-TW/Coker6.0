@@ -27,17 +27,21 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Image3 { get; set; }
 		public string? Image4 { get; set; }
 		public string? Image5 { get; set; }
-		public string? Tech1 { get; set; }
-		public string? Tech2 { get; set; }
-		public string? Tech3 { get; set; }
-		public string? Tech4 { get; set; }
-		public string? Tag1 { get; set; }
+        public string? Image6 { get; set; }
+        public string? Image7 { get; set; }
+        public string? File1 { get; set; }
+		public string? File2 { get; set; }
+		public string? File3 { get; set; }
+		public string? File4 { get; set; }
+        public string? File5 { get; set; }
+        public string? Tag1 { get; set; }
 		public string? Tag2 { get; set; }
 		public string? Tag3 { get; set; }
 		public string? Tag4 { get; set; }
 		public string? Tag5 { get; set; }
-		public long? FK_WebsiteId { get; set; }
-		public List<ProductStockDto>? stocks { get; set; }
-		public List<TechCertDto>? Techs { get; set; }
+        public string? Tag6 { get; set; }
+        public long? FK_WebsiteId { get; set; }
+		public List<ProductStockDto>? stocks { get; set; } = new List<ProductStockDto>();
+		public List<TechCertDto>? Techs { get; set; } = new List<TechCertDto>();
 	}
 }

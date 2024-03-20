@@ -58,6 +58,22 @@
                 }
             })
         },
+        warn: function (title, text, action) {
+            Swal.fire({
+                icon: 'warning',
+                title: title,
+                html: text,
+                showConfirmButton: true,
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: '確定',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
+        },
         TitleHilight: function (string, title) {
             return string.replace("{0}", `<span class='ConfirmKeyWord'>${title}</span>`);
         }

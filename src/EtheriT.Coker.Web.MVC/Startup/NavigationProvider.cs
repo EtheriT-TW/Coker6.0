@@ -9,13 +9,17 @@ namespace EtheriT.Coker.Web.MVC.Startup
 {
 	public class NavigationProvider
 	{
-		private readonly LoginUserData loginUserData;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly LoginUserData loginUserData;
 		private readonly IPermissionsAppService permissionsAppService;
-		public NavigationProvider(LoginUserData loginUserData, IPermissionsAppService permissionsAppService)
-		{
+		public NavigationProvider(LoginUserData loginUserData, 
+			IPermissionsAppService permissionsAppService,
+            IHttpContextAccessor httpContextAccessor
+		){
 			this.loginUserData = loginUserData;
 			this.permissionsAppService = permissionsAppService;
-		}
+            _httpContextAccessor = httpContextAccessor;
+        }
 		public async Task<Site> getMenus()
 		{
 			Site site = new Site
@@ -377,49 +381,106 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					break;
 			}
 			SetJobs(site.Jobs, seting);
-		}
+        }
 		public async Task setUserJob(Site site)
 		{
-			var data = await permissionsAppService.GetLoginUserPermissions();
-			ThePermission.superManager = await permissionsAppService.IsPowerUserPermissions();
-			if (data != null)
-			{
-				List<JobMenu> jobs = new List<JobMenu>();
-				data.ForEach(x =>
-				{
-					string name = x.Name.Split(".")[0];
-					string type = x.Name.Split(".")[1];
-					JobMenu? job = jobs.Find(e => e.PageName == name);
-					if (job == null)
+            ThePermission.Initable = false;
+            ThePermission.superManager = await permissionsAppService.IsPowerUserPermissions();
+			if (ThePermission.superManager) {
+				site.Jobs.ForEach(x => {
+					if (x.Enable)
 					{
-						job = new JobMenu
+                        x.CanRemove = true;
+                        x.CanUpdate = true;
+                        x.CanVisble = true;
+                        x.CanCreate = true;
+                        if (x.jobItemModels != null)
+                        {
+                            x.jobItemModels.ForEach(s => {
+								if (s.Enable) {
+                                    s.CanRemove = true;
+                                    s.CanUpdate = true;
+                                    s.CanVisble = true;
+                                    s.CanCreate = true;
+                                }
+                            });
+                        }
+                    }
+                });
+
+            }
+            else {
+				var data = await permissionsAppService.GetLoginUserPermissions();
+				if (data != null)
+				{
+					List<JobMenu> jobs = new List<JobMenu>();
+					data.ForEach(x =>
+					{
+						string name = x.Name.Split(".")[0];
+						string type = x.Name.Split(".")[1];
+						JobMenu? job = jobs.Find(e => e.PageName == name);
+						if (job == null)
 						{
-							PageName = name,
-							Enable= true,
-						};
-						jobs.Add(job);
-					}
-					switch (type) {
-						case "View":
-							job.CanVisble = x.IsGranted;
-							break;
-						case "Edit":
-							job.CanUpdate = x.IsGranted;
-							break;
-						case "Create":
-							job.CanCreate = x.IsGranted;
-							break;
-						case "Delete":
-							job.CanRemove = x.IsGranted;
-							break;
-						default:
-							job.Enable = false; 
-							break;
-					}
-				});
-				SetJobs(site.Jobs, jobs);
+							job = new JobMenu
+							{
+								PageName = name,
+								Enable = true,
+							};
+							jobs.Add(job);
+						}
+						switch (type)
+						{
+							case "View":
+								job.CanVisble = x.IsGranted;
+								break;
+							case "Edit":
+								job.CanUpdate = x.IsGranted;
+								break;
+							case "Create":
+								job.CanCreate = x.IsGranted;
+								break;
+							case "Delete":
+								job.CanRemove = x.IsGranted;
+								break;
+							default:
+								job.Enable = false;
+								break;
+						}
+					});
+					SetJobs(site.Jobs, jobs);
+				}
 			}
-		}
+            if (_httpContextAccessor.HttpContext != null && _httpContextAccessor.HttpContext.Request.RouteValues.ContainsKey("action"))
+            {
+                string ControllerName = (_httpContextAccessor.HttpContext.Request.RouteValues["controller"] ?? "").ToString();
+                string ActionName = (_httpContextAccessor.HttpContext.Request.RouteValues["action"] ?? "").ToString();
+                JobMenu? item = null;
+                site.Jobs.ForEach(e => {
+                    if (e.Controller == ControllerName && e.Action == ActionName) item = e;
+                    else if (e.jobItemModels != null)
+                    {
+                        var n = e.jobItemModels.Find(x => x.Controller == ControllerName && x.Action == ActionName);
+                        if (n != null) item = n;
+                    }
+                    if (item != null) return;
+                });
+                if (item != null)
+                {
+                    ThePermission.CanVisble = item.CanVisble;
+                    ThePermission.CanUpdate = item.CanUpdate;
+                    ThePermission.CanRemove = item.CanRemove;
+                    ThePermission.CanCreate = item.CanCreate;
+                }
+                else
+                {
+                    ThePermission.CanVisble = false;
+                    ThePermission.CanUpdate = false;
+                    ThePermission.CanRemove = false;
+                    ThePermission.CanCreate = false;
+                }
+            }
+            ThePermission.Initable = true;
+        }
 		private void SetJobs(List<JobMenu> jobs, List<JobMenu> seting)
 		{
 			if (seting.Count() == 0) return;

@@ -23,7 +23,7 @@ namespace EtheriT.Coker.Web.Core.Models
 		[StringLength(100)]
 		public string? Account { get; set; }
 		[StringLength(150)]
-		public string Email { get; set; }
+		public string? Email { get; set; }
 		[StringLength(50)]
 		public string? CellPhone { get; set; }
 		[StringLength(50)]

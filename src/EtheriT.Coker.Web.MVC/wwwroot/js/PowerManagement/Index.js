@@ -200,6 +200,8 @@
                 } else co.sweet.error("資料錯誤", result.error);
             });
         });
+        if ($("#roleMember").data("isSuperUser")) $item.find(".fa-user-cog").addClass("d-none");
+        else $item.find(".fa-user-cog").removeClass("d-none");
         $item.find(".fa-user-cog").on("click", function (event) {
             event.stopPropagation();
             const self = $(this).parents(".member-item").first();
@@ -231,6 +233,7 @@
             nItem = m;
             co.Form.insertData($(m).data(), $("#offcanvastopByRoleEdit"));
         });
+        if (element.isSuperUser) $item.find(".fa-user-cog").addClass("d-none");
         $item.find(".fa-user-cog").on("click", function (event) {
             event.stopPropagation();
             const self = $(this).parents(".role-item").first();
@@ -263,6 +266,7 @@
                         co.Array.Delete($Role.data("members"), $(this).data());
                         $(this).appendTo("#noGroupMember");
                         $(this).removeClass("checked");
+                        $(this).find(".fa-user-cog").removeClass("d-none");
                     });
                 }
             });
@@ -287,6 +291,7 @@
                         $Role.data("members").push($(this).data());
                         $(this).appendTo("#roleMember");
                         $(this).removeClass("checked");
+                        if ($Role.data("isSuperUser")) $(this).find(".fa-user-cog").addClass("d-none");
                     });
                 }
             });

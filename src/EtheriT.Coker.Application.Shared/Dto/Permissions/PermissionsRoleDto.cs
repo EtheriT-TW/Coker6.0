@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Permissions
     {
         public long Id { get; set; }
         public string Name { get; set; }
+        public bool IsSuperUser { get; set; }
         public List<PermissionsUserDto> Members { get; set; } = new List<PermissionsUserDto>();
     }
 }

@@ -93,6 +93,9 @@ input[type="number"] {
 #ProductForm > .name .name_count::after {
     content: '/150';
 }
+#ProductForm > .itemNo .itemNo_count::after {
+    content: '/100';
+}
 
 #ProductForm > .introduction .introduction_count::after {
     content: '/3000';

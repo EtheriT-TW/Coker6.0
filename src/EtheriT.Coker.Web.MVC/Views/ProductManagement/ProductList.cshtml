@@ -115,7 +115,9 @@
                     .Columns(c =>
                     {
                         c.AddFor(e => e.Disp_Opt).Caption("是否顯示").Width(90);
+                        c.AddFor(e => e.Id).Caption("id").Width(50);
                         c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
+                        c.AddFor(e => e.ItemNo).Caption("銷貨編號");
                         c.AddFor(e => e.Title).Caption("商品名稱");
                         c.AddFor(e => e.Price).Caption("價格");
                         c.AddFor(e => e.StartTime).Caption("起始日期");
@@ -177,6 +179,13 @@
                     </div>
                     <textarea id="InputName" class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入商品名稱" required></textarea>
                 </div>
+                <div class="itemNo border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0 required_all">銷帳編號</span>
+                        <div class="itemNo_count">0</div>
+                    </div>
+                    <textarea id="InputItemNo" class="form-control border-0" aria-label="With textarea" maxlength="100" placeholder="輸入銷帳編號" required></textarea>
+                </div>
 
                 <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
                     <ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
@@ -231,7 +240,7 @@
                     </div>
                     <div class="position-absolute upload_title bg-white">輪播</div>
                 </div>
-                <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
+                <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative d-none">
                     <ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
                         <li class="btn_upload_add border mb-1 p-1 shadow-sm">
                             <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">

@@ -648,7 +648,6 @@ html[dir='rtl'] #outerContainer.sidebarOpen #viewerContainer:not(.pdfPresentatio
 }
 
 .toolbar {
-    display: none;
     position: relative;
     left: 0;
     right: 0;

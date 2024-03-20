@@ -43,6 +43,15 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "EtheriT.Coker.Web.Public.bronson": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "bronson"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7193;http://localhost:5193"
     }
   },
   "iisSettings": {

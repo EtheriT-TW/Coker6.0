@@ -295,18 +295,18 @@ function DirectoryDataInsert($item, result) {
             $tags = content.find(".tags");
             $tags.empty();
             data.tags.slice(0, 2).forEach((tag) => {
-                var badge = $(temp_tag).clone();
+                let badge = $(temp_tag).clone();
                 badge.text(tag.tag_Name.slice(0, 4));
                 $tags.append(badge);
             });
             data.tags.slice(2).forEach((tag) => {
-                var badge = $(temp_tag).clone();
+                let badge = $(temp_tag).clone();
                 badge.text(tag.tag_Name.slice(0, 4));
                 badge.addClass("more-tag d-none");
                 $tags.append(badge);
             });
             if (data.tags.length > 2) {
-                var badge = $(temp_tag).clone();
+                let badge = $(temp_tag).clone();
                 badge.text("...");
                 badge.addClass("less-tag");
                 $tags.append(badge);

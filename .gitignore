@@ -387,3 +387,7 @@ upload/**/*.*
 NuGet.config
 /src/EtheriT.Coker.Web.MVC/appsettings2.json
 /src/EtheriT.Coker.Web.Public/appsettings2.json
+
+.gitignore
+appsettings.bronson.json
+launchSettings.json

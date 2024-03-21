@@ -73,6 +73,7 @@ function ready() {
     if ($(".ContactForm").length > 0) setContact();
     if ($(".BGCanvas").length > 0) setBGCanvas();
     if ($(".FlipBook").length > 0) FlipBookInit();
+    if ($(".FlipBookModal").length > 0) FlipBookModalInit();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
     if ($(".container .qa").length > 0) {
         $(".container").each((i, e) => {

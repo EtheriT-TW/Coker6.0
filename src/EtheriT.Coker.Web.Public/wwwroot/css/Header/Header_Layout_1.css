@@ -125,7 +125,7 @@
     cursor: pointer;
 }
 
-    #Offcanvas_Mega_Menu > ul > .title > a {
+    #Offcanvas_Mega_Menu > ul > .title > div > a {
         color: black;
     }
 
@@ -140,7 +140,7 @@
         box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > a > img + span{
+    #Offcanvas_Mega_Menu > ul > .title > div > a > img + span{
         display: none;
     }
 
@@ -328,10 +328,10 @@
         background: #ffffffe6;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > a > img {
+    #Offcanvas_Mega_Menu > ul > .title > div > a > img {
         display: none; 
     }
-    #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+    #Offcanvas_Mega_Menu > ul > .title > div > a > img + span {
         display: unset;
         height: 2em;
         font-size: 1.1em;

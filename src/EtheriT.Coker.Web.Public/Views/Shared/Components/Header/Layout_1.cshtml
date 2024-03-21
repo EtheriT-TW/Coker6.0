@@ -54,22 +54,26 @@
                         }
                         @if (subItems.Count() > 0)
                         {
-                            <a id="collapse-header-@menu.Title" href="@menu.Link" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item collapsed"
+                            <div id="collapse-header-@menu.Title" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item collapsed"
                                data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
-                                    @menu.Title
+                                    <a href="@menu.Link">@menu.Title</a>
                                 }else{
                                     if (string.IsNullOrEmpty(menu.hoverImageUrl))
                                     {
-                                        <img src="@menu.imageUrl" alt="@menu.Title" />
-                                        <span class="justify-content-center">@menu.Title</span>
+                                         <a href="@menu.Link">
+                                            <img src="@menu.imageUrl" alt="@menu.Title" />
+                                            <span class="justify-content-center">@menu.Title</span>
+                                         </a>
                                     }else{
-                                        <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
-                                        <span>@menu.Title</span>
+                                        <a href="@menu.Link">
+                                            <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                                            <span>@menu.Title</span>
+                                        </a>
                                     }
                                 }
-                            </a>
+                            </div>
                             <div class="content collapse_menus translate-middle-x collapse" id="collapse-@menu.Title" aria-labelledby="collapse-header-@menu.Title" data-bs-parent="#accordion-menu">
                                 <ul class="@jc">
                                     @foreach (var secItem in subItems)

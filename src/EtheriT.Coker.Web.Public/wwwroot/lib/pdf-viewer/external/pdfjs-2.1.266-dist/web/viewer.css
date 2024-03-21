@@ -624,12 +624,15 @@ html[dir='rtl'] #sidebarContent {
   transition-duration: 200ms;
   transition-timing-function: ease;
 }
+
+/*
 html[dir='ltr'] #viewerContainer {
   box-shadow: inset 1px 0 0 hsla(0,0%,100%,.05);
 }
 html[dir='rtl'] #viewerContainer {
   box-shadow: inset -1px 0 0 hsla(0,0%,100%,.05);
 }
+    */
 
 #outerContainer.sidebarResizing #viewerContainer {
   /* Improve responsiveness and avoid visual glitches when the sidebar is resized. */
@@ -1287,8 +1290,30 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
   content: url(images/toolbarButton-pageUp-rtl.png);
 }
 
+.pageButton.pageUp {
+    position: absolute;
+    top: 50%;
+    left: 0.5em;
+}
+.pageButton.pageDown {
+    position: absolute;
+    top: 50%;
+    right: 0.5em;
+}
+.pageButton {
+    width: 2em;
+    height: 2em;
+    background-color: #666;
+    border: 0px;
+    border-radius: 0.5em;
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 2rem;
+    color: #222;
+}
+
 html[dir='ltr'] .toolbarButton.pageDown::before {
-  content: url(images/toolbarButton-pageDown.png);
+    content: url(images/toolbarButton-pageDown.png);
 }
 html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-pageDown-rtl.png);

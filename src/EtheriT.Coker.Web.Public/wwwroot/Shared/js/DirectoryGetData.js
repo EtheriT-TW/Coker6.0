@@ -287,7 +287,7 @@ function DirectoryDataInsert($item, result) {
                 else return price;
             }
             const convert_price = (price) => {
-                return "$"+Intl.NumberFormat().format(get_high_price(price));
+                return Intl.NumberFormat().format(get_high_price(price));
             }
             content.find(".normal-price").text(convert_price(data.price));
             content.find(".price-grid").text(convert_price(data.price));

@@ -29,15 +29,15 @@ See https://github.com/adobe-type-tools/cmap-resources
     <title>PDF.js viewer</title>
 
 
-    <link rel="stylesheet" href="viewer.css">
+    <link rel="stylesheet" href="/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/viewer.css">
 
 
 <!-- This snippet is used in production (included from viewer.html) -->
-<link rel="resource" type="application/l10n" href="locale/locale.properties">
+<link rel="resource" type="application/l10n" href="/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/locale/locale.properties">
 <script src="/lib/pdf-viewer/external/pdfjs-2.1.266-dist/build/pdf.js"></script>
 
 
-    <script src="viewer.js"></script>
+    <script src="/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/viewer.js"></script>
 
     <!-- $FB: additional files included -->
     <script src="/lib/jquery/dist/jquery.min.js"></script>
@@ -192,10 +192,10 @@ See https://github.com/adobe-type-tools/cmap-resources
               </div>
           </div>  <!-- secondaryToolbar -->
 
-          <button class="pageButton pageUp" title="Previous Page" id="previous">
+          <button class="pageButton pageUp" title="Previous Page" id="sideprevious">
               <span><</span>
           </button>
-          <button class="pageButton pageDown" title="Next Page" id="next" >
+          <button class="pageButton pageDown" title="Next Page" id="sidenext" >
               <span>></span>
           </button>
 
@@ -203,9 +203,10 @@ See https://github.com/adobe-type-tools/cmap-resources
               <div id="toolbarContainer">
                   <div id="toolbarViewer">
                       <div id="toolbarViewerLeft">
-                          <button id="sidebarToggle" class="toolbarButton" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
+                          <button id="sidebarToggle" class="toolbarButton d-none" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
                               <span data-l10n-id="toggle_sidebar_label">Toggle Sidebar</span>
                           </button>
+                          <div class="toolbarButtonSpacer"></div>
                           <div class="toolbarButtonSpacer"></div>
                           <button id="viewFind" class="toolbarButton" title="Find in Document" tabindex="12" data-l10n-id="findbar">
                               <span data-l10n-id="findbar_label">Find</span>
@@ -227,7 +228,7 @@ See https://github.com/adobe-type-tools/cmap-resources
                               <span data-l10n-id="presentation_mode_label">Presentation Mode</span>
                           </button>
 
-                          <button id="openFile" class="toolbarButton openFile hiddenLargeView" title="Open File" tabindex="32" data-l10n-id="open_file">
+                          <button id="openFile" class="toolbarButton openFile hiddenLargeView d-none" title="Open File" tabindex="32" data-l10n-id="open_file">
                               <span data-l10n-id="open_file_label">Open</span>
                           </button>
 
@@ -238,7 +239,7 @@ See https://github.com/adobe-type-tools/cmap-resources
                           <button id="download" class="toolbarButton download hiddenMediumView" title="Download" tabindex="34" data-l10n-id="download">
                               <span data-l10n-id="download_label">Download</span>
                           </button>
-                          <a href="#" id="viewBookmark" class="toolbarButton bookmark hiddenSmallView" title="Current view (copy or open in new window)" tabindex="35" data-l10n-id="bookmark">
+                          <a href="#" id="viewBookmark" class="toolbarButton bookmark hiddenSmallView d-none" title="Current view (copy or open in new window)" tabindex="35" data-l10n-id="bookmark">
                               <span data-l10n-id="bookmark_label">Current View</span>
                           </a>
 

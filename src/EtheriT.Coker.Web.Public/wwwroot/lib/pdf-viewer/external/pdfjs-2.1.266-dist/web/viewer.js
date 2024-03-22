@@ -142,6 +142,8 @@ function getViewerConfiguration() {
       scaleSelect: document.getElementById('scaleSelect'),
       customScaleOption: document.getElementById('customScaleOption'),
       previous: document.getElementById('previous'),
+      sidenext: document.getElementById('sidenext'),
+      sideprevious: document.getElementById('sideprevious'),
       next: document.getElementById('next'),
       zoomIn: document.getElementById('zoomIn'),
       zoomOut: document.getElementById('zoomOut'),
@@ -5270,7 +5272,7 @@ var defaultOptions = {
     kind: OptionKind.WORKER
   },
   workerSrc: {
-    value: '../build/pdf.worker.js',
+    value: '/lib/pdf-viewer/external/pdfjs-2.1.266-dist/build/pdf.worker.js',
     kind: OptionKind.WORKER
   }
 };
@@ -13215,6 +13217,16 @@ function () {
           source: self
         });
       });
+      items.sideprevious.addEventListener('click', function () {
+          eventBus.dispatch('previouspage', {
+              source: self
+          });
+      });
+      items.sidenext.addEventListener('click', function () {
+          eventBus.dispatch('nextpage', {
+              source: self
+          });
+      });
       items.zoomIn.addEventListener('click', function () {
         eventBus.dispatch('zoomin', {
           source: self
@@ -13322,6 +13334,8 @@ function () {
 
       items.previous.disabled = pageNumber <= 1;
       items.next.disabled = pageNumber >= pagesCount;
+      items.sideprevious.disabled = pageNumber <= 1;
+      items.sidenext.disabled = pageNumber >= pagesCount;
       items.zoomOut.disabled = pageScale <= _ui_utils.MIN_SCALE;
       items.zoomIn.disabled = pageScale >= _ui_utils.MAX_SCALE;
       var customScale = Math.round(pageScale * 10000) / 100;

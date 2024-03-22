@@ -1,8 +1,10 @@
 ﻿.FlipBook {
-    height: 100vh;
+    height: 50em;
+    width: 100%;
+    background: #404040;
 }
 
-.FlipBook iframe {
+.FlipBook > div {
     height: 100%;
-    background: #404040;
+    background: #0000;
 }

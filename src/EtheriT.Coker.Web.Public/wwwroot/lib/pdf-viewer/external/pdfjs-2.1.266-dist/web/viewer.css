@@ -396,25 +396,20 @@
   --sidebar-width: 200px;
 }
 
-* {
-  padding: 0;
-  margin: 0;
-}
-
-html {
+.Flipbook {
   height: 100%;
   width: 100%;
   /* Font size is needed to make the activity bar the correct size. */
   font-size: 10px;
 }
 
-body {
-  height: 100%;
-  width: 100%;
-  background-color: #0000;
-/*  background-image: url(images/texture.png); */
+.Flipbook > div {
+    height: 100%;
+    width: 100%;
+    background-color: #0000;
+    /*  background-image: url(images/texture.png); */
 }
-
+/*
 body,
 input,
 button,
@@ -422,7 +417,7 @@ select {
   font: message-box;
   outline: none;
 }
-
+*/
 .hidden {
   display: none !important;
 }
@@ -583,6 +578,7 @@ html[dir='rtl'] #outerContainer.sidebarOpen #sidebarContainer {
 }
 
 #mainContainer {
+    overflow: hidden;
     position: absolute;
     top: 0;
     right: 0;
@@ -610,15 +606,15 @@ html[dir='rtl'] #sidebarContent {
 }
 
 #viewerContainer {
-  overflow: visible;
-  -webkit-overflow-scrolling: touch;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  outline: none;
-  margin: 5em;
+    overflow: visible;
+    -webkit-overflow-scrolling: touch;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    outline: none;
+    margin: 5em;
 }
 #viewerContainer:not(.pdfPresentationMode) {
   transition-duration: 200ms;
@@ -654,7 +650,7 @@ html[dir='rtl'] #outerContainer.sidebarOpen #viewerContainer:not(.pdfPresentatio
     position: relative;
     left: 0;
     right: 0;
-    z-index: 9999;
+    z-index: 950;
     cursor: default;
 }
 

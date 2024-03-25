@@ -407,7 +407,7 @@ var PDFViewerApplication = {
   l10n: null,
   isInitialViewSet: false,
   downloadComplete: false,
-  isViewerEmbedded: window.parent !== window,
+  isViewerEmbedded: true,// window.parent !== window,
   url: '',
   baseUrl: '',
   externalServices: DefaultExternalServices,

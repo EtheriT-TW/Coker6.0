@@ -396,25 +396,20 @@
   --sidebar-width: 200px;
 }
 
-* {
-  padding: 0;
-  margin: 0;
-}
-
-html {
+.Flipbook {
   height: 100%;
   width: 100%;
   /* Font size is needed to make the activity bar the correct size. */
   font-size: 10px;
 }
 
-body {
-  height: 100%;
-  width: 100%;
-  background-color: #0000;
-/*  background-image: url(images/texture.png); */
+.Flipbook > div {
+    height: 100%;
+    width: 100%;
+    background-color: #0000;
+    /*  background-image: url(images/texture.png); */
 }
-
+/*
 body,
 input,
 button,
@@ -422,7 +417,7 @@ select {
   font: message-box;
   outline: none;
 }
-
+*/
 .hidden {
   display: none !important;
 }
@@ -583,6 +578,7 @@ html[dir='rtl'] #outerContainer.sidebarOpen #sidebarContainer {
 }
 
 #mainContainer {
+    overflow: hidden;
     position: absolute;
     top: 0;
     right: 0;
@@ -610,26 +606,29 @@ html[dir='rtl'] #sidebarContent {
 }
 
 #viewerContainer {
-  overflow: visible;
-  -webkit-overflow-scrolling: touch;
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  outline: none;
-  margin: 5em;
+    overflow: visible;
+    -webkit-overflow-scrolling: touch;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    outline: none;
+    margin: 5em;
 }
 #viewerContainer:not(.pdfPresentationMode) {
   transition-duration: 200ms;
   transition-timing-function: ease;
 }
+
+/*
 html[dir='ltr'] #viewerContainer {
   box-shadow: inset 1px 0 0 hsla(0,0%,100%,.05);
 }
 html[dir='rtl'] #viewerContainer {
   box-shadow: inset -1px 0 0 hsla(0,0%,100%,.05);
 }
+    */
 
 #outerContainer.sidebarResizing #viewerContainer {
   /* Improve responsiveness and avoid visual glitches when the sidebar is resized. */
@@ -651,7 +650,7 @@ html[dir='rtl'] #outerContainer.sidebarOpen #viewerContainer:not(.pdfPresentatio
     position: relative;
     left: 0;
     right: 0;
-    z-index: 9999;
+    z-index: 950;
     cursor: default;
 }
 
@@ -1287,8 +1286,30 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
   content: url(images/toolbarButton-pageUp-rtl.png);
 }
 
+.pageButton.pageUp {
+    position: absolute;
+    top: 50%;
+    left: 0.5em;
+}
+.pageButton.pageDown {
+    position: absolute;
+    top: 50%;
+    right: 0.5em;
+}
+.pageButton {
+    width: 2em;
+    height: 2em;
+    background-color: #666;
+    border: 0px;
+    border-radius: 0.5em;
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 2rem;
+    color: #222;
+}
+
 html[dir='ltr'] .toolbarButton.pageDown::before {
-  content: url(images/toolbarButton-pageDown.png);
+    content: url(images/toolbarButton-pageDown.png);
 }
 html[dir='rtl'] .toolbarButton.pageDown::before {
   content: url(images/toolbarButton-pageDown-rtl.png);

@@ -289,7 +289,7 @@ namespace EtheriT.Coker.Application
         }
         public async Task SetLogs(string Controller, string Action,long? UsetId,long? WebsiteId, string Paramater, string response)
         {
-			var user = await GetUser(UsetId.Value);
+			var user = await GetUser(UsetId??0);
 			db.AuditLogs.Add(new Core.Models.AuditLog
             {
                 ClientIpAddress = GetClientIP(),
@@ -301,7 +301,7 @@ namespace EtheriT.Coker.Application
                 ReturnValue = response,
                 UserId = UsetId,
                 FK_WebsiteId = WebsiteId,
-				ClientName = user.UserName
+				ClientName = user==null?"": user.UserName
 			});
             db.SaveChanges();
         }

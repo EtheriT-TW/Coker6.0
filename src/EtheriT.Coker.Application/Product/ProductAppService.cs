@@ -566,59 +566,56 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
+                string orgName = await loginUserData.GetWebsiteOrgName();
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
-
-                foreach (var Id in dto.Ids)
+                var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).ToListAsync();
+                if (result != null)
                 {
-                    var result = await db.Prods.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).FirstOrDefaultAsync();
-
-                    if (result != null)
-                    {
-                        ProdGetDataDto tempoutput = mapper.Map<ProdGetDataDto>(result);
-                        productData.Add(tempoutput);
-                    }
-                    else throw new Exception("查無商品資料");
+                    productData.AddRange(mapper.Map<List<ProdGetDataDto>>(result));
                 }
+                else throw new Exception("查無商品資料");
 
                 if (productData != null)
                 {
                     productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
-                    for (int i = 0; i < productData.Count; i++)
+                    output = (from p in productData
+                              select new DirectoryReleInfoDto {
+                                  Id = p.Id,
+                                  Title = p.Title,
+                                  ItemNo = p.ItemNo,
+                                  Link = $"/product/{p.Id}",
+                                  type = DirectoryTypeEnum.商品,
+                                  Description = p.Description,
+                                  SerNo = p.Ser_No,
+                                  tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == WebsiteID)
+                                          join a in db.Tag_Associates.Where(e => !e.IsDeleted)
+                                                       .Where(e => e.FK_AId == p.Id)
+                                                       .Where(e => e.Type == (int)TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
+                                          group t by new { t.Id,t.Title } into g
+                                          select new TagGetSelectedDto
+                                          {
+                                              FK_TId = g.Key.Id,
+                                              Tag_Name = g.Key.Title
+                                          }).ToList(),
+                                  MainImage = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                                  .Where(e => e.fileUpload!=null && e.fileUpload.FK_WebsiteId == WebsiteID)
+                                                  .Where(e => e.fileUpload!=null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                                  .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                              select new DirectoryReleInfoDto { 
+                                                Link = (f.fileUpload.DownloadFileName??"").Replace("upload", $"upload{orgName}")
+                                              }).FirstOrDefault()?? new DirectoryReleInfoDto()).Link,
+                             }).ToList();
+                    for (int i = 0; i < output.Count; i++)
                     {
-                        var data = productData[i];
-                        var output_data = new DirectoryReleInfoDto();
-                        var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
-                        {
-                            Sid = data.Id,
-                            Type = (int)FileBindTypeEnum.產品,
-                            Size = 1
-                        });
+                        var data = output[i];
                         var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e=> e.Id).ToListAsync();
                         var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
                         double min = p.Min(e => e.Price)??0;
                         double max = p.Max(e => e.Price) ?? 0;
-                        if (min == max) output_data.Price = $"{max}";
-                        else output_data.Price = $"{min} ~ {max}";
-                        var tagIds = await db.Tag_Associates.Where(e => !e.IsDeleted)
-                            .Where(e => e.FK_AId == data.Id)
-                            .Where(e => e.Type == 1)
-                            .Select(e => e.FK_TId).ToListAsync();
-                        output_data.tags = await (
-                            from t in db.Tags.Where(e => tagIds.Contains(e.Id))
-                            select new TagGetSelectedDto
-                            { 
-                                Id = data.Id,
-                                FK_TId = t.Id,
-                                Tag_Name = t.Title
-                            }
-                        ).ToListAsync();
-                        output_data.type = DirectoryTypeEnum.商品;
-                        output_data = mapper.Map(data, output_data);
-                        output_data.Link = $"/product/{data.Id}";
-                        output_data.MainImage = (imagedata[0] ?? new FileGetImgDto()).Link;
-
-                        output.Add(output_data);
+                        if (min == max) data.Price = $"{max}";
+                        else data.Price = $"{min} ~ {max}";
+                       
                     }
                 }
 
@@ -1201,7 +1198,11 @@ namespace EtheriT.Coker.Application.Product
                 .Where(e => strings.Contains(e.Title)).ToListAsync();
             var webMenu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
                 .Where(e => !string.IsNullOrEmpty(e.Title) && strings.Contains(e.Title)).ToListAsync();
-            for(int i=0; i< menuMap.Count; i++) {
+            var TagAssociate = await db.Tag_Associates.Include(t => t.Tag)
+                    .Where(e => !e.IsDeleted)
+                    .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                    .Where(t => t.Tag!=null && t.Tag.FK_WebsiteId == WebsiteID).ToListAsync();
+            for (int i=0; i< menuMap.Count; i++) {
                 var menu = menuMap[i];
                 if (menu.Child.Any()) await createDirectory(menu.Child);
                 else {
@@ -1218,8 +1219,9 @@ namespace EtheriT.Coker.Application.Product
                         await loginUserData.SaveChanges(dir);
                     }
                     if (menu.Tags != null && menu.Tags.Any()) {
+                        var tagIds = menu.Tags.FindAll(e => e.Id != null).Select(e => e.Id).ToList();
                         menu.Tags.ForEach(async tag => {
-                            if (tag.Id != null) {
+                            if (tag.Id != null && !TagAssociate.Exists( e => e.FK_AId == dir.Id && e.FK_TId == tag.Id)) {
                                 Tag_Associate associate = new Tag_Associate
                                 {
                                     FK_AId = dir.Id,
@@ -1230,6 +1232,11 @@ namespace EtheriT.Coker.Application.Product
                                 associates.Add(associate);
                             }
                         });
+                        var oldTagBind = TagAssociate.FindAll(e => e.FK_AId == dir.Id && !tagIds.Contains(e.FK_TId)).ToList();
+                        for (int j=0; j< oldTagBind.Count(); j++) {
+                            oldTagBind[i].IsDeleted = true;
+                            await loginUserData.setOptionParameter(oldTagBind[i]);
+                        }
                     }
                     var myMenu = webMenu.Where(e => e.Title == menu.Name).FirstOrDefault();
                     if (myMenu != null && string.IsNullOrEmpty(myMenu.SaveHtml) && !string.IsNullOrEmpty(dir.Title))
@@ -1444,7 +1451,7 @@ namespace EtheriT.Coker.Application.Product
                 if (myProd != null)
                 {
                     List<string?> fileName =
-                        ImagStr.FindAll(e => e == prod.Image1 || e == prod.Image2 || e == prod.Image3 || e == prod.Image4 || e == prod.Image5);
+                        ImagStr.FindAll(e => e == prod.Image1 || e == prod.Image2 || e == prod.Image3 || e == prod.Image4 || e == prod.Image5 || e == prod.Image6 || e == prod.Image7);
                     for (int i = 0; i < fileName.Count; i++)
                     {
                         if (!string.IsNullOrEmpty(fileName[i]))

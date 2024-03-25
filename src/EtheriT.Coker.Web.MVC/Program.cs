@@ -239,6 +239,14 @@ else
 }
 
 var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
+app.UseCookiePolicy(
+    new CookiePolicyOptions
+    {
+        Secure = CookieSecurePolicy.Always,
+        HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
+        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
+    }
+);
 /*
 app.Use((context, next) =>
 {

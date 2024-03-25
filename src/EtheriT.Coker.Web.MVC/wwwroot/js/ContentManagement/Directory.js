@@ -309,7 +309,7 @@ function AddUp(success_text, error_text) {
         Description: $description_text.val(),
         Type: parseInt($bind_type.val()),
         Visible: disp_opt,
-        TagSelected: tag_list,
+        TagSelected: $DirectorytTags.data("tagList"),
         Fk_Mid: Fk_Mid
     }).done(function () {
         Coker.sweet.success(success_text, null, true);

@@ -359,15 +359,20 @@ namespace EtheriT.Coker.Application.Directory
                     {
                         case DirectoryTypeEnum.商品:
                             var product_datas = new List<ProdGetDataDto>();
+                            List<long> list = new List<long>();
                             foreach (var tag in tags)
                             {
                                 var db_ps = await (db.Tag_Associates.Where(e => e.FK_TId == tag.FK_TId && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
-                                if (db_ps != null)
+                                if (!list.Any()) list = db_ps.Select(e => e.FK_AId).ToList();
+                                else {
+                                    list = db_ps.Where(e => list.Contains(e.FK_AId)).Select(e => e.FK_AId).ToList();
+                                }
+                            }
+                            if (list.Any())
+                            {
+                                foreach (var FK_AId in list)
                                 {
-                                    foreach (var db_p in db_ps)
-                                    {
-                                        product_datas.Add(await productAppService.GetProdDataOne(db_p.FK_AId));
-                                    }
+                                    product_datas.Add(await productAppService.GetProdDataOne(FK_AId));
                                 }
                             }
                             foreach (var product_data in product_datas)

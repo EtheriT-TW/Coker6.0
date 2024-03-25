@@ -62,7 +62,8 @@ builder.Services.AddAntiforgery(options =>
     // Set Cookie properties using CookieBuilder properties†.
     options.FormFieldName = "AntiforgeryFieldname";
     options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
-    options.SuppressXFrameOptionsHeader = false;
+    //iis setting
+    //options.SuppressXFrameOptionsHeader = false;
 });
 
 // Add services to the container.
@@ -149,9 +150,20 @@ app.Use((context, next) =>
         context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
             new CookieOptions { HttpOnly = true });
     }
-
-	return next(context);
+    /* iis setting
+     *context.Response.Headers.Add("Content-Security-Policy",
+                            "default-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com; style-src 'self' 'unsafe-inline' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; frame-ancestors self *.ezsale.tw");
+    */
+    return next(context);
 });
+app.UseCookiePolicy(
+    new CookiePolicyOptions
+    {
+        Secure = CookieSecurePolicy.Always,
+        HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
+        MinimumSameSitePolicy = SameSiteMode.Strict
+    }
+);
 
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 List<string> childOrgNames = new List<string>();

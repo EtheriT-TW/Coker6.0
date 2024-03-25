@@ -8,6 +8,12 @@
     max-height: 150px;
     max-width: 150px;
 }
+.dx-widget img {
+    max-height:4rem;
+}
+.dx-widget td {
+    vertical-align: middle !important;
+}  
 
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

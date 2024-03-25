@@ -93,6 +93,7 @@ function PageDefaultSet(result) {
         if (item.img_small.length > 0) {
             item.img_small.forEach(function (img) {
                 $(".pro_tc > ul").append(`<li class="me-1"><button class="btn_tc bg-transparent border-0" data-tcid="${item.id}"><img src="${img.link}" alt="${img.name}" /></button></li>`);
+                $(".pro_tc > ul img").imgCheck();
             })
 
             item.img_orig.forEach(function (img) {
@@ -103,6 +104,7 @@ function PageDefaultSet(result) {
 			                                                      <div class="description align-self-center col">${item.description}</div>
 		                                                      </div>
 		                                                      <hr class="m-1" />`)
+                $(".pro_tc_content > .techcert_list img").imgCheck();
             })
         } else {
             $(".pro_tc").addClass("d-none");
@@ -218,6 +220,7 @@ function PageDefaultSet(result) {
                     slide_image.attr("src", img_med.link[0]);
                     break;
             }
+            slide_image.imgCheck();
             $product_swiper.append(slide);
         });
 
@@ -234,6 +237,7 @@ function PageDefaultSet(result) {
                     break;
             }
             pre_slide_image.data("id", img_small.id);
+            pre_slide_image.imgCheck();
             $preview_swiper.append(pre_slide);
         });
     }

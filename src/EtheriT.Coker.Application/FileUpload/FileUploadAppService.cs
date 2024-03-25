@@ -215,8 +215,6 @@ namespace EtheriT.Coker.Application
 			ResponseMessageDto response = new ResponseMessageDto() { Success = true };
 			if (dto.Count == 0) return response;
 
-			long WebsiteID = await loginUserData.GetWebsiteId();
-			long userId = await loginUserData.GetUserId();
 			List<FileUpload> files = await AddFileUploads(dto);
 			db.FileUploads.AddRange(files);
 			await db.SaveChangesAsync();
@@ -231,18 +229,17 @@ namespace EtheriT.Coker.Application
 			string OrgName = await loginUserData.GetWebsiteOrgName();
 			long userId = await loginUserData.GetUserId();
 			List<FileUpload> files = new List<FileUpload>();
-			List<string> fileNames = dto.Where(e => string.IsNullOrEmpty(e.mediaLink)).Select(e => e.mediaLink).ToList();
+			List<string> fileNames = dto.Where(e => !string.IsNullOrEmpty(e.mediaLink)).Select(e => e.mediaLink).ToList();
 			List<FileUpload> nowFiles = db.FileUploads
 										.Where(e => !e.IsDeleted)
-										.Where(e => e.DownloadFileName!=null)
-										.Where(e => fileNames.Contains(e.DownloadFileName))
+										.Where(e => e.DownloadFileName!=null && fileNames.Contains(e.DownloadFileName))
 										.Where(e => e.FK_WebsiteId == WebsiteID)
 										.ToList();
 			foreach (var file in dto)
 			{
 				try
 				{
-					string dir = "";
+                    /*string dir = "";
 					switch (file.Type)
 					{
 						case FileBindTypeEnum.產品:
@@ -255,9 +252,9 @@ namespace EtheriT.Coker.Application
 							dir = "Orthers";
 							break;
 					}
-					if (!(new Regex("^http")).IsMatch(file.mediaLink)) file.mediaLink = $"/upload/{dir}/{file.mediaLink}";
+					if (!(new Regex("^http")).IsMatch(file.mediaLink)) file.mediaLink = $"/upload/{dir}/{file.mediaLink}";*/
 
-					var myFile = nowFiles.Find(e => e.DownloadFileName == file.mediaLink);
+                    var myFile = nowFiles.Find(e => e.DownloadFileName == file.mediaLink);
 					var hasFile = files.Find(e => e.DownloadFileName == file.mediaLink);
 					if (myFile == null && hasFile == null) {
 						
@@ -290,6 +287,7 @@ namespace EtheriT.Coker.Application
 			var filesName = dto.Select(o => o.mediaLink).ToList();
 			var allFile = db.FileUploads
 							.Where(e => e.FK_WebsiteId == WebsiteID)
+							.Where(e => !e.IsDeleted)
 							.Where(f => filesName.Contains(f.DownloadFileName)).ToList();
 			List<FileBind> FileBinds = new List<FileBind>();
 			foreach (var file in dto)
@@ -297,6 +295,7 @@ namespace EtheriT.Coker.Application
 				long Id = allFile.Find(d => d.DownloadFileName == file.mediaLink).Id;
 				var myFileBind = db.FileBinds
 						.Where(e => e.FK_FileUploadId == Id)
+						.Where(e => !e.IsDeleted)
 						.Where(e => e.Sid == file.SId)
 						.Where(e => e.type == (int)file.Type)
 						.FirstOrDefault();

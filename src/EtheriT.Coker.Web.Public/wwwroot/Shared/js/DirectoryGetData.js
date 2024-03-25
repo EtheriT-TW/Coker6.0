@@ -249,7 +249,7 @@ function DirectoryDataInsert($item, result) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
         }
         content.find("img").attr("src", imglink);
-        content.find("img").attr("alt", `${data.title}的主要圖片`);
+        content.find("img").imgCheck().attr("alt", `${data.title}的主要圖片`);
         content.find(".title").text(data.title);
         content.find(".description").html(data.description);
         if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();

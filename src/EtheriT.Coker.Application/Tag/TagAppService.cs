@@ -318,11 +318,11 @@ namespace EtheriT.Coker.Application.Tag
                              where ta.FK_AId == dto.Fk_Aid && ta.Type == dto.Type && !ta.IsDeleted
                              join t in db.Tags on ta.FK_TId equals t.Id
                              where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
+                             group t by new { t.Id,t.Title} into g
                              select new TagGetSelectedDto
                              {
-                                 Id = ta.Id,
-                                 FK_TId = ta.FK_TId,
-                                 Tag_Name = t.Title
+                                 FK_TId = g.Key.Id,
+                                 Tag_Name = g.Key.Title
                              };
 
                 return await output.ToListAsync();

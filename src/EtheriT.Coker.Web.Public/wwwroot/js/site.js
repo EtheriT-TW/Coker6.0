@@ -535,6 +535,15 @@ $.fn.extend({
     goTo: function (offset) {
         $('html, body').animate({ scrollTop: $(this).offset().top + (!!offset ? offset : 0) }, 0);
     },
+    imgCheck: function () {
+        var $self = $(this);
+        $self.each(function (i,item) {
+            $(item).on("error", function () {
+                $(item).attr("src", "/images/noImg.jpg");
+            })
+        });
+        return $self;
+    },
     setRandenId: function(i) {
         const $self = $(this);
         let className = typeof ($self.attr('class')) != "undefined" && $self.attr('class') != "" ? $self.attr('class').split(/\s+/)[0]+"Id" : "";

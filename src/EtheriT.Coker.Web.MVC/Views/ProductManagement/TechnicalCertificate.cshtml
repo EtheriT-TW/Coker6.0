@@ -44,12 +44,12 @@
                             c.AddFor(e => e.Title).Caption("證照名稱").Width(100);
                             c.AddFor(e => e.Description).Caption("說明").Width(150);
                             c.AddFor(e => e.Img).Caption("圖示").AllowFiltering(false).AllowSorting(false).CellTemplate(@<text>
-                                                                                                                                                                                                            <ul class="list-unstyled">
-                                                                                                                                                                                                                <% for(var i = value.length - 1 ; i >= 0 ; i--) { %>
-                                                                                                                                                                                                                <li><img class="img-fluid my-1" src="<%- value[i] %>" alt="" /></li>
-                                                                                                                                                                                                                <% } %>
-                                                                                                                                                                                                            </ul>
-                                                                                                                                                                                                        </text> );
+                                <ul class="list-unstyled">
+                                    <% for(var i = value.length - 1 ; i >= 0 ; i--) { %>
+                                    <li><img class="img-fluid my-1" src="<%- value[i] %>" alt="" /></li>
+                                    <% } %>
+                                </ul>
+                            </text> );
                             c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
                             c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
                             c.AddFor(e => e.StartDate).Caption("起始日期").Width(150);

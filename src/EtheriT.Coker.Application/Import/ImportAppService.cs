@@ -64,7 +64,21 @@ namespace EtheriT.Coker.Application.Import
 					{
 						var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName);
 						rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
-						data.Add(rows[i]);
+                        if(!string.IsNullOrEmpty(rows[i].Image1)) rows[i].Image1 = $"/upload/Product/{rows[i].Image1}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].Image2)) rows[i].Image2 = $"/upload/Product/{rows[i].Image2}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].Image3)) rows[i].Image3 = $"/upload/Product/{rows[i].Image3}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].Image4)) rows[i].Image4 = $"/upload/Product/{rows[i].Image4}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].Image5)) rows[i].Image5 = $"/upload/Product/{rows[i].Image5}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].Image6)) rows[i].Image6 = $"/upload/Product/{rows[i].Image6}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].Image7)) rows[i].Image7 = $"/upload/Product/{rows[i].Image7}".Replace("//", "/");
+
+                        if (rows[i].Techs != null)
+						{
+                            rows[i].Techs.ForEach(e => {
+                                if(!string.IsNullOrEmpty(e.Img)) e.Img = $"/upload/TechnicalCertificate/{e.Img}".Replace("//", "/");
+                            });
+                        }
+                        data.Add(rows[i]);
 					}
 				}
 			}

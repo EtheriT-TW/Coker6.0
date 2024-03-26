@@ -88,13 +88,13 @@ var bookFlip = {
 		
 		var scale = viewer.currentScale;
 		var parent = this;
-		$('#viewer .page').each(function(){
+		
+		$('#viewer').removeClass('pdfViewer').addClass('bookViewer').css({ opacity: 1 });;
+		$('#viewer .page').each(function () {
 			parent._width[$(this).attr('data-page-number')] = $(this).width() / scale;
 			parent._height[$(this).attr('data-page-number')] = $(this).height() / scale;
 		});
-		
-		$('#viewer').removeClass('pdfViewer').addClass('bookViewer').css({ opacity: 1 });;
-		
+
 		$('#spreadOdd').prop('disabled', true);
 		var pages = PDFViewerApplication.pagesCount;
 		for(var page = 3; page < pages + (pages%2); page ++){

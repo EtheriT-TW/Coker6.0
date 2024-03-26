@@ -1,4 +1,8 @@
-﻿.FlipBook {
+﻿.FlipBookModal .FlipBook {
+    height: 100%;
+}
+
+.FlipBook {
     height: 50em;
     width: 100%;
     background: #404040;

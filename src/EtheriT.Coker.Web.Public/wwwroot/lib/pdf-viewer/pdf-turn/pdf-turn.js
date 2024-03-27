@@ -50,8 +50,6 @@ var bookFlip = {
 				this.toStart = false;
 				console.log("switch mode");
 				PDFViewerApplication.pdfViewer.scrollMode = 3;
-				PDFViewerApplication.pdfViewer.soreadMode = 2;
-				//$("#spreadEven").trigger("click");
 				PDFViewerApplication.pdfViewer.currentScaleValue = "page-fit";
 			}
 		});

@@ -578,7 +578,7 @@ html[dir='rtl'] #outerContainer.sidebarOpen #sidebarContainer {
 }
 
 #mainContainer {
-    overflow: hidden;
+    overflow: scroll;
     position: absolute;
     top: 0;
     right: 0;
@@ -1287,14 +1287,14 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
 }
 
 .pageButton.pageUp {
-    position: absolute;
+    position: fixed;
     top: 50%;
-    left: 0.5em;
+    left: 1.5em;
 }
 .pageButton.pageDown {
-    position: absolute;
+    position: fixed;
     top: 50%;
-    right: 0.5em;
+    right: 1.5em;
 }
 .pageButton {
     width: 2em;

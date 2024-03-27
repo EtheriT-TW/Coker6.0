@@ -5,10 +5,26 @@
 .FlipBook {
     height: 50em;
     width: 100%;
-    background: #404040;
+    background: #404040d0;
 }
 
 .FlipBook > div {
     height: 100%;
     background: #0000;
+}
+
+.FlipBookModal .modal-dialog {
+    background-color: #fff4
+}
+
+.FlipBookModal .modal-content {
+    background-color: #fff4
+}
+
+.FlipBookModal .modal-header {
+    background-color: #fff4
+}
+
+.FlipBookModal .modal-body {
+    background-color: #fff4
 }

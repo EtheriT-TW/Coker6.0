@@ -81,7 +81,7 @@ var bookFlip = {
 		$('#' + selected).addClass('toggled');	
 		
 		this._evSpread = PDFViewerApplication.eventBus._listeners.switchspreadmode;
-		PDFViewerApplication.eventBus._listeners.switchspreadmode = null;
+		// PDFViewerApplication.eventBus._listeners.switchspreadmode = null;
 		
 		viewer.scrollPageIntoView = (data) => {return this.link(data)};
 		viewer._getVisiblePages = () => {return this.load()};

@@ -143,7 +143,13 @@ var bookFlip = {
 	},
 	// resize flipbook pages
 	resize: function(){
-		if(!this.active)return;
+		if (!this.active) return;
+		if (this._spread !== 0 && document.getElementById("viewerContainer").getBoundingClientRect().width < 720) {
+			this.spread(0);
+		}
+		if (this._spread === 0 && document.getElementById("viewerContainer").getBoundingClientRect().width > 720) {
+			this.spread(1);
+		}
 		var page = PDFViewerApplication.page;
 		$('#viewer').turn('size', this._size(page,'width') * this._spreadMult(), this._size(page,'height'));
 	},

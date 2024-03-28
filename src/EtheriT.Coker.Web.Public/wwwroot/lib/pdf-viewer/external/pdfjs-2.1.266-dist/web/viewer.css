@@ -14,21 +14,23 @@
  */
 
 .textLayer {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  opacity: 0.2;
-  line-height: 1.0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    opacity: 0.2;
+    line-height: 1.0;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
 }
 
 .textLayer > span {
   color: transparent;
   position: absolute;
   white-space: pre;
-  cursor: text;
   -webkit-transform-origin: 0% 0%;
           transform-origin: 0% 0%;
 }
@@ -614,7 +616,8 @@ html[dir='rtl'] #sidebarContent {
     bottom: 0;
     left: 0;
     outline: none;
-    margin: 5em;
+    margin-top: 2em;
+    margin-bottom: 1em;
 }
 #viewerContainer:not(.pdfPresentationMode) {
   transition-duration: 200ms;
@@ -1288,18 +1291,20 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
 
 .pageButton.pageUp {
     position: fixed;
+    z-index: 10;
     top: 50%;
     left: 1.5em;
 }
 .pageButton.pageDown {
     position: fixed;
+    z-index: 10;
     top: 50%;
     right: 1.5em;
 }
 
 .pageButton {
-    width: 2em;
-    height: 2em;
+    width: 1em;
+    height: 1.5em;
     background-color: #666;
     border: 0px;
     border-radius: 0.5em;

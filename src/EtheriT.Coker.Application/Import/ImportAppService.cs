@@ -62,7 +62,7 @@ namespace EtheriT.Coker.Application.Import
 				{
 					if (rows[i] != null)
 					{
-						var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName);
+						var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName && e.ItemNo == rows[i].ItemNo);
 						rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
                         if(!string.IsNullOrEmpty(rows[i].Image1)) rows[i].Image1 = $"/upload/Product/{rows[i].Image1}".Replace("//", "/");
                         if (!string.IsNullOrEmpty(rows[i].Image2)) rows[i].Image2 = $"/upload/Product/{rows[i].Image2}".Replace("//", "/");
@@ -71,6 +71,11 @@ namespace EtheriT.Coker.Application.Import
                         if (!string.IsNullOrEmpty(rows[i].Image5)) rows[i].Image5 = $"/upload/Product/{rows[i].Image5}".Replace("//", "/");
                         if (!string.IsNullOrEmpty(rows[i].Image6)) rows[i].Image6 = $"/upload/Product/{rows[i].Image6}".Replace("//", "/");
                         if (!string.IsNullOrEmpty(rows[i].Image7)) rows[i].Image7 = $"/upload/Product/{rows[i].Image7}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].File1)) rows[i].File1 = $"/upload/Product/File/{rows[i].File1}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].File2)) rows[i].File2 = $"/upload/Product/File/{rows[i].File2}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].File3)) rows[i].File3 = $"/upload/Product/File/{rows[i].File3}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].File4)) rows[i].File4 = $"/upload/Product/File/{rows[i].File4}".Replace("//", "/");
+                        if (!string.IsNullOrEmpty(rows[i].File5)) rows[i].File5 = $"/upload/Product/File/{rows[i].File5}".Replace("//", "/");
 
                         if (rows[i].Techs != null)
 						{

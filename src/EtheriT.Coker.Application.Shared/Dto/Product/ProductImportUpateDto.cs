@@ -10,8 +10,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 	public class ProductImportUpateDto
 	{
 		public string ProdName { get; set; } = string.Empty;
-		public string ItemNo { get; set; } = string.Empty;
-		public string? Description { get; set; }
+		public string Status {  get; set; } = "一般";
+        public string ItemNo { get; set; } = string.Empty;
+        public string SubItemNo { get; set; } = string.Empty;
+        public string? Description { get; set; }
 		public string? Introduction { get; set; }
 		public string? Html { get; set; }
 		public DateTime StartTime { get; set; }
@@ -34,6 +36,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? File3 { get; set; }
 		public string? File4 { get; set; }
         public string? File5 { get; set; }
+        public string? FileName1 { get; set; }
+        public string? FileName2 { get; set; }
+        public string? FileName3 { get; set; }
+        public string? FileName4 { get; set; }
+        public string? FileName5 { get; set; }
         public string? Tag1 { get; set; }
 		public string? Tag2 { get; set; }
 		public string? Tag3 { get; set; }

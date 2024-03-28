@@ -212,155 +212,137 @@
     </div>
 </template>
 <Content id="main" class="d-none">
-<div id="Product" class="container row m-auto my-3">
-    <div class="image col-md-6 col-sm-12">
-        <div class="container-fluid position-relative">
-            <div class="ProductSwiper swiper">
-                <div class="swiper-wrapper">
+    <div id="Product" class="container row m-auto my-3">
+        <div class="image col-md-6 col-sm-12">
+            <div class="container-fluid position-relative">
+                <div class="ProductSwiper swiper">
+                    <div class="swiper-wrapper">
+                    </div>
+                </div>
+                <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
+                <button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0 opacity-50"><i class="fa-solid fa-chevron-right fs-3"></i></button>
+            </div>
+
+            <div thumbsSlider="" class="PreviewSwiper swiper my-3">
+                <div class="swiper-wrapper align-items-center">
+                </div>
+                <div class="swiper-scrollbar"></div>
+            </div>
+
+            <ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
+        </div>
+
+        <div class="content col-md-6 col-sm-12">
+            <div class="pro_title title fs-5"></div>
+
+            <div class="describe d-flex align-items-center justify-content-between">
+                <ul class="introduce my-2"></ul>
+
+                <div class="track text-center">
+                    <button class="btn_favorites bg-transparent border-0 p-0">
+                        <i class="fa-regular fa-heart"></i>
+                        <span class="d-none">關注</span>
+                    </button>
+                    <div>追蹤</div>
                 </div>
             </div>
-            <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
-            <button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0 opacity-50"><i class="fa-solid fa-chevron-right fs-3"></i></button>
-        </div>
 
-        <div thumbsSlider="" class="PreviewSwiper swiper my-3">
-            <div class="swiper-wrapper align-items-center">
-            </div>
-            <div class="swiper-scrollbar"></div>
-        </div>
+            <hr class="m-1" />
 
-        <ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
-    </div>
+            <div class="specification text-center my-2">
+                <ul class="text-start w-100 collapse"></ul>
 
-    <div class="content col-md-6 col-sm-12">
-        <div class="pro_title title fs-5"></div>
-
-        <div class="describe d-flex align-items-center justify-content-between">
-            <ul class="introduce my-2"></ul>
-
-            <div class="track text-center">
-                <button class="btn_favorites bg-transparent border-0 p-0">
-                    <i class="fa-regular fa-heart"></i>
-                    <span class="d-none">關注</span>
+                <button class="btn_detailed icon_down px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target=".specification > .collapse" aria-expanded="false" aria-controls="collapseSpecification">
+                    詳細規格
                 </button>
-                <div>追蹤</div>
             </div>
-        </div>
 
-        <hr class="m-1" />
-
-        <div class="specification px-4 text-center my-2">
-            <ul class="text-start w-100 collapse"></ul>
-
-            <button class="btn_detailed icon_down px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target=".specification > .collapse" aria-expanded="false" aria-controls="collapseSpecification">
-                詳細規格
-            </button>
-        </div>
-
-        <div class="pro_tc px-3">
-            <div class="title">標章認證</div>
-            <ul class="image d-flex flex-wrap"></ul>
-        </div>
-
-        <hr class="m-1" />
-
-        <div class="priceframe row flex-wrap">
-            <div class="col d-flex ps-3 align-items-center">
-                <div class="ori_price price me-2 d-none"></div>
-                <div class="discount d-flex align-items-center fs-4 fw-bold price text-danger"></div>
+            <div class="pro_tc px-3">
+                <div class="title">標章認證</div>
+                <ul class="image d-flex flex-wrap"></ul>
             </div>
-            @*<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>*@
-        </div>
 
-        <hr class="m-1" />
+            <hr class="m-1" />
 
-        <template id="Template_Spec_Radio">
-            <div class="radio d-flex align-items-center my-2">
-                @*<div class="spec_title title"></div>*@
-                <div class="spec_control control d-flex flex-wrap">
+            <div class="priceframe row flex-wrap">
+                <div class="col d-flex ps-3 align-items-center">
+                    <div class="ori_price price me-2 d-none"></div>
+                    <div class="discount d-flex align-items-center fs-4 fw-bold price text-danger"></div>
+                </div>
+                @*<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>*@
+            </div>
+
+            <hr class="m-1" />
+
+            <template id="Template_Spec_Radio">
+                <div class="radio d-flex align-items-center my-2">
+                    @*<div class="spec_title title"></div>*@
+                    <div class="spec_control control d-flex flex-wrap">
+                    </div>
+                </div>
+            </template>
+
+            <div class="options px-3 d-none">
+                <div class="counter d-flex align-items-center my-2">
+                    <label class="title" for="quantityInput1">數量</label>
+                    <div class="counter_input d-flex">
+                        <button class="btn_count_minus bg-white my-1">
+                            <i class="fa-solid fa-minus"></i>
+                            <span class="d-none">減少</span>
+                        </button>
+
+                        <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
+
+                        <button class="btn_count_plus bg-white my-1">
+                            <i class="fa-solid fa-plus"></i>
+                            <span class="d-none">增加</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </template>
 
-        <div class="options px-3 d-none">
-            <div class="counter d-flex align-items-center my-2">
-                <label class="title" for="quantityInput1">數量</label>
-                <div class="counter_input d-flex">
-                    <button class="btn_count_minus bg-white my-1">
-                        <i class="fa-solid fa-minus"></i>
-                        <span class="d-none">減少</span>
-                    </button>
-
-                    <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
-
-                    <button class="btn_count_plus bg-white my-1">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="d-none">增加</span>
-                    </button>
-                </div>
+            <div class="btn_addToCar d-none align-items-center justify-content-center text-white" type="button">
+                <div class="icon_plus">我要購買</div>
+            </div>
+            <div class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button">
+                <a href="/lcb/distribution">
+                    <div class="text-white">了解更多</div>
+                </a>
             </div>
         </div>
+    </div>
 
-        <div class="btn_addToCar d-none align-items-center justify-content-center text-white" type="button">
-            <div class="icon_plus">我要購買</div>
+    <div id="CenterLine" class="container d-flex pt-sm-0 pt-2 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
+        <div class="shareBlock d-flex align-items-center justify-content-center justify-content-sm-end">
+            <div>分享：</div>
         </div>
-        <div class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button">
-            <a href="/lcb/distribution">
-                <div class="text-white">了解更多</div>
-            </a>
-        </div>
-    </div>
-</div>
-
-<div id="CenterLine" class="container d-flex pt-sm-0 pt-2 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
-    <div class="shareBlock d-flex align-items-center justify-content-center justify-content-sm-end">
-        <div>分享：</div>
-    </div>
-    <ul id="btn_tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">產品說明</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#Certifications" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">標章認證</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">檔案下載</button>
-        </li>
-    </ul>
-</div>
-
-<div id="TabContent" class="tab-content container">
-    <div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
-        <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
-        <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
+        <ul id="btn_tab" class="text d-flex pt-2 pt-sm-0 nav nav-pills" role="tablist">
+            <li class="nav-item description" role="presentation">
+                <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">產品說明</button>
+            </li>
+            <li class="nav-item technical" role="presentation">
+                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">標章認證</button>
+            </li>
+            <li class="nav-item files" role="presentation">
+                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">檔案下載</button>
+            </li>
+        </ul>
     </div>
 
-    <div id="Certifications" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
-        <div id="FileDownload" class="filedownload d-flex pt-5 pb-3 flex-wrap">
-            @*<div class="file px-4 py-1 border border-dark">
-            <a href="/upload/badge/badge_03.jpg" download="施工圖.dwg"><div>施工圖.dwg</div></a>
-            </div>
-            <div class="file px-4 py-1 border border-dark">
-            <a href="/upload/badge/badge_03.jpg" download="施工圖.pdf"><div>施工圖.pdf</div></a>
-            </div>*@
+    <div id="TabContent" class="tab-content container">
+        <div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
+            <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+            <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
         </div>
 
-        <div class="techcert_list"></div>
-    </div>
-
-    <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
-        <div id="FileDownload" class="filedownload d-flex pt-5 pb-3 flex-wrap">
-            @*<div class="file px-4 py-1 border border-dark">
-            <a href="/upload/badge/badge_03.jpg" download="施工圖.dwg"><div>施工圖.dwg</div></a>
-            </div>
-            <div class="file px-4 py-1 border border-dark">
-            <a href="/upload/badge/badge_03.jpg" download="施工圖.pdf"><div>施工圖.pdf</div></a>
-            </div>*@
+        <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+            <div class="techcert_list"></div>
         </div>
 
-        <div class="techcert_list"></div>
+        <div id="FileDownload" class="container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+            <div class="File_list"></div>
+        </div>
     </div>
-</div>
 </Content>
 @if (Model.ParentData != null)
 {

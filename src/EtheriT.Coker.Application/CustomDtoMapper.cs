@@ -127,7 +127,10 @@ namespace EtheriT.Coker.Application
 				.ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
 				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
 				.ForMember(e => e.permanent, option => option.MapFrom(c => true))
-				.ReverseMap();
+                .ForMember(e => e.Status, option => option.MapFrom(c => 0))
+                .ForMember(e => e.Visible, option => option.MapFrom(c => true))
+                .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => false))
+                .ReverseMap();
 			CreateMap<ProdAddUpDto, Prod>()
 				.ReverseMap();
 			CreateMap<ProductImportDto, ProdAddUpDto>()

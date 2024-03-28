@@ -305,7 +305,7 @@ namespace EtheriT.Coker.Application
 					FileBind fb = new FileBind
 					{
 						Guid = Guid.NewGuid(),
-						Name = file.mediaLink,
+						Name = string.IsNullOrEmpty(file.Name)? file.mediaLink: file.Name,
 						Sid = file.SId,
 						type = (int)file.Type,
 						num = 1,
@@ -320,7 +320,7 @@ namespace EtheriT.Coker.Application
 				else if(myFileBind != null)
 				{
 					myFileBind.SerNo = file.SerNo;
-					myFileBind.Name = file.mediaLink;
+					myFileBind.Name = string.IsNullOrEmpty(file.Name) ? file.mediaLink : file.Name;
 					myFileBind.FK_FileUploadId = Id;
 					myFileBind.MediaLink = file.mediaLink;
 					myFileBind.LastModifierUserId = userId;
@@ -436,29 +436,31 @@ namespace EtheriT.Coker.Application
 			{
 				long websiteId = await loginUserData.GetWebsiteId();
 				string orgName = await loginUserData.GetWebsiteOrgName();
-
-				var faids = await (db.FileBinds.Where(e => e.Sid == dto.Sid && e.type == dto.Type).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo).Select(e => e.FK_FileUploadId)).ToListAsync();
+                var files = await db.FileBinds.Include(e => e.fileUpload)
+                        .Where(e => e.Sid == dto.Sid && e.type == dto.Type)
+                        .Where(e => !e.IsDeleted).OrderBy(e => e.SerNo).ToListAsync();
+                var faids = files.Select(e => e.FK_FileUploadId).ToList();
 
 				if (faids != null)
 				{
 					if (dto.Size == 1)
 					{
-						foreach (var faid in faids)
-						{
-							var fadata = await db.FileUploads.Where(e => e.Id == faid).FirstOrDefaultAsync();
+                        if (files != null && files.Any())
+                        {
+                            files.ForEach(e => {
+                                if (e.fileUpload != null)
+                                {
+                                    result.Add(new FileGetImgDto
+                                    {
+                                        Id = e.fileUpload.Id,
+                                        Name = e.Name,
+                                        Link = e.fileUpload.DownloadFileName.Replace("upload", $"upload{orgName}")
+                                    });
+                                }
+                            });
 
-							if (fadata != null && fadata.GuidKey != Guid.Empty)
-							{
-								orgName = orgName == "" ? "" : $"/{orgName}";
-								result.Add(new FileGetImgDto
-								{
-									Id = fadata.Id,
-									Name = fadata.OriginalFileName,
-									Link = fadata.DownloadFileName.Replace("upload", $"upload{orgName}")
-								});
-							}
-						}
-					}
+                        }
+                    }
 					else
 					{
 						foreach (var faid in faids)
@@ -947,7 +949,22 @@ namespace EtheriT.Coker.Application
 			}
 
 		}
-		private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
+		public async Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+			long websiteId = dto.FK_WebsiteID==0? await loginUserData.GetWebsiteId() : dto.FK_WebsiteID;
+			bool haveUri = db.NotFoundImage.Where(e => e.FK_WebsiteId == websiteId && e.Url == dto.Url).Any();
+            if (!string.IsNullOrEmpty(dto.Url) && !haveUri) {
+				db.NotFoundImage.Add(new NotFoundImage { 
+					FK_WebsiteId = websiteId,
+					Url = dto.Url,
+					From = dto.From
+                });
+				await db.SaveChangesAsync();
+			}
+			return response;
+        }
+
+        private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
 		{
 			if (file.Length > 0)
 			{

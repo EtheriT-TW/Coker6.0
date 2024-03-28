@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public double Price { get; set; }
         public int? Stock { get; set; }
         public int Ser_No { get; set; }
+        public string SubItemNo { get; set; } = string.Empty;
         public int? Min_Qty { get; set; }
         public int? Alert_Qty { get; set; }
         public List<ProductPriceDto> Prices { get; set; }

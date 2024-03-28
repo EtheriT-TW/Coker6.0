@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public virtual DateTime? EndTime { get; set; }
         public bool Permanent { get; set; }
         public string? ItemNo {  get; set; }
+        public int Status { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
         public List<TechCertGetSelectedDto> TechCertDatas { get; set; }
         public List<ProductStockDto> Stocks { get; set; }

@@ -20,14 +20,13 @@
 }
 
 function initElemntAndLoadDir($dir,page) {
-    const $self = $dir || $(".catalog_frame,.menu_directory").first();
+    const $self = $dir || $(".catalog_frame").first();
     const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
     
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
     const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
     const hashPage = !!page? page.toString() : location.hash.replace("#", "");
-
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage=="") page = "1";
         else page = hashPage;
@@ -45,7 +44,7 @@ function initElemntAndLoadDir($dir,page) {
 }
 
 function DirectoryGetDataInit() {
-    const dirLength = $(".catalog_frame,.menu_directory").length;
+    const dirLength = $(".catalog_frame").length;
     $(".catalog_frame").each(function () {
         const $self = $(this);
         const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
@@ -79,7 +78,7 @@ function DirectoryGetDataInit() {
                             });
                             var $body = item.find(".accordion-body");
                             $.each(SecIItem.children, function (index, ThirdIItem) {
-                                if (PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
+                                if (typeof(PageKey)!="undefined" && PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
                                     $(accordionCollapse).collapse('show'); 
                                 }
                                 $body.append(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`)
@@ -112,7 +111,7 @@ function hashChangeDirectory(e) {
 }
 
 function DirectoryDataGet($item, option) {
-    const dirLength = $(".catalog_frame,.menu_directory").length;
+    const dirLength = $(".catalog_frame").length;
     let page = parseInt(option.Page);
     if ($item.data("type") == "search") {
         $.extend(true, option, {
@@ -177,7 +176,9 @@ function DirectoryDataGet($item, option) {
         })
         if (!$item.data("init")) {
             $item.find(`.btn_prev > button`).on("click", function () {
+                var $self = $(this);
                 page = parseInt($item.data("page")) - 1;
+                $self.data("page", page)
                 if (page >= 1) {
                     if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
                     else initElemntAndLoadDir($item, $self.data("page"))
@@ -186,10 +187,12 @@ function DirectoryDataGet($item, option) {
             })
 
             $item.find(`.btn_next > button`).on("click", function () {
+                var $self = $(this);
                 page = parseInt($item.data("page")) + 1;
+                $self.data("page", page)
                 if (page <= result.totalPage) {
                     if (dirLength == 1 && window.location.hash != `#${page}`) window.location.hash = `#${page}`;
-                    else initElemntAndLoadDir($item, $self.data("page"))
+                    else initElemntAndLoadDir($item, $self.data("page"));
                 }
                 $item.goTo();
             })
@@ -231,6 +234,9 @@ function DirectoryDataInsert($item, result) {
         } else {
             path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : `${data.orgName == null ? "" : `/${data.orgName}`}${window.location.pathname}`) + data.link;
             target = "_self";
+        }
+        if (data.type == 1 && data.status != 0) {
+            content.find("a").append(`<span class="status status${data.status}">${data.statusName}</span>`);
         }
         path = path.replace("//", "/");
         const linkData = {

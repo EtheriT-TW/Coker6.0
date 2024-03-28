@@ -352,39 +352,29 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
-
+                var FKTIds = tags.Select(e => e.FK_TId).ToList();
                 if (tags != null)
                 {
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
                         case DirectoryTypeEnum.商品:
-                            var product_datas = new List<ProdGetDataDto>();
-                            List<long> list = new List<long>();
-                            foreach (var tag in tags)
+                            var pd_as = await db.Tag_Associates
+                                    .Where(e => !e.IsDeleted)
+                                    .Where(e => e.Type == (int)TagAssociateTypeEnum.商品)
+                                    .Where(e => FKTIds.Contains(e.FK_TId))
+                                    .ToListAsync();
+                            if (pd_as != null)
                             {
-                                var db_ps = await (db.Tag_Associates.Where(e => e.FK_TId == tag.FK_TId && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
-                                if (!list.Any()) list = db_ps.Select(e => e.FK_AId).ToList();
-                                else {
-                                    list = db_ps.Where(e => list.Contains(e.FK_AId)).Select(e => e.FK_AId).ToList();
-                                }
-                            }
-                            if (list.Any())
-                            {
-                                foreach (var FK_AId in list)
-                                {
-                                    product_datas.Add(await productAppService.GetProdDataOne(FK_AId));
-                                }
-                            }
-                            foreach (var product_data in product_datas)
-                            {
-                                if (!DataIds.Contains(product_data.Id))
-                                {
-                                    DataIds.Add(product_data.Id);
-                                }
+                                var allIds = pd_as.Select(e => e.FK_AId).ToList();
+                                DataIds = db.Prods
+                                    .Where(e => allIds.Contains(e.Id))
+                                    .Where(e => !e.IsDeleted)
+                                    .Where(e => siteIds.Contains(e.FK_WebsiteId))
+                                    .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
+                                    .Select(e => e.Id).ToList();
                             }
                             break;
                         case DirectoryTypeEnum.文章:
-                            var FKTIds = tags.Select(e => e.FK_TId).ToList();
                             var db_as = await db.Tag_Associates
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)

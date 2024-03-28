@@ -39,5 +39,6 @@ namespace EtheriT.Coker.Core.Models
         public List<Recipient>? Recipients { get; set; }
         public List<Permissions> Permissions { get; set; }
         public List<PermissionDetail> PermissionDetails { get; set; }
+        public List<NotFoundImage> NotFoundImages { get; set; }
     }
 }

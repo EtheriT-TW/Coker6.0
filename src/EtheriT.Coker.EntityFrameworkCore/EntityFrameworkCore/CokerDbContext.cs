@@ -62,8 +62,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Permissions> Permissions { get; set; }
         public DbSet<PermissionDetail> PermissionDetail { get; set; }
         public DbSet<Remote> Remotes { get; set; }
+        public DbSet<NotFoundImage> NotFoundImage { get; set; }
 
-		public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
+        public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
 
         }
@@ -116,6 +117,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Prods).HasForeignKey(f => f.FK_WebsiteId);
+                o.Property(p => p.Visible).HasDefaultValue(true);
+                o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
+                o.Property(p => p.Status).HasDefaultValue(0);
             });
             modelBuilder.Entity<Prod_Log>(o =>
             {
@@ -230,9 +234,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 				o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
 				o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
 			});
-			
+            modelBuilder.Entity<NotFoundImage>(o => {
+                o.Property(t => t.CreateDate).HasDefaultValueSql("getdate()");
+                o.HasOne(f => f.Website).WithMany(w => w.NotFoundImages).HasForeignKey(e => e.FK_WebsiteId);
+            });
 
-			base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }
     }

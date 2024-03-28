@@ -12,7 +12,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
 		public string ProdName { get; set; } = "";
 		public string Title { get; set; } = "";
 		public string Image1 { get; set; } = "";
-		public string Description { get; set; } = "";
+        public string ItemNo { get; set; } = "";
+        public string Description { get; set; } = "";
 		public int Ser_no { get; set; } = 500;
 
 	}

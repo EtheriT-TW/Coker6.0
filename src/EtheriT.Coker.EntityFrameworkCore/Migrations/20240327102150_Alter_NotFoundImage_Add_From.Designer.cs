@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240327102150_Alter_NotFoundImage_Add_From")]
+    partial class Alter_NotFoundImage_Add_From
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1581,11 +1583,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<bool>("RemovedFromShelves")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<string>("SaveCss")
                         .HasColumnType("nvarchar(max)");
 
@@ -1598,20 +1595,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("StartTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<bool>("Visible")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
 
                     b.Property<bool>("permanent")
                         .HasColumnType("bit");
@@ -1633,11 +1620,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "從座圈到噴嘴給您雙重防護\n不用動手全自動科技最體貼\n雙漩洗技術為您實現真乾淨",
                             IsDeleted = false,
-                            RemovedFromShelves = false,
                             Ser_No = 500,
-                            Status = 0,
                             Title = "DE-R1073 德瑞克直熱式微電腦馬桶座／遙控型",
-                            Visible = false,
                             permanent = true
                         },
                         new
@@ -1650,11 +1634,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "商品二的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
-                            RemovedFromShelves = false,
                             Ser_No = 500,
-                            Status = 0,
                             Title = "C659NA 德瑞克Smart III淨未來智慧馬桶",
-                            Visible = false,
                             permanent = true
                         },
                         new
@@ -1667,11 +1648,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "商品三的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
-                            RemovedFromShelves = false,
                             Ser_No = 500,
-                            Status = 0,
                             Title = "L602 檯上三角盆",
-                            Visible = false,
                             permanent = true
                         },
                         new
@@ -1684,11 +1662,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_WebsiteId = 2L,
                             Introduction = "最大容水量：11公升\n適用水壓：1~5kgf/㎝²",
                             IsDeleted = false,
-                            RemovedFromShelves = false,
                             Ser_No = 500,
-                            Status = 0,
                             Title = "L183NA 檯上奈米方型盆",
-                            Visible = false,
                             permanent = true
                         });
                 });

@@ -5,6 +5,7 @@ function ready() {
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
     const $PostCSS = $("#PostCSS");
+    jqueryExtend();
     $("link").each(function () {
         var $self = $(this);
         if ($self.data("orgname") != undefined) {
@@ -20,6 +21,7 @@ function ready() {
             IsFaPage = $self.data("isfapage");
         }
     });
+    if (typeof (IsFaPage) == "string") IsFaPage = IsFaPage.toLowerCase() == "true";
     const menuMouseover = function () {
         const item = $(this).find("img");
         if (!!$(item).data("mouseover"))
@@ -534,15 +536,6 @@ var Coker = {
 $.fn.extend({
     goTo: function (offset) {
         $('html, body').animate({ scrollTop: $(this).offset().top + (!!offset ? offset : 0) }, 0);
-    },
-    imgCheck: function () {
-        var $self = $(this);
-        $self.each(function (i,item) {
-            $(item).on("error", function () {
-                $(item).attr("src", "/images/noImg.jpg");
-            })
-        });
-        return $self;
     },
     setRandenId: function(i) {
         const $self = $(this);

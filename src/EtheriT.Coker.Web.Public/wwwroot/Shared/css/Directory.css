@@ -4,11 +4,25 @@
     border-left: #888888 solid .5rem;
 }
 
+.catalog {
+    position:relative;
+}
+    .catalog .status {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        background: #fbb034;
+        font-size:0.8rem;
+        padding: 0.2rem 0.7rem;
+        color:#fff;
+        font-weight:600;
+        border-radius:1.5rem;
+    }
+
 .type_change_frame > .catalog .box-shadow {
     box-shadow: 2px 3px 5px rgba(50,50,50,0.3);
     height: 100%;
     padding: 10px;
-   
 }
 
 .type_change_frame > .catalog .date {

@@ -87,7 +87,7 @@ namespace EtheriT.Coker.Application.Product
                         FK_WebsiteId = WebsiteID,
                         CreatorUserId = userId
                     };
-                    mapper.Map(dto,p);
+                    mapper.Map(dto, p);
                     db.Prods.Add(p);
                     db.SaveChanges();
                     asoid = p.Id;
@@ -308,7 +308,7 @@ namespace EtheriT.Coker.Application.Product
                                     Title = p.Title,
                                     Disp_Opt = p.Disp_Opt,
                                     Ser_No = p.Ser_No,
-                                    ItemNo = p.ItemNo??"",
+                                    ItemNo = p.ItemNo ?? "",
                                     Price = "",
                                     StartTime = p.StartTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.StartTime),
                                     EndTime = p.EndTime == null ? "-" : string.Format("{0:yyyy-MM-dd hh:mm}", p.EndTime),
@@ -531,7 +531,7 @@ namespace EtheriT.Coker.Application.Product
                         Size = 1,
                         Type = 8
                     });
-                    if (Files.Count != null) output.Files = Files;
+                    if (Files != null && Files.Count() > 0) output.Files = Files;
 
                     var Imgs_original = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
                     if (Imgs_original != null)
@@ -580,7 +580,8 @@ namespace EtheriT.Coker.Application.Product
                 {
                     productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
                     output = (from p in productData
-                              select new DirectoryReleInfoDto {
+                              select new DirectoryReleInfoDto
+                              {
                                   Id = p.Id,
                                   Title = p.Title,
                                   ItemNo = p.ItemNo,
@@ -588,34 +589,37 @@ namespace EtheriT.Coker.Application.Product
                                   type = DirectoryTypeEnum.商品,
                                   Description = p.Description,
                                   SerNo = p.Ser_No,
+                                  Status = p.Status,
+                                  StatusName = Enum.GetName(typeof(ProdStatusEnum), (ProdStatusEnum)p.Status),
                                   tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == WebsiteID)
                                           join a in db.Tag_Associates.Where(e => !e.IsDeleted)
                                                        .Where(e => e.FK_AId == p.Id)
                                                        .Where(e => e.Type == (int)TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
-                                          group t by new { t.Id,t.Title } into g
+                                          group t by new { t.Id, t.Title } into g
                                           select new TagGetSelectedDto
                                           {
                                               FK_TId = g.Key.Id,
                                               Tag_Name = g.Key.Title
                                           }).ToList(),
                                   MainImage = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                  .Where(e => e.fileUpload!=null && e.fileUpload.FK_WebsiteId == WebsiteID)
-                                                  .Where(e => e.fileUpload!=null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteID)
+                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
                                                   .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                              select new DirectoryReleInfoDto { 
-                                                Link = (f.fileUpload.DownloadFileName??"").Replace("upload", $"upload{orgName}")
-                                              }).FirstOrDefault()?? new DirectoryReleInfoDto()).Link,
-                             }).ToList();
+                                                select new DirectoryReleInfoDto
+                                                {
+                                                    Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}")
+                                                }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
+                              }).ToList();
                     for (int i = 0; i < output.Count; i++)
                     {
                         var data = output[i];
-                        var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e=> e.Id).ToListAsync();
+                        var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                         var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
-                        double min = p.Min(e => e.Price)??0;
+                        double min = p.Min(e => e.Price) ?? 0;
                         double max = p.Max(e => e.Price) ?? 0;
                         if (min == max) data.Price = $"{max}";
                         else data.Price = $"{min} ~ {max}";
-                       
+
                     }
                 }
 
@@ -979,28 +983,33 @@ namespace EtheriT.Coker.Application.Product
         {
             ImportOutputDto response = new ImportOutputDto { ErrorList = new List<ImportMassageItem>() };
             ProdImportAllDto fileData = await importAppService.ProdReplace(files);
-			long WebsiteID = await loginUserData.GetWebsiteId();
+            long WebsiteID = await loginUserData.GetWebsiteId();
             if (fileData.Products.Any())
             {
                 List<ProductImportDto> allData = fileData.Products.FindAll(e => !string.IsNullOrEmpty(e.ProdName));
                 List<ProductImportDto> prods = new List<ProductImportDto>();
-                List<string> allTitles = allData.Select(p => p.ItemNo + p.ProdName).ToList();
-                var updateItems = db.Prods.Where(p => allTitles.Contains(p.ItemNo??"" + p.Title)).Select(s => new { s.Id, s.ItemNo, s.Title }).ToList();
+                List<string> allTitles = allData.Select(p => p.ProdName).ToList();
+                List<string> allItemNos = allData.Select(p => p.ItemNo).ToList();
+                var updateItems = db.Prods.Where(e => !e.IsDeleted)
+                    .Where(p => allTitles.Contains(p.Title))
+                    .Where(p => allItemNos.Contains(p.ItemNo??""))
+                    .Select(s => new { s.Id, s.ItemNo, s.Title }).ToList();
                 ProductImportDto dto = null;
                 for (int i = 0; i < allData.Count; i++)
                 {
-                    var item = updateItems.Find(e => e.Title == allData[i].ProdName && e.ItemNo== allData[i].ItemNo);
-                    allData[i].FK_WebsiteId = WebsiteID;
-                    if (item != null) allData[i].Id = item.Id;
-                    var preProds = prods.Find(e => e.ProdName == allData[i].ProdName && e.ItemNo == allData[i].ItemNo);
+                    var el = allData[i];
+                    var item = updateItems.Find(e => e.Title == el.ProdName && e.ItemNo == el.ItemNo);
+                    el.FK_WebsiteId = WebsiteID;
+                    if (item != null) el.Id = item.Id;
+                    var preProds = prods.Find(e => e.ProdName == el.ProdName && e.ItemNo == el.ItemNo);
                     if (preProds == null)
                     {
-                        dto = allData[i];
+                        dto = el;
                         dto.stocks = new List<ProductStockDto>();
-                        prods.Add(allData[i]);
+                        prods.Add(el);
                     }
                     else dto = preProds;
-                    if (dto != null && dto.stocks != null) dto.stocks.Add(mapper.Map<ProductStockDto>(allData[i]));
+                    if (dto != null && dto.stocks != null) dto.stocks.Add(mapper.Map<ProductStockDto>(el));
                 }
                 try
                 {
@@ -1017,21 +1026,22 @@ namespace EtheriT.Coker.Application.Product
             }
             if (fileData.Directories.Any()) await imporDirectories(fileData.Directories);
 
-			return response;
+            return response;
         }
-        private async Task imporDirectories(List<DirectoryImportDto> directories) {
-			try
-			{
-				long WebsiteID = await loginUserData.GetWebsiteId();
-				List<string> manuNames = new List<string>();
-				manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level1)).Select(e => (e.Level1 ?? "").Trim()).ToList());
-				manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level2)).Select(e => (e.Level2 ?? "").Trim()).ToList());
-				manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level3)).Select(e => (e.Level3 ?? "").Trim()).ToList());
+        private async Task imporDirectories(List<DirectoryImportDto> directories)
+        {
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                List<string> manuNames = new List<string>();
+                manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level1)).Select(e => (e.Level1 ?? "").Trim()).ToList());
+                manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level2)).Select(e => (e.Level2 ?? "").Trim()).ToList());
+                manuNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Level3)).Select(e => (e.Level3 ?? "").Trim()).ToList());
 
-				List<string> tagNames = new List<string>();
-				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag1)).Select(e => (e.Tag1 ?? "").Trim()).ToList());
-				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag2)).Select(e => (e.Tag2 ?? "").Trim()).ToList());
-				tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => (e.Tag3 ?? "").Trim()).ToList());
+                List<string> tagNames = new List<string>();
+                tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag1)).Select(e => (e.Tag1 ?? "").Trim()).ToList());
+                tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag2)).Select(e => (e.Tag2 ?? "").Trim()).ToList());
+                tagNames.AddRange(directories.Where(e => !string.IsNullOrEmpty(e.Tag3)).Select(e => (e.Tag3 ?? "").Trim()).ToList());
 
                 await importMenus(WebsiteID, manuNames);
                 await importTags(WebsiteID, tagNames);
@@ -1040,29 +1050,29 @@ namespace EtheriT.Coker.Application.Product
                                 .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
                                 .Where(e => e.FK_WebsiteId == WebsiteID).ToListAsync();
 
-				var Tags = await db.Tags.Where(e => !e.IsDeleted)
-							   .Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
-							   .Where(e => e.FK_WebsiteId == WebsiteID).ToListAsync();
+                var Tags = await db.Tags.Where(e => !e.IsDeleted)
+                               .Where(e => !string.IsNullOrEmpty(e.Title) && tagNames.Contains(e.Title))
+                               .Where(e => e.FK_WebsiteId == WebsiteID).ToListAsync();
 
                 List<DirectoryArrangeImportDto> menuMap = new List<DirectoryArrangeImportDto>();
-				for (int i = 0; i < directories.Count; i++)
-				{
+                for (int i = 0; i < directories.Count; i++)
+                {
                     var directory = directories[i];
-					DirectoryArrangeImportDto? item = menuMap.Find(e => e.Name == directory.Level1);
+                    DirectoryArrangeImportDto? item = menuMap.Find(e => e.Name == directory.Level1);
                     if (string.IsNullOrEmpty(directory.Level1)) break;
 
-					var menu = menus.Where(e => e.Title == directory.Level1).FirstOrDefault();
+                    var menu = menus.Where(e => e.Title == directory.Level1).FirstOrDefault();
                     if (menu == null) break;
 
                     if (item == null)
                     {
                         item = new DirectoryArrangeImportDto { Id = menu.Id, Name = directory.Level1 };
                         menuMap.Add(item);
-					}
+                    }
                     else item.Id = menu.Id;
-                    
+
                     if (string.IsNullOrEmpty(directory.Level2)) continue;
-					var menu2 = menus.Where(e => e.Title == directory.Level2).FirstOrDefault();
+                    var menu2 = menus.Where(e => e.Title == directory.Level2).FirstOrDefault();
                     if (menu2 != null)
                     {
                         menu2.FK_TopNodeId = menu.Id;
@@ -1080,7 +1090,8 @@ namespace EtheriT.Coker.Application.Product
                             else
                             {
                                 var menu3 = menus.Where(e => e.Title == directory.Level3).FirstOrDefault();
-                                if (menu3 != null) {
+                                if (menu3 != null)
+                                {
                                     menu3.FK_TopNodeId = menu2.Id;
                                     menu3.FK_RootNodeId = menu.Id;
                                     DirectoryArrangeImportDto? item3 = item.Child.Find(e => e.Name == directory.Level3);
@@ -1093,7 +1104,8 @@ namespace EtheriT.Coker.Application.Product
                                 }
                             }
                         }
-                        else {
+                        else
+                        {
                             if (string.IsNullOrEmpty(directory.Level3))
                             {
                                 await addDirectoryToTags(directory, item2, Tags);
@@ -1116,78 +1128,143 @@ namespace EtheriT.Coker.Application.Product
                             }
                         }
                     }
-				}
+                }
                 await db.SaveChangesAsync();
                 await createDirectory(menuMap);
             }
-			catch { }
-		}
-        private string getMenuInitHtml(SelectDto dto) {
-            return HttpUtility.HtmlEncode($@"<div id=""in4v"" class=""container"">
-                <div id=""in4v-3"" class=""container edit_lock"">
-                    <div data-dirid=""{dto.Id}"" data-diridname=""{dto.Name}"" id=""igmm"" class=""frame type_change_frame catalog_frame my-5 allowedit"">
-                        <div id=""i5z9"" btn_text=""1"" btn_grid=""1"" btn_list=""1"" class=""d-flex justify-content-end switch_control allowedit"">
-                            <button class=""btn_text d-flex bg-transparent border-0 align-items-center mx-1 text-black-50 allowedit"">
-                                <span class=""material-symbols-outlined fs-5 me-1"">list</span>文字
-                            </button>
-                            <button class=""btn_grid d-flex bg-transparent border-0 align-items-center mx-1 allowedit"">
-                                <span class=""material-symbols-outlined fs-5 me-1"">grid_on</span>圖片
-                            </button>
-                            <button class=""btn_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50 allowedit"">
-                                <span class=""material-symbols-outlined fs-5 me-1"">view_list</span>圖文
-                            </button>
-                        </div>
-                        <div class=""catalog content row row-cols-sm-4 hover-outside hover_mask gx-0"">
-                            <div class=""templatecontent d-none"">
-                                <div class=""template p-2 py-3"">
-                                    <div class=""col hover_protrude_scale bg-white p-2 position-sticky box-shadow type2 hover-dark"">
-                                        <a class=""text-black"">
-                                            <figure class=""d-flex justify-content-center flex-column mb-0 h-100 max-h"">
-                                                <div class=""image_frame d-flex flex-grow-1 justify-content-center align-items-center w-100"">
-                                                    <img src="""" class=""image gjs-plh-image img-fluid"" />
-                                                </div>
-                                                <figcaption class=""w-100 position-relative pb1"">
-                                                    <div class=""title m-0 fs-5 fw-bold p-2 align-itmes-center type1-title"">
-                                                    </div>
-                                                    <p class=""description mt-1 overflow-hidden p-2 type2-content d-none"">
-                                                    </p>
-                                                    <div class=""more-btn position-absolute d-none d-flex justify-content-center align-items-center"">
-                                                        <div class=""fas fa-angle-right"">
-                                                        </div>
-                                                    </div>
-                                                    <div class=""date d-flex justify-content-end align-items-center p-2 d-none"">
-                                                    </div>
-                                                    <div class=""more text-end mt-1 d-none"">
-                                                        詳細介紹
-                                                    </div>
-                                                </figcaption>
-                                            </figure>
-                                        </a>
+            catch { }
+        }
+        private string getMenuInitHtml(SelectDto dto)
+        {
+            return HttpUtility.HtmlEncode($@"<div class=""container"">
+                <div class=""two_three_block d-flex flex-wrap"">
+                    <div class=""col-3"">
+                        <div data-dirid=""6"" data-diridname=""頁左選單"" class=""menu_directory bg-white"">
+                            <div class=""title custom_h5 fw-bold py-3 px-3""></div>
+                            <div class=""accordion accordion-flush""></div>
+                            <div id=""TemplateAccordionItem"" class=""d-none"">
+                                <div class=""accordion-item border-0 border-bottom"">
+                                    <div class=""accordion-header"">
+                                        <button type=""button"" data-bs-toggle=""collapse"" data-bs-target="""" aria-expanded=""false"" aria-controls="""" class=""accordion-button collapsed custom_h5 sectitle""></button>
+                                    </div>
+                                    <div aria-labelledby="""" class=""accordion-collapse collapse"">
+                                        <div class=""accordion-body p-0""></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <nav aria-label=""Catalog Page"">
-                            <ul class=""page_btn d-flex justify-content-center my-5 pagination"">
-                                <li class=""page-item btn_prev"">
-                                    <button class=""page-link text-black"">
-                                        <i class=""fa-solid fa-angle-left"">
-                                        </i>
+                    </div>
+                    <div class=""col"">
+                        <div class=""custom_h3 my-2 fw-bold"">
+                            <b>
+                                <span>{dto.Name}</span>
+                            </b>
+                        </div>
+                        <div class=""container edit_lock my-0"">
+                            <div data-dirid=""{dto.Id}"" data-diridname=""{dto.Name}"" class=""frame type_change_frame catalog_frame allowedit"">
+                                <div class=""d-flex justify-content-end switch_control allowedit mb-2"">
+                                    <button id=""ig77w"" class=""btn_prod_grid d-flex bg-transparent border-0 align-items-center mx-1 allowedit"">
+                                        <span class=""material-symbols-outlined fs-5 me-1"">grid_on</span>商品圖片
                                     </button>
-                                </li>
-                                <li class=""page-item btn_next"">
-                                    <button class=""page-link text-black"">
-                                        <i class=""fa-solid fa-angle-right"">
-                                        </i>
+                                    <button id=""i13wzg5"" class=""btn_prod_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50 allowedit"">
+                                        <span class=""material-symbols-outlined fs-5 me-1"">view_list</span>商品圖文
                                     </button>
-                                </li>
-                            </ul>
-                        </nav>
+                                </div>
+                                <div class=""catalog content row row-cols-lg-4 gx-0 rounded-lg bg-light px-2"">
+                                    <div class=""templatecontent d-none"">
+                                        <div class=""template p-2 py-2"">
+                                            <div class=""col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100"">
+                                                <a href="""" title="""" target=""_self"" class=""text-black"">
+                                                    <figure class=""d-flex justify-content-center mb-0 h-100 max-h flex-column"">
+                                                        <div class=""image_frame d-flex flex-grow-1 justify-content-center align-items-center type4-image-frame w-100"">
+                                                            <img src=""/upload/Product/Photo/C656NA.jpg"" alt="""" class=""image gjs-plh-image img-fluid"" />
+                                                        </div>
+                                                        <figcaption class=""w-100 position-relative pb1 type4-caption d-flex flex-column"">
+                                                            <div class=""item-header d-flex"">
+                                                                <div class=""itemNo m-0 p-0 align-itmes-center type4-title d-inline fw-bold"">
+                                                                    {{產品編號}}
+                                                                </div>
+                                                            </div>
+                                                            <div class=""item-title"">
+                                                                <div class=""catalog-number itemNo m-0 p-2 align-itmes-center type4-title d-inline"">
+                                                                    {{產品編號}}
+                                                                </div>
+                                                                <div class=""title m-0 fs-5 align-itmes-center type4-title d-inline fs-6"">
+                                                                </div>
+                                                                <div class=""like-and-share top_line d-none"">
+                                                                    <div class=""btn_favorites bg-transparent border-0 d-none"">
+                                                                        <i class=""fs-5 fa-regular fa-heart"">
+                                                                        </i><span class=""d-none"">關注</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <p class=""description mt-1 overflow-hidden p-2 d-none type2-content"">
+                                                            </p>
+                                                            <div class=""more-btn position-absolute d-flex justify-content-center align-items-center d-none"">
+                                                                <div class=""fas fa-angle-right"">
+                                                                </div>
+                                                            </div>
+                                                            <div class=""date d-flex justify-content-end align-items-center p-2 d-none"">
+                                                            </div>
+                                                            <div class=""more text-end mt-1 d-none"">
+                                                                詳細介紹
+                                                            </div>
+                                                            <div class=""price price-grid mt-auto type2-title d-inline fw-bold fs-7"">{{price}}</div>
+                                                            <div class=""bottom-row d-flex align-text-bottom"">
+                                                                <div class=""tags""></div>
+                                                                <div class=""purchase d-none"">
+                                                                    <div class=""price price-discount me-auto p-2 align-itmes-center type2-title d-none"">
+                                                                        {{min price}}
+                                                                    </div>
+                                                                    <div class=""price normal-price me-auto p-2 align-itmes-center type2-title d-inline fw-bold"">
+                                                                        {{max price}}
+                                                                    </div>
+                                                                    <span class=""cart badge rounded-pill bg-secondary text-white me-auto p-2 px-4 align-itmes-center type2-title d-none fw-normal"">
+                                                                        <i class=""fa-solid fa-cart-shopping fa-inverse""></i>
+                                                                        放入購物車
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </figcaption>
+                                                    </figure>
+                                                </a>
+                                                <div class=""shareBlock"">
+                                                    <button class=""btn_share bg-transparent border-0"">
+                                                        <i class=""fs-5 fa-solid fa-share"">
+                                                        </i><span class=""d-none"">分享</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class=""templatecontent-tag d-none"">
+                                        <span class=""badge rounded-pill bg-light text-secondary fw-normal me-1 px-2"">{{Tag Name}}</span>
+                                    </div>
+                                </div>
+                                <nav aria-label=""Catalog Page"">
+                                    <ul class=""page_btn d-flex justify-content-center my-5 pagination"">
+                                        <li class=""page-item btn_prev"">
+                                            <button class=""page-link text-black"">
+                                                <i class=""fa-solid fa-angle-left""></i>
+                                            </button>
+                                        </li>
+                                        <li class=""page-item btn_next"">
+                                            <button class=""page-link text-black"">
+                                                <i class=""fa-solid fa-angle-right""></i>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                        <!-- Content here -->
                     </div>
                 </div>
+                <!-- Content here -->
             </div>");
         }
-        private async Task createDirectory(List<DirectoryArrangeImportDto> menuMap) {
+        private async Task createDirectory(List<DirectoryArrangeImportDto> menuMap)
+        {
             long WebsiteID = await loginUserData.GetWebsiteId();
             List<string> strings = menuMap.Where(e => !string.IsNullOrEmpty(e.Name)).Select(e => e.Name).ToList();
             List<Core.Models.Directory> Directory = new List<Core.Models.Directory>();
@@ -1201,11 +1278,13 @@ namespace EtheriT.Coker.Application.Product
             var TagAssociate = await db.Tag_Associates.Include(t => t.Tag)
                     .Where(e => !e.IsDeleted)
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
-                    .Where(t => t.Tag!=null && t.Tag.FK_WebsiteId == WebsiteID).ToListAsync();
-            for (int i=0; i< menuMap.Count; i++) {
+                    .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID).ToListAsync();
+            for (int i = 0; i < menuMap.Count; i++)
+            {
                 var menu = menuMap[i];
                 if (menu.Child.Any()) await createDirectory(menu.Child);
-                else {
+                else
+                {
                     var dir = oldDirectory.Where(e => e.Title == menu.Name).FirstOrDefault();
                     if (dir == null)
                     {
@@ -1218,10 +1297,13 @@ namespace EtheriT.Coker.Application.Product
                         db.Directory.Add(dir);
                         await loginUserData.SaveChanges(dir);
                     }
-                    if (menu.Tags != null && menu.Tags.Any()) {
+                    if (menu.Tags != null && menu.Tags.Any())
+                    {
                         var tagIds = menu.Tags.FindAll(e => e.Id != null).Select(e => e.Id).ToList();
-                        menu.Tags.ForEach(async tag => {
-                            if (tag.Id != null && !TagAssociate.Exists( e => e.FK_AId == dir.Id && e.FK_TId == tag.Id)) {
+                        menu.Tags.ForEach(async tag =>
+                        {
+                            if (tag.Id != null && !TagAssociate.Exists(e => e.FK_AId == dir.Id && e.FK_TId == tag.Id))
+                            {
                                 Tag_Associate associate = new Tag_Associate
                                 {
                                     FK_AId = dir.Id,
@@ -1233,7 +1315,8 @@ namespace EtheriT.Coker.Application.Product
                             }
                         });
                         var oldTagBind = TagAssociate.FindAll(e => e.FK_AId == dir.Id && !tagIds.Contains(e.FK_TId)).ToList();
-                        for (int j=0; j< oldTagBind.Count(); j++) {
+                        for (int j = 0; j < oldTagBind.Count(); j++)
+                        {
                             oldTagBind[i].IsDeleted = true;
                             await loginUserData.setOptionParameter(oldTagBind[i]);
                         }
@@ -1249,7 +1332,8 @@ namespace EtheriT.Coker.Application.Product
             db.Tag_Associates.AddRange(associates);
             await db.SaveChangesAsync();
         }
-        private async Task addDirectoryToTags(DirectoryImportDto directory, DirectoryArrangeImportDto item,List<Core.Models.Tag> Tags) {
+        private async Task addDirectoryToTags(DirectoryImportDto directory, DirectoryArrangeImportDto item, List<Core.Models.Tag> Tags)
+        {
             item.Tags = new List<TagGetSelectedDto>();
             if (!string.IsNullOrEmpty(directory.Tag1))
             {
@@ -1267,7 +1351,8 @@ namespace EtheriT.Coker.Application.Product
                 if (tag3 != null) item.Tags.Add(new TagGetSelectedDto { Id = tag3.Id, Tag_Name = tag3.Title });
             }
         }
-        private async Task importMenus(long WebsiteID, List<string> manuNames) {
+        private async Task importMenus(long WebsiteID, List<string> manuNames)
+        {
             var menus = await db.WebMenus.Where(e => !e.IsDeleted)
                         .Where(e => e.FK_WebsiteId == WebsiteID)
                         .Where(e => !string.IsNullOrEmpty(e.Title) && manuNames.Contains(e.Title))
@@ -1276,7 +1361,8 @@ namespace EtheriT.Coker.Application.Product
 
             var needAddMenus = manuNames.Where(e => !hasMenusTitle.Contains(e)).ToList();
             List<SelectDto> addMmenus = new List<SelectDto>();
-            needAddMenus.ForEach(e => {
+            needAddMenus.ForEach(e =>
+            {
                 if (!addMmenus.Exists(m => m.Name == e))
                     addMmenus.Add(new SelectDto { Name = e });
             });
@@ -1292,13 +1378,15 @@ namespace EtheriT.Coker.Application.Product
             var hasTagsTitle = tags.Select(e => e.Title).ToArray();
             var needAddTagss = tagNames.Where(e => !hasTagsTitle.Contains(e)).ToList();
             List<SelectDto> addTags = new List<SelectDto>();
-            needAddTagss.ForEach(e => {
+            needAddTagss.ForEach(e =>
+            {
                 if (!addTags.Exists(m => m.Name == e))
                     addTags.Add(new SelectDto { Name = e });
             });
 
             var newTags = mapper.Map<List<Core.Models.Tag>>(addTags);
-            newTags.ForEach(e => {
+            newTags.ForEach(e =>
+            {
                 e.FK_WebsiteId = WebsiteID;
                 e.CreatorUserId = userId;
                 e.CreationTime = DateTime.Now;
@@ -1320,13 +1408,13 @@ namespace EtheriT.Coker.Application.Product
         }
         private async Task importProdTech(List<ProductImportDto> prods, List<ImportMassageItem> errors)
         {
-            var prodGroup = prods.GroupBy(x => new { x.ItemNo, x.ProdName }).Select(e => new { e.Key.ItemNo,e.Key.ProdName }).ToList();
+            var prodGroup = prods.GroupBy(x => new { x.ItemNo, x.ProdName }).Select(e => new { e.Key.ItemNo, e.Key.ProdName }).ToList();
             var prodTitles = prodGroup.Select(e => e.ProdName).ToList();
             var prodItemNos = prodGroup.Select(e => e.ItemNo).ToList();
             var crrenProds = db.Prods.Where(e => !e.IsDeleted)
                     .Where(e => prodTitles.Contains(e.Title))
-                    .Where(e => prodItemNos.Contains(e.ItemNo??""))
-                    .Select(e => new { e.Id, e.Title,e.ItemNo }).ToList();
+                    .Where(e => prodItemNos.Contains(e.ItemNo ?? ""))
+                    .Select(e => new { e.Id, e.Title, e.ItemNo }).ToList();
             var techs = db.TechnicalCertificates.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
 
             List<TechCertProdAssociateDto> techCertProdAssociateDtos = new List<TechCertProdAssociateDto>();
@@ -1403,13 +1491,21 @@ namespace EtheriT.Coker.Application.Product
                                     .Select(e => new { e.Id, e.Title }).ToList();
             var allProd = db.Prods.Where(e => e.FK_WebsiteId == WebsiteId)
                                     .Where(e => !e.IsDeleted)
-                                    .Select(e => new { e.Id, e.Title }).ToList();
+                                    .Select(e => new { e.Id, e.Title, e.ItemNo }).ToList();
             List<TagAssociateDto> TagAssociates = new List<TagAssociateDto>();
             for (int i = 0; i < prods.Count; i++)
             {
                 var item = prods[i];
-                item.Id = allProd.Find(e => e.Title == item.ProdName).Id;
-                var tag = nowTags.FindAll(e => e.Title == item.Tag1 || e.Title == item.Tag2 || e.Title == item.Tag3 || e.Title == item.Tag4 || e.Title == item.Tag5);
+                var el = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo);
+                if (el == null) {
+                    errors.Add(new ImportMassageItem { 
+                        Name = item.ProdName,
+                        Description = "商品標籤榜定失敗。"
+                    });
+                    continue; 
+                }
+                item.Id = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo).Id;
+                var tag = nowTags.FindAll(e => e.Title == item.Tag1 || e.Title == item.Tag2 || e.Title == item.Tag3 || e.Title == item.Tag4 || e.Title == item.Tag5 || e.Title == item.Tag6);
                 if (tag != null)
                 {
                     for (int j = 0; j < tag.Count; j++)
@@ -1433,8 +1529,8 @@ namespace EtheriT.Coker.Application.Product
             List<string?> ImagStr3 = prods.Where(e => !string.IsNullOrEmpty(e.Image3)).Select(e => e.Image3).ToList();
             List<string?> ImagStr4 = prods.Where(e => !string.IsNullOrEmpty(e.Image4)).Select(e => e.Image4).ToList();
             List<string?> ImagStr5 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image5).ToList();
-            List<string?> ImagStr6 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image6).ToList();
-            List<string?> ImagStr7 = prods.Where(e => !string.IsNullOrEmpty(e.Image5)).Select(e => e.Image7).ToList();
+            List<string?> ImagStr6 = prods.Where(e => !string.IsNullOrEmpty(e.Image6)).Select(e => e.Image6).ToList();
+            List<string?> ImagStr7 = prods.Where(e => !string.IsNullOrEmpty(e.Image7)).Select(e => e.Image7).ToList();
             List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
             ImagStr.AddRange(ImagStr2);
             ImagStr.AddRange(ImagStr3);
@@ -1447,7 +1543,7 @@ namespace EtheriT.Coker.Application.Product
             var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();
             foreach (var prod in prods)
             {
-                var myProd = fileProds.Where(e => e.Title == prod.ProdName).FirstOrDefault();
+                var myProd = fileProds.Where(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo).FirstOrDefault();
                 if (myProd != null)
                 {
                     List<string?> fileName =
@@ -1461,6 +1557,67 @@ namespace EtheriT.Coker.Application.Product
                                 SId = myProd.Id,
                                 Type = FileBindTypeEnum.產品,
                                 mediaLink = fileName[i] ?? "",
+                                SerNo = 500
+                            });
+                        }
+                    }
+                }
+            }
+            await fileUploadAppService.uploadImageLink(importDtos);
+            await ImportProdDownloadFileLinks(prods, errors);
+        }
+        private async Task ImportProdDownloadFileLinks(List<ProductImportDto> prods, List<ImportMassageItem> errors)
+        {
+            List<string?> FileStr = prods.Where(e => !string.IsNullOrEmpty(e.File1)).Select(e => e.File1).ToList();
+            List<string?> FileStr2 = prods.Where(e => !string.IsNullOrEmpty(e.File2)).Select(e => e.File2).ToList();
+            List<string?> FileStr3 = prods.Where(e => !string.IsNullOrEmpty(e.File3)).Select(e => e.File3).ToList();
+            List<string?> FileStr4 = prods.Where(e => !string.IsNullOrEmpty(e.File4)).Select(e => e.File4).ToList();
+            List<string?> FileStr5 = prods.Where(e => !string.IsNullOrEmpty(e.File5)).Select(e => e.File5).ToList();
+            List<string?> FileNameStr = prods.Where(e => !string.IsNullOrEmpty(e.FileName1)).Select(e => e.FileName1).ToList();
+            List<string?> FileNameStr2 = prods.Where(e => !string.IsNullOrEmpty(e.FileName2)).Select(e => e.FileName2).ToList();
+            List<string?> FileNameStr3 = prods.Where(e => !string.IsNullOrEmpty(e.FileName3)).Select(e => e.FileName3).ToList();
+            List<string?> FileNameStr4 = prods.Where(e => !string.IsNullOrEmpty(e.FileName4)).Select(e => e.FileName4).ToList();
+            List<string?> FileNameStr5 = prods.Where(e => !string.IsNullOrEmpty(e.FileName5)).Select(e => e.FileName5).ToList();
+            List<string?> ProdStr = prods.Where(e => !string.IsNullOrEmpty(e.ProdName)).Select(e => e.ProdName).ToList();
+            FileStr.AddRange(FileStr2);
+            FileStr.AddRange(FileStr3);
+            FileStr.AddRange(FileStr4);
+            FileStr.AddRange(FileStr5);
+            FileStr = FileStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
+
+            FileNameStr.AddRange(FileNameStr2);
+            FileNameStr.AddRange(FileNameStr3);
+            FileNameStr.AddRange(FileNameStr4);
+            FileNameStr.AddRange(FileNameStr5);
+            FileNameStr = FileNameStr.Where(e => !string.IsNullOrEmpty(e)).GroupBy(e => e).Select(e => e.Key).ToList();
+            List<FileImageImportDto> importDtos = new List<FileImageImportDto>();
+            var fileProds = db.Prods.Where(e => !e.IsDeleted).Where(e => ProdStr.Contains(e.Title)).ToList();
+            foreach (var prod in prods)
+            {
+                var myProd = fileProds.Where(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo).FirstOrDefault();
+                if (myProd != null)
+                {
+                    List<string?> fileLink =
+                        FileStr.FindAll(e => e == prod.File1 || e == prod.File2 || e == prod.File3 || e == prod.File4 || e == prod.File5);
+                    List<string?> fileName =
+                        FileNameStr.FindAll(e => e == prod.FileName1 || e == prod.FileName2 || e == prod.FileName3 || e == prod.FileName4 || e == prod.FileName5);
+                    if (fileLink.Count() != fileName.Count()) {
+                        int ll = fileLink.Count();
+                        int nl = fileName.Count();
+                        int all = ll + nl;
+                    }
+                    for (int i = 0; i < fileLink.Count; i++)
+                    {
+                        if (!string.IsNullOrEmpty(fileLink[i]))
+                        {
+                            string l = fileLink[i],n = "";
+                            if (i < fileName.Count()) n = fileName[i];
+                            importDtos.Add(new FileImageImportDto
+                            {
+                                SId = myProd.Id,
+                                Type = FileBindTypeEnum.產品檔案,
+                                Name = fileName[i]??"",
+                                mediaLink = fileLink[i] ?? "",
                                 SerNo = 500
                             });
                         }
@@ -1485,10 +1642,18 @@ namespace EtheriT.Coker.Application.Product
             List<Prod> news = mapper.Map<List<Prod>>(prods);
             foreach (Prod prod in news)
             {
-                var item = prods.Find(p => p.ProdName == prod.Title && p.ItemNo == (prod.ItemNo??""));
+                var item = prods.Find(p => p.ProdName == prod.Title && p.ItemNo == (prod.ItemNo ?? ""));
                 if (item != null && item.stocks != null)
                 {
                     prod.Prod_Stocks = await InsertOrUpdateStore(item);
+                    prod.Visible = true;
+                    prod.RemovedFromShelves = false;
+                    ProdStatusEnum statusType;
+                    if (Enum.TryParse(item.Status, out statusType))
+                    {
+                        prod.Status = (int)statusType;
+                    }
+                    else prod.Status = 0;
                 }
                 prod.CreatorUserId = userId;
             }
@@ -1499,12 +1664,13 @@ namespace EtheriT.Coker.Application.Product
         {
             long userId = await loginUserData.GetUserId();
             List<string> titles = prods.Select(e => e.ProdName ?? "").ToList();
-            var items = db.Prods.Where(e => titles.Contains(e.Title));
+            List<string> itemNos = prods.Select(e => e.ItemNo ?? "").ToList();
+            var items = await db.Prods.Where(e => !e.IsDeleted).Where(e => titles.Contains(e.Title)).Where(e => string.IsNullOrEmpty(e.ItemNo) || itemNos.Contains(e.ItemNo)).ToListAsync();
             foreach (var prod in items)
             {
                 try
                 {
-                    ProductImportDto? item = prods.Find(e => e.ProdName == prod.Title);
+                    ProductImportDto? item = prods.Find(e => e.ProdName == prod.Title && e.ItemNo == prod.ItemNo);
                     if (item != null)
                     {
                         mapper.Map(mapper.Map<ProductImportUpateDto>(item), prod);
@@ -1512,12 +1678,19 @@ namespace EtheriT.Coker.Application.Product
                         {
                             prod.Prod_Stocks = await InsertOrUpdateStore(item);
                         }
+                        ProdStatusEnum statusType;
+                        if (Enum.TryParse(item.Status, out statusType))
+                        {
+                            prod.Status = (int)statusType;
+                        }
+                        else prod.Status = 0;
                     }
                     prod.LastModifierUserId = userId;
                     prod.LastModificationTime = DateTime.Now;
-                }catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
-                    errors.Add(new ImportMassageItem { Name = prod.Title,Description=ex.Message });
+                    errors.Add(new ImportMassageItem { Name = prod.Title, Description = ex.Message });
                 }
             }
             await db.SaveChangesAsync();
@@ -1552,13 +1725,14 @@ namespace EtheriT.Coker.Application.Product
                     if (myStore != null)
                     {
                         myStore.Stock = stock.Stock;
+                        myStore.SubItemNo = stock.SubItemNo;
                         stockDto.Add(myStore);
                     }
                     else
                     {
                         myStore = mapper.Map<Prod_Stock>(stock);
                         myStore.Id = 0;
-						stockDto.Add(myStore);
+                        stockDto.Add(myStore);
                     }
                 }
                 else

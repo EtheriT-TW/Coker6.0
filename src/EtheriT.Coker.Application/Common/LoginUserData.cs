@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using System;
@@ -27,14 +28,17 @@ namespace EtheriT.Coker.Application
 
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         public LoginUserData(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration,
             IMapper mapper
         ) {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
+            this.configuration = configuration;
             this.mapper = mapper;
         }
 

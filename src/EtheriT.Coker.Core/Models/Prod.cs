@@ -20,6 +20,9 @@ namespace EtheriT.Coker.Core.Models
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }
         public bool permanent { get; set; }
+        public bool Visible { get; set; }
+        public bool RemovedFromShelves { get; set; }
+        public int Status {  get; set; }
         public List<Prod_Stock> Prod_Stocks { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }
         public string? SaveHtml { get; set; }

@@ -47,6 +47,7 @@
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/Contact.js",
         "wwwroot/Shared/js/BGCanvas.js",
+        "wwwroot/Shared/js/JqueryExtends.js",
         "wwwroot/Shared/js/FlipBook.js"
       ]
     },

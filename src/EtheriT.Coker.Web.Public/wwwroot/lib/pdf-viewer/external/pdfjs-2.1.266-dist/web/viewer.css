@@ -1296,6 +1296,7 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
     top: 50%;
     right: 1.5em;
 }
+
 .pageButton {
     width: 2em;
     height: 2em;
@@ -2412,6 +2413,16 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
 
 @media all and (max-width: 535px) {
   #scaleSelectContainer {
-    display: none;
+    display: none !important;
   }
+    .pageButton.pageUp {
+        display: none;
+    }
+    .pageButton.pageDown {
+        display: none;
+    }
+    #viewerContainer {
+        margin: 0em;
+        margin-top: 3em;
+    }
 }

@@ -2420,12 +2420,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
   #scaleSelectContainer {
     display: none !important;
   }
-    .pageButton.pageUp {
-        display: none;
-    }
-    .pageButton.pageDown {
-        display: none;
-    }
     #viewerContainer {
         margin: 0em;
         margin-top: 3em;

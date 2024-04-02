@@ -9,6 +9,7 @@ using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.Migrations.Seed;
 using EtheriT.Coker.Core.Models;
 using Directory = EtheriT.Coker.Core.Models.Directory;
+using System.Text.Json.Nodes;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -63,6 +64,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<PermissionDetail> PermissionDetail { get; set; }
         public DbSet<Remote> Remotes { get; set; }
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
+        public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
+
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -238,7 +241,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(t => t.CreateDate).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.Website).WithMany(w => w.NotFoundImages).HasForeignKey(e => e.FK_WebsiteId);
             });
-
+            modelBuilder.Entity<Core.Models.JsonObject>(o => {
+                o.Property(t => t.CreationTime).HasDefaultValueSql("getdate()");
+                o.HasOne(f => f.FK_Website).WithMany(w => w.jsonObjects).HasForeignKey(e => e.FK_WebsiteId);
+            });
             base.OnModelCreating(modelBuilder);
             new SeedHelper(modelBuilder).SeedHost();
         }

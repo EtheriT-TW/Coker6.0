@@ -78,14 +78,20 @@ function DirectoryGetDataInit() {
                             });
                             var $body = item.find(".accordion-body");
                             $.each(SecIItem.children, function (index, ThirdIItem) {
-                                if (typeof(PageKey)!="undefined" && PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
+                                const _a = $(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`);
+                                if (typeof (PageKey) != "undefined" && PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
+                                    $(_a).addClass("active");
                                     $(accordionCollapse).collapse('show'); 
+                                    item.find(".accordion-header").addClass("active");
                                 }
-                                $body.append(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`)
+                                $body.append(_a);
                             })
                             $self.find(".accordion").append(item);
                         } else {
-                            var html = `<div class="accordion-item border-0 border-bottom px-1"><a href="${SecIItem.routerName}" title="連結至：${SecIItem.title}" class="list-group-item border-0 py-3 custom_h5 text-black">${SecIItem.title}</a></div>`
+                            var html = $(`<div class="accordion-item border-0 border-bottom px-1"><a href="${SecIItem.routerName}" title="連結至：${SecIItem.title}" class="list-group-item border-0 py-3 custom_h5 text-black">${SecIItem.title}</a></div>`);
+                            if (typeof (PageKey) != "undefined" && PageKey.toLowerCase() == SecIItem.routerName.toLowerCase()) {
+                                $(html).find("a").addClass("active");
+                            }
                             $self.find(".accordion").append(html);
                         }
                     })
@@ -251,7 +257,7 @@ function DirectoryDataInsert($item, result) {
         }
 
         var imglink = data.mainImage || "/images/noImg.jpg";
-        if (data.orgName!=null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && IsFaPage != "True") || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
+        if (data.orgName != null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && !IsFaPage) || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);
         }
         content.find("img").attr("src", imglink);

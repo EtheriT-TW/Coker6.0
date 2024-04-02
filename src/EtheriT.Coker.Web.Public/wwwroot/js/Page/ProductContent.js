@@ -98,7 +98,7 @@ function PageDefaultSet(result) {
 
             item.img_orig.forEach(function (img) {
                 $(".pro_tc_content > .techcert_list").append(`<div class="badge_${item.id} row pb-3">
-			                                                      <div class="col-12 col-lg-3 col-md-5 text-center">
+			                                                      <div class="col-12 col-lg-2 col-md-5 text-center verticalAlign">
 				                                                      <img class="" src="${img.link}" alt="${img.name}" />
 			                                                      </div>
 			                                                      <div class="description align-self-center col">${item.description}</div>
@@ -113,16 +113,11 @@ function PageDefaultSet(result) {
 
     if (!$(".pro_tc").hasClass("d-none")) {
         $(".btn_tc").on("click", function () {
-            console.log("1");
             $("#ProductDescription").removeClass("active show")
-            console.log("2");
             $("#TechnicalDocuments").addClass("active show")
-            console.log("3");
             $("#pills-description-tab").removeClass("active")
-            console.log("4");
             $("#pills-documents-tab").addClass("active")
             var $self_btn = $(this);
-            console.log("5");
             console.log($(`.badge_${$self_btn.data("tcid")}`));
             $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
         })
@@ -247,50 +242,51 @@ function PageDefaultSet(result) {
             pre_slide_image.imgCheck();
             $preview_swiper.append(pre_slide);
         });
-        if (result.img_Small.length == 1) $(".PreviewSwiper").addClass("d-none");
+        if (result.img_Small.length == 1) $(".PreviewSwiper,.btn_swiper_prev_product,.btn_swiper_next_product").addClass("d-none");
     }
-
-    preview_swiper = new Swiper(".PreviewSwiper", {
-        slidesPerView: 4,
-        loop: false,
-        spaceBetween: 10,
-        freeMode: true,
-        watchSlidesProgress: true,
-        scrollbar: {
-            el: ".swiper-scrollbar",
-        },
-        breakpoints: {
-            576: {
-                slidesPerView: 4,
+    if (result.img_Small.length > 1) {
+        preview_swiper = new Swiper(".PreviewSwiper", {
+            slidesPerView: 4,
+            loop: false,
+            spaceBetween: 10,
+            freeMode: true,
+            watchSlidesProgress: true,
+            scrollbar: {
+                el: ".swiper-scrollbar",
             },
-            768: {
-                slidesPerView: 6,
-            },
-            992: {
-                slidesPerView: 8,
+            breakpoints: {
+                576: {
+                    slidesPerView: 4,
+                },
+                768: {
+                    slidesPerView: 6,
+                },
+                992: {
+                    slidesPerView: 8,
+                }
             }
-        }
-    });
+        });
 
-    product_swiper = new Swiper(".ProductSwiper", {
-        spaceBetween: 15,
-        loop: true,
-        navigation: {
-            nextEl: ".btn_swiper_next_product",
-            prevEl: ".btn_swiper_prev_product",
-        },
-        breakpoints: {
-            768: {
-                allowTouchMove: true,
+        product_swiper = new Swiper(".ProductSwiper", {
+            spaceBetween: 15,
+            loop: true,
+            navigation: {
+                nextEl: ".btn_swiper_next_product",
+                prevEl: ".btn_swiper_prev_product",
             },
-            992: {
-                allowTouchMove: false,
-            }
-        },
-        thumbs: {
-            swiper: preview_swiper,
-        },
-    });
+            breakpoints: {
+                768: {
+                    allowTouchMove: true,
+                },
+                992: {
+                    allowTouchMove: false,
+                }
+            },
+            thumbs: {
+                swiper: preview_swiper,
+            },
+        });
+    }
     $product_swiper.find(".pro_display").on("click", ShowBigPro);
     img_origin_list = result.img_Original;
 
@@ -306,10 +302,10 @@ function PageDefaultSet(result) {
         result.files.forEach(function (file) {
             var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
             $("#FileDownload>.File_list").append(`
-            <div class="file px-4 py-1 border-bottom">
+            <div class="file border-bottom">
                 <a href="${link}" download="${file.name}" titile="${file.name}" class="link_with_icon d-flex text-decoration-none edit_lock">
                     <div draggable="true" class="icon pe-2"></div>
-                    <div draggable="true" class="name text-black">${file.name}
+                    <div draggable="true" class="name">${file.name}
                 </div></a>
             </div>`)
         });

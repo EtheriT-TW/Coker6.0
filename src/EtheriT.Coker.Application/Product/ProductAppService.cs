@@ -607,7 +607,7 @@ namespace EtheriT.Coker.Application.Product
                                                   .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
                                                 select new DirectoryReleInfoDto
                                                 {
-                                                    Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}")
+                                                    Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//","/")
                                                 }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
                               }).ToList();
                     for (int i = 0; i < output.Count; i++)

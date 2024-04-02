@@ -25,6 +25,7 @@ using System.Linq;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Permissions;
+using System.Collections.Generic;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -355,17 +356,21 @@ namespace EtheriT.Coker.Application.Directory
                 var FKTIds = tags.Select(e => e.FK_TId).ToList();
                 if (tags != null)
                 {
+                    List<long> allIds = new List<long>();
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
                         case DirectoryTypeEnum.商品:
-                            var pd_as = await db.Tag_Associates
-                                    .Where(e => !e.IsDeleted)
-                                    .Where(e => e.Type == (int)TagAssociateTypeEnum.商品)
-                                    .Where(e => FKTIds.Contains(e.FK_TId))
-                                    .ToListAsync();
-                            if (pd_as != null)
+                            foreach (var id in FKTIds)
                             {
-                                var allIds = pd_as.Select(e => e.FK_AId).ToList();
+                                var pd_as = await (db.Tag_Associates.Where(e => e.FK_TId == id && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
+                                if (!allIds.Any()) allIds = pd_as.Select(e => e.FK_AId).ToList();
+                                else
+                                {
+                                    allIds = pd_as.Where(e => allIds.Contains(e.FK_AId)).Select(e => e.FK_AId).ToList();
+                                }
+                            }
+                            if (allIds.Any())
+                            {
                                 DataIds = db.Prods
                                     .Where(e => allIds.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
@@ -382,7 +387,7 @@ namespace EtheriT.Coker.Application.Directory
                                     .ToListAsync();
                             if (db_as != null)
                             {
-                                var allIds = db_as.Select(e => e.FK_AId).ToList();
+                                allIds = db_as.Select(e => e.FK_AId).ToList();
                                 DataIds = db.Article
                                     .Where(e => allIds.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)

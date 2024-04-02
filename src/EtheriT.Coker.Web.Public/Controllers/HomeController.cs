@@ -59,6 +59,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var defaultData = await websiteApplication.GetDefaultData(siteId, key);
             var site_name = $"Layout_{defaultData.Id}_Site";
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
+            await webMenuApplication.CheckDisplayAll(siteId);
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
             var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput {key= "ga4",SiteId= siteId });

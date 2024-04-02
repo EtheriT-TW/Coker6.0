@@ -292,6 +292,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 view = "index";
             }
+            await webMenuApplication.CheckDisplayAll(siteId);
             await RemoteAppService.insertRemote(remoteInputDto);
 
 			return View(view, model);

@@ -78,6 +78,7 @@
         transition: all 0.5s;
         width: 4.5rem;
         height: 4.5rem;
+        border:none;
     }
 
 .hover_article_scale {

@@ -6,10 +6,10 @@ html, body {
 }
 
 /* Universal */
-a {
-    text-decoration: none;
-    color: black;
-}
+a {text-decoration: none; color:inherit;}
+    a:hover {
+        color: inherit;
+    }
 
 p {
     margin: 0;
@@ -28,3 +28,13 @@ p {
     padding:0;
     margin:0;
 }
+
+.verticalAlign {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+    .verticalAlign:before {
+        content:"";
+        height:100%;
+    }

@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Mail
 {
     public class SenderDto
     {
-        public MailUserDataDto Sender { get; set; } = new MailUserDataDto { Email= "servise@ether.com.tw" };
+        public MailUserDataDto Sender { get; set; } = new MailUserDataDto { Email= "service@ether.com.tw" };
         public List<MailUserDataDto> Recipients { get; set; } = new List<MailUserDataDto>();
         public List<MailUserDataDto> Bcc { get; set; } = new List<MailUserDataDto>();
         public List<MailUserDataDto> CC { get; set; } = new List<MailUserDataDto>();

@@ -22,6 +22,7 @@ function ready() {
         }
     });
     if (typeof (IsFaPage) == "string") IsFaPage = IsFaPage.toLowerCase() == "true";
+    else IsFaPage = false;
     const menuMouseover = function () {
         const item = $(this).find("img");
         if (!!$(item).data("mouseover"))

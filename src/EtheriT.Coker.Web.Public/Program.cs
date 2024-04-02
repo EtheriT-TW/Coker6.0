@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
 using EtheriT.Coker.Application.Import;
+using EtheriT.Coker.Application.JsonObject;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Permissions;
@@ -17,6 +18,7 @@ using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.Product;
@@ -52,11 +54,16 @@ builder.Services.AddHsts(options =>
     options.IncludeSubDomains = true;
     options.MaxAge = TimeSpan.FromDays(365);
 });
-builder.Services.AddHttpsRedirection(options =>
+
+
+if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
 {
-    options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
-    options.HttpsPort = 5001;
-});
+    builder.Services.AddHttpsRedirection(options =>
+    {
+        options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
+        options.HttpsPort = 443;
+    });
+}
 builder.Services.AddAntiforgery(options =>
 {
     // Set Cookie properties using CookieBuilder properties†.
@@ -112,6 +119,7 @@ builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
 builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
+builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())

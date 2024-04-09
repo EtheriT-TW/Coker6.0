@@ -76,14 +76,20 @@ function MenuLiSize() {
         $(".subtitle").addClass("w-100")
         $(".subtitle li").addClass("w-100")
     }
-
     if ($(window).width() > 992) {
         $(".offcanvas-body").removeClass("accordion")
         $(".offcanvas-body .collapse").addClass("show")
+        $(`.offcanvas-body  .nav-link[data-bs-toggle]`).attr("data-bs-toggle","");
     } else {
         $(".offcanvas-body").addClass("accordion")
         $(".offcanvas-body .collapse").removeClass("show")
+        $(`.offcanvas-body  .nav-link[data-bs-toggle]`).attr("data-bs-toggle", "collapse");
     }
+    $("#Offcanvas_Mega_Menu a").each(function () {
+        const $item = $(this);
+        if ($item.attr("href").match(PageKey) != null)
+            $item.parents(".collapse").addClass("show");
+    });
 }
 
 function CartDropInit() {

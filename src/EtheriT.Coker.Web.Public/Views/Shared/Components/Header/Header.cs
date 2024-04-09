@@ -239,7 +239,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 default:
                     break;
             }
-
+            headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";
             return View(defaultData.View, headerViewModel);
         }
     }

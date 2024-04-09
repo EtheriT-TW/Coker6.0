@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Tag
         public string Title { get; set; }
         public List<long>? FK_Tid { get; set; }
         public List<string>? TagTitle { get; set; }
+        public List<TagGetSelectedDto>? Tags {  get; set; }
         public bool? Disp_Opt { get; set; }
     }
 }

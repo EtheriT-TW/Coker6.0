@@ -43,17 +43,7 @@ namespace EtheriT.Coker.Application.JsonObject
                 db.JsonObjects.Add(header);
             }
             header.Json = jsonStr;
-            if (header.Id == 0)
-            {
-                header.CreationTime = DateTime.Now;
-                header.CreatorUserId = 1;
-            }
-            else
-            {
-                header.LastModificationTime = DateTime.Now;
-                header.LastModifierUserId = 1;
-            }
-            await db.SaveChangesAsync();
+            await loginUserData.SaveChanges(header);
             return response;
         }
     }

@@ -65,7 +65,8 @@ namespace EtheriT.Coker.Application
 					OrgName = site.OrgName,
 					ParntOrgNames = ParntOrgNames,
 					Layout_Type = site.LayoutType??0,
-					Level = (WebsiteLevelEnum)site.Level
+					Level = (WebsiteLevelEnum)site.Level,
+                    locale = site.Locale
 				};
                 defaultData.View = defaultData.Layout_Type == 0 ? "Default" : $"Layout_{defaultData.Layout_Type}";
 				defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;

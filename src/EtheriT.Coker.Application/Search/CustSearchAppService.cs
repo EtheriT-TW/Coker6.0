@@ -98,8 +98,20 @@ namespace EtheriT.Coker.Application.Search
 						);
 						break;
 				}
-			}
-            
+                if (site.Level >= 2)
+                {
+                    bool hasProds = await db.Prods.Where(e => e.FK_WebsiteId == site.Id).Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).AnyAsync();
+                    if (hasProds) {
+                        list.Add(
+                            new SearchItemDto
+                            {
+                                Id = 3,
+                                Name = "找商品"
+                            }
+                        );
+                    }
+                }
+            }
             return list;
         }
     }

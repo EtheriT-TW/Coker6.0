@@ -3,6 +3,9 @@
 .text-border {
     border-left: #888888 solid .5rem;
 }
+.catalog_frame {
+    margin-bottom:1rem;
+}
 
 .catalog {
     position: relative;
@@ -113,6 +116,10 @@
     position: relative;
 }
 
+.type_change_frame .type4 .item-title {
+    max-width: calc(100% - 32px);
+}
+
 .type_change_frame .type2-content {
     overflow: hidden;
     display: -webkit-box;
@@ -183,13 +190,12 @@
 /* Button Share */
 .type_change_frame .shareBlock.type4 {
     position: absolute;
-    top: 60%;
     right: 0.5em;
 }
 
 .type_change_frame .shareBlock.type5 {
     position: absolute;
-    top: 1em;
+    top: 1em !important;
     right: 1em;
 }
 

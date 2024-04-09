@@ -5,10 +5,14 @@
     ViewData["SideName"] = Model.PageData.SiteName;
     ViewData["PageName"] = Model.PageData.Title;
     ViewData["OrgName"] = Model.orgName;
+    ViewData["Layout"] = Model.layout;
+    ViewData["PageTagNameName"] = $"{Model.PageData.Title} - 【{Model.PageData.SiteName}】";
     ViewData["Description"] = Model.PageData.Description;
     ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["XSRF-TOKEN"] = Model.token;
+    ViewData["Locale"] = Model.locale;
 }
 <link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />

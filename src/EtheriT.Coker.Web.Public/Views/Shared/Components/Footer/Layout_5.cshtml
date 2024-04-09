@@ -30,7 +30,7 @@
 }
 <div class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg" style="background: url('/upload/htmlConten/footer_img.jpg')">
 	<img src="\upload\htmlConten\footer_boat.png" class="footer-img" />
-	<h5 class="my-1">www.濠廣.tw</h5>
+	<h5 class="my-1">@Model.Title</h5>
 	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">
 		@for (int i = 0; i < Model.Content.Count; i++)
 		{
@@ -40,7 +40,23 @@
 </div>
 
 <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
-	<p class="cookie_text my-3 pe-3">本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見&ensp;<span style="cursor:pointer">隱私權政策</span>。</p>
+	<p class="cookie_text my-3 pe-3">
+		@if (Model.locale == "zh-tw")
+		{
+			<span>
+				本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見 & ensp;
+				<span style="cursor:pointer">隱私權政策</span>。
+			</span>
+			
+		}
+		else if (Model.locale == "en")
+		{
+			<span>
+				We use cookies to make your experience of our websites better. By using and further navigating this website, you accepted the use of cookie according to this policy. Detailed information about the use of cookies on this website is available by clicking on more information.
+			</span>
+		}
+
+	</p>
 	<div id="Cookie_button">
 		<div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">接受</div>
 		<div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">拒絕</div>

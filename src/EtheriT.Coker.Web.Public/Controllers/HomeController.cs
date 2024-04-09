@@ -76,6 +76,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 guessLike = guessLike,
                 layout = $"layput{defaultData.Layout_Type}",
                 Level = defaultData.Level,
+                locale = defaultData.locale,
 				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
                 storeSet = new StoreSetFrontDto
                 {

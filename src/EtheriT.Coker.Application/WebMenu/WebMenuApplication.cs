@@ -77,10 +77,10 @@ namespace EtheriT.Coker.Application
                 var jsonStr = "";
                 if (lastUpdateMenu != null) {
                     DateTime lastUpdate = lastUpdateMenu.LastModificationTime != null ? lastUpdateMenu.LastModificationTime.Value : lastUpdateMenu.CreationTime;
-                    if (header == null ||
-                        !string.IsNullOrEmpty(header.Json) && (
+                    if (header == null || string.IsNullOrEmpty(header.Json) ||
+                        (
                             (header.LastModificationTime != null && header.LastModificationTime < lastUpdate) ||
-                            (header.CreationTime < lastUpdate)
+                            (header.LastModificationTime == null && header.CreationTime < lastUpdate)
                         )
                     )
                     {
@@ -117,6 +117,7 @@ namespace EtheriT.Coker.Application
                 if (lastUpdateMenu != null)
                 {
                     DateTime lastUpdate = lastUpdateMenu.LastModificationTime != null ? lastUpdateMenu.LastModificationTime.Value : lastUpdateMenu.CreationTime;
+                    if (lastUpdateMenu.DeletionTime!=null && lastUpdate < lastUpdateMenu.DeletionTime) lastUpdate = lastUpdateMenu.DeletionTime.Value;
                     if (header == null ||
                         !string.IsNullOrEmpty(header.Json) && (
                             (header.LastModificationTime != null && header.LastModificationTime < lastUpdate) ||

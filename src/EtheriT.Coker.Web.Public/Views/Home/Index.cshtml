@@ -8,14 +8,15 @@
 @model HomeViewModel
 @{
     ViewData["SideName"] = Model.PageData.SiteName;
-	ViewData["OrgName"] = Model.OrgName;
+    ViewData["OrgName"] = Model.OrgName;
     ViewData["PageName"] = Model.PageData.SiteName;
     ViewData["Layout"] = Model.layout;
     ViewData["PageTagNameName"] = Model.PageData.SiteName;
-	ViewData["Description"] = Model.PageData.Description;
-	ViewData["GA4"] = Model.storeSet.GA4;
-	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+    ViewData["Description"] = Model.PageData.Description;
+    ViewData["GA4"] = Model.storeSet.GA4;
+    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["Locale"] = Model.locale;
     ViewData["XSRF-TOKEN"] = Model.token;
     switch (Model.Level)
     {
@@ -32,6 +33,9 @@
             break;
     }
 }
+<script>
+    const PageKey = "Home";
+</script>
 @Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />

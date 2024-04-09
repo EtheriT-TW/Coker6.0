@@ -124,6 +124,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
                 o.Property(p => p.Status).HasDefaultValue(0);
             });
+
+            modelBuilder.Entity<Prod_TechCert>(o =>
+            {
+                o.HasOne(u => u.Prod).WithMany(u => u.TechnicalCertificates).HasForeignKey(f => f.FK_PId);
+                o.HasOne(u => u.TechnicalCertificate).WithMany(u => u.prods).HasForeignKey(f => f.FK_TCId);
+            });
             modelBuilder.Entity<Prod_Log>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Pid);

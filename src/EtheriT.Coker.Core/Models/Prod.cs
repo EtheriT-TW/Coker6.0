@@ -23,8 +23,6 @@ namespace EtheriT.Coker.Core.Models
         public bool Visible { get; set; }
         public bool RemovedFromShelves { get; set; }
         public int Status {  get; set; }
-        public List<Prod_Stock> Prod_Stocks { get; set; }
-        public List<Prod_Log> Prod_Logs { get; set; }
         public string? SaveHtml { get; set; }
         [MaxLength]
         public string? SaveCss { get; set; }
@@ -33,6 +31,9 @@ namespace EtheriT.Coker.Core.Models
         [MaxLength]
         public string? Css { get; set; }
         public Website? Website { get; set; }
-		public List<Remote> Remotes { get; set; } = new List<Remote>();
-	}
+        public List<Prod_Stock> Prod_Stocks { get; set; }
+        public List<Prod_Log> Prod_Logs { get; set; }
+        public List<Remote> Remotes { get; set; }
+        public List<Prod_TechCert> TechnicalCertificates { get; set; }
+    }
 }

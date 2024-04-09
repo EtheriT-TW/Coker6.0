@@ -961,7 +961,8 @@ namespace EtheriT.Coker.Application
                 });
 				await db.SaveChangesAsync();
 			}
-			return response;
+            response.Success = true;
+            return response;
         }
 
         private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)

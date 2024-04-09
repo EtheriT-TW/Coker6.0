@@ -7,14 +7,17 @@ function PageReady() {
 
     ElementInit();
     window.CI360.init();
-
-    Pid = $(location).attr('href').substr($(location).attr('href').lastIndexOf("/") + 1);
-
+    Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
+    if (isNaN(Pid) && /\/[\d]+\//.test(location.pathname)) {
+        const para = location.pathname.match(/\/[\d]+\//g); 
+        if (para.length>0)
+            Pid = para[para.length-1].replace(/\//g,"");
+    }
     Product.GetOne.ProdMainDisplay(Pid).done(function (result) {
         if (result != null) {
             PageDefaultSet(result);
         } else {
-            window.location.href = window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/"));
+            window.location.href = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/"));
         }
     });
 
@@ -309,8 +312,8 @@ function PageDefaultSet(result) {
                 </div></a>
             </div>`)
         });
-        LinkWithIconInit();
-    }
+    } else $("#btn_tab > .files,#FileDownload").remove();
+    LinkWithIconInit();
 }
 
 function SpecRadio() {

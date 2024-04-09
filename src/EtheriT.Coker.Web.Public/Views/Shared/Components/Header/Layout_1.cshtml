@@ -54,26 +54,22 @@
                         }
                         @if (subItems.Count() > 0)
                         {
-                            <div id="collapse-header-@menu.Title" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item collapsed"
+                            <a href="@menu.Link" id="collapse-header-@menu.Title" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item collapsed"
                                data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
-                                    <a href="@menu.Link">@menu.Title</a>
+                                    @menu.Title
                                 }else{
                                     if (string.IsNullOrEmpty(menu.hoverImageUrl))
                                     {
-                                         <a href="@menu.Link">
-                                            <img src="@menu.imageUrl" alt="@menu.Title" />
-                                            <span class="justify-content-center">@menu.Title</span>
-                                         </a>
+                                        <img src="@menu.imageUrl" alt="@menu.Title" />
+                                        <span class="justify-content-center">@menu.Title</span>
                                     }else{
-                                        <a href="@menu.Link">
-                                            <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
-                                            <span>@menu.Title</span>
-                                        </a>
+                                        <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                                        <span>@menu.Title</span>
                                     }
                                 }
-                            </div>
+                            </a>
                             <div class="content collapse_menus translate-middle-x collapse" id="collapse-@menu.Title" aria-labelledby="collapse-header-@menu.Title" data-bs-parent="#accordion-menu">
                                 <ul class="@jc">
                                     @foreach (var secItem in subItems)
@@ -90,14 +86,19 @@
                                                     title = $"展開選單：{secItem.Title}";
                                                 }
                                             }
-                                            <a class="subtitle_title nav-link text-black py-0 text-nowrap text-start d-flex align-items-center" href="@secItem.Link" title="@title" target="@target">
+                                            <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
+                                               data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
                                                 <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
                                                 <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
                                                 @secItem.Title
+                                                <span class="material-symbols-outlined">
+                                                    double_arrow
+                                                </span>
                                             </a>
-                                            @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0 && menu.Title != "產品專區")
+                                            @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
                                             {
-                                                <ul class="row mx-0@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")">
+                                                <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
+                                                    class="row collapse mx-0@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
                                                     @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
                                                     {
                                                         iconclass = thirdItem.Icon == "" ? "d-none" : "";
@@ -169,12 +170,10 @@
         <!-- Tool Bar -->
         <div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2">
             <!-- Search Block -->
-            <button class="d-flex bg-transparent border-0">
+            <a href="@Model.SearchPath" title="前往搜尋頁" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
                 <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
-            </button>
-            <button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
-                <div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
-            </button>
+                <span class="text-nowrap ms-2">搜尋</span>
+            </a>
             @if (Model.HasShoppingCar == true)
             {
                 <div id="Cart_Dropdown_Parent" class="d-flex px-1">

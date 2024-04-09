@@ -125,7 +125,7 @@
     cursor: pointer;
 }
 
-    #Offcanvas_Mega_Menu > ul > .title > div > a {
+    #Offcanvas_Mega_Menu > ul > .title > a {
         color: black;
     }
 
@@ -140,7 +140,7 @@
         box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > div > a > img + span{
+    #Offcanvas_Mega_Menu > ul > .title > a > img + span{
         display: none;
     }
 
@@ -191,7 +191,6 @@
     }
 
     .metaMenu .collapse_menus > ul ul {
-        display: flex;
         flex-wrap: wrap;
         flex-direction: column;
         height: 180px;
@@ -322,16 +321,26 @@
             width: unset;
             height: unset;
         }
+    .subtitle > .subtitle_title {
+        width: 100%;
+        padding-right: 0.5rem;
+    }
+        .subtitle > .subtitle_title > .material-symbols-outlined {
+            transition: transform .2s ease-in-out;
+            transform: rotate(-90deg);
+        }
+        .subtitle > .subtitle_title.collapsed > .material-symbols-outlined {
+            transform: rotate(90deg);
+        }
 
-    
     #Offcanvas_Mega_Menu {
         background: #ffffffe6;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > div > a > img {
+    #Offcanvas_Mega_Menu > ul > .title > a > img {
         display: none; 
     }
-    #Offcanvas_Mega_Menu > ul > .title > div > a > img + span {
+    #Offcanvas_Mega_Menu > ul > .title > a > img + span {
         display: unset;
         height: 2em;
         font-size: 1.1em;

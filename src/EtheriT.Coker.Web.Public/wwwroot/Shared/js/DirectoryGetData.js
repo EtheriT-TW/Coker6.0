@@ -206,6 +206,7 @@ function DirectoryDataGet($item, option) {
 
         $item.data("init", "true");
         DirectoryDataInsert($item, result.releInfos);
+        $item.data({ filter: result.filter }).trigger("load");
     })
 }
 
@@ -289,7 +290,6 @@ function DirectoryDataInsert($item, result) {
             }
             content.find(".date-year").text(`${noteDate.getFullYear()}`);
         }
-        
         if (data.price != null) {
             const get_high_price = (price) => {
                 if (price.includes("~")) {
@@ -303,7 +303,9 @@ function DirectoryDataInsert($item, result) {
             }
             content.find(".normal-price").text(convert_price(data.price));
             content.find(".price-grid").text(convert_price(data.price));
-            content.find(".itemNo").text(data.itemNo);
+            if (data.itemNo != null && data.itemNo != "") content.find(".itemNo").text(data.itemNo);
+            else content.find(".itemNo").remove();
+
             $tags = content.find(".tags");
             $tags.empty();
             data.tags.slice(0, 2).forEach((tag) => {
@@ -323,15 +325,18 @@ function DirectoryDataInsert($item, result) {
                 badge.addClass("less-tag");
                 $tags.append(badge);
             }
+        } else {
+            content.find(".itemNo,.price").remove();
         }
         // Clear content of shareBlock and re-init
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
-
+        content.find("img").on("load.heigh", function () {
+            content.find(".shareBlock").css({ top: content.find(".image_frame").height() + 30 });
+        });
         $item.find(".catalog").append(content);
     });
-
     HoverEffectInit();
     ShareBlockInit();
 }

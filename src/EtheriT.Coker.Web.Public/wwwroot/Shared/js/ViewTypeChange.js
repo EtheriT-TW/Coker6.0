@@ -155,21 +155,20 @@ function ViewTypeChangeInit() {
                     }
                 })
             }
-            
-            if (!$btn_grid.hasClass("d-none")){
+            if ($btn_grid.length>0 && !$btn_grid.hasClass("d-none")){
                 $btn_grid.trigger("click");
             } 
-            else if (!$btn_list.hasClass("d-none")) {
+            else if ($btn_list.length > 0 && !$btn_list.hasClass("d-none")) {
                 $btn_list.trigger("click");
             }
-            else if (!$btn_text.hasClass("d-none")) {
-                $btn_text.trigger("click");
-            } 
-            else if (!$btn_prod_grid.hasClass("d-none")) {
+            else if ($btn_prod_grid.length > 0 && !$btn_prod_grid.hasClass("d-none")) {
                 $btn_prod_grid.trigger("click");
             } 
-            else if (!$btn_prod_list.hasClass("d-none")) {
+            else if ($btn_prod_list.length > 0 && !$btn_prod_list.hasClass("d-none")) {
                 $btn_prod_list.trigger("click");
+            }
+            else if ($btn_text.length > 0 && !$btn_text.hasClass("d-none")) {
+                $btn_text.trigger("click");
             } 
 
             var visible_btns = 0;

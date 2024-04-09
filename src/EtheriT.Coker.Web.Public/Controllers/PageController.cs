@@ -102,6 +102,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 enterAd = enterAds,
                 layout = $"layout{defaultData.Layout_Type}",
                 Level = defaultData.Level,
+                locale = defaultData.locale,
 				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
 				storeSet = new Application.Shared.Dto.StoreSet.StoreSetFrontDto
                 {

@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Core.Models
         public virtual DateTime? EndDate { get; set; }
         public bool Permanent { get; set; }
         public Website? Website { get; set; }
+        public List<Prod_TechCert>? prods { get; set; }
     }
 }

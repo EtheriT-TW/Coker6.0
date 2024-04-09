@@ -18,7 +18,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
             IWebsiteApplication websiteApplication,
             IConfiguration Configuration
 
-			)
+            )
         {
             this.websiteApplication = websiteApplication;
             this.Configuration = Configuration;
@@ -171,51 +171,94 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         }
                     };
                     break;
-				case 5:
-					footerViewModel = new FooterViewModel
-					{
-						footerViewModels = new List<FooterViewModel> {
-									new FooterViewModel { Title = "關於濠廣", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "公司介紹", Link = "/haoguang/introduce" },
+                case 5:
+                    if (defaultData.Id == 3)
+                    {
+                        footerViewModel = new FooterViewModel
+                        {
+                            Title = "www.濠廣.tw",
+                            footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "關於濠廣", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "公司介紹", Link = "/haoguang/introduce" },
                                             new FooterViewModel { Title = "領導專業團隊", Link = "/haoguang/team" },
                                             new FooterViewModel { Title = "聯絡我們", Link = "/haoguang/contactUs" },
                                         }
-									},
-									new FooterViewModel { Title = "服務項目", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "風力發電服務工程", Link = "/haoguang/Windpowergeneration" },
-											new FooterViewModel { Title = "散裝/貨輪船體維修", Link = "/haoguang/repair02" },
-											new FooterViewModel { Title = "船舶主機、輔機維修", Link = "/haoguang/repair01" },
-											new FooterViewModel { Title = "更多服務", Link = "/haoguang/moreservice" },
-										}
-									},
-									new FooterViewModel { Title = "實績展示", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "水閥換新", Link = "/haoguang/watervalve" },
-											new FooterViewModel { Title = "吊桿前端滑輪", Link = "/haoguang/pulley" },
-											new FooterViewModel { Title = "船舶吊桿維修", Link = "/haoguang/shipboom" },
-											new FooterViewModel { Title = "進口錨鍊吊掛更換安裝", Link = "/haoguang/anchorchain" },
-											new FooterViewModel { Title = "絞纜機離合器更換", Link = "/haoguang/winchclutch" },
-											new FooterViewModel { Title = "艙蓋板整形", Link = "/haoguang/Hatchcover" },
-											new FooterViewModel { Title = "開艙液壓缸", Link = "/haoguang/cylinder" },
-											new FooterViewModel { Title = "發電機吊缸保養", Link = "/haoguang/Generator" },
-											new FooterViewModel { Title = "駕駛台警報系統", Link = "/haoguang/alert" },
-											new FooterViewModel { Title = "駕駛台玻璃防水工程", Link = "/haoguang/waterproof" },
-											new FooterViewModel { Title = "其他工程", Link = "/haoguang/Otherprojects" },
-										}
-									}
-								},
-						Content = new List<string>
-								{
-									"© HAO GUANG",
-									"International Enterprise Co, Ltd.",
-									" ALL RIGHTS RESERVED. Design by EtheriT"
-								}
-					};
-					break;
-				default:
+                                    },
+                                    new FooterViewModel { Title = "服務項目", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "風力發電服務工程", Link = "/haoguang/Windpowergeneration" },
+                                            new FooterViewModel { Title = "散裝/貨輪船體維修", Link = "/haoguang/repair02" },
+                                            new FooterViewModel { Title = "船舶主機、輔機維修", Link = "/haoguang/repair01" },
+                                            new FooterViewModel { Title = "更多服務", Link = "/haoguang/moreservice" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "實績展示", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "水閥換新", Link = "/haoguang/watervalve" },
+                                            new FooterViewModel { Title = "吊桿前端滑輪", Link = "/haoguang/pulley" },
+                                            new FooterViewModel { Title = "船舶吊桿維修", Link = "/haoguang/shipboom" },
+                                            new FooterViewModel { Title = "進口錨鍊吊掛更換安裝", Link = "/haoguang/anchorchain" },
+                                            new FooterViewModel { Title = "艙蓋板整形", Link = "/haoguang/Hatchcover" },
+                                            new FooterViewModel { Title = "開艙液壓缸", Link = "/haoguang/cylinder" },
+                                            new FooterViewModel { Title = "更換錨鍊", Link = "/haoguang/anchorchain02" },
+                                            new FooterViewModel { Title = "駕駛台警報系統", Link = "/haoguang/alert" },
+                                            new FooterViewModel { Title = "駕駛台玻璃防水工程", Link = "/haoguang/waterproof" },
+                                            new FooterViewModel { Title = "其他工程", Link = "/haoguang/Otherprojects" },
+                                        }
+                                    }
+                                },
+                            Content = new List<string>
+                                {
+                                    "© HAO GUANG",
+                                    "International Enterprise Co, Ltd.",
+                                    " ALL RIGHTS RESERVED. Design by EtheriT"
+                                }
+                        };
+                    }
+                    else
+                    {
+                        footerViewModel = new FooterViewModel
+                        {
+                            Title = "https://www.fu-how-24.com",
+                            locale = defaultData.locale,
+                            footerViewModels = new List<FooterViewModel> {
+                                new FooterViewModel { Title = "Company", Link = "", footerViewModels = new List<FooterViewModel> {
+                                        new FooterViewModel { Title = "About ", Link = "/haoguang/introduce" },
+                                        new FooterViewModel { Title = "Lead Professional Teams", Link = "/haoguang/team" },
+                                        new FooterViewModel { Title = "Contact", Link = "/haoguang/contactUs" },
+                                    }
+                                },
+                                new FooterViewModel { Title = "Service", Link = "", footerViewModels = new List<FooterViewModel> {
+                                        new FooterViewModel { Title = "Wind Power Services", Link = "/haoguang/Windpowergeneration" },
+                                        new FooterViewModel { Title = "Bulk/Freighter Hull Repairs", Link = "/haoguang/repair02" },
+                                        new FooterViewModel { Title = "Main Engine and Auxiliary Machine Maintenance", Link = "/haoguang/repair01" },
+                                        new FooterViewModel { Title = "More Services", Link = "/haoguang/moreservice" },
+                                    }
+                                },
+                                new FooterViewModel { Title = "Performance", Link = "", footerViewModels = new List<FooterViewModel> {
+                                        new FooterViewModel { Title = "Water Valve Replacement", Link = "/haoguang/watervalve" },
+                                        new FooterViewModel { Title = "Derrick Head Block", Link = "/haoguang/pulley" },
+                                        new FooterViewModel { Title = "Vessel Derrick", Link = "/haoguang/shipboom" },
+                                        new FooterViewModel { Title = "Imported Anchor Chain Hanging, Replacement, and Installation", Link = "/haoguang/anchorchain" },
+                                        new FooterViewModel { Title = "Winch Clutch Replacement", Link = "/haoguang/winchclutch" },
+                                        new FooterViewModel { Title = "Hatch Cover Plate Deformed", Link = "/haoguang/Hatchcover" },
+                                        new FooterViewModel { Title = "Open Cabin Hydraulic Cylinders", Link = "/haoguang/anchorchain02" },
+                                        new FooterViewModel { Title = "Replacement of Anchor Chain", Link = "/haoguang/cylinder" },
+                                        new FooterViewModel { Title = "Bridge Alarm Systems", Link = "/haoguang/alert" },
+                                        new FooterViewModel { Title = "Other Projects", Link = "/haoguang/Otherprojects" }
+                                    }
+                                }
+                            },
+                            Content = new List<string>{
+                                "© HAO GUANG",
+                                "International Enterprise Co, Ltd.",
+                                " ALL RIGHTS RESERVED. Design by EtheriT"
+                            }
+                        };
+                    }
+                    break;
+                default:
                     footerViewModel = new FooterViewModel();
                     break;
             }
-
             return View(defaultData.View, footerViewModel);
         }
     }

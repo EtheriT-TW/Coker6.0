@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string Title { get; set; }
         public string Introduction { get; set; }
         public string Description { get; set; }
+        public string Html { get; set; }
         public double? Discount { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
         public List<TechCertDisplayDto> TechCertDatas { get; set; }

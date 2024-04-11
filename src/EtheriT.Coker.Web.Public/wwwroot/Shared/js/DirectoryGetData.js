@@ -22,7 +22,6 @@
 function initElemntAndLoadDir($dir,page) {
     const $self = $dir || $(".catalog_frame").first();
     const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
-    
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
     const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
@@ -30,13 +29,20 @@ function initElemntAndLoadDir($dir,page) {
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage=="") page = "1";
         else page = hashPage;
-        $self.find(".catalog>.template").remove();
-        DirectoryDataGet($self,{
+        const option = {
             Ids: [dirid],
             SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
             Page: page,
             ShowNum: shownum,
-            MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen
+            MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
+            Filters: $self.data("filtered")
+        }
+        $self.find(".catalog>.template").remove();
+        DirectoryDataGet($self, option);
+
+        $self.off("filter").on("filter", function () {
+            $self.removeData("page");
+            initElemntAndLoadDir($dir, page);
         });
         $self.data("page", page)
     }

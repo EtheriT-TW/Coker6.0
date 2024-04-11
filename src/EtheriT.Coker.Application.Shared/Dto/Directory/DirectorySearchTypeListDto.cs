@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
 {
     public class DirectorySearchTypeListDto
     {
+        public long? Id {  get; set; }
         public DirectorySearchTypeEnum Type {  get; set; }
         public string Name { get; set; }
         public List<TagGetSelectedDto>? Tags { get; set; }

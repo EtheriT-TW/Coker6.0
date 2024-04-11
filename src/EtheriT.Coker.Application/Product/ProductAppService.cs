@@ -492,6 +492,7 @@ namespace EtheriT.Coker.Application.Product
                         Title = db_p.Title,
                         Introduction = db_p.Introduction,
                         Description = db_p.Description,
+                        Html = db_p.Html??"",
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
                         Stocks = new List<ProductStockDto>(),

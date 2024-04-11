@@ -208,11 +208,37 @@ header #Search {
 
 #filterList, #filterList ul {
     list-style: none;
+    margin: 0;
+    padding: 0;
 }
+
 h3.title {
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0.5rem;
+}
+
+#filterList label {
+    cursor: pointer;
+    width:100%;
+}
+
+    #filterList li ul label:hover {
+        background-color: #eee;
+    }
+
+.filterType > label {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background-color: #cccccc;
+}
+    .filterType > label:hover {
+        background-color: #c0c0c0;
+    }
+
+.filterType + ul label {
+    width: 100%;
+    padding: 0.25rem 1rem;
 }
 
 .form-check-input {

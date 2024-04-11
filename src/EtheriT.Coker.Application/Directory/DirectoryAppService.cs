@@ -338,6 +338,7 @@ namespace EtheriT.Coker.Application.Directory
         private async Task<DirectoryReleInfoGetDto> SearchProd(DirectoryReleInfoInputDto dto)
         {
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
+            if (string.IsNullOrEmpty(dto.SearchText)) return output;
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
             Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
             int page = dto.Page ?? 0;
@@ -345,11 +346,57 @@ namespace EtheriT.Coker.Application.Directory
             if (shownum <= 0) shownum = 12;
             int skip = (page - 1) * shownum - 1;
             if (skip < 0) skip = 0;
-            var prods = db.Prods.Include(e => e.Website)
+            IQueryable<Prod>? prods = db.Prods.Include(e => e.Website)
                 .Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves)
                 .Where(e => e.FK_WebsiteId == WebsiteID)
                 .Where(e => e.Title.Contains(dto.SearchText??"") || e.Description.Contains(dto.SearchText ?? "") || (e.Html??"").Contains(dto.SearchText ?? ""));
             List<long> Ids = await prods.Select(e => e.Id).ToListAsync();
+            dto.Filters.ForEach(t => {
+                t.Group.ForEach(g => {
+                    if (g.Tags.Any())
+                    {
+                        switch (t.Type)
+                        {
+                            case DirectorySearchTypeEnum.標籤:
+
+                                if (g.Id != 0)
+                                {
+                                    var tid = from p in prods
+                                              join ta in db.Tag_Associates.Include(e => e.Tag)
+                                                              .Where(e => !e.IsDeleted && e.Type == (int)TagAssociateTypeEnum.商品 && !e.Tag.IsDeleted)
+                                                      on p.Id equals ta.FK_AId
+                                              join tg in db.Tag_TagGroups.Include(e => e.Tag_Group)
+                                                              .Where(e => !e.IsDeleted && !e.Tag_Group.IsDeleted && e.Tag_Group.FK_WebsiteId == WebsiteID)
+                                                      on ta.FK_TId equals tg.FK_TId
+                                              where tg.FK_TGId == g.Id && g.Tags.Contains(ta.FK_TId)
+                                              select p.Id;
+                                    prods = prods.Where(e => tid.Contains(e.Id));
+                                }
+                                else
+                                {
+                                    var tid = from p in prods
+                                              join ta in db.Tag_Associates.Include(e => e.Tag)
+                                                              .Where(e => !e.IsDeleted && e.Type == (int)TagAssociateTypeEnum.商品 && !e.Tag.IsDeleted)
+                                                      on p.Id equals ta.FK_AId
+                                              where g.Tags.Contains(ta.FK_TId)
+                                              select p.Id;
+                                    prods = prods.Where(e => tid.Contains(e.Id));
+                                }
+
+                                break;
+                            case DirectorySearchTypeEnum.技術文件:
+                                var ptid = from p in prods
+                                          join t in db.Prod_TechCerts.Include(e => e.TechnicalCertificate)
+                                                            .Where(e => !e.IsDeleted && e.TechnicalCertificate.FK_WebsiteId == WebsiteID && !e.TechnicalCertificate.IsDeleted)
+                                                on p.Id equals t.FK_PId
+                                            where g.Tags.Contains(t.FK_TCId)
+                                          select p.Id;
+                                prods = prods.Where(e => ptid.Contains(e.Id));
+                                break;
+                        }
+                    }
+                });
+            });
             var tagbind = db.Tag_Associates.Include(e => e.Tag).Where(e => !e.IsDeleted)
                     .Where(e => e.Tag != null && e.Tag.FK_WebsiteId == WebsiteID && !e.Tag.IsDeleted)
                     .Where(e => Ids.Contains(e.FK_AId) && e.Type == (int)TagAssociateTypeEnum.商品);
@@ -360,8 +407,9 @@ namespace EtheriT.Coker.Application.Directory
                 .ToListAsync();
             tagsId = tagsId.FindAll(e => !allGropTagsId.Contains(e));
             output.Filter.Add(new DirectorySearchTypeListDto { 
+                Id = 0,
                 Type = DirectorySearchTypeEnum.標籤,
-                Name = "標籤",
+                Name = "其他",
                 Tags = (from t in db.Tags.Where(e => !e.IsDeleted)
                         where t.FK_WebsiteId == WebsiteID && tagsId.Contains(t.Id)
                         select new TagGetSelectedDto
@@ -375,6 +423,7 @@ namespace EtheriT.Coker.Application.Directory
                             where !tg.IsDeleted && tg.FK_WebsiteId == WebsiteID
                             select new DirectorySearchTypeListDto
                             {
+                                Id = tg.Id,
                                 Type = DirectorySearchTypeEnum.標籤,
                                 Name = tg.Title,
                                 Tags = (from t in db.Tags.Where(e => !e.IsDeleted)
@@ -393,6 +442,7 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => !e.TechnicalCertificate.IsDeleted && e.TechnicalCertificate.FK_WebsiteId == WebsiteID);
             var tecIds = await tec.Select(e => e.FK_TCId).ToListAsync();
             output.Filter.Add(new DirectorySearchTypeListDto { 
+                        Id = 0,
                         Type = DirectorySearchTypeEnum.技術文件,
                         Name = "技術文件",
                         Tags = (
@@ -457,10 +507,12 @@ namespace EtheriT.Coker.Application.Directory
         }
         private string getSearchDescription(string? conten, string findstr)
         {
+            if (string.IsNullOrEmpty(conten)) return "";
             string s = Regex.Replace(stringHandler.HtmlDecode(conten), @"<(.|\n)*?>", "");
             int index = s.IndexOf(findstr) - 10;
             if (index < 0) index = 0;
             s = s.Substring(index);
+            if (string.IsNullOrEmpty(findstr)) return s;
             return s.Replace(findstr, $"<span class='text-bg-warning text-dark'>{findstr}</span>");
         }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)

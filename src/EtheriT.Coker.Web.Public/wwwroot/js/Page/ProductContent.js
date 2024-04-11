@@ -90,7 +90,8 @@ function PageDefaultSet(result) {
     if (spec_height > $pro_specification.height()) {
         $btn_detailed.removeClass("d-none")
     }
-    $("#ProductDescription > Content").before("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>");
+    if (result.html != null && result.html.trim() != "") $("#ProductDescription > Content").removeClass("d-none").html($.htmlDecode(result.html));
+    else $("#ProductDescription > Content,#btn_tab .description").addClass("d-none")
 
     result.techCertDatas.forEach(item => {
         if (item.img_small.length > 0) {

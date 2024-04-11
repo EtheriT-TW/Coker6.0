@@ -83,7 +83,12 @@ function MenuLiSize() {
     } else {
         $(".offcanvas-body").addClass("accordion")
         $(".offcanvas-body .collapse").removeClass("show")
-        $(`.offcanvas-body  .nav-link[data-bs-toggle]`).attr("data-bs-toggle", "collapse");
+        $(`.offcanvas-body  .nav-link[data-bs-toggle]`).each((i, item) => {
+            if ($(item).next("ul").length > 0)
+                $(item).attr("data-bs-toggle", "collapse");
+            else
+                $(item).find(".material-symbols-outlined").remove();
+        });
     }
     $("#Offcanvas_Mega_Menu a").each(function () {
         const $item = $(this);

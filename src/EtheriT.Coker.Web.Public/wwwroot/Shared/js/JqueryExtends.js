@@ -23,4 +23,11 @@ function jqueryExtend() {
             return $self;
         }
     });
+    $.extend({
+        htmlDecode: function (encodedString) {
+            var textArea = document.createElement('textarea');
+            textArea.innerHTML = encodedString;
+            return textArea.value.replace(/\n/g, "<br />");
+        }
+    });
 }

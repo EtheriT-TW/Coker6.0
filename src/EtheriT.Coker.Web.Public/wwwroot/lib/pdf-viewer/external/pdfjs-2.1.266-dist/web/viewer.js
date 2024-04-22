@@ -5223,7 +5223,7 @@ var defaultOptions = {
     kind: OptionKind.API
   },
   cMapUrl: {
-    value: '../web/cmaps/',
+    value: '/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/cmaps/',
     kind: OptionKind.API
   },
   disableAutoFetch: {

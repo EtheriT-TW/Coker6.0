@@ -225,7 +225,10 @@ app.UseStaticFiles(new StaticFileOptions()
      {
          ".properties",
          "application/octet-stream"
-       }
+     },{
+         ".bcmap",
+         "image/svg+xml"
+     }
     })
 });
 

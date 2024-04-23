@@ -25,7 +25,6 @@
     }
     xhttp.open("GET", '/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/viewer.html?file=' + encodeURIComponent(target_pdf), true);
     xhttp.send();
-
 }
 
 function FlipBookModalInit() {
@@ -37,7 +36,6 @@ function FlipBookModalInit() {
         console.log(target_pdf);
         PDFViewerApplication.setInitialView();
         PDFViewerApplication.open({url: target_pdf, originalUrl: target_pdf});
-
     });
 }
 

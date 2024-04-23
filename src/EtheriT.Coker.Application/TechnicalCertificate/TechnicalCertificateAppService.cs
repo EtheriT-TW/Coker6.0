@@ -14,6 +14,10 @@ using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Core.Models;
 using AutoMapper;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -21,23 +25,30 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 	{
 		private readonly CokerDbContext db;
 		private readonly LoginUserData loginUserData;
-		private readonly IFileUploadAppService fileUploadAppService;
+        private readonly StringHandler stringHandler;
+        private readonly IFileUploadAppService fileUploadAppService;
 		private readonly IConfiguration configuration;
 		private readonly IMapper mapper;
-		public TechnicalCertificateAppService(
+		private readonly string ServiceName;
+
+        public TechnicalCertificateAppService(
 			CokerDbContext db,
 			LoginUserData loginUserData,
-			IFileUploadAppService fileUploadAppService,
+            StringHandler stringHandler,
+            IFileUploadAppService fileUploadAppService,
 			IConfiguration configuration,
 			IMapper mapper
 		)
 		{
 			this.db = db;
 			this.loginUserData = loginUserData;
+			this.stringHandler = stringHandler;
 			this.fileUploadAppService = fileUploadAppService;
 			this.configuration = configuration;
 			this.mapper = mapper;
-		}
+			ServiceName = "TechnicalCertificate";
+
+        }
 		public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
 		{
 			ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -415,7 +426,63 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
 			return null;
 		}
-		public async Task<ResponseMessageDto> Delete(long Id)
+		public async Task<GetTechnicalCertificateContenDto> GetConten(SearchIDDto dto) {
+            GetTechnicalCertificateContenDto results = new GetTechnicalCertificateContenDto();
+            try
+            {
+                long siteId = await loginUserData.GetWebsiteId();
+                var tecCer = await db.TechnicalCertificates.Where(e => e.FK_WebsiteId == siteId)
+                                    .Where(e => e.Id == dto.Id)
+                                    .Where(e => !e.IsDeleted)
+                                    .FirstOrDefaultAsync();
+                if (tecCer != null)
+                {
+                    results.Title = tecCer.Title;
+                    results.Conten = new TechnicalCertificateSaveContenDto
+                    {
+                        SaveHtml = tecCer.Html,
+                        SaveCss = tecCer.Css
+                    };
+                    results.Conten.SaveHtml = stringHandler.HtmlEncode(results.Conten.SaveHtml);
+                    results.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                results.Success = false;
+                results.Error = ex.Message;
+            }
+            return results;
+        }
+		public async Task<ResponseMessageDto> SaveConten(TechnicalCertificateSaveContenDto dto) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
+                var tecCer = await db.TechnicalCertificates.FirstOrDefaultAsync(e => e.Id == dto.Id);
+
+                if (tecCer != null)
+                {
+                    tecCer.Html = dto.SaveHtml;
+                    tecCer.Css = dto.SaveCss;
+                    await loginUserData.SaveChanges(tecCer);
+                    response.Success = true;
+                }
+                else throw new Exception("資料不存在");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            finally
+            {
+                await loginUserData.SetLogs(ServiceName, "SaveConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> Delete(long Id)
 		{
 			ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
@@ -451,8 +518,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 		}
 		public async Task<ResponseMessageDto> TechCertAssociateDelete(long Id)
 		{
-
-			ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
 			try
 			{
@@ -479,5 +545,160 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
 			return output;
 		}
-	}
+        public async Task<GetFrontContenOutputDto> GetFrontConten(TechCertGetFrontContenInputDto dto)
+        {
+            if (dto.siteId == null)
+            {
+                dto.siteId = configuration.GetValue<long>("WebConfig:SiteId");
+            }
+            GetFrontContenOutputDto result = new GetFrontContenOutputDto();
+            try
+            {
+                var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
+                var TechCert = await db.TechnicalCertificates.Where(e => e.Id == dto.TechCertId).Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == dto.siteId).FirstOrDefaultAsync();
+                if (side != null)
+                {
+                    result.SiteName = side.Title;
+                    if (TechCert != null)
+                    {
+						var img = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { 
+							Sid = dto.TechCertId,
+							Size =1,
+							Type = (int) FileBindTypeEnum.技術證照
+						});
+                        result.Id = (int)TechCert.Id;
+                        result.Title = TechCert.Title;
+                        result.Description = TechCert.Description;
+                        result.Html = TechCert.Html;
+                        result.Css = TechCert.Css;
+						result.Html.Replace($"upload/{side.OrgName}/", "upload/");
+                        result.Html = $@"{result.Html}
+							<div class='container'>
+								{(img.Count > 0? $@"
+								<div class=""row align-items-center m-3"">
+									<div class=""col-3"">
+										<img src=""{img[0].Link}"" alt="" "" />
+									</div>
+									<div class=""col"">{result.Description}</div>
+								</div>
+								":"")}
+								<div class=""catalog_frame type_change_frame mt-3"" data-dirid=""{result.Id}"" data-type=""TechCert"" data-ShowNum=""24"" data-dirid=""@Model.SearchPalameter.SearchId"" data-search-text=""@Model.SearchPalameter.SearchText"">
+									<div class=""d-flex justify-content-end switch_control text-black-50"">
+										<div class=""justify-content-center align-items-center d-none"">
+											<p>
+												發布日期
+											</p>
+											<input type=""date"" name=""startDate"" class=""text-black-50"" />
+											<p class=""px-2 fs-3""> ~ </p>
+											<input type=""date"" name=""endDate"" class=""text-black-50"" />
+										</div>
+										<button class=""btn_prod_grid d-flex bg-transparent border-0 align-items-center mx-1"">
+											<span class=""material-symbols-outlined fs-5 me-1"">grid_on</span>圖片
+										</button>
+										<button class=""btn_prod_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50"">
+											<span class=""material-symbols-outlined fs-5 me-1"">view_list</span>圖文
+										</button>
+										<button class=""btn_text d-flex bg-transparent border-0 align-items-center mx-1 text-black-50"">
+											<span class=""material-symbols-outlined fs-5 me-1"">list</span>文字
+										</button>
+									</div>
+									<div class=""catalog content gx-0 rounded-lg type4 row row-cols-lg-4 row-cols-md-2 bg-light px-2"">
+										<div class=""templatecontent d-none"">
+											<div class=""template p-2 py-2"">
+												<div class=""col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100"">
+													<a href="""" title="""" target=""_self"" class=""text-black"">
+														<figure class=""d-flex justify-content-center mb-0 h-100 max-h flex-column"">
+															<div class=""image_frame d-flex flex-grow-1 justify-content-center align-items-center type4-image-frame w-100"">
+																<img src=""/upload/Product/Photo/C656NA.jpg"" alt="""" class=""image gjs-plh-image img-fluid"" />
+															</div>
+															<figcaption class=""w-100 position-relative pb1 type4-caption d-flex flex-column justify-content-center"">
+																<div class=""item-header d-flex"">
+																	<div class=""itemNo m-0 p-0 align-itmes-center type4-title d-inline fw-bold"">
+																		{{{{產品編號}}}}
+																	</div>
+																</div>
+																<div class=""item-title"">
+																	<div class=""catalog-number itemNo m-0 p-2 align-itmes-center type4-title d-inline"">
+																		{{{{產品編號}}}}
+																	</div>
+																	<div class=""title m-0 fs-5 align-itmes-center type4-title d-inline fs-6"">
+																	</div>
+																	<div class=""like-and-share top_line d-none"">
+																		<div class=""btn_favorites bg-transparent border-0 d-none"">
+																			<i class=""fs-5 fa-regular fa-heart"">
+																			</i><span class=""d-none"">關注</span>
+																		</div>
+																	</div>
+																</div>
+																<p class=""description mt-1 overflow-hidden p-2 d-none type2-content"">
+																</p>
+																<div class=""more-btn position-absolute d-flex justify-content-center align-items-center d-none"">
+																	<div class=""fas fa-angle-right"">
+																	</div>
+																</div>
+																<div class=""date d-flex justify-content-end align-items-center p-2 d-none"">
+																</div>
+																<div class=""more text-end mt-1 d-none"">
+																	詳細介紹
+																</div>
+																<div class=""price price-grid mt-auto type2-title d-inline fw-bold fs-7"">{{{{price}}}}</div>
+																<div class=""bottom-row d-flex align-text-bottom"">
+																	<div class=""tags""></div>
+																	<div class=""purchase d-none"">
+																		<div class=""price price-discount me-auto p-2 align-itmes-center type2-title d-none"">
+																			{{{{min price}}}}
+																		</div>
+																		<div class=""price normal-price me-auto p-2 align-itmes-center type2-title d-inline fw-bold"">
+																			{{{{max price}}}}
+																		</div>
+																		<span class=""cart badge rounded-pill bg-secondary text-white me-auto p-2 px-4 align-itmes-center type2-title d-none fw-normal"">
+																			<i class=""fa-solid fa-cart-shopping fa-inverse""></i>
+																			放入購物車
+																		</span>
+																	</div>
+																</div>
+															</figcaption>
+														</figure>
+													</a>
+													<div class=""shareBlock"">
+														<button class=""btn_share bg-transparent border-0"">
+															<i class=""fs-5 fa-solid fa-share"">
+															</i><span class=""d-none"">分享</span>
+														</button>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class=""templatecontent-tag d-none"">
+											<span class=""badge rounded-pill bg-light text-secondary fw-normal me-1 px-2"">{{{{Tag Name}}}}</span>
+										</div>
+									</div>
+									<nav draggable=""true"" aria-label=""Page"">
+										<ul draggable=""true"" class=""page_btn d-flex justify-content-center my-5 pagination"">
+											<li draggable=""true"" class=""page-item btn_prev"">
+												<button draggable=""true"" class=""page-link text-black"">
+													<i class=""fa-solid fa-angle-left""></i>
+												</button>
+											</li>
+											<li draggable=""true"" class=""page-item btn_next"">
+												<button draggable=""true"" class=""page-link text-black"">
+													<i class=""fa-solid fa-angle-right""></i>
+												</button>
+											</li>
+										</ul>
+									</nav>
+								</div>
+							</div>
+						";
+                        result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
+                        result.Html = stringHandler.HtmlEncode(stringHandler.HtmlDecode(result.Html));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+            }
+            return result;
+        }
+    }
 }

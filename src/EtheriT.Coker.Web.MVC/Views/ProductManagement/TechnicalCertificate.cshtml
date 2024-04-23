@@ -7,62 +7,68 @@
 }
 
 <link rel="stylesheet" href="~/css/ProductManagement/TechnicalCertificate.min.css" asp-append-version="true" />
+@{
+    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
+}
 <script src="~/js/ProductManagement/TechnicalCertificate.min.js" asp-append-version="true"></script>
 
 <div class="">
-    <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
-        <div class="title fw-bold fs-3">技術證照</div>
+    <div id="TopLine" class="py-2 px-4">
+        <div class="d-flex">
+            <div class="title fw-bold fs-3">技術證照</div>
+            <a class="btn btn-primary text-decoration-none align-self-center d-none" href="#" role="button">返回選單</a>
+        </div>
     </div>
-
-    <div id="" class="py-2">
+    <div id="">
         <div id="TechnicalCertificateList" class="card border-0">
             <div class="card-body position-relative">
                 <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
                     <span class="material-symbols-outlined">add</span>
                 </button>
                 @(
-                        Html.DevExtreme().DataGrid<TechCertGetAllListDto>()
-                        .DataSource(d => d.RemoteController().Key("Id")
-                        .LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
-                        )
-                        .RemoteOperations(true)
-                        .ColumnHidingEnabled(true)
-                        .ShowBorders(true)
-                        .FilterRow(filterRow => filterRow
-                        .Visible(true)
-                        .ApplyFilter(GridApplyFilterMode.Auto)
-                        )
-                        .SearchPanel(searchPanel => searchPanel
-                        .Visible(true)
-                        .Width(480)
-                        .Placeholder("請輸入要搜尋的資料")
-                        )
-                        .ShowRowLines(true)
-                        .Columns(c =>
+                    Html.DevExtreme().DataGrid<TechCertGetAllListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/TechnicalCertificate/GetAllList").LoadMethod("Get")
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("編號").Width(50).Visible(false);
+                        c.AddFor(e => e.Title).Caption("證照名稱").Width(100);
+                        c.AddFor(e => e.Description).Caption("說明").Width(150);
+                        c.AddFor(e => e.Img).Caption("圖示").AllowFiltering(false).AllowSorting(false).CellTemplate(@<text>
+                    <ul class="list-unstyled">
+                        <% for(var i = value.length - 1 ; i >= 0 ; i--) { %>
+                        <li><img class="img-fluid my-1" src="<%- value[i] %>" alt="" /></li>
+                        <% } %>
+                    </ul>
+                </text>);
+                        c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
+                        c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
+                        c.AddFor(e => e.StartDate).Caption("起始日期").Width(150);
+                        c.AddFor(e => e.EndDate).Caption("結束日期").Width(150);
+                        c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
                         {
-                            c.AddFor(e => e.Id).Caption("編號").Width(50).Visible(false);
-                            c.AddFor(e => e.Title).Caption("證照名稱").Width(100);
-                            c.AddFor(e => e.Description).Caption("說明").Width(150);
-                            c.AddFor(e => e.Img).Caption("圖示").AllowFiltering(false).AllowSorting(false).CellTemplate(@<text>
-                                <ul class="list-unstyled">
-                                    <% for(var i = value.length - 1 ; i >= 0 ; i--) { %>
-                                    <li><img class="img-fluid my-1" src="<%- value[i] %>" alt="" /></li>
-                                    <% } %>
-                                </ul>
-                            </text> );
-                            c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
-                            c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
-                            c.AddFor(e => e.StartDate).Caption("起始日期").Width(150);
-                            c.AddFor(e => e.EndDate).Caption("結束日期").Width(150);
-                            c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
-                            c.Add()
-                            .Type(GridCommandColumnType.Buttons)
-                            .Buttons(b =>
-                            {
-                                b.Add().Name("edit").OnClick("editButtonClicked");
-                                b.Add().Name("delete").OnClick("deleteButtonClicked");
-                            });
-                        })
+                            b.Add().Name("edit").OnClick("editButtonClicked");
+                            b.Add().Icon("palette").Name("edit").OnClick("paletteButtonClicked");
+                            b.Add().Name("delete").OnClick("deleteButtonClicked");
+                        });
+                    })
                     .ColumnAutoWidth(true)
                     .Paging(paging => paging.PageSize(30))
                     .Pager(pager =>
@@ -101,7 +107,7 @@
             <form id="TechnicalCertificateForm" class="card-body needs-validation">
                 <div class="d-flex align-self-center justify-content-between mb-3">
                     <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="false" data-needcompress="true">
-                        @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
                     </div>
                     <button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
                         <span class="material-symbols-outlined fs-2">visibility</span>
@@ -155,6 +161,10 @@
                     </div>
                 </div>
             </form>
+        </div>
+
+        <div id="TechnicalCertificateCanvas" class="border-0 d-none">
+            <div id="gjs"></div>
         </div>
     </div>
 </div>

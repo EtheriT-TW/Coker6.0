@@ -1,5 +1,4 @@
-﻿using EtheriT.Coker.Application.Authorization;
-using EtheriT.Coker.Application.Dto;
+﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Contact;
 using EtheriT.Coker.Application.Contact;
 using Microsoft.AspNetCore.Mvc;

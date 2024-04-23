@@ -8,12 +8,18 @@
 img {
     max-width: 100%;
 }
+.banner {
+    position:relative;
+}
 
 .banner-img-crop {
     object-fit: cover;
     width: 100%;
     min-height: 10em;
 }
+    .banner-img-crop.times-2 {
+        min-height: 21em;
+    }
 
 .banner-img-crop span.subtitle {
     font-size: 1.2em;
@@ -231,5 +237,10 @@ table:not(.table) {
 @media only screen and (max-width: 576px) {
     .masonry > .grid > .grid-item {
         width: 100%;
+    }
+    .banner img {
+        position:relative;
+        width:140%;
+        left:-20%;
     }
 }

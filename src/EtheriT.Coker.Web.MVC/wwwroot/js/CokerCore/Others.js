@@ -297,6 +297,15 @@
             editor.setStyle(css);
             editor.setComponents(html);
         }
+    }, Date: {
+        GetDateTimeStr: function (str) {
+            const datetime = new Date(str);
+            const dateStr = `${String(datetime.getFullYear()).padStart(4, "0")}-${String(datetime.getMonth() + 1).padStart(2, "0")}-${String(datetime.getDate()).padStart(2, "0")
+                }T${String(datetime.getHours()).padStart(2, "0")
+                }:${String(datetime.getMinutes()).padStart(2, "0")
+                }:${String(datetime.getSeconds()).padStart(2, "0")}`; 
+            return dateStr;
+        }
     }
 });
 

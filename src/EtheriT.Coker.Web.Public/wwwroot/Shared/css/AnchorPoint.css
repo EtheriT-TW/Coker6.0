@@ -2,3 +2,14 @@
     background-color: #AAA;
     color: white;
 }
+.selectList {
+    text-align:center;
+    margin:0.5rem 0;
+}
+.selectList > select {
+    position: relative;
+    width: 95%;
+    padding: 0.5rem;
+    text-align: center;
+    margin: auto;
+}

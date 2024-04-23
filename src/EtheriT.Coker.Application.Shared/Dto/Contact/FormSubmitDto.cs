@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Dto.Contact
 {
 	public class FormSubmitDto
 	{
+		public string RouterName {  get; set; }
 		public MailUserDataDto Sender { get; set; }
 		public List<FormFieldDto> forms { get; set; }
 	}

@@ -25,6 +25,7 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Shared.Dto.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
+using EtheriT.Coker.Application.Shared.Dto.Contact;
 
 namespace EtheriT.Coker.Application
 {
@@ -225,6 +226,10 @@ namespace EtheriT.Coker.Application
 			CreateMap<RemoteInputDto, Core.Models.Remote>()
 				.ForMember(e => e.ExecutionTime, option => option.MapFrom(c => DateTime.Now))
 				.ReverseMap();
-		}
-	}
+
+            //Contact
+            CreateMap<ContactListDto, Core.Models.Contact>().ReverseMap();
+            CreateMap<AsrFormDataDto, Core.Models.Contact>().ReverseMap();
+        }
+    }
 }

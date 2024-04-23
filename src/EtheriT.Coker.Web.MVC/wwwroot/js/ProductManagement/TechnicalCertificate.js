@@ -3,36 +3,43 @@ var startDate, endDate, keyId, disp_opt = true;
 var technicalCertificate_list
 
 function PageReady() {
-    co.TechnicalCertificate = {
-        AddUp: function (data) {
-            return $.ajax({
-                url: "/api/TechnicalCertificate/AddUp",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
+    const editor = grapesInit({
+        save:null,
+        import: function (html, css) {
+            var _dfr = $.Deferred();
+            co.TechnicalCertificate.SaveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (resutlt) {
+                if (resutlt.success) _dfr.resolve();
+                else co.sweet.error(resutlt.error);
             });
+            return _dfr.promise();
         },
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/TechnicalCertificate/GetOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
+        getComponer: function () {
+            var _dfr = $.Deferred();
+            co.HtmlContent.GetAllComponent().done(function (result) {
+                if (result.success) _dfr.resolve(result.list);
+                else co.sweet.error(resutlt.error);
             });
-        },
-        Delete: function (id) {
-            return $.ajax({
-                url: "/api/TechnicalCertificate/Delete/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { Id: id },
-            });
-        },
-    };
+            return _dfr.promise();
+        }
+    });
+    //設定html資料
+    setPage = function (id) {
+        $("body").addClass("grapesEdit");
+        console.log(co.TechnicalCertificate);
+        co.TechnicalCertificate.GetConten({ Id: id }).done(function (result) {
+            if (result.success) {
+                var html = co.Data.HtmlDecode(result.conten.saveHtml);
+                co.Grapes.setEditor(editor, html, result.conten.saveCss);
+                if (!!result.title) $("#TopLine .title").text(result.title);
+            } else {
+                co.sweet.error(result.error);
+            }
+        });
+    }
 
     ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
@@ -159,13 +166,18 @@ function HashDataEdit() {
                 MoveToContent();
             } else {
                 co.TechnicalCertificate.Get(parseInt(hash)).done(function (result) {
-                    MoveToContent();
-                    if (result != null) {
-                        co.File.getImgFile({ Sid: result.id, Type: 4, Size: 3 }).done(function (img_result) {
-                            FormDataSet(result, img_result);
-                        });
+                    keyId = parseInt(hash);
+                    if (hash.indexOf("-") > 0) {
+                        MoveToCanvas();
                     } else {
-                        window.location.hash = ""
+                        MoveToContent();
+                        if (result != null) {
+                            co.File.getImgFile({ Sid: result.id, Type: 4, Size: 3 }).done(function (img_result) {
+                                FormDataSet(result, img_result);
+                            });
+                        } else {
+                            window.location.hash = ""
+                        }
                     }
                 })
             }
@@ -179,6 +191,11 @@ function editButtonClicked(e) {
     MoveToContent();
     keyId = e.row.key;
     window.location.hash = keyId;
+}
+
+function paletteButtonClicked(e) {
+    keyId = e.row.key;
+    window.location.hash = keyId + "-1";
 }
 
 function FormDataSet(result, img_result) {
@@ -306,16 +323,26 @@ function AddUp(display, success_text, error_text) {
     })
 
 }
-
+function MoveToCanvas() {
+    UnValidated();
+    $("#gjs").data("id", keyId);
+    setPage(keyId);
+    $("#TopLine > div > a").removeClass("d-none");
+    $("#TechnicalCertificateList,#TechnicalCertificateContent").addClass("d-none");
+    $("#TechnicalCertificateCanvas").removeClass("d-none");
+}
 function MoveToContent() {
     UnValidated();
-    $("#TechnicalCertificateList").addClass("d-none");
+    $("#TechnicalCertificateList,#TechnicalCertificateCanvas").addClass("d-none");
     $("#TechnicalCertificateContent").removeClass("d-none");
 }
 
 function BackToList() {
     $("#TechnicalCertificateList").removeClass("d-none");
-    $("#TechnicalCertificateContent").addClass("d-none");
+    $("#TechnicalCertificateContent,#TechnicalCertificateCanvas").addClass("d-none");
+    $("#TopLine > div > a").addClass("d-none");
+    $("body").removeClass("grapesEdit");
+    $("#TopLine .title").text("技術證照");
     window.location.hash = ""
 }
 

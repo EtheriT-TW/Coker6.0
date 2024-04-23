@@ -260,6 +260,38 @@
     display: block;
 }
 
+.menuHeadTool {
+    display: flex;
+    justify-content: center;
+}
+.imgMenu {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+}
+
+    .imgMenu > span {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: rgba(55,36,21,0.9);
+        color: #fff;
+        transition: top 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .imgMenu > img {
+        max-height: 3rem;
+    }
+
+.imgMenu:hover > span {
+    top: 0;
+}
+
 @media only screen and (max-width: 768px) {
     .type_change_frame > .catalog .title {
         line-height: 1.5rem;
@@ -307,7 +339,7 @@
 }
 
 .activity h4 {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: bold;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -401,7 +433,7 @@
     color: #fff;
     height: 25px;
     border: none;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .search-category .check_btn-type3 {
@@ -503,7 +535,7 @@
     padding: 3px 6px;
     background: #EFEFEF;
     color: gray;
-    font-size: 10px;
+    font-size: 0.625rem;
 }
 
 .search-category .fs-gray {
@@ -679,7 +711,7 @@
         height: 40px;
         border-radius: 50%;
         background: #bfbfbf83;
-        font-size: 28px;
+        font-size: 1.75rem;
         color: #fff;
     }
 
@@ -778,7 +810,7 @@
         }
 
         .e-info .resource .card h3 {
-            font-size: 20px;
+            font-size: 1.25rem;
             font-weight: bold;
             text-align: justify;
             padding: .5rem 0;
@@ -788,7 +820,7 @@
         }
 
         .e-info .resource .card h4 {
-            font-size: 16px;
+            font-size: 1rem;
             text-align: justify;
             padding: .5rem 0;
             height: 160px;
@@ -1298,12 +1330,12 @@
     }
 
     .e-info .about .card h3 {
-        font-size: 12px;
+        font-size: 0.75rem;
         margin: 0;
     }
 
     .e-info .about .card i {
-        font-size: 8px;
+        font-size: 0.5rem;
         margin: 0;
     }
 
@@ -1339,7 +1371,7 @@
     .e-info .news .btn {
         width: 30px;
         height: 30px;
-        font-size: 20px;
+        font-size: 1.25rem;
     }
 
     .e-info .news .text-column {
@@ -1394,7 +1426,7 @@
 
     .e-info-footer p {
         margin-right: 0rem;
-        font-size: 12px;
+        font-size: 0.75rem;
         padding: 1rem 0 1rem 1rem;
     }
 

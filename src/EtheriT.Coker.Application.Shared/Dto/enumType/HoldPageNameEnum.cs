@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     public enum HoldPageNameEnum
     {
         Article=1,
-        Product=2
+        Product=2,
+        TechCert=3
     }
 }

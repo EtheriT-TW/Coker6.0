@@ -1,5 +1,8 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using Microsoft.AspNetCore.Authorization;
@@ -34,6 +37,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<TechCertDto> GetOne(int id)
         {
             return await technicalCertificateAppService.GetOne(id);
+        }
+        [HttpPost]
+        public async Task<GetTechnicalCertificateContenDto> GetConten(SearchIDDto dto)
+        {
+            return await technicalCertificateAppService.GetConten(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SaveConten(TechnicalCertificateSaveContenDto dto)
+        {
+            return await technicalCertificateAppService.SaveConten(dto);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(long Id)

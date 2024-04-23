@@ -17,6 +17,7 @@
         "wwwroot/js/CokerCore/Directory.js",
         "wwwroot/js/CokerCore/Articles.js",
         "wwwroot/js/CokerCore/Company.js",
+        "wwwroot/js/CokerCore/Contact.js",
         "wwwroot/js/CokerCore/File.js",
         "wwwroot/js/CokerCore/Form.js",
         "wwwroot/js/CokerCore/HtmlContent.js",
@@ -26,6 +27,7 @@
         "wwwroot/js/CokerCore/PowerManagement.js",
         "wwwroot/js/CokerCore/Product.js",
         "wwwroot/js/CokerCore/sweet.js",
+        "wwwroot/js/CokerCore/TechnicalCertificate.js",
         "wwwroot/js/CokerCore/User.js",
         "wwwroot/js/CokerCore/WebMesnus.js",
         "wwwroot/js/CokerCore/WebSite.js"

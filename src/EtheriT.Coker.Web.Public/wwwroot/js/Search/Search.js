@@ -23,7 +23,23 @@
         const temp = $("#filterTemp").html();
         const $traget = $("#filterList");
         const filter = $(this).data("filter");
+        const dirTypeTemp = $("#filterDirTypeTemp").html();
+        const $tragetDir = $("#filterBlock > .filterDirType > ul");
         $traget.empty();
+        $tragetDir.empty();
+        $fram.data("directoryType").unshift({ id: 0, name: "全部" })
+        $($fram.data("directoryType")).each((i, e) => {
+            const $item = $(dirTypeTemp);
+            if (typeof ($fram.data("directoryTypeChecked")) != "undefined" && $fram.data("directoryTypeChecked") == e.id)
+                $("#filterBlock > .filterDirType > a").text(e.name);
+            $item.find("a").data(e).text(e.name).on("click", function () {
+                $fram.data("directoryTypeChecked", $(this).data("id"));
+                $("#filterBlock > .filterDirType > a").text($(this).data("name"));
+                $fram.trigger("filter");
+                return false;
+            });
+            $tragetDir.append($item);
+        });
         $(filter).each((i, element) => {
             const $item = $(temp);
             const tid = `filterType${element.type}`;
@@ -39,6 +55,7 @@
             $(element.tags).each((ii, tag) => {
                 const $tag = $(tagTemp);
                 const tagId = `filterTag${element.type}-${tag.fK_TId}`;
+                if (tag.count <= 0) return;
                 const $tagInput = $tag.children(".form-check-input").data({ type: element.type, gid: element.id, id: tag.fK_TId }).attr("id", tagId).on("change", function () {
                     const $self = $(this);
                     clearTimeout(timer);
@@ -73,7 +90,7 @@
                 }
             }
             $item.find(".typeName").text(element.name);
-            $traget.append($item);
+            if ($tagTarget.children("li").length>0) $traget.append($item);
         });
         clearTimeout(timer);
     })

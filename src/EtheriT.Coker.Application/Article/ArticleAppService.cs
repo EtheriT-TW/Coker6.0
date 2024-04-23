@@ -173,11 +173,10 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.Article;
+                var result = db.Article.Where(e => e.FK_WebsiteId == WebsiteID && !e.IsDeleted);
                 if (result != null)
                 {
                     var data = await (from e in result
-                        where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
                         orderby e.Id descending
                         select new ArticleListGetDto
                         {

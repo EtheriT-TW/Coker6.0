@@ -40,7 +40,8 @@ namespace EtheriT.Coker.Application
             IConfiguration Configuration,
             IFileUploadAppService fileUploadAppService,
             IJsonObjectAppService jsonObjectAppService
-        ) {
+        )
+        {
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.loginUserData = loginUserData;
@@ -75,7 +76,8 @@ namespace EtheriT.Coker.Application
                         .OrderByDescending(e => e.LastModificationTime).ThenByDescending(e => e.CreationTime)
                         .FirstOrDefaultAsync();
                 var jsonStr = "";
-                if (lastUpdateMenu != null) {
+                if (lastUpdateMenu != null)
+                {
                     DateTime lastUpdate = lastUpdateMenu.LastModificationTime != null ? lastUpdateMenu.LastModificationTime.Value : lastUpdateMenu.CreationTime;
                     if (header == null || string.IsNullOrEmpty(header.Json) ||
                         (
@@ -86,7 +88,8 @@ namespace EtheriT.Coker.Application
                     {
                         jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
                     }
-                    else {
+                    else
+                    {
                         if (!string.IsNullOrEmpty(header.Json))
                         {
                             response.Message = header.Json;
@@ -117,7 +120,7 @@ namespace EtheriT.Coker.Application
                 if (lastUpdateMenu != null)
                 {
                     DateTime lastUpdate = lastUpdateMenu.LastModificationTime != null ? lastUpdateMenu.LastModificationTime.Value : lastUpdateMenu.CreationTime;
-                    if (lastUpdateMenu.DeletionTime!=null && lastUpdate < lastUpdateMenu.DeletionTime) lastUpdate = lastUpdateMenu.DeletionTime.Value;
+                    if (lastUpdateMenu.DeletionTime != null && lastUpdate < lastUpdateMenu.DeletionTime) lastUpdate = lastUpdateMenu.DeletionTime.Value;
                     if (header == null ||
                         !string.IsNullOrEmpty(header.Json) && (
                             (header.LastModificationTime != null && header.LastModificationTime < lastUpdate) ||
@@ -134,16 +137,19 @@ namespace EtheriT.Coker.Application
                     }
                 }
                 else jsonStr = await GetDisplayChildAndSaveCache(null, WebsiteID);
-                if (!string.IsNullOrEmpty(jsonStr)) {
-                    await jsonObjectAppService.AddUp(new JsonObjectAddDto { 
+                if (!string.IsNullOrEmpty(jsonStr))
+                {
+                    await jsonObjectAppService.AddUp(new JsonObjectAddDto
+                    {
                         Type = JsonObjectEnum.主選單,
                         FK_WebsiteId = WebsiteID,
                         Json = jsonStr
                     });
                 }
             }
-            catch (Exception e) {
-            
+            catch (Exception e)
+            {
+
             }
         }
         private async Task<List<MenuItemDto>> GetChild(long? id)
@@ -193,21 +199,17 @@ namespace EtheriT.Coker.Application
                     }
                     if (m.icon.StartsWith("IconId"))
                     {
-                        if (m.icon.Split(":")[1] != "")
+                        var s = m.icon.Split(":");
+                        if (s.Length > 1 && !string.IsNullOrEmpty(s[1]))
                         {
-                            var data = await fileUploadAppService.getImgFiles(new FileGetImgInputDto()
-                            {
-                                Sid = m.Id,
-                                Type = 9,
-                                Size = 1,
-                            });
+                            var data = await fileUploadAppService.getImgFilesById(new List<long> { long.Parse(s[1]) }, 1);
                             if (data != null && data.Any())
                             {
                                 m.IconId = m.icon.Split(":")[1];
-                                m.IconUrl = data[0].Link;
+                                m.IconUrl = data[0];
                             }
                         }
-                        m.icon = "empty";
+                        else m.icon = "empty";
                     }
                     if (m.Children.Count == 0) m.Children = null;
                 }
@@ -218,21 +220,23 @@ namespace EtheriT.Coker.Application
                 throw ex;
             }
         }
-        private async Task<string> GetDisplayChildAndSaveCache(long? id, long WebsiteID) {
+        private async Task<string> GetDisplayChildAndSaveCache(long? id, long WebsiteID)
+        {
             var menus = await GetDisplayChild(id, WebsiteID);
             string jsonStr = JsonConvert.SerializeObject(menus);
             return jsonStr;
         }
-        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID)
+        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID, bool getDirectoryMenuData = false)
         {
             try
             {
-                var menus = await db.WebMenus
-                            .Where(m => m.FK_TopNodeId == id)
+                IQueryable<WebMenu>? dataQuery = db.WebMenus.Where(m => m.FK_TopNodeId == id)
                             .Where(m => m.FK_WebsiteId == WebsiteID)
                             .Where(m => !m.IsDeleted)
-                            .Where(m => !m.RemovedFromShelves)
-                            .Where(m => m.Visible)
+                            .Where(m => !m.RemovedFromShelves);
+                if (!getDirectoryMenuData) dataQuery = dataQuery.Where(e => e.Visible);
+
+                var menus = await dataQuery
                             .OrderBy(m => m.SerNO)
                             .ThenBy(m => m.Id)
                             .ToListAsync();
@@ -344,7 +348,34 @@ namespace EtheriT.Coker.Application
                                         RouterName = w.RouterName,
                                         Children = new List<MenuItemDto>()
                                     }).FirstOrDefaultAsync();
-                if (output != null) output.Children = await this.GetDisplayChild(dto.Id, dto.WebsiteId);
+                if (output != null)
+                {
+                    output.Children = await this.GetDisplayChild(dto.Id, dto.WebsiteId, dto.showUnvisible);
+                    output.Children.ForEach(async e => {
+                        var img = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        {
+                            Sid = e.Id,
+                            Size = 1,
+                            Type = (int)FileBindTypeEnum.選單圖
+                        });
+                        if (img.Any())
+                        {
+                            e.ImgId = img[0].Id;
+                            e.ImgUrl = img[0].Link;
+                        }
+                        var overimg = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        {
+                            Sid = e.Id,
+                            Size = 1,
+                            Type = (int)FileBindTypeEnum.選單覆蓋
+                        });
+                        if (overimg.Any())
+                        {
+                            e.OverImgId = overimg[0].Id;
+                            e.OverImgUrl = overimg[0].Link;
+                        }
+                    });
+                }
                 return output;
             }
             catch (Exception ex)

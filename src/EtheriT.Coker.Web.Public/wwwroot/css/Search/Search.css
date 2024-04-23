@@ -220,18 +220,19 @@ h3.title {
 
 #filterList label {
     cursor: pointer;
-    width:100%;
+    width: 100%;
 }
 
-    #filterList li ul label:hover {
-        background-color: #eee;
-    }
+#filterList li ul label:hover {
+    background-color: #eee;
+}
 
 .filterType > label {
     width: 100%;
     padding: 0.5rem 1rem;
     background-color: #cccccc;
 }
+
     .filterType > label:hover {
         background-color: #c0c0c0;
     }
@@ -239,6 +240,25 @@ h3.title {
 .filterType + ul label {
     width: 100%;
     padding: 0.25rem 1rem;
+}
+
+.filterDirType > a {
+    width: 100%;
+    border-radius: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.filterDirType:hover > ul {
+    position: absolute;
+    display: block;
+}
+
+.filterDirType > .dropdown-menu {
+    width: 100%;
+    border-radius: 0;
+    max-height: calc(32px * 3 + 18px);
+    overflow: auto;
 }
 
 .form-check-input {

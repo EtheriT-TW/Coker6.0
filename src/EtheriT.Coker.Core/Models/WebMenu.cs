@@ -48,6 +48,7 @@ namespace EtheriT.Coker.Core.Models
         public WebMenu? FK_RootNode { get; set; }
         public List<WebMenu>? FK_ChildNodes { get; set; }
 		public List<Remote> Remotes { get; set; } = new List<Remote>();
+        public List<Contact>? Contacts { get; set; }
 		public Website Website { get; set; }
     }
 }

@@ -50,6 +50,7 @@ using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.JsonObject;
 using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Application.Contact;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -165,7 +166,8 @@ builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
 builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
-
+builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
+builder.Services.AddTransient<IContactAppService, ContactAppService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

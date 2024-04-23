@@ -9,11 +9,13 @@ using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Remote;
+using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +41,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IStoreSetAppService storeSetAppService;
 		private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRemoteAppService RemoteAppService;
-		private readonly StringHandler stringHandler;
+        private readonly ITechnicalCertificateAppService technicalCertificateAppService;
+        private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -53,7 +56,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ICustSearchAppService custSearchAppService,
 			IHttpContextAccessor httpContextAccessor,
 			IRemoteAppService RemoteAppService,
-			StringHandler stringHandler
+            ITechnicalCertificateAppService technicalCertificateAppService,
+            StringHandler stringHandler
         )
         {
             this._logger = logger;
@@ -69,8 +73,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.custSearchAppService = custSearchAppService;
             this.httpContextAccessor = httpContextAccessor;
             this.RemoteAppService = RemoteAppService;
+            this.technicalCertificateAppService = technicalCertificateAppService;
 
-		}
+
+        }
         private bool UseLegacyPathHandling(string website, string key, string option) { 
             bool check = true;
             if (
@@ -120,7 +126,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
 				Response.StatusCode = 404;
 				view = "Error/404";
 			}else if (!string.IsNullOrEmpty(key)){
-                switch (option)
+                if (string.IsNullOrEmpty(option)) option = "";
+                switch (option.ToLower())
                 {
                     case "article":
                         var PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
@@ -197,6 +204,43 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             view = "ProductContent";
                         }
                         else view = "Error/404";
+                        break;
+                    case "techcert":
+                        var TechCertPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                        remoteInputDto.FK_WebmenuId = TechCertPageData.Id;
+                        model.MenuBread = await webMenuApplication.GetMenuBread(TechCertPageData.Id);
+                        model.PageData = await technicalCertificateAppService.GetFrontConten(new TechCertGetFrontContenInputDto { siteId = defaultData.Id, TechCertId = id });
+                        remoteInputDto.FK_ArticleId = model.PageData.Id;
+                        model.ParentData = TechCertPageData;
+                        model.PageData.LayoutType = defaultData.Layout_Type;
+                        model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.TechCert;
+                        if (key.ToLower() == "techvert")
+                        {
+                            model.PageData.VisibleHeader = true;
+                            model.PageData.VisibleFooter = true;
+                            model.PageData.VisibleTitle = true;
+                        }
+                        else
+                        {
+                            model.PageData.VisibleHeader = TechCertPageData.VisibleHeader;
+                            model.PageData.VisibleFooter = TechCertPageData.VisibleFooter;
+                            model.PageData.VisibleTitle = TechCertPageData.VisibleTitle;
+                        }
+
+                        if (string.IsNullOrEmpty(model.PageData.Html))
+                        {
+                            Response.StatusCode = 404;
+                            view = "Error/404";
+                        }
+                        else
+                        {
+                            if (string.IsNullOrEmpty(model.PageData.Description))
+                            {
+                                string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
+                                model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                            }
+                            view = "Index";
+                        }
                         break;
                     case "privacy":
                         model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });

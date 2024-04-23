@@ -121,6 +121,15 @@
     </div>
     <div class="row">
         <div id="filterBlock" class="col-3 bg-light p-2 d-none">
+            <div class="filterDirType dropdown">
+                <a class="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    請選擇分類
+                </a>
+                <ul class="dropdown-menu"></ul>
+                <template id="filterDirTypeTemp">
+                    <li><a class="dropdown-item" href="#">Action</a></li>
+                </template>
+            </div>
             <h3 class="title">條件過濾</h3>
             <ul id="filterList"></ul>
         </div>

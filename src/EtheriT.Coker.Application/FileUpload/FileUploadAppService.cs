@@ -440,8 +440,8 @@ namespace EtheriT.Coker.Application
                         .Where(e => e.Sid == dto.Sid && e.type == dto.Type)
                         .Where(e => !e.IsDeleted).OrderBy(e => e.SerNo).ToListAsync();
                 var faids = files.Select(e => e.FK_FileUploadId).ToList();
-
-				if (faids != null)
+                orgName = string.IsNullOrEmpty(orgName) ? "" : $"/{orgName}";
+                if (faids != null)
 				{
 					if (dto.Size == 1)
 					{
@@ -479,7 +479,6 @@ namespace EtheriT.Coker.Application
 
 									}
 									chimg = chimg.OrderByDescending(e => e.Size).ToList();
-									orgName = orgName == "" ? "" : $"/{orgName}";
 									if (chimg_ids.Count == 2)
 									{
 										result.Add(new FileGetImgDto
@@ -501,7 +500,6 @@ namespace EtheriT.Coker.Application
 								}
 								else
 								{
-									orgName = orgName == "" ? "" : $"/{orgName}";
 									result.Add(new FileGetImgDto
 									{
 										Id = fadata.Id,
@@ -524,7 +522,9 @@ namespace EtheriT.Coker.Application
 		public async Task<List<string>> getImgFilesById(List<long> Ids, int size)
 		{
 			var result = new List<string>();
-			try
+            string orgName = await loginUserData.GetWebsiteOrgName();
+            orgName = string.IsNullOrEmpty(orgName) ? "" : $"/{orgName}";
+            try
 			{
 				long websiteId = await loginUserData.GetWebsiteId();
 				if (websiteId == 0)
@@ -539,7 +539,7 @@ namespace EtheriT.Coker.Application
 						var file = await db.FileUploads.Where(e => e.Id == id && !e.IsDeleted && e.FK_WebsiteId == websiteId).FirstOrDefaultAsync();
 						if (file != null)
 						{
-							result.Add(file.DownloadFileName == null ? "" : file.DownloadFileName);
+							result.Add(file.DownloadFileName == null ? "" : file.DownloadFileName.Replace("upload", $"upload{orgName}"));
 						}
 					}
 				}
@@ -576,16 +576,16 @@ namespace EtheriT.Coker.Application
 
 								if (files.Count == 2)
 								{
-									result.Add(temp_files[size - 2].Link);
+									result.Add(temp_files[size - 2].Link.Replace("upload", $"upload{orgName}"));
 								}
 								else
 								{
-									result.Add(temp_files[0].Link);
+									result.Add(temp_files[0].Link.Replace("upload", $"upload{orgName}"));
 								}
 							}
 							else
 							{
-								result.Add(fa_file.DownloadFileName == null ? "" : fa_file.DownloadFileName);
+								result.Add(fa_file.DownloadFileName == null ? "" : fa_file.DownloadFileName.Replace("upload", $"upload{orgName}"));
 							}
 						}
 					}

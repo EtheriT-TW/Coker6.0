@@ -1,14 +1,112 @@
-﻿@{
-	ViewData["Title"] = "ContactUs";
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Contact
+@{
+    ViewData["Title"] = "ContactUs";
 }
-
-<link rel="stylesheet" href="~/css/ContentManagement/ContactUs.min.css" asp-append-version="true" />
-@*<script src="~/js/ContentManagement/ContactUs.min.js" asp-append-version="true"></script>*@
+<link rel="stylesheet" href="~/css/ContentManagement/ContactUsReply.min.css" asp-append-version="true" />
+<script src="~/js/ContentManagement/ContactUsReply.min.js" asp-append-version="true"></script>
 
 <div class="">
-	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
-		<div class="title fw-bold fs-3">聯絡我們</div>
-	</div>
-
-	<a href="/ContentManagement/ContactUs?id=001">前往查看及回覆頁--></a>
+    <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+        <div class="title fw-bold fs-3">聯絡我們</div>
+    </div>
+    <div class="pageList">
+        <div id="ArticleList" class="card py-2 border-0 page show">
+            <div class="card-body position-relative">
+                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+                @(
+                    Html.DevExtreme().DataGrid<ContactListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Contact/GetContactListAll").LoadMethod("Get")
+                    )
+                    .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("編號").Width(90);
+                        c.AddFor(e => e.Name).Caption("位置");
+                        c.AddFor(e => e.TargetEmail).Caption("處理信箱");
+                        c.AddFor(e => e.CreationTime).Caption("詢問日期");
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
+                        {
+                            b.Add().Name("edit").OnClick("editButtonClicked");
+                        });
+                    })
+                    .ColumnAutoWidth(true)
+                    .Paging(paging => paging.PageSize(30))
+                    .Pager(pager =>
+                    {
+                        pager.Visible(true);
+                        pager.ShowPageSizeSelector(true);
+                        pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                        pager.ShowInfo(true);
+                    })
+                    .Editing(editing =>
+                    {
+                        editing.AllowUpdating(true);
+                        editing.UseIcons(true);
+                    })
+                    .OnContentReady("contentReady")
+                    )
+            </div>
+        </div>
+        <div id="Form" class="card border-0 page">
+            <div class="card-header d-flex justify-content-between">
+                <div class="fw-bold fs-5 me-auto">查看及回覆</div>
+                <div><button class="btn_back btn-danger border-0 px-3 py-1 text-white mx-3">返回</button></div>
+                <div><button class="btn_done btn-primary border-0 px-3 py-1 text-white d-none" form="ReplyForm">儲存</button></div>
+            </div>
+            <form id="ReplyForm" class="form-floating needs-validation" novalidate>
+                <div class="card-body row">
+                    <input type="hidden" name="id" />
+                    <div class="col-12 col-sm-6 d-flex mb-3 align-items-center">
+                        <div class="title pe-3 text-end">位址</div>
+                        <input type="text" name="name" readonly disabled />
+                    </div>
+                    <div class="col-12 col-sm-6 d-flex mb-3 align-items-center">
+                        <div class="title pe-3 text-end">處理信箱</div>
+                        <input type="text" name="targetEmail" readonly disabled />
+                    </div>
+                    <div class="col-12 col-sm-6 d-flex mb-3 align-items-center">
+                        <div class="title pe-3 text-end">詢問日期</div>
+                        <input type="datetime-local" name="creationTime" readonly disabled />
+                    </div>
+                    <div class="col-12 d-flex flex-column mb-3">
+                        <div class="title pe-3 mb-3">詢問資料</div>
+                        <div class="html" name="html" data-form-type="html"></div>
+                    </div>
+                    <div class="col-12 mb-3 d-none">
+                        <div class="select_status d-flex">
+                            <label class="form-label mb-0 pe-3 text-end align-self-center" for="Status">處理狀態</label>
+                            <select id="Status" class="form-select" aria-label="Status Select" disabled>
+                                <option selected value="Unprocessed">未處理</option>
+                                <option value="Processed">已處理</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-3 d-none">
+                        <textarea id="InputReply" class="website_description form-control col" type="text" placeholder="回覆" required></textarea>
+                        <label class="required" for="InputReply">回覆</label>
+                        <div class="invalid-tooltip">尚未填寫回覆</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>

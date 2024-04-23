@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public int? TotalPage { get; set; }
         public string? SearchText { get; set; }
         public string? Type { get; set; }
+        public long DirectoryType { get; set; } = 0;
         public List<DirectoryFilterDto> Filters { get; set; } = new List<DirectoryFilterDto>();
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

@@ -49,6 +49,9 @@
                                 ImageUploadModalDataInsert($e, file[0].id, file[0].link, file[0].name)
                         });
                         break;
+                    case "html":
+                        $e.empty().html($("<div>").html(value).html());
+                        break;
                     default:
                         $e.val(value);
                         break;
@@ -67,6 +70,10 @@
                                         break;
                                     case "checkbox":
                                         $e.prop("checked", obj[key]);
+                                        break;
+
+                                    case "datetime-local":
+                                        $e.val(co.Date.GetDateTimeStr(obj[key]));
                                         break;
                                     default:
                                         $e.val(obj[key]);

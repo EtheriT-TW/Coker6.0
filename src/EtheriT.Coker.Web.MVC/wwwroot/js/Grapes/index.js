@@ -245,7 +245,13 @@ var grapesInit = function (options) {
             processor: (obj) => {
                 if (!!obj.classes) {
                     const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
-                    iframe.jqueryExtend();
+                    const isrun = false;
+                    let timer = null;
+                    const init = function () {
+                        if (typeof(iframe.jqueryExtend) != "undefined" ) iframe.jqueryExtend();
+                        else timer = setTimeout(init, 100);
+                    }
+                    timer = setTimeout(init, 100);
                     let checkClass = [
                         { key: "SwiperInit", state: false, run: true, class: [], parameter: { autoplay: false } },
                         { key: "FrameInit", state: false, run: true, class: [], parameter: {} },

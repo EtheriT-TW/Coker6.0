@@ -124,7 +124,7 @@ namespace EtheriT.Coker.Application
                     if (header == null ||
                         !string.IsNullOrEmpty(header.Json) && (
                             (header.LastModificationTime != null && header.LastModificationTime < lastUpdate) ||
-                            (header.CreationTime < lastUpdate)
+                            (header.LastModificationTime == null && header.CreationTime < lastUpdate)
                         )
                     )
                     {

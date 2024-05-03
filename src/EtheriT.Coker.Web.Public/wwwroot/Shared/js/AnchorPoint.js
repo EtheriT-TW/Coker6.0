@@ -4,7 +4,7 @@
         $directory.children("ul").empty();
         $(".anchor_title").each(function () {
             var $self = $(this);
-            var text = $self.text().indexOf('\n') > -1 ? $self.text().substring(0, $self.text().indexOf('\n')) : $self.text();
+            var text = $self.text().indexOf('\n') > -1 ? $self.text().replace(/\n/g,"") : $self.text();
             $directory.children("ul").append(`<li class="fs-5"><a class="text-black text-decoration-none" href="#${$self.attr("id")}"><div class="p-2 px-4">${text}</div></a></li>`);
             $self.on('DOMNodeInserted', function () {
                 AnchorPointInit()
@@ -24,7 +24,7 @@
                 const $list = $self.find("a");
                 const $select = $("<select>");
                 $self.find("select").remove();
-                $select.append($("<option>").val("").text("請選擇愈前往的標籤"))
+                $select.append($("<option>").val("").text("請選擇將前往的標籤"))
                 $list.each((j, a) => {
                     $select.append(
                         $("<option>").data("trigger", a).val(a.href).text($(a).text())
@@ -44,7 +44,6 @@
                 $self.children().first().addClass("d-none");
                 $self.children("select").removeClass("d-none");
             }
-            console.log($self,$(window).width());
         });
     });
     $(window).trigger("resize.selectList");

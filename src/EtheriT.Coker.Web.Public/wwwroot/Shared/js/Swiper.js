@@ -130,7 +130,7 @@ function SwiperInit(obj) {
                     576: {
                         slidesPerView: 3,
                     },
-                    769: {
+                    992: {
                         slidesPerView: 4,
                     }
                 }
@@ -148,7 +148,52 @@ function SwiperInit(obj) {
         }
     });
 
-
+    $(".five_swiper").prop("draggable", true).each(function () {
+        var $self = $(this);
+        if (!!!$self.data("isInit")) {
+            var Id = "#" + $self.attr("id") + " > .swiper";
+            var selfConfig = Object.assign({}, config, {
+                pagination: {
+                    el: "#" + $self.attr("id") + " .swiper_pagination",
+                    clickable: true,
+                },
+                scrollbar: {
+                    el: '.swiper-scrollbar',
+                    draggable: true,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                }, breakpoints: {
+                    320: {
+                        slidesPerView: 2,
+                    },
+                    375: {
+                        slidesPerView: 2,
+                    },
+                    576: {
+                        slidesPerView: 3,
+                    },
+                    769: {
+                        slidesPerView: 4,
+                    },
+                    1024: {
+                        slidesPerView: 5,
+                    }
+                }
+            }, obj.autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {});
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            obj.autoplay && $self.swiperBindEven(swiper);
+            $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
+        }
+    });
     $(".six_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {

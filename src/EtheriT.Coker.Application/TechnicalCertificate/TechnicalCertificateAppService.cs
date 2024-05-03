@@ -575,14 +575,12 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         result.Html = $@"{result.Html}
 							<div class='container'>
 								{(img.Count > 0? $@"
-								<div class=""row align-items-center m-3"">
-									<div class=""col-3"">
-										<img src=""{img[0].Link}"" alt="" "" />
-									</div>
-									<div class=""col"">{result.Description}</div>
+								<div class=""row imageTitle"">
+									<img src=""{img[0].Link}"" alt="" "" />
+									{result.Description}
 								</div>
 								":"")}
-								<div class=""catalog_frame type_change_frame mt-3"" data-dirid=""{result.Id}"" data-type=""TechCert"" data-ShowNum=""24"" data-dirid=""@Model.SearchPalameter.SearchId"" data-search-text=""@Model.SearchPalameter.SearchText"">
+								<div class=""catalog_frame type_change_frame mt-3"" data-dirid=""{result.Id}"" data-type=""TechCert"" data-ShowNum=""24"" data-search-text="""">
 									<div class=""d-flex justify-content-end switch_control text-black-50"">
 										<div class=""justify-content-center align-items-center d-none"">
 											<p>

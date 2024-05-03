@@ -1,6 +1,50 @@
 ﻿body {
     .qa-bg {
         background: #f4f1ec;
+        padding: 0.5rem;
+
+        &:not(.collapsed) {
+            box-shadow: #ccc 1px 0px 3px !important;
+        }
+
+        > span:first-child:before {
+            content: "\e4ef";
+            font-family: 'Font Awesome 6 Free';
+            color: #af0000;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+            font-weight: 900;
+        }
+
+        > .fas {
+            color: #8b8b8b;
+        }
+    }
+
+    .qa {
+        .card > span:first-child:before {
+            content: "\f086";
+            font-family: 'Font Awesome 6 Free';
+            color: #af0000;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+            font-weight: 400;
+        }
+
+        .collapse {
+            &.show {
+                margin-bottom: 1rem;
+
+                .card-body {
+                    box-shadow: #ccc 1px 1px 3px;
+                }
+            }
+        }
+
+        .card-body {
+            border-radius: 0 0 5px 5px;
+            padding: 1rem 1rem 1rem 3rem;
+        }
     }
 
     .btn {

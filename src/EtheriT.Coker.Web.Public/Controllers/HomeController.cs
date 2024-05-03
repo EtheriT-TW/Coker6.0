@@ -102,6 +102,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 {
                     model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                     model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"href=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
+                    model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;(?!(http|/))", $"href=&quot;/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                     model.PageData.Css = model.PageData.Css.Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                 }
 

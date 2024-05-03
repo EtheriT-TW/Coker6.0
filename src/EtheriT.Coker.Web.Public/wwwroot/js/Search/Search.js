@@ -28,6 +28,15 @@
         $traget.empty();
         $tragetDir.empty();
         $fram.data("directoryType").unshift({ id: 0, name: "全部" })
+
+        $("#filterBlock .fa-close").on("click", function () {
+            $("#filterBlock").removeClass("active");
+            $("body").removeClass("modal-open");
+        });
+        $(".btn_filter_grid").on("click", function () {
+            $("#filterBlock").addClass("active");
+            $("body").addClass("modal-open");
+        });
         $($fram.data("directoryType")).each((i, e) => {
             const $item = $(dirTypeTemp);
             if (typeof ($fram.data("directoryTypeChecked")) != "undefined" && $fram.data("directoryTypeChecked") == e.id)
@@ -92,13 +101,13 @@
             $item.find(".typeName").text(element.name);
             if ($tagTarget.children("li").length>0) $traget.append($item);
         });
+        if ($(".search-category .active").data("id") != "3" || $(".searchText").text().trim() == "") $("#filterBlock").addClass("d-none");
+        else $("#filterBlock").removeClass("d-none");
         clearTimeout(timer);
     })
     $(".searchbtn").on("click", function () {
         window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid") }/${$search.data("search-text")}`;
     });
-    if ($(".search-category .active").data("id") != "3" || $(".searchText").text().trim()=="") $("#filterBlock").addClass("d-none");
-    else $("#filterBlock").removeClass("d-none");
 }
 function filteredPush(data,item) {
     filteredInsertOrDeleted(data, item, true);

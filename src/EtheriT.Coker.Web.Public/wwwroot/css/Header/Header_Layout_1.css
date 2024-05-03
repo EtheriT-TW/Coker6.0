@@ -72,6 +72,22 @@
         }
 
 /* Button Mega Menu */
+#Mega_Menu > .logo {
+    font-size:0;
+}
+    #Mega_Menu > .logo img {
+        height: 60px;
+        padding: 5px 0;
+    }
+#accordion-menu .title > .nav-link > img {
+    height: 60px;
+    padding: 10px 0;
+}
+#Mega_Menu > .logo > a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 #Mega_Menu > .btn_menu {
     margin-top: 0.25rem;
     transition: 0.3s;
@@ -109,7 +125,7 @@
 /* Mega Menu */
 #Mega_Menu {
     position: relative;
-    padding: 0 5%;
+    padding: 0 3rem;
 }
 
 .mega_menu_canvas .nav-link::after {
@@ -117,12 +133,19 @@
 }
 
 /* Mega Menu Offcanvas */
+#Offcanvas_Mega_Menu {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+}
 #Offcanvas_Mega_Menu > ul > li:first-child {
     position: relative;
 }
 
 #Offcanvas_Mega_Menu > ul > .title {
     cursor: pointer;
+    width:150px;
 }
 
     #Offcanvas_Mega_Menu > ul > .title > a {
@@ -136,8 +159,7 @@
         position: absolute;
         top: 100%;
         background-color: #e0e0e0;
-        padding: 2% 10% 2% 10%;
-        box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
+        padding: 1% 10%;
     }
 
     #Offcanvas_Mega_Menu > ul > .title > a > img + span{
@@ -180,7 +202,8 @@
 .metaMenu .collapse_menus > ul {
     display: flex;
     flex-wrap: wrap;
-    width: 1100px;
+    width: 1200px;
+    max-width:100%;
     margin: auto;
 }
 
@@ -198,6 +221,7 @@
 
         .metaMenu .collapse_menus > ul ul > li {
             width: 175px;
+            font-size:0.9rem;
         }
 
 .listMenu {
@@ -237,9 +261,16 @@
         text-align: center;
     }
 }
+@media only screen and (max-width: 1200px) {
+    #Offcanvas_Mega_Menu > ul > .title {
+        width: 120px;
+    }
+}
 
 @media only screen and (max-width: 992px) {
-
+    #Offcanvas_Mega_Menu > ul > .title {
+        width: 100%;
+    }
 
     #Header_Top {
         height: 3rem;
@@ -335,6 +366,7 @@
 
     #Offcanvas_Mega_Menu {
         background: #ffffffe6;
+        flex-direction:column;
     }
 
     #Offcanvas_Mega_Menu > ul > .title > a > img {
@@ -357,14 +389,16 @@
         width: 100%;
         text-align: center;
     }
-    
+
     .metaMenu .collapse_menus > ul {
         width: 100%;
+        flex-direction: column;
     }
 
-    .metaMenu .collapse_menus > ul ul {
-        height: auto;
-    }
+        .metaMenu .collapse_menus > ul ul {
+            height: auto;
+            flex-wrap: nowrap;
+        }
 
     .smart-search {
         border: #ccc solid 1px;

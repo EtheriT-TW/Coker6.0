@@ -64,7 +64,7 @@ function ready() {
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
-    if ($(".one_swiper,.two_swiper,.four_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
+    if ($(".one_swiper,.two_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
     if ($(".masonry").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
     if ($(".hover_mask").length > 0) HoverEffectInit();
@@ -77,6 +77,7 @@ function ready() {
     if ($(".BGCanvas").length > 0) setBGCanvas();
     if ($(".FlipBook").length > 0) FlipBookInit();
     if ($(".FlipBookModal").length > 0) FlipBookModalInit();
+    if ($(".MapMessage").length > 0) MapMessage();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
     if ($(".container .qa").length > 0) {
         $(".container").each((i, e) => {

@@ -51,6 +51,7 @@ using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.JsonObject;
 using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Application.Contact;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -223,6 +224,15 @@ builder.Services.AddSwaggerGen(option =>
         }
     });
 });
+
+if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
+{
+    builder.Services.AddHttpsRedirection(options =>
+    {
+        options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
+        options.HttpsPort = 443;
+    });
+}
 
 var app = builder.Build();
 

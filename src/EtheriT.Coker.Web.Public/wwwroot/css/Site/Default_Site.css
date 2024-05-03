@@ -38,3 +38,6 @@ p {
         content:"";
         height:100%;
     }
+.modal-open {
+    overflow: hidden;
+}

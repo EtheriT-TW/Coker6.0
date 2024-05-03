@@ -28,6 +28,44 @@ function jqueryExtend() {
             var textArea = document.createElement('textarea');
             textArea.innerHTML = encodedString;
             return textArea.value.replace(/\n/g, "<br />");
+        },
+        loadCss: function (src) {
+            const _dfr = $.Deferred();
+            let head = document.getElementsByTagName('HEAD')[0];
+
+            // Create new link Element
+            let link = document.createElement('link');
+
+            // set the attributes for link element
+            link.rel = 'stylesheet';
+
+            link.type = 'text/css';
+
+            link.href = src;
+            link.onload = function () {
+                _dfr.resolve();
+            };
+            // Append link element to HTML head
+            head.appendChild(link);
+            return _dfr.promise();
+        },
+        LoadJs: function (src) {
+            const _dfr = $.Deferred();
+            let head = document.getElementsByTagName('HEAD')[0];
+
+            // Create new link Element
+            let link = document.createElement('script');
+
+            // set the attributes for link element
+            link.type = 'text/javascript';
+
+            link.src = src;
+            link.onload = function () {
+                _dfr.resolve();
+            };
+            // Append link element to HTML head
+            head.appendChild(link);
+            return _dfr.promise();
         }
     });
 }

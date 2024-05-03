@@ -1,7 +1,8 @@
 ﻿var $input_quantity
 var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
-var preview_swiper, product_swiper
+var preview_swiper, product_swiper, $pro_itemNo;
+const showRange = false;
 
 function PageReady() {
 
@@ -70,6 +71,7 @@ function ElementInit() {
 
     $prod_content = $("#Product > .content");
     $pro_name = $prod_content.find('.pro_title');
+    $pro_itemNo = $prod_content.find('.pro_itemNo');
     $pro_introduce = $prod_content.find('.introduce');
     $pro_specification = $prod_content.find('.specification').children("ul");
     $pro_price = $prod_content.find(".ori_price");
@@ -81,6 +83,7 @@ function ElementInit() {
 
 function PageDefaultSet(result) {
     $pro_name.text(result.title);
+    $pro_itemNo.text(result.itemNo);
     $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")
     $pro_specification.append("<li>" + result.description.replaceAll("\n", "</li><li>") + "</li>")
     var spec_height = 0;
@@ -185,12 +188,13 @@ function PageDefaultSet(result) {
                 $(this).on("click", SpecRadio)
             })
         })
-
-        if (maxprice == minprice) {
-            $pro_discount.text(minprice.toLocaleString('en-US'));
-        } else {
-            $pro_discount.text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
-        }
+        if (showRange) {
+            if (maxprice == minprice) {
+                $pro_discount.text(minprice.toLocaleString('en-US'));
+            } else {
+                $pro_discount.text(minprice.toLocaleString('en-US') + " ~ " + maxprice.toLocaleString('en-US'));
+            }
+        } else $pro_discount.text(maxprice.toLocaleString('en-US'));
     } else {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;

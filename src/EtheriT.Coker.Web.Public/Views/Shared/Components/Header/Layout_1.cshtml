@@ -11,7 +11,7 @@
     <!-- Mega Menu -->
     <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
         <!-- Logo -->
-        <div class="d-none d-lg-flex logo col-2 m-2 justify-content-end">
+        <div class="d-none d-lg-flex logo justify-content-end">
             @{
                 var home_target = Model.HomeTarget == true ? "_blank" : "_self";
                 var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
@@ -33,28 +33,28 @@
             List<MenuItemModel> MenuItems = Model.menuItemModels ?? new List<MenuItemModel>();
         }
         <!-- Menu Canvas -->
-        <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start col-lg-8 col visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+        <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <!-- Menu Canvas Search Block -->
             <div class="offcanvas-header pt-2 ps-5">
                 <h5 class="offcanvas-title mx-auto fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
             </div>
 
             <!-- Menu Canvas Menu -->
-            <ul class="navbar-nav offcanvas-body w-100 m-0" id="accordion-menu">
+            <ul class="navbar-nav offcanvas-body m-0 mx-3" id="accordion-menu">
                 <li class="">
                     <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
                 </li>
                 @foreach (var menu in MenuItems)
                 {
                     string headType =  "metaMenu";
-                    <li class="title nav-item col-lg-2 @headType">
+                    <li class="title nav-item @headType">
                         @{
                             List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
-                            string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-start";
+                            string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
                         }
                         @if (subItems.Count() > 0)
                         {
-                            <a href="@menu.Link" id="collapse-header-@menu.Title" class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black menu-item collapsed"
+                            <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-black menu-item collapsed"
                                data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
@@ -154,7 +154,7 @@
                 var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
                 var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
             }
-            <a href="@Model.HomeTarget" target="@logo_target" title="@logo_title">
+            <a href="@Model.HomeLink" target="@logo_target" title="@logo_title">
                 @if (string.IsNullOrEmpty(Model.Title))
                 {
                     <h1>@Model.Title</h1>
@@ -168,11 +168,11 @@
         </div>
 
         <!-- Tool Bar -->
-        <div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2">
+        <div class="d-flex justify-content-center">
             <!-- Search Block -->
             <a href="@Model.SearchPath" title="前往搜尋頁" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
                 <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
-                <span class="text-nowrap ms-2">搜尋</span>
+                <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
             </a>
             @if (Model.HasShoppingCar == true)
             {

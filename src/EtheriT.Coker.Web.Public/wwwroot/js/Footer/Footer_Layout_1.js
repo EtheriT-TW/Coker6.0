@@ -4,6 +4,7 @@ function FooterInit() {
     $menu_item = $("#Footer_Menu > ul > li > ul")
     $content = $("#Footer_Menu > ul > li > ul > li")
     MenuItemResize();
+    toggleFooterMenu();
 
     $(window).resize(function () {
         MenuItemResize();
@@ -23,18 +24,10 @@ function MenuItemResize() {
 
 function toggleFooterMenu() {
     var footerMenu = document.getElementById('Footer_Menu');
-    if (window.innerWidth < 1000) {
-        if (footerMenu.style.height === '0px' || footerMenu.style.height === '') {
-            footerMenu.style.height = '400px';
-        } else {
-            footerMenu.style.height = '0px';
-        }
+    if (footerMenu.style.height === '0px' || footerMenu.style.height === '') {
+        footerMenu.style.height = `${footerMenu.scrollHeight}px`;
     } else {
-        if (footerMenu.style.height === '0px' || footerMenu.style.height === '') {
-            footerMenu.style.height = '230px';
-        } else {
-            footerMenu.style.height = '0px';
-        }
+        footerMenu.style.height = '0px';
     }
 }
 

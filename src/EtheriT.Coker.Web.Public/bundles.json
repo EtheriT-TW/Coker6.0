@@ -48,7 +48,8 @@
         "wwwroot/Shared/js/Contact.js",
         "wwwroot/Shared/js/BGCanvas.js",
         "wwwroot/Shared/js/JqueryExtends.js",
-        "wwwroot/Shared/js/FlipBook.js"
+        "wwwroot/Shared/js/FlipBook.js",
+        "wwwroot/Shared/js/MapMessage.js"
       ]
     },
     {
@@ -105,6 +106,12 @@
       "outputFolder": "lib/swiper/",
       "input": [
         "node_modules/swiper/swiper-bundle.min.js.map"
+      ]
+    },
+    {
+      "outputFolder": "lib/counterup2",
+      "input": [
+        "node_modules/counterup2/dist/*.*"
       ]
     }
   ]

@@ -72,7 +72,7 @@
 }
 
 .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
-    font-size: 2.5rem;
+    font-size: 2rem;
 }
 
 .swiper_link {
@@ -94,6 +94,11 @@
         max-height:100%;
         max-width:100%;
     }
+@media only screen and (max-width: 979px) {
+    .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
+        font-size: 1.5rem;
+    }
+}
 
 @media only screen and (max-width: 768px) {
     .swiper_btn_circle_hide_left {
@@ -109,7 +114,7 @@
     }
 
     .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
 }
 
@@ -129,6 +134,6 @@
     }
 
     .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
 }

@@ -274,6 +274,7 @@ var grapesInit = function (options) {
                             case "one_swiper":
                             case "two_swiper":
                             case "four_swiper":
+                            case "five_swiper":
                             case "six_swiper":
                                 setConfig(0, s);
                                 checkClass[0].parameter.autoplay = false;

@@ -170,6 +170,12 @@ var bookFlip = {
 	flip: function(){
 		if(!this.active)return;
 		$('#viewer').turn('page', PDFViewerApplication.page);
+		// force load next page
+		// TODO: Find proper way to force this loading
+		// this line seems to not do anything but successfully caused the website to update
+		// it throws a lot of error in the console though. 
+		PDFViewerApplication.update();
+		// end TODO
 		if(!PDFViewerApplication.pdfViewer.hasEqualPageSizes)this.resize();
 	},
 	// follow internal links

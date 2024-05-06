@@ -607,6 +607,7 @@ namespace EtheriT.Coker.Application.Product
                                                   .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteID)
                                                   .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
                                                   .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                 select new DirectoryReleInfoDto
                                                 {
                                                     Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//","/")

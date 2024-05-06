@@ -239,6 +239,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 default:
                     break;
             }
+            if (defaultData.Layout_Type == 1) {
+                headerViewModel.LogoImageUrl = "/upload/logo.svg";
+            }
             headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";
             return View(defaultData.View, headerViewModel);
         }

@@ -270,6 +270,7 @@ input:disabled + .btn_radio {
 /* TabContent */
 #TabContent {
     color: var(--gray-text);
+    margin-bottom:4rem;
 }
 
     #TabContent > div > img {

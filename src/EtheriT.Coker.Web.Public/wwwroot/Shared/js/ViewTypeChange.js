@@ -82,7 +82,7 @@ const display_configurations = {
         ".title": "type2-title pr3 h-100",
         "figure": "flex-column",
     }],
-    [list_type.product_grid]: ["type4 row row-cols-lg-4 row-cols-md-2  bg-light px-2", {
+    [list_type.product_grid]: ["type4 row row-cols-lg-4 row-cols-md-2 row-cols-2  bg-light px-2", {
         ".card-border": "card-border-rd type2",
         ".catalog-number": "d-none",
         ".check_btn": "w-100",
@@ -110,7 +110,7 @@ const display_configurations = {
         ".col": " type5 rounded-lg",
         ".description": "type3-content",
         ".image": "px-0",
-        ".image_frame": "h-100 w-25",
+        ".image_frame": "type5-image-frame",
         ".imgh": "img-h",
         ".item-header": "d-none",
         ".item-title": "d-lg-flex",

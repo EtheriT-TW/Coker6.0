@@ -47,11 +47,9 @@
                 @foreach (var menu in MenuItems)
                 {
                     string headType =  "metaMenu";
+                    List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
+                    string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
                     <li class="title nav-item @headType">
-                        @{
-                            List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
-                            string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
-                        }
                         @if (subItems.Count() > 0)
                         {
                             <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-black menu-item collapsed"
@@ -71,64 +69,65 @@
                                 }
                             </a>
                             <div class="content collapse_menus translate-middle-x collapse" id="collapse-@menu.Title" aria-labelledby="collapse-header-@menu.Title" data-bs-parent="#accordion-menu">
-                                <ul class="@jc">
-                                    @foreach (var secItem in subItems)
-                                    {
-                                        var iconclass = secItem.Icon == "" ? "d-none" : "";
-                                        var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
-                                        <li class="subtitle nav-item my-0">
-                                            @{
-                                                var target = secItem.Target == true ? "_blank" : "_self";
-                                                var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
-                                                if (string.IsNullOrEmpty(secItem.Link))
-                                                {
-                                                    secItem.Link = "#";
-                                                    title = $"展開選單：{secItem.Title}";
-                                                }
-                                            }
-                                            <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
-                                               data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
-                                                <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
-                                                <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-                                                @secItem.Title
-                                                <span class="material-symbols-outlined d-lg-none">
-                                                    double_arrow
-                                                </span>
-                                            </a>
-                                            @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
+                                <div class="container">
+                                    <ul class="@jc">
+                                        @foreach (var secItem in subItems)
+                                        {
+                                            var iconclass = secItem.Icon == "" ? "d-none" : "";
+                                            var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
+                                            var target = secItem.Target == true ? "_blank" : "_self";
+                                            var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
+                                            string titleClass = (secItem.menuItemModels == null || secItem.menuItemModels.Count() == 0 || menu.Link.ToLower().Contains("product")) ? "" : "hasChild";
+                                            if (string.IsNullOrEmpty(secItem.Link))
                                             {
-                                                <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
-                                                    class="row collapse mx-0@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
-                                                    @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
-                                                    {
-                                                        iconclass = thirdItem.Icon == "" ? "d-none" : "";
-                                                        imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
-                                                        <li class="px-0">
-                                                            @if (secItem.Link != "")
-                                                            {
-                                                                target = thirdItem.Target == true ? "_blank" : "_self";
-                                                                title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
-                                                                <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
-                                                                    <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
-                                                                    <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
-                                                                    @thirdItem.Title
-                                                                </a>
-                                                            }
-                                                            else
-                                                            {
-                                                                <div class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center">
-                                                                    <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
-                                                                    <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
-                                                                    @thirdItem.Title
-                                                                </div>
-                                                            }
-                                                        </li>
-                                                    }
-                                                </ul>
+                                                secItem.Link = "#";
+                                                title = $"展開選單：{secItem.Title}";
                                             }
-                                        </li>
-                                    }
-                                </ul>
+                                            <li class="subtitle nav-item my-0 @titleClass">
+                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
+                                                   data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
+                                                    <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                                    <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                                    @secItem.Title
+                                                    <span class="material-symbols-outlined d-lg-none">
+                                                        double_arrow
+                                                    </span>
+                                                </a>
+                                                @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
+                                                {
+                                                    <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
+                                                        class="row collapse mx-0@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
+                                                        @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
+                                                        {
+                                                            iconclass = thirdItem.Icon == "" ? "d-none" : "";
+                                                            imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
+                                                            <li class="px-0">
+                                                                @if (secItem.Link != "")
+                                                                {
+                                                                    target = thirdItem.Target == true ? "_blank" : "_self";
+                                                                    title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                                        <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+                                                                        <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+                                                                        @thirdItem.Title
+                                                                    </a>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center">
+                                                                        <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+                                                                        <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+                                                                        @thirdItem.Title
+                                                                    </div>
+                                                                }
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
                             </div>
                         }
                         else

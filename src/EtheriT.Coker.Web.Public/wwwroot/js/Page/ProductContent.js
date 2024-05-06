@@ -154,8 +154,8 @@ function PageDefaultSet(result) {
 
             if (data.fK_S1id > 0) {
                 if (s1_list.indexOf(data.fK_S1id) < 0) {
-                    item1_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
-                    item1_control.prepend('<input id="s1_' + data.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + data.fK_S1id + '">');
+                    item1_control.append('<input id="s1_' + data.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + data.fK_S1id + '">');
+                    item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
                     s1_list.push(data.fK_S1id);
                 }
             } else {
@@ -166,8 +166,8 @@ function PageDefaultSet(result) {
 
             if (data.fK_S2id > 0) {
                 if (s2_list.indexOf(data.fK_S2id) < 0) {
-                    item2_control.prepend('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
-                    item2_control.prepend('<input id="s2_' + data.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + data.fK_S2id + '">');
+                    item2_control.append('<input id="s2_' + data.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + data.fK_S2id + '">');
+                    item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
                     s2_list.push(data.fK_S2id);
                 }
             } else {

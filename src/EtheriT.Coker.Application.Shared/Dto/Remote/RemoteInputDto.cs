@@ -14,5 +14,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Remote
 		public long FK_WebmenuId { get; set; }
 		public long? FK_ArticleId { get; set; }
 		public long? FK_ProdId { get; set; }
-	}
+        public long? FK_TechCertId { get; set; }
+    }
 }

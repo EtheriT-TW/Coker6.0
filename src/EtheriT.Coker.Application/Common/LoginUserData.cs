@@ -157,6 +157,9 @@ namespace EtheriT.Coker.Application
                 else return 0;
             }
         }
+        public long GetFrontWebsiteId() {
+            return configuration.GetValue<long>("WebConfig:SiteId");
+        }
         public async Task<string> GetWebsiteName() {
             Guid s = GetSecret();
             string name = "";
@@ -183,6 +186,20 @@ namespace EtheriT.Coker.Application
             catch {}
             return name;
         }
+        public async Task<string> GetWebsiteOrgName(long id) {
+            string name = "";
+            try
+            {
+                if (id != 0)
+                {
+                    var website = await db.Websites.Where(w => w.Id == id).FirstOrDefaultAsync();
+                    if (website != null) name = website.OrgName;
+                }
+                else throw new Exception();
+            }
+            catch { }
+            return name;
+        }
         public async Task<string> GetWebsiteUrl()
         {
             Guid s = GetSecret();
@@ -193,6 +210,12 @@ namespace EtheriT.Coker.Application
             var myWeb = await t.FirstOrDefaultAsync();
             if (myWeb != null) url = myWeb.DefaultUrl??"";
             return url;
+        }
+        public async Task<string> GetFrontWebsiteUrl() { 
+            long siteId = GetFrontWebsiteId();
+            var site = await db.Websites.Where(e => !e.IsDeleted && e.Id == siteId).FirstOrDefaultAsync();
+            if (site != null) return site.DefaultUrl ?? "";
+            else return "";
         }
         public async Task<WebsiteLevelEnum> GetWebsiteLevel() {
             long id = await GetWebsiteId();

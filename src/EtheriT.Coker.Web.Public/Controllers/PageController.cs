@@ -173,7 +173,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 							remoteInputDto.FK_WebmenuId = ProdPageData.Id;
 							model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
-							remoteInputDto.FK_ArticleId = model.PageData.Id;
+							remoteInputDto.FK_ProdId = model.PageData.Id;
 							model.ParentData = ProdPageData;
                             model.PageData.LayoutType = defaultData.Layout_Type;
                             model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
@@ -210,7 +210,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         remoteInputDto.FK_WebmenuId = TechCertPageData.Id;
                         model.MenuBread = await webMenuApplication.GetMenuBread(TechCertPageData.Id);
                         model.PageData = await technicalCertificateAppService.GetFrontConten(new TechCertGetFrontContenInputDto { siteId = defaultData.Id, TechCertId = id });
-                        remoteInputDto.FK_ArticleId = model.PageData.Id;
+                        remoteInputDto.FK_TechCertId = model.PageData.Id;
                         model.ParentData = TechCertPageData;
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.TechCert;

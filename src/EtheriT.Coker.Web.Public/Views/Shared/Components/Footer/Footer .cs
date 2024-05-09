@@ -46,15 +46,14 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             {
                                 footerViewModels = new List<FooterViewModel> {
                                     new FooterViewModel { Title = "產品專區", Link = "", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel { Title = "馬桶 ", Link = "/lcb/toilet" },
+                                            new FooterViewModel { Title = "馬桶 ", Link = "/lcb/Apro" },
                                             new FooterViewModel { Title = "微電腦馬桶座", Link = "/lcb/Bpro" },
                                             new FooterViewModel { Title = "面盆&浴櫃組", Link = "/lcb/Cpro" },
-                                            new FooterViewModel { Title = "浴室龍頭", Link = "/lcb/faucet" },
-                                            new FooterViewModel { Title = "沐浴龍頭", Link = "/lcb/shower_faucet" },
-                                            new FooterViewModel { Title = "無障礙設備", Link = "/lcb/barrier_free" },
-                                            new FooterViewModel { Title = "浴缸", Link = "/lcb/tub" },
+                                            new FooterViewModel { Title = "浴室龍頭", Link = "/lcb/Dpro" },
+                                            new FooterViewModel { Title = "無障礙設備", Link = "/lcb/Epro" },
+                                            new FooterViewModel { Title = "浴缸", Link = "/lcb/Fpro" },
                                             new FooterViewModel { Title = "浴室配件", Link = "/lcb/Gpro" },
-                                            new FooterViewModel { Title = "小便斗", Link = "/lcb/urinal" },
+                                            new FooterViewModel { Title = "小便斗", Link = "/lcb/Hpro" },
                                             new FooterViewModel { Title = "停產專區", Link = "/lcb/discontinue" },
                                         }
                                     },

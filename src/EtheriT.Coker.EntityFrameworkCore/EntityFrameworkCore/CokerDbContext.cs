@@ -242,7 +242,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 				o.HasOne(f => f.WebMenu).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_WebmenuId);
 				o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
 				o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
-			});
+                o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
+            });
             modelBuilder.Entity<NotFoundImage>(o => {
                 o.Property(t => t.CreateDate).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.Website).WithMany(w => w.NotFoundImages).HasForeignKey(e => e.FK_WebsiteId);

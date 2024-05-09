@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Freight;
@@ -38,6 +39,7 @@ using EtheriT.Coker.Web.MVC.Resources;
 using EtheriT.Coker.Web.Public.Middlewares;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using SimpleCaptcha;
@@ -92,6 +94,11 @@ builder.Services.AddDbContext<CokerDbContext>(item =>
     item.UseSqlServer(configuration.GetConnectionString("Default"))
 );
 
+builder.Services.AddMvc(options =>
+{
+    options.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+});
+
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();
@@ -120,6 +127,7 @@ builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
 builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
+builder.Services.AddTransient<ISitemap, Sitemap>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())
@@ -196,6 +204,12 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "Sitemap",
+    pattern: "Sitemap",
+    defaults: new { controller = "Sitemap", action = "Index" }
+);
 
 app.MapControllerRoute(
     name: "Verify",

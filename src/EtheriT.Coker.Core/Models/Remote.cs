@@ -16,7 +16,8 @@ namespace EtheriT.Coker.Core.Models
 		public long FK_WebmenuId { get; set; }
 		public long? FK_ArticleId { get; set; }
 		public long? FK_ProdId { get; set; }
-		public DateTime ExecutionTime { get; set; }
+        public long? FK_TechCertId { get; set; }
+        public DateTime ExecutionTime { get; set; }
 		[StringLength(64)]
 		public string? ClientIpAddress { get; set; }
 		[StringLength(512)] 
@@ -24,6 +25,7 @@ namespace EtheriT.Coker.Core.Models
 		public User? User { get; set; }
 		public WebMenu WebMenu { get; set; }
 		public Article? Article { get; set; }
-		public Prod? Prod { get; set; }
+		public TechnicalCertificate? TechnicalCertificate { get; set; }
+        public Prod? Prod { get; set; }
 	}
 }

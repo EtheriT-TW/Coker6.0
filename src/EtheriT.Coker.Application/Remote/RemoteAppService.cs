@@ -17,6 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using DevExtreme.AspNet.Mvc;
+using System.Collections;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -50,30 +51,75 @@ namespace EtheriT.Coker.Application.Remote
 		}
 		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions) {
 			long siteId = await loginUserData.GetWebsiteId();
-			var data = await db.Remotes
-				.Include(e => e.Article)
-				.Include(e => e.WebMenu)
-				.Include(e => e.Prod)
-				.Where(e => e.WebMenu.FK_WebsiteId == siteId)
-				.ToListAsync();
-			if (data != null)
+			var Query = await db.Remotes.Where(e => e.FK_WebsiteId == siteId).ToListAsync();
+            var data = from e in Query
+					   group e by new {
+                           e.FK_ProdId,
+                           e.FK_WebmenuId,
+                           e.FK_ArticleId,
+						   e.FK_TechCertId,
+                           e.ExecutionTime.Date
+                       } into g
+					   select new {
+                           g.Key.FK_ProdId,
+                           g.Key.FK_WebmenuId,
+                           g.Key.FK_ArticleId,
+						   g.Key.FK_TechCertId,
+                           g.Key.Date,
+                           Count = g.Count(),
+                           MemCount = g.GroupBy(x => x.ClientIpAddress).Count()
+                       };
+
+            if (data != null)
 			{
-				var dataQuery = from d in data
-								group d by new {
-									d.ExecutionTime.Date,
-									d.WebMenu.FK_WebsiteId,
-									d.FK_WebmenuId,
-									d.FK_ProdId,
-									d.FK_ArticleId
-								} into g
+                IEnumerable<RemoteListOtputDto>? dataQuery = from d in data
+								join a in db.Article.Where(e => !e.IsDeleted) on d.FK_ArticleId equals a.Id
 								select new RemoteListOtputDto{ 
-									date = g.Key.Date,
-									type = g.Select(e => e.Article != null ? "文章" : (e.Prod != null ? "商品" : "選單")).First() ?? "",
-									name = g.Select(e => e.Article != null ? e.Article.Title : (e.Prod != null ? e.Prod.Title : e.WebMenu.Title)).First()??"",
-									count = g.Count(),
-									MemCount = g.GroupBy(e => e.ClientIpAddress).Count(),
+									date = d.Date,
+									type = "文章",
+									name = a.Title??"",
+									count = d.Count,
+									MemCount = d.MemCount,
 								};
-				var output = DataSourceLoader.Load(dataQuery, loadOptions);
+                dataQuery = dataQuery.Concat(
+                    from d in data
+                    join a in db.Prods.Where(e => !e.IsDeleted) on d.FK_ProdId equals a.Id
+                    select new RemoteListOtputDto
+                    {
+                        date = d.Date,
+                        type = "商品",
+                        name = a.Title ?? "",
+                        count = d.Count,
+                        MemCount = d.MemCount,
+                    }
+				);
+                dataQuery = dataQuery.Concat(
+                    from d in data
+                    join a in db.WebMenus.Where(e => !e.IsDeleted) on d.FK_WebmenuId equals a.Id
+					where d.FK_ProdId == null && d.FK_ArticleId == null && d.FK_TechCertId == null
+                    select new RemoteListOtputDto
+                    {
+                        date = d.Date,
+                        type = "選單",
+                        name = a.Title ?? "",
+                        count = d.Count,
+                        MemCount = d.MemCount,
+                    }
+                );
+                dataQuery = dataQuery.Concat(
+                    from d in data
+                    join a in db.TechnicalCertificates.Where(e => !e.IsDeleted) on d.FK_TechCertId equals a.Id
+                    select new RemoteListOtputDto
+                    {
+                        date = d.Date,
+                        type = "標章認證",
+                        name = a.Title ?? "",
+                        count = d.Count,
+                        MemCount = d.MemCount,
+                    }
+                );
+                dataQuery.OrderBy(e => e.date);
+                var output = DataSourceLoader.Load(dataQuery, loadOptions);
 				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 			}
 			else throw new Exception("查無資料");
@@ -81,18 +127,14 @@ namespace EtheriT.Coker.Application.Remote
 		public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
 			long siteId = await loginUserData.GetWebsiteId();
 			var data = await db.Remotes
-				.Include(e => e.Article)
-				.Include(e => e.WebMenu)
-				.Include(e => e.Prod)
-				.Where(e => e.WebMenu.FK_WebsiteId == siteId)
-				.ToListAsync();
+                .Where(e => e.FK_WebsiteId == siteId).ToListAsync();
 			if (data != null)
 			{
 				var dataQuery = from d in data
 								group d by new
 								{
 									d.ExecutionTime.Date,
-									d.WebMenu.FK_WebsiteId,
+									d.FK_WebsiteId,
 								} into d
 								select new RemoteListOtputDto
 								{

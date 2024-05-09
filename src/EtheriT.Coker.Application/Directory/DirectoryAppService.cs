@@ -587,8 +587,8 @@ namespace EtheriT.Coker.Application.Directory
                             MainImage = p.Html,
                             tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
                                     join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
-                                    where m.FK_AId == p.Id
-                                   select new TagGetSelectedDto {
+                                    where m.FK_AId == p.Id && m.Type == (int)TagAssociateTypeEnum.商品
+                                    select new TagGetSelectedDto {
                                         Tag_Name = t.Title,
                                         FK_TId = p.Id,
                                    }).ToList(),

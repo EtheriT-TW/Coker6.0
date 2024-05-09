@@ -456,6 +456,9 @@
 }
 
 @media only screen and (max-width: 576px) {
+    #Mega_Menu {
+        padding: 0 1rem;
+    }
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
         flex-direction: column;

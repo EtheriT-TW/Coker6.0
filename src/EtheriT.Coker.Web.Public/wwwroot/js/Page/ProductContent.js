@@ -125,7 +125,6 @@ function PageDefaultSet(result) {
             $("#pills-description-tab").removeClass("active")
             $("#pills-documents-tab").addClass("active")
             var $self_btn = $(this);
-            console.log($(`.badge_${$self_btn.data("tcid")}`));
             $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
         })
     }
@@ -300,7 +299,7 @@ function PageDefaultSet(result) {
 
     if (result.tagDatas.length > 0) {
         result.tagDatas.forEach(item => {
-            $(".pro_tag").prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="">${item.tag_Name}</a></li>`);
+            $(".pro_tag").prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${OrgName}/Search/Get/3/${item.tag_Name}">${item.tag_Name}</a></li>`);
         })
     } else {
         $(".pro_tag").addClass("d-none");
@@ -311,7 +310,7 @@ function PageDefaultSet(result) {
             var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
             $("#FileDownload>.File_list").append(`
             <div class="file border-bottom">
-                <a href="${link}" download="${file.name}" titile="${file.name}" class="link_with_icon d-flex text-decoration-none edit_lock">
+                <a href="${link}" download="${file.name}" title="${file.name}" class="link_with_icon d-flex text-decoration-none edit_lock">
                     <div draggable="true" class="icon pe-2"></div>
                     <div draggable="true" class="name">${file.name}
                 </div></a>

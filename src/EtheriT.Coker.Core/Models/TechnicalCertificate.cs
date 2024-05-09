@@ -18,5 +18,6 @@ namespace EtheriT.Coker.Core.Models
         public bool Permanent { get; set; }
         public Website? Website { get; set; }
         public List<Prod_TechCert>? prods { get; set; }
+        public List<Remote>? Remotes { get; set; }
     }
 }

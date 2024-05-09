@@ -366,6 +366,12 @@ function DirectoryDataInsert($item, result) {
                 badge.addClass("less-tag");
                 $tags.append(badge);
             }
+            $tags.children().each(function () {
+                $(this).on("click", function () {
+                    location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
+                    return false;
+                })
+            });
         } else {
             content.find(".itemNo,.price").remove();
         }

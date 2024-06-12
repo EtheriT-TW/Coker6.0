@@ -1,6 +1,15 @@
 ﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@using EtheriT.Coker.Application.Shared.i18n;
 @model FooterViewModel
 <link rel="stylesheet" href="~/css/Footer/Footer_Layout_5.min.css" asp-append-version="true" />
+@{
+	switch (ViewData["Locale"] == null ? "" : ViewData["Locale"].ToString())
+	{
+		case "en":
+			<link rel="stylesheet" href="~/css/Footer/Footer_Layout_5.en.min.css" asp-append-version="true" />
+			break;
+	}
+}
 <script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>
 
 <div id="Collapse_Button" class="center" onclick="toggleFooterMenu()">
@@ -8,11 +17,11 @@
 </div>
 @if (Model.footerViewModels != null && Model.footerViewModels.Count > 0)
 {
-	<div class="container listMenu d-flex justify-content-center align-items-center">
-		<div id="Footer_Menu" class="abreast row row-cols-2 row-cols-sm-6 w-100">
+	<div id="FootContainer" class="container listMenu d-flex justify-content-center align-items-center">
+		<div id="Footer_Menu" class="abreast row w-100">
 			@foreach (var menu in Model.footerViewModels)
 			{
-				<div class="paging_frame col">
+				<div class="paging_frame">
 					<p style="font-weight:bold;font-size:1.1rem;">@menu.Title</p>
 					<div class="abreast">
 						<ul>
@@ -40,24 +49,10 @@
 
 <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
 	<p class="cookie_text my-3 pe-3">
-		@if (Model.locale == "zh-tw")
-		{
-			<span>
-				本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見 & ensp;
-				<span style="cursor:pointer">隱私權政策</span>。
-			</span>
-			
-		}
-		else if (Model.locale == "en")
-		{
-			<span>
-				We use cookies to make your experience of our websites better. By using and further navigating this website, you accepted the use of cookie according to this policy. Detailed information about the use of cookies on this website is available by clicking on more information.
-			</span>
-		}
-
+		<span>@L.get("cookieDeclare")</span>
 	</p>
 	<div id="Cookie_button">
-		<div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">接受</div>
-		<div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">拒絕</div>
+		<div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">@L.get("accept")</div>
+		<div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
 	</div>
 </div>

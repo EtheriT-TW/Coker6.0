@@ -1,5 +1,6 @@
 ﻿@using System.Web;
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+@using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 @{
     ViewData["SideName"] = Model.PageData.SiteName;
@@ -15,7 +16,9 @@
     ViewData["Locale"] = Model.locale;
 }
 <script>
+    const ProdId = @Model.PageData.Id;
     const PageKey = "Product";
+    const local = @Html.Raw(L.getAllJsonString());
 </script>
 <link rel="stylesheet" href="~/css/Page/ProductContent.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />

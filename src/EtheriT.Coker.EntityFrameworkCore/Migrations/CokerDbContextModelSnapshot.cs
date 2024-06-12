@@ -1667,9 +1667,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<double?>("Discount")
                         .HasColumnType("float");
 
-                    b.Property<bool>("Disp_Opt")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
@@ -1745,7 +1742,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             Description = "奈米單體馬桶 W384 x D685 x H470mm\n直熱式微電腦馬桶座\n噴嘴紫外線殺菌\n獨立水壓系統\n腳觸設計\nEasy Touch開閉蓋技術\n第二代微波感應技術",
-                            Disp_Opt = true,
                             FK_WebsiteId = 2L,
                             Introduction = "從座圈到噴嘴給您雙重防護\n不用動手全自動科技最體貼\n雙漩洗技術為您實現真乾淨",
                             IsDeleted = false,
@@ -1753,7 +1749,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Ser_No = 500,
                             Status = 0,
                             Title = "DE-R1073 德瑞克直熱式微電腦馬桶座／遙控型",
-                            Visible = false,
+                            Visible = true,
                             permanent = true
                         },
                         new
@@ -1762,7 +1758,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             Description = "商品二的第一行說明\n商品二的第二行說明",
-                            Disp_Opt = true,
                             FK_WebsiteId = 2L,
                             Introduction = "商品二的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
@@ -1770,7 +1765,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Ser_No = 500,
                             Status = 0,
                             Title = "C659NA 德瑞克Smart III淨未來智慧馬桶",
-                            Visible = false,
+                            Visible = true,
                             permanent = true
                         },
                         new
@@ -1779,7 +1774,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             Description = "商品三的第一行說明\n商品二的第二行說明",
-                            Disp_Opt = true,
                             FK_WebsiteId = 2L,
                             Introduction = "商品三的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
@@ -1787,7 +1781,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Ser_No = 500,
                             Status = 0,
                             Title = "L602 檯上三角盆",
-                            Visible = false,
+                            Visible = true,
                             permanent = true
                         },
                         new
@@ -1796,7 +1790,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 2L,
                             Description = "L183NA檯上奈米方型盆W560 x D380 x H120mm\n1033PH四角型單孔單槍加高面盆龍頭歐洲省水二段Ø35短腳陶瓷心軸(附歐規按押無溢水排桿)",
-                            Disp_Opt = true,
                             FK_WebsiteId = 2L,
                             Introduction = "最大容水量：11公升\n適用水壓：1~5kgf/㎝²",
                             IsDeleted = false,
@@ -1804,7 +1797,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Ser_No = 500,
                             Status = 0,
                             Title = "L183NA 檯上奈米方型盆",
-                            Visible = false,
+                            Visible = true,
                             permanent = true
                         });
                 });
@@ -2504,6 +2497,40 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Name = "系統總管理者",
                             Type = 0
                         });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.SearchLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<string>("ClientIpAddress")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_CustSearchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("SearchLogs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
@@ -3282,6 +3309,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("SerNO")
                         .HasColumnType("int");
 
+                    b.Property<bool>("ShowToMenu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<bool?>("Target")
                         .HasColumnType("bit");
 
@@ -3982,6 +4014,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("WebMenu");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.SearchLog", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("SearchLogs")
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Prod_Stock", "Prod_Stock")
@@ -4272,6 +4315,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Prods");
 
                     b.Navigation("Recipients");
+
+                    b.Navigation("SearchLogs");
 
                     b.Navigation("StoreSetDetails");
 

@@ -37,7 +37,7 @@ namespace EtheriT.Coker.Application.Remote
 			ResponseMessageDto response= new ResponseMessageDto();
 			try {
 				Core.Models.Remote r = mapper.Map<Core.Models.Remote>(dto);
-				if(httpContextAccessor.HttpContext != null)
+                if (httpContextAccessor.HttpContext != null)
 					r.BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString();
 				r.ClientIpAddress = loginUserData.GetClientIP();
 				db.Add(r);
@@ -50,25 +50,30 @@ namespace EtheriT.Coker.Application.Remote
 			return response;
 		}
 		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions) {
-			long siteId = await loginUserData.GetWebsiteId();
-			var Query = await db.Remotes.Where(e => e.FK_WebsiteId == siteId).ToListAsync();
-            var data = from e in Query
-					   group e by new {
-                           e.FK_ProdId,
-                           e.FK_WebmenuId,
-                           e.FK_ArticleId,
-						   e.FK_TechCertId,
-                           e.ExecutionTime.Date
-                       } into g
-					   select new {
-                           g.Key.FK_ProdId,
-                           g.Key.FK_WebmenuId,
-                           g.Key.FK_ArticleId,
-						   g.Key.FK_TechCertId,
-                           g.Key.Date,
-                           Count = g.Count(),
-                           MemCount = g.GroupBy(x => x.ClientIpAddress).Count()
-                       };
+			long siteId =  await loginUserData.GetWebsiteId();
+			var data = await (
+                from d in db.Remotes
+                join m in db.WebMenus on d.FK_WebmenuId equals m.Id
+                where m.FK_WebsiteId == siteId
+                group d by new
+                {
+                    d.FK_ProdId,
+                    d.FK_WebmenuId,
+                    d.FK_ArticleId,
+                    d.FK_TechCertId,
+                    d.ExecutionTime.Date
+                } into g
+                select new
+                {
+                    g.Key.FK_ProdId,
+                    g.Key.FK_WebmenuId,
+                    g.Key.FK_ArticleId,
+                    g.Key.FK_TechCertId,
+                    g.Key.Date,
+                    Count = g.Count()
+                }
+            ).ToListAsync();
+			;
 
             if (data != null)
 			{
@@ -78,8 +83,7 @@ namespace EtheriT.Coker.Application.Remote
 									date = d.Date,
 									type = "文章",
 									name = a.Title??"",
-									count = d.Count,
-									MemCount = d.MemCount,
+									count = d.Count
 								};
                 dataQuery = dataQuery.Concat(
                     from d in data
@@ -89,8 +93,7 @@ namespace EtheriT.Coker.Application.Remote
                         date = d.Date,
                         type = "商品",
                         name = a.Title ?? "",
-                        count = d.Count,
-                        MemCount = d.MemCount,
+                        count = d.Count
                     }
 				);
                 dataQuery = dataQuery.Concat(
@@ -102,8 +105,7 @@ namespace EtheriT.Coker.Application.Remote
                         date = d.Date,
                         type = "選單",
                         name = a.Title ?? "",
-                        count = d.Count,
-                        MemCount = d.MemCount,
+                        count = d.Count
                     }
                 );
                 dataQuery = dataQuery.Concat(
@@ -114,11 +116,24 @@ namespace EtheriT.Coker.Application.Remote
                         date = d.Date,
                         type = "標章認證",
                         name = a.Title ?? "",
-                        count = d.Count,
-                        MemCount = d.MemCount,
+                        count = d.Count
                     }
                 );
-                dataQuery.OrderBy(e => e.date);
+                if (loadOptions.Sort == null)
+                {
+                    var Sort = new List<SortingInfo>{
+                        new SortingInfo
+                        {
+                            Selector = "date",
+                            Desc = true
+                        },new SortingInfo
+                        {
+                            Selector = "count",
+                            Desc = true
+                        } 
+                    };
+                    loadOptions.Sort = Sort.ToArray();
+                }
                 var output = DataSourceLoader.Load(dataQuery, loadOptions);
 				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 			}
@@ -126,23 +141,43 @@ namespace EtheriT.Coker.Application.Remote
 		}
 		public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
 			long siteId = await loginUserData.GetWebsiteId();
-			var data = await db.Remotes
-                .Where(e => e.FK_WebsiteId == siteId).ToListAsync();
-			if (data != null)
+			var data =
+                from d in db.Remotes
+                join m in db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted) on d.FK_WebmenuId equals m.Id
+                group d by new
+                {
+                    d.ExecutionTime.Date,
+                    d.ClientIpAddress
+                } into g
+                select new
+                {
+                    g.Key.Date,
+                    count = g.Count(),
+                };
+
+            if (data != null)
 			{
 				var dataQuery = from d in data
 								group d by new
 								{
-									d.ExecutionTime.Date,
-									d.FK_WebsiteId,
+									d.Date,
 								} into d
 								select new RemoteListOtputDto
 								{
 									date = d.Key.Date,
-									count = d.Count(),
-									MemCount = d.GroupBy(e => e.ClientIpAddress).Count(),
+									count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),
+									MemCount = d.Count(),
 								};
-				var output = DataSourceLoader.Load(dataQuery, loadOptions);
+                if (loadOptions.Sort == null)
+                {
+                    var Sort = new List<SortingInfo>{new SortingInfo
+                    {
+                        Selector = "date",
+                        Desc = true
+                    } };
+                    loadOptions.Sort = Sort.ToArray();
+                }
+                var output = DataSourceLoader.Load(dataQuery, loadOptions);
 				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 			}
 			else throw new Exception("查無資料");

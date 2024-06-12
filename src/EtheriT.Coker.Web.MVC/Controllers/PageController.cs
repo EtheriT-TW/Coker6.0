@@ -1,14 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class PageController : Controller
     {
-        public IActionResult Index()
+        private readonly LoginUserData loginUserData;
+        private readonly WebsiteFrameDto WebsiteFrame;
+        public PageController(LoginUserData loginUserData)
         {
-            return View();
+            this.loginUserData = loginUserData;
         }
-        public IActionResult ComponerManager()
+        public async Task<IActionResult> Index()
+        {
+            WebsiteFrameDto dto = new WebsiteFrameDto { Level = await loginUserData.GetWebsiteUseFrameLevel() };
+            return View(dto);
+        }
+        public async Task<IActionResult> ComponerManager()
         {
             return View("ComponerManager");
         }

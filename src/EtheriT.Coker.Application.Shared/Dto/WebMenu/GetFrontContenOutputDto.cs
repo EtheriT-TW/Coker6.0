@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public string Css { get; set; }
         public int LayoutType { get; set; }
         public int? Popular { get; set; }
+        public bool RemovedFromShelves { get; set; }
         public bool VisibleHeader { get; set; }
         public bool VisibleFooter { get; set; }
         public bool VisibleTitle { get; set; }

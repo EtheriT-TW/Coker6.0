@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto.Contact;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.i18n;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,13 +53,13 @@ namespace EtheriT.Coker.Application.Contact
 			try {
 				var code = dto.forms.Find(e => e.Name == "captcha");
 				var codeId = dto.forms.Find(e => e.Name == "captchaId");
-				if (codeId == null || code == null || !captchaAppService.Validate(codeId.Value, code.Value).Success) throw new Exception("驗證碼錯誤");
+				if (codeId == null || code == null || !captchaAppService.Validate(codeId.Value, code.Value).Success) throw new Exception(L.get("VerificationCodeError"));
                 else
                 {
 					var site = await db.Websites.Where(e => !e.IsDeleted).Where(e => e.Id == siteId).FirstOrDefaultAsync();
-					if (site == null) throw new Exception("網站資料錯誤");
+					if (site == null) throw new Exception(L.get("WebsiteDataError"));
                     var menu = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && e.RouterName == dto.RouterName).FirstOrDefaultAsync();
-                    if (menu == null) throw new Exception("來源不明");
+                    if (menu == null) throw new Exception(L.get("UnknownSource"));
                     MailUserDataDto recipient = new MailUserDataDto();
 					string html = "<table class='table'>";
 					dto.forms.ForEach(e => {
@@ -76,7 +77,7 @@ namespace EtheriT.Coker.Application.Contact
 					{
 						Recipients = new List<MailUserDataDto> { recipient },
 						CC = new List<MailUserDataDto> { dto.Sender },
-						Subject = $"{site.Title}-客服中心",
+						Subject = $"{site.Title}-{L.get("ServiceCenter")}",
 						Body = html,
 						Css = ".table{width:800px;} .table td{border-bottom: #ececec solid 1px; padding: 6px 3px;} .table td:last-child{padding-left: 9px;} .title{background-color: #ececec; width:22%; text-align: center; font-weight: bold;}"
                     };

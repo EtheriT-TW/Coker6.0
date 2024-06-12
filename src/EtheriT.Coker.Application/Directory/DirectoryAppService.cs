@@ -28,6 +28,8 @@ using EtheriT.Coker.Application.Permissions;
 using System.Collections.Generic;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.Shared.Dto.Search;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -42,6 +44,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IWebMenuApplication webMenuApplicationService;
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly ICustSearchAppService custSearchAppService;
         private readonly StringHandler stringHandler;
         public DirectoryAppService(
             CokerDbContext db,
@@ -54,6 +57,7 @@ namespace EtheriT.Coker.Application.Directory
             IWebMenuApplication webMenuApplicationService,
             IPermissionsAppService permissionsAppService,
             IFileUploadAppService fileUploadAppService,
+            ICustSearchAppService custSearchAppService,
             IConfiguration configuration
         )
         {
@@ -67,6 +71,7 @@ namespace EtheriT.Coker.Application.Directory
             this.webMenuApplicationService = webMenuApplicationService;
             this.permissionsAppService = permissionsAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.custSearchAppService = custSearchAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -242,10 +247,14 @@ namespace EtheriT.Coker.Application.Directory
         private async Task<DirectoryReleInfoGetDto> SearchReleInfo(DirectoryReleInfoInputDto dto)
         {
             long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
-            if (SearchId == 3) return await SearchProd(dto);
-
-            var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
+            if (!string.IsNullOrEmpty(dto.SearchText)) await custSearchAppService.SaveSearchLog(new SaveSearchLogDto { 
+                Key = dto.SearchText,
+                FK_CustSearchId = SearchId,
+                FK_WebsiteId = dto.SiteId??0
+            });
+            if (SearchId == 3) return await SearchProd(dto);
+            var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
             int page = (int)dto.Page;
             int shownum = (int)dto.ShowNum;
             if (string.IsNullOrEmpty(dto.SearchText))
@@ -258,13 +267,15 @@ namespace EtheriT.Coker.Application.Directory
             var data1 = db.WebMenus.Include(e => e.Website).Where(e => !e.IsDeleted)
                             .Where(e => e.FK_WebsiteId == WebsiteID)
                             .Where(e => e.Visible)
-                            .Where(e => e.RouterName.ToLower() != "home")
+                            //.Where(e => e.RouterName.ToLower() != "home")
+                            .Where(e => !string.IsNullOrEmpty(e.Html))
                             .Where(e =>
                                 (e.Title ?? "").Contains(dto.SearchText ?? "") ||
                                 (e.Html ?? "").Contains(dto.SearchText ?? "")
                             );
             var data2 = db.Article.Include(e => e.Website).Where(e => !e.IsDeleted)
                             .Where(e => e.FK_WebsiteId == WebsiteID)
+                            .Where(e => !string.IsNullOrEmpty(e.Html))
                             .Where(e => e.Visible)
                             .Where(e =>
                                 e.permanent ||
@@ -416,6 +427,7 @@ namespace EtheriT.Coker.Application.Directory
             if (skip < 0) skip = 0;
             IQueryable<Prod>? prods = db.Prods.Include(e => e.Website)
                 .Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves)
+                .Where(e => e.Visible)
                 .Where(e => e.FK_WebsiteId == WebsiteID)
                 .Where(e => 
                     e.Title.Contains(dto.SearchText ?? "") || 
@@ -585,6 +597,8 @@ namespace EtheriT.Coker.Application.Directory
                             ItemNo = p.ItemNo,
                             Description = p.Description,
                             MainImage = p.Html,
+                            Status = p.Status,
+                            StatusName = ((ProdStatusEnum)p.Status).ToString(),
                             tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
                                     join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
                                     where m.FK_AId == p.Id && m.Type == (int)TagAssociateTypeEnum.商品
@@ -620,12 +634,19 @@ namespace EtheriT.Coker.Application.Directory
         private string getSearchDescription(string? conten, string findstr)
         {
             if (string.IsNullOrEmpty(conten)) return "";
-            string s = Regex.Replace(stringHandler.HtmlDecode(conten), @"<(.|\n)*?>", "");
+            List<string> replaceRul = new List<string> {
+				@"<span(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/span>",
+				@"<i(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/i>",
+				@"<(.|\n)*?>",
+                @"\n"
+            };
+            string s = Regex.Replace(stringHandler.HtmlDecode(conten), @$"({String.Join("|", replaceRul.ToArray())})", "");
             int index = s.IndexOf(findstr) - 10;
             if (index < 0) index = 0;
             s = s.Substring(index);
+            if (index != 0) s = $" ... {s}";
             if (string.IsNullOrEmpty(findstr)) return s;
-            return s.Replace(findstr, $"<span class='text-bg-warning text-dark'>{findstr}</span>");
+            return s.Replace(findstr, $"<span class='bg-warning text-dark'>{findstr}</span>");
         }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
@@ -667,6 +688,8 @@ namespace EtheriT.Coker.Application.Directory
                                 DataIds = db.Prods
                                     .Where(e => allIds.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
+                                    .Where(e => !e.RemovedFromShelves)
+                                    .Where(e => e.Visible)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
                                     .Select(e => e.Id).ToList();
@@ -712,7 +735,7 @@ namespace EtheriT.Coker.Application.Directory
                         case DirectoryTypeEnum.商品:
                             var tempproddata = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
                             {
-                                Ids = DataIds.Skip((page - 1) * shownum - 1).Take(shownum).ToList<long>(),
+                                Ids = DataIds.Skip((page - 1) * shownum).Take(shownum).ToList<long>(),
                                 SiteId = WebsiteID
                             });
                             if (tempproddata != null)

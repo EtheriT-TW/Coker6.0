@@ -59,6 +59,7 @@ footer {
 
 .paging_frame {
     margin: 2rem 1rem 1rem;
+    width:auto;
 }
 
     .paging_frame > div {
@@ -241,10 +242,11 @@ footer {
 .footer_pack_up {
     /* width:70%;*/
 }
-a{
-    text-decoration:none;
-    color:#fff;
+#FootContainer a {
+    text-decoration: none;
+    color: #fff;
 }
+
 @media (min-width: 1500px) {
     #Footer_Menu {
         font-size:0.95rem;
@@ -276,13 +278,12 @@ a{
             margin: 0px;
             padding: 2rem;
         }
-        .abreast .paging_frame:nth-child(1) {
+        .abreast .paging_frame:not(:last-child) {
             width: 50%;
         }
 
-        .abreast .paging_frame:nth-child(3) {
+        .abreast .paging_frame:nth-child(:last-child) {
             width: 100%;
-            margin-top:-100px;
         }
     }
 

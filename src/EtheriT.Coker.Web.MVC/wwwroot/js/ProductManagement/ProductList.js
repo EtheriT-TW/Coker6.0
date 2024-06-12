@@ -1220,7 +1220,7 @@ function AddUp(success_text, error_text, target) {
         Id: keyId,
         Title: $name.val(),
         ItemNo: $itemNo.val(),
-        Disp_Opt: disp_opt,
+        Visible: disp_opt,
         Ser_No: 500,
         Introduction: $introduction.val(),
         Description: $illustrate.val(),

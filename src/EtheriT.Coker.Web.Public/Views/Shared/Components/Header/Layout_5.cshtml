@@ -1,8 +1,17 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@using EtheriT.Coker.Application.Shared.i18n;
 @model HeaderViewModel
 <link rel="stylesheet" href="~/css/Header/Header_Layout_5.min.css" asp-append-version="true" />
+@{
+    switch (ViewData["Locale"] == null ? "" : ViewData["Locale"].ToString())
+    {
+        case "en":
+            <link rel="stylesheet" href="~/css/Header/Header_Layout_5.en.min.css" asp-append-version="true" />
+            break;
+    }
+}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
@@ -27,7 +36,7 @@
             <div class="logo d-lg-none text-center py-lg-0 py-1" style="width:80%">
                 @{
                     var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
-                    var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                    var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
                 }
                 <a href="/" target="@logo_target" title="@logo_title">
                     @if (string.IsNullOrEmpty(Model.Title))
@@ -52,7 +61,7 @@
             <div class="d-none d-lg-flex logo m-2 justify-content-end">
                 @{
                     var home_target = Model.HomeTarget == true ? "_blank" : "_self";
-                    var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                    var home_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
                     if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
                 }
                 <a href="/" target="@home_target" title="@home_title">
@@ -68,14 +77,14 @@
                 </a>
             </div>
             <div class="position-relative">
-                <div id="Search" class="d-flex lh-lg position-absolute  justify-content-center align-items-center">
+                <div id="Search" class="d-flex lh-lg justify-content-center align-items-center">
                     <input id="SearchInput" class="input_sear form-control   fs_change  input-pd" type="search" placeholder="" aria-label="Search">
                     <span class="material-symbols-outlined icon position-absolute">search</span>
                     <i class="fa-solid fa-earth-americas mx-2"></i>
                     @foreach (var menu in Model.langMenuItemModels)
                     {
                         var target = menu.Target??false ? "_blank" : "_self";
-                        var targetStr = menu.Target ?? false ? $"連結至：{menu.Title}(另開新視窗)" : $"連結至：{menu.Title}";
+                        var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
                         <a href="@menu.Link" class="mx-2 switch-button" title="@targetStr" target="@target">@menu.Title</a>
                     }
                 </div>
@@ -83,6 +92,7 @@
         </div>
         @{
             List<MenuItemModel> MenuItems = Model.menuItemModels ?? new List<MenuItemModel>();
+            int changeMetaMenucont = 0;
         }
         <!-- Menu Canvas -->
         <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start  col-12 col w-100 visible d-flex justify-content-center align-items-center " tabindex="-1" aria-labelledby="offcanvasExampleLabel">
@@ -92,11 +102,12 @@
             </div>
 
             <!-- Menu Canvas Menu -->
-            <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
+            <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="@L.get("accesskeyTop")">:::</a>
             <ul class="navbar-nav offcanvas-body m-0 ">
                 @foreach (var menu in MenuItems)
                 {
-                    string headType = (menu.menuItemModels != null && menu.menuItemModels.Count() > 4) || menu.Length > 0 ? "metaMenu" : "listMenu";
+                    string headType = (menu.menuItemModels != null && menu.menuItemModels.Count() > changeMetaMenucont) || menu.Length > 0 ? "metaMenu" : "listMenu";
+                    string justifyContent = menu.menuItemModels != null && (menu.menuItemModels.Count() < (ViewData["Locale"] != null && (new List<string> { "zh-tw" }).Contains(ViewData["Locale"])? 5 : 4)) ? "justify-content-center" : "";
                     <li class="title nav-item col-lg-3 @headType">
                         @{
                             List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
@@ -105,7 +116,7 @@
                         {
                             <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">@menu.Title</div>
                             <div class="content collapse_menus translate-middle-x">
-                                <ul>
+                                <ul class="@justifyContent" data-count-theme="@(menu.menuItemModels != null? menu.menuItemModels.Count() : "0")">
                                     @foreach (var secItem in subItems)
                                     {
                                         var iconclass = secItem.Icon == "" ? "d-none" : "";
@@ -113,17 +124,19 @@
                                         <li class="subtitle nav-item my-0 text-start">
                                             @{
                                                 var target = secItem.Target == true ? "_blank" : "_self";
-                                                var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
+                                                var title = secItem.Target == true ? string.Format(L.get("LinkToAndBlank"), secItem.Title) : string.Format(L.get("LinkTo"), secItem.Title);
                                                 if (string.IsNullOrEmpty(secItem.Link))
                                                 {
                                                     secItem.Link = "#";
                                                     title = $"展開選單：{secItem.Title}";
                                                 }
                                             }
-                                            <a class="subtitle_title nav-link text-white py-1 text-nowrap text-start d-inline-block" href="@secItem.Link" title="@title" target="@target">
+                                            <a class="subtitle_title nav-link text-white text-start d-flex" href="@secItem.Link" title="@title" target="@target">
                                                 <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
                                                 <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-                                                @secItem.Title
+                                                <span>
+                                                    @secItem.Title
+                                                </span>
                                             </a>
                                             @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0 && menu.Title != "產品專區")
                                             {
@@ -136,7 +149,7 @@
                                                             @if (secItem.Link != "")
                                                             {
                                                                 target = thirdItem.Target == true ? "_blank" : "_self";
-                                                                title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                                title = thirdItem.Target == true ? string.Format(L.get("LinkToAndBlank"), thirdItem.Title) : string.Format(L.get("LinkTo"), thirdItem.Title);
                                                                 <a class="subtitle_title ps-2 nav-link text-black pt-0 pb-1 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
                                                                     <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
                                                                     <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
@@ -163,7 +176,7 @@
                         else
                         {
                             <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
-                                <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                                <a class="p-0 nav-link text-nowrap text-white" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title))">
                                     @menu.Title
                                 </a>
                             </div>
@@ -173,7 +186,7 @@
                 @foreach (var menu in Model.langMenuItemModels)
                 {
                     var target = menu.Target ?? false ? "_blank" : "_self";
-                    var targetStr = menu.Target ?? false ? $"連結至：{menu.Title}(另開新視窗)" : $"連結至：{menu.Title}";
+                    var targetStr = menu.Target ?? false ? string.Format(L.get("LinkToAndBlank"), menu.Title) : string.Format(L.get("LinkTo"), menu.Title);
                     <li class="title nav-item col-lg-3 listMenu langMenu">
                         <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap font">
                             <a href="@menu.Link" class="text-white" title="@targetStr" target="@target">@menu.Title</a>

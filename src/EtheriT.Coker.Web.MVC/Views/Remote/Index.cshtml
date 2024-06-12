@@ -11,7 +11,7 @@
 					keyboard_backspace
 				</span>
 			</button>
-			<div class="title fw-bold fs-4">全站瀏覽數量</div>
+			<div class="title fw-bold fs-4">頁面瀏覽數量</div>
 		</div>
 	</div>
 	<div id="AuditLogList" class="card border-0">
@@ -39,7 +39,6 @@
 					c.AddFor(e => e.type).Caption("類別");
 					c.AddFor(e => e.name).Caption("頁面名稱");
 					c.AddFor(e => e.date).Caption("日期");
-					c.AddFor(e => e.MemCount).Caption("人數");
 					c.AddFor(e => e.count).Caption("人次");
 				})
 				.ColumnAutoWidth(true)

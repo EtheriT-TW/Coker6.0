@@ -22,7 +22,7 @@
                 form.classList.add('was-validated')
                 if (!form.checkValidity()) {
                     NewCaptcha($imgCaptcha, $captcha_input, "ContactUs");
-                    Coker.sweet.error("錯誤", "須確實填寫表單資料才可送出", null, true);
+                    Coker.sweet.error(local.Error, local.FormSubmitMessage, null, true);
                 } else {
                     event.preventDefault();
                     const sender = { Email: "", Name: "" };
@@ -37,7 +37,7 @@
                     }
 
                     if (sender.Email == "") {
-                        co.sweet.error("資料錯誤", "請選擇寄件人");
+                        co.sweet.error(local.InformationError, local.NoSelectSender);
                         return;
                     }
                     $.ajax({
@@ -56,10 +56,10 @@
                         }
                     }).done(function (result) {
                         if (result.success) {
-                            Coker.sweet.success("成功送出表單！", null, true);
+                            Coker.sweet.success(local.SentSuccessfully, null, true);
                             $forms.removeClass('was-validated');
                             $forms.get(0).reset();
-                        } else Coker.sweet.error("發送失敗", result.error, null, true);
+                        } else Coker.sweet.error(local.FailedToSend, result.error, null, true);
                         NewCaptcha($imgCaptcha, $captcha_input, "ContactUs");
                     });
                 }

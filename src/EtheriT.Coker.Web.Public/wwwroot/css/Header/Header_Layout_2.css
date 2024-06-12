@@ -1,1 +1,54 @@
-﻿
+﻿header nav {
+    background-color: #000B;
+    padding: 0.5rem 1rem;
+}
+
+    header nav a, .nav-link {
+        color: #FFF;
+    }
+
+.btn_menu {
+    margin-top: 0.25rem;
+    transition: 0.3s;
+    z-index: 1046;
+}
+
+    .btn_menu > .bar {
+        position: relative;
+        display: block;
+        width: 1.75rem;
+        height: .2rem;
+        margin: .35rem auto;
+        background-color: #FFF;
+        border-radius: 10px;
+        -webkit-transition: .3s;
+        transition: .3s;
+    }
+.offcanvas.show + .btn_menu > .bar:nth-of-type(1) {
+    -webkit-transform: translateY(0.525rem) rotate(-45deg);
+    -ms-transform: translateY(0.525rem) rotate(-45deg);
+    transform: translateY(0.525rem) rotate(-45deg);
+}
+
+.offcanvas.show + .btn_menu > .bar:nth-of-type(2) {
+    opacity: 0;
+}
+
+.offcanvas.show + .btn_menu > .bar:nth-of-type(3) {
+    -webkit-transform: translateY(-0.525rem) rotate(45deg);
+    -ms-transform: translateY(-0.525rem) rotate(45deg);
+    transform: translateY(-0.525rem) rotate(45deg);
+}
+@media(max-width:992px) {
+    #Offcanvas_Menu {
+        background-color: #333;
+    }
+    .navbar-collapse .navbar-nav {
+        width: 100%;
+        padding-top:6rem;
+    }
+        .navbar-nav > .nav-item {
+            text-align:center;
+            border-bottom:#FFF solid 1px;
+        }
+}

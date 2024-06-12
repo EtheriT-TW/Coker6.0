@@ -8,11 +8,13 @@ function PageReady() {
 
     ElementInit();
     window.CI360.init();
-    Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
+    if (ProdId != null && !isNaN(ProdId)) Pid = ProdId;
+    else Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
     if (isNaN(Pid) && /\/[\d]+\//.test(location.pathname)) {
-        const para = location.pathname.match(/\/[\d]+\//g); 
-        if (para.length>0)
-            Pid = para[para.length-1].replace(/\//g,"");
+        const para = location.pathname.match(/\/[\d]+\//g);
+        if (para.length > 0) {
+            Pid = para[para.length - 1].replace(/\//g, "");
+        }
     }
     Product.GetOne.ProdMainDisplay(Pid).done(function (result) {
         if (result != null) {
@@ -117,12 +119,16 @@ function PageDefaultSet(result) {
             $(".pro_tc").addClass("d-none");
         }
     });
+    console.log(result,result.status);
+    if (result.status != 0) {
+        $("#Product>.image").append(`<span class="status status${result.status}">${result.statusName}</span>`);
+    }
 
     if (!$(".pro_tc").hasClass("d-none")) {
         $(".btn_tc").on("click", function () {
-            $("#ProductDescription").removeClass("active show")
+            $("#TabContent .tab-pane").removeClass("active show")
             $("#TechnicalDocuments").addClass("active show")
-            $("#pills-description-tab").removeClass("active")
+            $("#btn_tab .nav-link").removeClass("active")
             $("#pills-documents-tab").addClass("active")
             var $self_btn = $(this);
             $('html, body').animate({ scrollTop: $(`.badge_${$self_btn.data("tcid")}`).offset().top - $("header > nav").height() * 2 }, 0);
@@ -305,7 +311,7 @@ function PageDefaultSet(result) {
         $(".pro_tag").addClass("d-none");
     }
 
-    if (result.files !=null && result.files.length > 0) {
+    if (result.files != null && result.files.length > 0) {
         result.files.forEach(function (file) {
             var link = IsFaPage == true ? file.link : file.link.replace("upload", `upload/${OrgName}`);
             $("#FileDownload>.File_list").append(`

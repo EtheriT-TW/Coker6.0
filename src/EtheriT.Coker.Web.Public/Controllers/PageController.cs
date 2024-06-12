@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Shared.i18n;
 using System.Web;
 
 namespace EtheriT.Coker.Web.Public.Controllers
@@ -122,7 +123,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             model.option = key;
             if (!UseLegacyPathHandling(website, key, option)) {
-                model.PageData = new GetFrontContenOutputDto { SiteName = "路徑錯誤" };
+                model.PageData = new GetFrontContenOutputDto { SiteName = L.get("PathError") };
 				Response.StatusCode = 404;
 				view = "Error/404";
 			}else if (!string.IsNullOrEmpty(key)){
@@ -173,35 +174,39 @@ namespace EtheriT.Coker.Web.Public.Controllers
 							remoteInputDto.FK_WebmenuId = ProdPageData.Id;
 							model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
-							remoteInputDto.FK_ProdId = model.PageData.Id;
-							model.ParentData = ProdPageData;
-                            model.PageData.LayoutType = defaultData.Layout_Type;
-                            model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
-                            if (key == "product")
-                            {
-                                model.PageData.VisibleHeader = true;
-                                model.PageData.VisibleFooter = true;
-                                model.PageData.VisibleTitle = true;
-                            }
+                            if (model.PageData.Id == 0) view = "Error/404";
                             else
                             {
-                                model.PageData.VisibleHeader = ProdPageData.VisibleHeader;
-                                model.PageData.VisibleFooter = ProdPageData.VisibleFooter;
-                                model.PageData.VisibleTitle = ProdPageData.VisibleTitle;
-                            }
+                                remoteInputDto.FK_ProdId = model.PageData.Id;
+                                model.ParentData = ProdPageData;
+                                model.PageData.LayoutType = defaultData.Layout_Type;
+                                model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+                                if (key == "product")
+                                {
+                                    model.PageData.VisibleHeader = true;
+                                    model.PageData.VisibleFooter = true;
+                                    model.PageData.VisibleTitle = true;
+                                }
+                                else
+                                {
+                                    model.PageData.VisibleHeader = ProdPageData.VisibleHeader;
+                                    model.PageData.VisibleFooter = ProdPageData.VisibleFooter;
+                                    model.PageData.VisibleTitle = ProdPageData.VisibleTitle;
+                                }
 
-                            model.MenuBread.Add(new GetMenuBreadDto
-                            {
-                                Title = model.PageData.Title,
-                                Link = "",
-                            });
+                                model.MenuBread.Add(new GetMenuBreadDto
+                                {
+                                    Title = model.PageData.Title,
+                                    Link = "",
+                                });
 
-                            if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
-                            {
-                                string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
-                                model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                                if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
+                                {
+                                    string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
+                                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                                }
+                                view = "ProductContent";
                             }
-                            view = "ProductContent";
                         }
                         else view = "Error/404";
                         break;
@@ -252,13 +257,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
-                            model.PageData.Title = "站內搜尋";
+                            model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {
                                 SearchId = id,
                                 SearchText = search ?? "",
                                 Class = await custSearchAppService.GetSearchList(defaultData.Id)
                             };
+                            if (model.SearchPalameter.Class.Exists(e => e.Id == 3) && model.SearchPalameter.SearchId == 0 && string.IsNullOrEmpty(option))
+                                model.SearchPalameter.SearchId = 3;
                             view = "CustSearch";
                             int c;
                             int.TryParse(model.layout.Replace("layout", ""), out c);
@@ -267,7 +274,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else if (key.ToLower() == "demosearch") {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
-                            model.PageData.Title = "站內搜尋";
+                            model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {
                                 SearchId = id,
@@ -279,7 +286,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
                         }
-                        else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Contact" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
+                        else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
@@ -303,7 +310,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 if (string.IsNullOrEmpty(model.PageData.Description))
                                 {
                                     string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
-                                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                                    model.PageData.Description = Regex.Replace(htmlString, @"(<(.|\n)*?>|\s)", "");
                                 }
                                 view = "Index";
                             }

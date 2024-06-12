@@ -34,6 +34,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod_Spec_Type> Prod_Spec_Types { get; set; }
         public DbSet<Prod_Stock> Prod_Stocks { get; set; }
         public DbSet<ShoppingCart> ShoppingCarts { get; set; }
+        public DbSet<SearchLog> SearchLogs { get; set; }
         public DbSet<Prod_Log> Prod_Logs { get; set; }
         public DbSet<Html_Content> Html_Contents { get; set; }
         public DbSet<TechnicalCertificate> TechnicalCertificates { get; set; }
@@ -97,6 +98,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(m => m.VisibleHeader).HasDefaultValue(true);
                 o.Property(m => m.VisibleFooter).HasDefaultValue(true);
                 o.Property(m => m.VisibleTitle).HasDefaultValue(true);
+                o.Property(m => m.ShowToMenu).HasDefaultValue(true);
                 o.Property(m => m.RemovedFromShelves).HasDefaultValue(false);
             });
             modelBuilder.Entity<Order_Details>(o =>
@@ -152,6 +154,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PSid);
                 o.HasOne(u => u.Token).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_Tid);
+            }); 
+            modelBuilder.Entity<SearchLog>(o =>
+            {
+                o.HasOne(s => s.Website).WithMany(w => w.SearchLogs).HasForeignKey(f => f.FK_WebsiteId);
             });
             modelBuilder.Entity<Html_Content>(o =>
             {

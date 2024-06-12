@@ -71,6 +71,21 @@
             typeof (PageReady) === "function" && PageReady();
         }
     },
+    i18: {
+        getAll: function () {
+            return $.ajax({
+                url: "/api/i18/getLocal",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("requestverificationtoken",
+                        $('input:hidden[name="AntiforgeryFieldname"]').val());
+                }
+            });
+        }
+    },
     String: {
         generateRandomString: function (num) {
             const characters =

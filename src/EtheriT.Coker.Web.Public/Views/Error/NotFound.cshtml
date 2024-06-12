@@ -1,0 +1,24 @@
+﻿@using EtheriT.Coker.Web.Public.Models;
+@model PageViewModel
+@{
+    ViewData["PageTagNameName"] = "頁面不存在";
+}
+<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<style>
+    .container {
+        padding: 10rem 0;
+        text-align: center;
+    }
+    a{
+        color: #0d6efd;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>頁面不存在</h1>
+            <p>請確認您的連結是否正確，或 <a href="/" class="" title="連結至：首頁">回到首頁</a></p>
+        </div>
+    </div>
+</div>

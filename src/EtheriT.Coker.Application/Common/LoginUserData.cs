@@ -20,6 +20,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -199,6 +200,33 @@ namespace EtheriT.Coker.Application
             }
             catch { }
             return name;
+        }
+        public async Task<string> GetWebsiteLocal() {
+            string local = "";
+            try
+            {
+                long id = await GetWebsiteId();
+                var website = await db.Websites.Where(w => w.Id == id).FirstOrDefaultAsync();
+                if (website != null) local = website.Locale;
+            }
+            catch { }
+            return local;
+        }
+        public async Task<int> GetWebsiteUseFrameLevel()
+        {
+            long id = await GetWebsiteId();
+            int level = 0;
+            try
+            {
+                if (id != 0)
+                {
+                    var website = await db.Websites.Where(w => w.Id == id).FirstOrDefaultAsync();
+                    if (website != null) level = website.LayoutType??0;
+                }
+                else throw new Exception();
+            }
+            catch { }
+            return level;
         }
         public async Task<string> GetWebsiteUrl()
         {

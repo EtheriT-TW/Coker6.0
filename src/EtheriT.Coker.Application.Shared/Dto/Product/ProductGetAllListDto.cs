@@ -5,7 +5,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
     {
         public long Id { get; set; }
         public string Title { get; set; }
-        public bool Disp_Opt { get; set; }
+        public bool Visible { get; set; }
         public int Ser_No { get; set; }
         public string ItemNo { get; set; }
         public string Price { get; set; }

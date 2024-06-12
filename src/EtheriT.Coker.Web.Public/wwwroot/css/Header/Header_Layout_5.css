@@ -117,32 +117,69 @@
 }
 
 /* Mega Menu Offcanvas */
-#Offcanvas_Mega_Menu > ul > li:first-child {
-    position: relative;
+#Offcanvas_Mega_Menu {
+    background: rgba(100,128,108,.9);
 }
 
-#Offcanvas_Mega_Menu > ul > .title {
-    cursor: pointer;
-}
-
-    #Offcanvas_Mega_Menu > ul > .title > a {
-        color: black;
+    #Offcanvas_Mega_Menu > * {
+        color: #ffffff;
     }
 
-    /* Mega Menu Content */
-    #Offcanvas_Mega_Menu > ul > .title > .content {
-        cursor: default;
-        visibility: hidden;
-        position: absolute;
-        top: 100%;
-        background-color: #e0e0e0;
-        padding: 2% 10% 2% 10%;
-        box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
+    #Offcanvas_Mega_Menu > ul > .title {
+        cursor: pointer;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > a > img + span {
-        display: none;
-    }
+        #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
+            background: rgba(100,128,108,.9);
+        }
+
+            #Offcanvas_Mega_Menu > ul > .title:hover > .text-black :hover {
+                background: #4e6354;
+                margin-left: 0;
+            }
+
+        #Offcanvas_Mega_Menu > ul > .title > a {
+            color: black;
+        }
+
+            #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+                display: none;
+            }
+
+        /* Mega Menu Content */
+        #Offcanvas_Mega_Menu > ul > .title > .content {
+            visibility: hidden;
+            background-color: rgba(100,128,108,.96);
+            padding: 1rem 0;
+            cursor: default;
+            position: absolute;
+            top: 100%;
+            box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
+        }
+
+            #Offcanvas_Mega_Menu > ul > .title > .content li {
+                width: 20%;
+            }
+
+                #Offcanvas_Mega_Menu > ul > .title > .content li > a {
+                    padding: 10px 20px 10px 40px;
+                    width: 100%;
+                }
+
+                    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
+                        padding-left:20px;
+                    }
+                    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover::before {
+                        content: "➤";
+                        display: inline-block;
+                        margin-right:4px;
+                    }
+
+
+                    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
+                        background: #4e6354;
+                        margin-left: 0;
+                    }
 
 
 .subtitle > .subtitle_title {
@@ -169,7 +206,7 @@
     padding: 0;
 }
 
-    .navbar-nav ul > li {
+    .navbar-nav ul > li > a {
         padding: 0.5rem;
     }
 
@@ -181,11 +218,12 @@
 .metaMenu .collapse_menus > ul {
     display: flex;
     flex-wrap: wrap;
-    width: 1100px;
+    width: 1300px;
+    max-width:100%;
     margin: auto;
 }
 
-    .metaMenu .collapse_menus > ul > li {
+    .metaMenu .collapse_menus > ul > li > a {
         margin-left: 0.5rem;
         margin-right: 1.5rem;
         min-width: 175px;
@@ -239,8 +277,15 @@
     }
 }
 
+@media (max-width: 1200px) {
+    .metaMenu .collapse_menus > ul {
+        width: 1100px;
+    }
+}
 @media only screen and (max-width: 992px) {
-
+    .metaMenu .collapse_menus > ul {
+        width: 100%;
+    }
 
     #Header_Top {
         height: 3rem;
@@ -337,10 +382,6 @@
             transform: rotate(90deg);
         }
 
-    #Offcanvas_Mega_Menu {
-        background: #ffffffe6;
-    }
-
         #Offcanvas_Mega_Menu > ul > .title > a > img {
             display: none;
         }
@@ -355,7 +396,6 @@
             visibility: visible;
             position: relative;
             top: 0;
-            padding: 0;
             box-shadow: 0 0 transparent;
             background-color: transparent;
             text-align: initial;
@@ -386,19 +426,13 @@
     flex-direction: column;
 }
 
-#Search {
-    top: 50%;
-    right: -200px;
-    transform: translateY(-50%);
+#Search a {
+    color: #64806c;
 }
 
-    #Search a {
-        color: #64806c;
+    #Search a:hover {
+        color: #333333;
     }
-
-        #Search a:hover {
-            color: #333333;
-        }
 
 #SearchInput {
     border: solid 1px rgba(100,128,108,.9);
@@ -427,39 +461,8 @@
         height: 80px;
     }
 
-#Offcanvas_Mega_Menu {
-    background: rgba(100,128,108,.9);
-}
-
-    #Offcanvas_Mega_Menu > * {
-        color: #ffffff;
-    }
-
-    #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
-        background: rgba(100,128,108,.9);
-    }
-
-    #Offcanvas_Mega_Menu > ul > .title > .content {
-        background-color: rgba(100,128,108,.9);
-        padding: 1rem 0;
-    }
-
-        #Offcanvas_Mega_Menu > ul > .title > .content li {
-            padding: 10px 20px;
-        }
-
-    #Offcanvas_Mega_Menu > ul > .title:hover > .text-black :hover {
-        background: #4e6354;
-        margin-left: 0;
-    }
-
-    #Offcanvas_Mega_Menu > ul > .title > .content li:hover {
-        background: #4e6354;
-        margin-left: 0;
-    }
-
 .logo-img {
-    width: 100% !important;
+    width: auto !important;
     height: 70px !important;
 }
 
@@ -475,12 +478,6 @@
 .offcanvas-body {
     width: 60%;
 }
-
-.collapse_menus > ul > li:hover::before {
-    content: "➤";
-    display: inline-block;
-}
-
 
 .icon-search-bg {
     background: rgba(100,128,108,1);
@@ -539,7 +536,7 @@
         display: none !important;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > .content li {
+    #Offcanvas_Mega_Menu > ul > .title > .content li > a {
         margin-left: 1rem;
     }
 
@@ -597,17 +594,17 @@
         justify-content: space-between;
         flex-direction: column;
     }
+
+    #Offcanvas_Mega_Menu > ul > .title > .content li > a {
+        margin-left: 1rem;
+        padding: 0.25rem 0;
+        margin: 0;
+    }
 }
 
 @media (max-width: 440px) {
     .subtitle > .subtitle_title {
         font-weight: 400;
-    }
-
-    #Offcanvas_Mega_Menu > ul > .title > .content li {
-        margin-left: 1rem;
-        padding: 0;
-        margin: 0;
     }
 
     .font {

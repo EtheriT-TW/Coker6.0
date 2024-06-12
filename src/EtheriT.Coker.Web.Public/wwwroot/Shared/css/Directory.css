@@ -6,10 +6,13 @@
 .catalog_frame {
     margin-bottom:1rem;
 }
+    .catalog_frame button {
+        color:#000;
+    }
 
-.catalog {
-    position: relative;
-}
+    .catalog {
+        position: relative;
+    }
 
     .catalog .status {
         position: absolute;
@@ -58,7 +61,7 @@
 .type_change_frame > .catalog .description {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 5;
+    -webkit-line-clamp: 4;
 }
 
 .type_change_frame .fs-5 {
@@ -121,10 +124,6 @@
     position: relative;
 }
 
-.type_change_frame .type4 .item-title {
-    max-width: calc(100% - 32px);
-}
-
 .type_change_frame .type2-content {
     overflow: hidden;
     display: -webkit-box;
@@ -138,8 +137,8 @@
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    max-height: calc(1em * 5);
+    -webkit-line-clamp: 4;
+    max-height: calc(1.65em * 4);
     position: relative;
 }
 
@@ -157,10 +156,6 @@
 }
 
 .type_change_frame .btn_favorites {
-    color: var(--gray-icon);
-}
-
-.type_change_frame .btn_share {
     color: var(--gray-icon);
 }
 
@@ -198,15 +193,28 @@
 }
 
 /* Button Share */
-.type_change_frame .shareBlock.type4 {
+.type_change_frame .shareBlock {
     position: absolute;
     right: 0.5em;
+    top: 0;
 }
+    .type_change_frame .shareBlock > button.btn_share {
+        background-color: var(--gray-icon) !important;
+        color: #FFF;
+        border-radius: 100%;
+        width: 30px;
+        height: 30px;
+        transform: scale(0.8);
+        opacity: 0.8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
 .type_change_frame .shareBlock.type5 {
     position: absolute;
-    top: 1em !important;
     right: 1em;
+    top: 1em
 }
 
 .type_change_frame .shareBlock > a {
@@ -1374,7 +1382,7 @@
         justify-content: center;
     }
 
-    .type_change_frame > .catalog .image_frame {
+    .type_change_frame > .catalog .image_frame:not(.type4-image-frame) {
         width: 100%;
         height: 100%;
         overflow: hidden;
@@ -1465,5 +1473,12 @@
 
     .two-column-width .catalog > div, .two-column-width .catalog > a {
         width: 100%;
+    }
+    .type_change_frame .catalog .type4-image-frame {
+        height: 130px;
+        max-height: 130px;
+    }
+    .type_change_frame .type4-caption {
+        height: auto;
     }
 }

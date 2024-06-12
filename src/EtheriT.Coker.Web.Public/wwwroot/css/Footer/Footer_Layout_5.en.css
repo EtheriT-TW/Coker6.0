@@ -1,0 +1,66 @@
+﻿#FootContainer {
+    max-width: 90%;
+}
+
+#Footer_Menu .abreast {
+    width: auto;
+}
+
+    #Footer_Menu .abreast > ul {
+        height: 220px;
+        width: 100%;
+    }
+
+.abreast > ul > li {
+    margin: 0rem 1rem 0.5rem 0;
+    display: flex;
+    line-height: 1.2rem;
+}
+
+    .abreast > ul > li:before {
+        content: "。";
+    }
+
+#Footer_Menu > .paging_frame:last-child {
+    width:500px;
+    max-width:100%;
+}
+.paging_frame {
+    margin: 2rem 0rem 1rem;
+}
+
+.footer-bg h5 {
+    font-size: 1rem;
+}
+
+@media (min-width: 1500px) {
+    .abreast > ul > li {
+        width: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    #FootContainer {
+        max-width: 96%;
+    }
+}
+
+@media (max-width: 576px) {
+    .abreast > ul > li {
+        width: 100%;
+    }
+    #Footer_Menu > .paging_frame:not(:last-child) {
+        width:50%;
+    }
+    #Footer_Menu > .paging_frame:last-child {
+        width: 100%;
+    }
+
+    .abreast .paging_frame:nth-child(3) {
+        margin-top: 0;
+    }
+
+    #Footer_Menu .paging_frame:nth-child(3) > .abreast > ul {
+        height: auto;
+    }
+}

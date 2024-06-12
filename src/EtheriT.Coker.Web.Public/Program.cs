@@ -145,10 +145,24 @@ if (builder.Environment.EnvironmentName == "EPZA")
 
 var app = builder.Build();
 
+if (!app.Environment.IsProduction())
+{
+    IHostApplicationLifetime lifetime = app.Lifetime;
+    // 檢查是否是應用程式的啟動階段
+    lifetime.ApplicationStarted.Register(() =>
+    {
+        // 在應用程式啟動時執行一次的程式碼
+        Console.WriteLine("應用程式已啟動，執行初始化程式碼...");
+
+        // 在這裡可以做一些初始化的工作，例如註冊服務或設定狀態
+    });
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
+    app.UseStatusCodePagesWithReExecute("/Error/{0}");
     app.UseMiddleware<CustomBadRequestMiddleware>();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
@@ -199,10 +213,25 @@ if (childOrgNames != null)
 }
 
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.UseRouting();
+app.UseStaticFiles(new StaticFileOptions()
+{
+    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
+    {
+     {
+         ".properties",
+         "application/octet-stream"
+     },{
+         ".bcmap",
+         "image/svg+xml"
+     }
+    })
+});
 
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -224,27 +253,14 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "Page",
     pattern: "{website}/{key}/{option?}/{id?}/{search?}",
-    defaults: new { controller = "Page", action = "Index" }
+    defaults: new { controller = "Page", action = "Index" },
+    constraints: new { website = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared","lib" }) }
 );
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{key?}/{id?}",
     defaults: new { controller = "Home", action = "Index" });
-
-app.UseStaticFiles(new StaticFileOptions()
-{
-    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
-    {
-     {
-         ".properties",
-         "application/octet-stream"
-     },{
-         ".bcmap",
-         "image/svg+xml"
-     }
-    })
-});
 
 //var options = new RewriteOptions()
 //        .AddRedirect("^Search/(.*)/(.*)", "Search?id=$&search=$2", 301);

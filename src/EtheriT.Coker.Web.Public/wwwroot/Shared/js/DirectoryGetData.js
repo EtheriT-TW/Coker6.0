@@ -379,9 +379,6 @@ function DirectoryDataInsert($item, result) {
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
-        content.find("img").on("load.heigh", function () {
-            content.find(".shareBlock").css({ top: content.find(".image_frame").height() + 30 });
-        });
         $item.find(".catalog").append(content);
     });
     HoverEffectInit();

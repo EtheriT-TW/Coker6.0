@@ -81,15 +81,21 @@
     {
       "output": "Shared/shared.min.css",
       "input": [
+        "wwwroot/Shared/css/Activity.less",
         "wwwroot/Shared/css/AnchorPoint.css",
+        "wwwroot/Shared/css/BGCanvas.css",
+        "wwwroot/Shared/css/Contact.css",
         "wwwroot/Shared/css/Directory.css",
+        "wwwroot/Shared/css/FlipBook.css",
         "wwwroot/Shared/css/Frame.css",
         "wwwroot/Shared/css/HoverEffect.css",
-        "wwwroot/Shared/css/Swiper.css",
-        "wwwroot/Shared/css/Contact.css",
-        "wwwroot/Shared/css/Activity.less",
-        "wwwroot/Shared/css/BGCanvas.css",
-        "wwwroot/Shared/css/FlipBook.css"
+        "wwwroot/Shared/css/Swiper.css"
+      ]
+    },
+    {
+      "output": "Shared/shared.en.min.css",
+      "input": [
+        "wwwroot/Shared/css/Contact.en.css"
       ]
     },
     {

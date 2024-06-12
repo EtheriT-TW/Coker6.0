@@ -33,6 +33,9 @@ input[type="number"] {
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .pro_display {
         cursor: pointer;
+        object-fit: contain;
+        width: 100%;
+        height: 100%;
     }
 
 
@@ -99,7 +102,21 @@ input[type="number"] {
     #Product > .content > .describe > .track {
         display: none;
     }
-
+#Product > .image {
+    position:relative;
+}
+    #Product > .image > .status {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        background: rgba(196, 196, 196, .8);
+        font-size: .8rem;
+        padding: .2rem 1.2rem;
+        color: #fff;
+        font-weight: 600;
+        border-radius: 1.5rem;
+        z-index:2;
+    }
 #Product > .image > .pro_tag {
     width: calc(100% - 30px);
     height: 2rem;

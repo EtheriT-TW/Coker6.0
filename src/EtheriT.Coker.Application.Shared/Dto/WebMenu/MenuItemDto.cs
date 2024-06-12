@@ -38,6 +38,7 @@ namespace EtheriT.Coker.Application.Dto
         public bool IsFromShelves {  get; set; }
         public long? FK_TopNodeId { get; set; }
         public long? FK_RootNodeId { get; set; }
+        public bool ShowToMenu { get; set; }
         public DateTime? LastModificationTime { get; set; }
         public DateTime CreationTime { get; set; }
         public List<MenuItemDto>? Children { get; set; }

@@ -14,7 +14,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
         public string ParntOrgNames { get; set; }
         public int Layout_Type { get; set; }
         public string View { get; set; }
-        public string locale { get; set; } = "zh-tw";
+        public string Description { get; set; }
+
+		public string locale { get; set; } = "zh-tw";
         public WebsiteLevelEnum Level { get; set; }
 	}
 }

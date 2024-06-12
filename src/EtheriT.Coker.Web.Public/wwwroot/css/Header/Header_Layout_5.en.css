@@ -1,0 +1,50 @@
+﻿.metaMenu .collapse_menus > ul {
+    width: 1500px;
+    align-items: center;
+}
+    .metaMenu .collapse_menus > ul:not(.justify-content-center) > li {
+        width: 340px;
+    }
+
+        .metaMenu .collapse_menus > ul:not(.justify-content-center) > li > a {
+            width: 280px;
+        }
+    .metaMenu .collapse_menus > ul > li > a {
+        font-size:0.8rem;
+    }
+.subtitle_title {
+    max-width: 300px;
+    vertical-align: top;
+}
+.collapse_menus > ul > li:hover::before {
+    margin-top: 2px;
+}   
+@media (max-width: 1400px) {
+    .metaMenu .collapse_menus > ul {
+        width: 1300px;
+    }
+}
+@media (max-width: 1200px) {
+    .metaMenu .collapse_menus > ul {
+        width: 1100px;
+    }
+        .metaMenu .collapse_menus > ul:not(.justify-content-center) > li {
+            width: 240px;
+        }
+}
+@media (max-width: 992px) {
+    .metaMenu .collapse_menus > ul {
+        width: 100%;
+    }
+    #Offcanvas_Mega_Menu > ul {
+        padding: 0;
+        width: 85%;
+    }
+    #Offcanvas_Mega_Menu > .offcanvas-header > .offcanvas-title {
+        font-size: 1.2rem !important;
+        padding: 0.2rem 0 0.2rem 1rem;
+    }
+    .metaMenu .collapse_menus > ul > li > a {
+        font-size: 1rem;
+    }
+}

@@ -9,11 +9,31 @@
   <ItemGroup>
     <Content Remove="appsettings.EPZA.json" />
     <Content Remove="appsettings.Haoguang.json" />
+    <Content Remove="appsettings.Haoguangen.json" />
     <Content Remove="Views\Page\OrderManagement.cshtml" />
     <Content Remove="wwwroot\css\Page\OrderManagement.css" />
     <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
     <Content Remove="wwwroot\js\Page\OrderManagement.js" />
     <Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
+    <Content Remove="wwwroot\Shared\css\Activity.less" />
+    <Content Remove="wwwroot\Shared\css\AnchorPoint.css" />
+    <Content Remove="wwwroot\Shared\css\AnchorPoint.min.css" />
+    <Content Remove="wwwroot\Shared\css\BGCanvas.css" />
+    <Content Remove="wwwroot\Shared\css\BGCanvas.min.css" />
+    <Content Remove="wwwroot\Shared\css\Contact.css" />
+    <Content Remove="wwwroot\Shared\css\Contact.en.css" />
+    <Content Remove="wwwroot\Shared\css\Contact.en.min.css" />
+    <Content Remove="wwwroot\Shared\css\Contact.min.css" />
+    <Content Remove="wwwroot\Shared\css\Directory.css" />
+    <Content Remove="wwwroot\Shared\css\Directory.min.css" />
+    <Content Remove="wwwroot\Shared\css\FlipBook.css" />
+    <Content Remove="wwwroot\Shared\css\FlipBook.min.css" />
+    <Content Remove="wwwroot\Shared\css\Frame.css" />
+    <Content Remove="wwwroot\Shared\css\Frame.min.css" />
+    <Content Remove="wwwroot\Shared\css\HoverEffect.css" />
+    <Content Remove="wwwroot\Shared\css\HoverEffect.min.css" />
+    <Content Remove="wwwroot\Shared\css\Swiper.css" />
+    <Content Remove="wwwroot\Shared\css\Swiper.min.css" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +61,28 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Include="appsettings.Haoguang.json" />
+    <None Include="appsettings.Haoguangen.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="wwwroot\Shared\css\Activity.less" />
+    <None Include="wwwroot\Shared\css\AnchorPoint.css" />
+    <None Include="wwwroot\Shared\css\AnchorPoint.min.css" />
+    <None Include="wwwroot\Shared\css\BGCanvas.css" />
+    <None Include="wwwroot\Shared\css\BGCanvas.min.css" />
+    <None Include="wwwroot\Shared\css\Contact.css" />
+    <None Include="wwwroot\Shared\css\Contact.en.css" />
+    <None Include="wwwroot\Shared\css\Contact.en.min.css" />
+    <None Include="wwwroot\Shared\css\Contact.min.css" />
+    <None Include="wwwroot\Shared\css\Directory.css" />
+    <None Include="wwwroot\Shared\css\Directory.min.css" />
+    <None Include="wwwroot\Shared\css\FlipBook.css" />
+    <None Include="wwwroot\Shared\css\FlipBook.min.css" />
+    <None Include="wwwroot\Shared\css\Frame.css" />
+    <None Include="wwwroot\Shared\css\Frame.min.css" />
+    <None Include="wwwroot\Shared\css\HoverEffect.css" />
+    <None Include="wwwroot\Shared\css\HoverEffect.min.css" />
+    <None Include="wwwroot\Shared\css\Swiper.css" />
+    <None Include="wwwroot\Shared\css\Swiper.min.css" />
   </ItemGroup>
 
 </Project>

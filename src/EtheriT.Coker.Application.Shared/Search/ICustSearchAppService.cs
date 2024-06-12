@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Application.Search
     {
         public Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions);
         public Task<List<SearchItemDto>> GetSearchList(long sid);
+        public Task SaveSearchLog(SaveSearchLogDto dto);
     }
 }

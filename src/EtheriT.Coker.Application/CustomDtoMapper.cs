@@ -26,6 +26,7 @@ using EtheriT.Coker.Application.Shared.Dto.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application
 {
@@ -121,7 +122,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
 				.ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
 				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
-				.ForMember(e => e.permanent, option => option.MapFrom(c => true))
+                .ForMember(e => e.Status, option => option.MapFrom(c =>  (int) Enum.Parse(typeof(ProdStatusEnum), c.Status)))
+                .ForMember(e => e.permanent, option => option.MapFrom(c => true))
 				.ReverseMap();
 			CreateMap<ProductImportUpateDto, Prod>()
 				.ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))

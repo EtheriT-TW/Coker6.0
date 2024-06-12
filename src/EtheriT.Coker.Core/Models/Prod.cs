@@ -8,7 +8,6 @@ namespace EtheriT.Coker.Core.Models
         public long FK_WebsiteId { get; set; }
         [StringLength(150)]
         public string Title { get; set; }
-        public bool Disp_Opt { get; set; }
         public int Ser_No { get; set; }
         [StringLength(100)]
         public string? ItemNo { get; set; }

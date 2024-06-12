@@ -73,21 +73,25 @@
 
 /* Button Mega Menu */
 #Mega_Menu > .logo {
-    font-size:0;
+    font-size: 0;
 }
+
     #Mega_Menu > .logo img {
         height: 60px;
         padding: 5px 0;
     }
+
 #accordion-menu .title > .nav-link > img {
     height: 60px;
     padding: 10px 0;
 }
+
 #Mega_Menu > .logo > a {
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
 #Mega_Menu > .btn_menu {
     margin-top: 0.25rem;
     transition: 0.3s;
@@ -139,51 +143,52 @@
     flex-wrap: nowrap;
     justify-content: space-around;
 }
-#Offcanvas_Mega_Menu > ul > li:first-child {
-    position: relative;
-}
 
-#Offcanvas_Mega_Menu > ul > .title {
-    cursor: pointer;
-    width:150px;
-}
-
-    #Offcanvas_Mega_Menu > ul > .title > a {
-        color: black;
+    #Offcanvas_Mega_Menu > ul > li:first-child {
+        position: relative;
     }
 
-    /* Mega Menu Content */
-    #Offcanvas_Mega_Menu > ul > .title > .content {
-        cursor: default;
-        visibility: hidden;
-        position: absolute;
-        top: 100%;
-        background-color: #f0f0f0;
-        padding: 1%;
-        display:flex;
+    #Offcanvas_Mega_Menu > ul > .title {
+        cursor: pointer;
+        width: 150px;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > a > img + span{
-        display: none;
-    }
+        #Offcanvas_Mega_Menu > ul > .title > a {
+            color: black;
+        }
+
+        /* Mega Menu Content */
+        #Offcanvas_Mega_Menu > ul > .title > .content {
+            cursor: default;
+            visibility: hidden;
+            position: absolute;
+            top: 100%;
+            background-color: #f0f0f0;
+            padding: 1%;
+        }
+
+        #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+            display: none;
+        }
 
 
 .subtitle > .subtitle_title {
     width: fit-content;
     font-weight: bold;
-    opacity:0.8;
+    opacity: 0.8;
     margin: 0 auto 0.5rem;
 }
+
     .subtitle > .subtitle_title:hover {
         opacity: 1;
     }
 
-    .subtitle .subtitle_title > i {
-        font-size: 1.5rem;
-    }
+.subtitle .subtitle_title > i {
+    font-size: 1.5rem;
+}
 
-.subtitle .subtitle_title > img {
-    height: 1.5rem;
+.subtitle .subtitle_title > img, .subtitle .subtitle_title > div > img {
+    max-height: 1.5rem;
 }
 
 .subtitle.hasChild > .subtitle_title {
@@ -229,7 +234,7 @@
 
         .metaMenu .collapse_menus > .container > ul ul > li {
             width: 175px;
-            font-size:0.9rem;
+            font-size: 0.9rem;
         }
 
 .listMenu {
@@ -269,12 +274,14 @@
         text-align: center;
     }
 }
+
 @media only screen and (max-width: 1200px) {
     #Offcanvas_Mega_Menu > ul > .title {
         width: 120px;
     }
+
     .metaMenu .collapse_menus > .container > ul > li {
-        width:155px;
+        width: 155px;
     }
 }
 
@@ -296,63 +303,64 @@
         padding: 1em 1.5em;
     }
 
-    #Offcanvas_Mega_Menu > ul *:focus:not(:focus-visible) {
-        outline: none;
-    }
-    
-    #Offcanvas_Mega_Menu > ul > .title {
-        font-size: 1.25rem;
-        font-weight: bold;
-    }
-
-        #Offcanvas_Mega_Menu > ul > .title > .text-black {
-            color: unset;
+        #Offcanvas_Mega_Menu > ul *:focus:not(:focus-visible) {
+            outline: none;
         }
 
-        #Offcanvas_Mega_Menu > ul > .title:hover {
-            background-color: unset;
+        #Offcanvas_Mega_Menu > ul > .title {
+            font-size: 1.25rem;
+            font-weight: bold;
         }
 
-            #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
+            #Offcanvas_Mega_Menu > ul > .title > .text-black {
                 color: unset;
-                font-weight: unset;
             }
 
-        #Offcanvas_Mega_Menu > ul > .title > .menu-item {
-            display: flex;
-        }
-
-            #Offcanvas_Mega_Menu > ul > .title > .menu-item::after {
-                display: inline-flex;
-                width: 1.25rem;
-                height: 1.25rem;
-                margin-top: 0.5rem;
-                margin-left: auto;
-                margin-right: 0.5rem;
-                content: "";
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-                background-repeat: no-repeat;
-                background-size: 1.25rem;
-                background-position: left;
-                transition: transform .2s ease-in-out;
+            #Offcanvas_Mega_Menu > ul > .title:hover {
+                background-color: unset;
             }
 
-            #Offcanvas_Mega_Menu > ul > .title > .menu-item.collapsed::after {
-                transform: rotate(-180deg);
-                background-position: right;
+                #Offcanvas_Mega_Menu > ul > .title:hover > .text-black {
+                    color: unset;
+                    font-weight: unset;
+                }
+
+            #Offcanvas_Mega_Menu > ul > .title > .menu-item {
+                display: flex;
             }
 
-    #Offcanvas_Mega_Menu > ul > .title > .content {
-        border-bottom: 1px solid #555;
-    }
+                #Offcanvas_Mega_Menu > ul > .title > .menu-item::after {
+                    display: inline-flex;
+                    width: 1.25rem;
+                    height: 1.25rem;
+                    margin-top: 0.5rem;
+                    margin-left: auto;
+                    margin-right: 0.5rem;
+                    content: "";
+                    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+                    background-repeat: no-repeat;
+                    background-size: 1.25rem;
+                    background-position: left;
+                    transition: transform .2s ease-in-out;
+                }
 
-    #Offcanvas_Mega_Menu > ul > .title > .content .text-black{
-        color: #222 !important;
-    }
+                #Offcanvas_Mega_Menu > ul > .title > .menu-item.collapsed::after {
+                    transform: rotate(-180deg);
+                    background-position: right;
+                }
+
+            #Offcanvas_Mega_Menu > ul > .title > .content {
+                border-bottom: 1px solid #555;
+            }
+
+                #Offcanvas_Mega_Menu > ul > .title > .content .text-black {
+                    color: #222 !important;
+                }
 
     .metaMenu .collapse_menus > .container > ul {
         align-items: flex-start;
     }
+
     .mega_menu_canvas {
         margin: 0;
         width: calc(100% - 2rem);
@@ -366,43 +374,47 @@
             width: unset;
             height: unset;
         }
+
     .subtitle > .subtitle_title {
         width: 100%;
         padding-right: 0.5rem;
     }
+
         .subtitle > .subtitle_title > .material-symbols-outlined {
             transition: transform .2s ease-in-out;
             transform: rotate(-90deg);
         }
+
         .subtitle > .subtitle_title.collapsed > .material-symbols-outlined {
             transform: rotate(90deg);
         }
 
     #Offcanvas_Mega_Menu {
         background: #ffffffe6;
-        flex-direction:column;
+        flex-direction: column;
     }
 
-    #Offcanvas_Mega_Menu > ul > .title > a > img {
-        display: none; 
-    }
-    #Offcanvas_Mega_Menu > ul > .title > a > img + span {
-        display: unset;
-        height: 2em;
-        font-size: 1.1em;
-    }
+        #Offcanvas_Mega_Menu > ul > .title > a > img {
+            display: none;
+        }
 
-    #Offcanvas_Mega_Menu > ul > .title > .content {
-        visibility: visible;
-        position: relative;
-        top: 0;
-        padding: 0;
-        box-shadow: 0 0 transparent;
-        background-color: transparent;
-        text-align: initial;
-        width: 100%;
-        text-align: center;
-    }
+            #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+                display: unset;
+                height: 2em;
+                font-size: 1.1em;
+            }
+
+        #Offcanvas_Mega_Menu > ul > .title > .content {
+            visibility: visible;
+            position: relative;
+            top: 0;
+            padding: 0;
+            box-shadow: 0 0 transparent;
+            background-color: transparent;
+            text-align: initial;
+            width: 100%;
+            text-align: center;
+        }
 
     .metaMenu .collapse_menus > .container > ul {
         width: 100%;
@@ -459,6 +471,7 @@
     #Mega_Menu {
         padding: 0 1rem;
     }
+
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
         flex-direction: column;

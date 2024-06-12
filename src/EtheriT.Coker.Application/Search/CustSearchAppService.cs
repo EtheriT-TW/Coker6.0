@@ -14,6 +14,9 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
+using EtheriT.Coker.Application.Shared.i18n;
+using EtheriT.Coker.Core.Models;
+using Newtonsoft.Json.Linq;
 
 namespace EtheriT.Coker.Application.Search
 {
@@ -69,12 +72,7 @@ namespace EtheriT.Coker.Application.Search
         public async Task<List<SearchItemDto>> GetSearchList(long sid)
         {
             var site = await db.Websites.Where(e => !e.IsDeleted).Where(e => e.Id == sid).FirstOrDefaultAsync();
-            List<SearchItemDto> list = new List<SearchItemDto> {
-                new SearchItemDto{
-                    Id = 0,
-                    Name = "找全部"
-                }
-            };
+            List<SearchItemDto> list = new List<SearchItemDto> ();
             if (site != null)
             {
 				switch (site.OrgName)
@@ -106,13 +104,37 @@ namespace EtheriT.Coker.Application.Search
                             new SearchItemDto
                             {
                                 Id = 3,
-                                Name = "找商品"
+                                Name = L.get("FindProduct")
                             }
                         );
                     }
                 }
             }
+            list.Add(new SearchItemDto
+            {
+                Id = 0,
+                Name = L.get("FindArticle")
+            });
             return list;
+        }
+
+        public async Task SaveSearchLog(SaveSearchLogDto dto)
+        {
+            string Ip = loginUserData.GetClientIP()??"";
+            long WebsiteID = dto.FK_WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.FK_WebsiteId;
+            SearchLog log = new SearchLog { 
+                Key = dto.Key,
+                ClientIpAddress = Ip,
+                FK_WebsiteId = WebsiteID,
+                FK_CustSearchId = dto.FK_CustSearchId,
+            };
+            var reg = db.SearchLogs.Where(e => e.CreationTime.Date == log.CreationTime.Date && e.FK_WebsiteId == log.FK_WebsiteId && e.FK_CustSearchId == log.FK_CustSearchId)
+                        .Where(e => e.Key == log.Key && e.ClientIpAddress == log.ClientIpAddress);
+            if (!reg.Any())
+            {
+                db.SearchLogs.Add(log);
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

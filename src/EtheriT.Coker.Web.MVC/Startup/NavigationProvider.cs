@@ -356,9 +356,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
 						{
 							PageName="ProductManagement",
 							Enable=false
-						},new JobMenu{
-							PageName="ContactUs",
-							Enable=false
 						}, new JobMenu{
 							 PageName="MemberData",
 							 Enable=false

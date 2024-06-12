@@ -218,6 +218,21 @@ html {
     cursor: pointer;
 }
 
+.pageTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 1rem 1rem;
+}
+
+    .pageTitle > .title {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        margin: 0 1rem;
+        max-width: calc(100% - 96px);
+    }
+
 @media only screen and (max-width: 576px) {
     #cookie_button {
         flex-direction: column;

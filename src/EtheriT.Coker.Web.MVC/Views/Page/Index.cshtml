@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@model EtheriT.Coker.Application.Shared.Dto.Webs.WebsiteFrameDto;
 @{
     ViewData["Title"] = "CustomPage";
 }
@@ -14,7 +15,9 @@
 <!--導入頁面配置-->
 <link rel="stylesheet" href="~/css/Page/index.min.css" asp-append-version="true" />
 <script src="~/js/Page/index.min.js" asp-append-version="true"></script>
-
+<script>
+    const frameLevel = @Model.Level;
+</script>
 <div id="TopLine" class="py-2 px-4">
     <div class="d-flex">
         <div class="title fw-bold fs-4">自訂頁面</div>
@@ -151,23 +154,30 @@
                         </div>
                         <div class="row ">
                             <div class="col-12 d-flex justify-content-around align-item-center my-3">
-                                <div class="col-4 form-group form-check pr-1">
+                                <div class="col-3 form-group form-check pr-1">
                                     <label for="Visible">是否顯示</label>
-                                    <select name="visible" id="visible" class="form-select item-menu">
+                                    <select name="visible" id="Visible" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false" selected>否</option>
                                     </select>
                                 </div>
-                                <div class="col-4 form-group form-check px-1">
+                                <div class="col-3 form-group form-check pl-1">
+                                    <label for="ShowToMenu">是否顯示在主選單</label>
+                                    <select name="showToMenu" id="ShowToMenu" class="form-select item-menu">
+                                        <option value="true">是</option>
+                                        <option value="false">否</option>
+                                    </select>
+                                </div>
+                                <div class="col-3 form-group form-check px-1">
                                     <label for="target">另開視窗</label>
                                     <select name="target" id="target" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false" selected>否</option>
                                     </select>
                                 </div>
-                                <div class="col-4 form-group form-check pl-1">
+                                <div class="col-3 form-group form-check pl-1">
                                     <label for="PopularVisible">顯示人氣值</label>
-                                    <select name="popularVisible" id="popularVisible" class="form-select item-menu">
+                                    <select name="popularVisible" id="PopularVisible" class="form-select item-menu">
                                         <option value="true">是</option>
                                         <option value="false">否</option>
                                     </select>

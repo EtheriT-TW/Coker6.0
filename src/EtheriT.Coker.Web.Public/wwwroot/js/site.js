@@ -38,7 +38,7 @@ function ready() {
     $(".menu-item").on("focus", menuMouseover);
     $(".menu-item").on("blur", menuMouseout);
     if ($conten.length > 0) {
-        let s = $conten.text().indexOf("&amp;") >= 0 ? Coker.stringManager.ReplaceAndSinge($conten.text()) : co.stringManager.htmlEncode($conten.html());
+        let s = $conten.text().indexOf("&amp;") >= 0 && $conten.text().indexOf("lt;") >= 0 ? Coker.stringManager.ReplaceAndSinge($conten.text()) : co.stringManager.htmlEncode($conten.html());
         let ele = document.createElement('span');
         ele.innerHTML = s;
         if ($parentConten.length > 0 && $parentConten.text().indexOf("subpage_content") >= 0) {
@@ -50,7 +50,8 @@ function ready() {
             $pe.find(".subpage_content").replaceWith(ele.textContent || ele.innerText);
             ele.textContent = $pe.html();
         }
-        $conten.html(ele.textContent || ele.innerText);
+        if (location.pathname.toLowerCase().indexOf("/article/") >= 0) $conten.html($(`<div class="container">`).html(ele.textContent || ele.innerText));
+        else $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");
     }
@@ -79,8 +80,8 @@ function ready() {
     if ($(".FlipBookModal").length > 0) FlipBookModalInit();
     if ($(".MapMessage").length > 0) MapMessage();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
-    if ($(".container .qa").length > 0) {
-        $(".container").each((i, e) => {
+    if ($(".container .qa,.container-fluid .qa").length > 0) {
+        $(".container,.container-fluid").each((i, e) => {
             var $c = $(e);
             if (typeof ($c.attr("id")) == "undefined" && $c.find("qa").length>0) {
                 $c.setRandenId();
@@ -92,6 +93,19 @@ function ready() {
         });
     }
     if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo(45);
+    if ($("video").length > 0) {
+        $("video").each(function () {
+            this.video.pause();
+            setTimeout(() => {
+                this.video.play().then((res) => {
+                    console.log("playing start", res);
+                })
+                    .catch((err) => {
+                        console.log("error playing", err);
+                    });
+            }, 0);
+        });
+    }
     _c.Search.Init("#Search");
     $(".nav-link").on("focus", function () {
         $(this).trigger("mouseover");

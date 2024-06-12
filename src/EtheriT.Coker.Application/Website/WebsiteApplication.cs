@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Webs.Dto;
+using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -59,6 +60,7 @@ namespace EtheriT.Coker.Application
             var site = await db.Websites.Where(e => e.Id == siteId).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
             if (site != null)
             {
+                L.local = site.Locale;
                 defaultData = new DefaultDataDto
 				{
 					Id = site.Id,
@@ -66,7 +68,8 @@ namespace EtheriT.Coker.Application
 					ParntOrgNames = ParntOrgNames,
 					Layout_Type = site.LayoutType??0,
 					Level = (WebsiteLevelEnum)site.Level,
-                    locale = site.Locale
+                    locale = site.Locale,
+                    Description = site.Description
 				};
                 defaultData.View = defaultData.Layout_Type == 0 ? "Default" : $"Layout_{defaultData.Layout_Type}";
 				defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;

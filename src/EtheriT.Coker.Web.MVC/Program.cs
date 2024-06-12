@@ -281,6 +281,7 @@ app.Use((context, next) =>
 //設定虛擬目錄
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 app.UseVirtualDirectory("shared", builder.Configuration.GetValue<string>("VirtualDirectory:Shared"));
+app.UseVirtualDirectory("layout", builder.Configuration.GetValue<string>("VirtualDirectory:Layout"));
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

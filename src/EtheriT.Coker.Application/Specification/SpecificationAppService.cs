@@ -353,7 +353,7 @@ namespace EtheriT.Coker.Application.Specification
                             var remain_ps = await db.Prod_Stocks.Where(e => e.FK_Pid == p.Id && !e.IsDeleted).ToListAsync();
                             if (remain_ps.Count == 0)
                             {
-                                p.Disp_Opt = false;
+                                p.Visible = false;
                                 db.SaveChanges();
                             }
                         }

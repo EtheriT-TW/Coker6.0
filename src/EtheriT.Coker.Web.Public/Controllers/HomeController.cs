@@ -12,6 +12,7 @@ using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -63,7 +64,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
             var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput {key= "ga4",SiteId= siteId });
-            await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
+
+			await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
             {
                 FK_WebsiteId = siteId,
                 FK_WebmenuId = defaultData.Id
@@ -85,8 +87,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;
-
-            if (string.IsNullOrEmpty(model.PageData.Html)|| (key!=null && key != defaultData.OrgName))
+            if(!string.IsNullOrEmpty(defaultData.Description)) model.PageData.Description = defaultData.Description;
+			if (string.IsNullOrEmpty(model.PageData.Html)|| (key!=null && key != defaultData.OrgName))
             {
                 Response.StatusCode = 404;
                 view = "/Page/Error/404";
@@ -96,7 +98,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 if (string.IsNullOrEmpty(model.PageData.Description))
                 {
                     string htmlString = HttpUtility.HtmlDecode(model.PageData.Html);
-                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
+                    model.PageData.Description = Regex.Replace(htmlString, @"(<(.|\n)*?>|\s|navigate_before|navigate_next)", "");
                 }
                 if (key != null)
                 {

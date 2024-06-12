@@ -152,6 +152,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 								FK_WebsiteId = WebsiteID,
 								CreatorUserId = userId,
 								Permanent = true,
+								Html = "",
+								Css = ""
 							});
 						}
 					}
@@ -214,7 +216,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 					{
 						if (techs.Find(e => e.FK_TCId == data.FK_TCId && e.FK_PId == data.FK_PId) == null)
 						{
-							Core.Models.Prod_TechCert ptc = new Core.Models.Prod_TechCert
+							Prod_TechCert ptc = new Prod_TechCert
 							{
 								FK_PId = data.FK_PId,
 								FK_TCId = data.FK_TCId,

@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             _env = env;
         }
         [HttpGet]
+        [Produces("application/xml")]
         public async Task<Urlset> Index()
         {
             return await sitemap.GetUrlsetAsync();

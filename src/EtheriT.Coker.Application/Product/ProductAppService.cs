@@ -27,6 +27,7 @@ using System.Web;
 using System.Data;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using System.IO;
+using System.Linq;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -99,7 +100,7 @@ namespace EtheriT.Coker.Application.Product
                     {
                         db_p.Title = dto.Title;
                         db_p.ItemNo = dto.ItemNo;
-                        db_p.Disp_Opt = dto.Disp_Opt;
+                        db_p.Visible = dto.Visible;
                         db_p.Ser_No = dto.Ser_No;
                         db_p.Introduction = dto.Introduction;
                         db_p.Description = dto.Description;
@@ -306,7 +307,7 @@ namespace EtheriT.Coker.Application.Product
                                 {
                                     Id = p.Id,
                                     Title = p.Title,
-                                    Disp_Opt = p.Disp_Opt,
+                                    Visible = p.Visible,
                                     Ser_No = p.Ser_No,
                                     ItemNo = p.ItemNo ?? "",
                                     Price = "",
@@ -492,8 +493,10 @@ namespace EtheriT.Coker.Application.Product
                         Title = db_p.Title,
                         Introduction = db_p.Introduction,
                         Description = db_p.Description,
-                        Html = db_p.Html??"",
+                        Html = db_p.Html ?? "",
                         ItemNo = db_p.ItemNo,
+                        Status = db_p.Status,
+                        StatusName = ((ProdStatusEnum)db_p.Status).ToString(),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
                         Stocks = new List<ProductStockDto>(),
@@ -610,7 +613,7 @@ namespace EtheriT.Coker.Application.Product
                                                   .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                 select new DirectoryReleInfoDto
                                                 {
-                                                    Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//","/")
+                                                    Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
                                                 }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
                               }).ToList();
                     for (int i = 0; i < output.Count; i++)
@@ -935,7 +938,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var result = await (from p in db.Prods
-                                    where !p.IsDeleted && p.Disp_Opt && p.FK_WebsiteId == webid
+                                    where !p.IsDeleted && p.Visible && p.FK_WebsiteId == webid
                                     where p.permanent || (DateTime.Compare(DateTime.Now, (DateTime)p.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)p.EndTime) < 0)
                                     orderby p.Ser_No
                                     join ps in db.Prod_Stocks.Where(e => !e.IsDeleted) on p.Id equals ps.FK_Pid
@@ -994,17 +997,16 @@ namespace EtheriT.Coker.Application.Product
                 List<string> allTitles = allData.Select(p => p.ProdName).ToList();
                 List<string> allItemNos = allData.Select(p => p.ItemNo).ToList();
                 var updateItems = db.Prods.Where(e => !e.IsDeleted)
-                    .Where(p => allTitles.Contains(p.Title))
-                    .Where(p => allItemNos.Contains(p.ItemNo??""))
+                    .Where(p => string.IsNullOrEmpty(p.ItemNo)? allTitles.Contains(p.Title) : allItemNos.Contains(p.ItemNo))
                     .Select(s => new { s.Id, s.ItemNo, s.Title }).ToList();
                 ProductImportDto dto = null;
                 for (int i = 0; i < allData.Count; i++)
                 {
                     var el = allData[i];
-                    var item = updateItems.Find(e => e.Title == el.ProdName && e.ItemNo == el.ItemNo);
+                    var item = updateItems.Find(e => string.IsNullOrEmpty(el.ItemNo) ? e.Title == el.ProdName : e.ItemNo == el.ItemNo);
                     el.FK_WebsiteId = WebsiteID;
                     if (item != null) el.Id = item.Id;
-                    var preProds = prods.Find(e => e.ProdName == el.ProdName && e.ItemNo == el.ItemNo);
+                    var preProds = prods.Find(e => string.IsNullOrEmpty(el.ItemNo) ? e.ProdName == el.ProdName : e.ItemNo == el.ItemNo);
                     if (preProds == null)
                     {
                         dto = el;
@@ -1135,7 +1137,9 @@ namespace EtheriT.Coker.Application.Product
                 await db.SaveChangesAsync();
                 await createDirectory(menuMap);
             }
-            catch { }
+            catch(Exception e) {
+                Console.WriteLine(e.Message);
+            }
         }
         private string getMenuInitHtml(SelectDto dto)
         {
@@ -1269,6 +1273,7 @@ namespace EtheriT.Coker.Application.Product
         private async Task createDirectory(List<DirectoryArrangeImportDto> menuMap)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
+            long UserID = await loginUserData.GetUserId();
             List<string> strings = menuMap.Where(e => !string.IsNullOrEmpty(e.Name)).Select(e => e.Name).ToList();
             List<Core.Models.Directory> Directory = new List<Core.Models.Directory>();
             List<Tag_Associate> associates = new List<Tag_Associate>();
@@ -1303,7 +1308,7 @@ namespace EtheriT.Coker.Application.Product
                     if (menu.Tags != null && menu.Tags.Any())
                     {
                         var tagIds = menu.Tags.FindAll(e => e.Id != null).Select(e => e.Id).ToList();
-                        menu.Tags.ForEach(async tag =>
+                        menu.Tags.ForEach(tag =>
                         {
                             if (tag.Id != null && !TagAssociate.Exists(e => e.FK_AId == dir.Id && e.FK_TId == tag.Id))
                             {
@@ -1313,7 +1318,7 @@ namespace EtheriT.Coker.Application.Product
                                     FK_TId = tag.Id.Value,
                                     Type = (int)TagAssociateTypeEnum.目錄
                                 };
-                                await loginUserData.setOptionParameter(associate);
+                                loginUserData.setOptionParameter(associate, UserID);
                                 associates.Add(associate);
                             }
                         });
@@ -1415,8 +1420,7 @@ namespace EtheriT.Coker.Application.Product
             var prodTitles = prodGroup.Select(e => e.ProdName).ToList();
             var prodItemNos = prodGroup.Select(e => e.ItemNo).ToList();
             var crrenProds = db.Prods.Where(e => !e.IsDeleted)
-                    .Where(e => prodTitles.Contains(e.Title))
-                    .Where(e => prodItemNos.Contains(e.ItemNo ?? ""))
+                    .Where(e =>string.IsNullOrEmpty(e.ItemNo)? prodTitles.Contains(e.Title): prodItemNos.Contains(e.ItemNo))
                     .Select(e => new { e.Id, e.Title, e.ItemNo }).ToList();
             var techs = db.TechnicalCertificates.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
 
@@ -1424,7 +1428,7 @@ namespace EtheriT.Coker.Application.Product
             for (int i = 0; i < prods.Count; i++)
             {
                 var prod = prods[i];
-                var n = crrenProds.Find(e => e.Title == prod.ProdName && e.ItemNo == prod.ItemNo);
+                var n = crrenProds.Find(e => string.IsNullOrEmpty(e.ItemNo)? e.Title == prod.ProdName : e.ItemNo == prod.ItemNo);
                 if (n == null || prod.Techs == null) continue;
                 for (int j = 0; j < prod.Techs.Count; j++)
                 {
@@ -1500,12 +1504,14 @@ namespace EtheriT.Coker.Application.Product
             {
                 var item = prods[i];
                 var el = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo);
-                if (el == null) {
-                    errors.Add(new ImportMassageItem { 
+                if (el == null)
+                {
+                    errors.Add(new ImportMassageItem
+                    {
                         Name = item.ProdName,
                         Description = "商品標籤榜定失敗。"
                     });
-                    continue; 
+                    continue;
                 }
                 item.Id = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo).Id;
                 var tag = nowTags.FindAll(e => e.Title == item.Tag1 || e.Title == item.Tag2 || e.Title == item.Tag3 || e.Title == item.Tag4 || e.Title == item.Tag5 || e.Title == item.Tag6);
@@ -1604,7 +1610,8 @@ namespace EtheriT.Coker.Application.Product
                         FileStr.FindAll(e => e == prod.File1 || e == prod.File2 || e == prod.File3 || e == prod.File4 || e == prod.File5);
                     List<string?> fileName =
                         FileNameStr.FindAll(e => e == prod.FileName1 || e == prod.FileName2 || e == prod.FileName3 || e == prod.FileName4 || e == prod.FileName5);
-                    if (fileLink.Count() != fileName.Count()) {
+                    if (fileLink.Count() != fileName.Count())
+                    {
                         int ll = fileLink.Count();
                         int nl = fileName.Count();
                         int all = ll + nl;
@@ -1613,13 +1620,13 @@ namespace EtheriT.Coker.Application.Product
                     {
                         if (!string.IsNullOrEmpty(fileLink[i]))
                         {
-                            string l = fileLink[i],n = "";
+                            string l = fileLink[i], n = "";
                             if (i < fileName.Count()) n = fileName[i];
                             importDtos.Add(new FileImageImportDto
                             {
                                 SId = myProd.Id,
                                 Type = FileBindTypeEnum.產品檔案,
-                                Name = fileName[i]??"",
+                                Name = fileName[i] ?? "",
                                 mediaLink = fileLink[i] ?? "",
                                 SerNo = 500
                             });
@@ -1643,22 +1650,41 @@ namespace EtheriT.Coker.Application.Product
         {
             long userId = await loginUserData.GetUserId();
             List<Prod> news = mapper.Map<List<Prod>>(prods);
+            /*List<Prod> news = new List<Prod>();
+            foreach (ProductImportDto p in prods)
+            {
+                try
+                {
+                    news.Add(mapper.Map<Prod>(p));
+                }
+                catch (Exception e)
+                {
+                    errors.Add(new ImportMassageItem { Name = p.ProdName, Description = e.Message });
+                }
+            }*/
             foreach (Prod prod in news)
             {
-                var item = prods.Find(p => p.ProdName == prod.Title && p.ItemNo == (prod.ItemNo ?? ""));
-                if (item != null && item.stocks != null)
+                try
                 {
-                    prod.Prod_Stocks = await InsertOrUpdateStore(item);
-                    prod.Visible = true;
-                    prod.RemovedFromShelves = false;
-                    ProdStatusEnum statusType;
-                    if (Enum.TryParse(item.Status, out statusType))
+                    var item = prods.Find(p => string.IsNullOrEmpty(prod.ItemNo)? p.ProdName == prod.Title : p.ItemNo == prod.ItemNo);
+                    if (item != null && item.stocks != null)
                     {
-                        prod.Status = (int)statusType;
+                        prod.Prod_Stocks = await InsertOrUpdateStore(item);
+                        prod.Visible = true;
+                        prod.RemovedFromShelves = false;
+                        ProdStatusEnum statusType;
+                        if (Enum.TryParse(item.Status, out statusType))
+                        {
+                            prod.Status = (int)statusType;
+                        }
+                        else prod.Status = 0;
                     }
-                    else prod.Status = 0;
+                    prod.CreatorUserId = userId;
                 }
-                prod.CreatorUserId = userId;
+                catch (Exception ex)
+                {
+                    errors.Add(new ImportMassageItem { Name = prod.Title, Description = ex.Message });
+                }
             }
             db.AddRange(news);
             await db.SaveChangesAsync();
@@ -1668,12 +1694,14 @@ namespace EtheriT.Coker.Application.Product
             long userId = await loginUserData.GetUserId();
             List<string> titles = prods.Select(e => e.ProdName ?? "").ToList();
             List<string> itemNos = prods.Select(e => e.ItemNo ?? "").ToList();
-            var items = await db.Prods.Where(e => !e.IsDeleted).Where(e => titles.Contains(e.Title)).Where(e => string.IsNullOrEmpty(e.ItemNo) || itemNos.Contains(e.ItemNo)).ToListAsync();
+            var items = await db.Prods.Where(e => !e.IsDeleted)
+                .Where(e => string.IsNullOrEmpty(e.ItemNo) ? titles.Contains(e.Title) : itemNos.Contains(e.ItemNo))
+                .ToListAsync();
             foreach (var prod in items)
             {
                 try
                 {
-                    ProductImportDto? item = prods.Find(e => e.ProdName == prod.Title && e.ItemNo == prod.ItemNo);
+                    ProductImportDto? item = prods.Find(e => string.IsNullOrEmpty(e.ItemNo) ? e.ProdName == prod.Title : e.ItemNo == prod.ItemNo);
                     if (item != null)
                     {
                         mapper.Map(mapper.Map<ProductImportUpateDto>(item), prod);
@@ -1968,7 +1996,7 @@ namespace EtheriT.Coker.Application.Product
                 if (side != null)
                 {
                     result.SiteName = side.Title;
-                    if (prod != null)
+                    if (prod != null && !prod.RemovedFromShelves)
                     {
                         result.Id = (int)prod.Id;
                         result.Title = prod.Title;

@@ -3,6 +3,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.enumType
 @using EtheriT.Coker.Web.Public.Models
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 @{
     ViewData["SideName"] = Model.PageData.SiteName;
@@ -33,6 +34,7 @@
 }
 <script>
     const PageKey = "Search";
+    const local = @Html.Raw(L.getAllJsonString()) ;
 </script>
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Search/Search.min.css" asp-append-version="true" />
@@ -55,14 +57,26 @@
 }
 <div class="search-category container">
     <div class="container d-flex justify-content-center mt-5">
-        @foreach (var e in Model.SearchPalameter.Class)
-        {
-            <button class="mx-1@( Model.SearchPalameter.SearchId == e.Id ? " active": "")" data-id="@e.Id">@e.Name</button>
+        @{
+            foreach (var e in Model.SearchPalameter.Class)
+            {
+                <button class="mx-1@( Model.SearchPalameter.SearchId == e.Id ? " active": "")" data-id="@e.Id">@e.Name</button>
+            }
+            string placeholder = string.Empty;
+            switch (Model.SearchPalameter.SearchId)
+            {
+                case 3:
+                    placeholder = L.get("SearchProdPlaceholder");
+                    break;
+                default:
+                    placeholder = L.get("SearchAllPlaceholder");
+                    break;
+            }
         }
     </div>
     <div class="d-flex justify-content-center align-items-center my-2 search-input-block container">
         <div class="input-container w-100 d-flex justify-content-center align-items-center">
-            <input type="text" value="@Model.SearchPalameter.SearchText" class="search-input p-2" />
+            <input type="text" value="@Model.SearchPalameter.SearchText" placeholder="@placeholder" class="search-input p-2" />
             <a class="searchbtn" title="搜尋" href="#">
                 <i class="fas fa-search"></i>.
             </a>
@@ -114,9 +128,7 @@
     </div>
     <div id="Search_Title" data-key="" class="container d-flex justify-content-center my-4">
         <p>
-            搜尋
-            <span class="px-1 searchText">@Model.SearchPalameter.SearchText</span>共
-            <span class="px-1 searchCount">0</span>筆 資料
+            @Html.Raw(string.Format(L.get("FindDescription"),$@"<span class=""px-1 searchText"">{@Model.SearchPalameter.SearchText}</span>", $@"<span class=""px-1 searchCount"">0</span>"))
         </p>
     </div>
     <div class="row">
@@ -154,13 +166,13 @@
                         </button>
                     }
                     <button class="btn_prod_grid d-flex bg-transparent border-0 align-items-center mx-1">
-                        <span class="material-symbols-outlined fs-5 me-1">grid_on</span>圖片
+                        <span class="material-symbols-outlined fs-5 me-1">grid_on</span>@L.get("GridImage")
                     </button>
                     <button class="btn_prod_list d-flex bg-transparent border-0 align-items-center mx-1 text-black-50">
-                        <span class="material-symbols-outlined fs-5 me-1">view_list</span>圖文
+                        <span class="material-symbols-outlined fs-5 me-1">view_list</span>@L.get("GridImageAndText")
                     </button>
                     <button class="btn_text d-flex bg-transparent border-0 align-items-center mx-1 text-black-50">
-                        <span class="material-symbols-outlined fs-5 me-1">list</span>文字
+                        <span class="material-symbols-outlined fs-5 me-1">list</span>@L.get("GridText")
                     </button>
                 </div>
                 <div class="catalog content gx-0 rounded-lg type4 row row-cols-lg-4 row-cols-md-2 bg-light px-2">

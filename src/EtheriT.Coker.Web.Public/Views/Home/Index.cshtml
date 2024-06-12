@@ -4,6 +4,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Web.Public.Models
+@using EtheriT.Coker.Application.Shared.i18n;
 @using System.Web;
 @model HomeViewModel
 @{
@@ -35,6 +36,7 @@
 }
 <script>
     const PageKey = "Home";
+    const local = @Html.Raw(L.getAllJsonString()) ;
 </script>
 @Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />

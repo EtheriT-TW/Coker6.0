@@ -44,6 +44,7 @@ namespace EtheriT.Coker.Core.Models
         public bool VisibleFooter { get; set; }
         public bool VisibleTitle { get; set; }
         public bool RemovedFromShelves { get; set; }
+        public bool ShowToMenu { get; set; }
         public WebMenu? FK_TopNode { get; set; }
         public WebMenu? FK_RootNode { get; set; }
         public List<WebMenu>? FK_ChildNodes { get; set; }

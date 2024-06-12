@@ -89,6 +89,7 @@ body {
 .search-category button {
     border: none;
     background: none;
+    color:#000;
 }
 
 .search-category .merge {
@@ -117,6 +118,11 @@ body {
     padding-left: 30px;
     box-sizing: border-box;
 }
+    .search-category .search-input::placeholder {
+        font-weight: lighter;
+        font-size: 1rem;
+        padding: 0.5rem;
+    }
 
 .search-category .searchbtn {
     position: absolute;
@@ -508,7 +514,7 @@ h3.title {
     }
 
     .search-category .switch_control {
-        padding-right: 1rem;
+        padding-right: 0;
     }
 
     .search-category .container {
@@ -525,5 +531,8 @@ h3.title {
 
     .type_change_frame .type1-title {
         height: calc(1rem * 3.6);
+    }
+    .catalog_frame button {
+        width: 100%;
     }
 }

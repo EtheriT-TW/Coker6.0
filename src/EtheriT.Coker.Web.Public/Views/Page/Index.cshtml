@@ -2,6 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu
 @using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Models;
+@using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 @{
     ViewData["SideName"] = Model.PageData.SiteName;
@@ -33,8 +34,16 @@
 <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
+@{
+    switch (Model.locale) { 
+        case "en":
+            <link rel="stylesheet" href="~/Shared/shared.en.min.css" asp-append-version="true" />
+            break;
+    }
+}
 <script>
     const PageKey = "@Model.option";
+    const local = @Html.Raw(L.getAllJsonString()) ;
 </script>
 @Html.AntiForgeryToken()
 

@@ -86,9 +86,11 @@
                                             <li class="subtitle nav-item my-0 @titleClass">
                                                 <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
                                                    data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
-                                                    <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
-                                                    <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
-                                                    @secItem.Title
+                                                    <div>
+                                                        <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                                        <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                                        @secItem.Title
+                                                    </div>
                                                     <span class="material-symbols-outlined d-lg-none">
                                                         double_arrow
                                                     </span>

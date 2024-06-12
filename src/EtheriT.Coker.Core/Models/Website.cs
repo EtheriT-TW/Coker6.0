@@ -41,5 +41,6 @@ namespace EtheriT.Coker.Core.Models
         public List<PermissionDetail> PermissionDetails { get; set; }
         public List<NotFoundImage> NotFoundImages { get; set; }
         public List<JsonObject> jsonObjects { get; set; }
+        public List<SearchLog> SearchLogs { get; set; }
     }
 }

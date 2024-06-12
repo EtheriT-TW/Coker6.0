@@ -1,0 +1,5 @@
+﻿.required::after {
+    content: 'Required';
+    color: var(--red-text);
+    font-size: 0.5rem;
+}

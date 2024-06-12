@@ -222,11 +222,11 @@ namespace EtheriT.Coker.Application
         }
         private async Task<string> GetDisplayChildAndSaveCache(long? id, long WebsiteID)
         {
-            var menus = await GetDisplayChild(id, WebsiteID);
+            var menus = await GetDisplayChild(id, WebsiteID, false,true);
             string jsonStr = JsonConvert.SerializeObject(menus);
             return jsonStr;
         }
-        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID, bool getDirectoryMenuData = false)
+        private async Task<List<MenuItemDto>> GetDisplayChild(long? id, long WebsiteID, bool getDirectoryMenuData = false,bool ShowToMenu = false)
         {
             try
             {
@@ -235,6 +235,8 @@ namespace EtheriT.Coker.Application
                             .Where(m => !m.IsDeleted)
                             .Where(m => !m.RemovedFromShelves);
                 if (!getDirectoryMenuData) dataQuery = dataQuery.Where(e => e.Visible);
+                if(ShowToMenu) 
+                    dataQuery = dataQuery.Where(e => e.ShowToMenu);
 
                 var menus = await dataQuery
                             .OrderBy(m => m.SerNO)
@@ -254,7 +256,7 @@ namespace EtheriT.Coker.Application
                         }
                         else m.icon = "empty";
                     }
-                    m.Children = await GetDisplayChild(m.Id, WebsiteID);
+                    m.Children = await GetDisplayChild(m.Id, WebsiteID, getDirectoryMenuData, ShowToMenu);
                     if (m.Children.Count == 0) m.Children = null;
                 }
                 return result;
@@ -721,6 +723,10 @@ namespace EtheriT.Coker.Application
                     CreationTime = DateTime.Now,
                     CreatorUserId = userId,
                     IsDeleted = false,
+                    VisibleFooter=true,
+                    VisibleHeader=true,
+                    VisibleTitle=true,
+                    RemovedFromShelves=false
                 };
                 newMenus.Add(menu);
             });

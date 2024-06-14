@@ -19,7 +19,8 @@ namespace EtheriT.Coker.Application
         public Task<string> getImgUrl(long? imgid, long websiteid);
         public Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto);
         public Task<List<string>> getImgFilesById(List<long> Ids, int size);
-        public Task<List<FileGetProdDisplayDto>> getProdDisplayFiles(long Pid, int size);
+        public Task<List<FileGetProdDisplayDto>> getProdFiles(long Pid);
+        public Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size);
         public Task<ResponseMessageDto> fileSortChange(FileChangeSortDto dto);
         public Task<ResponseMessageDto> deleteFile(Guid key);
         public Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto);

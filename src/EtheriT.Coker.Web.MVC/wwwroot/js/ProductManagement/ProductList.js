@@ -1,9 +1,9 @@
 ﻿var $btn_display, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
-    $marks, $price, $stock_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
+    $marks, $price, $subItemNo, $stock_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count;
 var startDate, endDate, keyId, disp_opt = true, price_tid, temp_psid
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list
 var $price_modal, priceModal
-var file_num = 0, total_files = [];
+var total_files = [];
 let importProdPopup = null;
 function ImportProd() {
     var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
@@ -92,258 +92,7 @@ function PageReady() {
     }
 
     /* File Upload */
-    $(".btn_upload_add > button").on("click", function (e) {
-        e.preventDefault();
-        UploadListAdd(null);
-    })
-
-    $(window).on("fileUploadWithPreview:imagesAdded", function (event) {
-        var cachedFile = upload_file.cachedFileArray;
-        $("#ProductForm > .data_upload > ul > li").each(function () {
-            var $self = $(this);
-            if ($self.data("edit")) {
-                switch ($self.data("uploadtype")) {
-                    //圖片上傳
-                    case 1:
-                        var new_file_list = [];
-                        var file_name, file_type;
-                        cachedFile.forEach(function (file, index) {
-                            file_name = file.name.substring(0, file.name.indexOf(":"));
-                            file_type = file.type;
-                            new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
-                        })
-                        var temp_files = [];
-                        file_num--;
-                        new_file_list.forEach(function (file, index) {
-                            var img_file = [];
-                            img_file.push(file);
-                            var obj = {};
-                            obj["TempId"] = $self.data("tempid") + index;
-                            obj["Type"] = $self.data("uploadtype");
-                            var reader = new FileReader();
-                            reader.readAsDataURL(img_file[0]);
-                            reader.onload = (function (e) {
-                                obj["Link"] = e.target.result;
-                            });
-                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 500, height: 500, imageType: img_file[0].type })
-                            htmlImageCompress.then(function (result) {
-                                img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-
-                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3, width: 150, height: 150, imageType: img_file[0].type })
-                                htmlImageCompress.then(function (result) {
-                                    img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                    obj["File"] = img_file;
-                                    obj["IsDelete"] = false;
-                                    obj["Name"] = result.origin.name;
-                                    total_files.push(obj);
-                                    UploadListAdd(obj);
-                                }).catch(function (err) {
-                                    UploadPreviewFrameClear();
-                                    console.log($`發生錯誤：${err}`);
-                                    co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
-                                })
-
-                            }).catch(function (err) {
-                                UploadPreviewFrameClear();
-                                console.log($`發生錯誤：${err}`);
-                                co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
-                            })
-                        })
-
-                        break;
-                        //360圖片上傳
-                        /* ********** ***************** 
-                        須重打
-                        ***************************/
-                    case 2:
-                        var new_file_list = [];
-                        var file_name, file_type;
-                        cachedFile.forEach(function (file, index) {
-                            file_name = file.name.substring(0, file.name.indexOf(":"));
-                            file_type = file.type;
-                            new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
-                        })
-
-                        new_file_list.forEach(function (file, index) {
-                            var img_file = [];
-                            img_file.push(file);
-                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7 })
-                            htmlImageCompress.then(function (result) {
-                                img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-
-                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3 })
-                                htmlImageCompress.then(function (result) {
-                                    var obj = {};
-                                    img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                    obj["File"] = img_file;
-                                    obj["TempId"] = $self.data("tempid");
-                                    obj["Name"] = result.origin.name;
-                                    obj["Type"] = $self.data("uploadtype");
-                                    obj["IsDelete"] = false;
-                                    total_files.push(obj);
-                                }).catch(function (err) {
-                                    console.log($`發生錯誤：${err}`);
-                                    UploadPreviewFrameClear();
-                                    co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
-                                })
-
-                            }).catch(function (err) {
-                                console.log($`發生錯誤：${err}`);
-                                UploadPreviewFrameClear();
-                                co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
-                            })
-                        })
-
-                        $self.find(".title").text(`${new_file_list[0].name}...共${new_file_list.length}張圖`);
-                        break;
-                    //影片上傳
-                    /* ********** *****************
-                    須重打，上傳有問題，尚未查詢
-                    ***************************/
-                    case 3:
-                        var new_file_list = [];
-                        var file_name, file_type;
-                        cachedFile.forEach(function (file, index) {
-                            file_name = file.name.substring(0, file.name.indexOf(":"));
-                            file_type = file.type;
-                            new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
-                        })
-
-                        var temp_files = [];
-                        new_file_list.forEach(function (file, index) {
-                            var obj = {};
-                            obj["File"] = file;
-                            obj["TempId"] = $self.data("tempid") + index;
-                            obj["Type"] = $self.data("uploadtype");
-                            obj["IsDelete"] = false;
-                            obj["Name"] = file.name;
-                            total_files.push(obj);
-                            temp_files.push(obj)
-                        })
-
-                        file_num--;
-                        temp_files.forEach(function (file) {
-                            UploadListAdd(file);
-                        })
-
-                        break;
-                }
-            }
-        })
-    })
-
-    $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
-        console.log("2");
-        //console.log("fileUploadWithPreview:imageDeleted")
-        $("#ProductForm > .data_upload > ul > li").each(function () {
-            var $self = $(this);
-            if ($self.data("edit")) {
-                var cachedFile = upload_file.cachedFileArray;
-                if (cachedFile.length < 1) {
-                    $self.data("file", "");
-                    $self.find(".title").text("");
-                } else {
-                    var new_file_list = [];
-                    cachedFile.forEach(function (file, index) {
-                        var file_name = file.name.substring(0, file.name.indexOf(":"));
-                        var file_type = file.type;
-                        new_file_list.push(new File(cachedFile.slice(index, index + 1), file_name, { type: file_type }));
-                    })
-                    $self.data("file", new_file_list);
-                }
-            }
-        })
-    })
-
-    $(window).on("fileUploadWithPreview:clearButtonClicked", function (event) {
-        $("#ProductForm > .data_upload > ul > li").each(function () {
-            var $self = $(this);
-            if ($self.data("edit")) {
-                if ($self.data("serno") < file_num) { SortChange("bigger", $self.data("serno"), file_num); }
-                if (typeof ($self.data("id")) != "undefined") {
-                    total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
-                } else if (typeof ($self.data("tempid")) != "undefined") {
-                    var tempid = $self.data("tempid");
-                    var index = total_files.findIndex(item => item["TempId"] == tempid);
-                    total_files.splice(index, 1);
-                    total_files.forEach(file => {
-                        file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
-                    })
-                }
-                UploadPreviewFrameClear();
-                $self.remove();
-                file_num -= 1;
-            }
-        })
-    })
-
-    $("#BtnConnect").on("click", function (e) {
-        e.preventDefault();
-        console.log("in");
-        var $self_list;
-        $("#ProductForm > .data_upload > ul > .upload_list").each(function () {
-            var $temp_self = $(this);
-            if ($temp_self.data("edit")) { $self_list = $temp_self; }
-        })
-        var value = $(this).prev().val();
-        var index = value.indexOf("watch?v=") + 8;
-        $(".youtube_preview").children("*").remove();
-        if (value != "" && index > -1 && value.substring(index) != "") {
-            var url = "https://www.youtube.com/embed/" + value.substring(index);
-            var iframe_html = `<iframe class="yt_preview w-100 h-100" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-            $(".youtube_preview").append(iframe_html);
-            $self_list.find(".title").text(value);
-            if (typeof (total_files.find(item => item["Id"] == $self_list.data("id"))) != "undefined") {
-                if (total_files.find(item => item["Id"] == $self_list.data("id"))["File"] != value.substring(index)) {
-                    total_files.find(item => item["Id"] == $self_list.data("id"))["File"] = value.substring(index)
-                }
-            } else if (typeof (total_files.find(item => item["TempId"] == $self_list.data("tempid"))) != "undefined") {
-                if (total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] != value.substring(index)) {
-                    total_files.find(item => item["TempId"] == $self_list.data("tempid"))["File"] = value.substring(index)
-                }
-            } else {
-                var obj = {};
-                obj["File"] = value.substring(index);
-                obj["TempId"] = $self_list.data("tempid");
-                obj["Type"] = $self_list.data("uploadtype");
-                obj["IsDelete"] = false;
-                total_files.push(obj);
-            }
-        } else {
-            var error_html = "<div class='w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-25 fw-bold'>請輸入正確的Youtube連結</div>"
-            $(".youtube_preview").append(error_html);
-            $self_list.find(".title").text("");
-            $self_list.data("file", "");
-        }
-    })
-
-    $(function () {
-        var drap_sy, drap_ey, drap_itemh;
-        $("#ProductForm > .data_upload > ul").sortable({
-            items: "> .upload_list",
-            axis: "y",
-            cursor: "move",
-            dropOnEmpty: false,
-            start: function (event, ui) {
-                drap_sy = ui.item.offset().top;
-                drap_itemh = ui.item.height() * 1.5
-            },
-            stop: function (event, ui) {
-                drap_ey = ui.item.offset().top;
-                var move = Math.trunc((drap_ey - drap_sy) / drap_itemh);
-                var $ser_no = ui.item.find(".ser_no");
-                if (move > 0) {
-                    $ser_no.val(parseInt($ser_no.val()) + move)
-                    SortChange("bigger", ui.item.data("serno"), $ser_no.val())
-                    ui.item.data("serno", $ser_no.val())
-                } else if (move < 0) {
-                    $ser_no.val(parseInt($ser_no.val()) + move)
-                    SortChange("smaller", $ser_no.val(), ui.item.data("serno"))
-                    ui.item.data("serno", $ser_no.val())
-                }
-            }
-        });
-    });
+    co.File.ListFileInit();
 
     /* 日期選擇 */
     $picker = $("#InputDate");
@@ -494,6 +243,7 @@ function ElementInit() {
     $marks = $("#InputMarks");
     $spec_select = $(".spec_select")
     $price = $(".input_price");
+    $subItemNo = $(".input_subItemNo");
     $stock_number = $(".input_stock_number");
     $min_number = $(".input_min_number");
     $alert_number = $(".input_alert_number");
@@ -547,6 +297,7 @@ function FormDataClear() {
     $illustrate_count.text(0);
     $marks.val("");
     $price.val("");
+    $subItemNo.val("");
     $stock_number.val("");
     $alert_number.val("");
     $min_number.val("");
@@ -560,10 +311,10 @@ function FormDataClear() {
     modal_price_list = []
     price_tid = 0;
     temp_psid = 0;
-
-    UploadPreviewFrameClear();
-    $("#ProductForm > .data_upload > ul").children(".upload_list").remove();
-    file_num = 0;
+    $(".data_upload").each(function () {
+        UploadPreviewFrameClear($(this));
+    });
+    $(".data_upload > ul").children(".upload_list").remove();
     total_files = [];
 }
 
@@ -637,9 +388,14 @@ function FormDataSet(result) {
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
 
-    result.files.forEach(file => {
-        UploadListAdd(file);
+    result.multimedia.forEach(media => {
+        UploadListAdd(media, $("#ProdMedia"));
     })
+
+    result.files.forEach(file => {
+        UploadListAdd(file, $("#ProdFiles"));
+    })
+
 
     result.stocks.forEach(function (stock) {
         stock.prices.forEach(function (price) {
@@ -651,6 +407,7 @@ function FormDataSet(result) {
             price_obj["FK_RId"] = price.fK_RId
             price_obj["Price"] = price.price
             price_obj["Bonus"] = price.bonus
+            price_obj["SubItemNo"] = price.subItemNo
             price_obj["IsDelete"] = false;
             price_tid += 1;
             modal_price_list.push(price_obj);
@@ -674,6 +431,7 @@ function FormDataSet(result) {
     $illustrate_count.text($illustrate.val().length);
 
     $date = $("#InputDate");
+    $(".linkToF").attr("href", `${defaultUrl}/${OrgName}/search/product/${result.id}`);
     if (result.permanent) {
         $date.val('');
         $date.attr("disabled", "disabled");
@@ -792,6 +550,7 @@ function SpecAdd(result) {
         item_select_list_1 = item.find("datalist").first(),
         item_select_list_2 = item.find("datalist").last(),
         item_price = item.find(".input_price"),
+        item_subItemNo = item.find(".input_subItemNo"),
         item_min = item.find(".input_min_number"),
         item_stock = item.find(".input_stock_number"),
         item_alert = item.find(".input_alert_number"),
@@ -875,7 +634,7 @@ function SpecAdd(result) {
     } else {
         item_price.val("");
     }
-
+    item_subItemNo.val(result != null ? result.subItemNo : "")
     item_min.val(result != null ? result.min_Qty : "");
     item_stock.val(result != null ? result.stock : "");
     item_alert.val("");
@@ -1033,13 +792,15 @@ function ISpecRepect() {
     return isRepect;
 }
 
-function UploadListAdd(result) {
+function UploadListAdd(result,$target) {
     var item = $($("#TemplateUploadList").html()).clone();
     var item_serno = item.find(".ser_no"),
         item_btn_remove = item.find(".btn_remove");
 
+    var file_num = $target.data("file_num");
+    if (typeof (file_num) == "undefined") file_num = 0;
     if (result == null) {
-        $("#ProductForm > .data_upload > ul > li").each(function () {
+        $target.find("ul > li").each(function () {
             var $self = $(this);
             if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
                 $self.remove();
@@ -1051,7 +812,10 @@ function UploadListAdd(result) {
         item.data("tempid", file_num);
         item.data("serno", file_num);
         item_serno.val(file_num);
-        item.data("uploadtype", 0);
+        if ($target.find(".select_frame").length == 0 && typeof ($target.data("uploadtype")) != "undefined")
+            item.data("uploadtype", $target.data("uploadtype"));
+        else
+            item.data("uploadtype", 0);
         item.data("edit", false);
         item.on("click", function () {
             co.File.ListFile($(this));
@@ -1095,7 +859,7 @@ function UploadListAdd(result) {
             co.File.ListFile($(this));
         })
     }
-
+    $target.data("file_num", file_num);
     item_serno.on("blur",function () {
         var $self = $(this);
         if ($self.val() < 1) {
@@ -1118,7 +882,7 @@ function UploadListAdd(result) {
     item_btn_remove.on("click", function (e) {
         e.preventDefault();
         var $self = $(this).parents("li").first();
-        if (item.data("serno") < file_num) { SortChange("bigger", item.data("serno"), file_num); }
+        if (item.data("serno") < $target.data("file_num")) { SortChange("bigger", item.data("serno"), $target.data("file_num")); }
         if (typeof ($self.data("id")) != "undefined") {
             total_files.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
         } else if (typeof ($self.data("tempid")) != "undefined") {
@@ -1129,18 +893,18 @@ function UploadListAdd(result) {
                 file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
             })
         }
-        UploadPreviewFrameClear();
+        UploadPreviewFrameClear($target);
         $self.remove();
-        file_num -= 1;
+        $target.data("file_num", $target.data("file_num")-1);
     })
 
-    $("#ProductForm > .data_upload > ul > .btn_upload_add").before(item);
+    $target.find("ul > .btn_upload_add").before(item);
 
     co.File.ListFile(item);
 }
 
-function UploadPreviewFrameClear() {
-    var $self = $("#ProductForm > .data_upload > .preview_frame");
+function UploadPreviewFrameClear($target) {
+    var $self = $target.find(".preview_frame");
     $self.find(".default_frame").addClass("d-flex");
     $self.find(".upload_frame").addClass("d-none");
     $self.find(".media_frame").removeClass("d-flex");
@@ -1327,7 +1091,7 @@ function AddUp(success_text, error_text, target) {
                             case 4:
                                 if (typeof (file["Id"]) != "undefined") {
                                     var deleteid_list = [];
-                                    deleteid_list.add(file["Id"]);
+                                    deleteid_list.push(file["Id"]);
                                     co.File.DeleteFileById({
                                         Sid: parseInt(result.message),
                                         Type: 1,

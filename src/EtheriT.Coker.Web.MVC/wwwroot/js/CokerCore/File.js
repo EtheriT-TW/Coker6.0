@@ -130,6 +130,18 @@
             });
             return upload;
         },
+        UploadFileInit: function (elementId, label_text) {
+            const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
+                accept: ".pdf,.dwg,.csv,.doc,.docx,.xls,.xlsx",
+                multiple: true,
+                text: {
+                    browse: "　瀏 覽　",
+                    chooseFile: "選擇圖片...",
+                    label: "圖片上傳",
+                },
+            });
+            return upload;
+        },
         Upload360Init: function (elementId, label_text) {
             const upload = new FileUploadWithPreview.FileUploadWithPreview(elementId, Option = {
                 accept: "image/*",

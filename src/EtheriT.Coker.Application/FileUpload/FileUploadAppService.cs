@@ -598,7 +598,50 @@ namespace EtheriT.Coker.Application
 			}
 			return result;
 		}
-		public async Task<List<FileGetProdDisplayDto>> getProdDisplayFiles(long Pid, int size)
+		public async Task<List<FileGetProdDisplayDto>> getProdFiles(long Pid) {
+            var output = new List<FileGetProdDisplayDto>();
+            string orgName = await loginUserData.GetWebsiteOrgName();
+			try
+			{
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (websiteId == 0)
+                {
+                    websiteId = await loginUserData.GetWebsiteId();
+                }
+
+                var fbs = await (db.FileBinds.Where(e => e.Sid == Pid && e.type == (int)FileBindTypeEnum.產品檔案).Where(e => !e.IsDeleted)).ToListAsync();
+				if (fbs != null) {
+					foreach (var fb in fbs) {
+						if (fb.MediaLink != "") {
+                            var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
+							if (fu != null)
+							{
+                                string MediaLink = fb.MediaLink;
+                                if (orgName != "")
+                                {
+                                    MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
+                                }
+                                output.Add(new FileGetProdDisplayDto
+                                {
+                                    Id = fu.Id,
+                                    Name = fb.Name,
+                                    FileType = 5,
+                                    Link = new List<string> { MediaLink },
+                                    SerNo = fb.SerNo,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+			{
+
+			}
+            return output;
+        }
+
+        public async Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size)
 		{
 			var output = new List<FileGetProdDisplayDto>();
 			string orgName = await loginUserData.GetWebsiteOrgName();
@@ -699,7 +742,7 @@ namespace EtheriT.Coker.Application
 					{
 						if (orgName != "")
 						{
-							output[i].Link[j] = output[i].Link[j].Replace("upload", $"upload/{orgName}");
+							output[i].Link[j] = output[i].Link[j].Replace("upload", $"upload/{orgName}").Replace($"/{orgName}/{orgName}/",$"/{orgName}/");
 						}
 					}
 				}

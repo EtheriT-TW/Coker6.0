@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
     {
         public long Id { get; set; }
         public string Title { get; set; }
-        public bool Disp_Opt { get; set; }
+        public bool Visible { get; set; }
         public int Ser_No { get; set; }
         public string Introduction { get; set; }
         public string Description { get; set; }
@@ -23,5 +23,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public List<TechCertGetSelectedDto> TechCertDatas { get; set; }
         public List<ProductStockDto> Stocks { get; set; }
         public List<FileGetProdDisplayDto> Files { get; set; }
+        public List<FileGetProdDisplayDto> Multimedia { get; set; }
     }
 }

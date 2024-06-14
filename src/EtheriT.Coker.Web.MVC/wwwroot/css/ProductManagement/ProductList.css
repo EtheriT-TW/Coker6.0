@@ -68,9 +68,15 @@ input[type="number"] {
 .data_upload > ul {
     height: 70vh;
 }
+#ProdFiles.data_upload>ul{
+    height:auto;
+}
 
 .data_upload > .preview_frame {
     height: 70vh;
+}
+#ProdFiles.data_upload>.preview_frame {
+    height: auto;
 }
 
 #ProductForm > div > div > .btn_input_pic {
@@ -115,6 +121,9 @@ input[type="number"] {
 
 #Spec_Frame > div > div > .price > input {
     padding-left: 5.5rem;
+}
+#Spec_Frame > .frame > div > div > .input_subItemNo {
+    padding-left: 4rem;
 }
 
 #Spec_Frame > .frame > div > div > .input_stock_number {

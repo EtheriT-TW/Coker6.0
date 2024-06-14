@@ -164,6 +164,11 @@
                     <div class="titile lh-lg d-flex"></div>
                 </div>
                 <div class="d-flex flex-md-row flex-column">
+                    <a href="/" class="px-3 py-1 linkToF" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="前台瀏覽">
+                        <i class="material-symbols-outlined">
+                            captive_portal
+                        </i>
+                    </a>
                     <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-md-3 text-nowrap my-2 my-md-0" form="ProductForm">發　布</button>
                     <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center text-nowrap justify-content-center" form="ProductForm">
                         進階編輯<span class="material-symbols-outlined ms-1">palette</span>
@@ -172,6 +177,22 @@
             </div>
 
             <form id="ProductForm" class="card-body needs-validation">
+                <div class="d-flex flex-row-reverse my-1">
+                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                        <input id="RemovedFromShelves" type="checkbox" name="RemovedFromShelves" class="selectedItem" checked value="true" />
+                        <label for="RemovedFromShelves" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                            <span class="material-symbols-outlined fs-2">open_in_new</span>
+                            <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                        </label>
+                    </div>
+                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                        <input id="Visible" type="checkbox" name="Visible" class="selectedItem" checked value="true" />
+                        <label for="Visible" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="顯示">
+                            <span class="material-symbols-outlined fs-2">visibility</span>
+                            <span class="material-symbols-outlined fs-2">visibility_off</span>
+                        </label>
+                    </div>
+                </div>
                 <div class="name border mb-3 p-2 rounded">
                     <div class="d-flex justify-content-between w-100">
                         <span class="input-group-text bg-transparent border-0 p-0 required_all">商品名稱</span>
@@ -187,7 +208,7 @@
                     <textarea id="InputItemNo" class="form-control border-0" aria-label="With textarea" maxlength="100" placeholder="輸入銷帳編號" required></textarea>
                 </div>
 
-                <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
+                <div id="ProdMedia" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
                     <ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
                         <li class="btn_upload_add border mb-1 p-1 shadow-sm">
                             <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
@@ -240,18 +261,18 @@
                     </div>
                     <div class="position-absolute upload_title bg-white">輪播</div>
                 </div>
-                <div class="data_upload row mx-0 border rounded mb-3 p-3 position-relative d-none">
-                    <ul class="col-12 col-sm-6 border p-2 overflow-auto mb-0">
+                <div id="ProdFiles" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
+                    <div class="preview_frame col-12 border p-2 mb-2">
+                        <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+                        <div class="upload_frame custom-file-container" data-upload-id="ProdFile"></div>
+                    </div>
+                    <ul class="col-12 border p-2 overflow-auto mb-0">
                         <li class="btn_upload_add border mb-1 p-1 shadow-sm">
                             <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
                                 <span class="material-symbols-outlined">add</span>
                             </button>
                         </li>
                     </ul>
-                    <div class="preview_frame col-12 col-sm-6 border p-2">
-                        <div class="default_frame h-100 d-flex d-none justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
-                        <div class="upload_frame custom-file-container d-none" data-upload-id="FileUpload"></div>
-                    </div>
                     <div class="position-absolute upload_title bg-white">檔案下載</div>
                 </div>
 
@@ -327,11 +348,17 @@
                                 <datalist id=""></datalist>
                             </div>
 
-                            <div class="price input-group mb-3 col-12 col-lg-4">
+                            <div class="price input-group mb-3 col-12 col-lg-3">
                                 <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                     <span class="material-symbols-outlined me-1 required_sign">attach_money</span>價格
                                 </div>
                                 <input class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" required>
+                            </div>
+                            <div class="SubItemNo input-group mb-3 col-12 col-lg-3">
+                                <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                    子料號
+                                </div>
+                                <input class="input_subItemNo form-control rounded text-start" type="text" aria-label="Input SubItemNo of Product">
                             </div>
                         </div>
 

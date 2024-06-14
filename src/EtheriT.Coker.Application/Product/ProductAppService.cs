@@ -366,6 +366,7 @@ namespace EtheriT.Coker.Application.Product
                         TechCertDatas = new List<TechCertGetSelectedDto>(),
                         Stocks = new List<ProductStockDto>(),
                         Files = new List<FileGetProdDisplayDto>(),
+                        Multimedia = new List<FileGetProdDisplayDto>()
                     };
                     mapper.Map(db_p, output);
 
@@ -394,11 +395,17 @@ namespace EtheriT.Coker.Application.Product
                         output.Stocks = stockDatas;
                     }
 
-                    var fileDatas = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
+                    var fileDatas = await fileUploadAppService.getProdFiles(output.Id);
                     if (fileDatas != null)
                     {
                         output.Files = fileDatas;
                     }
+                    var mediaDatas = await fileUploadAppService.getProdMultimedia(output.Id, 1);
+                    if (mediaDatas != null)
+                    {
+                        output.Multimedia = mediaDatas;
+                    }
+
 
                     return output;
                 }
@@ -428,6 +435,7 @@ namespace EtheriT.Coker.Application.Product
                                         Min_Qty = ps.Min_Qty,
                                         Stock = ps.Stock,
                                         Alert_Qty = ps.Alert_Qty,
+                                        SubItemNo = ps.SubItemNo??"",
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 
@@ -538,19 +546,19 @@ namespace EtheriT.Coker.Application.Product
                     });
                     if (Files != null && Files.Count() > 0) output.Files = Files;
 
-                    var Imgs_original = await fileUploadAppService.getProdDisplayFiles(output.Id, 1);
+                    var Imgs_original = await fileUploadAppService.getProdMultimedia(output.Id, 1);
                     if (Imgs_original != null)
                     {
                         output.Img_Original = Imgs_original;
                     }
 
-                    var Imgs_medium = await fileUploadAppService.getProdDisplayFiles(output.Id, 2);
+                    var Imgs_medium = await fileUploadAppService.getProdMultimedia(output.Id, 2);
                     if (Imgs_medium != null)
                     {
                         output.Img_Medium = Imgs_medium;
                     }
 
-                    var Imgs_small = await fileUploadAppService.getProdDisplayFiles(output.Id, 3);
+                    var Imgs_small = await fileUploadAppService.getProdMultimedia(output.Id, 3);
                     if (Imgs_small != null)
                     {
                         output.Img_Small = Imgs_small;

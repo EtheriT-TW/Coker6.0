@@ -334,6 +334,7 @@
                         if (result.success) {
                             var html = co.Data.HtmlDecode(result.conten.saveHtml);
                             co.Grapes.setEditor(editor, html, result.conten.saveCss);
+                            co.Grapes.setFile(editor, data.id, 1);
                             $("body").addClass("grapesEdit");
                             $("#TopLine .title").text(data.text);
                             myOffcanvas.hide();

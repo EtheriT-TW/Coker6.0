@@ -50,7 +50,11 @@ var grapesInit = function (options) {
                     if (result.success) {
                         var myJSON = [];
                         $(result.files).each(function (index) {
-                            myJSON.push(this.path);
+                            myJSON.push({
+                                path: this.path,
+                                name: this.name,
+                                guid: this.guid
+                            });
                         });
                         var images = myJSON;
                         editor.AssetManager.add(images);

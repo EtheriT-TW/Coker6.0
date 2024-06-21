@@ -90,7 +90,7 @@ namespace EtheriT.Coker.Application.Product
                     };
                     mapper.Map(dto, p);
                     db.Prods.Add(p);
-                    db.SaveChanges();
+                    await loginUserData.SaveChanges(p);
                     asoid = p.Id;
                 }
                 else
@@ -98,20 +98,10 @@ namespace EtheriT.Coker.Application.Product
                     var db_p = db.Prods.Where(e => e.Id == dto.Id).FirstOrDefault();
                     if (db_p != null)
                     {
-                        db_p.Title = dto.Title;
-                        db_p.ItemNo = dto.ItemNo;
-                        db_p.Visible = dto.Visible;
-                        db_p.Ser_No = dto.Ser_No;
-                        db_p.Introduction = dto.Introduction;
-                        db_p.Description = dto.Description;
-                        db_p.StartTime = dto.StartTime;
-                        db_p.EndTime = dto.EndTime;
-                        db_p.permanent = dto.Permanent;
-                        db_p.LastModificationTime = DateTime.Now;
-                        db_p.LastModifierUserId = userId;
+                        mapper.Map(dto, db_p);
+                        await loginUserData.SaveChanges(db_p);
                     }
                 }
-                db.SaveChanges();
 
                 if (asoid != 0)
                 {
@@ -338,7 +328,7 @@ namespace EtheriT.Coker.Application.Product
                                 }
                             }
                         }
-                        var price_text = min_price == max_price ? max_price.ToString("###,###") : $"{min_price}~{max_price}";
+                        var price_text = min_price == max_price ? max_price.ToString("###,###") : $"{min_price.ToString("###,###")}~{max_price.ToString("###,###")}";
                         data.GetType().GetProperty("Price").SetValue(data, price_text);
                     }
                 }
@@ -1679,6 +1669,11 @@ namespace EtheriT.Coker.Application.Product
                     {
                         prod.Prod_Stocks = await InsertOrUpdateStore(item);
                         prod.Visible = true;
+                        if (prod.Html != null)
+                        {
+                            prod.Html = $"<div class=\"container\">{prod.Html.Trim().Replace(Environment.NewLine, "<br />")}</div>";
+                            prod.SaveHtml = prod.Html;
+                        }
                         prod.RemovedFromShelves = false;
                         ProdStatusEnum statusType;
                         if (Enum.TryParse(item.Status, out statusType))
@@ -1712,10 +1707,21 @@ namespace EtheriT.Coker.Application.Product
                     ProductImportDto? item = prods.Find(e => string.IsNullOrEmpty(e.ItemNo) ? e.ProdName == prod.Title : e.ItemNo == prod.ItemNo);
                     if (item != null)
                     {
-                        mapper.Map(mapper.Map<ProductImportUpateDto>(item), prod);
+                        var s = mapper.Map<ProductImportUpateDto>(item);
+                        mapper.Map(s, prod);
                         if (item.stocks != null)
                         {
                             prod.Prod_Stocks = await InsertOrUpdateStore(item);
+                        }
+                        if (prod.Html != null)
+                        {
+                            prod.Html = $"<div class=\"container\"><p>{prod.Html.Trim().Replace("\n", "<br />")}</p></div>";
+                            prod.SaveHtml = prod.Html;
+                            prod.Css = "";
+                            prod.SaveCss = "";
+                        }
+                        if (prod.ItemNo == "C206-12") {
+                            Console.WriteLine(prod.ItemNo);
                         }
                         ProdStatusEnum statusType;
                         if (Enum.TryParse(item.Status, out statusType))

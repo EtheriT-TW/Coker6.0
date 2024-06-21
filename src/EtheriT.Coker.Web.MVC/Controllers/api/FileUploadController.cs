@@ -29,8 +29,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             switch (s)
             {
                 case FileBindTypeEnum.產品:
-                case FileBindTypeEnum.產品檔案:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product");
+                case FileBindTypeEnum.產品檔案:
+                    return await fileUploadAppService.uploadFiles(files, type, (long)sid, serno, "Product/File");
                 case FileBindTypeEnum.選單圖:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Menu");
                 case FileBindTypeEnum.選單Icon:
@@ -76,12 +77,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> getFileList(GetFileListDto dto)
         {
-            switch ((FileBindTypeEnum)dto.type)
-            {
-                default:
-                    return await fileUploadAppService.getHtmlContentFiles();
-            }
-        }
+			return await fileUploadAppService.getHtmlContentFiles(dto);
+		}
         [HttpPost]
         public async Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto)
         {

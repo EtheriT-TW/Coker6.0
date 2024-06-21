@@ -296,6 +296,22 @@
             editor.UndoManager.clear(); // Clear undo history
             editor.setStyle(css);
             editor.setComponents(html);
+        },
+        setFile: function (editor,id,type) {
+            co.File.getFileList({ id: id, type: type }).done(function (result) {
+                if (result.success) {
+                    var images = [];
+                    $(result.files).each(function (index) {
+                        images.push({
+                            src: this.path,
+                            name: `${this.name}`,
+                            guid: this.guid
+                        });
+                    });
+                    editor.settings.asset = result.files;
+                    editor.AssetManager.add(images);
+                }
+            });
         }
     }, Date: {
         GetDateTimeStr: function (str) {

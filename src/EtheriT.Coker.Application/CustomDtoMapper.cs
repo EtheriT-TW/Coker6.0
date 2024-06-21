@@ -126,7 +126,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.permanent, option => option.MapFrom(c => true))
 				.ReverseMap();
 			CreateMap<ProductImportUpateDto, Prod>()
-				.ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
+                .ForMember(e => e.Title, option => option.MapFrom(c => c.ProdName))
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
 				.ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
 				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
 				.ForMember(e => e.permanent, option => option.MapFrom(c => true))
@@ -135,7 +136,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => false))
                 .ReverseMap();
 			CreateMap<ProdAddUpDto, Prod>()
-				.ReverseMap();
+                .ForMember(e => e.permanent, option => option.MapFrom(c => c.Permanent))
+                .ReverseMap();
 			CreateMap<ProductImportDto, ProdAddUpDto>()
 				.ForMember(e => e.Id, option => option.MapFrom(c => 0))
 				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))

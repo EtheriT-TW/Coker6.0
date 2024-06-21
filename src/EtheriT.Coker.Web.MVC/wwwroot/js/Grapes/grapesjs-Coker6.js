@@ -7,6 +7,7 @@
         iconPickerOpt: { cols: 4, rows: 4, footer: false, iconset: "GoogleMaterialSymbolsOutlined" }
     };
     $.extend(true, settings, options);
+    editor.settings = settings;
     const AssetManager = editor.AssetManager;
     const categories = editor.BlockManager.getCategories();
     const BlockManager = editor.BlockManager;
@@ -82,23 +83,6 @@
         co.File.Delete(guid).done(function (result) {
             console.log(result);
         });
-    });
-
-    //載入所有檔案
-    co.File.getFileList(0).done(function (result) {
-        if (result.success) {
-            var myJSON = [];
-            settings.asset = result.files;
-            $(result.files).each(function (index) {
-                myJSON.push({
-                    src: this.path,
-                    name: `${this.name}`,
-                    guid: this.guid
-                });
-            });
-            var images = myJSON;
-            editor.AssetManager.add(images);
-        }
     });
 
     //元件參數設定

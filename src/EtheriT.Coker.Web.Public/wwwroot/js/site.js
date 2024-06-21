@@ -51,6 +51,7 @@ function ready() {
             ele.textContent = $pe.html();
         }
         if (location.pathname.toLowerCase().indexOf("/article/") >= 0) $conten.html($(`<div class="container">`).html(ele.textContent || ele.innerText));
+        else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html(ele.textContent || ele.innerText);
         else $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
         $conten.removeClass("d-none");

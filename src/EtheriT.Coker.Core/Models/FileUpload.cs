@@ -12,7 +12,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public long FK_WebsiteId { get; set; }
         public Guid GuidKey { get; set; }
-        [StringLength(50)] public string ContentType { get; set; }
+        [StringLength(200)] public string ContentType { get; set; }
         [StringLength(200)] public string OriginalFileName { get; set; }
         [StringLength(200)] public string? DownloadFileName { get; set; }
         public long Size { get; set; }

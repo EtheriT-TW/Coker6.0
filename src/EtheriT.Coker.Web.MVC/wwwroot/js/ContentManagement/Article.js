@@ -47,6 +47,7 @@ function PageReady() {
             if (result.success) {
                 var html = co.Data.HtmlDecode(result.conten.saveHtml);
                 co.Grapes.setEditor(editor, html, result.conten.saveCss);
+                co.Grapes.setFile(editor, id, 2);
                 if (!!result.title) $("#TopLine .title").text(result.title);
             } else {
                 co.sweet.error(result.error);

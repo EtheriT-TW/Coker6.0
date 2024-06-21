@@ -18,7 +18,9 @@
 						.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
 						)
 						.ID("TagList")
-						.Selection(s => s.Mode(SelectionMode.Multiple))
+						.Selection(s => 
+							s.Mode(SelectionMode.Multiple).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+						)
 						.RemoteOperations(true)
 						.ColumnHidingEnabled(false)
 						.ShowBorders(true)

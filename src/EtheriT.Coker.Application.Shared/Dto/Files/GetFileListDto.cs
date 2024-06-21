@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Files
 {
     public class GetFileListDto
     {
-        public int type { get; set; }
+        public long Id { get; set; }
+        public GrapesPageTypeEnum type { get; set; }
     }
 }

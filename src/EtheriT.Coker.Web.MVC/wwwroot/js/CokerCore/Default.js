@@ -106,6 +106,14 @@
         getWeekNumber: function (i) {
             const characters = "一二三四五六日";
             return characters.charAt(i-1);
+        },
+        thousandSign: function (str) {
+            let comma = /\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g;
+            let num = str.toString();
+            if (!isNaN(num)) {
+                num = num.replace(comma, ',')
+            } else num = "0";
+            return num;
         }
     },
     Object: {

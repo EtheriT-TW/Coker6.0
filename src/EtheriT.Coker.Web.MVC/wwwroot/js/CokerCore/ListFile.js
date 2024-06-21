@@ -50,29 +50,31 @@
 
         $(function () {
             var drap_sy, drap_ey, drap_itemh;
-            $(".data_upload > ul").sortable({
-                items: "> .upload_list",
-                axis: "y",
-                cursor: "move",
-                dropOnEmpty: false,
-                start: function (event, ui) {
-                    drap_sy = ui.item.offset().top;
-                    drap_itemh = ui.item.height() * 1.5
-                },
-                stop: function (event, ui) {
-                    drap_ey = ui.item.offset().top;
-                    var move = Math.trunc((drap_ey - drap_sy) / drap_itemh);
-                    var $ser_no = ui.item.find(".ser_no");
-                    if (move > 0) {
-                        $ser_no.val(parseInt($ser_no.val()) + move)
-                        SortChange("bigger", ui.item.data("serno"), $ser_no.val())
-                        ui.item.data("serno", $ser_no.val())
-                    } else if (move < 0) {
-                        $ser_no.val(parseInt($ser_no.val()) + move)
-                        SortChange("smaller", $ser_no.val(), ui.item.data("serno"))
-                        ui.item.data("serno", $ser_no.val())
+            $(".data_upload > ul").each(function (index,element) {
+                $(element).sortable({
+                    items: "> .upload_list",
+                    axis: "y",
+                    cursor: "move",
+                    dropOnEmpty: false,
+                    start: function (event, ui) {
+                        drap_sy = ui.item.offset().top;
+                        drap_itemh = ui.item.height() * 1.5
+                    },
+                    stop: function (event, ui) {
+                        drap_ey = ui.item.offset().top;
+                        var move = Math.trunc((drap_ey - drap_sy) / drap_itemh);
+                        var $ser_no = ui.item.find(".ser_no");
+                        if (move > 0) {
+                            $ser_no.val(parseInt($ser_no.val()) + move)
+                            SortChange("bigger", ui.item.data("serno"), $ser_no.val())
+                            ui.item.data("serno", $ser_no.val())
+                        } else if (move < 0) {
+                            $ser_no.val(parseInt($ser_no.val()) + move)
+                            SortChange("smaller", $ser_no.val(), ui.item.data("serno"))
+                            ui.item.data("serno", $ser_no.val())
+                        }
                     }
-                }
+                });
             });
         });
     },
@@ -241,7 +243,6 @@
         })
 
         $(window).on("fileUploadWithPreview:imageDeleted", function (event) {
-            console.log("2");
             //console.log("fileUploadWithPreview:imageDeleted")
             $(".data_upload > ul > li").each(function () {
                 var $self = $(this);
@@ -442,8 +443,3 @@
         $parent.data("file_num", file_num);
     }
 });
-(function($){
-    $.fn.extend({
-        
-    });
-})(jQuery)

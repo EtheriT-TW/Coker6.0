@@ -53,29 +53,22 @@ input[type="number"] {
         width: 2.5rem;
     }
 
+
+.upload_list > .material-symbols-outlined {
+    font-size: 1rem;
+    margin: 0 0.5rem;
+    cursor: pointer;
+}
+
+[name="serNo"] {
+    padding-left: 5rem;
+}
+
 /* Product Form */
-.media_preview {
-    height: calc(70vh - 115px);
-}
-
-    .media_preview img {
-        max-height: 100%;
-        max-width: 100%;
-        width: auto;
-        height: auto;
-    }
-
-.data_upload > ul {
-    height: 70vh;
-}
-#ProdFiles.data_upload>ul{
-    height:auto;
-}
-
-.data_upload > .preview_frame {
-    height: 70vh;
-}
-#ProdFiles.data_upload>.preview_frame {
+.media_preview img {
+    max-height: 150px;
+    max-width: 100%;
+    width: auto;
     height: auto;
 }
 
@@ -99,6 +92,7 @@ input[type="number"] {
 #ProductForm > .name .name_count::after {
     content: '/150';
 }
+
 #ProductForm > .itemNo .itemNo_count::after {
     content: '/100';
 }
@@ -118,23 +112,32 @@ input[type="number"] {
 #ProductForm > .tag > input {
     padding-left: 4.5rem;
 }
+#Spec_Frame > .border {
+    padding: 0.5rem;
+}
+#Spec_Frame .frame:not(:last-child) {
+    border-bottom: #ccc solid 1px;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
 
-#Spec_Frame > div > div > .price > input {
+#Spec_Frame .frame .price > input {
     padding-left: 5.5rem;
 }
-#Spec_Frame > .frame > div > div > .input_subItemNo {
+
+#Spec_Frame .frame .input_subItemNo {
     padding-left: 4rem;
 }
 
-#Spec_Frame > .frame > div > div > .input_stock_number {
+#Spec_Frame .frame .input_stock_number {
     padding-left: 8.5rem;
 }
 
-#Spec_Frame > .frame > div > div > .input_min_number {
+#Spec_Frame .frame .input_min_number {
     padding-left: 7.5rem;
 }
 
-#Spec_Frame > .frame > div > div > .input_alert_number {
+#Spec_Frame .frame .input_alert_number {
     padding-left: 8.5rem;
 }
 

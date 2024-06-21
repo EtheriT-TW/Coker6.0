@@ -193,19 +193,39 @@
                         </label>
                     </div>
                 </div>
+                <div class="date input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                    </div>
+                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                        <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
+                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
+                    </div>
+                </div>
+                <div class="sort input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
+                    </div>
+                    <input class="form-control rounded" type="number" name="serNo" aria-label="Input Sort of Article" disabled="disabled" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                        <input class="form-check-input" id="SortCheck" name="SortCheck" type="checkbox" value="">
+                        <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
+                    </div>
+                </div>
+                <div class="itemNo border mb-3 p-2 rounded">
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="input-group-text bg-transparent border-0 p-0">銷帳編號</span>
+                        <div class="itemNo_count">0</div>
+                    </div>
+                    <textarea id="InputItemNo" class="form-control border-0" aria-label="With textarea" maxlength="100" placeholder="輸入銷帳編號"></textarea>
+                </div>
                 <div class="name border mb-3 p-2 rounded">
                     <div class="d-flex justify-content-between w-100">
                         <span class="input-group-text bg-transparent border-0 p-0 required_all">商品名稱</span>
                         <div class="name_count">0</div>
                     </div>
                     <textarea id="InputName" class="form-control border-0" aria-label="With textarea" maxlength="150" placeholder="輸入商品名稱" required></textarea>
-                </div>
-                <div class="itemNo border mb-3 p-2 rounded">
-                    <div class="d-flex justify-content-between w-100">
-                        <span class="input-group-text bg-transparent border-0 p-0 required_all">銷帳編號</span>
-                        <div class="itemNo_count">0</div>
-                    </div>
-                    <textarea id="InputItemNo" class="form-control border-0" aria-label="With textarea" maxlength="100" placeholder="輸入銷帳編號" required></textarea>
                 </div>
 
                 <div id="ProdMedia" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
@@ -219,7 +239,7 @@
                     <template id="TemplateUploadList">
                         <li class="upload_list d-flex align-items-center border bg-white shadow-sm p-1 mb-1">
                             <input class="ser_no rounded text-center border text-black-50" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
-                            <span class="material-symbols-outlined" title="變更順序">unfold_more</span>
+                            <span class="material-symbols-outlined" title="變更順序">open_with</span>
                             <span class="title flex-grow-1 overflow-auto"></span>
                             <button class="btn_remove d-flex bg-transparent border-0 p-0" title="移除檔案">
                                 <span class="material-symbols-outlined">delete</span>
@@ -261,21 +281,6 @@
                     </div>
                     <div class="position-absolute upload_title bg-white">輪播</div>
                 </div>
-                <div id="ProdFiles" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
-                    <div class="preview_frame col-12 border p-2 mb-2">
-                        <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
-                        <div class="upload_frame custom-file-container" data-upload-id="ProdFile"></div>
-                    </div>
-                    <ul class="col-12 border p-2 overflow-auto mb-0">
-                        <li class="btn_upload_add border mb-1 p-1 shadow-sm">
-                            <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
-                                <span class="material-symbols-outlined">add</span>
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="position-absolute upload_title bg-white">檔案下載</div>
-                </div>
-
                 <div class="introduction border mb-3 p-2 rounded">
                     <div class="d-flex justify-content-between w-100">
                         <span class="input-group-text bg-transparent border-0 p-0 required_all">商品簡介</span>
@@ -290,7 +295,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="illustrate border mb-3 p-2 rounded">
                     <div class="d-flex justify-content-between w-100">
                         <span class="input-group-text bg-transparent border-0 p-0 required_all">詳細說明</span>
@@ -306,11 +310,16 @@
                     </div>
                 </div>
 
-                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TechCertListModal"})
+                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TechCertListModal" })
 
-                @await Component.InvokeAsync(nameof(Modal), new {dispaly = "TagListModal"})
+                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagListModal" })
 
-                <div id="Spec_Frame"></div>
+                <div id="Spec_Frame">
+                    <div class="border mb-3 pt-3 px-3 rounded position-relative">
+                        <div class="spec_title position-absolute bg-white px-2">規格設定</div>
+                        <div class="list"></div>
+                    </div>
+                </div>
 
                 <div class="d-flex justify-content-center mb-3">
                     <button class="btn_spec_add d-flex border-0 bg-transparent" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="新增規格">
@@ -333,8 +342,7 @@
                 </template>
 
                 <template id="TemplateSpecification">
-                    <div class="frame border mb-3 pt-3 px-3 rounded position-relative">
-                        <div class="spec_title position-absolute bg-white px-2">規格設定</div>
+                    <div class="frame">
                         <div class="topline row">
                             <div class="spec input-group mb-3 col-12 col-sm-6 col-xl-3">
 
@@ -395,16 +403,19 @@
                         </div>
                     </div>
                 </template>
-
-                <div class="date input-group mb-3">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>設定上架日期
+                <div id="ProdFiles" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative" data-uploadtype="5">
+                    <ul class="col-12 border p-2 overflow-auto mb-0">
+                        <li class="btn_upload_add border mb-1 p-1 shadow-sm">
+                            <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="preview_frame col-12 border p-2 mb-2">
+                        <div class="default_frame h-100 d-none d-flex justify-content-center align-items-center"><span>點選 + 號新增檔案</span></div>
+                        <div class="upload_frame custom-file-container" data-upload-id="ProdFile"></div>
                     </div>
-                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                        <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
-                        <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
-                    </div>
+                    <div class="position-absolute upload_title bg-white">檔案下載</div>
                 </div>
             </form>
 

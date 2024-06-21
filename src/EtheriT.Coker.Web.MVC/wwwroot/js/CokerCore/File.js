@@ -48,13 +48,13 @@
                 }
             });
         },
-        getFileList: function (type) {
+        getFileList: function (obj) {
             return $.ajax({
                 url: "/api/FileUpload/getFileList",
                 type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify({ type: type }),
+                data: JSON.stringify({ type: obj.type, id: obj.id }),
                 dataType: "json",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("requestverificationtoken",
@@ -90,13 +90,13 @@
                 }
             });
         },
-        Delete: function (data) {
+        Delete: function (guid) {
             return $.ajax({
                 url: "/api/FileUpload/DeleteFile",
-                type: "Post",
+                type: "Delete",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify(data),
+                data: JSON.stringify({ key: guid }),
                 dataType: "json",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("requestverificationtoken",

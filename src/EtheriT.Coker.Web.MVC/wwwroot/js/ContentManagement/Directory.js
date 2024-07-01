@@ -329,6 +329,7 @@ function AddUpArticlet(success_text, error_text) {
         });
     }
     co.Articles.AddUp(data).done((result) => {
+        console.log(result);
         const success = function () {
             Coker.sweet.success(success_text, null, true);
             directoryDatailList.component.refresh();

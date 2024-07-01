@@ -248,7 +248,7 @@ function DirectoryDataInsert($item, result) {
     result != null && result.forEach(function (data) {
         var content = $(temp).clone();
         let path, target;
-        if (isSearch || window.location.pathname.toLowerCase().indexOf("search") > 0) {
+        if (isSearch || window.location.pathname.toLowerCase().indexOf("search") > 0 || window.location.pathname.toLowerCase().indexOf("techcert") > 0) {
             switch (data.type) {
                 case 3:
                     path = `${data.orgName == null ? "" : `/${data.orgName}`}/${data.link}`;

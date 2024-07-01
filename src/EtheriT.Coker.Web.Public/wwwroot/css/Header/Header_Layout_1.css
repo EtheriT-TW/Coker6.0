@@ -188,7 +188,7 @@
 }
 
 .subtitle .subtitle_title > img, .subtitle .subtitle_title > div > img {
-    max-height: 1.5rem;
+    max-height: 1.75rem;
 }
 
 .subtitle.hasChild > .subtitle_title {
@@ -235,6 +235,7 @@
         .metaMenu .collapse_menus > .container > ul ul > li {
             width: 175px;
             font-size: 0.9rem;
+            margin-bottom: 0.5rem;
         }
 
 .listMenu {

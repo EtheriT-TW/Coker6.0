@@ -67,7 +67,7 @@ namespace EtheriT.Coker.Application.Article
                 long usetId = await loginUserData.GetUserId();
                 var asoid = dto.Id;
 
-                if (dto.Id == 0)
+                if (dto.Id == null || dto.Id == 0)
                 {
                     Core.Models.Article a = mapper.Map<Core.Models.Article>(dto);
                     a.FK_WebsiteId= WebsiteID;
@@ -299,8 +299,8 @@ namespace EtheriT.Coker.Application.Article
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
-									.OrderByDescending(a => a.NodeDate)
-								    .ThenBy(a => a.SerNO)
+									.OrderBy(a => a.SerNO)
+								    .ThenByDescending(a => a.NodeDate)
 								    .ThenByDescending(e => e.Id)
 									.ToListAsync();
                 if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();

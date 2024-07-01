@@ -45,6 +45,7 @@
         Add: function (key, value) {
             var expDate = new Date();
             expDate.setTime(expDate.getTime() + Coker.Cookie.EffectiveTime);
+            console.log(key, value, { path: "/", expires: expDate });
             $.cookie(key, value, { path: "/", expires: expDate });
         },
         AddAll: function (obj) {
@@ -61,13 +62,17 @@
         DelAll: function () {
             var cookies = $.cookie();
             for (var cookie in cookies) {
-                if (cookie != "LastWebSite") $.removeCookie(cookie, { path: "/" });
+                if (cookie != "LastWebSite" && cookie != "lastViewPage") $.removeCookie(cookie, { path: "/" });
             }
         }
     },
     Page: {
         Ready: function () {
-            if (location.pathname != "/") Coker.Cookie.Add("lastViewPage", location.pathname);
+            if (location.pathname != "/") {
+                co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
+                Coker.Cookie.Add("lastViewPage", location.pathname);
+                co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
+            }
             typeof (PageReady) === "function" && PageReady();
         }
     },

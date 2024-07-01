@@ -358,6 +358,7 @@
                         .ShowBorders(true)
                         .ElementAttr("data-name", "List")
                         .OnContentReady("NewsletterReady")
+                        .OnSaving("onSaving")
                         .Paging(paging => paging.Enabled(false))
                         .Editing(editing =>
                         {

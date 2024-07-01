@@ -53,12 +53,12 @@
                     secret: result.secret,
                     endDateTime: (new Date(result.endDateTime)).getTime()
                 });
-                co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
-                co.Cookie.Add("LastWebSite", co.Cookie.Get("LastWebSite"));
-                co.Cookie.EffectiveTime = co.Data.Time.D;
                 _dfr.resolve(result);
             }).fail(function () {
                 _c.Cookie.DelAll();
+                co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {
+                    location.href = "/";
+                }, false);
                 _dfr.resolve();
             });
             return _dfr.promise();

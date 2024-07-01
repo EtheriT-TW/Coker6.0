@@ -167,7 +167,7 @@ namespace EtheriT.Coker.Application.Authorization
                         if (t != null)
                         {
                             var users = await db.Users.Where(e => e.Id == t.UserID).FirstOrDefaultAsync();
-                            if (t.EndTime < DateTime.Now.AddMinutes(5))
+                            if (t.EndTime < DateTime.Now.AddMinutes(10))
                             {
                                 t.EndTime = DateTime.Now.AddMinutes(30);
                                 db.SaveChanges();

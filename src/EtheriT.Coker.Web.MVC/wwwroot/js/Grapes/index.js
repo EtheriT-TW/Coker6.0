@@ -51,7 +51,7 @@ var grapesInit = function (options) {
                         var myJSON = [];
                         $(result.files).each(function (index) {
                             myJSON.push({
-                                path: this.path,
+                                src: this.path,
                                 name: this.name,
                                 guid: this.guid
                             });

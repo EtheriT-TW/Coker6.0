@@ -175,6 +175,7 @@ namespace EtheriT.Coker.Application.Product
                             Min_Qty = item.Min_Qty,
                             Alert_Qty = item.Alert_Qty,
                             Ser_No = item.Ser_No,
+                            Price = item.Price,
                             CreatorUserId = usetId,
                         };
                         db.Prod_Stocks.Add(ps);
@@ -197,12 +198,13 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.Min_Qty = item.Min_Qty;
                             db_ps.Alert_Qty = item.Alert_Qty;
                             db_ps.Ser_No = item.Ser_No;
+                            db_ps.Price = item.Price;
                             db_ps.LastModificationTime = DateTime.Now;
                             db_ps.LastModifierUserId = usetId;
                         }
                     }
 
-                    priceresponse = await this.PriceAddUp(item.Prices);
+                    priceresponse = await PriceAddUp(item.Prices);
 
                 }
 
@@ -230,11 +232,12 @@ namespace EtheriT.Coker.Application.Product
                     for (int i = 0; i < dto.Count; i++)
                     {
                         var item = dto[i];
-                        var thePrice = await db.Prod_Prices
+                        var allPrice = db.Prod_Prices.Where(e => !e.IsDeleted);
+                        var thePrice = await allPrice
                                 .Where(e => e.FK_PSId == item.FK_PSId)
                                 .Where(e => e.FK_RId == item.FK_RId)
-                                .Where(e => e.Price == item.Price).FirstOrDefaultAsync();
-                        if (thePrice != null) item.Id = thePrice.Id;
+                                .FirstOrDefaultAsync();
+                        if (thePrice != null && !item.IsDelete) item.Id = thePrice.Id;
 
                         if (item.Id == 0 && !item.IsDelete)
                         {
@@ -537,22 +540,42 @@ namespace EtheriT.Coker.Application.Product
                     if (Files != null && Files.Count() > 0) output.Files = Files;
 
                     var Imgs_original = await fileUploadAppService.getProdMultimedia(output.Id, 1);
-                    if (Imgs_original != null)
+                    if (Imgs_original != null && Imgs_original.Count != 0)
                     {
                         output.Img_Original = Imgs_original;
                     }
+                    else output.Img_Original.Add(new FileGetProdDisplayDto {  
+                        Link = new List<string> { "/images/noImg.jpg" },
+                        Name = "/images/noImg.jpg",
+                        FileType = 1,
+                        SerNo = 500
+                    });
 
                     var Imgs_medium = await fileUploadAppService.getProdMultimedia(output.Id, 2);
-                    if (Imgs_medium != null)
+                    if (Imgs_medium != null && Imgs_medium.Count !=0)
                     {
                         output.Img_Medium = Imgs_medium;
                     }
+                    else output.Img_Medium.Add(new FileGetProdDisplayDto
+                    {
+                        Link = new List<string> { "/images/noImg.jpg" },
+                        Name = "/images/noImg.jpg",
+                        FileType = 1,
+                        SerNo = 500
+                    });
 
                     var Imgs_small = await fileUploadAppService.getProdMultimedia(output.Id, 3);
-                    if (Imgs_small != null)
+                    if (Imgs_small != null && Imgs_small.Count != 0)
                     {
                         output.Img_Small = Imgs_small;
                     }
+                    else output.Img_Small.Add(new FileGetProdDisplayDto
+                    {
+                        Link = new List<string> { "/images/noImg.jpg" },
+                        Name = "/images/noImg.jpg",
+                        FileType = 1,
+                        SerNo = 500
+                    });
 
                     return output;
                 }

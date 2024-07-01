@@ -17,7 +17,7 @@
                 if (result.success) {
                     co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
                     co.Cookie.Add("LastWebSite", result.message);
-                    co.Cookie.EffectiveTime = co.Data.Time.D;
+                    co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
                 }
                 _dfr.resolve(result);
             });

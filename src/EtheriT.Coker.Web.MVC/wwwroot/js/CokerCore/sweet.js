@@ -41,7 +41,7 @@
                 }
             })
         },
-        confirm: function (title, text, confirmtexet, cancanceltext, action) {
+        confirm: function (title, text, confirmtexet, cancanceltext, action, fail) {
             Swal.fire({
                 icon: 'info',
                 title: title,
@@ -55,6 +55,8 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
+                } else {
+                    typeof (fail) === "function" && fail();
                 }
             })
         },

@@ -623,7 +623,6 @@ function SpecAdd(result) {
             }
         }
     }
-
     if (result != null) {
         item.data("psid", result.id);
     } else {
@@ -856,6 +855,7 @@ function UploadListAdd(result, $target) {
         }
         obj["Type"] = result.fileType;
         obj["IsDelete"] = false;
+        item.find(".btn_link").attr("href", obj["File"]);
         total_files.push(obj);
 
         item.on("click", function () {
@@ -954,7 +954,6 @@ function AddUp(success_text, error_text, target) {
             })
             fk_sid.push(id)
         })
-
         obj["Id"] = $self.data("psid") == "" ? 0 : $self.data("psid");
         obj["FK_S1id"] = fk_sid[0];
         obj["FK_S2id"] = fk_sid[1];

@@ -77,6 +77,9 @@ function PageReady() {
     $(".image_upload").each(function () {
         ImageUploadModalInit($(this));
     });
+    $(`[type="number"]`).on("wheel", function (e) {
+        e.preventDefault()
+    });
     ElementInit();
     TagListModalInit();
 
@@ -229,6 +232,23 @@ function hashChange(e) {
     } else {
         console.log("HashChange錯誤")
     }
+}
+
+function onSaving(e) {
+    console.log(e);
+    for (let i = 0; i < e.changes.length; i++) {
+        const item = e.changes[i].data;
+        if (typeof (item.date) != "undefined") {
+            let d = new Date(item.date);
+            if (d.getFullYear() < 1000) d.setFullYear(d.getFullYear() + 1911);
+            item.date = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+        }
+    }
+   
+    // e.setValue(newValue);
+    // Otherwise, call the default handler:
+    //defaultValueChangeHandler(args); // Execute the default handler
+    //vesselsBoxOnValueChanged(args); // Execute my code
 }
 
 function HashDataEdit() {

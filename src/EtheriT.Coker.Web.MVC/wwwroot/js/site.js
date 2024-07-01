@@ -6,9 +6,24 @@
 var PreLoader;
 
 (function (a) {
-
+    var keyValuePairs = document.cookie.split(';');
     var now = new Date();
     var edt = !!co.Cookie.Get("endDateTime") ? parseInt(co.Cookie.Get("endDateTime")) : 0;
+    const continueLoginState = function () {
+        co.sweet.confirm("即將登出", "登入時間超過二十分鐘，是否保持狀態?", "是", "登出", function () {
+            co.User.Check().done(function (resule) {
+                if (!resule.success) {
+                    co.sweet.error("連線失敗", "延遲時間過久，您的登入狀態已被登出，請重新登入。", function () {
+                        location.href = "/";
+                    },false);
+                }
+            });
+            setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
+        }, function () {
+            co.User.Logout();
+        });
+    }
+    setTimeout(continueLoginState, co.Data.Time.ReCheckTime - 1000);
     if (!!!co.Cookie.Get("token")) {
         if (location.pathname != "/" && !/^\/Account/.test(location.pathname)) location.href = "/";
         else co.Page.Ready();

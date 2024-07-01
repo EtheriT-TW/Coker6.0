@@ -96,7 +96,7 @@ function PageDefaultSet(result) {
         $btn_detailed.removeClass("d-none")
     }
     if (result.html != null && result.html.trim() != "") $("#ProductDescription > Content").removeClass("d-none").html($.htmlDecode(result.html));
-    else $("#ProductDescription > Content,#btn_tab .description").addClass("d-none")
+    else $("#ProductDescription,#btn_tab .description").remove();
 
     result.techCertDatas.forEach(item => {
         if (item.img_small.length > 0) {
@@ -119,7 +119,6 @@ function PageDefaultSet(result) {
             $(".pro_tc").addClass("d-none");
         }
     });
-    console.log(result,result.status);
     if (result.status != 0) {
         $("#Product>.image").append(`<span class="status status${result.status}">${result.statusName}</span>`);
     }
@@ -323,6 +322,7 @@ function PageDefaultSet(result) {
             </div>`)
         });
     } else $("#btn_tab > .files,#FileDownload").remove();
+    $("#btn_tab>li>button").first().trigger("click");
     LinkWithIconInit();
 }
 

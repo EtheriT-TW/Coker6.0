@@ -12,6 +12,23 @@
   </ItemGroup>
   <ItemGroup>
     <Content Remove="appsettings.EPZA.json" />
+    <Content Remove="wwwroot\js\Account\Index.js" />
+    <Content Remove="wwwroot\js\Components\ImageUploadModal.js" />
+    <Content Remove="wwwroot\js\Components\PermissionDetailsModal.js" />
+    <Content Remove="wwwroot\js\Components\TagListModal.js" />
+    <Content Remove="wwwroot\js\Components\TagSelectModal.js" />
+    <Content Remove="wwwroot\js\Components\TechCertListModal.js" />
+    <Content Remove="wwwroot\js\Components\WebmenuListModal.js" />
+    <Content Remove="wwwroot\js\ContentManagement\Article.js" />
+    <Content Remove="wwwroot\js\ContentManagement\ContactUsReply.js" />
+    <Content Remove="wwwroot\js\ContentManagement\Directory.js" />
+    <Content Remove="wwwroot\js\ContentManagement\EnterAd.js" />
+    <Content Remove="wwwroot\js\ContentManagement\Marquee.js" />
+    <Content Remove="wwwroot\js\ContentManagement\RightSideAd.js" />
+    <Content Remove="wwwroot\js\ContentManagement\Tag.js" />
+    <Content Remove="wwwroot\js\ProductManagement\ProductList.js" />
+    <Content Remove="wwwroot\js\ProductManagement\SpecSetting.js" />
+    <Content Remove="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
     <Content Remove="wwwroot\js\CokerCore\**" />
   </ItemGroup>
   <ItemGroup>
@@ -25,6 +42,23 @@
     <None Include="appsettings.EPZA.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Include="wwwroot\js\Account\Index.js" />
+    <None Include="wwwroot\js\Components\ImageUploadModal.js" />
+    <None Include="wwwroot\js\Components\PermissionDetailsModal.js" />
+    <None Include="wwwroot\js\Components\TagListModal.js" />
+    <None Include="wwwroot\js\Components\TagSelectModal.js" />
+    <None Include="wwwroot\js\Components\TechCertListModal.js" />
+    <None Include="wwwroot\js\Components\WebmenuListModal.js" />
+    <None Include="wwwroot\js\ContentManagement\Article.js" />
+    <None Include="wwwroot\js\ContentManagement\ContactUsReply.js" />
+    <None Include="wwwroot\js\ContentManagement\Directory.js" />
+    <None Include="wwwroot\js\ContentManagement\EnterAd.js" />
+    <None Include="wwwroot\js\ContentManagement\Marquee.js" />
+    <None Include="wwwroot\js\ContentManagement\RightSideAd.js" />
+    <None Include="wwwroot\js\ContentManagement\Tag.js" />
+    <None Include="wwwroot\js\ProductManagement\ProductList.js" />
+    <None Include="wwwroot\js\ProductManagement\SpecSetting.js" />
+    <None Include="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
     <None Include="wwwroot\js\CokerCore\**" />
   </ItemGroup>
   <ItemGroup>

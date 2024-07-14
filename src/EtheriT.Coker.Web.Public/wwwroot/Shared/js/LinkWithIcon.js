@@ -1,7 +1,7 @@
 ﻿function LinkWithIconInit() {
     $(".link_with_icon").each(function () {
         var $self = $(this)
-        if (typeof ($self.data("isnum")) != "undefined" || $self.data("isnum")) return true;
+        if (typeof ($self.data("isrun")) != "undefined" || $self.data("isrun")) return true;
         var data_url = $self.attr("href");
         $self.find(".icon").empty();
         if (typeof (data_url) != "undefined") {
@@ -48,6 +48,6 @@
             $self.attr({ target: "_blank" }).removeAttr("download");
         else if (!(new RegExp(`[\.]{1}${type}$`, "gi")).test($self.attr("download"))) $self.attr("download", `${$self.attr("download")}.${type}`);
         else $self.attr("download", `${$self.attr("download")}`);
-        $self.data("isnum",true);
+        $self.data("isrun",true);
     })
 }

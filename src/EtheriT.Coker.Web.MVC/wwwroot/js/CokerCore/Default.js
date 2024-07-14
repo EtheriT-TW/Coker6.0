@@ -45,7 +45,6 @@
         Add: function (key, value) {
             var expDate = new Date();
             expDate.setTime(expDate.getTime() + Coker.Cookie.EffectiveTime);
-            console.log(key, value, { path: "/", expires: expDate });
             $.cookie(key, value, { path: "/", expires: expDate });
         },
         AddAll: function (obj) {

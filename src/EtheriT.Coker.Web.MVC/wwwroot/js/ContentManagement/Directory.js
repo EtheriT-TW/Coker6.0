@@ -458,7 +458,7 @@ function paletteArticlesButtonClicked(e) {
     window.location.hash = `ArticlesEditorView_${DirectoryId}_${e.row.key}`;
 }
 function groupArticlesButtonClicked(e) {
-    $("#PermissionDetailsModal").setData({ id: e.row.key, type: 3 }).modal("show");
+    $("#PermissionDetailsModal").setData({ pageId: e.row.key, title: e.row.data.Title, type: 3 }).modal("show");
 }
 function deleteArticlesButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {

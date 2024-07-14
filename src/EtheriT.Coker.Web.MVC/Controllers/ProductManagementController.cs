@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Product;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Specification;
@@ -22,6 +23,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             ProductManagementModel model = new ProductManagementModel
             {
                 SpecType = spec_type,
+                ProdStatus = Enum.GetValues(typeof(ProdStatusEnum)).Cast<ProdStatusEnum>().ToList()
+
             };
             return View("ProductList", model);
         }

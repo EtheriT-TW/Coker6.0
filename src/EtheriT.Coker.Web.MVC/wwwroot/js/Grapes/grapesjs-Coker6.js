@@ -174,11 +174,8 @@
                     }
                 ],
             }, init() {
-                this.on('change:attributes:download', function () {
-                    setTimeout(function () {
-                        var LinkWithIconInit = $(".gjs-frame")[0].contentWindow.LinkWithIconInit;
-                        LinkWithIconInit();
-                    }, 100);
+                this.on('change:attributes:download', function (component) {
+                    component.find(".name")[0].components(component.getAttributes().download);
                 });
             }
         },

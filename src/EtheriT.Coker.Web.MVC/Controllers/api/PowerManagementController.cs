@@ -108,8 +108,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 ThePermission.CanCreate,
 				ThePermission.CanUpdate,
 				ThePermission.CanVisble,
-				ThePermission.CanRemove
-			}, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+				ThePermission.CanRemove,
+                ThePermission.superManager
+            }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 		}
 	}
 }

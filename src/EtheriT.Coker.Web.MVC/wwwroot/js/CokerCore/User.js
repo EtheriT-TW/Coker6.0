@@ -14,6 +14,10 @@
                     secret: result.secret,
                     endDateTime: (new Date(result.endDateTime)).getTime()
                 });
+                _c.Data.Header = {
+                    Authorization: 'Bearer ' + $.cookie("token"),
+                    Secret: $.cookie("secret")
+                }
                 _dfr.resolve(result);
             });
             return _dfr.promise();
@@ -32,6 +36,9 @@
                     location.href = "/";
                     _dfr.resolve();
                 }
+            }).fail(function () {
+                _c.Cookie.DelAll();
+                location.href = "/";
             });
             return _dfr.promise();
         },

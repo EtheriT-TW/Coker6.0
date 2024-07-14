@@ -1133,7 +1133,6 @@ function MenuEditor(idSelector, options) {
     iconPicker.on('change', function (e) {
         $form.find("[name=icon]").val(e.icon);
     });
-
     $main.on('click', '.btnRemove', function (e) {
         e.preventDefault();
         var self = this;
@@ -1160,9 +1159,15 @@ function MenuEditor(idSelector, options) {
         !!settings.on.page && settings.on.page($(itemEditing).data());
         editItem(itemEditing);
     });
-
+    $main.on('click', '.btnPower', function (e) {
+        e.preventDefault();
+        itemEditing = $(this).closest('li');
+        settings.on.setPower($(itemEditing).data());
+        editItem(itemEditing);
+    });
     $main.on('click', '.btnEdit', function (e) {
         e.preventDefault();
+        console.log("btnEdit");
         itemEditing = $(this).closest('li');
         editItem(itemEditing);
         !!settings.on.edit && settings.on.edit();
@@ -1291,7 +1296,12 @@ function MenuEditor(idSelector, options) {
         var $btnOut = TButton({ classCss: 'btn btn-secondary btn-sm btnOut btnMove levelMove', text: '<i class="fas fa-level-down-alt clickable"></i>'});
         var $btnIn = TButton({ classCss: 'btn btn-secondary btn-sm btnIn btnMove levelMove', text: '<i class="fas fa-level-up-alt clickable"></i>' });
         var $btnCont = TButton({ classCss: 'btn btn-success btn-sm btnPage', text: '<i class="fa fa-paint-roller clickable"></i>' });
-        $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut).append($btnEdit).append($btnRemv).append($btnCont);
+        var $btnPower = TButton({ classCss: 'btn btn-warning btn-sm btnPower', text: '<i class="fa-solid fa-user-group clickable"></i>' });
+        $divbtn.append($btnUp).append($btnDown).append($btnIn).append($btnOut);
+        if (typeof (settings.on.setPower) != "undefined") {
+            $divbtn.append($btnPower);
+        }
+        $divbtn.append($btnEdit).append($btnRemv).append($btnCont);
         return $divbtn;
     }
 
@@ -1318,7 +1328,7 @@ function MenuEditor(idSelector, options) {
             var $span = $('<span>').addClass('txt font-weight-bold').append(v.text).css('margin-right', '5px');
             var $divTitle = $("<div class='d-flex align-items-center float-left' />");
             var $divbtn = TButtonGroup();
-            if (!v.canEdit) $divbtn.find(".btnEdit ,.btnRemove, .btnPage").addClass("d-none");
+            if (!v.canEdit) $divbtn.find(".btnEdit ,.btnRemove, .btnPage, .btnPower").addClass("d-none");
             if ($i.hasClass("material-symbols-outlined")) $i.text(v.icon.replace("material-symbols-outlined", "").trim());
             $divTitle.append($i).append("&nbsp;").append($span);
             if (v.visible) $divTitle.append(`<span class="material-symbols-outlined">visibility</span>`);

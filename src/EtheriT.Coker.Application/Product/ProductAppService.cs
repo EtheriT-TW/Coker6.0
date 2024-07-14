@@ -310,7 +310,6 @@ namespace EtheriT.Coker.Application.Product
                                 };
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-
                 foreach (var data in output.data)
                 {
                     int min_price = 0, max_price = 0;

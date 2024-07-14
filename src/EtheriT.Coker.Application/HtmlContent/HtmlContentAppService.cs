@@ -91,6 +91,8 @@ namespace EtheriT.Coker.Application.HtmlContent
                 var result = await db.Html_Contents
                         .Where(e => t.Contains(e.Type))
                         .Where(e => !e.IsDeleted)
+                        .OrderBy(e => e.Type)
+                        .ThenBy(e => e.Ser_no)
                         .ToListAsync();
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
                 respose.Success = true;

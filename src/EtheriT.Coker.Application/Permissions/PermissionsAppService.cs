@@ -452,7 +452,7 @@ namespace EtheriT.Coker.Application.Permissions
             try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
-                var items = await db.PermissionDetail.Where(e => e.FK_WebsiteId == websiteId).ToListAsync();
+                var items = await db.PermissionDetail.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Type == (int)dto.Type && e.FK_TargetId == dto.PageId).ToListAsync();
                 var userPerm = items.Where(e => e.FK_UserId != null && e.IsGranted).Select(e => e.FK_UserId).ToList();
                 var RoPerm = items.Where(e => e.FK_RoleId != null && e.IsGranted).Select(e => e.FK_RoleId).ToList();
                 response.Object = new PagePermissionOutputDto

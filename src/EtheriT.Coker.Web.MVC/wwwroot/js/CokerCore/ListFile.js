@@ -105,32 +105,55 @@
                                 obj["TempId"] = $self.data("tempid") + index;
                                 obj["Type"] = $self.data("uploadtype");
                                 var reader = new FileReader();
+                                var _URL = window.URL || window.webkitURL;
+                                var image = new Image();
+                                var _dfr = $.Deferred();
+                                _dfr.promise();
+                                image.src = _URL.createObjectURL(img_file[0]);
                                 reader.readAsDataURL(img_file[0]);
+                                image.onload = function () {
+                                    _dfr.resolve(this.width);
+                                };
                                 reader.onload = (function (e) {
                                     obj["Link"] = e.target.result;
                                 });
-                                htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 500, imageType: img_file[0].type })
-                                htmlImageCompress.then(function (result) {
-                                    img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                    htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.3, width: 150, imageType: img_file[0].type })
+                                _dfr.pipe(function (width) {
+                                    switch (true) {
+                                        case width < 500:
+                                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.5, width: 500, imageType: img_file[0].type });
+                                            break;
+                                        case width < 1000:
+                                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.7, width: 800, imageType: img_file[0].type });
+                                            break;
+                                        default:
+                                            htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.8, width: 1000, imageType: img_file[0].type });
+                                            break;
+                                    }
+                                    return htmlImageCompress;
+                                }).pipe(function () {
                                     htmlImageCompress.then(function (result) {
                                         img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
-                                        obj["File"] = img_file;
-                                        obj["IsDelete"] = false;
-                                        obj["Name"] = result.origin.name;
-                                        total_files.push(obj);
-                                        UploadListAdd(obj, $root);
+                                        htmlImageCompress = new HtmlImageCompress(img_file[0], { quality: 0.9, width: 300, imageType: img_file[0].type })
+                                        htmlImageCompress.then(function (result) {
+                                            image.src = _URL.createObjectURL(result.file);
+                                            img_file.push(new File([result.file], result.origin.name, { type: result.file.type }));
+                                            obj["File"] = img_file;
+                                            obj["IsDelete"] = false;
+                                            obj["Name"] = result.origin.name;
+                                            total_files.push(obj);
+                                            UploadListAdd(obj, $root);
+                                        }).catch(function (err) {
+                                            UploadPreviewFrameClear($root);
+                                            console.log($`發生錯誤：${err}`);
+                                            co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
+                                        })
+
                                     }).catch(function (err) {
                                         UploadPreviewFrameClear($root);
                                         console.log($`發生錯誤：${err}`);
                                         co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
                                     })
-
-                                }).catch(function (err) {
-                                    UploadPreviewFrameClear($root);
-                                    console.log($`發生錯誤：${err}`);
-                                    co.sweet.error("資料上傳失敗", "請重新上傳", null, null);
-                                })
+                                });
                             })
 
                             break;

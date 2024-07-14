@@ -108,6 +108,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 freightModels = freight,
                 enterAd = enterAds,
                 layout = $"layout{defaultData.Layout_Type}",
+                root = defaultData.Root,
                 Level = defaultData.Level,
                 locale = defaultData.locale,
 				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
@@ -137,6 +138,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
 						remoteInputDto.FK_ArticleId = model.PageData.Id;
 						model.ParentData = PageData;
+                        model.PageData.PageView = "Article";
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
                         if (key == "article")
@@ -171,7 +173,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (id != 0)
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-							remoteInputDto.FK_WebmenuId = ProdPageData.Id;
+                            remoteInputDto.FK_WebmenuId = ProdPageData.Id;
 							model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
                             if (model.PageData.Id == 0) view = "Error/404";
@@ -179,6 +181,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             {
                                 remoteInputDto.FK_ProdId = model.PageData.Id;
                                 model.ParentData = ProdPageData;
+                                model.PageData.PageView = "Product";
                                 model.PageData.LayoutType = defaultData.Layout_Type;
                                 model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
                                 if (key == "product")
@@ -217,6 +220,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData = await technicalCertificateAppService.GetFrontConten(new TechCertGetFrontContenInputDto { siteId = defaultData.Id, TechCertId = id });
                         remoteInputDto.FK_TechCertId = model.PageData.Id;
                         model.ParentData = TechCertPageData;
+                        model.PageData.PageView = "Techcert";
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.TechCert;
                         if (key.ToLower() == "techvert")
@@ -256,7 +260,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (key.ToLower() == "search")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
+							model.PageData.PageView = "Search";
+							remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {

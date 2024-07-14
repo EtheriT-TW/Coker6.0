@@ -15,6 +15,7 @@ using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application
 {
@@ -69,8 +70,11 @@ namespace EtheriT.Coker.Application
 					Layout_Type = site.LayoutType??0,
 					Level = (WebsiteLevelEnum)site.Level,
                     locale = site.Locale,
+                    Root = site.DefaultUrl,
                     Description = site.Description
 				};
+                if(!string.IsNullOrEmpty(defaultData.Root))
+                    defaultData.Root = Regex.Replace(defaultData.Root,"/$","");
                 defaultData.View = defaultData.Layout_Type == 0 ? "Default" : $"Layout_{defaultData.Layout_Type}";
 				defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;
 
@@ -215,6 +219,7 @@ namespace EtheriT.Coker.Application
                         token.websiteId = dto.Id;
                         responseMessageDto.Message = dto.Id.ToString();
                         db.SaveChanges();
+                        responseMessageDto.Success = true;
                     }
                     else throw new Exception("金鑰失效");
                 }

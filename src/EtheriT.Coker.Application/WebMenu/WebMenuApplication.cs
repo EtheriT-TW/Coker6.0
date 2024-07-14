@@ -2,6 +2,7 @@
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -32,6 +33,7 @@ namespace EtheriT.Coker.Application
         private readonly IConfiguration Configuration;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IJsonObjectAppService jsonObjectAppService;
+        private readonly IPermissionsAppService permissionsAppService;
         public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
@@ -39,7 +41,8 @@ namespace EtheriT.Coker.Application
             IMapper mapper,
             IConfiguration Configuration,
             IFileUploadAppService fileUploadAppService,
-            IJsonObjectAppService jsonObjectAppService
+            IJsonObjectAppService jsonObjectAppService,
+            IPermissionsAppService permissionsAppService
         )
         {
             this.db = db;
@@ -50,6 +53,7 @@ namespace EtheriT.Coker.Application
             this.ApplicationName = "WebMenu";
             this.fileUploadAppService = fileUploadAppService;
             this.jsonObjectAppService = jsonObjectAppService;
+            this.permissionsAppService = permissionsAppService;
         }
         public async Task<SiteMapDto> GetAll()
         {
@@ -158,10 +162,19 @@ namespace EtheriT.Coker.Application
             {
                 var WebsiteID = await loginUserData.GetWebsiteId();
                 var orgName = await loginUserData.GetWebsiteOrgName();
-                var menus = await db.WebMenus
-                            .Where(m => m.FK_TopNodeId == id)
-                            .Where(m => m.FK_WebsiteId == WebsiteID)
-                            .Where(m => !m.IsDeleted)
+                long UserID = await loginUserData.GetUserId();
+                List<long> RoleIds = await loginUserData.GetUserRoleIds(); 
+                bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
+                IQueryable<WebMenu> AllMenus = db.WebMenus.Where(m => !m.IsDeleted && m.FK_WebsiteId == WebsiteID && m.FK_TopNodeId == id);
+                if (!isSuperUser) {
+                    var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
+                        .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
+                        .Where(e => e.Type == (int)PermissionDetailsTypeEnum.選單)
+                        .Where(e => e.IsGranted).Select(e => e.FK_TargetId).ToListAsync();
+                    if (per != null && per.Any()) AllMenus = AllMenus.Where(e => per.Contains(e.Id));
+                }
+
+                var menus = await AllMenus
                             .OrderBy(m => m.SerNO)
                             .ThenBy(m => m.Id)
                             .ToListAsync();

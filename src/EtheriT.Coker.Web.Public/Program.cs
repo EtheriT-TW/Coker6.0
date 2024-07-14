@@ -40,6 +40,7 @@ using EtheriT.Coker.Web.Public.Middlewares;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using SimpleCaptcha;
@@ -254,7 +255,7 @@ app.MapControllerRoute(
     name: "Page",
     pattern: "{website}/{key}/{option?}/{id?}/{search?}",
     defaults: new { controller = "Page", action = "Index" },
-    constraints: new { website = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared","lib" }) }
+    constraints: new { website = new NotEqual(new List<string> { "upload", "css", "js", "images", "Shared", "lib" }) }
 );
 
 app.MapControllerRoute(
@@ -262,10 +263,32 @@ app.MapControllerRoute(
     pattern: "{key?}/{id?}",
     defaults: new { controller = "Home", action = "Index" });
 
-//var options = new RewriteOptions()
-//        .AddRedirect("^Search/(.*)/(.*)", "Search?id=$&search=$2", 301);
-//app.UseRewriter(options);
+if (!app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        using (var scope = app.Services.CreateScope()) {
+            long siteId = builder.Configuration.GetValue<long>("WebConfig:SiteId");
+            var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
+            var website = dbContext.Websites.Where(e => e.Id == siteId && !e.IsDeleted).FirstOrDefault();
+            if(website!=null && !string.IsNullOrEmpty(website.DefaultUrl))
+            {
+                var currentHost = context.Request.Host.Host;
+                var mainDomain = website.DefaultUrl.Replace("http://","").Replace("https://", ""); // 主網域
 
-//app.UseRouting();
+                if (!currentHost.Equals(mainDomain, StringComparison.OrdinalIgnoreCase))
+                {
+                    var newUrl = $"https://{mainDomain}{context.Request.Path}{context.Request.QueryString}";
+                    context.Response.Redirect(newUrl, true); // true 表示 301轉址 
+                    return;
+                }
+
+                await next();
+            }
+        }
+    });
+}
+
+app.UseRouting();
 
 app.Run();

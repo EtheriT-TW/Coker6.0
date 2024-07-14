@@ -136,7 +136,7 @@ function PageReady() {
                             }, false);
                         } else {
                             Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                                AddUp("已成功發布", "發布發生未知錯誤", "List");
+                                AddUp("已成功發布", "發布發生未知錯誤", "item");
                             });
                         }
                     }
@@ -249,8 +249,9 @@ function ElementInit() {
     priceModal = new bootstrap.Modal(document.getElementById('PriceModal'))
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body >.price_option");
     $("#SortCheck").on("change", function () {
-        if ($(this).prop("checked")) $(`[name="serNo"]`).removeAttr("disabled");
-        else $(`[name="serNo"]`).attr({ disabled: "disabled" });
+        const $items = $(`[name="serNo"]`);
+        if ($(this).prop("checked")) $items.removeAttr("disabled");
+        else $items.attr({ disabled: "disabled" });
     });
     document.getElementById('PriceModal').addEventListener('hidden.bs.modal', function (event) {
         $price_modal.children(".frame").each(function () {
@@ -428,7 +429,7 @@ function FormDataSet(result) {
     $introduction_count.text($introduction.val().length);
     $illustrate.val(result.description);
     $illustrate_count.text($illustrate.val().length);
-
+    $(`[name="ProdStatus"] > option[value="${result.status}"]`).prop("selected", true);
     $date = $("#InputDate");
     $(".linkToF").attr("href", `${defaultUrl}/${OrgName}/search/product/${result.id}`);
 
@@ -995,10 +996,12 @@ function AddUp(success_text, error_text, target) {
         Permanent: $permanent.is(":checked"),
         TagSelected: tag_list,
         TechCertSelected: techcert_list,
-        Stocks: stock_addup_list
+        Stocks: stock_addup_list,
+        Status: $(`[name="ProdStatus"] > option:selected`).val()
     }).done(function (result) {
         var pid = parseInt(result.message);
         if (result.success) {
+            Coker.sweet.success(success_text, null, true);
             if (total_files.length > 0) {
 
                 $("#ProductForm > .data_upload > ul > li").each(function () {
@@ -1017,6 +1020,7 @@ function AddUp(success_text, error_text, target) {
                                 if (typeof (data[0]["File"]) == "string") {
                                     co.File.fileSortChange({
                                         Id: data[0]["Id"],
+                                        Sid: pid,
                                         SerNo: $self.find(".ser_no").val(),
                                     });
                                 } else {
@@ -1055,6 +1059,7 @@ function AddUp(success_text, error_text, target) {
                                 if (typeof (data[0]["File"]) == "string") {
                                     co.File.fileSortChange({
                                         Id: data[0]["Id"],
+                                        sid: pid,
                                         SerNo: $self.find(".ser_no").val(),
                                     });
                                 } else {
@@ -1080,6 +1085,7 @@ function AddUp(success_text, error_text, target) {
                                 if (typeof (data[0]["File"]) == "string") {
                                     co.File.fileSortChange({
                                         Id: data[0]["Id"],
+                                        sid: pid,
                                         SerNo: $self.find(".ser_no").val(),
                                     });
                                 } else {
@@ -1105,12 +1111,13 @@ function AddUp(success_text, error_text, target) {
                             case 1:
                             case 3:
                             case 4:
+                            case 5:
                                 if (typeof (file["Id"]) != "undefined") {
                                     var deleteid_list = [];
                                     deleteid_list.push(file["Id"]);
                                     co.File.DeleteFileById({
                                         Sid: parseInt(result.message),
-                                        Type: 1,
+                                        Type: (file["Type"] == 5 ? 8 : 1),
                                         Fid: deleteid_list,
                                     });
                                 }
@@ -1120,13 +1127,11 @@ function AddUp(success_text, error_text, target) {
                 });
 
                 if (target == "List") {
-                    Coker.sweet.success(success_text, null, true);
                     setTimeout(function () {
                         BackToList();
                         product_list.component.refresh();
                     }, 1000);
                 } else if (target == "Canvas") {
-                    Coker.sweet.success(success_text, null, true);
                     setTimeout(function () {
                         var hash = window.location.hash.replace("#", "") + "-1";
                         window.location.hash = hash;
@@ -1136,13 +1141,11 @@ function AddUp(success_text, error_text, target) {
             } else {
 
                 if (target == "List") {
-                    Coker.sweet.success(success_text, null, true);
                     setTimeout(function () {
                         BackToList();
                         product_list.component.refresh();
                     }, 1000);
                 } else if (target == "Canvas") {
-                    Coker.sweet.success(success_text, null, true);
                     setTimeout(function () {
                         var hash = window.location.hash.replace("#", "") + "-1";
                         window.location.hash = hash;

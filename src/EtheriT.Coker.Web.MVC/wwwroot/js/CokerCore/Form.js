@@ -21,7 +21,7 @@
                     case "date":
                         if (!!!$e.data('daterangepicker'))
                             _c.Picker.Init($e, { singleDatePicker: true, timePicker: false, locale: { format: 'YYYY/MM/DD' } });
-                        $e.data('daterangepicker').setStartDate(value||"");
+                        $e.data('daterangepicker').setStartDate(value || Date.now());
                         break;
                     case "disabled":
                         $e.on("change", function () {
@@ -85,7 +85,7 @@
                                 break;
                         }
                     }
-                } else console.log(key);
+                }// else console.log(key);
             }
         },
         getJson: function (id) {
@@ -126,6 +126,7 @@
             const form = document.getElementById(id);
             const $items = $(`[data-form-type]`);
             _c.Form.insertData(_c.Form.getJson(id), `#${id}`);
+            console.log(_c.Form.getJson(id));
             $items.each(function (i, e) {
                 const $e = $(e);
                 switch ($e.data("form-type")) {
@@ -134,6 +135,10 @@
                             $e.ImageUploadModalClear();
                             $e.data("init", true)
                         } else $e.ImageUploadModalClear();
+                        break;
+                    case "date":
+                        $e.data('daterangepicker').setStartDate(_c.Date.GetDateTimeStr(Date.now()));
+                        $e.data('daterangepicker').setEndDate(null);
                         break;
                 }
             });

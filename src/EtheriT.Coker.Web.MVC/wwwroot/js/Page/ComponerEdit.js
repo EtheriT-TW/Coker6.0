@@ -167,6 +167,11 @@
     $('#offcanvasSite').on('show.bs.offcanvas', function () {
         closeEdit();
     });
+    $('#offcanvasSite').on("click", ".btn-close", function (e) {
+        e.preventDefault();
+        if ($("#offcanvasSite.offcanvas-lg").length > 0) closeEdit();
+        else myOffcanvas.hide();
+    });
     $("#btnExtend").on("click", function () {
         openEditForm();
         $('#frmEdit [name="id"]').val(0);

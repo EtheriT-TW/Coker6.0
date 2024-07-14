@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Web.Public.Models
         public string layout { get; set; }
 		public string? token { get; set; }
         public string locale { get; set; } = "zh-tw";
+        public string root {  get; set; }
         public WebsiteLevelEnum Level { get; set; }
 		public List<HtmlContentDisplayDto>? enterAd { get; set; }
 		public GetFrontContenOutputDto? ParentData { get; set; }

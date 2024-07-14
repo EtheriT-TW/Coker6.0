@@ -25,17 +25,19 @@
 </div>
 <div id="gjs" class="d-none"></div>
 <div class="emptyList"></div>
-<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
+<div class="offcanvas offcanvas-start menu-bg" tabindex="-1" id="offcanvasSite" aria-labelledby="offcanvasSiteLabel">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="offcanvasSiteleLabel">元件目錄</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <button type="button" class="btn-close"></button>
     </div>
     <div class="offcanvas-body">
         <div id="EditBlock" class="row">
             <ul id="myEditor" class="sortableLists list-group item-menu d-none"></ul>
             <div class="emptyList"></div>
-            <div id="MenuEditorForm" class="card border-primary mb-3 item-menu">
-                <div class="card-header bg-primary text-white">選單資料</div>
+            <div id="MenuEditorForm" class="card item-menu menu-bg">
+                <div class="card-header text-white d-flex justify-content-between">
+                    <span class="title">選單資料</span>
+                </div>
                 <div class="card-body">
                     <form id="frmEdit" class="form-horizontal needs-validation" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
@@ -54,7 +56,7 @@
                     </form>
                 </div>
                 <div class="card-footer">
-                    <button type="button" id="btnUpdate" class="btn btn-primary" disabled><i class="fas fa-sync-alt"></i>更新</button>
+                    <button type="button" id="btnUpdate" class="btn" disabled><i class="fas fa-sync-alt"></i>更新</button>
                     <button type="button" id="btnAdd" class="btn btn-success"><i class="fas fa-plus"></i>新增</button>
                     <button type="button" id="btnRefresh" class="btn btn-info">
                         <i class="fa-sharp fa-solid fa-rotate-right"></i>清空

@@ -260,6 +260,7 @@ var grapesInit = function (options) {
                     const isrun = false;
                     let timer = null;
                     if (typeof (iframe.local) == "undefined") {
+                        iframe.local = {};
                         co.i18.getAll().done(function (result) {
                             iframe.local = result;
                         });

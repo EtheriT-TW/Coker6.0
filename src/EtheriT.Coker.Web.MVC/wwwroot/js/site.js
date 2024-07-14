@@ -85,8 +85,11 @@ var PreLoader;
         $(this).find(".card-body").append(`<span class="material-icons app-selected md-16">check</span>`);
     });
     $("#switchApp .switch").on("click", function () {
-        co.WebSite.exchange($(".active-app").first().data("id")).done(function () {
-            location.reload()
+        co.WebSite.exchange($(".active-app").first().data("id")).done(function (result) {
+            if (result.success) {
+                co.Cookie.Add("LastWebSite", result.message);
+                location.reload();
+            }
         });
     });
     a.fn.setAsideMode = function () {

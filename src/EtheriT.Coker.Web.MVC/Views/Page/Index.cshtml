@@ -36,10 +36,9 @@
                 <span class="fas fa-plus "></span>
             </button>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <button type="button" class="btn-close"></button>
     </div>
     <div class="offcanvas-body">
-
         <div id="EditBlock" class="row d-flex justify-content-center">
             <ul id="myEditor" class="sortableLists list-group item-menu d-none"></ul>
             <div class="emptyList menu-bg"></div>
@@ -205,6 +204,7 @@
         </div>
     </div>
 </div>
+@await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
 @section scripts {
     @{
         await Html.RenderPartialAsync(@"GrapesComponents\_PopupDirectory");

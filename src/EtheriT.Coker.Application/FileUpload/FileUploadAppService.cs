@@ -839,7 +839,7 @@ namespace EtheriT.Coker.Application
             {
                 var checkStatus = new List<int> { (int)FileBindTypeEnum.產品, (int)FileBindTypeEnum.產品檔案 };
                 var userid = await loginUserData.GetUserId();
-                var db_fb = await db.FileBinds.Where(e => e.FK_FileUploadId == dto.id && !e.IsDeleted)
+                var db_fb = await db.FileBinds.Where(e => !e.IsDeleted && e.Sid == dto.sid && e.FK_FileUploadId == dto.id)
                     .Where(e => checkStatus.Contains(e.type))
                     .FirstOrDefaultAsync();
                 if (db_fb != null)

@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.Tag;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Product
@@ -11,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public bool Visible { get; set; }
         public bool RemovedFromShelves {  get; set; }
         public int Ser_No { get; set; }
+        public ProdStatusEnum status { get; set; }
         public string Introduction { get; set; }
         public string Description { get; set; }
         public double? Discount { get; set; }

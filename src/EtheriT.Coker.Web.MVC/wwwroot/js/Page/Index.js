@@ -34,318 +34,341 @@
             return _dfr.promise();
         }
     });
-
-    var menuEditor = new MenuEditor('myEditor',
-        {
-            textConfirmDelete: "是否確認將<span class='ConfirmKeyWord'>{0}</span>選單刪除?",
-            listOptions: {
-                placeholderCss: { 'background-color': "#cccccc" }
-            },
-            iconPicker: {
-                searchText: "Buscar...", labelHeader: "{0}/{1}"
-            },
-            maxLevel: -1, // (Optional) Default is -1 (no level limit)
-            element: {
-                Form: "#frmEdit",
-                Update: "#btnUpdate",
-                Add: '#btnAdd',
-                Refresh: '#btnRefresh',
-            },
-            on: {
-                ready: function () {
-                    co.WebMesnus.GetPageTypeList().done(function (result) {
-                        if (result.success) {
-                            const $s = $("#pageType");
-                            $(result.type).each(function () {
-                                $s.append(`<option value="${this.value}">${this.key}</option>`);
-                            });
-                            $s.on("change", function () {
-                                const $self = $(this);
-                                if ($self.val() == 2) {
-                                    $("#RouterNameBlock").addClass("d-none").val("Home");
-                                } else {
-                                    $("#RouterNameBlock").removeClass("d-none").val("");
-                                }
-                            })
-                        }
-                    });
-                    $("#IconImageUpload").ImageUploadModalClear();
-                    $("#ImageUpload").ImageUploadModalClear();
-                    $("#OverImageUpload").ImageUploadModalClear();
-                },
-                edit: function () {
-                    openEditForm();
-                    $("#btnUpdate").removeClass("d-none");
-                    $("#btnRefresh,#btnAdd").addClass("d-none");
-                    $("#IconImageUpload").ImageUploadModalClear();
-                    ImageUploadModalDataInsert($("#IconImageUpload"), $("#IconImageUpload").siblings("#iconId").val(), $("#IconImageUpload").siblings("#iconUrl").val(), "");
-                    $("#ImageUpload").ImageUploadModalClear();
-                    ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
-                    $("#OverImageUpload").ImageUploadModalClear();
-                    ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val())
-                },
-                del: function (data) {
-                    if ($("#myEditor>li").length == 0) {
-                        $("#myEditor").addClass("d-none");
-                        $("#myEditor + .emptyList").removeClass("d-none");
+    let editorStting = {
+        textConfirmDelete: "是否確認將<span class='ConfirmKeyWord'>{0}</span>選單刪除?",
+        listOptions: {
+            placeholderCss: { 'background-color': "#cccccc" }
+        },
+        iconPicker: {
+            searchText: "Buscar...", labelHeader: "{0}/{1}"
+        },
+        maxLevel: -1, // (Optional) Default is -1 (no level limit)
+        element: {
+            Form: "#frmEdit",
+            Update: "#btnUpdate",
+            Add: '#btnAdd',
+            Refresh: '#btnRefresh',
+        },
+        on: {
+            ready: function () {
+                co.WebMesnus.GetPageTypeList().done(function (result) {
+                    if (result.success) {
+                        const $s = $("#pageType");
+                        $(result.type).each(function () {
+                            $s.append(`<option value="${this.value}">${this.key}</option>`);
+                        });
+                        $s.on("change", function () {
+                            const $self = $(this);
+                            if ($self.val() == 2) {
+                                $("#RouterNameBlock").addClass("d-none").val("Home");
+                            } else {
+                                $("#RouterNameBlock").removeClass("d-none").val("");
+                            }
+                        })
                     }
-                    co.WebMesnus.delete(data.id).done(function (result) {
-                        if (result.success) co.sweet.success("已成功刪除");
-                        else co.sweet.error(result.error);
-                    });
-                },
-                add: function (cEl) {
-                    var data = cEl.data();
-                    $("#myEditor").removeClass("d-none");
-                    $("#myEditor + .emptyList").addClass("d-none");
+                });
+                $("#IconImageUpload").ImageUploadModalClear();
+                $("#ImageUpload").ImageUploadModalClear();
+                $("#OverImageUpload").ImageUploadModalClear();
+            },
+            edit: function () {
+                openEditForm();
+                $("#btnUpdate").removeClass("d-none");
+                $("#btnRefresh,#btnAdd").addClass("d-none");
+                $("#IconImageUpload").ImageUploadModalClear();
+                ImageUploadModalDataInsert($("#IconImageUpload"), $("#IconImageUpload").siblings("#iconId").val(), $("#IconImageUpload").siblings("#iconUrl").val(), "");
+                $("#ImageUpload").ImageUploadModalClear();
+                ImageUploadModalDataInsert($("#ImageUpload"), $("#ImageUpload").siblings("#imgId").val(), $("#ImageUpload").siblings("#imgUrl").val(), $("#ImageUpload").siblings("#imgName").val())
+                $("#OverImageUpload").ImageUploadModalClear();
+                ImageUploadModalDataInsert($("#OverImageUpload"), $("#OverImageUpload").siblings("#overImgId").val(), $("#OverImageUpload").siblings("#overImgUrl").val(), $("#OverImageUpload").siblings("#overImgName").val())
+            },
+            del: function (data) {
+                if ($("#myEditor>li").length == 0) {
+                    $("#myEditor").addClass("d-none");
+                    $("#myEditor + .emptyList").removeClass("d-none");
+                }
+                co.WebMesnus.delete(data.id).done(function (result) {
+                    if (result.success) co.sweet.success("已成功刪除");
+                    else co.sweet.error(result.error);
+                });
+            },
+            add: function (cEl) {
+                var data = cEl.data();
+                $("#myEditor").removeClass("d-none");
+                $("#myEditor + .emptyList").addClass("d-none");
+                co.WebMesnus.createOrEdit(data).done(function (result) {
+                    if (!result.success) co.sweet.error(result.error);
+                    else {
+                        data.id = parseInt(result.message);
+                        var ico_success = 0, img_success = 0, overimg_success = 0;
+
+                        var $ico_file = $("#IconImageUpload .img_input_frame > .img_input");
+                        if (typeof ($ico_file.data("file")) != "undefined" && $ico_file.data("file") != null) {
+                            var formData = new FormData();
+                            formData.append("files", $ico_file.data("file").File);
+                            formData.append("type", 9);
+                            formData.append("sid", data.id);
+                            formData.append("serno", 500);
+                            co.File.Upload(formData).done(function (result) {
+                                if (result.success) ico_success = 1;
+                                else ico_success = -1;
+                            });
+                        } else ico_success = 1;
+
+                        var $file = $("#ImageUpload .img_input_frame > .img_input");
+                        if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null) {
+                            var formData = new FormData();
+                            formData.append("files", $file.data("file").File);
+                            formData.append("type", 2);
+                            formData.append("sid", data.id);
+                            formData.append("serno", 500);
+                            co.File.Upload(formData).done(function (result) {
+                                if (result.success) img_success = 1;
+                                else img_success = -1;
+                            });
+                        } else img_success = 1;
+
+                        var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
+                        if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null) {
+                            var formData = new FormData();
+                            formData.append("files", $over_file.data("file").File);
+                            formData.append("type", 3);
+                            formData.append("sid", data.id);
+                            formData.append("serno", 500);
+                            co.File.Upload(formData).done(function (result) {
+                                if (result.success) overimg_success = 1;
+                                else overimg_success = -1;
+                            });
+                        } else overimg_success = 1;
+
+                        const timmer = function () {
+                            if (ico_success != 0 && img_success != 0 && overimg_success != 0) {
+                                $("#IconImageUpload").ImageUploadModalClear();
+                                $("#ImageUpload").ImageUploadModalClear();
+                                $("#OverImageUpload").ImageUploadModalClear();
+                                menuReload(menuEditor, myOffcanvas);
+                                if (!result.success) co.sweet.error(result.error);
+                                else {
+                                    if (ico_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
+                                    else co.sweet.success("新增成功");
+                                }
+                            } else setTimeout(timmer, 100);
+                        };
+                        setTimeout(timmer, 100);
+                    }
+                });
+            },
+            update: function (data) {
+                let check = false;
+                let massage = "";
+                if (data.linkUrl == "" && data.routerName == "") {
+                    massage = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>必須</span>填寫其中之一";
+                } else if (data.linkUrl != "" && data.routerName != "") {
+                    massage = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>僅能</span>填寫其中之一";
+                } else check = true;
+                if (check) {
                     co.WebMesnus.createOrEdit(data).done(function (result) {
                         if (!result.success) co.sweet.error(result.error);
                         else {
-                            data.id = parseInt(result.message);
-                            var ico_success = 0, img_success = 0, overimg_success = 0;
+                            var iconimg_success = 0, img_success = 0, overimg_success = 0, deliconimg_success = 0, delimg_success = 0, deloverimg_success = 0;
 
-                            var $ico_file = $("#IconImageUpload .img_input_frame > .img_input");
-                            if (typeof ($ico_file.data("file")) != "undefined" && $ico_file.data("file") != null) {
-                                var formData = new FormData();
-                                formData.append("files", $ico_file.data("file").File);
-                                formData.append("type", 9);
-                                formData.append("sid", data.id);
-                                formData.append("serno", 500);
-                                co.File.Upload(formData).done(function (result) {
-                                    if (result.success) ico_success = 1;
-                                    else ico_success = -1;
+                            var $icon_del_list = $("#IconImageUpload .img_input_frame").data("delectList");
+                            if ($icon_del_list != null) {
+                                co.File.DeleteFileById({
+                                    sid: data.id,
+                                    type: 9,
+                                    fid: $icon_del_list,
+                                }).done(function (result) {
+                                    if (result.success) deliconimg_success = 1
+                                    else deliconimg_success = -1
+                                    data.IconUrl = "";
+                                    data.IconId = "";
                                 });
-                            } else ico_success = 1;
+                            } else deliconimg_success = 1
 
-                            var $file = $("#ImageUpload .img_input_frame > .img_input");
-                            if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null) {
-                                var formData = new FormData();
-                                formData.append("files", $file.data("file").File);
-                                formData.append("type", 2);
-                                formData.append("sid", data.id);
-                                formData.append("serno", 500);
-                                co.File.Upload(formData).done(function (result) {
-                                    if (result.success) img_success = 1;
-                                    else img_success = -1;
+                            var $del_list = $("#ImageUpload .img_input_frame").data("delectList");
+                            if ($del_list != null) {
+                                co.File.DeleteFileById({
+                                    sid: data.id,
+                                    type: 2,
+                                    fid: $del_list,
+                                }).done(function (result) {
+                                    if (result.success) delimg_success = 1
+                                    else delimg_success = -1
                                 });
-                            } else img_success = 1;
+                            } else delimg_success = 1
 
-                            var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
-                            if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null) {
-                                var formData = new FormData();
-                                formData.append("files", $over_file.data("file").File);
-                                formData.append("type", 3);
-                                formData.append("sid", data.id);
-                                formData.append("serno", 500);
-                                co.File.Upload(formData).done(function (result) {
-                                    if (result.success) overimg_success = 1;
-                                    else overimg_success = -1;
+                            var $over_del_list = $("#OverImageUpload .img_input_frame").data("delectList");
+                            if ($over_del_list != null) {
+                                co.File.DeleteFileById({
+                                    sid: data.id,
+                                    type: 3,
+                                    fid: $over_del_list,
+                                }).done(function (result) {
+                                    if (result.success) deloverimg_success = 1
+                                    else deloverimg_success = -1
                                 });
-                            } else overimg_success = 1;
+                            } else deloverimg_success = 1
+                            const del_timmer = function () {
+                                if (deliconimg_success != 0 && delimg_success != 0 && deloverimg_success != 0) {
+                                    if (deliconimg_success == 1) {
+                                        var $file = $("#IconImageUpload .img_input_frame > .img_input");
+                                        if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
+                                            var formData = new FormData();
+                                            formData.append("files", $file.data("file").File);
+                                            formData.append("type", 9);
+                                            formData.append("sid", data.id);
+                                            formData.append("serno", 500);
+                                            co.File.Upload(formData).done(function (result) {
+                                                if (result.success) iconimg_success = 1;
+                                                else iconimg_success = -1;
+                                            });
+                                        } else iconimg_success = 1;
+                                    } else iconimg_success = -1;
 
-                            const timmer = function () {
-                                if (ico_success != 0 && img_success != 0 && overimg_success != 0) {
-                                    $("#IconImageUpload").ImageUploadModalClear();
-                                    $("#ImageUpload").ImageUploadModalClear();
-                                    $("#OverImageUpload").ImageUploadModalClear();
-                                    menuReload(menuEditor, myOffcanvas);
-                                    if (!result.success) co.sweet.error(result.error);
-                                    else {
-                                        if (ico_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
-                                        else co.sweet.success("新增成功");
+                                    if (delimg_success == 1) {
+                                        var $file = $("#ImageUpload .img_input_frame > .img_input");
+                                        if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
+                                            var formData = new FormData();
+                                            formData.append("files", $file.data("file").File);
+                                            formData.append("type", 2);
+                                            formData.append("sid", data.id);
+                                            formData.append("serno", 500);
+                                            co.File.Upload(formData).done(function (result) {
+                                                if (result.success) img_success = 1;
+                                                else img_success = -1;
+                                            });
+                                        } else img_success = 1;
+                                    } else img_success = -1;
+
+                                    if (deloverimg_success == 1) {
+                                        var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
+                                        if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
+                                            var formData = new FormData();
+                                            formData.append("files", $over_file.data("file").File);
+                                            formData.append("type", 3);
+                                            formData.append("sid", data.id);
+                                            formData.append("serno", 500);
+                                            co.File.Upload(formData).done(function (result) {
+                                                if (result.success) overimg_success = 1;
+                                                else overimg_success = -1;
+                                            });
+                                        } else overimg_success = 1;
+                                    } else overimg_success = -1;
+
+                                    const timmer = function () {
+                                        if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
+                                            menuReload(menuEditor, myOffcanvas);
+                                            $("#IconImageUpload").ImageUploadModalClear();
+                                            $("#ImageUpload").ImageUploadModalClear();
+                                            $("#OverImageUpload").ImageUploadModalClear();
+                                            if (!result.success) co.sweet.error(result.error);
+                                            else {
+                                                if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
+                                                else co.sweet.success("新增成功");
+                                            }
+                                        } else setTimeout(timmer, 100);
                                     }
-                                } else setTimeout(timmer, 100);
-                            };
-                            setTimeout(timmer, 100);
-                        }
-                    });
-                },
-                update: function (data) {
-                    let check = false;
-                    let massage = "";
-                    if (data.linkUrl == "" && data.routerName == "") {
-                        massage = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>必須</span>填寫其中之一";
-                    } else if (data.linkUrl != "" && data.routerName != "") {
-                        massage = "【路徑名稱】與【連結】<span class='text-danger font-weight-bold'>僅能</span>填寫其中之一";
-                    } else check = true;
-                    if (check) {
-                        co.WebMesnus.createOrEdit(data).done(function (result) {
-                            if (!result.success) co.sweet.error(result.error);
-                            else {
-                                var iconimg_success = 0, img_success = 0, overimg_success = 0, deliconimg_success = 0, delimg_success = 0, deloverimg_success = 0;
-
-                                var $icon_del_list = $("#IconImageUpload .img_input_frame").data("delectList");
-                                if ($icon_del_list != null) {
-                                    co.File.DeleteFileById({
-                                        sid: data.id,
-                                        type: 9,
-                                        fid: $icon_del_list,
-                                    }).done(function (result) {
-                                        if (result.success) deliconimg_success = 1
-                                        else deliconimg_success = -1
-                                        data.IconUrl = "";
-                                        data.IconId = "";
-                                    });
-                                } else deliconimg_success = 1
-
-                                var $del_list = $("#ImageUpload .img_input_frame").data("delectList");
-                                if ($del_list != null) {
-                                    co.File.DeleteFileById({
-                                        sid: data.id,
-                                        type: 2,
-                                        fid: $del_list,
-                                    }).done(function (result) {
-                                        if (result.success) delimg_success = 1
-                                        else delimg_success = -1
-                                    });
-                                } else delimg_success = 1
-
-                                var $over_del_list = $("#OverImageUpload .img_input_frame").data("delectList");
-                                if ($over_del_list != null) {
-                                    co.File.DeleteFileById({
-                                        sid: data.id,
-                                        type: 3,
-                                        fid: $over_del_list,
-                                    }).done(function (result) {
-                                        if (result.success) deloverimg_success = 1
-                                        else deloverimg_success = -1
-                                    });
-                                } else deloverimg_success = 1
-                                const del_timmer = function () {
-                                    if (deliconimg_success != 0 && delimg_success != 0 && deloverimg_success != 0) {
-                                        if (deliconimg_success == 1) {
-                                            var $file = $("#IconImageUpload .img_input_frame > .img_input");
-                                            if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
-                                                var formData = new FormData();
-                                                formData.append("files", $file.data("file").File);
-                                                formData.append("type", 9);
-                                                formData.append("sid", data.id);
-                                                formData.append("serno", 500);
-                                                co.File.Upload(formData).done(function (result) {
-                                                    if (result.success) iconimg_success = 1;
-                                                    else iconimg_success = -1;
-                                                });
-                                            } else iconimg_success = 1;
-                                        } else iconimg_success = -1;
-
-                                        if (delimg_success == 1) {
-                                            var $file = $("#ImageUpload .img_input_frame > .img_input");
-                                            if (typeof ($file.data("file")) != "undefined" && $file.data("file") != null && $file.data("file").File != null) {
-                                                var formData = new FormData();
-                                                formData.append("files", $file.data("file").File);
-                                                formData.append("type", 2);
-                                                formData.append("sid", data.id);
-                                                formData.append("serno", 500);
-                                                co.File.Upload(formData).done(function (result) {
-                                                    if (result.success) img_success = 1;
-                                                    else img_success = -1;
-                                                });
-                                            } else img_success = 1;
-                                        } else img_success = -1;
-
-                                        if (deloverimg_success == 1) {
-                                            var $over_file = $("#OverImageUpload .img_input_frame > .img_input");
-                                            if (typeof ($over_file.data("file")) != "undefined" && $over_file.data("file") != null && $over_file.data("file").File != null) {
-                                                var formData = new FormData();
-                                                formData.append("files", $over_file.data("file").File);
-                                                formData.append("type", 3);
-                                                formData.append("sid", data.id);
-                                                formData.append("serno", 500);
-                                                co.File.Upload(formData).done(function (result) {
-                                                    if (result.success) overimg_success = 1;
-                                                    else overimg_success = -1;
-                                                });
-                                            } else overimg_success = 1;
-                                        } else overimg_success = -1;
-
-                                        const timmer = function () {
-                                            if (iconimg_success == 1 && img_success == 1 && overimg_success == 1) {
-                                                menuReload(menuEditor, myOffcanvas);
-                                                $("#IconImageUpload").ImageUploadModalClear();
-                                                $("#ImageUpload").ImageUploadModalClear();
-                                                $("#OverImageUpload").ImageUploadModalClear();
-                                                if (!result.success) co.sweet.error(result.error);
-                                                else {
-                                                    if (iconimg_success == -1 || img_success == -1 || overimg_success == -1) co.sweet.erro("圖片上傳失敗");
-                                                    else co.sweet.success("新增成功");
-                                                }
-                                            } else setTimeout(timmer, 100);
-                                        }
-                                        setTimeout(timmer, 100);
-                                    } else setTimeout(del_timmer, 100);
-                                }
-                                setTimeout(del_timmer, 100);
+                                    setTimeout(timmer, 100);
+                                } else setTimeout(del_timmer, 100);
                             }
-                        });
-                    } else {
-                        co.sweet.error("資料錯誤", massage);     
-                    }
-                },
-                save: function () {
-
-                },
-                drop: function (cEl) {
-                    let saveList = [];
-                    let ps = cEl.parents('li');
-                    let root = ps.last();
-                    let fa = ps.first();
-                    let ul = cEl.parents('ul');
-                    let fK_TopNodeId, fK_RootNodeId;
-                    let isAdd = false;
-                    if (fa.length == 0) {
-                        fK_TopNodeId = null;
-                    } else {
-                        fK_TopNodeId = fa.data("id");
-                    }
-                    if (root.length == 0) {
-                        fK_RootNodeId = null;
-                    } else {
-                        fK_RootNodeId = root.data("id");
-                    }
-                    if (cEl.data("fK_TopNodeId") != fK_TopNodeId || cEl.data("fK_RootNodeId") != fK_RootNodeId) {
-                        cEl.data({
-                            "fK_TopNodeId": fK_TopNodeId,
-                            "fK_RootNodeId": fK_RootNodeId
-                        });
-                        isAdd = true;
-                        saveList.push($(cEl).data());
-                    }
-
-                    ul.children("li").each(function (index, element) {
-                        var s = $(element).data("serNO");
-                        console.log(s, index + 1, element);
-                        if (s != (index + 1)) {
-                            /*console.log(element, s, (index + 1));*/
-                            s = index + 1;
-                            $(element).data("serNO", s);
-                            if ($(element).data("id") != cEl.data("id")) saveList.push($(element).data());
-                            else if (!isAdd) saveList.push($(element).data());
+                            setTimeout(del_timmer, 100);
                         }
                     });
-                    co.WebMesnus.updateLevelAndSerNo(saveList).done(function (result) {
-                        if (!result.success) co.sweet.error(result.error);
-                    });
-                },
-                page: function (data) {
-                    $("#gjs").data("id", data.id);
-                    $("#gjs").removeClass("d-none");
-                    $("#gjs + .emptyList").addClass("d-none");
-                    co.WebMesnus.getConten(data.id).done(function (result) {
-                        if (result.success) {
-                            var html = co.Data.HtmlDecode(result.conten.saveHtml);
-                            co.Grapes.setEditor(editor, html, result.conten.saveCss);
-                            co.Grapes.setFile(editor, data.id, 1);
-                            $("body").addClass("grapesEdit");
-                            $("#TopLine .title").text(data.text);
-                            myOffcanvas.hide();
-                        } else {
-                            co.sweet.error(result.error);
-                        }
-                    });
+                } else {
+                    co.sweet.error("資料錯誤", massage);
                 }
+            },
+            setPower: function (data) {
+                $("#PermissionDetailsModal").setData({ pageId: data.id, title: data.text, type: 0 }).modal("show");
+            },
+            drop: function (cEl) {
+                let saveList = [];
+                let ps = cEl.parents('li');
+                let root = ps.last();
+                let fa = ps.first();
+                let ul = cEl.parents('ul');
+                let fK_TopNodeId, fK_RootNodeId;
+                let isAdd = false;
+                if (fa.length == 0) {
+                    fK_TopNodeId = null;
+                } else {
+                    fK_TopNodeId = fa.data("id");
+                }
+                if (root.length == 0) {
+                    fK_RootNodeId = null;
+                } else {
+                    fK_RootNodeId = root.data("id");
+                }
+                if (cEl.data("fK_TopNodeId") != fK_TopNodeId || cEl.data("fK_RootNodeId") != fK_RootNodeId) {
+                    cEl.data({
+                        "fK_TopNodeId": fK_TopNodeId,
+                        "fK_RootNodeId": fK_RootNodeId
+                    });
+                    isAdd = true;
+                    saveList.push($(cEl).data());
+                }
+
+                ul.children("li").each(function (index, element) {
+                    var s = $(element).data("serNO");
+                    console.log(s, index + 1, element);
+                    if (s != (index + 1)) {
+                        /*console.log(element, s, (index + 1));*/
+                        s = index + 1;
+                        $(element).data("serNO", s);
+                        if ($(element).data("id") != cEl.data("id")) saveList.push($(element).data());
+                        else if (!isAdd) saveList.push($(element).data());
+                    }
+                });
+                co.WebMesnus.updateLevelAndSerNo(saveList).done(function (result) {
+                    if (!result.success) co.sweet.error(result.error);
+                });
+            },
+            page: function (data) {
+                $("#gjs").data("id", data.id);
+                $("#gjs").removeClass("d-none");
+                $("#gjs + .emptyList").addClass("d-none");
+                co.WebMesnus.getConten(data.id).done(function (result) {
+                    if (result.success) {
+                        var html = co.Data.HtmlDecode(result.conten.saveHtml);
+                        co.Grapes.setEditor(editor, html, result.conten.saveCss);
+                        co.Grapes.setFile(editor, data.id, 1);
+                        $("body").addClass("grapesEdit");
+                        $("#TopLine .title").text(data.text);
+                        myOffcanvas.hide();
+                    } else {
+                        co.sweet.error(result.error);
+                    }
+                });
             }
+        }
+    };
+    co.PowerManagement.GetPermission().done(function (permission) {
+        if (!permission.superManager) delete editorStting.on.setPower;
+        var menuEditor = new MenuEditor('myEditor', editorStting);
+        $('#offcanvasSite').on('show.bs.offcanvas', function () {
+            closeEdit();
+        });
+        $('#offcanvasSite').on("click", ".btn-close", function (e) {
+            e.preventDefault();
+            if ($("#offcanvasSite.offcanvas-lg").length > 0) closeEdit();
+            else myOffcanvas.hide();
+        });
+        $("#btnExtend").on("click", function () {
+            $("#IconImageUpload").ImageUploadModalClear();
+            $("#ImageUpload").ImageUploadModalClear();
+            $("#OverImageUpload").ImageUploadModalClear();
+            openEditForm();
+            $('#frmEdit [name="id"]').val(0);
+            $("#btnRefresh,#btnAdd").removeClass("d-none");
+            $("#btnUpdate").addClass("d-none");
+            $("#btnRefresh").trigger("click");
+            $("#MenuEditorForm>.card-header>.title").text("新增選單");
+            $("#MenuEditorForm>.card-header>a").addClass("d-none");
         });
 
+        menuReload(menuEditor, myOffcanvas);
+    });
     var openEditForm = function () {
         if ($('#frmEdit [name="id"]').val() == 0) $("#btnClear").addClass("d-none");
         $("#offcanvasSite").addClass("offcanvas-lg");
@@ -355,23 +378,6 @@
         $("#offcanvasSite").removeClass("offcanvas-lg");
         $("#MenuEditorForm").addClass("d-none");
     }
-    $('#offcanvasSite').on('show.bs.offcanvas', function () {
-        closeEdit();
-    });
-    $("#btnExtend").on("click", function () {
-        $("#IconImageUpload").ImageUploadModalClear();
-        $("#ImageUpload").ImageUploadModalClear();
-        $("#OverImageUpload").ImageUploadModalClear();
-        openEditForm();
-        $('#frmEdit [name="id"]').val(0);
-        $("#btnRefresh,#btnAdd").removeClass("d-none");
-        $("#btnUpdate").addClass("d-none");
-        $("#btnRefresh").trigger("click");
-        $("#MenuEditorForm>.card-header>.title").text("新增選單");
-        $("#MenuEditorForm>.card-header>a").addClass("d-none");
-    });
-
-    menuReload(menuEditor, myOffcanvas);
     /*$(".material-symbols-outlined").each(function () {
         console.log(`"${$(this).text().trim()}"`);
     });*/

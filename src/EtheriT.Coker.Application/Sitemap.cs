@@ -31,7 +31,7 @@ namespace EtheriT.Coker.Application
         public async Task<Urlset> GetUrlsetAsync() {
             SiteMapDto Sitemap = new SiteMapDto();
             var header = await db.JsonObjects.Where(e => e.Type == (int)JsonObjectEnum.主選單).Where(e => e.FK_WebsiteId == siteId).FirstOrDefaultAsync();
-            if (header != null && string.IsNullOrEmpty(header.Json))
+            if (header != null && !string.IsNullOrEmpty(header.Json))
             {
                 var list = JsonConvert.DeserializeObject<List<MenuItemDto>>(header.Json);
                 if(list!=null && list.Any()) Sitemap.Maps = list;
@@ -40,6 +40,11 @@ namespace EtheriT.Coker.Application
         }
         private async Task<Urlset> GetUrlsetAsync(SiteMapDto Maps) {
             Urlset urlset = new Urlset();
+            urlset.Urls.Add(new UrlDto { 
+                loc = siteUrl,
+                priority = "1.00",
+
+            });
             setWebMenuUrl(Maps.Maps, urlset.Urls, 0.9);
             await setArticleUrl(urlset.Urls);
             await setProductUrl(urlset.Urls);
@@ -52,13 +57,16 @@ namespace EtheriT.Coker.Application
             {
                 if (!string.IsNullOrEmpty(map.RouterName))
                 {
-                    Urls.Add(new UrlDto
+                    if (map.hasContan && map.RouterName != "home")
                     {
-                        loc = $"{siteUrl}/{orgName}/{map.RouterName}".Replace("//", "/"),
-                        priority = priority.ToString(),
-                        lastmod = (map.LastModificationTime ?? map.CreationTime).ToString("yyyy/MM/dd HH:mm:ss"),
-                        changefreq = "monthly"
-                    });
+                        Urls.Add(new UrlDto
+                        {
+                            loc = $"{siteUrl}/{orgName}/{map.RouterName}".Replace("//", "/").Replace(":/", "://"),
+                            priority = priority.ToString(),
+                            lastmod = (map.LastModificationTime ?? map.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                            changefreq = "monthly"
+                        });
+                    }
                     if (map.Children!=null && map.Children.Any()) setWebMenuUrl(map.Children, Urls, priority - 0.1);
                 }
             });
@@ -69,9 +77,9 @@ namespace EtheriT.Coker.Application
             Arti.ForEach(a => {
                 Urls.Add(new UrlDto
                 {
-                    loc = $"{siteUrl}/{orgName}/Search/Article/{a.Id}".Replace("//", "/"),
+                    loc = $"{siteUrl}/{orgName}/Search/Article/{a.Id}".Replace("//", "/").Replace(":/", "://"),
                     priority = "1.0",
-                    lastmod = (a.LastModificationTime ?? a.CreationTime).ToString("yyyy/MM/dd HH:mm:ss"),
+                    lastmod = (a.LastModificationTime ?? a.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     changefreq = "never"
                 });
             });
@@ -82,9 +90,9 @@ namespace EtheriT.Coker.Application
             prods.ForEach(p => {
                 Urls.Add(new UrlDto
                 {
-                    loc = $"{siteUrl}/{orgName}/Search/Product/{p.Id}".Replace("//", "/"),
+                    loc = $"{siteUrl}/{orgName}/Search/Product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
                     priority = "1.0",
-                    lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy/MM/dd HH:mm:ss"),
+                    lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     changefreq = "monthly"
                 });
             });
@@ -95,9 +103,9 @@ namespace EtheriT.Coker.Application
             Techs.ForEach(t => {
                 Urls.Add(new UrlDto
                 {
-                    loc = $"{siteUrl}/{orgName}/Search/Product/{t.Id}".Replace("//", "/"),
+                    loc = $"{siteUrl}/{orgName}/Search/Product/{t.Id}".Replace("//", "/").Replace(":/", "://"),
                     priority = "0.5",
-                    lastmod = (t.LastModificationTime ?? t.CreationTime).ToString("yyyy/MM/dd HH:mm:ss"),
+                    lastmod = (t.LastModificationTime ?? t.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
                     changefreq = "monthly"
                 });
             });

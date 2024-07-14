@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public bool VisibleHeader { get; set; }
         public bool VisibleFooter { get; set; }
         public bool VisibleTitle { get; set; }
+        public string PageView {  get; set; }
         public DateTime? LastModificationTime { get; set; }
         public HoldPageNameEnum holdPage { get; set; }
     }

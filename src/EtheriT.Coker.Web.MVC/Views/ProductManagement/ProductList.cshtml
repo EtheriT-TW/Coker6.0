@@ -99,6 +99,7 @@
                     .DataSource(d => d.RemoteController().Key("Id")
                     .LoadUrl("/api/Product/GetAllList").LoadMethod("Get")
                     )
+                    .HeaderFilter(headerFilter => headerFilter.Visible(true))
                     .RemoteOperations(true)
                     .ColumnHidingEnabled(true)
                     .ShowBorders(true)
@@ -110,19 +111,20 @@
                     .Visible(true)
                     .Width(480)
                     .Placeholder("請輸入要搜尋的資料")
+                    .SearchVisibleColumnsOnly(true)
                     )
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Visible).Caption("是否顯示").Width(90);
+                        c.AddFor(e => e.Visible).Caption("是否顯示").AllowSearch(false).Width(90);
                         c.AddFor(e => e.Id).Caption("id").Width(50);
                         c.AddFor(e => e.Ser_No).Caption("排序").Width(50);
                         c.AddFor(e => e.ItemNo).Caption("銷貨編號");
                         c.AddFor(e => e.Title).Caption("商品名稱");
-                        c.AddFor(e => e.Price).Caption("價格");
-                        c.AddFor(e => e.StartTime).Caption("起始日期");
-                        c.AddFor(e => e.EndTime).Caption("結束日期");
-                        c.AddFor(e => e.Permanent).Caption("永久顯示").Width(90);
+                        c.AddFor(e => e.Price).Caption("價格").AllowSearch(false);
+                        c.AddFor(e => e.StartTime).Caption("起始日期").AllowSearch(false);
+                        c.AddFor(e => e.EndTime).Caption("結束日期").AllowSearch(false);
+                        c.AddFor(e => e.Permanent).Caption("永久顯示").AllowSearch(false).Width(90);
                         c.Add()
                         .Type(GridCommandColumnType.Buttons)
                         .Buttons(b =>
@@ -177,20 +179,46 @@
             </div>
 
             <form id="ProductForm" class="card-body needs-validation">
-                <div class="d-flex flex-row-reverse my-1">
-                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
-                        <input id="RemovedFromShelves" type="checkbox" name="RemovedFromShelves" class="selectedItem" checked value="true" />
-                        <label for="RemovedFromShelves" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
-                            <span class="material-symbols-outlined fs-2">open_in_new</span>
-                            <span class="material-symbols-outlined fs-2">open_in_new_off</span>
-                        </label>
+                <div class="row">
+                    <div class="col-2">
+                        <div class="form-check px-1 d-flex align-items-baseline">
+                            <label for="ProdStatus" class="col-5 col-xxl-4 form-label">商品狀態</label>
+                            <select name="ProdStatus" id="ProdStatus" class="form-select item-menu">
+                                @foreach (var status in Model.ProdStatus) { 
+                                    <option value="@((int)status)">@status.ToString()</option>
+                                }
+                            </select>
+                        </div>
                     </div>
-                    <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
-                        <input id="Visible" type="checkbox" name="Visible" class="selectedItem" checked value="true" />
-                        <label for="Visible" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="顯示">
-                            <span class="material-symbols-outlined fs-2">visibility</span>
-                            <span class="material-symbols-outlined fs-2">visibility_off</span>
-                        </label>
+                    <div class="col-2">
+                        <div class="sort input-group mb-3">
+                            <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                                <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
+                            </div>
+                            <input class="form-control disableHidenValue rounded" type="number" name="serNo" aria-label="Input Sort of Article" disabled="disabled" required>
+                            <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
+                                <input class="form-check-input" id="SortCheck" name="SortCheck" type="checkbox" value="">
+                                <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex flex-row-reverse my-1">
+                            <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                <input id="RemovedFromShelves" type="checkbox" name="RemovedFromShelves" class="selectedItem" checked value="true" />
+                                <label for="RemovedFromShelves" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="上架中">
+                                    <span class="material-symbols-outlined fs-2">open_in_new</span>
+                                    <span class="material-symbols-outlined fs-2">open_in_new_off</span>
+                                </label>
+                            </div>
+                            <div class="align-self-center border-0 btn d-flex pb-0 pt-0">
+                                <input id="Visible" type="checkbox" name="Visible" class="selectedItem" checked value="true" />
+                                <label for="Visible" class="bg-transparent border-0 mb-0 d-flex align-self-center noselect" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="顯示">
+                                    <span class="material-symbols-outlined fs-2">visibility</span>
+                                    <span class="material-symbols-outlined fs-2">visibility_off</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="date input-group mb-3">
@@ -201,16 +229,6 @@
                     <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
                         <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
                         <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
-                    </div>
-                </div>
-                <div class="sort input-group mb-3">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
-                    </div>
-                    <input class="form-control rounded" type="number" name="serNo" aria-label="Input Sort of Article" disabled="disabled" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                        <input class="form-check-input" id="SortCheck" name="SortCheck" type="checkbox" value="">
-                        <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
                     </div>
                 </div>
                 <div class="itemNo border mb-3 p-2 rounded">

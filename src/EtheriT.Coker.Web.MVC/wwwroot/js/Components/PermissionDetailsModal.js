@@ -9,6 +9,7 @@
             const $temp = $("#chooice");
             const $Roles = $self.find("#chooiceRoles .list");
             const $Users = $self.find("#chooiceUsers .list");
+            $("#PermissionDetailsModal .typeName").text(o.title);
             co.PowerManagement.GetPagePermission(o).done(function (result) {
                 if (result.success) {
                     $Roles.empty();

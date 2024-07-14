@@ -13,7 +13,9 @@
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
     ViewData["XSRF-TOKEN"] = Model.token;
-    ViewData["Locale"] = Model.locale;
+	ViewData["Locale"] = Model.locale;
+	ViewData["PageView"] = Model.PageData.PageView;
+	ViewData["PageView"] = Model.PageData.PageView;
     switch (Model.Level)
     {
         case WebsiteLevelEnum.會員:

@@ -12,10 +12,13 @@
     ViewData["PageTagNameName"] = $"{Model.PageData.Title} - 【{Model.PageData.SiteName}】";
     ViewData["Description"] = Model.PageData.Description;
     ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["Root"] = Model.root;
     ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
     ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
     ViewData["XSRF-TOKEN"] = Model.token;
     ViewData["Locale"] = Model.locale;
+    ViewData["PageView"] = Model.PageData.PageView;
+    ViewData["Id"] = Model.PageData.Id;
     switch (Model.Level)
     {
         case WebsiteLevelEnum.會員:

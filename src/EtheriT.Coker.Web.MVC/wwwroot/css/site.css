@@ -102,6 +102,10 @@ a {
             display: none;
         }
 
+.form-control.disableHidenValue:disabled {
+    color: transparent;
+}
+
 #switchApp .small.weight-300.text-muted {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -2299,12 +2303,6 @@ pre {
 
 .form-control::placeholder {
     color: #ccc;
-    opacity: 1;
-}
-/* line 51, ../../scss/bootstrap/_forms.scss */
-
-.form-control:disabled, .form-control[readonly] {
-    background-color: #e9ecef;
     opacity: 1;
 }
 /* line 60, ../../scss/bootstrap/_forms.scss */

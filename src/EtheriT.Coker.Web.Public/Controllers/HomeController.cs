@@ -80,6 +80,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 Level = defaultData.Level,
                 locale = defaultData.locale,
 				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+                PageView = "Home",
                 storeSet = new StoreSetFrontDto
                 {
                     GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""

@@ -8,11 +8,12 @@ var PageReady = function () {
     var number = document.getElementById("number");
     var symbol = document.getElementById("symbol");
     var length = document.getElementById("length");
+    const lastViewPage = $.cookie("lastViewPage") || co.Data.DefauleUrl;
 
     if (!!$.cookie("token")) {
         co.User.Check().done(function (result) {
             if (result.success)
-                location.href = $.cookie("lastViewPage") || co.Data.DefauleUrl;
+                location.href = lastViewPage;
         });
     }
 
@@ -23,7 +24,14 @@ var PageReady = function () {
             Password: $("#password").val()
         }).done(function (result) {
             if (result.success) {
-                location.href = co.Data.DefauleUrl;
+                if (isNaN(co.Cookie.Get("LastWebSite"))) location.href = lastViewPage;
+                else {
+                    co.WebSite.exchange(co.Cookie.Get("LastWebSite")).done(function (result) {
+                        if (result.success) {
+                            location.href = lastViewPage;
+                        }
+                    });
+                }
             } else alert(result.error);
         });
     });

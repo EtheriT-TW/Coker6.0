@@ -42,16 +42,36 @@
                     <form id="frmEdit" class="form-horizontal needs-validation" novalidate>
                         <input type="hidden" class="item-menu" name="id" />
                         <input type="hidden" id="serNO" name="serNO" value="500" class="item-menu">
-                        <div class="form-group form-check">
-                            <label for="Title">標題</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
-                                <div class="input-group-append">
-                                    <button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>
-                                </div>
-                                <div class="invalid-feedback">標題為必填</div>
+                        <div class="row">
+                            <div class="col form-group form-check">
+                                <label for="classType">分類</label>
+                                <select name="fK_TopNodeId" id="classType" class="form-select item-menu"></select>
                             </div>
-                            <input type="hidden" name="icon" class="item-menu">
+                            <div class="col form-group form-check pr-1 ml-3">
+                                <label for="Visible">是否顯示</label>
+                                <select name="visible" id="Visible" class="form-select item-menu">
+                                    <option value="true">是</option>
+                                    <option value="false" selected>否</option>
+                                </select>
+                            </div>
+                            <div class="col form-group form-check ml-3">
+                                <label for="ser_no">排序</label>
+                                <input type="text" name="ser_no" id="ser_no" class="form-control item-menu" placeholder="請輸入排序" required />
+                                <div class="invalid-feedback">排序為必填</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col form-group form-check">
+                                <label for="Title">標題</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
+                                    <div class="input-group-append">
+                                        <button type="button" id="myEditor_icon" class="btn btn-outline-secondary"></button>
+                                    </div>
+                                    <div class="invalid-feedback">標題為必填</div>
+                                </div>
+                                <input type="hidden" name="icon" class="item-menu">
+                            </div>
                         </div>
                     </form>
                 </div>

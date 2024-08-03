@@ -12,7 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         限量 = 1,
         售完 = 2,
         訂製 = 3,
-        促銷 = 4,
-        清倉 = 5
+        特惠 = 4,
+        新品 = 5
     }
 }

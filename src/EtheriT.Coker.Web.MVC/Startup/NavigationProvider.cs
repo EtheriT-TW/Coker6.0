@@ -227,25 +227,32 @@ namespace EtheriT.Coker.Web.MVC.Startup
 					},
 					new JobMenu{
 						PageName="StoreSettings",
-						Title="商店設定",
+						Title="商店管理",
 						Controller="Dashboard",
 						Action="Index",
 						Icon="store",
 						CollapseId="#StoreSettings",
 						jobItemModels= new List<JobMenu> {
-							new JobMenu{
+                            new JobMenu{
+                                PageName="StoreSet",
+                                Title="商店設定",
+                                Controller="StoreSettings",
+                                Action="Index",
+                                Icon="shopping_cart",
+                            },
+                            new JobMenu{
 								PageName="FreightSettings",
 								Title="運費設定",
 								Controller="StoreSettings",
-								Action="Index",
-								Icon="",
+								Action="FreightSettings",
+								Icon="local_shipping",
 							},
 							new JobMenu{
 								PageName="PaymentSettings",
 								Title="付款設定",
-								Controller="Dashboard",
-								Action="Index",
-								Icon="",
+								Controller="StoreSettings",
+								Action="PaymentSettings",
+								Icon="credit_card",
 							}
 						}
 					},

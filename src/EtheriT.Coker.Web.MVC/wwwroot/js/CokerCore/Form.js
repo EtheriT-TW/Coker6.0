@@ -1,5 +1,17 @@
 ﻿Coker.extend({
     Form: {
+        set: function (id,method) {
+            const form = document.getElementById(id);
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                let check = form.checkValidity();
+                if (check) {
+                    method();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        },
         insertData: function (obj, $self) {
             if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
             else if (typeof ($self) == "string") $self = $($self);
@@ -69,9 +81,12 @@
                                         $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
                                         break;
                                     case "checkbox":
-                                        $e.prop("checked", obj[key]);
+                                        if (Array.isArray(obj[key])) {
+                                            $(obj[key]).each(function (index, element) {
+                                                $self.find(`[name="${key}"][value="${element}"]`).prop("checked", true);
+                                            });
+                                        } else $self.find(`[name="${key}"][value="${obj[key]}"]`).prop("checked", true);
                                         break;
-
                                     case "datetime-local":
                                         $e.val(co.Date.GetDateTimeStr(obj[key]));
                                         break;
@@ -88,12 +103,13 @@
                 }// else console.log(key);
             }
         },
-        getJson: function (id) {
+        getJson: function (id, isArrayType) {
             let form = document.getElementById(id);
             let formFields = new FormData(form);
+            let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
             let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
                 const val = formFields.getAll(key)
-                return [key, val.length > 1 ? val : val.pop()]
+                return [key, (isArray || val.length > 1) ? val : val.pop()]
             }));
             let exItems = $(`#${id}`).find(`div[name]`);
             exItems.each(function () {
@@ -107,7 +123,37 @@
                         break;
                 }
             });
+            if (formDataObject.startEndDate) {
+                const d = formDataObject.startEndDate.split("~");
+                formDataObject.StartTime = d[0].trim();
+                if (d.length > 1) formDataObject.EndTime = d[1].trim();
+            }
             return formDataObject;
+        },
+        getJsonByFieldset: function (id, isArrayType) {
+            const fieldset = document.getElementById(id);
+            const isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+            const elements = fieldset.querySelectorAll('input, select, textarea');
+            const fieldsetData = {};
+            elements.forEach(element => {
+                switch (element.type) {
+                    case "checkbox":
+                        if (!fieldsetData[element.name]) {
+                            fieldsetData[element.name] = [];
+                        }
+                        if (element.checked) {
+                            fieldsetData[element.name].push(element.value);
+                        }
+                        break;
+                    case "select-multiple":
+                        fieldsetData[element.name] = Array.from(element.selectedOptions).map(option => option.value);
+                        break;
+                    default:
+                        fieldsetData[element.name] = element.value;
+                        break;
+                }
+            });
+            return fieldsetData;
         },
         init: function (id, fun) {
             const form = document.getElementById(id);
@@ -126,7 +172,6 @@
             const form = document.getElementById(id);
             const $items = $(`[data-form-type]`);
             _c.Form.insertData(_c.Form.getJson(id), `#${id}`);
-            console.log(_c.Form.getJson(id));
             $items.each(function (i, e) {
                 const $e = $(e);
                 switch ($e.data("form-type")) {

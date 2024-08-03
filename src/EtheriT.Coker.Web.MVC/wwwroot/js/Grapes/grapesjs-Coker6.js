@@ -304,24 +304,35 @@
     editor.DomComponents.addType('QA元件', {
         isComponent: el => el.classList?.contains('qa'),
         model: {
-            defaults: {
-                droppable: false,
-                copyable: false
-            },
             init() {
                 const self = this;
                 const ccid = self.ccid;
                 const c = $(".gjs-frame")[0].contentWindow.$;
-
                 window.setTimeout(function () {
                     const a = self.find("a.btn")[0];
                     const collapse = self.find(".collapse")[0];
-                    a.addAttributes({ "href": `#${ccid}_content`, "Title": "展開QA" })
+                    a.addAttributes({ "href": `#${ccid}_content`, "Title": "展開QA", "data-bs-toggle":"collapse" })
                     collapse.addAttributes({ "id": `${ccid}_content`});
                     c(`#${ccid} a`).attr({ "data-bs-toggle": `` });
                 }, 200)
             }
         },
+    });
+    editor.DomComponents.addType('QA元件鎖定版型', {
+        isComponent: el => {
+            const fa = $(el).parents(".qa");
+            return $(fa).length > 0 && (el.classList?.contains('collapse') || el.classList?.contains('card') || el.classList?.contains('fas') || el.classList?.contains('qa-bg'));
+        },
+        model: {
+            defaults: {
+                hoverable :false,
+                selectable:false,
+                droppable: false,
+                copyable: false,
+                removable: false,
+                editable: false,
+            }
+        }
     });
     //名片
     editor.DomComponents.addType('名片介紹', {
@@ -357,12 +368,13 @@
                 droppable: false,
                 copyable: false,
                 traits: [
-                    { name: 'data-strat-end-date', type: 'date-range', label: '起訖日期' },
+                    { name: 'data-dateRange', type: 'date-range', label: '起訖日期' },
                     { name: 'data-location', type: 'text', label: '地點', placeholder: '請輸入地點' },
                     { name: 'data-addr', type: 'text', label: '地址', placeholder: '請輸入地址' },
                     { name: 'data-link', type: 'text', label: '連結', placeholder: '請輸入連結' },
                     { name: 'data-organizer', type: 'text', label: '主辦單位', placeholder: '請輸入主辦單位' },
                     { name: 'data-a-organizer', type: 'text', label: '協辦單位', placeholder: '請輸入協辦單位' },
+                    { name: 'data-r-organizer', type: 'text', label: '執行單位', placeholder: '請輸入執行單位' },
                     { name: 'data-tel', type: 'text', label: '電話', placeholder: '請輸入電話' }
                 ]
             },
@@ -371,7 +383,8 @@
                 const setting = function () {
                     setTimeout(() => {
                         var content = $(".gjs-frame")[0].contentWindow.date_input_change;
-                        self.components(content(self.getId()));
+                        if (typeof (content) == "undefined") setting();
+                        else self.components(content(self.getId()));
                     }, 200);
                 }
                 self.on(`change:attributes`, setting);
@@ -386,19 +399,17 @@
             const self = this;
             const el = document.createElement('div');
             el.innerHTML = `
-              <div class="date-range_start-inputs">
-                <input type="date" class="date-range_strat-date" />
-              </div>
-              <div class="date-range_end-inputs">
-                <input type="date" class="date-range_end-date" />
+              <div class="date-range-inputs">
+                <input type="text" class="date-range" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" />
               </div>
             `;
+            const $d = $(el).find(".date-range");
+            co.Picker.Init($d);
+            $d.data('daterangepicker').setStartDate(Date.now);
+            $d.on("change", function () {
+                editor.getSelected().addAttributes({ "date-dateRange": this.value })
+            });
             return el;
-        },
-        onEvent({ elInput, component, event }) {
-            const inputstrat = elInput.querySelector('.date-range_strat-date');
-            const inputsend = elInput.querySelector('.date-range_end-date');
-            component.addAttributes({ "date-date-strat-date": inputstrat.value,"data-date-end": inputsend.value })
         }
     });
     //子頁內容區
@@ -630,61 +641,51 @@
     });
 
     //產生元件
-    const getCss = (selected) => {
-        const el = selected.getEl();
+    const getCssRules = (selected,myRule,top) => {
         const id = selected.getId();
-        const itemClass = el.classList;
-        const style = editor.CssComposer.getRule(`#${id}`);
-        const hoverStyle = editor.CssComposer.getRule(`#${id}:hover`);
-        let classCssStr = "";
-        $(itemClass).each(function () {
-            if (!!this) {
-                const myClass = this.toString();
-                const cStyle = editor.CssComposer.getRule(`.${myClass}`);
-                const cHoverStyle = editor.CssComposer.getRule(`.${myClass}:hover`);
-                if (cStyle) {
-                    classCssStr = `${classCssStr} ${cStyle.toCSS()}`;
-                }
-                if (cHoverStyle) classCssStr = `${classCssStr} ${cHoverStyle.toCSS()}`;
-            }
+        const itemClass = selected.getClasses();
+        const tagName = selected.get('tagName');
+        const cssComposer = editor.CssComposer;
+        const rules = cssComposer.getAll();
+        const relatedIdRules = rules.filter(rule => {
+            const ruleStr = rule.toCSS();
+            const hasIdOrTagName =
+                (itemClass.some(cls => ruleStr.includes(`.${cls}`)) && top.map(e => ruleStr.includes(e))) ||
+                ruleStr.includes(`#${id}`) ||
+                (ruleStr.includes(tagName) && top.map(e => ruleStr.includes(e)));
+            return hasIdOrTagName;
         });
-        if (style) {
-            if (hoverStyle) {
-                classCssStr = `${style.toCSS()} ${hoverStyle.toCSS()} ${classCssStr}`;
-            }
-            return classCssStr = `${style.toCSS()} ${classCssStr}`;
-        }
-        else {
-            return classCssStr;
-        }
+        co.Array.merge(myRule, relatedIdRules);
     }
 
-    const findComponentStyles = function (selected) {
-        let css = ''
+    const findComponentStyles = function (selected, myRule, top) {
         if (selected) {
             const childModel = selected.components().models
+            if (typeof (top) == "undefined") top = [];
             if (childModel) {
+                top.push(...selected.get('tagName'));
                 for (const model of childModel) {
-                    css = css + findComponentStyles(model)
+                    findComponentStyles(model, myRule, top)
                 }
-                return css + getCss(selected);
             }
-            else {
-                return getCss(selected);
-            }
+            getCssRules(selected, myRule,top);
         }
     }
     const createBlockTemplate = function (selected, name_blockId) {
         const blockId = name_blockId.blockId;
         const name = name_blockId.name;
-
+        const relatedRules = [];
         let elementHTML = $(selected.getEl().outerHTML).removeClass("gjs-selected")[0].outerHTML;
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `;
         let finalHtml = first_partHtml + second_partHtml;
         let icon = $('#NewBlockicon').val();
-        const blockCss = findComponentStyles(selected);
+        findComponentStyles(selected, relatedRules);
+        let blockCss = "";
+        relatedRules.forEach(rule => {
+            blockCss += rule.toCSS();
+        });
         const css = `<style>${blockCss}</style>`;
         const elementHtmlCss = finalHtml + css;
         const category = $('#ComponerTypeList>option:selected').text();
@@ -694,7 +695,8 @@
             icon: icon,
             type: $('#ComponerTypeList>option:selected').val(),
             Html: $('<div/>').text(finalHtml).html(),
-            css: blockCss
+            css: blockCss,
+            disp_opt: true
         }
         co.HtmlContent.AddUp(object).done(function (result) {
             if (result.success) {

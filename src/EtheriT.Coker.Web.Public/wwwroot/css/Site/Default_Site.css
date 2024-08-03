@@ -41,3 +41,23 @@ p {
 .modal-open {
     overflow: hidden;
 }
+
+body > .skiptranslate {
+    display: none;
+}
+
+.goog-logo-link {
+    display: none !important;
+}
+
+.goog-te-gadget {
+    color: transparent !important;
+}
+
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
+}
+
+a[href="https://translate.google.com"] {
+    display: none !important;
+}

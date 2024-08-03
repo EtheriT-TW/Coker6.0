@@ -48,19 +48,36 @@ namespace EtheriT.Coker.Application.StoreSet
             return output;
         }
 
-        public async Task<StoreSetResponseMessageDto> getAll(long StoreSetGroupId)
+        public async Task<StoreSetResponseMessageDto> getAll(List<long> StoreSetGroupId)
         {
             StoreSetResponseMessageDto output = new StoreSetResponseMessageDto();
-            var result = await db.StoreSetGroup
-                .Include(e => e.StoreSets.Where(s => !s.IsDeleted))
-                .Where(e => !e.IsDeleted)
-                .Where(e => e.Id == StoreSetGroupId)
-                .ToArrayAsync();
+            var result = from g in db.StoreSetGroup.Where(e => !e.IsDeleted && StoreSetGroupId.Contains(e.Id))
+                         select new StoreSetGroupOutputDto
+                         {
+                             Image = g.Image,
+                             Description = g.Description!,
+                             Title = g.Title,
+                             storeSets = (from s in db.StoreSet.Where(e => !e.IsDeleted && e.FK_StoreSetGroupId == g.Id).OrderBy(e => e.jobID)
+                                         select new StoreSetOutputDto { 
+                                            key = s.key,
+                                            name = s.name,
+                                            maxlength = s.maxlength,
+                                            memo = s.memo,
+                                            pattern = s.pattern,
+                                            type = (SeoSetDataTypeEnum)s.type!,
+                                            storeSetItemOutputDtos = (
+                                                from item in db.StoreSetItems.Where(e => !e.IsDeleted && e.FK_StoreSetId == s.Id)
+                                                select new StoreSetItemOutputDto { 
+                                                    Key = item.Key,
+                                                    Value = item.Value,
+                                                }
+                                            ).ToList()
+                                         }).ToList()
+                         };
             if (result != null)
             {
                 output.storeSets = mapper.Map<List<StoreSetGroupOutputDto>>(result);
                 output.Success = true;
-
             }
             else output.Message = "資料為空";
 
@@ -91,8 +108,15 @@ namespace EtheriT.Coker.Application.StoreSet
                     .Where(e => !e.IsDeleted)
                     .Where(e => e.StoreSet.FK_StoreSetGroupId == StoreSetGroupId)
                     .Where(e => e.FK_WebsiteId == websiteId)
-                    .ToArrayAsync();
-                output.storeSetDetails = mapper.Map<List<StoreSetDetailOutputDto>>(result);
+                    .ToListAsync();
+                output.storeSetDetails = (
+                    from s in result
+                    select new StoreSetDetailOutputDto
+                    {
+                        key = s.StoreSet.key,
+                        value = s.value!.Split(",").ToList().ConvertAll(e => e.Trim())
+                    }
+                ).ToList();
                 output.Success = true;
             }
             catch (Exception ex)
@@ -133,6 +157,7 @@ namespace EtheriT.Coker.Application.StoreSet
                     .Where(e => e.FK_WebsiteId == websiteId)
                     .FirstAsync();
                 output.detailItem = mapper.Map<StoreSetDetailOutputDto>(result);
+                output.detailItem.value = result.value!.Split(",").ToList().ConvertAll(e => e.Trim());
                 output.Success = true;
             }
             catch (Exception ex)
@@ -162,6 +187,7 @@ namespace EtheriT.Coker.Application.StoreSet
                         if (item != null)
                         {
                             mapper.Map(item, updateItems[i]);
+                            updateItems[i].value = String.Join(", ", item.value!.ToArray());
                         }
                     }
                     await db.SaveChangesAsync();
@@ -188,9 +214,9 @@ namespace EtheriT.Coker.Application.StoreSet
                         {
                             data.ForEach(e => {
                                 StoreSetDetailOutputDto? item = notHas.Find(n => n.key == e.StoreSet.key);
-                                if (item != null)
+                                if (item != null && item.value!=null)
                                 {
-                                    e.value = item.value;
+                                    e.value = String.Join(", ", item.value.ToArray());
                                 }
                             });
                             db.StoreSetDetail.AddRange(data);

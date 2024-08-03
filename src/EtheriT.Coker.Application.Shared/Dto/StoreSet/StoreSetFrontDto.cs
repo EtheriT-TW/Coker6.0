@@ -8,6 +8,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.StoreSet
 {
     public class StoreSetFrontDto
     {
-        public string GA4 { get; set; }
+        public string GA4 { get; set; } = string.Empty;
+        public string GoogleTranslate { get; set; } = string.Empty;
+        public string GTM { get; set; } = string.Empty;
     }
 }

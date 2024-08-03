@@ -22,5 +22,6 @@ namespace EtheriT.Coker.Core.Models
         public string jobID { get; set; }
         public List<StoreSetDetail> storeSetDetails { get; set; }
         public StoreSetGroup storeSetGroup { get; set; }
-	}
+        public List<storeSetItem>? storeSetItem { get; set; }
+    }
 }

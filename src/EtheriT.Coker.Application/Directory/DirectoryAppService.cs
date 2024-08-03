@@ -692,6 +692,7 @@ namespace EtheriT.Coker.Application.Directory
                                     .Where(e => e.Visible)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
+                                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                                     .Select(e => e.Id).ToList();
                             }
                             break;

@@ -49,8 +49,44 @@
             gtag('config', "@ViewData["GA4"]");
         </script>
     }
+    @if (ViewData["google.translate"] != null && !string.IsNullOrEmpty(ViewData["google.translate"]!.ToString() ?? ""))
+    {
+        <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        <script>
+            function googleTranslateElementInit() {
+                new google.translate.TranslateElement({
+                    pageLanguage: 'zh-TW', includedLanguages: '@ViewData["google.translate"]', gaTrack: true
+                }, 'google_translate_element');
+
+                $('select.goog-te-combo').attr('title', 'translate');
+
+            }
+        </script>
+    }
+    @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))
+    {
+        <!-- Google Tag Manager -->
+        <script>
+            (function (w, d, s, l, i) {
+                w[l] = w[l] || []; w[l].push({
+                    'gtm.start':
+                        new Date().getTime(), event: 'gtm.js'
+                }); var f = d.getElementsByTagName(s)[0],
+                    j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                        'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+            })(window, document, 'script', 'dataLayer', '@ViewData["GTM"]');</script>
+        <!-- End Google Tag Manager -->
+    }
 </head>
 <body onload="ready()" id="@ViewData["Layout"]">
+    @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))
+    {
+        <!-- Google Tag Manager (noscript) -->
+        <noscript>
+            <iframe src="https://www.googletagmanager.com/ns.html?id=@ViewData["GTM"]" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+        </noscript>
+        <!-- End Google Tag Manager (noscript) -->
+    }
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="@L.get("accesskeyJumpMain")">
         <span title="@L.get("accesskeyJumpMain")">@L.get("accesskeyJumpMain")</span>

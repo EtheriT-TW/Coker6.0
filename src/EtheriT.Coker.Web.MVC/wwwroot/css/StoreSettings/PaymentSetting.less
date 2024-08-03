@@ -1,0 +1,48 @@
+﻿.accordion-header {
+    &:not(.isused) {
+        .material-symbols-outlined {
+            display: none;
+        }
+    }
+}
+.accordion-body {
+    > fieldset {
+        > .d-flex {
+            margin: 1rem 0;
+
+            > label {
+                width: 10rem;
+                text-align: right;
+            }
+        }
+    }
+
+    > .d-flex {
+        margin: 1rem 0;
+
+        .d-flex {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+
+            .item {
+                display: flex;
+                padding: 0.5rem;
+                background-color: #eee;
+                border-radius: 3px;
+
+                label {
+                    margin: 0;
+                }
+
+                > .selectedItem {
+                    &:not(:checked) {
+                        & + label:hover {
+                            color: #000;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

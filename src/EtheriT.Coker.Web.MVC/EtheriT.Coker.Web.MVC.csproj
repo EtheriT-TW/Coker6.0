@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Remove="appsettings.EPZA.json" />
+    <Content Remove="wwwroot\css\Account\login.less" />
+    <Content Remove="wwwroot\css\Account\site.less" />
     <Content Remove="wwwroot\js\Account\Index.js" />
     <Content Remove="wwwroot\js\Components\ImageUploadModal.js" />
     <Content Remove="wwwroot\js\Components\PermissionDetailsModal.js" />
@@ -26,9 +28,27 @@
     <Content Remove="wwwroot\js\ContentManagement\Marquee.js" />
     <Content Remove="wwwroot\js\ContentManagement\RightSideAd.js" />
     <Content Remove="wwwroot\js\ContentManagement\Tag.js" />
+    <Content Remove="wwwroot\js\Dashboard\Index.js" />
+    <Content Remove="wwwroot\js\Grapes\grapesjs-Coker6.js" />
+    <Content Remove="wwwroot\js\Grapes\index.js" />
+    <Content Remove="wwwroot\js\Grapes\locale\tw.js" />
+    <Content Remove="wwwroot\js\MemberManagement\MemberData.js" />
+    <Content Remove="wwwroot\js\MemberManagement\SelfData.js" />
+    <Content Remove="wwwroot\js\Newsletter\Index.js" />
+    <Content Remove="wwwroot\js\Newsletter\Recipient.js" />
+    <Content Remove="wwwroot\js\OrderManagement\OrderList.js" />
+    <Content Remove="wwwroot\js\Page\ComponerEdit.js" />
+    <Content Remove="wwwroot\js\Page\Index.js" />
+    <Content Remove="wwwroot\js\PowerManagement\Index.js" />
     <Content Remove="wwwroot\js\ProductManagement\ProductList.js" />
     <Content Remove="wwwroot\js\ProductManagement\SpecSetting.js" />
     <Content Remove="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
+    <Content Remove="wwwroot\js\SearchManagement\CustSearch.js" />
+    <Content Remove="wwwroot\js\site.js" />
+    <Content Remove="wwwroot\js\StoreSettings\FreightSettings.js" />
+    <Content Remove="wwwroot\js\SystemManagement\SEOSetting.js" />
+    <Content Remove="wwwroot\js\SystemManagement\WebData.js" />
+    <Content Remove="wwwroot\js\vendor.js" />
     <Content Remove="wwwroot\js\CokerCore\**" />
   </ItemGroup>
   <ItemGroup>
@@ -42,6 +62,8 @@
     <None Include="appsettings.EPZA.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Include="wwwroot\css\Account\login.less" />
+    <None Include="wwwroot\css\Account\site.less" />
     <None Include="wwwroot\js\Account\Index.js" />
     <None Include="wwwroot\js\Components\ImageUploadModal.js" />
     <None Include="wwwroot\js\Components\PermissionDetailsModal.js" />
@@ -56,9 +78,27 @@
     <None Include="wwwroot\js\ContentManagement\Marquee.js" />
     <None Include="wwwroot\js\ContentManagement\RightSideAd.js" />
     <None Include="wwwroot\js\ContentManagement\Tag.js" />
+    <None Include="wwwroot\js\Dashboard\Index.js" />
+    <None Include="wwwroot\js\Grapes\grapesjs-Coker6.js" />
+    <None Include="wwwroot\js\Grapes\index.js" />
+    <None Include="wwwroot\js\Grapes\locale\tw.js" />
+    <None Include="wwwroot\js\MemberManagement\MemberData.js" />
+    <None Include="wwwroot\js\MemberManagement\SelfData.js" />
+    <None Include="wwwroot\js\Newsletter\Index.js" />
+    <None Include="wwwroot\js\Newsletter\Recipient.js" />
+    <None Include="wwwroot\js\OrderManagement\OrderList.js" />
+    <None Include="wwwroot\js\Page\ComponerEdit.js" />
+    <None Include="wwwroot\js\Page\Index.js" />
+    <None Include="wwwroot\js\PowerManagement\Index.js" />
     <None Include="wwwroot\js\ProductManagement\ProductList.js" />
     <None Include="wwwroot\js\ProductManagement\SpecSetting.js" />
     <None Include="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
+    <None Include="wwwroot\js\SearchManagement\CustSearch.js" />
+    <None Include="wwwroot\js\site.js" />
+    <None Include="wwwroot\js\StoreSettings\FreightSettings.js" />
+    <None Include="wwwroot\js\SystemManagement\SEOSetting.js" />
+    <None Include="wwwroot\js\SystemManagement\WebData.js" />
+    <None Include="wwwroot\js\vendor.js" />
     <None Include="wwwroot\js\CokerCore\**" />
   </ItemGroup>
   <ItemGroup>

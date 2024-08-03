@@ -24,6 +24,7 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly string ApplicationName;
+        private long websiteId;
         public ObjectTypeAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -40,10 +41,12 @@ namespace EtheriT.Coker.Application
             ObjectTypeGetAlldto response = new ObjectTypeGetAlldto();
             try
             {
-                long usetId = await loginUserData.GetUserId();
-                if (usetId == 0) throw new Exception("會員尚未登入");
-                var result = db.ObjectTypes.Where(e => !e.IsDeleted);
-                if (usetId != 1) result = result.Where(e => e.Id == 999);
+                bool othersOnly = await loginUserData.IsExtraSuperUser();
+                var user = await loginUserData.GetUser();
+                if (user == null) throw new Exception("會員尚未登入");
+                var result = db.ObjectTypes.Where(e => !e.IsDeleted && !(new List<long> {8,12 }).Contains(e.Id));
+                if (othersOnly) result = result.Where(e => e.Id == 999);
+                websiteId = await loginUserData.GetWebsiteId();
                 result = result.OrderBy(e => e.SerNo);
                 response.List = mapper.Map<List<ObjectTypeItemDto>>(result);
                 foreach (var e in response.List) {
@@ -62,6 +65,7 @@ namespace EtheriT.Coker.Application
             var reg = db.Html_Contents
                         .Where(e => e.Type == type)
                         .Where(e => !e.IsDeleted)
+                        .Where(e => e.Type != (int)ObjectTypeEnum.自訂 || e.FK_WebsiteId == websiteId)
                         .OrderBy(e => e.Ser_no);
             return mapper.Map<List<ObjectTypeItemDto>>(reg);
         }

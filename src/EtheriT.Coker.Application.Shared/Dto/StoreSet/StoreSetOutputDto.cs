@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,5 +16,6 @@ namespace EtheriT.Coker.Application.Dto.StoreSet
         public string? pattern { get; set; }
         public int? maxlength { get; set; }
         public SeoSetDataTypeEnum type { get; set; }
+        public List<StoreSetItemOutputDto> storeSetItemOutputDtos { get; set; } = new List<StoreSetItemOutputDto>();
     }
 }

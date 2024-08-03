@@ -420,6 +420,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSetGroup
+                {
+                    Id = 2,
+                    Title = "商店設定",
+                    Image = "",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 26, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
 
@@ -431,13 +440,144 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "Google Analytics(4)",
                     memo = "請輸入GOOGLE提供之驗證碼：G-xxxxxxxxxx",
                     FK_StoreSetGroupId = 1,
-                    type = 7,
+                    type = 1,
                     maxlength = 12,
-                    pattern = $@"\d{6}-\d",
+                    pattern = "^G-\\w+",
                     IsDeleted = false,
                     jobID = "S001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 2,
+                    key = "google.translate",
+                    name = "Google自動翻譯",
+                    memo = "請選擇需要翻譯的語系",
+                    FK_StoreSetGroupId = 1,
+                    type = 4,
+                    maxlength = 50,
+                    pattern = "(?=[a-z]{2}-?[A-Z]{0,2},?)+",
+                    IsDeleted = false,
+                    jobID = "S002",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 3,
+                    key = "storeBuyState",
+                    name = "商品販售設定",
+                    memo = "請選擇購物形式",
+                    FK_StoreSetGroupId = 2,
+                    type = 5,
+                    maxlength = 50,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 4,
+                    key = "storeMemo",
+                    name = "結帳備註",
+                    memo = "可以輸入一段話，在結帳的時候對客戶做一些小提醒。",
+                    FK_StoreSetGroupId = 2,
+                    type = 2,
+                    maxlength = 300,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 5,
+                    key = "GTM",
+                    name = "Google Tag Manager",
+                    memo = "請輸入GOOGLE提供之驗證碼：GTM-xxxxxxx",
+                    FK_StoreSetGroupId = 1,
+                    type = 1,
+                    maxlength = 12,
+                    pattern = "^GTM-\\w+",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }
+            );
+            modelBuilder.Entity<storeSetItem>().HasData(
+                new storeSetItem
+                {
+                    Id = 1,
+                    Key = "zh-TW",
+                    Value = "中文(繁體)",
+                    FK_StoreSetId = 2,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 2,
+                    Key = "zh-CN",
+                    Value = "中文(簡體)",
+                    FK_StoreSetId = 2,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 3,
+                    Key = "en",
+                    Value = "英文",
+                    FK_StoreSetId = 2,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 4,
+                    Key = "ja",
+                    Value = "日文",
+                    FK_StoreSetId = 2,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 5,
+                    Key = "noPayNoShow",
+                    Value = "不開放購物且不顯示商品售價",
+                    FK_StoreSetId = 3,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 6,
+                    Key = "noPay",
+                    Value = "不開放購物但顯示商品售價",
+                    FK_StoreSetId = 3,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 7,
+                    Key = "menberPay",
+                    Value = "限制僅會員購物",
+                    FK_StoreSetId = 3,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 8,
+                    Key = "Pay",
+                    Value = "開放購物",
+                    FK_StoreSetId = 3,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<Role>().HasData(
@@ -448,19 +588,257 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Type = 0,
                     IsDeleted = false,
                     CreatorUserId = 1,
-                    CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<MappingUserAndRole>().HasData(
                 new MappingUserAndRole
-                { 
+                {
                     Id = 1,
                     RoleId = 1,
                     UserId = 1,
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 2, 1, 18, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
-                }    
+                }
+            );
+
+            //金流
+            modelBuilder.Entity<ThirdParty>().HasData(
+                new ThirdParty
+                {
+                    Id = 1,
+                    Title = "轉帳",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new ThirdParty
+                {
+                    Id = 2,
+                    Title = "支付連",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new ThirdParty
+                {
+                    Id = 3,
+                    Title = "LINE Pay",
+                    IsDeleted = false,
+                    ser_no = 500,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }
+            );
+            modelBuilder.Entity<ThirdPartyKeypair>().HasData(
+                new ThirdPartyKeypair
+                {
+                    Id = 1,
+                    FK_TPid = 1,
+                    Title = "匯款銀行代號",
+                    Code = "bankNo",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 2,
+                    FK_TPid = 1,
+                    Title = "匯款帳號",
+                    Code = "account",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 3,
+                    FK_TPid = 1,
+                    Title = "戶名",
+                    Code = "shopID",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 4,
+                    FK_TPid = 2,
+                    Title = "PchomePayAppId",
+                    Code = "account",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 5,
+                    FK_TPid = 2,
+                    Title = "PchomePaySecre",
+                    Code = "code1",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 6,
+                    FK_TPid = 2,
+                    Title = "允許繳費有效天數",
+                    Code = "expire_day2",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 7,
+                    FK_TPid = 3,
+                    Title = "Channel ID",
+                    Code = "account",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new ThirdPartyKeypair
+                {
+                    Id = 8,
+                    FK_TPid = 3,
+                    Title = "Channel Secret Key",
+                    Code = "code1",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
+            );
+            modelBuilder.Entity<PaymentType>().HasData(
+                new PaymentType
+                {
+                    Id = 1,
+                    Used = false,
+                    Title = "atm",
+                    SerNo = 1,
+                    FK_ThirdPartyId = 1,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                },new PaymentType
+                {
+                    Id = 2,
+                    Used = false,
+                    Title = "信用卡付款",
+                    Code = "PchomePayCARD",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 3,
+                    Used = false,
+                    Title = "ATM付款",
+                    Code = "PchomePayATM",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 4,
+                    Used = false,
+                    Title = "PI錢包付款",
+                    Code = "PchomePayPI",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 5,
+                    Used = false,
+                    Title = "支付連餘額付款",
+                    Code = "PchomePayACCT",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 6,
+                    Used = false,
+                    Title = "支付連銀行支付付款",
+                    Code = "PchomePayEACH",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 7,
+                    Used = false,
+                    Title = "7-11貨到付款",
+                    Code = "PCHomeIPL7",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 8,
+                    Used = false,
+                    Title = "全家貨到付款",
+                    Code = "PCHomeIPLFM",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 9,
+                    Used = false,
+                    Title = "OK貨到付款",
+                    Code = "PCHomeIPLOK",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 10,
+                    Used = false,
+                    Title = "萊爾富貨到付款",
+                    Code = "PCHomeIPLHL",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 11,
+                    Used = false,
+                    Title = "線上刷卡3期分期付款",
+                    Code = "PchomePayInstallment3",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 12,
+                    Used = false,
+                    Title = "線上刷卡6期分期付款",
+                    Code = "PchomePayInstallment6",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 13,
+                    Used = false,
+                    Title = "線上刷卡12期分期付款",
+                    Code = "PchomePayInstallment12",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 14,
+                    Used = false,
+                    Title = "LINEPay",
+                    Code = "LinePay",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 3,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }
             );
         }
     }

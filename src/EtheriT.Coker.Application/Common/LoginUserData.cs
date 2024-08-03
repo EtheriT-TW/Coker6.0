@@ -158,6 +158,19 @@ namespace EtheriT.Coker.Application
                 else return 0;
             }
         }
+        public async Task<bool> IsExtraSuperUser() {
+            bool isThis = false;
+            var user = await GetUser();
+            if (user == null) return false;
+
+            var role = await db.Roles.Where(e => !e.IsDeleted && e.IsSuperUser && e.FK_WebsiteId == 1).FirstOrDefaultAsync();
+            if (role != null)
+            {
+                var perm = await db.MappingUserAndRoles.Where(e => e.UserId == user.Id && e.RoleId == role.Id).FirstOrDefaultAsync();
+                isThis = perm == null;
+            }
+            return isThis;
+        }
         public long GetFrontWebsiteId() {
             return configuration.GetValue<long>("WebConfig:SiteId");
         }

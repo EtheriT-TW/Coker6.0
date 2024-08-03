@@ -42,5 +42,7 @@ namespace EtheriT.Coker.Core.Models
         public List<NotFoundImage> NotFoundImages { get; set; }
         public List<JsonObject> jsonObjects { get; set; }
         public List<SearchLog> SearchLogs { get; set; }
+        public List<ThirdPartyKeypairValue> thirdPartyKeypairValues { get; set; }
+        public List<PaymentTypesValue> paymentTypesValues { get; set; }
     }
 }

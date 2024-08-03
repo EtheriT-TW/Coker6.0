@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Remote;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -63,9 +64,11 @@ namespace EtheriT.Coker.Web.Public.Controllers
             await webMenuApplication.CheckDisplayAll(siteId);
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
-            var storeSet = await storeSetAppService.getValues(new StoreSetGetValueInput {key= "ga4",SiteId= siteId });
+            var GA4 = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
+            var GTM = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "GTM", SiteId = siteId });
+            var GoogleTranslate = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "google.translate", SiteId = siteId });
 
-			await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
+            await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
             {
                 FK_WebsiteId = siteId,
                 FK_WebmenuId = defaultData.Id
@@ -83,7 +86,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 PageView = "Home",
                 storeSet = new StoreSetFrontDto
                 {
-                    GA4 = (storeSet.Success && storeSet != null && storeSet.detailItem != null) ? storeSet.detailItem.value ?? "" : ""
+                    GA4 = (GA4 != null && GA4.Success && GA4.detailItem != null) ? String.Join(",", GA4.detailItem.value!) : "",
+                    GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.Success && GoogleTranslate.detailItem != null) ? String.Join(",", GoogleTranslate.detailItem.value!) : "",
+                    GTM = (GTM != null && GTM.Success && GTM.detailItem != null) ? String.Join(",", GTM.detailItem.value!) : "",
                 }
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
@@ -111,7 +116,37 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
                 view = "Index";
             }
-
+            ViewData["SideName"] = model.PageData!.SiteName;
+            ViewData["PageName"] = model.PageData.Title;
+            ViewData["OrgName"] = model.OrgName;
+            ViewData["Layout"] = model.layout;
+            ViewData["PageTagNameName"] = $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
+            ViewData["Description"] = model.PageData.Description;
+            ViewData["GA4"] = model.storeSet.GA4;
+            ViewData["GTM"] = model.storeSet.GTM;
+            ViewData["google.translate"] = model.storeSet.GoogleTranslate;
+            ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
+            ViewData["Root"] = defaultData.Root;
+            ViewData["VisibleHeader"] = model.PageData.VisibleHeader;
+            ViewData["VisibleFooter"] = model.PageData.VisibleFooter;
+            ViewData["XSRF-TOKEN"] = model.token;
+            ViewData["Locale"] = model.locale;
+            ViewData["PageView"] = model.PageData.PageView;
+            ViewData["Id"] = model.PageData.Id;
+            switch (model.Level)
+            {
+                case WebsiteLevelEnum.會員:
+                    ViewData["LoginEnable"] = true;
+                    break;
+                case WebsiteLevelEnum.購物:
+                    ViewData["LoginEnable"] = true;
+                    ViewData["ShoppingEnable"] = true;
+                    break;
+                default:
+                    ViewData["LoginEnable"] = false;
+                    ViewData["ShoppingEnable"] = false;
+                    break;
+            }
             return View(view, model);
         }
 

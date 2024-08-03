@@ -27,9 +27,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<LogisticsSetting> LogisticsSettings { get; set; }
         public DbSet<Logisticstype> Logisticstypes { get; set; }
         public DbSet<PaymentType> PaymentTypes { get; set; }
+        public DbSet<PaymentTypesValue> PaymentTypesValues { get; set; }
         public DbSet<LogisticsType_PaymentType> LogisticsType_Payments { get; set; }
         public DbSet<ThirdParty> ThirdParties { get; set; }
         public DbSet<ThirdPartyKeypair> ThirdPartyKeypairs { get; set; }
+        public DbSet<ThirdPartyKeypairValue> ThirdPartyKeypairValues { get; set; }        
         public DbSet<Prod_Spec> Prod_Specs { get; set; }
         public DbSet<Prod_Spec_Type> Prod_Spec_Types { get; set; }
         public DbSet<Prod_Stock> Prod_Stocks { get; set; }
@@ -57,6 +59,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 		public DbSet<StoreSetGroup> StoreSetGroup { get; set; }
 		public DbSet<StoreSet> StoreSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
+        public DbSet<storeSetItem> StoreSetItems { get; set; }
         public DbSet<CustSearch> CustSearch { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<MappingCompanyAndWebsites> MappingCompanyAndWebsites { get; set; }
@@ -118,6 +121,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<ThirdPartyKeypair>(o =>
             {
                 o.HasOne(u => u.ThirdParty).WithMany(u => u.ThirdPartyKeypair).HasForeignKey(f => f.FK_TPid);
+            });
+            modelBuilder.Entity<ThirdPartyKeypairValue>(o =>
+            {
+                o.HasOne(u => u.ThirdPartyKeypair).WithMany(u => u.thirdPartyKeypairValues).HasForeignKey(f => f.FK_ThirdPartyKeypairId);
+            });
+            modelBuilder.Entity<PaymentTypesValue>(o =>
+            {
+                o.HasOne(u => u.paymentType).WithMany(u => u.paymentTypesValues).HasForeignKey(f => f.FK_PaymentTypesId);
             });
             modelBuilder.Entity<Prod>(o =>
             {
@@ -220,6 +231,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<StoreSetGroup>(o => {
                 o.HasMany(f => f.StoreSets).WithOne(u => u.storeSetGroup).HasForeignKey(f => f.FK_StoreSetGroupId);
 			});
+            modelBuilder.Entity<storeSetItem>(o => {
+                o.HasOne(f => f.storeSet).WithMany(u => u.storeSetItem).HasForeignKey(f => f.FK_StoreSetId);
+            });
             modelBuilder.Entity<CustSearch>(o => {
                 o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
             });

@@ -1,16 +1,16 @@
 ﻿function date_input_change(id) {
     var $self = $(`#${id}`);
-    var start_date = $self.attr('date-date-strat-date'); 
-    var end_date = $self.attr('data-date-end'); 
+    var dateRange = $self.attr('date-dateRange'); 
     var location = $self.attr('data-location'); 
     var addr = $self.attr('data-addr'); 
     var organizer = $self.attr('data-organizer');
-    var aorganizer = $self.attr('data-a-organizer'); 
+    var aorganizer = $self.attr('data-a-organizer');
+    var rorganizer = $self.attr('data-r-organizer'); 
     var link = $self.attr('data-link'); 
-    var tel = $self.attr('data-tel'); 
+    var tel = $self.attr('data-tel');
 
     var parenttime = $self.find(".activity_start_time").parents("div").eq(1);
-    if (start_date == "" && end_date=="") {
+    if (dateRange == "") {
         $(parenttime).addClass("d-none");
     } else {
         $(parenttime).removeClass("d-none"); 
@@ -45,6 +45,20 @@
     } else {
         $(parentaorganizer).removeClass("d-none");
     }
+    var prarentrorganizer = $self.find(".activity-r-organizer").parent("div").eq(0);
+    if (prarentrorganizer.length == 0) {
+        const $r = $(parentaorganizer).clone();
+        $r.find("div, span").removeAttr("id");
+        $r.removeAttr("id").removeClass("d-none");
+        $r.find("div").text("執行單位");
+        $r.find(".activity-a-organizer").removeClass("activity-a-organizer").addClass("activity-r-organizer");
+        prarentrorganizer = $r;
+        $(parentaorganizer).after($r);
+    }
+    if (typeof (rorganizer) != "undefined" && rorganizer != "") {
+        $(prarentrorganizer).removeAttr("id").removeClass("d-none");
+        $(prarentrorganizer).find(".activity-r-organizer").text(rorganizer);
+    } else $(prarentrorganizer).remove();
        
     var parentlink = $self.find(".activity_link").parents("div").eq(0);
     if (link == "") {
@@ -61,9 +75,11 @@
         $(parenttel).find("a").attr({ href: `tel:${tel}`, title: `播打電話：${tel}`, target: "_blank" });
         $(parenttel).removeClass("d-none");
     }
-
-    $self.find(".activity_start_time").html(start_date);
-    $self.find(".activity_end_time").html(end_date); 
+    if (typeof(dateRange) != "undefined" && !!dateRange) {
+        const range = dateRange.split("~");
+        $self.find(".activity_start_time").html(range[0].trim());
+        $self.find(".activity_end_time").html(range[1].trim()); 
+    }
     $self.find(".activity_location").html(location);
     $self.find(".activity_addr").html(addr); 
     $self.find(".activity-organizer").html(organizer); 

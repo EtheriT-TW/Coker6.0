@@ -594,7 +594,9 @@ namespace EtheriT.Coker.Application.Product
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
-                var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID).ToListAsync();
+                var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
+                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                    .ToListAsync();
                 if (result != null)
                 {
                     productData.AddRange(mapper.Map<List<ProdGetDataDto>>(result));
@@ -603,7 +605,6 @@ namespace EtheriT.Coker.Application.Product
 
                 if (productData != null)
                 {
-                    productData.Sort((x, y) => (x.Ser_No.CompareTo(y.Ser_No) * 2 + x.Id.CompareTo(y.Id)));
                     output = (from p in productData
                               select new DirectoryReleInfoDto
                               {

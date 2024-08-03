@@ -1,10 +1,10 @@
-﻿const Coker ={
-    extend:function(obj) {
-       for (var i in obj) {
-          if (!Coker.hasOwnProperty(i)) {
-             Coker[i] = obj[i];
-          }
-       }
+﻿const Coker = {
+    extend: function (obj) {
+        for (var i in obj) {
+            if (!Coker.hasOwnProperty(i)) {
+                Coker[i] = obj[i];
+            }
+        }
     },
     Data: {
         DefauleUrl: "/Welcome/index",
@@ -18,8 +18,8 @@
             ReCheckTime: 20 * MinutesSecond
         },
         Target: [
-            { Id:1, Name: "另開新視窗", value: "_blank" },
-            { Id:0, Name: "直接連結", value: "_self" }
+            { Id: 1, Name: "另開新視窗", value: "_blank" },
+            { Id: 0, Name: "直接連結", value: "_self" }
         ],
         ReplaceAndSinge: function (str) {
             if (!!str) {
@@ -109,7 +109,7 @@
         },
         getWeekNumber: function (i) {
             const characters = "一二三四五六日";
-            return characters.charAt(i-1);
+            return characters.charAt(i - 1);
         },
         thousandSign: function (str) {
             let comma = /\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g;
@@ -152,6 +152,13 @@
         }
     },
     Array: {
+        merge: function (arr1, arr2) {
+            let arr = [...arr1, ...arr2];
+            let mergedArr = [...new Set(arr)];
+            arr1.length = 0;
+            arr1.push(...mergedArr);
+            return arr1;
+        },
         Search: function (array, obj, rejectID) {
             var index = -1
             var i = 0;

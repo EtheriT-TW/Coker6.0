@@ -7,12 +7,11 @@ namespace EtheriT.Coker.Core.Models
     {
         [StringLength(50)] public string? Title { get; set; }
         [StringLength(50)] public string? Code { get; set; }
-        [StringLength(50)] public string? Head_column { get; set; }
         public bool Used { get; set; }
-        public bool Disp_Opt { get; set; }
-        public int Ser_No { get; set; }
-        [StringLength(50)] public string? ThirdID { get; set; }
-        public int? ThirdKey { get; set; }
-        public List<LogisticsType_PaymentType> LogisticsType_Payments { get; set; }
+        public int SerNo { get; set; }
+        public long FK_ThirdPartyId { get; set; }
+        public ThirdParty? ThirdParty { get; set; }
+        public List<LogisticsType_PaymentType>? LogisticsType_Payments { get; set; }
+        public List<PaymentTypesValue>? paymentTypesValues { get; set; }
     }
 }

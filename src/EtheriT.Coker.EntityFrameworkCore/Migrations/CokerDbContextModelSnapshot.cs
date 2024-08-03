@@ -1526,12 +1526,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("Disp_Opt")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Head_column")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<long>("FK_ThirdPartyId")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -1542,15 +1538,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("Ser_No")
+                    b.Property<int>("SerNo")
                         .HasColumnType("int");
 
-                    b.Property<string>("ThirdID")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("ThirdKey")
-                        .HasColumnType("int");
+                    b.Property<long?>("ThirdPartyId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Title")
                         .HasMaxLength(50)
@@ -1561,7 +1553,228 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ThirdPartyId");
+
                     b.ToTable("PaymentTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 1L,
+                            IsDeleted = false,
+                            SerNo = 1,
+                            Title = "atm",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            Code = "PchomePayCARD",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "信用卡付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            Code = "PchomePayATM",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "ATM付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            Code = "PchomePayPI",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "PI錢包付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 5L,
+                            Code = "PchomePayACCT",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "支付連餘額付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 6L,
+                            Code = "PchomePayEACH",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "支付連銀行支付付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 7L,
+                            Code = "PCHomeIPL7",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "7-11貨到付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 8L,
+                            Code = "PCHomeIPLFM",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "全家貨到付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 9L,
+                            Code = "PCHomeIPLOK",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "OK貨到付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 10L,
+                            Code = "PCHomeIPLHL",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "萊爾富貨到付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 11L,
+                            Code = "PchomePayInstallment3",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "線上刷卡3期分期付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 12L,
+                            Code = "PchomePayInstallment6",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "線上刷卡6期分期付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 13L,
+                            Code = "PchomePayInstallment12",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "線上刷卡12期分期付款",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 14L,
+                            Code = "LinePay",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 3L,
+                            IsDeleted = false,
+                            SerNo = 500,
+                            Title = "LINEPay",
+                            Used = false
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentTypesValue", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_PaymentTypesId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("Used")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("websiteId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_PaymentTypesId");
+
+                    b.HasIndex("websiteId");
+
+                    b.ToTable("PaymentTypesValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PermissionDetail", b =>
@@ -2508,7 +2721,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         new
                         {
                             Id = 1L,
-                            CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             IsDeleted = false,
                             IsSuperUser = false,
@@ -2702,8 +2915,68 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             maxlength = 12,
                             memo = "請輸入GOOGLE提供之驗證碼：G-xxxxxxxxxx",
                             name = "Google Analytics(4)",
-                            pattern = "\\d6-\\d",
-                            type = 7
+                            pattern = "^G-\\w+",
+                            type = 1
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 1L,
+                            IsDeleted = false,
+                            jobID = "S002",
+                            key = "google.translate",
+                            maxlength = 50,
+                            memo = "請選擇需要翻譯的語系",
+                            name = "Google自動翻譯",
+                            pattern = "(?=[a-z]{2}-?[A-Z]{0,2},?)+",
+                            type = 4
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "storeBuyState",
+                            maxlength = 50,
+                            memo = "請選擇購物形式",
+                            name = "商品販售設定",
+                            pattern = "",
+                            type = 5
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "storeMemo",
+                            maxlength = 300,
+                            memo = "可以輸入一段話，在結帳的時候對客戶做一些小提醒。",
+                            name = "結帳備註",
+                            pattern = "",
+                            type = 2
+                        },
+                        new
+                        {
+                            Id = 5L,
+                            CreationTime = new DateTime(2023, 7, 25, 19, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 1L,
+                            IsDeleted = false,
+                            jobID = "S001",
+                            key = "GTM",
+                            maxlength = 12,
+                            memo = "請輸入GOOGLE提供之驗證碼：GTM-xxxxxxx",
+                            name = "Google Tag Manager",
+                            pattern = "^GTM-\\w+",
+                            type = 1
                         });
                 });
 
@@ -2813,6 +3086,147 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Image = "/images/icon_google.png",
                             IsDeleted = false,
                             Title = "Google設定"
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2024, 7, 23, 14, 26, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            Description = "",
+                            Image = "",
+                            IsDeleted = false,
+                            Title = "商店設定"
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_StoreSetId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_StoreSetId");
+
+                    b.ToTable("StoreSetItems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 2L,
+                            IsDeleted = false,
+                            Key = "zh-TW",
+                            Value = "中文(繁體)"
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 2L,
+                            IsDeleted = false,
+                            Key = "zh-CN",
+                            Value = "中文(簡體)"
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 2L,
+                            IsDeleted = false,
+                            Key = "en",
+                            Value = "英文"
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 2L,
+                            IsDeleted = false,
+                            Key = "ja",
+                            Value = "日文"
+                        },
+                        new
+                        {
+                            Id = 5L,
+                            CreationTime = new DateTime(2024, 7, 17, 18, 4, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 3L,
+                            IsDeleted = false,
+                            Key = "noPayNoShow",
+                            Value = "不開放購物且不顯示商品售價"
+                        },
+                        new
+                        {
+                            Id = 6L,
+                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 3L,
+                            IsDeleted = false,
+                            Key = "noPay",
+                            Value = "不開放購物但顯示商品售價"
+                        },
+                        new
+                        {
+                            Id = 7L,
+                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 3L,
+                            IsDeleted = false,
+                            Key = "menberPay",
+                            Value = "限制僅會員購物"
+                        },
+                        new
+                        {
+                            Id = 8L,
+                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 3L,
+                            IsDeleted = false,
+                            Key = "Pay",
+                            Value = "開放購物"
                         });
                 });
 
@@ -3075,25 +3489,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
-                    b.Property<string>("Account")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("AuditUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<bool>("Auto_Deposit")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Code1")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Code2")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
@@ -3107,9 +3505,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("Expire_Day")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -3122,10 +3517,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("MaxPay")
                         .HasColumnType("int");
 
-                    b.Property<string>("Password")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("PaymentUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -3133,18 +3524,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("RefundUrl")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("ShopID")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TaxID")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -3161,6 +3540,35 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ThirdParties");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            IsDeleted = false,
+                            Title = "轉帳",
+                            ser_no = 500
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            IsDeleted = false,
+                            Title = "支付連",
+                            ser_no = 500
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            IsDeleted = false,
+                            Title = "LINE Pay",
+                            ser_no = 500
+                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypair", b =>
@@ -3209,6 +3617,140 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_TPid");
 
                     b.ToTable("ThirdPartyKeypairs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            Code = "bankNo",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 1L,
+                            IsDeleted = false,
+                            Title = "匯款銀行代號"
+                        },
+                        new
+                        {
+                            Id = 2L,
+                            Code = "account",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 1L,
+                            IsDeleted = false,
+                            Title = "匯款帳號"
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            Code = "shopID",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 1L,
+                            IsDeleted = false,
+                            Title = "戶名"
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            Code = "account",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 2L,
+                            IsDeleted = false,
+                            Title = "PchomePayAppId"
+                        },
+                        new
+                        {
+                            Id = 5L,
+                            Code = "code1",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 2L,
+                            IsDeleted = false,
+                            Title = "PchomePaySecre"
+                        },
+                        new
+                        {
+                            Id = 6L,
+                            Code = "expire_day2",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 2L,
+                            IsDeleted = false,
+                            Title = "允許繳費有效天數"
+                        },
+                        new
+                        {
+                            Id = 7L,
+                            Code = "account",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 3L,
+                            IsDeleted = false,
+                            Title = "Channel ID"
+                        },
+                        new
+                        {
+                            Id = 8L,
+                            Code = "code1",
+                            CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_TPid = 3L,
+                            IsDeleted = false,
+                            Title = "Channel Secret Key"
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypairValue", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_ThirdPartyKeypairId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<long>("WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_ThirdPartyKeypairId");
+
+                    b.HasIndex("WebsiteId");
+
+                    b.ToTable("ThirdPartyKeypairValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
@@ -3833,6 +4375,34 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("ShoppingCart");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentType", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.ThirdParty", "ThirdParty")
+                        .WithMany("paymentTypes")
+                        .HasForeignKey("ThirdPartyId");
+
+                    b.Navigation("ThirdParty");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentTypesValue", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.PaymentType", "paymentType")
+                        .WithMany("paymentTypesValues")
+                        .HasForeignKey("FK_PaymentTypesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "website")
+                        .WithMany("paymentTypesValues")
+                        .HasForeignKey("websiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("paymentType");
+
+                    b.Navigation("website");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PermissionDetail", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Role", "Role")
@@ -4092,6 +4662,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.StoreSet", "storeSet")
+                        .WithMany("storeSetItem")
+                        .HasForeignKey("FK_StoreSetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("storeSet");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
@@ -4155,6 +4736,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("ThirdParty");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypairValue", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.ThirdPartyKeypair", "ThirdPartyKeypair")
+                        .WithMany("thirdPartyKeypairValues")
+                        .HasForeignKey("FK_ThirdPartyKeypairId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("thirdPartyKeypairValues")
+                        .HasForeignKey("WebsiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ThirdPartyKeypair");
+
+                    b.Navigation("Website");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.WebMenu", "FK_RootNode")
@@ -4211,6 +4811,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentType", b =>
                 {
                     b.Navigation("LogisticsType_Payments");
+
+                    b.Navigation("paymentTypesValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
@@ -4255,6 +4857,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSet", b =>
                 {
                     b.Navigation("storeSetDetails");
+
+                    b.Navigation("storeSetItem");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSetGroup", b =>
@@ -4284,6 +4888,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdParty", b =>
                 {
                     b.Navigation("ThirdPartyKeypair");
+
+                    b.Navigation("paymentTypes");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypair", b =>
+                {
+                    b.Navigation("thirdPartyKeypairValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
@@ -4347,6 +4958,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("WebMenus");
 
                     b.Navigation("jsonObjects");
+
+                    b.Navigation("paymentTypesValues");
+
+                    b.Navigation("thirdPartyKeypairValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>

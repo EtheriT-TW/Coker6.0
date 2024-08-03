@@ -9,6 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
 	public class EnumDictionaryDto
 	{
 		public string Key { get; set; }
-		public int Value { get; set; }
+		public long Value { get; set; }
 	}
 }

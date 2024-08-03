@@ -90,7 +90,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                    .ToList();
                 var result = await db.Html_Contents
                         .Where(e => t.Contains(e.Type))
-                        .Where(e => !e.IsDeleted)
+                        .Where(e => !e.IsDeleted && e.Disp_opt)
                         .OrderBy(e => e.Type)
                         .ThenBy(e => e.Ser_no)
                         .ToListAsync();
@@ -339,11 +339,14 @@ namespace EtheriT.Coker.Application.HtmlContent
                 long userId = await loginUserData.GetUserId();
                 if (userId == 1)
                 {
-                    response.Type = Enum.GetValues(typeof(ObjectTypeEnum))
-                   .Cast<ObjectTypeEnum>().Select(e =>
-                   {
-                       return new EnumDictionaryDto { Key = e.ToString(), Value = (int)e };
-                   }).ToList();
+                    bool othersOnly = await loginUserData.IsExtraSuperUser();
+                    response.Type = (from o in db.ObjectTypes.Where(e => !e.IsDeleted)
+                                    where !(new List<long> { 8, 12 }).Contains(o.Id)
+                                    orderby o.SerNo
+                                    select new EnumDictionaryDto { 
+                                        Key =o.Title,
+                                        Value = o.Id
+                                    }).ToList();
                 }
                 else
                 {

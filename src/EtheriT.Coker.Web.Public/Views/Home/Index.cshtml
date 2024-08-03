@@ -7,33 +7,6 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @using System.Web;
 @model HomeViewModel
-@{
-    ViewData["SideName"] = Model.PageData.SiteName;
-    ViewData["OrgName"] = Model.OrgName;
-    ViewData["PageName"] = Model.PageData.SiteName;
-    ViewData["Layout"] = Model.layout;
-    ViewData["PageTagNameName"] = Model.PageData.SiteName;
-    ViewData["Description"] = Model.PageData.Description;
-    ViewData["GA4"] = Model.storeSet.GA4;
-    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
-    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
-    ViewData["Locale"] = Model.locale;
-    ViewData["XSRF-TOKEN"] = Model.token;
-    switch (Model.Level)
-    {
-        case WebsiteLevelEnum.會員:
-            ViewData["LoginEnable"] = true;
-            break;
-        case WebsiteLevelEnum.購物:
-            ViewData["LoginEnable"] = true;
-            ViewData["ShoppingEnable"] = true;
-            break;
-        default:
-            ViewData["LoginEnable"] = false;
-            ViewData["ShoppingEnable"] = false;
-            break;
-    }
-}
 <script>
     const PageKey = "Home";
     const local = @Html.Raw(L.getAllJsonString()) ;

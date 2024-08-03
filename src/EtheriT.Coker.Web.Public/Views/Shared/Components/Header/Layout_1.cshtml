@@ -172,9 +172,10 @@
         <div class="d-flex justify-content-center">
             <!-- Search Block -->
             <a href="@Model.SearchPath" title="前往搜尋頁" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
-                <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
+                <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5 notranslate">search</span>
                 <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
             </a>
+            <div id="google_translate_element"></div>
             @if (Model.HasShoppingCar == true)
             {
                 <div id="Cart_Dropdown_Parent" class="d-flex px-1">

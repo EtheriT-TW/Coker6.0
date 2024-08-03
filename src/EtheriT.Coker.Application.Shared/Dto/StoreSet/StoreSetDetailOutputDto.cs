@@ -10,6 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.StoreSet
     public class StoreSetDetailOutputDto
     {
         public string key { get; set; }
-        public string? value { get; set; }
+        public List<string>? value { get; set; }
     }
 }

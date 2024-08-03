@@ -182,6 +182,10 @@
 
     co.ObjectType.GetAll().done(function (result) {
         if (result.success) {
+            $(result.list).each((i, e) => {
+                const $s = $("#classType");
+                $s.append(`<option value="${e.id}">${e.title}</option>`);
+            });
             menuEditor.setData(result.list);
             $("#myEditor").removeClass("d-none");
             if (result.list.length > 0) $("#myEditor + .emptyList").addClass("d-none");

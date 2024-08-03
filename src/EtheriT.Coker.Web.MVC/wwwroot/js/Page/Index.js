@@ -1,4 +1,5 @@
 ﻿function PageReady() {
+    var menuEditor;
     const myOffcanvas = new bootstrap.Offcanvas('#offcanvasSite');
     var editor = grapesInit({
         save: function (html, css) {
@@ -345,7 +346,7 @@
     };
     co.PowerManagement.GetPermission().done(function (permission) {
         if (!permission.superManager) delete editorStting.on.setPower;
-        var menuEditor = new MenuEditor('myEditor', editorStting);
+        menuEditor = new MenuEditor('myEditor', editorStting);
         $('#offcanvasSite').on('show.bs.offcanvas', function () {
             closeEdit();
         });

@@ -93,10 +93,11 @@ namespace EtheriT.Coker.Application
             //Html_Content
             CreateMap<HtmlContentDto, Html_Content>()
 				.ReverseMap()
-				.ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
+                .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
 			CreateMap<ObjectTypeItemDto, Html_Content>()
-			   .ReverseMap()
-			   .ForMember(e => e.FK_TopNodeId, option => option.MapFrom(c => c.Type))
+               .ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
+               .ForMember(e => e.Disp_opt, option => option.MapFrom(c => c.Visible))
+               .ReverseMap()
 			   .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
 			   .ForMember(e => e.MinLevel, option => option.MapFrom(c => 1));
 			CreateMap<UpdateSerNoDto, Html_Content>()
@@ -207,9 +208,10 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.IsDeleted, option => option.MapFrom(c => false))
                 .ForMember(e => e.CreationTime, option => option.MapFrom(c => DateTime.Now))
                 .ReverseMap()
-				.ForMember(e => e.key, option => option.MapFrom(c => c.StoreSet == null ? "" : c.StoreSet.key));
-            
+                .ForMember(e => e.value, option => option.MapFrom(c => new List<string>()))
+                .ForMember(e => e.key, option => option.MapFrom(c => c.StoreSet == null ? "" : c.StoreSet.key));
             CreateMap<StoreSetGroupOutputDto, StoreSetGroup>().ReverseMap();
+            CreateMap<StoreSetItemOutputDto, storeSetItem>().ReverseMap();
 
             //CustSearch
             CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();

@@ -1,0 +1,10 @@
+﻿.font_small {
+    font-size: 0.8rem;
+}
+
+footer > div {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: left top;
+    background-color: #004280;
+}

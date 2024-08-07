@@ -1,0 +1,10 @@
+﻿/* Color */
+:root {
+    --blue-cyan: #0D7F87;
+    --blue-dark: #172844;
+}
+
+/* Default */
+html {
+    font-size: 100%;
+}

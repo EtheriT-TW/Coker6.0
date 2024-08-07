@@ -255,6 +255,23 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                 default:
                     footerViewModel = new FooterViewModel();
                     break;
+                case 6:
+                    footerViewModel = new FooterViewModel
+                    {
+                        Link = $"/upload/{defaultData.OrgName}",
+                        Sitemap_Link = $"/{defaultData.OrgName}/Website",
+                        Privacy_Link = $"/{defaultData.OrgName}/Privacy",
+                        Accessibility_Link = "https://accessibility.moda.gov.tw/Applications/Detail?category=20231110163027",
+                        Accessibility_Badge = "/upload/accessibility_badge.png",
+                        line_qr = $"/upload/{defaultData.OrgName}/lineqr.png",
+                        Content = new List<string>
+                        {
+                            "Tel：07-3611212 分機 317  /   Fax：07-3612751",
+                            "地址：811636高雄市楠梓區加昌路600號",
+                            "經濟部產業園區管理局 版權所有 © 2023 BIP ALL Rights Reserved"
+                        }
+                    };
+                    break;
             }
             return View(defaultData.View, footerViewModel);
         }

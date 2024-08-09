@@ -79,7 +79,7 @@
         <!-- End Google Tag Manager -->
     }
 </head>
-<body onload="ready()" id="@ViewData["Layout"]">
+<body onload="ready()" id="@ViewData["Layout"]" class="@ViewData["bodyClass"]">
     @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))
     {
         <!-- Google Tag Manager (noscript) -->

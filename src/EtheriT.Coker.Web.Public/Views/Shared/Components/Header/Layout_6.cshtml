@@ -15,7 +15,7 @@
                 <button class="btn d-lg-none px-0 d-lg-none order-0" type="button" data-bs-toggle="collapse" data-bs-target="#headermenu" aria-expanded="false" aria-controls="headermenu">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <a class="navbar-brand p-0 m-0 order-1" href="#"><img class="logoimg" src="@Model.LogoImageUrl" alt="logo "></a>
+                <a class="navbar-brand p-0 m-0 order-1" href="home"><img class="logoimg" src="@Model.LogoImageUrl" alt="logo "></a>
                 <div class="collapse navbar-collapse order-lg-2 order-3" id="headermenu">
                     <ul class="navbar-nav font_small">
                         @if (Model.Sitemap_Link != null)
@@ -39,5 +39,15 @@
                 <div class=" order-2 order-lg-3"><a href="#" class="d-flex ps-1 "><span class="material-symbols-outlined text-white">search</span></a></div>
             </nav>
         </div>
+    </div>
+</div>
+
+<img class="titleimage d-none m-auto d-block" src="@imgurl/headertitile.png" alt="Header Titile" />
+<div class="headernews d-none m-auto d-block position-relative">
+    <img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
+    <img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
+    <div class="content position-absolute row align-items-center w-100">
+        <div class="title  fw-bold  col-md-1 p-0 col-12 text-center">近期訊息</div>
+        <div class="text overflow-hidden text-white p-0 ps-3 col">申請研發、行銷、獎項等政府補助、跨業媒合申請研發、行銷、獎項等政府補助、跨業媒合...</div>
     </div>
 </div>

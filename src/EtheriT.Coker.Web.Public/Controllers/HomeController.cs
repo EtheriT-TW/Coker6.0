@@ -30,8 +30,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
-		private readonly IRemoteAppService RemoteAppService;
-		public HomeController(
+        private readonly IRemoteAppService RemoteAppService;
+        public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
@@ -40,8 +40,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IWebMenuApplication webMenuApplication,
             IStoreSetAppService storeSetAppService,
             IHttpContextAccessor httpContextAccessor,
-			IRemoteAppService RemoteAppService
-			)
+            IRemoteAppService RemoteAppService
+            )
         {
             this._logger = logger;
             this.htmlContentAppService = htmlContentAppService;
@@ -50,7 +50,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.websiteApplication = websiteApplication;
             this.webMenuApplication = webMenuApplication;
             this.storeSetAppService = storeSetAppService;
-            this.httpContextAccessor= httpContextAccessor;
+            this.httpContextAccessor = httpContextAccessor;
             this.RemoteAppService = RemoteAppService;
         }
 
@@ -72,17 +72,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 FK_WebsiteId = siteId,
                 FK_WebmenuId = defaultData.Id
-			});
-			HomeViewModel model = new HomeViewModel
+            });
+            HomeViewModel model = new HomeViewModel
             {
                 site_name = site_name,
-                OrgName= defaultData.OrgName,
-				enterAd = enterAds,
+                OrgName = defaultData.OrgName,
+                enterAd = enterAds,
                 guessLike = guessLike,
                 layout = $"layput{defaultData.Layout_Type}",
                 Level = defaultData.Level,
                 locale = defaultData.locale,
-				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+                token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
                 PageView = "Home",
                 storeSet = new StoreSetFrontDto
                 {
@@ -93,8 +93,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;
-            if(!string.IsNullOrEmpty(defaultData.Description)) model.PageData.Description = defaultData.Description;
-			if (string.IsNullOrEmpty(model.PageData.Html)|| (key!=null && key != defaultData.OrgName))
+            if (!string.IsNullOrEmpty(defaultData.Description)) model.PageData.Description = defaultData.Description;
+            if (string.IsNullOrEmpty(model.PageData.Html) || (key != null && key != defaultData.OrgName))
             {
                 Response.StatusCode = 404;
                 view = "/Page/Error/404";
@@ -133,6 +133,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["Locale"] = model.locale;
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Id"] = model.PageData.Id;
+            ViewData["bodyClass"] = "home";
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:

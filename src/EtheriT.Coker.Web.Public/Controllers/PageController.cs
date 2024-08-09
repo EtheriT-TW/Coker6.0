@@ -374,6 +374,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["Locale"] = model.locale;
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Id"] = model.PageData.Id;
+            ViewData["bodyClass"] = model.option;
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:

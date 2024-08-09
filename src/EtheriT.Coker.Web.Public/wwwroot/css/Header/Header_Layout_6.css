@@ -1,4 +1,12 @@
-﻿.logoimg {
+﻿
+body.home {
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center top;
+    background-color: #005491;
+}
+
+.logoimg {
     max-height: 3rem;
 }
 
@@ -16,22 +24,37 @@ header .menu {
     max-width: 60vw;
 }
 
-.headernews .row {
-    height: 5.5rem;
+.headernews {
     width: 40rem;
     max-width: 90vw;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
-    .headernews .row .title {
-        color: #09D1F2;
-        width: 7.5rem
+    .headernews .content {
+        top: calc(50% - 1.3rem);
+        padding-left: 5.75rem;
+        padding-right: 2rem;
     }
 
-    .headernews .row .content {
-        height: 1.75rem;
-        white-space: nowrap;
-        text-overflow: ellipsis;
+        .headernews .content .title {
+            color: #09D1F2;
+        }
+
+        .headernews .content .text {
+            height: 1.5rem;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+
+@media only screen and (max-width: 766px) {
+    .headernews {
+        width: 20rem;
+        max-width: 90vw;
     }
+
+        .headernews .content {
+            top: calc(50% - 1.5rem);
+            padding-left: 4.5rem;
+            padding-right: 0.75rem;
+        }
+}

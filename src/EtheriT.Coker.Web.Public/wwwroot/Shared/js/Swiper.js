@@ -105,7 +105,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
-            obj.autoplay &&$self.swiperBindEven(swiper);
+            obj.autoplay && $self.swiperBindEven(swiper);
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
             console.log(selfConfig);
         }
@@ -143,7 +143,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
-            obj.autoplay&&$self.swiperBindEven(swiper);
+            obj.autoplay && $self.swiperBindEven(swiper);
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
@@ -236,7 +236,7 @@ function SwiperInit(obj) {
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
-            obj.autoplay &&$self.swiperBindEven(swiper);
+            obj.autoplay && $self.swiperBindEven(swiper);
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
@@ -291,7 +291,7 @@ function SwiperInit(obj) {
             }
             pictureSwiper.slideTo(index, 0);
             pictureSwiperThumbs.slideTo(index, 0);
-            $('#SwiperModal').modal('show'); 
+            $('#SwiperModal').modal('show');
             return false;
         });
     }

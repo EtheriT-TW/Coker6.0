@@ -72,7 +72,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     if (data_s.Children != null)
                                     {
                                         var thirditemModels = new List<MenuItem.MenuItemModel> { };
-                                        length+= data_s.Children.Count();
+                                        length += data_s.Children.Count();
                                         data_s.Children.ForEach(data_t =>
                                         {
                                             thirditemModels.Add(new MenuItem.MenuItemModel
@@ -112,8 +112,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                 headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                                 {
                                     Title = data_f.Title,
-                                    Link = data_f.hasContan? 
-                                        data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" : 
+                                    Link = data_f.hasContan ?
+                                        data_f.RouterName != "" ? $"/{website_data[0].OrgName}/{data_f.RouterName}" : data_f.LinkUrl != "" ? data_f.LinkUrl : "" :
                                         "javascript:void(0)",
                                     menuItemModels = secitemModels,
                                     Length = length,
@@ -134,7 +134,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                         hoverImageUrl = (data_f.OverImgUrl ?? ""),
                                     });
                                 }
-                                else {
+                                else
+                                {
                                     headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
                                     {
                                         Title = data_f.Title,
@@ -236,10 +237,43 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         }
                     });
                     break;
+                case 6:
+                    webmenus_data = webmenus_data.ToList();
+                    headerViewModel = new HeaderViewModel
+                    {
+                        Title = website_data[0].Title,
+                        LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
+                        menuItemModels = new List<MenuItem.MenuItemModel> { },
+                    };
+                    webmenus_data.ForEach(data =>
+                    {
+                        if (data.PageType == (int)PageTypeEnum.首頁)
+                        {
+                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data.RouterName}";
+                            headerViewModel.HomeTarget = data.Target;
+                        }
+                        else if (data.LanBar)
+                        {
+                            headerViewModel.Sitemap_Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "";
+                            headerViewModel.Sitemap_Target = data.Target;
+                        }
+                        else
+                        {
+                            headerViewModel.menuItemModels.Add(new MenuItem.MenuItemModel
+                            {
+                                Title = data.Title,
+                                Link = data.RouterName != "" ? $"/{website_data[0].OrgName}/{data.RouterName}" : data.LinkUrl != "" ? data.LinkUrl : "",
+                                Target = data.Target,
+                                imageUrl = data.ImgUrl != null ? data.ImgUrl.Replace("upload", $"upload/{website_data[0].OrgName}") : "",
+                            });
+                        }
+                    });
+                    break;
                 default:
                     break;
             }
-            if (defaultData.Layout_Type == 1) {
+            if (defaultData.Layout_Type == 1)
+            {
                 headerViewModel.LogoImageUrl = "/upload/logo.svg";
             }
             headerViewModel.SearchPath = $"/{website_data[0].OrgName}/Search";

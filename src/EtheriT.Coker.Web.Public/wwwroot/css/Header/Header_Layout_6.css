@@ -1,0 +1,37 @@
+﻿.logoimg {
+    max-height: 3rem;
+}
+
+header .menu {
+    background: linear-gradient(90deg, #0BB0DD 0%, #0069A3 70%, #006AA1 100%);
+}
+
+#headermenu li a {
+    color: white;
+}
+
+.titleimage {
+    padding-top: 2.5rem;
+    width: 15rem;
+    max-width: 60vw;
+}
+
+.headernews .row {
+    height: 5.5rem;
+    width: 40rem;
+    max-width: 90vw;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+    .headernews .row .title {
+        color: #09D1F2;
+        width: 7.5rem
+    }
+
+    .headernews .row .content {
+        height: 1.75rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }

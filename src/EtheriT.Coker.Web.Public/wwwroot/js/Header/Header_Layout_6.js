@@ -1,0 +1,5 @@
+﻿function HeaderInit() {
+}
+
+function ElementInit() {
+}

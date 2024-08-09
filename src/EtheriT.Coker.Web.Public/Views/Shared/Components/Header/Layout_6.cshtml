@@ -1,0 +1,43 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@model HeaderViewModel
+
+<link rel="stylesheet" href="~/css/Header/Header_Layout_6.min.css" asp-append-version="true" />
+<script src="~/js/Header/Header_Layout_6.min.js" asp-append-version="true"></script>
+
+@{
+    string imgurl = Model.LogoImageUrl.Substring(0, Model.LogoImageUrl.LastIndexOf("/"));
+}
+<div class="text-white pb-lg-5">
+    <div class=" menu">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <button class="btn d-lg-none px-0 d-lg-none order-0" type="button" data-bs-toggle="collapse" data-bs-target="#headermenu" aria-expanded="false" aria-controls="headermenu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a class="navbar-brand p-0 m-0 order-1" href="#"><img class="logoimg" src="@Model.LogoImageUrl" alt="logo "></a>
+                <div class="collapse navbar-collapse order-lg-2 order-3" id="headermenu">
+                    <ul class="navbar-nav font_small">
+                        @if (Model.Sitemap_Link != null)
+                        {
+                            var sitemap_target = Model.Sitemap_Target == true ? "_blank" : "_self";
+                            var sitemap_title = Model.Sitemap_Target == true ? "連結至：網站導覽(另開視窗)" : "連結至：網站導覽";
+                            <li class="nav-item active">
+                                <a class="nav-link" href="@Model.Sitemap_Link" title="@sitemap_title" target="@sitemap_target">網站導覽 <span class="sr-only">(current)</span></a>
+                            </li>
+                        }
+                        @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
+                        {
+                            var target = menu.Target == true ? "_blank" : "_self";
+                            var title = menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}";
+                            <li class="nav-item active">
+                                <a class="nav-link" href="@menu.Link" title="@title" target="@target">@menu.Title <span class="sr-only">(current)</span></a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class=" order-2 order-lg-3"><a href="#" class="d-flex ps-1 "><span class="material-symbols-outlined text-white">search</span></a></div>
+            </nav>
+        </div>
+    </div>
+</div>

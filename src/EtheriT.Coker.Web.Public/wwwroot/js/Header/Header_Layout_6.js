@@ -11,6 +11,14 @@
             }
         });
     }
+
+    var swiper = new Swiper(".marqueeSwiper", {
+        direction: "vertical",
+        allowTouchMove: false,
+        autoplay: {
+            delay: 3000,
+        },
+    });
 }
 
 function ElementInit() {

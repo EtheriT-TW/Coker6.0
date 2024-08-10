@@ -40,7 +40,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
             var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
 
-            var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(siteId, "Top")).Value));
+            var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
             switch (defaultData.Layout_Type)
             {
@@ -244,6 +244,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         Title = website_data[0].Title,
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
+                        marqueeModels = new List<MarqueeDisplayDto> { },
                     };
                     webmenus_data.ForEach(data =>
                     {
@@ -268,6 +269,19 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             });
                         }
                     });
+
+                    if (marquee.Count > 0)
+                    {
+                        marquee.ForEach(data =>
+                        {
+                            headerViewModel.marqueeModels.Add(new MarqueeDisplayDto
+                            {
+                                title = data.title,
+                                link = data.link,
+                                target = data.target,
+                            });
+                        });
+                    }
                     break;
                 default:
                     break;

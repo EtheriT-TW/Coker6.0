@@ -42,9 +42,23 @@ header .menu {
         .headernews .content .text {
             height: 1.5rem;
             white-space: nowrap;
-            text-overflow: ellipsis;
         }
 
+.marqueeSwiper {
+    height: 1.5rem;
+}
+
+    .marqueeSwiper .swiper-slide {
+        text-align: center;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+    }
+
+        .marqueeSwiper .swiper-slide a {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
 
 @media only screen and (max-width: 766px) {
     .headernews {

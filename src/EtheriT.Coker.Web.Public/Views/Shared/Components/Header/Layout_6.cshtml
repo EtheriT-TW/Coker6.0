@@ -1,4 +1,5 @@
-﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee;
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
 @model HeaderViewModel
 
@@ -48,6 +49,17 @@
     <img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
     <div class="content position-absolute row align-items-center w-100">
         <div class="title  fw-bold  col-md-1 p-0 col-12 text-center">近期訊息</div>
-        <div class="text overflow-hidden text-white p-0 ps-3 col">申請研發、行銷、獎項等政府補助、跨業媒合申請研發、行銷、獎項等政府補助、跨業媒合...</div>
+        <div class="text overflow-hidden text-white p-0 ps-3 col">
+            <div class="swiper marqueeSwiper">
+                <div class="swiper-wrapper">
+                    @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
+                    {
+                        var target = marquee.target == true ? "_blank" : "_self";
+                        var title = marquee.title == "" ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+                        <div class="swiper-slide"><a class="overflow-hidden" href="@marquee.link" title="@title" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 </div>

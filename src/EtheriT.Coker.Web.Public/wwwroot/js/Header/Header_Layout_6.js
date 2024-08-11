@@ -1,4 +1,6 @@
-﻿function HeaderInit() {
+﻿var time = 0;
+function HeaderInit() {
+
     var backgroundimgurl = "";
 
     if ($('body').hasClass('home')) {
@@ -97,7 +99,16 @@
             prevEl: ".outcomeSwiper>.swiper-button-prev",
         },
     });
-}
 
-function ElementInit() {
+    $(window).scroll(function () {
+        $('.hideme').each(function (i) {
+            var $self = $(this);
+            var bottom_of_object = $self.offset().top + $self.outerHeight();
+            var bottom_of_window = $(window).scrollTop() + $(window).height();
+            if (bottom_of_window > bottom_of_object) {
+                $self.delay(time).animate({ 'opacity': '1' }, 500);
+                time += 500;
+            }
+        });
+    });
 }

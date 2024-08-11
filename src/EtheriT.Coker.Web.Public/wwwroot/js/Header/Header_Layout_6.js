@@ -20,14 +20,6 @@
         },
     });
 
-    /* CounselingSwiper */
-    var counselingSwiper = new Swiper(".counselingSwiper", {
-        allowTouchMove: true,
-        pagination: {
-            el: ".counselingSwiper .swiper-pagination",
-        },
-    });
-
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {
         slidesPerView: 1,

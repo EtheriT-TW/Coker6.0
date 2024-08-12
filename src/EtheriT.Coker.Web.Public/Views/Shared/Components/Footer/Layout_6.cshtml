@@ -12,7 +12,7 @@
                     @Model.Content[i]
                     @if (i == Model.Content.Count - 1 && Model.Sitemap_Link != null)
                     {
-                        <a class="text-white" href="@Model.Sitemap_Link">網站導覽</a>
+                        <a class="text-white" href="@Model.Sitemap_Link" title="連結至:網站導覽(另開視窗)" target="_blank">網站導覽</a>
                     }
                 </div>
             }
@@ -21,26 +21,26 @@
             <div class="d-lg-flex d-none pb-lg-4">
                 @if (Model.Privacy_Link != null)
                 {
-                    <a class="text-white" href="@Model.Privacy_Link">個資暨隱私權聲明</a>
+                    <a class="text-white" href="@Model.Privacy_Link" title="連結至:個資暨隱私權聲明(另開視窗)" target="_blank">個資暨隱私權聲明</a>
                 }
             </div>
-            <div class="d-flex flex-lg-row-reverse align-items-center justify-content-around">
+            <div class="d-flex flex-lg-row-reverse justify-content-around p-lg-0 pt-5">
                 <div>
                     <div class="d-lg-none pb-3">
                         @if (Model.Privacy_Link != null)
                         {
-                            <a class="text-white" href="@Model.Privacy_Link">個資暨隱私權聲明</a>
+                            <a class="text-white" href="@Model.Privacy_Link" title="連結至:個資暨隱私權聲明(另開視窗)" target="_blank">個資暨隱私權聲明</a>
                         }
                     </div>
                     @if (Model.Accessibility_Link != null && Model.Accessibility_Badge != null)
                     {
-                        <a href="@Model.Accessibility_Link" title="連結至:無障礙網站(另開視窗)">
+                        <a href="@Model.Accessibility_Link" title="連結至:無障礙網站(另開視窗)" target="_blank">
                             <img class="pe-lg-0 pe-2" alt="通過AA檢測等級無障礙網頁檢測" src="@Model.Accessibility_Badge" />
                         </a>
                     }
                 </div>
                 <div class="pe-lg-5 ps-lg-0 ps-2 m-0">
-                    <img class="img_maxh150" alt="產業供需服務平臺line@@" src="@Model.line_qr" />
+                    <a href="https://liff.line.me/1645278921-kWRPP32q/?accountId=998dalcj" title="連結至：產業供需服務平臺line@@(開新視窗)" target="_blank"><img class="img_maxh150" alt="產業供需服務平臺line@@ QRCode圖" src="@Model.line_qr" /></a>
                 </div>
             </div>
         </div>

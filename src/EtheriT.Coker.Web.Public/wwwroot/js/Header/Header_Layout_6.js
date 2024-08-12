@@ -26,6 +26,7 @@ function HeaderInit() {
     var threeSwiper = new Swiper(".threeSwiper", {
         slidesPerView: 1,
         loop: true,
+        allowTouchMove: true,
         navigation: {
             nextEl: ".threeSwiper>.swiper-button-next",
             prevEl: ".threeSwiper>.swiper-button-prev",
@@ -34,7 +35,7 @@ function HeaderInit() {
             768: {
                 slidesPerView: 3,
                 spaceBetween: 50,
-                loop: false,
+                allowTouchMove: false,
             },
         },
     });

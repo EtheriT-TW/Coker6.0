@@ -55,8 +55,16 @@
                     @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
                     {
                         var target = marquee.target == true ? "_blank" : "_self";
-                        var title = marquee.title == "" ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
-                        <div class="swiper-slide"><a class="overflow-hidden" href="@marquee.link" title="@title" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                        var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+                        var link = marquee.link;
+                        if (string.IsNullOrEmpty(link))
+                        {
+                            <div class="swiper-slide"><div class="overflow-hidden text">@marquee.title <span class="sr-only">(current)</span></div></div>
+                        }
+                        else
+                        {
+                            <div class="swiper-slide"><a class="overflow-hidden text" href="@link" title="@title" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                        }
                     }
                 </div>
             </div>

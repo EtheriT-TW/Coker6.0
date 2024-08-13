@@ -55,9 +55,13 @@ header .menu {
         align-items: center;
     }
 
-        .marqueeSwiper .swiper-slide a {
+        .marqueeSwiper .swiper-slide .text {
             white-space: nowrap;
             text-overflow: ellipsis;
+        }
+
+        .headernews .content .title, .marqueeSwiper .swiper-slide div.text {
+            cursor: default;
         }
 
 @media only screen and (max-width: 766px) {

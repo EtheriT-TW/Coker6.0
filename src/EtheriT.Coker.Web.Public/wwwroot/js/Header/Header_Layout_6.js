@@ -17,12 +17,12 @@ function HeaderInit() {
         },
     });
     const checkFunction = function () {
-        if (typeof($(".marqueeSwiper").swiperBindEven) == "function") 
+        if (typeof ($(".marqueeSwiper").swiperBindEven) == "function")
             $(".marqueeSwiper").swiperBindEven(marqueeSwiper);
         else
             setTimeout(checkFunction, 300);
     }
-    checkFunction();    
+    checkFunction();
 
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {
@@ -75,7 +75,7 @@ function HeaderInit() {
         coverflowEffect: {
             rotate: 0,
             stretch: 0,
-            depth: 100,
+            depth: 150,
             scale: 0.9,
             modifier: 1,
             slideShadows: false,

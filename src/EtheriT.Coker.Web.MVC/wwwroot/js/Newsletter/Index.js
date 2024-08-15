@@ -235,10 +235,9 @@ function hashChange(e) {
 }
 
 function onSaving(e) {
-    console.log(e);
     for (let i = 0; i < e.changes.length; i++) {
         const item = e.changes[i].data;
-        if (typeof (item.date) != "undefined") {
+        if (typeof (item) != "undefined" && typeof (item.date) != "undefined") {
             let d = new Date(item.date);
             if (d.getFullYear() < 1000) d.setFullYear(d.getFullYear() + 1911);
             item.date = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;

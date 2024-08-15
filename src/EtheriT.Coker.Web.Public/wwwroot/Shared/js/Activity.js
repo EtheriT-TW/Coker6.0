@@ -16,7 +16,7 @@
         $(parenttime).removeClass("d-none"); 
     }
     var parentlocation = $self.find(".activity_location").parents("div").eq(0);
-   
+
     if (location == "" ) {
         $(parentlocation).addClass("d-none");
     } else {
@@ -50,7 +50,8 @@
         const $r = $(parentaorganizer).clone();
         $r.find("div, span").removeAttr("id");
         $r.removeAttr("id").removeClass("d-none");
-        $r.find("div").text("執行單位");
+        if ($r.find("div > span").length > 0) $r.find("div > span").text("執行單位");
+        else $r.find("div").text("執行單位");
         $r.find(".activity-a-organizer").removeClass("activity-a-organizer").addClass("activity-r-organizer");
         prarentrorganizer = $r;
         $(parentaorganizer).after($r);
@@ -86,7 +87,6 @@
     $self.find(".activity-a-organizer").html(aorganizer); 
     $self.find(".activity_link").html(link);
     $self.find(".activity_tel").html(tel); 
-
 
     return $self.html();
 

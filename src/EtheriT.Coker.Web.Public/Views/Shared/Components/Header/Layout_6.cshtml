@@ -9,6 +9,10 @@
 @{
     string imgurl = Model.LogoImageUrl.Substring(0, Model.LogoImageUrl.LastIndexOf("/"));
 }
+<script>
+    const orgName = getComputedStyle(document.documentElement).getPropertyValue('--orgName').trim();
+    document.documentElement.style.setProperty('--homeBackground', `url('/upload/${orgName}/backgroundtop.jpg')`);
+</script>
 <div class="text-white pb-lg-5">
     <div class=" menu">
         <div class="container">

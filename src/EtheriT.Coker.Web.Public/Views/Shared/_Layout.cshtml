@@ -37,6 +37,11 @@
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
     <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
     <meta property="og:locale" content="zh-tw" />
+    <style>
+        :root{
+            --orgName:@ViewData["OrgName"];
+        }
+    </style>
     <style id="frameCss"></style>
     @if (ViewData["GA4"] != null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? ""))
     {

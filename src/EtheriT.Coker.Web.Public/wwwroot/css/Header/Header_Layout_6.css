@@ -1,12 +1,4 @@
-﻿
-body.home {
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center top;
-    background-color: #005491;
-}
-
-.logoimg {
+﻿.logoimg {
     max-height: 3rem;
 }
 
@@ -58,6 +50,8 @@ header .menu {
         .marqueeSwiper .swiper-slide .text {
             white-space: nowrap;
             text-overflow: ellipsis;
+            color: #fff;
+            text-decoration: none;
         }
 
         .headernews .content .title, .marqueeSwiper .swiper-slide div.text {

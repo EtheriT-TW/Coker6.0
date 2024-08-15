@@ -128,6 +128,7 @@
                 traits: [
                     // Strings are automatically converted to text types
                     { name: 'title', type: 'text', label: '名稱', placeholder: '請輸入連結名稱' },
+                    { name: 'data-text', type: 'text', label: '顯示文字', placeholder: '請輸入顯示文字' },
                     { name: 'href', type: 'text', label: '超連結', placeholder: '請輸入連結位子' },
                     {
                         name: 'file', type: 'button',
@@ -148,6 +149,12 @@
                         ]
                     }
                 ]
+            }, init() {
+                this.on('change:attributes:data-text', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        component.find(".name")[0].components(component.getAttributes()["data-text"]);
+                    }
+                });
             }
         },
     });
@@ -175,7 +182,8 @@
                 ],
             }, init() {
                 this.on('change:attributes:download', function (component) {
-                    component.find(".name")[0].components(component.getAttributes().download);
+                    if (typeof(component.getEl())!="undefined")
+                        component.find(".name")[0].components(component.getAttributes().download);
                 });
             }
         },
@@ -384,7 +392,10 @@
                     setTimeout(() => {
                         var content = $(".gjs-frame")[0].contentWindow.date_input_change;
                         if (typeof (content) == "undefined") setting();
-                        else self.components(content(self.getId()));
+                        else {
+                            const html = content(self.getId());
+                            self.components(html);
+                        }
                     }, 200);
                 }
                 self.on(`change:attributes`, setting);
@@ -436,6 +447,7 @@
                 traits: [
                     { name: 'id', type: 'text', label: 'ID', placeholder: '元件ID名稱' },
                     { name: 'data-diridname', type: 'text', label: '目錄名稱', placeholder: '尚未關聯目錄' },
+                    { name: 'data-dirpath', type: 'text', label: '路徑', placeholder: '設定連結路徑' },
                     {
                         name: 'data-dirid', type: 'button',
                         text: "設置目錄",

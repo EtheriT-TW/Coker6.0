@@ -263,7 +263,7 @@ app.MapControllerRoute(
     pattern: "{key?}/{id?}",
     defaults: new { controller = "Home", action = "Index" });
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
     app.Use(async (context, next) =>
     {

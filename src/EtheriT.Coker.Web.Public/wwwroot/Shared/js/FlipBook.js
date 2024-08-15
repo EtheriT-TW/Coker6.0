@@ -29,11 +29,15 @@
 
 function FlipBookModalInit() {
     var $this = $(".FlipBookModal");
+    const modal = bootstrap.Modal.getOrCreateInstance($this[0]);
     $this.on('show.bs.modal', event => {
         // Button that triggered the modal
         var button = event.relatedTarget;
         var target_pdf = button.getAttribute('data-pdf-url');
         console.log(target_pdf);
+        PDFViewerApplication.closeModal = function () {
+            modal.hide();
+        };
         PDFViewerApplication.setInitialView();
         PDFViewerApplication.open({url: target_pdf, originalUrl: target_pdf});
     });

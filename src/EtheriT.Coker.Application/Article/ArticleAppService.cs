@@ -123,12 +123,11 @@ namespace EtheriT.Coker.Application.Article
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.Article;
+                var result = db.Article.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID);
 
                 if (result != null)
                 {
                     var dataQuery = await (from e in result
-                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
                                     orderby e.Id descending
                                     select new ArticleListGetDto
                                     {
@@ -282,6 +281,7 @@ namespace EtheriT.Coker.Application.Article
         }
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
+            string error = string.Empty;
             try
             {
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
@@ -291,7 +291,6 @@ namespace EtheriT.Coker.Application.Article
 
                 var output = new List<DirectoryReleInfoDto>();
                 var articleData = new List<ArticleListGetDto>();
-
                 var result = await db.Article
                                     .Where(e => dto.Ids.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
@@ -299,6 +298,7 @@ namespace EtheriT.Coker.Application.Article
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
+                                    .Where(e => dto.Target == null || !string.IsNullOrEmpty(e.DataJson))
 									.OrderBy(a => a.SerNO)
 								    .ThenByDescending(a => a.NodeDate)
 								    .ThenByDescending(e => e.Id)
@@ -306,46 +306,70 @@ namespace EtheriT.Coker.Application.Article
                 if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();
                 int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
                 if (skip < 0) skip = 0;
-                articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum??12).ToList();
-
-                if (articleData != null)
+                if (string.IsNullOrEmpty(dto.Target))
                 {
-                    foreach (var data in articleData)
+                    articleData = mapper.Map(result, articleData).Skip(skip).Take(dto.ShowNum ?? 12).ToList();
+                    if (articleData != null)
                     {
-                        var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                        foreach (var data in articleData)
                         {
-                            Sid = data.Id,
-                            Type = (int)FileBindTypeEnum.文章管理,
-                            Size = 3
-                        });
-                        NewsletterFrameDto? DataJson = JsonConvert.DeserializeObject<NewsletterFrameDto>(data.DataJson ?? "{}");
+                            var imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                            {
+                                Sid = data.Id,
+                                Type = (int)FileBindTypeEnum.文章管理,
+                                Size = 3
+                            });
+                            NewsletterFrameDto? DataJson = JsonConvert.DeserializeObject<NewsletterFrameDto>(data.DataJson ?? "{}");
 
-                        var output_data = new DirectoryReleInfoDto();
-                        var website = sites.Find(e => e.Id == data.FK_WebsiteId);
-                        if (website != null)
+                            var output_data = new DirectoryReleInfoDto();
+                            var website = sites.Find(e => e.Id == data.FK_WebsiteId); 
+                            if (website != null)
+                            {
+                                output_data.type = DirectoryTypeEnum.文章;
+                                output_data = mapper.Map(data, output_data);
+                                output_data.Link = $"/article/{data.Id}";
+                                output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
+                                output_data.NodeDate = data.NodeDate;
+                                output_data.OrgName = website.OrgName;
+                                output_data.Title = ((DataJson != null && DataJson.No != 0) ? $"第{DataJson.No}期 " : "") + output_data.Title;
+                                if (data.Html != null && data.Html.IndexOf("activity_start_time") > 0)
+                                {
+                                    var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_start_time\">(.*?)<").Groups;
+                                    if (!string.IsNullOrEmpty(g[0].Value)) output_data.StartTime = DateTime.Parse(g[1].Value);
+                                }
+                                if (data.Html != null && data.Html.IndexOf("activity_addr") > 0)
+                                {
+                                    var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_addr\">(.*?)<").Groups;
+                                    if (!string.IsNullOrEmpty(g[0].Value)) output_data.Address = g[1].Value;
+                                }
+                                if (data.Html != null && data.Html.IndexOf("activity_location") > 0)
+                                {
+                                    var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_location\">(.*?)<").Groups;
+                                    if (!string.IsNullOrEmpty(g[0].Value)) output_data.Location = g[1].Value;
+                                }
+                                output.Add(output_data);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    List<NewsletterFrameDto> list = new List<NewsletterFrameDto>();
+                    foreach (var item in result.Take(30)) {
+                        if (!string.IsNullOrEmpty(item.DataJson))
                         {
-                            output_data.type = DirectoryTypeEnum.文章;
-                            output_data = mapper.Map(data, output_data);
-                            output_data.Link = $"/article/{data.Id}";
-                            output_data.MainImage = imagedata.Count <= 0 ? "" : imagedata.First().Link;
-                            output_data.NodeDate = data.NodeDate;
-                            output_data.OrgName = website.OrgName;
-                            output_data.Title = ((DataJson!=null && DataJson.No!=0)?$"第{DataJson.No}期 ":"")  + output_data.Title;
-                            if (data.Html!=null && data.Html.IndexOf("activity_start_time") > 0) {
-                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_start_time\">(.*?)<").Groups;
-                                if(!string.IsNullOrEmpty(g[0].Value)) output_data.StartTime = DateTime.Parse(g[1].Value);
-                            }
-                            if (data.Html != null && data.Html.IndexOf("activity_addr") > 0)
-                            {
-                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_addr\">(.*?)<").Groups;
-                                if (!string.IsNullOrEmpty(g[0].Value)) output_data.Address = g[1].Value;
-                            }
-                            if (data.Html != null && data.Html.IndexOf("activity_location") > 0)
-                            {
-                                var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_location\">(.*?)<").Groups;
-                                if (!string.IsNullOrEmpty(g[0].Value)) output_data.Location = g[1].Value;
-                            }
-                            output.Add(output_data);
+                            NewsletterFrameDto? obj = JsonConvert.DeserializeObject<NewsletterFrameDto>(item.DataJson);
+                            if(obj!=null) list.Add(obj);
+                        }
+                    }
+                    if (list.Any())
+                    {
+                        switch (dto.Target.ToLower())
+                        {
+                            case "conten2":
+                                var items = list.Select(e => e.Conten2).Where(e => e!=null).Where(e => e.Visible??false).ToList();
+                                mapper.Map(items, output).Skip(skip).Take(dto.ShowNum ?? 12).ToList();
+                                break;
                         }
                     }
                 }

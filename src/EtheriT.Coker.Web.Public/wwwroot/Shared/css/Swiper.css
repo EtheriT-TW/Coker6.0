@@ -94,6 +94,12 @@
         max-height:100%;
         max-width:100%;
     }
+#pictureSwiperThumbs {
+    height:25%;
+}
+    #pictureSwiperThumbs img {
+        max-height:100%;
+    }
 @media only screen and (max-width: 979px) {
     .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
         font-size: 1.5rem;

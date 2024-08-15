@@ -22,9 +22,20 @@
 }
 
 .FlipBookModal .modal-header {
-    background-color: #fff4
+    display:none;
 }
 
 .FlipBookModal .modal-body {
     background-color: #fff4
+}
+
+.toolbarButton#closeBottom::before {
+    top: 5px;
+    left: 5px;
+    transform: unset;
+}
+@media(max-width:576px) {
+    .FlipBookModal .modal-body {
+        padding:0;
+    }
 }

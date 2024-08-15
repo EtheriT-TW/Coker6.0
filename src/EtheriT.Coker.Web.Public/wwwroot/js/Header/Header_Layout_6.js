@@ -1,16 +1,10 @@
 ﻿var time = 0;
 function HeaderInit() {
-
-    var backgroundimgurl = "";
-
-    if ($('body').hasClass('home')) {
-        $("link").each(function (index) {
-            if (typeof ($(this).attr("data-orgname")) == "string") {
-                backgroundimgurl = `url("/upload/${$(this).attr("data-orgname")}/backgroundtop.jpg")`;
-                $("body").css("background-image", backgroundimgurl);
-            }
-        });
-    }
+    const $main = $("<div class='container'>")
+    const $contain = $("body:not(.home) #main > *");
+    $("#breadcrumb").prependTo($main);
+    $contain.appendTo($main);
+    $("#main").append($main);
 
     var marqueeSwiper = new Swiper(".marqueeSwiper", {
         direction: "vertical",

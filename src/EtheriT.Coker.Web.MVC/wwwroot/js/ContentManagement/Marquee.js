@@ -208,7 +208,7 @@ function FormDataClear() {
     $input_sort.val("")
     $input_sort.attr("disabled", "disabled");
     $check_sort.prop("checked", false);
-    $link.val("https://");
+    $link.val("");
     $target.prop("checked", false);
     $permanent.prop("checked", false);
     $date.val("");

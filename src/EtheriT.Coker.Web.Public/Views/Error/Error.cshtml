@@ -5,7 +5,7 @@
 
 <h1 class="text-danger">An error occurred.</h1>
 <p class="text-danger">Sorry, an unexpected error occurred. Please try again later.</p>
-@if (Model.ShowRequestId)
+@if (Model != null && Model.ShowRequestId)
 {
     <p>
         <strong>Request ID:</strong> <code>@Model.RequestId</code>

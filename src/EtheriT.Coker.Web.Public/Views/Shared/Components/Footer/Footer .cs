@@ -26,6 +26,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var routeData = HttpContext.GetRouteData();
             var website = HttpContext.GetRouteData().Values["website"];
             if (website == null)
             {
@@ -169,12 +170,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     };
                     break;
                 case 5:
-                    if (defaultData.Id == 3)
+                    switch (defaultData.Id)
                     {
-                        footerViewModel = new FooterViewModel
-                        {
-                            Title = "www.濠廣.tw",
-                            footerViewModels = new List<FooterViewModel> {
+                        case 3:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Title = "www.濠廣.tw",
+                                footerViewModels = new List<FooterViewModel> {
                                     new FooterViewModel { Title = "關於濠廣", Link = "", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "公司介紹", Link = "/haoguang/introduce" },
                                             new FooterViewModel { Title = "領導專業團隊", Link = "/haoguang/team" },
@@ -202,54 +204,74 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                         }
                                     }
                                 },
-                            Content = new List<string>
+                                Content = new List<string>
                                 {
                                     "© HAO GUANG",
                                     "International Enterprise Co, Ltd.",
                                     " ALL RIGHTS RESERVED. Design by EtheriT"
                                 }
-                        };
-                    }
-                    else
-                    {
-                        footerViewModel = new FooterViewModel
-                        {
-                            Title = "https://www.fu-how-24.com",
-                            locale = defaultData.locale,
-                            footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "Company", Link = "", footerViewModels = new List<FooterViewModel> {
-                                        new FooterViewModel { Title = "About ", Link = "/haoguang/introduce" },
-                                        new FooterViewModel { Title = "Lead Professional Teams", Link = "/haoguang/team" },
-                                        new FooterViewModel { Title = "Contact", Link = "/haoguang/contactUs" },
+                            };
+                            break;
+                        case 4:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Title = "https://www.fu-how-24.com",
+                                locale = defaultData.locale,
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "Company", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "About ", Link = "/haoguang/introduce" },
+                                            new FooterViewModel { Title = "Lead Professional Teams", Link = "/haoguang/team" },
+                                            new FooterViewModel { Title = "Contact", Link = "/haoguang/contactUs" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "Service", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "Wind Power Services", Link = "/haoguang/Windpowergeneration" },
+                                            new FooterViewModel { Title = "Bulk/Freighter Hull Repairs", Link = "/haoguang/repair02" },
+                                            new FooterViewModel { Title = "Main Engine and Auxiliary Machine Maintenance", Link = "/haoguang/repair01" },
+                                            new FooterViewModel { Title = "More Services", Link = "/haoguang/moreservice" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "Performance", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "Water Valve Replacement", Link = "/haoguang/watervalve" },
+                                            new FooterViewModel { Title = "Derrick Head Block", Link = "/haoguang/pulley" },
+                                            new FooterViewModel { Title = "Vessel Derrick", Link = "/haoguang/shipboom" },
+                                            new FooterViewModel { Title = "Imported Anchor Chain Hanging, Replacement, and Installation", Link = "/haoguang/anchorchain" },
+                                            new FooterViewModel { Title = "Winch Clutch Replacement", Link = "/haoguang/winchclutch" },
+                                            new FooterViewModel { Title = "Hatch Cover Plate Deformed", Link = "/haoguang/Hatchcover" },
+                                            new FooterViewModel { Title = "Open Cabin Hydraulic Cylinders", Link = "/haoguang/anchorchain02" },
+                                            new FooterViewModel { Title = "Replacement of Anchor Chain", Link = "/haoguang/cylinder" },
+                                            new FooterViewModel { Title = "Bridge Alarm Systems", Link = "/haoguang/alert" },
+                                            new FooterViewModel { Title = "Other Projects", Link = "/haoguang/Otherprojects" }
+                                        }
                                     }
                                 },
-                                new FooterViewModel { Title = "Service", Link = "", footerViewModels = new List<FooterViewModel> {
-                                        new FooterViewModel { Title = "Wind Power Services", Link = "/haoguang/Windpowergeneration" },
-                                        new FooterViewModel { Title = "Bulk/Freighter Hull Repairs", Link = "/haoguang/repair02" },
-                                        new FooterViewModel { Title = "Main Engine and Auxiliary Machine Maintenance", Link = "/haoguang/repair01" },
-                                        new FooterViewModel { Title = "More Services", Link = "/haoguang/moreservice" },
-                                    }
-                                },
-                                new FooterViewModel { Title = "Performance", Link = "", footerViewModels = new List<FooterViewModel> {
-                                        new FooterViewModel { Title = "Water Valve Replacement", Link = "/haoguang/watervalve" },
-                                        new FooterViewModel { Title = "Derrick Head Block", Link = "/haoguang/pulley" },
-                                        new FooterViewModel { Title = "Vessel Derrick", Link = "/haoguang/shipboom" },
-                                        new FooterViewModel { Title = "Imported Anchor Chain Hanging, Replacement, and Installation", Link = "/haoguang/anchorchain" },
-                                        new FooterViewModel { Title = "Winch Clutch Replacement", Link = "/haoguang/winchclutch" },
-                                        new FooterViewModel { Title = "Hatch Cover Plate Deformed", Link = "/haoguang/Hatchcover" },
-                                        new FooterViewModel { Title = "Open Cabin Hydraulic Cylinders", Link = "/haoguang/anchorchain02" },
-                                        new FooterViewModel { Title = "Replacement of Anchor Chain", Link = "/haoguang/cylinder" },
-                                        new FooterViewModel { Title = "Bridge Alarm Systems", Link = "/haoguang/alert" },
-                                        new FooterViewModel { Title = "Other Projects", Link = "/haoguang/Otherprojects" }
-                                    }
+                                Content = new List<string>{
+                                    "© HAO GUANG",
+                                    "International Enterprise Co, Ltd.",
+                                    " ALL RIGHTS RESERVED. Design by EtheriT"
                                 }
-                            },
-                            Content = new List<string>{
-                                "© HAO GUANG",
-                                "International Enterprise Co, Ltd.",
-                                " ALL RIGHTS RESERVED. Design by EtheriT"
-                            }
-                        };
+                            };
+                            break;
+                        default:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Title = "kao-feng.cocker.com.tw",
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "關於高峰", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "公司介紹", Link = "/kao-feng/introduce" },
+                                            new FooterViewModel { Title = "領導專業團隊", Link = "/kao-feng/team" },
+                                            new FooterViewModel { Title = "聯絡我們", Link = "/kao-feng/contactUs" },
+                                        }
+                                    }
+                                },
+                                Content = new List<string>
+                                {
+                                    "© Kao Feng",
+                                    "International Enterprise Co, Ltd.",
+                                    " ALL RIGHTS RESERVED. Design by EtheriT"
+                                }
+                            };
+                            break;
                     }
                     break;
                 default:

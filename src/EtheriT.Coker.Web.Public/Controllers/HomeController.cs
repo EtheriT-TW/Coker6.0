@@ -68,11 +68,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var GTM = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "GTM", SiteId = siteId });
             var GoogleTranslate = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "google.translate", SiteId = siteId });
 
-            await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
-            {
-                FK_WebsiteId = siteId,
-                FK_WebmenuId = defaultData.Id
-            });
             HomeViewModel model = new HomeViewModel
             {
                 site_name = site_name,
@@ -93,6 +88,11 @@ namespace EtheriT.Coker.Web.Public.Controllers
             };
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;
+            var saveRemote = await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
+            {
+                FK_WebsiteId = siteId,
+                FK_WebmenuId = model.PageData.Id
+            });
             if (!string.IsNullOrEmpty(defaultData.Description)) model.PageData.Description = defaultData.Description;
             if (string.IsNullOrEmpty(model.PageData.Html) || (key != null && key != defaultData.OrgName))
             {

@@ -94,7 +94,7 @@
 			</div>
 
 			<form id="PostForm" class="card-body needs-validation">
-				<div class="d-flex align-self-center justify-content-between mb-3">
+				<div class="align-self-center justify-content-between mb-3 d-none">
 					<div class="placement d-flex">
 						<label class="form-label mb-0 pe-3 align-self-center" for="Placement">刊登位置</label>
 						<select id="Placement" class="form-select" aria-label="Placement Select" required>
@@ -128,9 +128,9 @@
 
 				<div class="link input-group mb-3">
 					<div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-						<span class="material-symbols-outlined me-1 required_sign">link</span>
+						<span class="material-symbols-outlined me-1">link</span>
 					</div>
-					<input id="InputLink" class="form-control rounded" type="text" aria-label="Input Link of Marquee" value="https://" required>
+					<input id="InputLink" class="form-control" type="text" aria-label="Input Link of Marquee" value="">
 					<div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
 						<input id="TargetCheck" class="form-check-input" type="checkbox" value="">
 						<label class="form-check-label fs-6 pe-2" for="TargetCheck">開新視窗</label>
@@ -150,6 +150,6 @@
 			</form>
 		</div>
 
-		<div class="text-end my-2 text-danger">※前台最多僅顯示十筆資料</div>
+		<div class="text-end my-2 text-danger">※前台最多僅顯示五筆資料</div>
 	</div>
 </div>

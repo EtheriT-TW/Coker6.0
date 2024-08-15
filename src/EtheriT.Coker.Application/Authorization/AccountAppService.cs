@@ -266,7 +266,7 @@ namespace EtheriT.Coker.Application.Authorization
             ResponseMessageDto response = new ResponseMessageDto();
             try {
                 var theUser = await db.Users
-                    .Where(e => e.Account == dto.Account || e.Email == dto.Email)
+                    .Where(e => e.Account == dto.Account || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
                     .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                 string passwordError = checkPassword(dto.Password);
                 if (theUser != null) throw new Exception("該使用者的帳號或信箱已存在");

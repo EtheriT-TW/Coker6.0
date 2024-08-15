@@ -39,8 +39,9 @@
 @switch (Model.PageData.LayoutType)
 {
     case 1:
+    case 6:
         {
-            <div class="top_title_1 p-3 d-none d-md-block">
+            <div id="breadcrumb" class="top_title_1 p-3 d-none d-md-block">
                 <nav class="bread container">
                     <ol class="list-unstyled d-flex my-0">
                         @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
@@ -63,7 +64,7 @@
     case 3:
         @if (Model.MenuBread.Count() > 0 || Model.PageData.VisibleTitle)
         {
-            <div class="top_title_3 p-3 d-none d-md-block">
+            <div id="breadcrumb" class="top_title_3 p-3 d-none d-md-block">
                 @if (Model.MenuBread.Count() > 0 && Model.ParentData.VisibleHeader)
                 {
                 <nav class="bread container">
@@ -89,7 +90,7 @@
             </div>
             @if (Model.ParentData.VisibleTitle && Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)
             {
-                <div class="container">
+                <div id="breadcrumb" class="container">
                     <h2 class="p-2">@Model.PageData.Title</h2>
                 </div>
             }
@@ -102,7 +103,7 @@
         }
         @if (Model.MenuBread.Count() > 0 && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle))
         {
-            <div class="top_title p-3 bg-white container d-none d-md-block">
+            <div id="breadcrumb" class="top_title p-3 bg-white container d-none d-md-block">
                 @if (Model.ParentData.VisibleHeader)
                 {
                 <nav class="bread container">

@@ -25,7 +25,8 @@ function initElemntAndLoadDir($dir,page) {
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
     const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
-    const hashPage = !!page? page.toString() : location.hash.replace("#", "");
+    const hashPage = !!page ? page.toString() : location.hash.replace("#", "");
+    console.log($self.data("target"));
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage=="") page = "1";
         else page = hashPage;
@@ -36,7 +37,8 @@ function initElemntAndLoadDir($dir,page) {
             ShowNum: shownum,
             MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
             Filters: $self.data("filtered"),
-            directoryType: $self.data("directoryTypeChecked")
+            directoryType: $self.data("directoryTypeChecked"),
+            target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target")
         }
         $self.find(".catalog>.template").remove();
         DirectoryDataGet($self, option);
@@ -243,6 +245,7 @@ function DirectoryDataInsert($item, result) {
     const temp = $item.find(".templatecontent").html();
     const temp_tag = $item.find(".templatecontent-tag").html();
     const isSearch = $item.data("type") == "search";
+    const dirPath = typeof ($item.data("dirpath")) == "undefined" ? "" : $item.data("dirpath").toLowerCase();
     if (result.length == 0) $item.find(".catalog").addClass("empty");
     else $item.find(".catalog").removeClass("empty");
     result != null && result.forEach(function (data) {
@@ -270,13 +273,17 @@ function DirectoryDataInsert($item, result) {
                 data.mainImage = "https://img.youtube.com/vi/" + key + "/mqdefault.jpg";
             }
         } else {
-            path = (window.location.pathname.indexOf(data.orgName) > 0 ? window.location.pathname : `${data.orgName == null ? "" : `/${data.orgName}`}${window.location.pathname}`) + data.link;
+            path = (
+                window.location.pathname.indexOf(data.orgName) > 0 && window.location.pathname.toLowerCase().indexOf("home") < 0 && window.location.pathname.toLowerCase().indexOf(dirPath) >= 0 ?
+                window.location.pathname :
+                    `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname: window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`
+            ) + data.link;
             target = "_self";
         }
         if (data.type == 1 && data.status != 0) {
             content.find("a").append(`<span class="status status${data.status}">${data.statusName}</span>`);
         }
-        path = path.replace("//", "/");
+        if (!/^http/.test(path)) path = path.replace("//", "/");
         const linkData = {
             "href": path,
             "title": `連結至: ${data.title}${(target == "_blank" ? "(另開視窗)" : "")}`,

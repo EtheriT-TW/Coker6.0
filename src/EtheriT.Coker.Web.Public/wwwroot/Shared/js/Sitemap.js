@@ -22,7 +22,8 @@
 
 function CreateSitemap(result) {
     var frame = $(".sitemap_hierarchical_frame");
-    frame.append(`<ul class=""></ul>`);
+    const $firstUl = $(`<ul class=""></ul>`);
+    frame.append($firstUl);
 
     var index_f = 1;
 
@@ -74,8 +75,8 @@ function CreateSitemap(result) {
             first_item.parent("div").parent("div").html(`<a class="first d-block text-black px-3 rounded-3" href="${data.routerName}" alt="${data.text}">${index_f} ${data.title}</a>`)
 
         }
-
-        frame.append(first);
+        if (index_f == result.length) first.removeClass("border-bottom");
+        $firstUl.append(first);
         index_f++;
 
     })

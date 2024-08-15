@@ -10,6 +10,7 @@
     <Content Remove="appsettings.EPZA.json" />
     <Content Remove="appsettings.Haoguang.json" />
     <Content Remove="appsettings.Haoguangen.json" />
+    <Content Remove="appsettings.kao-feng.json" />
     <Content Remove="Views\Page\OrderManagement.cshtml" />
     <Content Remove="wwwroot\css\Page\OrderManagement.css" />
     <Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -62,6 +63,9 @@
     </None>
     <None Include="appsettings.Haoguang.json" />
     <None Include="appsettings.Haoguangen.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="appsettings.kao-feng.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\Shared\css\Activity.less" />

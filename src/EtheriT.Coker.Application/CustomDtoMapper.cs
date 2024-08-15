@@ -27,6 +27,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 
 namespace EtheriT.Coker.Application
 {
@@ -193,6 +194,12 @@ namespace EtheriT.Coker.Application
             CreateMap<ArticleListGetDto, Core.Models.Article>()
                 .ReverseMap()
                 .ForMember(e => e.NodeDate, option => option.MapFrom(c => c.NodeDate == null ? null : c.NodeDate.Value.ToString("yyyy/MM/dd")));
+            CreateMap<NewslatterContenDto, DirectoryReleInfoDto>()
+                .ForMember(e => e.Title, option => option.MapFrom(c => c.Title))
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Conten))
+                .ForMember(e => e.MainImage, option => option.MapFrom(c => c.image == null? "" : c.image.Path))
+                .ReverseMap();
+            
 
             //Directory
             CreateMap<DirectoryAddUpDto, Core.Models.Directory>().ReverseMap();

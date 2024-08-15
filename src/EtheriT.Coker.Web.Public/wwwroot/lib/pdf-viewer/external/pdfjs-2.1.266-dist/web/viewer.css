@@ -587,6 +587,8 @@ html[dir='rtl'] #outerContainer.sidebarOpen #sidebarContainer {
     bottom: 0;
     left: 0;
     min-width: 320px;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e2e2 #4c4c4c;
 }
 
 #sidebarContent {
@@ -1275,9 +1277,15 @@ html[dir='ltr'] .toolbarButton#secondaryToolbarToggle::before {
 html[dir='rtl'] .toolbarButton#secondaryToolbarToggle::before {
   content: url(images/toolbarButton-secondaryToolbarToggle-rtl.png);
 }
+.toolbarButton#closeBottom::before {
+    content: "\f00d";
+    font-weight: 900;
+    font-family: 'Font Awesome 6 Free';
+    font-size:1.2rem;
+}
 
 html[dir='ltr'] .toolbarButton.findPrevious::before {
-  content: url(images/findbarButton-previous.png);
+    content: url(images/findbarButton-previous.png);
 }
 html[dir='rtl'] .toolbarButton.findPrevious::before {
   content: url(images/findbarButton-previous-rtl.png);
@@ -1303,6 +1311,9 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
     top: 50%;
     left: 1.5em;
 }
+.sidebarOpen .pageButton.pageUp {
+    left: calc(1.5em + 200px);
+}
 .pageButton.pageDown {
     position: fixed;
     z-index: 500;
@@ -1311,15 +1322,19 @@ html[dir='rtl'] .toolbarButton.pageUp::before {
 }
 
 .pageButton {
-    width: 1em;
+    width: 1.5em;
     height: 1.5em;
-    background-color: #666;
+    background-color: #333;
     border: 0px;
-    border-radius: 0.5em;
+    border-radius: 100%;
     cursor: pointer;
     opacity: 0.7;
     font-size: 2rem;
-    color: #222;
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 html[dir='ltr'] .toolbarButton.pageDown::before {
@@ -1602,13 +1617,15 @@ html[dir='rtl'] .verticalToolbarSeparator {
 }
 
 #thumbnailView {
-  position: absolute;
-  width: calc(100% - 60px);
-  top: 0;
-  bottom: 0;
-  padding: 10px 30px 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 0;
+    padding: 10px 30px 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e2e2 #4c4c4c;
 }
 
 #thumbnailView > a:active,
@@ -2437,5 +2454,10 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     #viewerContainer {
         margin: 0em;
         margin-top: 3em;
+        display: flex;
+        align-items: center;
+    }
+    .sidebarOpen .pageButton {
+        display:none;
     }
 }

@@ -192,18 +192,11 @@ See https://github.com/adobe-type-tools/cmap-resources
               </div>
           </div>  <!-- secondaryToolbar -->
 
-          <button class="pageButton pageUp" title="Previous Page" id="sideprevious">
-              <span class="material-symbols-outlined">navigate_before</span>
-          </button>
-          <button class="pageButton pageDown" title="Next Page" id="sidenext" >
-              <span class="material-symbols-outlined">navigate_next</span>
-          </button>
-
           <div class="toolbar">
               <div id="toolbarContainer">
                   <div id="toolbarViewer">
                       <div id="toolbarViewerLeft">
-                          <button id="sidebarToggle" class="toolbarButton hidden" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
+                          <button id="sidebarToggle" class="toolbarButton" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
                               <span data-l10n-id="toggle_sidebar_label">Toggle Sidebar</span>
                           </button>
                           <div class="toolbarButtonSpacer"></div>
@@ -247,6 +240,9 @@ See https://github.com/adobe-type-tools/cmap-resources
 
                           <button id="secondaryToolbarToggle" class="toolbarButton" title="Tools" tabindex="36" data-l10n-id="tools">
                               <span data-l10n-id="tools_label">Tools</span>
+                          </button>
+                          <button id="closeBottom" class="toolbarButton" title="Close" tabindex="36" data-l10n-id="close">
+                              <span data-l10n-id="tools_close">關閉</span>
                           </button>
                       </div>
                       <div id="toolbarViewerMiddle">
@@ -301,7 +297,13 @@ See https://github.com/adobe-type-tools/cmap-resources
           </menu>
 
           <div id="viewerContainer" tabindex="0">
+              <button class="pageButton pageUp" title="Previous Page" id="sideprevious">
+                  <span class="material-symbols-outlined">navigate_before</span>
+              </button>
               <div id="viewer" class="pdfViewer"></div>
+              <button class="pageButton pageDown" title="Next Page" id="sidenext">
+                  <span class="material-symbols-outlined">navigate_next</span>
+              </button>
           </div>
 
           <div id="errorWrapper" hidden='true'>

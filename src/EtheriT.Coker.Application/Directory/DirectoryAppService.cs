@@ -752,7 +752,8 @@ namespace EtheriT.Coker.Application.Directory
                                 Page = page,
                                 ShowNum = shownum,
                                 SiteId = WebsiteID,
-                                MaxLen = dto.MaxLen
+                                MaxLen = dto.MaxLen,
+                                Target = dto.Target
                             });
                             if (temparticledata != null)
                             {
@@ -765,7 +766,7 @@ namespace EtheriT.Coker.Application.Directory
                     }
                 }
             }
-            return output;
+           return output;
         }
         public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
         {

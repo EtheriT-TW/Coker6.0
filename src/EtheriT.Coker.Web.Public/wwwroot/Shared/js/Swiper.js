@@ -7,6 +7,9 @@ function SwiperInit(obj) {
     var config = {
         slidesPerView: 1,
         spaceBetween: 15,
+        keyboard: {
+            enabled: true,
+        },
     };
     $.fn.extend({
         swiperBindEven: function (swiper) {

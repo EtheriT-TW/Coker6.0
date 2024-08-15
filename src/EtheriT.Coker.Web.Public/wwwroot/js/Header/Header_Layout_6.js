@@ -9,10 +9,20 @@ function HeaderInit() {
     var marqueeSwiper = new Swiper(".marqueeSwiper", {
         direction: "vertical",
         allowTouchMove: false,
+        keyboard: {
+            enabled: true,
+        },
         autoplay: {
             delay: 3000,
         },
     });
+    const checkFunction = function () {
+        if (typeof($(".marqueeSwiper").swiperBindEven) == "function") 
+            $(".marqueeSwiper").swiperBindEven(marqueeSwiper);
+        else
+            setTimeout(checkFunction, 300);
+    }
+    checkFunction();    
 
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {
@@ -22,6 +32,9 @@ function HeaderInit() {
         navigation: {
             nextEl: ".threeSwiper>.swiper-button-next",
             prevEl: ".threeSwiper>.swiper-button-prev",
+        },
+        keyboard: {
+            enabled: true,
         },
         breakpoints: {
             768: {
@@ -42,6 +55,9 @@ function HeaderInit() {
                 watchSlidesProgress: true,
                 allowTouchMove: false,
             },
+        },
+        keyboard: {
+            enabled: true,
         },
         navigation: {
             nextEl: ".planningSwiper>.swiper-button-next",
@@ -64,6 +80,9 @@ function HeaderInit() {
             modifier: 1,
             slideShadows: false,
         },
+        keyboard: {
+            enabled: true,
+        },
         navigation: {
             nextEl: ".planning>.swiper-button-next",
             prevEl: ".planning>.swiper-button-prev",
@@ -83,6 +102,9 @@ function HeaderInit() {
             768: {
                 slidesPerView: 4,
             },
+        },
+        keyboard: {
+            enabled: true,
         },
         pagination: {
             el: ".outcomeSwiper .swiper-pagination",

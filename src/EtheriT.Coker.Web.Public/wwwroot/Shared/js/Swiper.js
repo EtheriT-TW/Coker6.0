@@ -113,7 +113,43 @@ function SwiperInit(obj) {
             console.log(selfConfig);
         }
     });
-
+    $(".three_swiper").prop("draggable", true).each(function () {
+        var $self = $(this);
+        console.log("in");
+        if (!!!$self.data("isInit")) {
+            var Id = "#" + $self.attr("id") + " > .swiper";
+            var selfConfig = Object.assign({}, config, {
+                pagination: {
+                    el: "#" + $self.attr("id") + " .swiper-pagination",
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                }, breakpoints: {
+                    375: {
+                        slidesPerView: 1,
+                    },
+                    576: {
+                        slidesPerView: 2,
+                    },
+                    992: {
+                        slidesPerView: 3,
+                    }
+                }
+            }, obj.autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {});
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            obj.autoplay && $self.swiperBindEven(swiper);
+            $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
+        }
+    });
     $(".four_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
@@ -164,6 +200,7 @@ function SwiperInit(obj) {
                     el: '.swiper-scrollbar',
                     draggable: true,
                 },
+
                 navigation: {
                     nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
                     prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",

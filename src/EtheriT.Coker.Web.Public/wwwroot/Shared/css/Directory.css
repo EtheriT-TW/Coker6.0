@@ -315,16 +315,16 @@
     font-weight:600;
 }
 
-.activity {
+.catalog .activity {
     background: #fff;
     padding: 10px;
 }
 
-    .activity a {
+    .catalog .activity a {
         height: 275px;
     }
 
-    .activity img {
+    .catalog .activity img {
         max-height: 100%;
     }
 
@@ -333,7 +333,7 @@
     padding: 20px;
 }
 
-.activity h4 {
+.catalog .activity h4 {
     font-size: 1.125rem;
     font-weight: bold;
     display: -webkit-box;
@@ -343,7 +343,7 @@
     text-overflow: ellipsis;
 }
 
-.activity span {
+.catalog .activity span {
     font-size: 0.75rem;
     color: gray;
 }

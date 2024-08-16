@@ -291,6 +291,7 @@ var grapesInit = function (options) {
                         switch (s) {
                             case "one_swiper":
                             case "two_swiper":
+                            case "three_swiper":
                             case "four_swiper":
                             case "five_swiper":
                             case "six_swiper":

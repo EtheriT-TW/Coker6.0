@@ -110,7 +110,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     {
                         footerViewModels = new List<FooterViewModel> {
                             new FooterViewModel { Title = "最新消息", Link = "/ksp/home", footerViewModels = new List<FooterViewModel> {
-                                new FooterViewModel { Title = "園區公告", Link = "/ksp/Announcement" },
+                                new FooterViewModel { Title = "園區公告", Link = "/ksp/news" },
                                 new FooterViewModel { Title = "活動列表", Link = "/ksp/Activity" },
                                 new FooterViewModel { Title = "影音專區", Link = "/ksp/VideoZone" },
                                 new FooterViewModel { Title = "防疫紓困專區", Link = "/ksp/PreventionZone" },

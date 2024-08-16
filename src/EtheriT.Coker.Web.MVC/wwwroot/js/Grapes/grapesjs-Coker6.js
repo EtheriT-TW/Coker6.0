@@ -200,7 +200,7 @@
     });
     //輪播
     editor.DomComponents.addType('輪播', {
-        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
+        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
         model: {
             defaults: {
                 traits: [

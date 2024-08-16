@@ -116,13 +116,14 @@ function HeaderInit() {
     });
 
     $(window).scroll(function () {
-        $('.hideme').each(function (i) {
+        $('.hideme:not(.show)').each(function (i) {
             var $self = $(this);
             var bottom_of_object = $self.offset().top + $self.outerHeight();
             var bottom_of_window = $(window).scrollTop() + $(window).height();
             if (bottom_of_window > bottom_of_object) {
+                $self.addClass("show");
+                time = $self.data("swiper-slide-index") * 500;
                 $self.delay(time).animate({ 'opacity': '1' }, 500);
-                time += 500;
             }
         });
     });

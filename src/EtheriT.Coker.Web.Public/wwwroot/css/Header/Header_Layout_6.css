@@ -22,13 +22,14 @@ header .menu {
 }
 
     .headernews .content {
-        top: calc(50% - 1.3rem);
+        top: calc(50% - 0.9rem);
         padding-left: 5.75rem;
         padding-right: 2rem;
     }
 
         .headernews .content .title {
             color: #09D1F2;
+            line-height:1.2rem;
         }
 
         .headernews .content .text {
@@ -57,16 +58,37 @@ header .menu {
         .headernews .content .title, .marqueeSwiper .swiper-slide div.text {
             cursor: default;
         }
+@media only screen and (max-width: 929px) {
+    .menu .navbar-collapse {
+        position: absolute;
+        width: calc(100% + 1rem);
+        top: 3.5rem;
+        z-index: 2;
+        background-color: rgb(9, 162, 210);
+        left: -0.5rem;
+    }
+    .menu .navbar-nav > .nav-item > .nav-link {
+        font-size: 1.1rem;
+        font-weight: bold;
+        padding: 0.5rem 0;
+        text-align: center;
+        background-color: #004f8a;
+        margin: 0.2rem 0;
+    }
+}
 
-@media only screen and (max-width: 766px) {
+@media only screen and (max-width: 767px) {
     .headernews {
         width: 20rem;
         max-width: 90vw;
     }
 
         .headernews .content {
-            top: calc(50% - 1.5rem);
-            padding-left: 4.5rem;
+            top: calc(50% - 0.8rem);
+            padding-left: 5.5rem;
             padding-right: 0.75rem;
         }
+            .headernews .content .title {
+                display:none;
+            }
 }

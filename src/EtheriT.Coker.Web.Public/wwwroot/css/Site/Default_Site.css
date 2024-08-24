@@ -61,3 +61,7 @@ body > .skiptranslate {
 a[href="https://translate.google.com"] {
     display: none !important;
 }
+.gtmIframe {
+    display: none;
+    visibility: hidden
+}

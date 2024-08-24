@@ -23,7 +23,7 @@
     <!-- Mega Menu -->
     <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
         <div class="d-flex justify-content-center align-items-center w-100 bg-white">
-            <div class="btn_menu navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu" style="width:10%">
+            <div class="btn_menu navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
                 <div class="">
                     <div class="bar"></div>
                     <div class="bar"></div>
@@ -33,7 +33,7 @@
             </div>
 
             <!-- Logo -->
-            <div class="logo d-lg-none text-center py-lg-0 py-1" style="width:80%">
+            <div class="logo d-lg-none text-center py-lg-0 py-1">
                 @{
                     var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
                     var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
@@ -50,7 +50,7 @@
                     }
                 </a>
             </div>
-            <div class="" style="width:10%" id="icon-search">
+            <div id="icon-search">
                 <div class="icon-search-bg d-flex justify-content-center align-items-center">
                     <a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2"></a>
                 </div>

@@ -2,7 +2,9 @@
 @{
     ViewData["Title"] = "Error";
 }
-
+<script nonce="@ViewBag.Nonce">
+    const PageKey = "";
+</script>
 <h1 class="text-danger">An error occurred.</h1>
 <p class="text-danger">Sorry, an unexpected error occurred. Please try again later.</p>
 @if (Model != null && Model.ShowRequestId)

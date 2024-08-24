@@ -384,6 +384,7 @@ function DirectoryDataInsert($item, result) {
         }
         // Clear content of shareBlock and re-init
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons
+        content.find(".shareBlock").data("init",false);
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
         $item.find(".catalog").append(content);

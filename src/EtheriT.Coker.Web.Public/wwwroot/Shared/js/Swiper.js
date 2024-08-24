@@ -115,7 +115,6 @@ function SwiperInit(obj) {
     });
     $(".three_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
-        console.log("in");
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {

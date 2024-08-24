@@ -4153,7 +4153,7 @@
                         var scrollbarWidth = container.offsetWidth - viewer.offsetWidth;
 
                         if (scrollbarWidth > 0) {
-                            this.bar.setAttribute('style', 'width: calc(100% - ' + scrollbarWidth + 'px);');
+                            this.bar.style.width = `calc(100% - ${scrollbarWidth}px);`
                         }
                     }
                 }, {
@@ -4228,7 +4228,7 @@
         if (typeof window !== 'undefined' && window['pdfjs-dist/build/pdf']) {
             pdfjsLib = window['pdfjs-dist/build/pdf'];
         } else {
-            pdfjsLib = require('../build/pdf.js');
+            pdfjsLib = require('/lib/pdf-viewer/external/pdfjs-2.1.266-dist/build/pdf.js');
         }
 
         module.exports = pdfjsLib;
@@ -8609,7 +8609,7 @@
                         }
 
                         if (styleStr) {
-                            element.setAttribute('style', styleStr);
+                            element.style.cssText = styleStr;
                         }
                     }
                 }, {
@@ -12979,8 +12979,7 @@
                         if (this.containerHeight === this.previousContainerHeight) {
                             return;
                         }
-
-                        this.toolbarButtonContainer.setAttribute('style', 'max-height: ' + (this.containerHeight - _ui_utils.SCROLLBAR_PADDING) + 'px;');
+                        this.toolbarButtonContainer.maxHeight = `${this.containerHeight - _ui_utils.SCROLLBAR_PADDING}px`;
                         this.previousContainerHeight = this.containerHeight;
                     }
                 }, {
@@ -13428,14 +13427,15 @@
 
                         _ui_utils.animationStarted.then(function () {
                             if (container.clientWidth === 0) {
-                                container.setAttribute('style', 'display: inherit;');
+                                container.style.display = "inherit";
                             }
 
                             if (container.clientWidth > 0) {
-                                select.setAttribute('style', 'min-width: inherit;');
+                                select.style.minWidth = "inherit";
                                 var width = select.clientWidth + SCALE_SELECT_CONTAINER_PADDING;
-                                select.setAttribute('style', 'min-width: ' + (width + SCALE_SELECT_PADDING) + 'px;');
-                                container.setAttribute('style', 'min-width: ' + width + 'px; ' + 'max-width: ' + width + 'px;');
+                                select.style.minWidth = (width + SCALE_SELECT_PADDING) + 'px';
+                                select.style.minWidth = width + 'px';
+                                select.style.maxWidth = width + 'px';
                             }
                         });
                     }

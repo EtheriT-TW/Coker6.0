@@ -43,6 +43,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.CookiePolicy;
 using SimpleCaptcha;
 using System.Net;
 
@@ -72,6 +73,9 @@ builder.Services.AddAntiforgery(options =>
     // Set Cookie properties using CookieBuilder properties†.
     options.FormFieldName = "AntiforgeryFieldname";
     options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = true;
     //iis setting
     //options.SuppressXFrameOptionsHeader = false;
 });
@@ -179,22 +183,36 @@ app.Use((context, next) =>
     {
         var tokenSet = antiforgery.GetAndStoreTokens(context);
         context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!,
-            new CookieOptions { HttpOnly = true });
+            new CookieOptions { HttpOnly = true, Secure = true });
     }
-    /* iis setting
-     *context.Response.Headers.Add("Content-Security-Policy",
-                            "default-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com; style-src 'self' 'unsafe-inline' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; frame-ancestors self *.ezsale.tw");
-    */
     return next(context);
 });
 app.UseCookiePolicy(
     new CookiePolicyOptions
     {
         Secure = CookieSecurePolicy.Always,
-        HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
+        HttpOnly = HttpOnlyPolicy.Always,
         MinimumSameSitePolicy = SameSiteMode.Strict
     }
 );
+
+app.Use(async (context, next) =>
+{
+    var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+    // 將 nonce 存入 HttpContext.Items
+    context.Items["CSPNonce"] = nonce;
+    // 添加 CSP(內容限制) header
+    context.Response.Headers["Content-Security-Policy"] = $"default-src *; script-src 'self' 'nonce-{nonce}' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com; style-src 'self' 'nonce-{nonce}' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; frame-ancestors self *.ezsale.tw";
+    //cache 限制設定
+    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
+    //Pragma 為http 1.0以下使用，以上已被 Cache-Control取代
+    context.Response.Headers["Pragma"] = "no-cache";
+    context.Response.Headers["Expires"] = "0";
+    //防止瀏覽器進行 MIME 嗅探
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+
+    await next();
+});
 
 app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 List<string> childOrgNames = new List<string>();

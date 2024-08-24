@@ -189,7 +189,7 @@ function PageDefaultSet(result) {
         $radio.each(function () {
             $input = $(this).children(".spec_control").children("input")
             $input.each(function () {
-                $(this).on("click", SpecRadio)
+                $(this).on("change", SpecRadio)
             })
         })
         if (showRange) {
@@ -330,7 +330,6 @@ function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
     $self_s = $self_p.siblings(".radio");
-
     $self_p.find("input").each(function () {
         $radio = $(this)
         $radio.removeAttr("disabled");
@@ -359,6 +358,10 @@ function SpecRadio() {
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s2 = null;
             }
+            $self_s.find(`input`).prop("checked", false)
+            if ($self_s.find(`input:not([disabled])`).length > 0 && $self_s.find(`input:not([disabled]):checked`).length == 0) {
+                $self_s.find(`input:not([disabled])`).first().prop("checked", true).trigger("change");
+            }
             break;
         case 2:
             s2 = $self.val()
@@ -368,22 +371,23 @@ function SpecRadio() {
                     temp_list.push(item.s1id)
                 }
             })
+            /*
             $self_s.find("input").attr("disabled", "disabled");
             $self_s.find("input").each(function () {
                 $radio = $(this)
                 if (temp_list.indexOf(parseInt($radio.val())) > -1) {
                     $radio.removeAttr("disabled");
                 }
-            })
+            })*/
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s1 = null;
             }
             break;
     }
 
-    if (s1 != null && s2 != null) {
+    if (s1 != null) {
         price_list.forEach(function (item) {
-            if (item.s1id == s1 && item.s2id == s2) {
+            if (item.s1id == s1 && (item.s2id==0 || item.s2id == s2)) {
                 $pro_discount.text(item.price.toLocaleString('en-US'));
             }
         })

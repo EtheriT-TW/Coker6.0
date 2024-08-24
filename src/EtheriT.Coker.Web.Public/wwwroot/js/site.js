@@ -191,12 +191,14 @@ function ready() {
     });
 
     var LoginModal = document.getElementById('LoginModal')
-    LoginModal.addEventListener('show.bs.modal', function (event) {
-        NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
-    })
-    LoginModal.addEventListener('hidden.bs.modal', function (event) {
-        FormClear(LoginForms, $InputLoginVCode)
-    })
+    if (LoginModal != null) {
+        LoginModal.addEventListener('show.bs.modal', function (event) {
+            NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
+        })
+        LoginModal.addEventListener('hidden.bs.modal', function (event) {
+            FormClear(LoginForms, $InputLoginVCode)
+        })
+    }
 
     var RegisterModal = document.getElementById('RegisterModal')
     if (RegisterModal != null) {

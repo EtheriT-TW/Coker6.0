@@ -67,6 +67,8 @@ footer {
     }
     .paging_frame > p {
         padding: 0 5px;
+        font-weight: bold;
+        font-size: 1.1rem;
     }
 .abreast > ul {
     display: flex;

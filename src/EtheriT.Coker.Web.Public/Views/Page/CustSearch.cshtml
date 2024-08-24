@@ -5,7 +5,7 @@
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
-<script>
+<script nonce="@ViewBag.Nonce">
     const PageKey = "Search";
     const local = @Html.Raw(L.getAllJsonString()) ;
 </script>
@@ -149,7 +149,7 @@
                     </button>
                 </div>
                 <div class="catalog content gx-0 rounded-lg type4 row row-cols-lg-4 row-cols-md-2 bg-light px-2">
-                    <div class="templatecontent d-none">
+                    <template class="templatecontent">
                         <div class="template p-2 py-2">
                             <div class="col bg-white p-2 position-sticky p-1 type4 rounded-lg h-100">
                                 <a href="" title="" target="_self" class="text-black">
@@ -214,7 +214,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
                     <div class="templatecontent-tag d-none">
                         <span class="badge rounded-pill bg-light text-secondary fw-normal me-1 px-2">{{Tag Name}}</span>
                     </div>

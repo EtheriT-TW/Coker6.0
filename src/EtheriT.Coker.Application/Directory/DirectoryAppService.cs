@@ -667,6 +667,13 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
+                var notTags = await db.Tag_Associates.Include(e => e.Tag)
+                    .Where(e => dto.Ids.Contains(e.FK_AId))
+                    .Where(e => !e.IsDeleted)
+                    .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄拒絕)
+                    .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
+                    .ToListAsync();
+                var notTagIds = notTags.Select(e => e.FK_TId).ToList()?? new List<long>();
                 var FKTIds = tags.Select(e => e.FK_TId).ToList();
                 if (tags != null)
                 {
@@ -674,9 +681,10 @@ namespace EtheriT.Coker.Application.Directory
                     switch ((DirectoryTypeEnum)db_d.Type)
                     {
                         case DirectoryTypeEnum.商品:
+                            var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
                             foreach (var id in FKTIds)
                             {
-                                var pd_as = await (db.Tag_Associates.Where(e => e.FK_TId == id && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
+                                var pd_as = await (db.Tag_Associates.Where(e => e.FK_TId == id && !pd_notId.Contains(e.FK_AId) && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
                                 if (!allIds.Any()) allIds = pd_as.Select(e => e.FK_AId).ToList();
                                 else
                                 {
@@ -706,7 +714,7 @@ namespace EtheriT.Coker.Application.Directory
                             {
                                 allIds = db_as.Select(e => e.FK_AId).ToList();
                                 DataIds = db.Article
-                                    .Where(e => allIds.Contains(e.Id))
+                                    .Where(e => allIds.Contains(e.Id) && !notTagIds.Contains(e.Id))
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.Visible)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))

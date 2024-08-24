@@ -43,7 +43,7 @@
             $self.attr("download", local.UnnamedFile);
         }
         $self.attr("title", local.LinkToAndBlank.format($self.attr("download")));
-        $self.find(".name").text($self.attr("download"));
+        $self.find(".name").text($self.attr("download").replace(`.${type}`,""));
         if (type == "pdf")
             $self.attr({ target: "_blank" }).removeAttr("download");
         else if (!(new RegExp(`[\.]{1}${type}$`, "gi")).test($self.attr("download"))) $self.attr("download", `${$self.attr("download")}.${type}`);

@@ -335,6 +335,7 @@ namespace EtheriT.Coker.Application.Article
                     {
                         newresult.Add(result.Find(e => e.Id == distance[i].Id));
                     }
+                    result = newresult;
                 }
                 else
                 {

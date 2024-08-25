@@ -13,7 +13,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
     {
         public long? Id { get; set; }
         public string? Title { get; set; }
+        public string? Subtitle { get; set; }
         public string? Description { get; set; }
+        public double? Longitude { get; set; }
+        public double? Latitude { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; } = 500;
         public bool PopularVisible { get; set; }

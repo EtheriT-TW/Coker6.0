@@ -761,7 +761,10 @@ namespace EtheriT.Coker.Application.Directory
                                 ShowNum = shownum,
                                 SiteId = WebsiteID,
                                 MaxLen = dto.MaxLen,
-                                Target = dto.Target
+                                Target = dto.Target,
+                                FindNearest = dto.FindNearest,
+                                Longitude = dto.Longitude,
+                                Latitude = dto.Latitude
                             });
                             if (temparticledata != null)
                             {

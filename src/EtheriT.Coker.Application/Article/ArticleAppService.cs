@@ -24,6 +24,7 @@ using EtheriT.Coker.Application.Common;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using DevExtreme.AspNet.Data.ResponseModel;
+using System.Net;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -70,7 +71,7 @@ namespace EtheriT.Coker.Application.Article
                 if (dto.Id == null || dto.Id == 0)
                 {
                     Core.Models.Article a = mapper.Map<Core.Models.Article>(dto);
-                    a.FK_WebsiteId= WebsiteID;
+                    a.FK_WebsiteId = WebsiteID;
                     a.RemovedFromShelves = !a.RemovedFromShelves;
                     db.Article.Add(a);
                     await loginUserData.SaveChanges(a);
@@ -82,7 +83,7 @@ namespace EtheriT.Coker.Application.Article
 
                     if (result != null)
                     {
-                        mapper.Map(dto,result);
+                        mapper.Map(dto, result);
                         result.RemovedFromShelves = !result.RemovedFromShelves;
                         await loginUserData.SaveChanges(result);
                     }
@@ -128,32 +129,35 @@ namespace EtheriT.Coker.Application.Article
                 if (result != null)
                 {
                     var dataQuery = await (from e in result
-                                    orderby e.Id descending
-                                    select new ArticleListGetDto
-                                    {
-                                        Id = e.Id,
-                                        Title = e.Title,
-                                        Description = e.Description,
-                                        Visible = e.Visible,
-                                        SerNO = e.SerNO,
-                                        Popular = e.Popular,
-                                        PopularVisible = e.PopularVisible,
-                                        SaveHtml = e.SaveHtml,
-                                        Html = e.Html,
-                                        SaveCss = e.SaveCss,
-                                        Css = e.Css,
-                                        Tags = String.Join("、", (
-                                                    from ta in db.Tag_Associates
-                                                    where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
-                                                    join t in db.Tags on ta.FK_TId equals t.Id
-                                                    where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
-                                                    select t.Title
-                                                ).ToList()),
-                                        StartTime = e.StartTime,
-                                        EndTime = e.EndTime,
-                                        permanent = e.permanent,
-                                        NodeDate = e.NodeDate,
-                                    }).ToListAsync();
+                                           orderby e.Id descending
+                                           select new ArticleListGetDto
+                                           {
+                                               Id = e.Id,
+                                               Title = e.Title,
+                                               Subtitle = e.Subtitle,
+                                               Description = e.Description,
+                                               Longitude = e.Longitude,
+                                               Latitude = e.Latitude,
+                                               Visible = e.Visible,
+                                               SerNO = e.SerNO,
+                                               Popular = e.Popular,
+                                               PopularVisible = e.PopularVisible,
+                                               SaveHtml = e.SaveHtml,
+                                               Html = e.Html,
+                                               SaveCss = e.SaveCss,
+                                               Css = e.Css,
+                                               Tags = String.Join("、", (
+                                                           from ta in db.Tag_Associates
+                                                           where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
+                                                           join t in db.Tags on ta.FK_TId equals t.Id
+                                                           where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
+                                                           select t.Title
+                                                       ).ToList()),
+                                               StartTime = e.StartTime,
+                                               EndTime = e.EndTime,
+                                               permanent = e.permanent,
+                                               NodeDate = e.NodeDate,
+                                           }).ToListAsync();
                     var output = DataSourceLoader.Load(dataQuery, loadOptions);
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }
@@ -176,41 +180,46 @@ namespace EtheriT.Coker.Application.Article
                 if (result != null)
                 {
                     var data = await (from e in result
-                        orderby e.Id descending
-                        select new ArticleListGetDto
-                        {
-                            Id = e.Id,
-                            Title = e.Title,
-                            Description = e.Description,
-                            Visible = e.Visible,
-                            SerNO = e.SerNO,
-                            Popular = e.Popular,
-                            PopularVisible = e.PopularVisible,
-                            SaveHtml = e.SaveHtml,
-                            Html = e.Html,
-                            SaveCss = e.SaveCss,
-                            Css = e.Css,
-                            DataJson = e.DataJson,
-                            Tags = String.Join("、", (
-                                        from ta in db.Tag_Associates
-                                        where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
-                                        join t in db.Tags on ta.FK_TId equals t.Id
-                                        where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
-                                        select t.Title
-                                    ).ToList()),
-                            StartTime = e.StartTime,
-                            EndTime = e.EndTime,
-                            permanent = e.permanent,
-                            NodeDate = e.NodeDate,
-                    }).ToListAsync();
+                                      orderby e.Id descending
+                                      select new ArticleListGetDto
+                                      {
+                                          Id = e.Id,
+                                          Title = e.Title,
+                                          Subtitle = e.Subtitle,
+                                          Description = e.Description,
+                                          Longitude = e.Longitude,
+                                          Latitude = e.Latitude,
+                                          Visible = e.Visible,
+                                          SerNO = e.SerNO,
+                                          Popular = e.Popular,
+                                          PopularVisible = e.PopularVisible,
+                                          SaveHtml = e.SaveHtml,
+                                          Html = e.Html,
+                                          SaveCss = e.SaveCss,
+                                          Css = e.Css,
+                                          DataJson = e.DataJson,
+                                          Tags = String.Join("、", (
+                                                      from ta in db.Tag_Associates
+                                                      where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
+                                                      join t in db.Tags on ta.FK_TId equals t.Id
+                                                      where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
+                                                      select t.Title
+                                                  ).ToList()),
+                                          StartTime = e.StartTime,
+                                          EndTime = e.EndTime,
+                                          permanent = e.permanent,
+                                          NodeDate = e.NodeDate,
+                                      }).ToListAsync();
                     var dataQuery = data.Where(e => e.Tags.Contains("電子報")).ToList();
-                    
-                    if (dataQuery != null) {
+
+                    if (dataQuery != null)
+                    {
                         foreach (ArticleListGetDto item in dataQuery)
                         {
                             if (string.IsNullOrEmpty(item.DataJson)) continue;
-                            var myData = JsonConvert.DeserializeObject<NewsletterFrameDto>(item.DataJson??"");
-                            if (myData != null && myData.No!=0) {
+                            var myData = JsonConvert.DeserializeObject<NewsletterFrameDto>(item.DataJson ?? "");
+                            if (myData != null && myData.No != 0)
+                            {
                                 item.Title = $"第{myData.No}期 {myData.Title}";
                             }
                         }
@@ -225,7 +234,7 @@ namespace EtheriT.Coker.Application.Article
                 msg = e.Message;
             }
 
-            return new JsonResult(new List<ArticleListGetDto>() { new ArticleListGetDto { Title=msg } }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new List<ArticleListGetDto>() { new ArticleListGetDto { Title = msg } }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ArticleGetDataDto> GetDataOne(long Id)
         {
@@ -242,7 +251,10 @@ namespace EtheriT.Coker.Application.Article
                                         {
                                             Id = e.Id,
                                             Title = e.Title,
+                                            Subtitle = e.Subtitle,
                                             Description = e.Description,
+                                            Longitude = e.Longitude,
+                                            Latitude = e.Latitude,
                                             Visible = e.Visible,
                                             SerNO = e.SerNO,
                                             PopularVisible = e.PopularVisible,
@@ -252,7 +264,7 @@ namespace EtheriT.Coker.Application.Article
                                             NodeDate = e.NodeDate,
                                             RemovedFromShelves = !e.RemovedFromShelves,
                                             permanent = e.permanent,
-                                            DataJson = string.IsNullOrEmpty(e.DataJson)? null: JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
+                                            DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
                                         }).FirstOrDefaultAsync();
 
                     if (output != null)
@@ -286,7 +298,7 @@ namespace EtheriT.Coker.Application.Article
             {
                 long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
                 List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID || e.Id == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
-                if(siteIds.Count ==0) siteIds.Add(WebsiteID);
+                if (siteIds.Count == 0) siteIds.Add(WebsiteID);
                 var sites = await db.Websites.Where(e => siteIds.Contains(e.Id)).Where(e => !e.IsDeleted).ToListAsync();
 
                 var output = new List<DirectoryReleInfoDto>();
@@ -299,11 +311,35 @@ namespace EtheriT.Coker.Application.Article
                                     .Where(e => e.Visible)
                                     .Where(e => e.permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartTime) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndTime) < 0))
                                     .Where(e => dto.Target == null || !string.IsNullOrEmpty(e.DataJson))
-									.OrderBy(a => a.SerNO)
-								    .ThenByDescending(a => a.NodeDate)
-								    .ThenByDescending(e => e.Id)
-									.ToListAsync();
-                if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();
+                                    .OrderBy(a => a.SerNO)
+                                    .ThenByDescending(a => a.NodeDate)
+                                    .ThenByDescending(e => e.Id)
+                                    .ToListAsync();
+                if (dto.FindNearest == true)
+                {
+                    var distance = new List<DistanceTempDto>();
+                    result.ForEach(data =>
+                    {
+                        if (data.Longitude != null && data.Latitude != null)
+                        {
+                            var distemp = new DistanceTempDto();
+                            distemp.Id = data.Id;
+                            distemp.distance = Math.Sqrt(Math.Pow((double)data.Longitude - (double)dto.Longitude, 2) + Math.Pow((double)data.Latitude - (double)dto.Latitude, 2));
+                            distance.Add(distemp);
+                        }
+                    });
+                    distance.Sort((a, b) => a.distance < b.distance ? -1 : 1);
+                    distance.Take(dto.MaxLen.Value).ToList();
+                    var newresult = new List<Core.Models.Article>();
+                    for (var i = 0; i<(dto.MaxLen.Value>distance.Count()? distance.Count: dto.MaxLen.Value); i++)
+                    {
+                        newresult.Add(result.Find(e => e.Id == distance[i].Id));
+                    }
+                }
+                else
+                {
+                    if (dto.MaxLen != null && dto.MaxLen > 0) result = result.Take(dto.MaxLen.Value).ToList();
+                }
                 int skip = ((dto.Page ?? 1) - 1) * dto.ShowNum ?? 12 - 1;
                 if (skip < 0) skip = 0;
                 if (string.IsNullOrEmpty(dto.Target))
@@ -322,7 +358,7 @@ namespace EtheriT.Coker.Application.Article
                             NewsletterFrameDto? DataJson = JsonConvert.DeserializeObject<NewsletterFrameDto>(data.DataJson ?? "{}");
 
                             var output_data = new DirectoryReleInfoDto();
-                            var website = sites.Find(e => e.Id == data.FK_WebsiteId); 
+                            var website = sites.Find(e => e.Id == data.FK_WebsiteId);
                             if (website != null)
                             {
                                 output_data.type = DirectoryTypeEnum.文章;
@@ -332,6 +368,7 @@ namespace EtheriT.Coker.Application.Article
                                 output_data.NodeDate = data.NodeDate;
                                 output_data.OrgName = website.OrgName;
                                 output_data.Title = ((DataJson != null && DataJson.No != 0) ? $"第{DataJson.No}期 " : "") + output_data.Title;
+                                output_data.Subtitle = data.Subtitle;
                                 if (data.Html != null && data.Html.IndexOf("activity_start_time") > 0)
                                 {
                                     var g = Regex.Match(stringHandler.HtmlDecode(data.Html), "activity_start_time\">(.*?)<").Groups;
@@ -355,11 +392,12 @@ namespace EtheriT.Coker.Application.Article
                 else
                 {
                     List<NewsletterFrameDto> list = new List<NewsletterFrameDto>();
-                    foreach (var item in result.Take(30)) {
+                    foreach (var item in result.Take(30))
+                    {
                         if (!string.IsNullOrEmpty(item.DataJson))
                         {
                             NewsletterFrameDto? obj = JsonConvert.DeserializeObject<NewsletterFrameDto>(item.DataJson);
-                            if(obj!=null) list.Add(obj);
+                            if (obj != null) list.Add(obj);
                         }
                     }
                     if (list.Any())
@@ -367,7 +405,7 @@ namespace EtheriT.Coker.Application.Article
                         switch (dto.Target.ToLower())
                         {
                             case "conten2":
-                                var items = list.Select(e => e.Conten2).Where(e => e!=null).Where(e => e.Visible??false).ToList();
+                                var items = list.Select(e => e.Conten2).Where(e => e != null).Where(e => e.Visible ?? false).ToList();
                                 mapper.Map(items, output).Skip(skip).Take(dto.ShowNum ?? 12).ToList();
                                 break;
                         }
@@ -527,8 +565,9 @@ namespace EtheriT.Coker.Application.Article
             {
                 response.Error = ex.Message;
             }
-            finally {
-                await loginUserData.SetLogs(ServiceName, "SaveConten",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            finally
+            {
+                await loginUserData.SetLogs(ServiceName, "SaveConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

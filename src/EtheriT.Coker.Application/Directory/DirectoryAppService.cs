@@ -768,6 +768,22 @@ namespace EtheriT.Coker.Application.Directory
                             });
                             if (temparticledata != null)
                             {
+                                if (dto.FindNearest == true)
+                                {
+                                    for(int i = 0; i < temparticledata.Count; i++)
+                                    {
+                                        var temptags = await db.Tag_Associates.Include(e => e.Tag)
+                                                                                .Where(e => e.FK_AId == temparticledata[i].Id)
+                                                                                .Where(e => !e.IsDeleted)
+                                                                                .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
+                                                                                .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
+                                                                                .FirstOrDefaultAsync();
+                                        if (temptags != null)
+                                        {
+                                            temparticledata[i].tagname = temptags.Tag.Title;
+                                        }
+                                    }
+                                }
                                 output.ReleInfos = temparticledata;
                             }
 

@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using DevExtreme.AspNet.Data.ResponseModel;
 using System.Net;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -331,7 +332,7 @@ namespace EtheriT.Coker.Application.Article
                     distance.Sort((a, b) => a.distance < b.distance ? -1 : 1);
                     distance.Take(dto.MaxLen.Value).ToList();
                     var newresult = new List<Core.Models.Article>();
-                    for (var i = 0; i<(dto.MaxLen.Value>distance.Count()? distance.Count: dto.MaxLen.Value); i++)
+                    for (var i = 0; i < (dto.MaxLen.Value > distance.Count() ? distance.Count : dto.MaxLen.Value); i++)
                     {
                         newresult.Add(result.Find(e => e.Id == distance[i].Id));
                     }

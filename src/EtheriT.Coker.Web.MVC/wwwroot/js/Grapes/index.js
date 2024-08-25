@@ -280,7 +280,7 @@ var grapesInit = function (options) {
                         { key: "LinkWithIconInit", state: false, run: true, class: [], parameter: {} },
                         { key: "AnchorPointInit", state: false, run: true, class: [], parameter: {} },
                         { key: "ShareBlockInit", state: false, run: true, class: [], parameter: {} },
-                        { key: "GetLatLngInit", state: false, run: true, class: [], parameter: {} },
+                        { key: "GetLatLng", state: false, run: true, class: [], parameter: {} },
                     ];
                     const setConfig = function (index, str) {
                         checkClass[index].state = true;
@@ -326,7 +326,7 @@ var grapesInit = function (options) {
                             case "shareBlock":
                                 setConfig(8, s);
                                 break;
-                            case "btn_getlatlng":
+                            case "getlatlng":
                                 setConfig(9, s);
                                 break;
                         }

@@ -1,7 +1,4 @@
-﻿function GetLatLngInit() {
-    $(".btn_getlatlng").click(GetLatLng());
-}
-function GetLatLng() {
+﻿function GetLatLng() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {

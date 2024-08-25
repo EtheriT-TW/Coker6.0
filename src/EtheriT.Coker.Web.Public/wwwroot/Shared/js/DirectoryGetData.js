@@ -308,6 +308,10 @@ function DirectoryDataInsert($item, result) {
             content.children("div:first").addClass("d-none");
         }
 
+        if ($item.data("findnearest") == true) {
+            content.find(".tagname").text(data.tagname);
+        }
+
         var imglink = data.mainImage || "/images/noImg.jpg";
         if (data.orgName != null && ((typeof (IsFaPage) != "undefined" && typeof (OrgName) != "undefined" && !IsFaPage) || (typeof (OrgName) != "undefined" && OrgName != data.orgName))) {
             imglink = imglink.replace("upload", `upload/${data.orgName}`);

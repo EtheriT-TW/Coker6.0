@@ -49,7 +49,8 @@
         "wwwroot/Shared/js/BGCanvas.js",
         "wwwroot/Shared/js/JqueryExtends.js",
         "wwwroot/Shared/js/FlipBook.js",
-        "wwwroot/Shared/js/MapMessage.js"
+        "wwwroot/Shared/js/MapMessage.js",
+        "wwwroot/Shared/js/GetLatLng.js"
       ]
     },
     {

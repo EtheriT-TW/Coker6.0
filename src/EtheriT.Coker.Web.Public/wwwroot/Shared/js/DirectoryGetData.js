@@ -19,6 +19,10 @@
     }
 }
 
+function DirectoryReload() {
+    initElemntAndLoadDir();
+}
+
 function initElemntAndLoadDir($dir, page) {
     const $self = $dir || $(".catalog_frame").first();
     const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
@@ -310,6 +314,7 @@ function DirectoryDataInsert($item, result) {
 
         if ($item.data("findnearest") == true) {
             content.find(".tagname").text(data.tagname);
+            content.find(".tagname").removeClass("d-none");
         }
 
         var imglink = data.mainImage || "/images/noImg.jpg";

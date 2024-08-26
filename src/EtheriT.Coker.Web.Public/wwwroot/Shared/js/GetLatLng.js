@@ -4,6 +4,9 @@
             (position) => {
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
+                $(".getlatlng").data("longitude", longitude);
+                $(".getlatlng").data("latitude", latitude);
+                DirectoryReload();
                 console.log(`Latitude: ${latitude}, Longitude: ${longitude}`)
             },
             (error) => {

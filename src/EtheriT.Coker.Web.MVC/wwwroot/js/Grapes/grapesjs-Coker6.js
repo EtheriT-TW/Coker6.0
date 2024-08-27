@@ -458,7 +458,7 @@
                                 PopupDirectory.option("contentTemplate", $("#PopupDirectory-template"));
                                 PopupDirectory.option("title", "設置目錄");
                                 window.DirectoryList_SelectChange = function (selectedItems) {
-                                    data = selectedItems.selectedRowsData[0];
+                                    data = selectedItems.selectedRowsData;
                                 }
                                 window.setTimeout(function () {
                                     $("#PopupDirectory .cancel").on("click", function () {
@@ -466,8 +466,12 @@
                                     });
                                     $("#PopupDirectory .Sure").on("click", function () {
                                         editor.getSelected().set("attributes", {
-                                            "data-dirid": data.Id,
-                                            "data-diridname": data.Title
+                                            "data-dirid": data.map(function (item) {
+                                                return item['Id'];
+                                            }),
+                                            "data-diridname": data.map(function (item) {
+                                                return item['Title'];
+                                            })
                                         });
                                         PopupDirectory.hide();
                                         $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();

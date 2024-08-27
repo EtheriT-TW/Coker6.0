@@ -131,7 +131,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             if (!UseLegacyPathHandling(website, key, option)) {
                 model.PageData = new GetFrontContenOutputDto { SiteName = L.get("PathError") };
 				Response.StatusCode = 404;
-				view = "Error/404";
+				view = "../Error/NotFound";
 			}else if (!string.IsNullOrEmpty(key)){
                 if (string.IsNullOrEmpty(option)) option = "";
                 switch (option.ToLower())
@@ -162,7 +162,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {
                             Response.StatusCode = 404;
-                            view = "Error/404";
+                            view = "../Error/NotFound";
                         }
                         else
                         {
@@ -181,7 +181,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             remoteInputDto.FK_WebmenuId = ProdPageData.Id;
 							model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
-                            if (model.PageData.Id == 0) view = "Error/404";
+                            if (model.PageData.Id == 0) view = "../Error/NotFound";
                             else
                             {
                                 remoteInputDto.FK_ProdId = model.PageData.Id;
@@ -216,7 +216,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 view = "ProductContent";
                             }
                         }
-                        else view = "Error/404";
+                        else view = "../Error/NotFound";
                         break;
                     case "techcert":
                         var TechCertPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
@@ -244,7 +244,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (string.IsNullOrEmpty(model.PageData.Html))
                         {
                             Response.StatusCode = 404;
-                            view = "Error/404";
+                            view = "../Error/NotFound";
                         }
                         else
                         {
@@ -313,7 +313,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             if (string.IsNullOrEmpty(model.PageData.Html))
                             {
                                 Response.StatusCode = 404;
-                                view = "Error/404";
+                                view = "../Error/NotFound";
                             }
                             else
                             {
@@ -375,6 +375,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Id"] = model.PageData.Id;
             ViewData["bodyClass"] = model.option?.ToLower() == "home"? model.option:"page";
+            var nonce = HttpContext.Items["CSPNonce"] as string;
+            ViewBag.Nonce = nonce;
+            ViewData["nonce"] = nonce;
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:
@@ -389,7 +392,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     ViewData["ShoppingEnable"] = false;
                     break;
             }
-            return View(view, model);
+            switch (Response.StatusCode) {
+                case 404:
+                    ViewData["VisibleHeader"] = true;
+                    ViewData["VisibleFooter"] = true;
+                    return View(view);
+                default:
+                    return View(view, model);
+            }
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -3,10 +3,12 @@
 @{
     ViewData["PageTagNameName"] = "頁面不存在";
 }
-<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script nonce="@ViewBag.Nonce">
+    const PageKey = "";
+</script>
 <style>
-    .container {
+    #errorContainer {
         padding: 10rem 0;
         text-align: center;
     }
@@ -14,7 +16,7 @@
         color: #0d6efd;
     }
 </style>
-<div class="container">
+<div id="errorContainer" class="container">
     <div class="row">
         <div class="col">
             <h1>頁面不存在</h1>

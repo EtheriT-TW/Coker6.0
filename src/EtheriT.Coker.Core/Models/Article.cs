@@ -13,8 +13,11 @@ namespace EtheriT.Coker.Core.Models
         public long FK_WebsiteId { get; set; }
         [StringLength(150)]
         public string? Title { get; set; }
+        public string? Subtitle { get; set; }
         public string? Description { get; set; }
         [StringLength(50)]
+        public double? Longitude { get; set; }
+        public double? Latitude { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; } = 500;
         public int Popular { get; set; } = 0;

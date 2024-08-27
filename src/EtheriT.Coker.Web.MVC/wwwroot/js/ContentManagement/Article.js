@@ -1,4 +1,4 @@
-﻿var $btn_display, $btn_pop_visible, $title, $title_text, $describe, $describe_text, $sort, $sort_input, $sort_checkbox, $picker, $nodeDate, $permanent, $removedFromShelves;
+﻿var $btn_display, $btn_pop_visible, $title, $title_text, $subtitle_input, $describe, $describe_text, $longitude, $latitude, $sort, $sort_input, $sort_checkbox, $picker, $nodeDate, $permanent, $removedFromShelves;
 var startDate, endDate, keyId, disp_opt = false, pop_visible = false;
 var article_list;
 var setPage;
@@ -188,6 +188,9 @@ function ElementInit() {
     $btn_pop_visible = $(".btn_pop_visible");
     $title = $(".title");
     $title_text = $title.children("textarea");
+    $subtitle_input = $(".subtitle").children("input");
+    $longitude = $(".longitude");
+    $latitude = $(".latitude");
     $describe = $(".describe");
     $describe_text = $describe.children("textarea");
     $sort = $(".sort");
@@ -257,6 +260,9 @@ function FormDataClear() {
     $btn_display.children("span").text("visibility_off");
     $btn_pop_visible.children("span").text("group_off");
     $title_text.val("");
+    $subtitle_input.val("");
+    $longitude.val("");
+    $latitude.val("");
     $title.children("div").children(".count").text(0);
     $describe_text.val("");
     $describe.children("div").children(".count").text(0);
@@ -272,7 +278,7 @@ function FormDataClear() {
 function FormDataSet(result) {
     FormDataClear();
     co.File.getImgFile({ Sid: result.id, Type: 6, Size: 3 }).done(function (file) {
-        if (file.length>0)
+        if (file.length > 0)
             ImageUploadModalDataInsert($("#ImageUpload"), file[0].id, file[0].link, file[0].name)
     });
     keyId = result.id;
@@ -286,6 +292,9 @@ function FormDataSet(result) {
     }
 
     $title_text.val(result.title);
+    $subtitle_input.val(result.subtitle);
+    $longitude.val(result.longitude);
+    $latitude.val(result.latitude);
     $title.children("div").children(".count").text(result.title.length);
     $describe_text.val(result.description);
     $describe.children("div").children(".count").text(result.description.length);
@@ -295,7 +304,7 @@ function FormDataSet(result) {
     pop_visible = result.popularVisible;
     disp_opt = result.visible;
     $removedFromShelves.prop("checked", result.removedFromShelves);
-    
+
 
     if (result.serNO != 500) {
         $sort_input.val(result.serNO);
@@ -349,6 +358,9 @@ function AddUp(success_text, error_text, place) {
     co.Articles.AddUp({
         Id: keyId,
         Title: $title_text.val(),
+        Subtitle: $subtitle_input.val(),
+        Longitude: $longitude.val(),
+        Latitude: $latitude.val(),
         Description: $describe_text.val(),
         Visible: disp_opt,
         SerNO: $sort_checkbox.is(":checked") ? $sort_input.val() : 500,
@@ -358,7 +370,7 @@ function AddUp(success_text, error_text, place) {
         StartTime: startDate,
         EndTime: endDate,
         NodeDate: $nodeDate.val(),
-        RemovedFromShelves:$removedFromShelves.is(":checked")
+        RemovedFromShelves: $removedFromShelves.is(":checked")
     }).done(function (result) {
         if (result.success) {
             if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {

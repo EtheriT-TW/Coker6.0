@@ -2,7 +2,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
-<script>
+<script nonce="@ViewBag.Nonce">
     const ProdId = @Model.PageData!.Id;
     const PageKey = "Product";
     const local = @Html.Raw(L.getAllJsonString());

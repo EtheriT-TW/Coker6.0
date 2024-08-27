@@ -21,8 +21,9 @@ input[type="number"] {
 .z-index-up {
     z-index: 10;
 }
+
 textarea.h300 {
-    height:300px;
+    height: 300px;
 }
 /* Article List */
 .btn_back {
@@ -41,8 +42,13 @@ textarea.h300 {
 #ArticleContent .count::after {
     content: '/300';
 }
+
 #ArticleContent .count.l-150::after {
     content: '/150';
+}
+
+#ArticleContent .subtitle > input {
+    padding-left: 4rem;
 }
 
 #ArticleContent .sort > input {

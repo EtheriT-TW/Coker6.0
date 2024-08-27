@@ -236,7 +236,9 @@ input[type="number"] {
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
-
+#TextareaRemark {
+    height: 150px
+}
 /* Step3 - Payment Method */
 #PaymentMethod {
     white-space: nowrap;

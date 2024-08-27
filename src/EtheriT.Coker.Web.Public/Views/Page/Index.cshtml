@@ -20,9 +20,7 @@
             break;
     }
 }
-<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
-<script src="~/Shared/shared.min.js" asp-append-version="true"></script>
 @{
     switch (Model.locale) { 
         case "en":
@@ -30,7 +28,7 @@
             break;
     }
 }
-<script>
+<script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
     const local = @Html.Raw(L.getAllJsonString()) ;
 </script>

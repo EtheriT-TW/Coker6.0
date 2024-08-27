@@ -8,3 +8,6 @@ footer > div {
     background-position: left top;
     background-color: #004280;
 }
+.footer-bg {
+    background-image: var(--footerBackground);
+}

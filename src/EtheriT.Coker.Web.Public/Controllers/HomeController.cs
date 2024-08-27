@@ -11,6 +11,7 @@ using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
@@ -97,7 +98,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             if (string.IsNullOrEmpty(model.PageData.Html) || (key != null && key != defaultData.OrgName))
             {
                 Response.StatusCode = 404;
-                view = "/Page/Error/404";
+                return View("../Error/NotFound");
             }
             else
             {
@@ -134,6 +135,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Id"] = model.PageData.Id;
             ViewData["bodyClass"] = "home";
+            var nonce = HttpContext.Items["CSPNonce"] as string;
+            ViewBag.Nonce = nonce;
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:

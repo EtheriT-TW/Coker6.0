@@ -2,8 +2,10 @@
 @model FooterViewModel
 
 <link rel="stylesheet" href="~/css/Footer/Footer_Layout_6.min.css" asp-append-version="true" />
-
-<div class="text-white font_small" style="background-image: url(@Model.Link/backgroundfooter.jpg)">
+<script nonce="@ViewBag.Nonce">
+    document.documentElement.style.setProperty('--footerBackground', `url('/upload/${orgName}/backgroundfooter.jpg')`);
+</script>
+<div class="text-white font_small footer-bg">
     <div class="container d-lg-flex justify-content-between align-items-end py-4">
         <div class="text pb-lg-4">
             @for (int i = 0; i < Model.Content.Count; i++)

@@ -68,6 +68,8 @@ footer {
 
     .paging_frame > p {
         padding: 0 5px;
+        font-weight: bold;
+        font-size: 1.1rem;
     }
 
 .abreast > ul {
@@ -229,9 +231,10 @@ footer {
     height:auto;
 }
 .footer-bg {
-    background:#000;
+    background: #000;
     width: 100%;
     padding: 2rem 0 0 0;
+    background: url('/upload/htmlConten/footer_img.jpg')
 }
 #Footer_Menu {
     background: #647f6c;

@@ -81,6 +81,7 @@ function ready() {
     if ($(".FlipBook").length > 0) FlipBookInit();
     if ($(".FlipBookModal").length > 0) FlipBookModalInit();
     if ($(".MapMessage").length > 0) MapMessage();
+    if ($(".getlatlng").length > 0) GetLatLng();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
     if ($(".container .qa,.container-fluid .qa").length > 0) {
         $(".container,.container-fluid").each((i, e) => {
@@ -192,12 +193,14 @@ function ready() {
     });
 
     var LoginModal = document.getElementById('LoginModal')
-    LoginModal.addEventListener('show.bs.modal', function (event) {
-        NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
-    })
-    LoginModal.addEventListener('hidden.bs.modal', function (event) {
-        FormClear(LoginForms, $InputLoginVCode)
-    })
+    if (LoginModal != null) {
+        LoginModal.addEventListener('show.bs.modal', function (event) {
+            NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
+        })
+        LoginModal.addEventListener('hidden.bs.modal', function (event) {
+            FormClear(LoginForms, $InputLoginVCode)
+        })
+    }
 
     var RegisterModal = document.getElementById('RegisterModal')
     if (RegisterModal != null) {

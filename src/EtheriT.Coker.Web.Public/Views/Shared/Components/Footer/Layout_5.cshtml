@@ -22,7 +22,7 @@
 			@foreach (var menu in Model.footerViewModels)
 			{
 				<div class="paging_frame">
-					<p style="font-weight:bold;font-size:1.1rem;">@menu.Title</p>
+					<p>@menu.Title</p>
 					<div class="abreast">
 						<ul>
 							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
@@ -36,7 +36,7 @@
 		</div>
 	</div>
 }
-<div class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg" style="background: url('/upload/htmlConten/footer_img.jpg')">
+<div class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg">
 	<img src="\upload\htmlConten\footer_boat.png" class="footer-img" />
 	<h5 class="my-1">@Model.Title</h5>
 	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">

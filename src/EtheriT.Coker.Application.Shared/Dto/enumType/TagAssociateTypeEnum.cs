@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         商品 = 1,
         文章 = 2,
         目錄 = 3,
-        自訂搜尋 = 4
+        自訂搜尋 = 4,
+        目錄拒絕 = 5
     }
 }

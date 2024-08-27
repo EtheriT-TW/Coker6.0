@@ -89,7 +89,7 @@ body {
 .search-category button {
     border: none;
     background: none;
-    color:#000;
+    color: #000;
 }
 
 .search-category .merge {
@@ -118,6 +118,7 @@ body {
     padding-left: 30px;
     box-sizing: border-box;
 }
+
     .search-category .search-input::placeholder {
         font-weight: lighter;
         font-size: 1rem;
@@ -211,6 +212,7 @@ header #Search {
     max-height: calc(1.25rem * 2.6);
     max-width: calc(100% - 2rem);
 }
+
 #filterList, #filterList ul {
     list-style: none;
     margin: 0;
@@ -225,7 +227,7 @@ h3.title {
     font-size: 1.2rem;
     font-weight: 600;
     margin: 0.5rem;
-    text-align:center;
+    text-align: center;
 }
 
 #filterList label {
@@ -236,8 +238,9 @@ h3.title {
 #filterList li ul label:hover {
     background-color: #eee;
 }
+
 #filterList label > i {
-    font-size:1rem
+    font-size: 1rem
 }
 
 .filterType > label {
@@ -264,20 +267,23 @@ h3.title {
     align-items: center;
     background: #FFF;
     color: #000;
-    text-align:center;
-    font-size:1rem;
+    text-align: center;
+    font-size: 1rem;
 }
+
     .filterDirType > a ::after before {
-        color:#CCCCCC;
+        color: #CCCCCC;
     }
+
 .filterDirType:hover > a {
     background: #FFF;
     color: #000;
 }
-    .filterDirType:hover > ul {
-        position: absolute;
-        display: block;
-    }
+
+.filterDirType:hover > ul {
+    position: absolute;
+    display: block;
+}
 
 .filterDirType > .dropdown-menu {
     width: 100%;
@@ -477,9 +483,10 @@ h3.title {
     color: gray;
     font-size: 0.95rem;
 }
+
 @media(max-width:1200px) {
-    .search-input-block{
-        width:50%;
+    .search-input-block {
+        width: 50%;
     }
 }
 
@@ -489,9 +496,10 @@ h3.title {
         z-index: 1;
         background-color: #eee;
         width: 100%;
-        left:-100%;
-        transition:left ease-in-out 0.5s;
+        left: -100%;
+        transition: left ease-in-out 0.5s;
     }
+
         #filterBlock.active {
             left: 0%;
             top: 0;
@@ -499,8 +507,9 @@ h3.title {
             height: 100vh;
             overflow: auto;
         }
+
         #filterBlock .fa-close {
-            font-size:2rem;
+            font-size: 2rem;
         }
 }
 
@@ -532,6 +541,7 @@ h3.title {
     .type_change_frame .type1-title {
         height: calc(1rem * 3.6);
     }
+
     .catalog_frame button {
         width: 100%;
     }

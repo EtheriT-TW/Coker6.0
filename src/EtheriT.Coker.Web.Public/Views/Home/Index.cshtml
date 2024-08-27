@@ -7,15 +7,13 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @using System.Web;
 @model HomeViewModel
-<script>
+<script nonce="@ViewData["Nonce"]">
     const PageKey = "Home";
     const local = @Html.Raw(L.getAllJsonString()) ;
 </script>
 @Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/Home/Index.min.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
 <script src="~/js/Home/Index.min.js" asp-append-version="true"></script>
-<script src="~/Shared/shared.min.js" asp-append-version="true"></script>
 
 <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>

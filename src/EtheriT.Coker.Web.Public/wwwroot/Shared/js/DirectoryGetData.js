@@ -19,16 +19,22 @@
     }
 }
 
-function initElemntAndLoadDir($dir,page) {
+function DirectoryReload() {
+    initElemntAndLoadDir();
+}
+
+function initElemntAndLoadDir($dir, page) {
     const $self = $dir || $(".catalog_frame").first();
     const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
     const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
     const hashPage = !!page ? page.toString() : location.hash.replace("#", "");
-    console.log($self.data("target"));
+    const FindNearest = typeof ($self.data("findnearest")) != "undefined" ? $self.data("findnearest") : false;
+    const Longitude = typeof ($self.data("longitude")) != "undefined" ? $self.data("longitude") : null;
+    const Latitude = typeof ($self.data("latitude")) != "undefined" ? $self.data("latitude") : null;
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
-        if (isNaN(hashPage) || hashPage=="") page = "1";
+        if (isNaN(hashPage) || hashPage == "") page = "1";
         else page = hashPage;
         const option = {
             Ids: [dirid],
@@ -38,8 +44,12 @@ function initElemntAndLoadDir($dir,page) {
             MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
             Filters: $self.data("filtered"),
             directoryType: $self.data("directoryTypeChecked"),
-            target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target")
+            target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target"),
+            FindNearest: FindNearest,
+            Longitude: Longitude,
+            Latitude: Latitude,
         }
+        console.log(option);
         $self.find(".catalog>.template").remove();
         DirectoryDataGet($self, option);
 
@@ -49,7 +59,7 @@ function initElemntAndLoadDir($dir,page) {
         });
         $self.data("page", page)
     }
-    
+
 }
 
 function DirectoryGetDataInit() {
@@ -82,7 +92,7 @@ function DirectoryGetDataInit() {
                             var item = $($("#TemplateAccordionItem").html()).clone();
                             item.find(".sectitle").text(SecIItem.title);
                             item.find(".accordion-header").attr("id", `secheader${SecIItem.id}`);
-                            const accordionCollapse= item.find(".accordion-collapse").attr({
+                            const accordionCollapse = item.find(".accordion-collapse").attr({
                                 "aria-labelledby": `secheader${SecIItem.id}`,
                                 "id": `seccollapse${SecIItem.id}`,
                                 "data-bs-parent": `${groupId}`
@@ -96,7 +106,7 @@ function DirectoryGetDataInit() {
                                 const _a = $(`<a href="${ThirdIItem.routerName}" title="連結至：${ThirdIItem.title}" class="list-group-item list-group-item-action border-0 py-3">${ThirdIItem.title}</a>`);
                                 if (typeof (PageKey) != "undefined" && PageKey.toLowerCase() == ThirdIItem.routerName.toLowerCase()) {
                                     $(_a).addClass("active");
-                                    $(accordionCollapse).collapse('show'); 
+                                    $(accordionCollapse).collapse('show');
                                     item.find(".accordion-header").addClass("active");
                                 }
                                 $body.append(_a);
@@ -275,8 +285,8 @@ function DirectoryDataInsert($item, result) {
         } else {
             path = (
                 window.location.pathname.indexOf(data.orgName) > 0 && window.location.pathname.toLowerCase().indexOf("home") < 0 && window.location.pathname.toLowerCase().indexOf(dirPath) >= 0 ?
-                window.location.pathname :
-                    `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname: window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`
+                    window.location.pathname :
+                    `${data.orgName == null ? "" : `/${data.orgName}`}${dirPath == "" ? data.orgName == null ? window.location.pathname : window.location.pathname.toLowerCase().replace(`${data.orgName.toLowerCase()}`, "") : `/${dirPath}`}`
             ) + data.link;
             target = "_self";
         }
@@ -289,10 +299,22 @@ function DirectoryDataInsert($item, result) {
             "title": `連結至: ${data.title}${(target == "_blank" ? "(另開視窗)" : "")}`,
             "target": target
         }
-        if (content[0].tagName == "A") {
-            content.attr(linkData);
-        } else {
-            content.find("a").attr(linkData);
+
+        if (content.length > 0) {
+            if (content[0].tagName == "A") {
+                content.attr(linkData);
+            } else {
+                content.find("a").attr(linkData);
+            }
+        }
+
+        if ($item.hasClass("cross_graphics_frame") && data.mainImage == "") {
+            content.children("div:first").addClass("d-none");
+        }
+
+        if ($item.data("findnearest") == true) {
+            content.find(".tagname").text(data.tagname);
+            content.find(".tagname").removeClass("d-none");
         }
 
         var imglink = data.mainImage || "/images/noImg.jpg";
@@ -302,6 +324,7 @@ function DirectoryDataInsert($item, result) {
         content.find("img").attr("src", imglink);
         content.find("img").imgCheck().attr("alt", `${data.title}的主要圖片`);
         content.find(".title").text(data.title);
+        content.find(".subtitle").text(data.subtitle);
         content.find(".description").html(data.description);
         if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
         else content.find(".location").text(data.location);
@@ -384,6 +407,7 @@ function DirectoryDataInsert($item, result) {
         }
         // Clear content of shareBlock and re-init
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons
+        content.find(".shareBlock").data("init", false);
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
         $item.find(".catalog").append(content);

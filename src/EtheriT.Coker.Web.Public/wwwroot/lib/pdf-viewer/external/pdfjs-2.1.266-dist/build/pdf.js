@@ -18494,7 +18494,7 @@ var renderTextLayer = function renderTextLayerClosure() {
     styleBuf[5] = fontHeight;
     styleBuf[7] = style.fontFamily;
     textDivProperties.style = styleBuf.join('');
-    textDiv.setAttribute('style', textDivProperties.style);
+    textDiv.style.cssText = textDivProperties.style;
     textDiv.textContent = geom.str;
 
     if (task._fontInspectorEnabled) {

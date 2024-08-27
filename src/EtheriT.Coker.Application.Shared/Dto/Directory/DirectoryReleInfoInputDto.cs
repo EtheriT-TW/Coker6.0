@@ -11,8 +11,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public int? TotalPage { get; set; }
         public string? SearchText { get; set; }
         public string? Type { get; set; }
-        public string? Target {  get; set; }
+        public string? Target { get; set; }
         public long DirectoryType { get; set; } = 0;
+        public double? Longitude { get; set; }
+        public double? Latitude { get; set; }
+        public bool? FindNearest { get; set; } = false;
         public List<DirectoryFilterDto> Filters { get; set; } = new List<DirectoryFilterDto>();
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

@@ -1180,7 +1180,9 @@
 
     .catalog-line a .content > div:not(.tagname) > h5 {
         font-size: 2rem;
-        margin: 1rem;
+        margin: 0 1rem;
+        margin-top: 0;
+        max-height: 14rem;
         height: 100%;
         text-align-last: justify;
     }
@@ -1531,6 +1533,14 @@
         width: 100%;
         height: 15em;
     }
+
+    .catalog-line a .content > div:not(.tagname) {
+        margin: 2rem 0;
+    }
+
+        .catalog-line a .content > div:not(.tagname) > h5 {
+            margin-top: 0;
+        }
 }
 
 @media only screen and (max-width: 768px) {

@@ -1,0 +1,153 @@
+﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@using EtheriT.Coker.Application.Shared.i18n;
+@model HeaderViewModel
+
+
+
+        <link rel="stylesheet" href="/css/Header/Header_Layout_7.min.css?v=UJriaIDsLXWKXdJ20_031lq_fOTVVIX2QLSfjpPDVwg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&amp;display=swap" rel="stylesheet">
+<script src="/js/ProductAction.min.js?v=SA4afFMEWIyKlvHiGlKKXDfguHmFprPRtV7E3ajudUk"></script>
+<script src="/js/Header/Header_Layout_1.min.js?v=zbKttCEPNGXLQYGwLlXEzjJj-aMTnCxquVuRQaLpxM8"></script>
+
+
+<nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
+    <!-- Mega Menu -->
+    <div id="Mega_Menu" class=" navbar navbar-expand-lg w-100">
+        <div class="kao-feng-color d-flex justify-content-center align-items-center w-100">
+            <div class="btn_menu navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu" style="width:10%">
+                <div class="">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+
+            </div>
+
+            <!-- Logo -->
+            <div class="logo d-lg-none text-center py-lg-0 py-1" style="width:80%">
+                <a href="/" target="_self" title="連結至：首頁">
+                        <img class="" src="/upload/logo.png" alt="高鋒開發有限公司">
+                        <h1 class="d-none">高鋒開發有限公司</h1>
+                </a>
+            </div>
+            <div class="" style="width: 10%; display: none;" id="icon-search">
+                <div class="icon-search-bg d-flex justify-content-center align-items-center">
+                    <a href="/kao-feng/Search" class="fa-solid fa-search mx-2"></a>
+                </div>
+            </div>
+        </div>
+        <!-- Logo -->
+        <div class="d-flex justify-content-around align-items-center  py-2 bg-white w50 w-100">
+            <div class="d-none d-lg-flex logo m-2 justify-content-end">
+                <a href="/" target="_self" title="連結至：首頁">
+                        <img src="/upload/logo.png" alt="高鋒開發有限公司" class="logo-img">
+                        <h1 class="d-none">高鋒開發有限公司</h1>
+                </a>
+            </div>
+            <div class="position-relative">
+                <div id="Search" class="d-flex lh-lg justify-content-center align-items-center">
+                    <input id="SearchInput" class="input_sear form-control   fs_change  input-pd" type="search" placeholder="" aria-label="Search">
+                    <span class="material-symbols-outlined icon position-absolute">search</span>
+                    <i class="fa-solid fa-earth-americas mx-2"></i>
+                </div>
+            </div>
+        </div>
+        <!-- Menu Canvas -->
+        <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start  col-12 col w-100 visible d-flex justify-content-center align-items-center " tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+            <!-- Menu Canvas Search Block -->
+            <div class="offcanvas-header pt-2 ps-5">
+                <h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">高鋒開發有限公司</h5>
+            </div>
+
+            <!-- Menu Canvas Menu -->
+            <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方自訂區">:::</a>
+            <ul class="navbar-nav offcanvas-body m-0">
+                    <li class="title nav-item col-lg-3 listMenu">
+                            <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
+                                <a class="p-0 nav-link text-nowrap text-white" href="/kao-feng/home" target="_self" title="連結至：公司簡介">
+                                    公司簡介
+                                </a>
+                            </div>
+                    </li>
+                    <li class="title nav-item col-lg-3 listMenu">
+                            <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
+                                <a class="p-0 nav-link text-nowrap text-white" href="/kao-feng/Catalog_kao" target="_self" title="連結至：機械型錄">
+                                    機械型錄
+                                </a>
+                            </div>
+                    </li>
+                    <li class="title nav-item col-lg-3 metaMenu">
+                            <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">中古買賣</div>
+                            <div class="content collapse_menus translate-middle-x">
+                                <ul class="justify-content-center" data-count-theme="3">
+                                        <li class="subtitle nav-item my-0 text-start">
+                                            <a class="subtitle_title nav-link text-white text-start d-flex" href="/kao-feng/Bending" title="連結至：二手折床" target="_self">
+                                                <i class=" me-2 d-none"></i>
+                                                <img class="d-none me-2" src="" alt="二手折床">
+                                                <span>
+                                                    二手折床
+                                                </span>
+                                            </a>
+                                        </li>
+                                        <li class="subtitle nav-item my-0 text-start">
+                                            <a class="subtitle_title nav-link text-white text-start d-flex" href="/kao-feng/Shearing" title="連結至：二手剪床" target="_self">
+                                                <i class=" me-2 d-none"></i>
+                                                <img class="d-none me-2" src="" alt="二手剪床">
+                                                <span>
+                                                    二手剪床
+                                                </span>
+                                            </a>
+                                        </li>
+                                        <li class="subtitle nav-item my-0 text-start">
+                                            <a class="subtitle_title nav-link text-white text-start d-flex" href="/kao-feng/Other" title="連結至：其他中古機械" target="_self">
+                                                <i class=" me-2 d-none"></i>
+                                                <img class="d-none me-2" src="" alt="其他中古機械">
+                                                <span>
+                                                    其他中古機械
+                                                </span>
+                                            </a>
+                                        </li>
+                                </ul>
+                            </div>
+                    </li>
+                    <li class="title nav-item col-lg-3 listMenu">
+                            <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
+                                <a class="p-0 nav-link text-nowrap text-white" href="/kao-feng/Connect" target="_self" title="連結至：聯絡我們">
+                                    聯絡我們
+                                </a>
+                            </div>
+                    </li>
+                    <li class="title nav-item col-lg-3 listMenu">
+                            <div class="mt-0 mt-lg-1 nav-link pb-0 pb-lg-3 text-nowrap text-white font">
+                                <a class="p-0 nav-link text-nowrap text-white" href="test" target="_self" title="連結至：測試">
+                                    測試
+                                </a>
+                            </div>
+                    </li>
+            </ul>
+        </div>
+
+
+        <!-- Tool Bar -->
+        <!-- <div class="col-lg-2 col-4 d-flex justify-content-center mt-0 mt-lg-3 pb-0 pb-lg-2"> -->
+        <!-- Search Block -->
+        <!-- <button class="d-flex bg-transparent border-0">
+                <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5">search</span>
+            </button>
+            <button class="align-items-center bg-transparent border-0 d-flex p-0 p-lg-1">
+                <div class="d-lg-flex d-none text-nowrap">智慧搜尋</div>
+            </button>-->
+
+        <!-- Login Button -->
+        <!--<div class="d-flex">
+                <button class="bg-transparent border-0 d-flex align-items-center" type="button">
+                    <span class="material-symbols-outlined">person</span>
+                </button>
+            </div>
+        </div> -->
+    </div>
+</nav>

@@ -1104,15 +1104,15 @@
             right: 0;
         }
 
-    .catalog-line a:hover .content > div:not(.tagname) {
+    .catalog-line a:hover .content > div:not(.dirname) {
         color: #fff;
     }
 
-        .catalog-line a:hover .content > div:not(.tagname):before {
+        .catalog-line a:hover .content > div:not(.dirname):before {
             border-color: #fff;
         }
 
-        .catalog-line a:hover .content > div:not(.tagname) > span {
+        .catalog-line a:hover .content > div:not(.dirname) > span {
             background-color: #948b84;
         }
 
@@ -1144,7 +1144,7 @@
     background-color: #f2f2f2;
 }
 
-    .catalog-line a .content > div:not(.tagname) {
+    .catalog-line a .content > div:not(.dirname) {
         color: #000;
         transition: all ease-in-out 0.01s 0.4s;
         display: flex;
@@ -1166,7 +1166,7 @@
         transition: all ease-in-out 1s;
     }
 
-    .catalog-line a .content > div:not(.tagname):before {
+    .catalog-line a .content > div:not(.dirname):before {
         content: "";
         position: absolute;
         border: #aaa solid 1px;
@@ -1178,7 +1178,7 @@
         transition: all ease-in-out 0.01s 0.4s;
     }
 
-    .catalog-line a .content > div:not(.tagname) > h5 {
+    .catalog-line a .content > div:not(.dirname) > h5 {
         font-size: 2rem;
         margin: 0 1rem;
         margin-top: 0;
@@ -1186,7 +1186,7 @@
         text-align-last: justify;
     }
 
-    .catalog-line a .content > div:not(.tagname) > span {
+    .catalog-line a .content > div:not(.dirname) > span {
         font-size: 1rem;
         background-color: #f2f2f2;
         z-index: 1;
@@ -1533,11 +1533,11 @@
         height: 15em;
     }
 
-    .catalog-line a .content > div:not(.tagname) {
+    .catalog-line a .content > div:not(.dirname) {
         margin: 2rem 0;
     }
 
-        .catalog-line a .content > div:not(.tagname) > h5 {
+        .catalog-line a .content > div:not(.dirname) > h5 {
             margin-top: 0;
         }
 }
@@ -1677,7 +1677,7 @@
             width: 100%;
         }
 
-            .catalog-line a .content > div:not(.tagname):before {
+            .catalog-line a .content > div:not(.dirname):before {
                 height: 70%;
             }
 }

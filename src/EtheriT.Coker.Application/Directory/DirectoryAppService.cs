@@ -177,7 +177,8 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
         }
-        private async Task<DirectoryReleInfoGetDto> TechCertReleInfo(DirectoryReleInfoInputDto dto) {
+        private async Task<DirectoryReleInfoGetDto> TechCertReleInfo(DirectoryReleInfoInputDto dto)
+        {
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
             long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
             Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
@@ -248,10 +249,11 @@ namespace EtheriT.Coker.Application.Directory
         {
             long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
-            if (!string.IsNullOrEmpty(dto.SearchText)) await custSearchAppService.SaveSearchLog(new SaveSearchLogDto { 
+            if (!string.IsNullOrEmpty(dto.SearchText)) await custSearchAppService.SaveSearchLog(new SaveSearchLogDto
+            {
                 Key = dto.SearchText,
                 FK_CustSearchId = SearchId,
-                FK_WebsiteId = dto.SiteId??0
+                FK_WebsiteId = dto.SiteId ?? 0
             });
             if (SearchId == 3) return await SearchProd(dto);
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
@@ -429,9 +431,9 @@ namespace EtheriT.Coker.Application.Directory
                 .Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves)
                 .Where(e => e.Visible)
                 .Where(e => e.FK_WebsiteId == WebsiteID)
-                .Where(e => 
-                    e.Title.Contains(dto.SearchText ?? "") || 
-                    e.Description.Contains(dto.SearchText ?? "") || 
+                .Where(e =>
+                    e.Title.Contains(dto.SearchText ?? "") ||
+                    e.Description.Contains(dto.SearchText ?? "") ||
                     (e.Html ?? "").Contains(dto.SearchText ?? "") ||
                     (e.ItemNo != null && e.ItemNo.Contains(dto.SearchText ?? "")) ||
                     db.Tag_Associates.Include(t => t.Tag)
@@ -459,8 +461,10 @@ namespace EtheriT.Coker.Application.Directory
                 );
             }
             List<long> Ids = await prods.Select(e => e.Id).ToListAsync();
-            dto.Filters.ForEach(t => {
-                t.Group.ForEach(g => {
+            dto.Filters.ForEach(t =>
+            {
+                t.Group.ForEach(g =>
+                {
                     if (g.Tags.Any())
                     {
                         switch (t.Type)
@@ -494,11 +498,11 @@ namespace EtheriT.Coker.Application.Directory
                                 break;
                             case DirectorySearchTypeEnum.技術文件:
                                 var ptid = from p in prods
-                                          join t in db.Prod_TechCerts.Include(e => e.TechnicalCertificate)
-                                                            .Where(e => !e.IsDeleted && e.TechnicalCertificate.FK_WebsiteId == WebsiteID && !e.TechnicalCertificate.IsDeleted)
-                                                on p.Id equals t.FK_PId
-                                            where g.Tags.Contains(t.FK_TCId)
-                                          select p.Id;
+                                           join t in db.Prod_TechCerts.Include(e => e.TechnicalCertificate)
+                                                             .Where(e => !e.IsDeleted && e.TechnicalCertificate.FK_WebsiteId == WebsiteID && !e.TechnicalCertificate.IsDeleted)
+                                                 on p.Id equals t.FK_PId
+                                           where g.Tags.Contains(t.FK_TCId)
+                                           select p.Id;
                                 prods = prods.Where(e => ptid.Contains(e.Id));
                                 break;
                         }
@@ -510,11 +514,12 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => Ids.Contains(e.FK_AId) && e.Type == (int)TagAssociateTypeEnum.商品);
             List<long> tagsId = tagbind.Select(e => e.FK_TId).ToList();
             var allGropTagsId = await db.Tag_TagGroups.Include(e => e.Tag).Where(e => !e.IsDeleted)
-                .Where(e => e.Tag!=null && !e.Tag.IsDeleted && e.Tag.FK_WebsiteId == WebsiteID)
+                .Where(e => e.Tag != null && !e.Tag.IsDeleted && e.Tag.FK_WebsiteId == WebsiteID)
                 .Select(e => e.FK_TId)
                 .ToListAsync();
             tagsId = tagsId.FindAll(e => !allGropTagsId.Contains(e));
-            output.Filter.Add(new DirectorySearchTypeListDto { 
+            output.Filter.Add(new DirectorySearchTypeListDto
+            {
                 Id = 0,
                 Type = DirectorySearchTypeEnum.標籤,
                 Name = "其他",
@@ -527,58 +532,61 @@ namespace EtheriT.Coker.Application.Directory
                             count = (from b in tagbind.Where(e => e.FK_TId == t.Id) select b).Count()
                         }).ToList()
             });
-            output.DirectoryType.AddRange(await(
+            output.DirectoryType.AddRange(await (
                 from dir in db.Directory.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
-                    .Where(d => 
+                    .Where(d =>
                         db.Tag_Associates
-                            .Where(a => !a.IsDeleted && a.Type ==(int)TagAssociateTypeEnum.目錄 && a.FK_AId == d.Id)
-                            .Where(a => 
+                            .Where(a => !a.IsDeleted && a.Type == (int)TagAssociateTypeEnum.目錄 && a.FK_AId == d.Id)
+                            .Where(a =>
                                 db.Tag_Associates.Where(p => !p.IsDeleted && p.Type == (int)TagAssociateTypeEnum.商品 && dirFilterIds.Contains(p.FK_AId))
                                 .Select(p => p.FK_TId).Contains(a.FK_TId)
                             )
                             .Select(a => a.FK_AId).Contains(d.Id)
                     )
-                select new DirectoryListBySearchDto{ 
+                select new DirectoryListBySearchDto
+                {
                     Id = dir.Id,
                     Name = dir.Title
                 }
             ).ToListAsync());
             output.Filter.AddRange(await (from tg in db.Tag_Groups
-                            where !tg.IsDeleted && tg.FK_WebsiteId == WebsiteID
-                            select new DirectorySearchTypeListDto
-                            {
-                                Id = tg.Id,
-                                Type = DirectorySearchTypeEnum.標籤,
-                                Name = tg.Title,
-                                Tags = (from t in db.Tags.Where(e => !e.IsDeleted)
-                                        join m in db.Tag_TagGroups.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
-                                        where t.FK_WebsiteId == WebsiteID && m.FK_TGId == tg.Id
-                                        select new TagGetSelectedDto
-                                        {
-                                            FK_TId =t.Id,
-                                            Tag_Name = t.Title,
-                                            count = (from b in tagbind.Where(e => e.FK_TId == t.Id) select b).Count()
-                                        }).ToList()
-                            }).ToListAsync());
+                                          where !tg.IsDeleted && tg.FK_WebsiteId == WebsiteID
+                                          select new DirectorySearchTypeListDto
+                                          {
+                                              Id = tg.Id,
+                                              Type = DirectorySearchTypeEnum.標籤,
+                                              Name = tg.Title,
+                                              Tags = (from t in db.Tags.Where(e => !e.IsDeleted)
+                                                      join m in db.Tag_TagGroups.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
+                                                      where t.FK_WebsiteId == WebsiteID && m.FK_TGId == tg.Id
+                                                      select new TagGetSelectedDto
+                                                      {
+                                                          FK_TId = t.Id,
+                                                          Tag_Name = t.Title,
+                                                          count = (from b in tagbind.Where(e => e.FK_TId == t.Id) select b).Count()
+                                                      }).ToList()
+                                          }).ToListAsync());
             var tec = db.Prod_TechCerts.Include(p => p.Prod).Include(t => t.TechnicalCertificate)
                     .Where(e => !e.IsDeleted && e.Prod.FK_WebsiteId == WebsiteID)
                     .Where(e => !e.Prod.IsDeleted && Ids.Contains(e.FK_PId))
                     .Where(e => !e.TechnicalCertificate.IsDeleted && e.TechnicalCertificate.FK_WebsiteId == WebsiteID);
             var tecIds = await tec.Select(e => e.FK_TCId).ToListAsync();
-            output.Filter.Add(new DirectorySearchTypeListDto { 
-                        Id = 0,
-                        Type = DirectorySearchTypeEnum.技術文件,
-                        Name = "技術文件",
-                        Tags = (
+            output.Filter.Add(new DirectorySearchTypeListDto
+            {
+                Id = 0,
+                Type = DirectorySearchTypeEnum.技術文件,
+                Name = "技術文件",
+                Tags = (
                             from t in db.TechnicalCertificates.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
                             where tecIds.Contains(t.Id)
-                            select new TagGetSelectedDto { 
+                            select new TagGetSelectedDto
+                            {
                                 FK_TId = t.Id,
-                                Tag_Name = t.Title??"",
+                                Tag_Name = t.Title ?? "",
                                 count = (from b in tec.Where(e => e.FK_TCId == t.Id) select b).Count()
                             }
                         ).ToList()
-                    }
+            }
                 );
             output.TotalCount = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
@@ -586,34 +594,36 @@ namespace EtheriT.Coker.Application.Directory
                        .ThenByDescending(e => e.Id)
                        .Skip(skip).Take(shownum);
             var list = await (from p in dataMargin
-                       select new DirectoryReleInfoDto
-                        {
-                            Id = p.Id,
-                            Title = p.Title,
-                            Link = $"/product/{p.Id}",
-                            OrgName = p.Website != null ? p.Website.OrgName : "",
-                            type = DirectoryTypeEnum.商品,
-                            SerNo = p.Ser_No,
-                            ItemNo = p.ItemNo,
-                            Description = p.Description,
-                            MainImage = p.Html,
-                            Status = p.Status,
-                            StatusName = ((ProdStatusEnum)p.Status).ToString(),
-                            tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
-                                    join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
-                                    where m.FK_AId == p.Id && m.Type == (int)TagAssociateTypeEnum.商品
-                                    select new TagGetSelectedDto {
-                                        Tag_Name = t.Title,
-                                        FK_TId = p.Id,
-                                   }).ToList(),
-                        }).ToListAsync();
+                              select new DirectoryReleInfoDto
+                              {
+                                  Id = p.Id,
+                                  Title = p.Title,
+                                  Link = $"/product/{p.Id}",
+                                  OrgName = p.Website != null ? p.Website.OrgName : "",
+                                  type = DirectoryTypeEnum.商品,
+                                  SerNo = p.Ser_No,
+                                  ItemNo = p.ItemNo,
+                                  Description = p.Description,
+                                  MainImage = p.Html,
+                                  Status = p.Status,
+                                  StatusName = ((ProdStatusEnum)p.Status).ToString(),
+                                  tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
+                                          join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
+                                          where m.FK_AId == p.Id && m.Type == (int)TagAssociateTypeEnum.商品
+                                          select new TagGetSelectedDto
+                                          {
+                                              Tag_Name = t.Title,
+                                              FK_TId = p.Id,
+                                          }).ToList(),
+                              }).ToListAsync();
             for (int i = 0; i < list.Count; i++)
             {
                 var data = list[i];
-                var imgs = await fileUploadAppService.getImgFiles(new FileGetImgInputDto { 
+                var imgs = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                {
                     Sid = data.Id,
-                    Size =1,
-                    Type = (int) FileBindTypeEnum.產品
+                    Size = 1,
+                    Type = (int)FileBindTypeEnum.產品
                 });
                 if (string.IsNullOrEmpty(data.Description)) getSearchDescription(data.MainImage, dto.SearchText);
                 else getSearchDescription(data.Description, dto.SearchText);
@@ -635,9 +645,9 @@ namespace EtheriT.Coker.Application.Directory
         {
             if (string.IsNullOrEmpty(conten)) return "";
             List<string> replaceRul = new List<string> {
-				@"<span(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/span>",
-				@"<i(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/i>",
-				@"<(.|\n)*?>",
+                @"<span(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/span>",
+                @"<i(.|\n)*?class=""material-symbols-outlined(.|\n)*?>(.|\n)*?/i>",
+                @"<(.|\n)*?>",
                 @"\n"
             };
             string s = Regex.Replace(stringHandler.HtmlDecode(conten), @$"({String.Join("|", replaceRul.ToArray())})", "");
@@ -650,6 +660,7 @@ namespace EtheriT.Coker.Application.Directory
         }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
+            var corr = new List<CorrDTAID>();
             if ((dto.Type ?? "").ToLower() == "search") return await SearchReleInfo(dto);
             if ((dto.Type ?? "").ToLower() == "techcert") return await TechCertReleInfo(dto);
             var DataIds = new List<long>();
@@ -657,7 +668,15 @@ namespace EtheriT.Coker.Application.Directory
             List<long> siteIds = await db.MappingWebsiteRelationship.Where(e => e.FatherId == WebsiteID).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
             siteIds.Add(WebsiteID);
             var output = new DirectoryReleInfoGetDto();
-            var db_d = db.Directory.Where(e => e.Id == dto.Ids[0] && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+            var db_d = db.Directory.Where(e => dto.Ids.Contains(e.Id) && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).ToList();
+            db_d.ForEach(e =>
+            {
+                corr.Add(new CorrDTAID
+                {
+                    DirectoryId = e.Id,
+                    DirectoryName = e.Title,
+                });
+            });
 
             if (db_d != null)
             {
@@ -667,18 +686,24 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
+                
+                tags.ForEach(t =>
+                {
+                    corr[corr.FindIndex(c => c.DirectoryId == t.FK_AId)].TagId = t.FK_TId;
+                });
+                
                 var notTags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => dto.Ids.Contains(e.FK_AId))
                     .Where(e => !e.IsDeleted)
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄拒絕)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
-                var notTagIds = notTags.Select(e => e.FK_TId).ToList()?? new List<long>();
+                var notTagIds = notTags.Select(e => e.FK_TId).ToList() ?? new List<long>();
                 var FKTIds = tags.Select(e => e.FK_TId).ToList();
                 if (tags != null)
                 {
                     List<long> allIds = new List<long>();
-                    switch ((DirectoryTypeEnum)db_d.Type)
+                    switch ((DirectoryTypeEnum)db_d[0].Type)
                     {
                         case DirectoryTypeEnum.商品:
                             var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
@@ -705,11 +730,29 @@ namespace EtheriT.Coker.Application.Directory
                             }
                             break;
                         case DirectoryTypeEnum.文章:
+
                             var db_as = await db.Tag_Associates
                                     .Where(e => !e.IsDeleted)
                                     .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
                                     .Where(e => FKTIds.Contains(e.FK_TId))
                                     .ToListAsync();
+                            var tempcorr = new List<CorrDTAID>();
+                            db_as.ForEach(a =>
+                            {
+                                var dindex = corr.FindIndex(c => c.TagId == a.FK_TId);
+                                if(dindex!= -1)
+                                {
+                                    tempcorr.Add(new CorrDTAID
+                                    {
+                                        DirectoryId = corr[dindex].DirectoryId,
+                                        DirectoryName = corr[dindex].DirectoryName,
+                                        TagId = corr[dindex].TagId,
+                                        ArticleId = a.FK_AId,
+                                    });
+                                }
+                            });
+                            corr = tempcorr;
+
                             if (db_as != null)
                             {
                                 allIds = db_as.Select(e => e.FK_AId).ToList();
@@ -739,7 +782,7 @@ namespace EtheriT.Coker.Application.Directory
                         output.TotalPage = (int)Math.Ceiling(dto.MaxLen.Value / (double)shownum);
                         output.TotalCount = dto.MaxLen.Value;
                     }
-                    switch ((DirectoryTypeEnum)db_d.Type)
+                    switch ((DirectoryTypeEnum)db_d[0].Type)
                     {
                         case DirectoryTypeEnum.商品:
                             var tempproddata = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
@@ -770,17 +813,12 @@ namespace EtheriT.Coker.Application.Directory
                             {
                                 if (dto.FindNearest == true)
                                 {
-                                    for(int i = 0; i < temparticledata.Count; i++)
+                                    foreach (var item in temparticledata)
                                     {
-                                        var temptags = await db.Tag_Associates.Include(e => e.Tag)
-                                                                                .Where(e => e.FK_AId == temparticledata[i].Id)
-                                                                                .Where(e => !e.IsDeleted)
-                                                                                .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
-                                                                                .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
-                                                                                .FirstOrDefaultAsync();
-                                        if (temptags != null)
+                                        var dindex = corr.FindIndex(c => c.ArticleId == item.Id);
+                                        if(dindex != -1)
                                         {
-                                            temparticledata[i].tagname = temptags.Tag.Title;
+                                            item.Dirname = corr[dindex].DirectoryName;
                                         }
                                     }
                                 }
@@ -793,7 +831,7 @@ namespace EtheriT.Coker.Application.Directory
                     }
                 }
             }
-           return output;
+            return output;
         }
         public async Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto)
         {

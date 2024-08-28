@@ -21,7 +21,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public double? Longitude { get; set; }
         public double? Latitude { get; set; }
         public string? Location { get; set; }
-        public string? tagname { get; set; }
+        public string? Dirname { get; set; }
         public string? Description { get; set; }
         public string? OrgName { get; set; }
         public string? Price { get; set; }

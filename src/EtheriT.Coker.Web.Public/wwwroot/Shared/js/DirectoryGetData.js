@@ -25,20 +25,21 @@ function DirectoryReload() {
 
 function initElemntAndLoadDir($dir, page) {
     const $self = $dir || $(".catalog_frame").first();
-    const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
+    const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
-    const maxlen = typeof ($self.data("maxlen")) != "undefined" && $self.data("maxlen")!="" ? $self.data("maxlen") : 0;
+    const maxlen = typeof ($self.data("maxlen")) != "undefined" && $self.data("maxlen") != "" ? $self.data("maxlen") : 0;
     const hashPage = !!page ? page.toString() : location.hash.replace("#", "");
     const FindNearest = typeof ($self.data("findnearest")) != "undefined" ? $self.data("findnearest") : false;
     const Longitude = typeof ($self.data("longitude")) != "undefined" ? $self.data("longitude") : null;
     const Latitude = typeof ($self.data("latitude")) != "undefined" ? $self.data("latitude") : null;
 
+
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage == "") page = "1";
         else page = hashPage;
         const option = {
-            Ids: [dirid],
+            Ids: dirid,
             SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
             Page: page,
             ShowNum: shownum,
@@ -66,12 +67,12 @@ function DirectoryGetDataInit() {
     const dirLength = $(".catalog_frame").length;
     $(".catalog_frame").each(function () {
         const $self = $(this);
-        const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
+        const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
         if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) initElemntAndLoadDir($(this));
     })
     $(".menu_directory").each(function () {
         var $self = $(this);
-        var dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
+        const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
         var showUnvisible = typeof ($self.attr("data-show-unvisible")) != "undefined" ? $self.attr("data-show-unvisible").toLowerCase() == "true" : false;
 
         if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) {
@@ -313,8 +314,8 @@ function DirectoryDataInsert($item, result) {
         }
 
         if ($item.data("findnearest") == true) {
-            content.find(".tagname").text(data.tagname);
-            content.find(".tagname").removeClass("d-none");
+            content.find(".dirname").text(data.dirname);
+            content.find(".dirname").removeClass("d-none");
         }
 
         var imglink = data.mainImage || "/images/noImg.jpg";

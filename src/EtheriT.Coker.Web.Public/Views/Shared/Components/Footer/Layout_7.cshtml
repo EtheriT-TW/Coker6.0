@@ -6,53 +6,71 @@
 	switch (ViewData["Locale"] == null ? "" : ViewData["Locale"].ToString())
 	{
 		case "en":
-			<link rel="stylesheet" href="~/css/Footer/Footer_Layout_5.en.min.css" asp-append-version="true" />
+			<link rel="stylesheet" href="~/css/Footer/Footer_Layout_7.en.min.css" asp-append-version="true" />
 			break;
 	}
 }
-<script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>
+<!--<script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>-->
 
-<div id="Collapse_Button" class="center" onclick="toggleFooterMenu()">
-	<i class="fa-solid fa-chevron-down"></i>
-</div>
-@if (Model.footerViewModels != null && Model.footerViewModels.Count > 0)
-{
-	<div id="FootContainer" class="container listMenu d-flex justify-content-center align-items-center">
-		<div id="Footer_Menu" class="abreast row w-100">
-			@foreach (var menu in Model.footerViewModels)
-			{
-				<div class="paging_frame">
-					<p style="font-weight:bold;font-size:1.1rem;">@menu.Title</p>
-					<div class="abreast">
-						<ul>
-							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
-							{
-								<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
-							}
-						</ul>
-					</div>
-				</div>
-			}
+<div id="foot" class="container" cockeraffix-bottom="leftMenu">
+	<div class="row-fluid">
+		<div class="span12">
+			<div id="d1">
+				<br>
+				<br>
+				<span class="ft-size">
+					高鋒開發有限公司 版權所有 | KaoFeng Development Co., Ltd. ALL Rights Reservd<br>
+					地址：高雄市仁武區鳳仁路177-2號 電話：07-3737909 傳真：07-3737915<br>
+					建議您使用IE8.0&amp; 以上的瀏覽器|Flash8.0&amp;<span class="heavy"> 以上版本|螢幕解析度請設為1024*768&amp; 以上│Design by EtheriT</span>
+				</span>
+			</div>
+			<br>
 		</div>
-	</div>
-}
-<div class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg" style="background: url('/upload/htmlConten/footer_img.jpg')">
-	<img src="\upload\htmlConten\footer_boat.png" class="footer-img" />
-	<h5 class="my-1">@Model.Title</h5>
-	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">
-		@for (int i = 0; i < Model.Content.Count; i++)
-		{
-			<p>@Model.Content[i]</p>
-		}
-	</div>
-</div>
+	</div><!--end .row-->
 
-<div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
-	<p class="cookie_text my-3 pe-3">
-		<span>@L.get("cookieDeclare")</span>
-	</p>
-	<div id="Cookie_button">
-		<div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">@L.get("accept")</div>
-		<div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
-	</div>
+	<script type="text/template" id="Footer-Template">
+		<!--桌機-->
+		<div class="container visible-desktop hidden-phone hidden-tablet text-center">
+			<ul class=" nav-justified list-unstyled" data-bind="foreach: { data: FooterInfo().Nodes, as: 'ParentNode' }">
+				<li>
+					<a href="#" data-bind="attr: { href: Url }">
+						<!--ko if:ImageUrl-->
+						<img src="Images/loading.gif" data-bind="attr: { src: ImageUrl }">
+						<!--/ko-->
+						<!--ko ifnot:ImageUrl-->
+						<span data-bind="text: Title"></span>
+						<!--/ko-->
+					</a>
+					<ul class="list-unstyled" data-bind="foreach: ChildrenNodes">
+						<li>
+							<a data-bind="attr: { href: Url }, text: Title"
+								style="font-size: 0.7rem; color: rgb(102, 102, 102); line-height: 16pt;" onmouseover="style.color='#920883'" onmouseout="style.color='#666666'"></a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+		<!--平板及手機-->
+		<div class="row hidden-desktop visible-phone visible-tablet text-center" data-bind="foreach: { data: FooterInfo().Nodes, as: 'ParentNode' }">
+			<ul class="list-unstyled" data-bind="css: $parent.FooterInfo().Span_sm">
+				<li>
+					<span data-bind="css: { 'icon-minus': IsOpen() == true, 'icon-plus': IsOpen() == false }, click: $parent.FooterInfo().OpenOrCloseChildNodes" style="cursor: pointer"></span>
+					<!--ko if:ImageUrl-->
+					<a href="#" data-bind="attr: { href: Url }">
+						<img src="Images/loading.gif" data-bind="attr: { src: ImageUrl }" style="margin-left: -4px; border: 0; width: 131px; height: 22px;">
+					</a>
+					<!--/ko-->
+					<!--ko ifnot:ImageUrl-->
+					<span data-bind="text: Title"></span>
+					<!--/ko-->
+				</li>
+				<!-- ko foreach: ChildrenNodes -->
+				<li data-bind="if: ParentNode.IsOpen() == true">
+					<a data-bind="attr: { href: Url }, text: Title"
+						style="font-size: 0.7rem; color: rgb(102, 102, 102); line-height: 16pt;" onmouseover="style.color='#920883'" onmouseout="style.color='#666666'"></a>
+				</li>
+				<!--/ko-->
+			</ul>
+		</div>
+	</script>
 </div>

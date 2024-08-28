@@ -1,9 +1,12 @@
-﻿
+﻿.bg-kao-feng {
+    background: url(..\..\..\..\..\upload\kao-feng\20170818112557.jpg) no-repeat top;
+}
 
 /* Button Car Dropdown */
 #btn_car_dropdown > i.open {
     color: var(--red-popup);
 }
+
 
 #btn_car_dropdown > .badge {
     border: 0.15rem black solid;
@@ -19,6 +22,7 @@
 
 #Mega_Menu .bj-white {
     background: transparent !important;
+    background: url(..\..\..\..\..\upload\kao-feng\20170818112557.jpg) no-repeat top;
 }
 
 /* Cart Dropdown*/
@@ -123,7 +127,7 @@
 
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
-    background: rgba(100,128,108,.9);
+    background-color: #002153;
 }
 
     #Offcanvas_Mega_Menu > * {
@@ -154,7 +158,8 @@
         /* Mega Menu Content */
         #Offcanvas_Mega_Menu > ul > .title > .content {
             visibility: hidden;
-            background-color: rgba(100,128,108,.96);
+            background-color: #002153;
+            opacity: 0.9;
             padding: 1rem 0;
             cursor: default;
             position: absolute;
@@ -182,7 +187,7 @@
 
 
                     #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
-                        background: #4e6354;
+                        background: #0dbbfd57;
                         margin-left: 0;
                     }
 
@@ -352,7 +357,8 @@
                 }
 
             #Offcanvas_Mega_Menu > ul > .title > .content {
-                border-bottom: 1px solid #555;
+                /*原色是#555*/
+                border-bottom: 1px solid black;
             }
 
                 #Offcanvas_Mega_Menu > ul > .title > .content .text-black {
@@ -471,10 +477,10 @@
     height: 70px !important;
 }
 
-.fa-earth-americas {
+/*.fa-earth-americas {
     font-size: 20px;
     color: rgba(100,128,108,.9);
-}
+}*/
 
 .switch-button {
     width: 60px;

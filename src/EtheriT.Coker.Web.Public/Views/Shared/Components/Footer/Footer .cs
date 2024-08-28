@@ -294,7 +294,28 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         }
                     };
                     break;
-            }
+                case 7:
+					footerViewModel = new FooterViewModel
+					{
+						Title = "kao-feng.cocker.com.tw",
+						footerViewModels = new List<FooterViewModel> {
+									new FooterViewModel { Title = "關於高峰", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "公司介紹", Link = "/kao-feng/introduce" },
+											new FooterViewModel { Title = "領導專業團隊", Link = "/kao-feng/team" },
+											new FooterViewModel { Title = "聯絡我們", Link = "/kao-feng/contactUs" },
+										}
+									}
+								},
+						Content = new List<string>
+								{
+									"© Kao Feng",
+									"International Enterprise Co, Ltd.",
+									" ALL RIGHTS RESERVED. Design by EtheriT"
+								}
+					};
+					break;
+
+			}
             return View(defaultData.View, footerViewModel);
         }
     }

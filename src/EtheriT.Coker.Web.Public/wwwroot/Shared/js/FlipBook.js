@@ -19,12 +19,14 @@
             if (this.status == 200) { flipbook_container.innerHTML = this.responseText; }
             if (this.status == 404) { flipbook_container.innerHTML = "Page not found."; }
             $(flipbook_container).find("meta,title,script").remove();
-            const loadJs = [
-                $.LoadJs("/lib/pdf-viewer/external/pdfjs-2.1.266-dist/build/pdf.js"),
-                $.LoadJs("/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/viewer.js"),
-                $.LoadJs("/lib/pdf-viewer/external/turn.js"),
-                $.LoadJs("/lib/pdf-viewer/pdf-turn/pdf-turn.js")
-            ];
+            const loadJs = [];
+            $.LoadJs("/lib/pdf-viewer/external/pdfjs-2.1.266-dist/build/pdf.js").done(function () {
+                loadJs.push(...[
+                    $.LoadJs("/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/viewer.js"),
+                    $.LoadJs("/lib/pdf-viewer/external/turn.js"),
+                    $.LoadJs("/lib/pdf-viewer/pdf-turn/pdf-turn.js")
+                ])
+            });
             $this.append(flipbook_container);
             $this.removeClass("d-none");
             if ($(".FlipBookModal").length > 0) {

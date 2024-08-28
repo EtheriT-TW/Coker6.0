@@ -28,11 +28,12 @@ function initElemntAndLoadDir($dir, page) {
     const dirid = $self.attr("data-dirid") > 0 ? $self.attr("data-dirid") : 0;
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
-    const maxlen = typeof ($self.data("maxlen")) != "undefined" ? $self.data("maxlen") : 0;
+    const maxlen = typeof ($self.data("maxlen")) != "undefined" && $self.data("maxlen")!="" ? $self.data("maxlen") : 0;
     const hashPage = !!page ? page.toString() : location.hash.replace("#", "");
     const FindNearest = typeof ($self.data("findnearest")) != "undefined" ? $self.data("findnearest") : false;
     const Longitude = typeof ($self.data("longitude")) != "undefined" ? $self.data("longitude") : null;
     const Latitude = typeof ($self.data("latitude")) != "undefined" ? $self.data("latitude") : null;
+
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage == "") page = "1";
         else page = hashPage;
@@ -49,7 +50,6 @@ function initElemntAndLoadDir($dir, page) {
             Longitude: Longitude,
             Latitude: Latitude,
         }
-        console.log(option);
         $self.find(".catalog>.template").remove();
         DirectoryDataGet($self, option);
 

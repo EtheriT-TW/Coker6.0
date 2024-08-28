@@ -5817,8 +5817,9 @@ a.bg-light:hover, a.bg-light:focus, button.bg-light:hover, button.bg-light:focus
 a.bg-dark:hover, a.bg-dark:focus, button.bg-dark:hover, button.bg-dark:focus {
     background-color: #1d2124 !important;
 }
-/* line 13, ../../scss/bootstrap/utilities/_background.scss */
 
+
+/* line 13, ../../scss/bootstrap/utilities/_background.scss */
 .bg-white {
     background-color: #fff !important;
 }

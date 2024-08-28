@@ -36,6 +36,7 @@ function SwiperInit(obj) {
             const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed")
+            
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -44,7 +45,8 @@ function SwiperInit(obj) {
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
                     clickable: true,
-                },
+                }, 
+
                 effect: effect,
                 speed: speed
             }, autoplay ? {
@@ -59,6 +61,63 @@ function SwiperInit(obj) {
                         nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
                         prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
                     }
+                } : {});
+            if (!canNext) {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
+            }
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            if (autoplay && swiper.slides.length - 2 > 1) {
+                $self.swiperBindEven(swiper);
+            }
+        }
+    });
+
+    //單欄輪播+兩欄縮圖
+    $(".one_swiper_thumbs").prop("draggable", true).each(function () {
+        var $self = $(this);
+        if (!!!$self.data("isInit")) {
+            var Id = "#" + $self.attr("id") + " > .swiper";
+            const canNext = $(Id).find(".swiper-slide").length >= 2;
+            const loopOption = $(Id).find(".swiper-slide").length > 6;
+            var effect = $self.data("effect");
+            var speed = $self.data("effect-speed");      
+            
+            var swiperThumbs = new Swiper(".six_thumbs", {               
+                loop: loopOption,
+                spaceBetween: 10,
+                slidesPerView: 6,
+                freeMode: true,
+                watchSlidesProgress: true,
+            });
+            
+            if (typeof effect === 'undefined' || effect === false) effect = "slide";
+            if (typeof speed === 'undefined' || speed === false) speed = 300;
+            else speed = parseInt(speed);
+            var autoplay = obj.autoplay ? canNext : false;
+            var selfConfig = Object.assign({}, config, {
+                pagination: {
+                    el: "#" + $self.attr("id") + " .swiper_pagination",
+                    clickable: true,
+                }, thumbs: {
+                    swiper: swiperThumbs,
+                },
+
+                effect: effect,
+                speed: speed
+            }, autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {},
+                canNext ? {
+                    navigation: {
+                        nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
+                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                    },
+                    
                 } : {});
             if (!canNext) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
@@ -281,6 +340,8 @@ function SwiperInit(obj) {
     });
 
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
+        const imgCount = $(".picture-category .templatecontent img").length - 2;
+        const loopOption = imgCount > 6; //給loop用的，輪播數量大於6就loop:true
         const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
             spaceBetween: 10,
             breakpoints: {
@@ -294,11 +355,14 @@ function SwiperInit(obj) {
                     slidesPerView: 4,
                 },
                 1024: {
-                    slidesPerView: 6,
+                    slidesPerView: 6, //modal顯示縮圖的數量
+
                 }
             },
+            loop: loopOption,
             freeMode: true,
             watchSlidesProgress: true,
+            
         });
         const pictureSwiper = new Swiper("#pictureSwiper", {
             centeredSlides: true,
@@ -314,10 +378,16 @@ function SwiperInit(obj) {
                 swiper: pictureSwiperThumbs,
             }
         });
+        $(".picture-category").each(function () {
+            const $self = $(this);
+            if ($self.hasClass("swiper")) { //找到有swiper class的元素
+
+            }
+        });
         $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
             const $self = $(this).parents(".picture-category");
             const index = $(".picture-category a").index(this);
-            const $images = [];
+            const $images = [];           
             $self.find(".templatecontent img").each(function () {
                 $images.push($(this).attr("src"));
             });
@@ -325,6 +395,7 @@ function SwiperInit(obj) {
             pictureSwiperThumbs.removeAllSlides();
             for (let i = 0; i < $images.length; i++) {
                 const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
+                
                 pictureSwiper.appendSlide(newSlide);
                 pictureSwiperThumbs.appendSlide(newSlide);
             }

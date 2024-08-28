@@ -291,12 +291,13 @@ var grapesInit = function (options) {
                         var s = this.toString();
                         switch (s) {
                             case "one_swiper":
+                            case "one_swiper_thumbs":
                             case "two_swiper":
                             case "three_swiper":
                             case "four_swiper":
                             case "five_swiper":
                             case "six_swiper":
-                                setConfig(0, s);
+                                setConfig(0, s); 
                                 checkClass[0].parameter.autoplay = false;
                                 break;
                             case "masonry":

@@ -234,7 +234,7 @@ function ready() {
     $(".btn_cookie_accept").on("click", cookie_accept);
     $(".btn_cookie_reject").on("click", cookie_reject);
 
-    $("#Collapse_Button > i").on("click", function () {
+    $("#Collapse_Button").on("click", function () {
         $("footer").toggleClass("footer_pack_up");
     });
 

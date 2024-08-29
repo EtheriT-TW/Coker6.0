@@ -430,11 +430,11 @@ namespace EtheriT.Coker.Application
         private async Task<List<GetMenuBreadDto>> GetBread(long Id)
         {
             var output = new List<GetMenuBreadDto>();
-
             var result = await db.WebMenus.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
             if (result != null)
             {
                 var parentid = result.FK_RootNodeId;
+                var orgName = await loginUserData.GetWebsiteOrgName(result.FK_WebsiteId);
                 if (parentid != null)
                 {
                     output.AddRange(await this.GetMenuBread((long)parentid));
@@ -442,7 +442,7 @@ namespace EtheriT.Coker.Application
                 output.Add(new GetMenuBreadDto
                 {
                     Title = result.Title,
-                    Link = result.RouterName,
+                    Link = string.IsNullOrEmpty(result.RouterName)? result.LinkUrl! : $"{orgName}/{result.RouterName}",
                 });
             }
 

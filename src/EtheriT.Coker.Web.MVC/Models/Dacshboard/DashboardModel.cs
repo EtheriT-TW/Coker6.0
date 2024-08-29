@@ -2,6 +2,10 @@
 {
     public class DashboardModel
     {
-        public List<OrderItem> Orders { get; set; }
+		
+
+		public string CalcuateDirectorySize { get; set; }
+
+		public List<OrderItem> Orders { get; set; }
     }
 }

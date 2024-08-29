@@ -42,6 +42,7 @@
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
     <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
     <meta property="og:locale" content="zh-tw" />
+    <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
     <style nonce="@ViewBag.Nonce">
         :root{
             --orgName:@ViewData["OrgName"];
@@ -54,18 +55,31 @@
             ready();
         });
         const originalAppendChild = Element.prototype.appendChild;
+        const originalInsertBefore = Node.prototype.insertBefore;
+        const nonce = document.querySelector('meta[name="csp-nonce"]').getAttribute('content');
 
         // 覆寫 appendChild 方法
         Element.prototype.appendChild = function (child) {
             // 檢查是否為 <script> 或 <style> 元素
             if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE') {
                 // 為元素添加 nonce 屬性
-                const nonce = '@Html.Raw(ViewBag.Nonce)'; // 這裡替換為實際的 nonce 值
                 child.setAttribute('nonce', nonce);
             }
 
             // 調用原始的 appendChild 方法
             return originalAppendChild.call(this, child);
+        };
+
+        // 覆寫 insertBefore 方法
+        Node.prototype.insertBefore = function (newNode, referenceNode) {
+            // 檢查插入的節點是否為 script 或 style
+            if (newNode.tagName === 'SCRIPT' || newNode.tagName === 'STYLE') {
+                // 添加 nonce 屬性
+                newNode.setAttribute('nonce', nonce);
+            }
+
+            // 調用原始的 insertBefore 方法
+            return originalInsertBefore.call(this, newNode, referenceNode);
         };
     </script>
     @if (ViewData["GA4"] != null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? ""))

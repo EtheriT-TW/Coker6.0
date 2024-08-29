@@ -8,6 +8,25 @@
 img {
     max-width: 100%;
 }
+.font-yellow {
+    color: #ff9500;
+}
+.font-rad {
+    color: #b30b00;
+}
+.font-blue {
+    color: #2c599d;
+}
+.font-orange {
+    color: #D04323;
+}
+.font-green {
+    color: #037945;
+}
+.font-gray {
+    color: #999999;
+}
+
 .object-fit-cover {
     object-fit: cover;
     height: 100%;

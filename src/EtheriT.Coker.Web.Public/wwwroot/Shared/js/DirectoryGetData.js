@@ -80,7 +80,7 @@ function DirectoryGetDataInit() {
             $self.find(".title").text("");
             $self.find(".accordion").empty();
             Directory.getDirectoryMenuData({
-                Id: dirid,
+                Ids: dirid,
                 WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0,
                 showUnvisible: showUnvisible
             }).done(function (result) {

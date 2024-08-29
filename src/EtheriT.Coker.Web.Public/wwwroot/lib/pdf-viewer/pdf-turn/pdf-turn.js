@@ -18,17 +18,18 @@ var bookFlip = {
 	_ready: false,	//ready to start flipbook
 
 	// event listeners when bookFlip need different handling 
-	init: function(){
-		$(document).on('rotationchanging', () => {this.rotate()});
-		$(document).on('scalechanging', () => {this.resize()});
-		$(document).on('pagechanging', () => {this.flip()});
+	init: function () {
+		const eventBus = PDFViewerApplication.eventBus;
+		eventBus.on('rotationchanging', () => { this.rotate(); console.log(1); });
+		eventBus.on('scalechanging', () => { this.resize(); console.log(2); });
+		eventBus.on('pagechanging', () => { this.flip(); console.log(3); });
 		
-		$(document).on('documentinit', () => {
+		eventBus.on('documentinit', () => {
 			this.stop();
 			this._ready = false;
 		});
 
-		$(document).on('scrollmodechanged', () => {
+		eventBus.on('scrollmodechanged', () => {
 			var scroll = PDFViewerApplication.pdfViewer.scrollMode;
 			if (scroll === 3)this.start();
 			else this.stop();
@@ -36,7 +37,7 @@ var bookFlip = {
 			button.classList.toggle('toggled', scroll === 3);
 		});
 		
-		$(document).on('switchspreadmode', (evt) => {
+		eventBus.on('switchspreadmode', (evt) => {
 			this.spread(evt.originalEvent.detail.mode);
 			PDFViewerApplication.eventBus.dispatch('spreadmodechanged', {
 				source: PDFViewerApplication,
@@ -44,7 +45,7 @@ var bookFlip = {
 			});
 		});
 		
-		$(document).on('pagesloaded', () => {
+		eventBus.on('pagesloaded', () => {
 			this._ready = true;
 			if(this.toStart){
 				this.toStart = false;
@@ -54,7 +55,7 @@ var bookFlip = {
 			}
 		});
 
-		$(document).on('baseviewerinit', () => {
+		eventBus.on('baseviewerinit', () => {
 			PDFViewerApplicationOptions.set('scrollModeOnLoad', 3);
 			
 			this._intoView = PDFViewerApplication.pdfViewer.scrollPageIntoView;
@@ -160,16 +161,18 @@ var bookFlip = {
 		this.resize();
 	},
 	// change flipbook spread mode
-	spread: function(spreadMode){
+	spread: function (spreadMode) {
 		if(!this.active)return;
 		this._spread = spreadMode;
 		$('#viewer').turn('display', this._spreadType());
 		this.resize();
 	},
 	// turn page
-	flip: function(){
+	flip: function () {
+		console.log(this.active);
 		if(!this.active)return;
 		$('#viewer').turn('page', PDFViewerApplication.page);
+		console.log(PDFViewerApplication.page);
 		// force load next page
 		// TODO: Find proper way to force this loading
 		// this line seems to not do anything but successfully caused the website to update
@@ -215,5 +218,3 @@ var bookFlip = {
 		return size * PDFViewerApplication.pdfViewer.currentScale;
 	}
 };
-
-bookFlip.init();

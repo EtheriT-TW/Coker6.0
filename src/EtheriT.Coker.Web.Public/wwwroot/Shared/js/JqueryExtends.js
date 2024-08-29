@@ -60,6 +60,9 @@ function jqueryExtend() {
             link.type = 'text/javascript';
 
             link.src = src;
+            if (/.mjs$/.test(src)) {
+                link.type = "module";
+            }
             link.onload = function () {
                 _dfr.resolve();
             };

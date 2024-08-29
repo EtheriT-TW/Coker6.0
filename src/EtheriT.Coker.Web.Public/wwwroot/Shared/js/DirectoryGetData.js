@@ -19,18 +19,20 @@
     }
 }
 
-function DirectoryReload() {
-    initElemntAndLoadDir();
-}
-
 function initElemntAndLoadDir($dir, page) {
     const $self = $dir || $(".catalog_frame").first();
+    var temp_siblings = $self.find(".templatecontent").siblings();
+    if (temp_siblings.length > 0) {
+        for (i = 0; i < temp_siblings.length; i++) {
+            temp_siblings[i].remove();
+        }
+    }
     const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
     $self.data("prevdirid", dirid);
     const shownum = typeof ($self.data("shownum")) != "undefined" ? $self.data("shownum") : 12;
     const maxlen = typeof ($self.data("maxlen")) != "undefined" && $self.data("maxlen") != "" ? $self.data("maxlen") : 0;
     const hashPage = !!page ? page.toString() : location.hash.replace("#", "");
-    const FindNearest = typeof ($self.data("findnearest")) != "undefined" ? $self.data("findnearest") : false;
+    const FindNearest = $self.hasClass("getlatlng");
     const Longitude = typeof ($self.data("longitude")) != "undefined" ? $self.data("longitude") : null;
     const Latitude = typeof ($self.data("latitude")) != "undefined" ? $self.data("latitude") : null;
 
@@ -313,7 +315,7 @@ function DirectoryDataInsert($item, result) {
             content.children("div:first").addClass("d-none");
         }
 
-        if ($item.data("findnearest") == true) {
+        if ($item.hasClass("getlatlng")) {
             content.find(".dirname").text(data.dirname);
             content.find(".dirname").removeClass("d-none");
         }

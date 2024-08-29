@@ -1,5 +1,5 @@
 ﻿var PageReady = function () {
-
+    var remoteCounts = @Html.Raw(Json.Serialize(Model.WebsitesRemotes)); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
 
     new Chart(ctx, {
@@ -13,7 +13,7 @@
                 borderRadius: 4,
                 borderSkipped: false,
                 backgroundColor: "rgba(255, 255, 255, .8)",
-                data: [50, 20, 10, 22, 50, 10, 40],
+                data: remoteCounts,
                 maxBarThickness: 6
             },],
         },

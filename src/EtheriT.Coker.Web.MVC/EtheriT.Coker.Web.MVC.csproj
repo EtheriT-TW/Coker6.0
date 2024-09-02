@@ -21,6 +21,8 @@
     <Content Remove="wwwroot\js\Components\TagSelectModal.js" />
     <Content Remove="wwwroot\js\Components\TechCertListModal.js" />
     <Content Remove="wwwroot\js\Components\WebmenuListModal.js" />
+    <Content Remove="wwwroot\js\AdvertisementManagement\EnterAd.js" />
+    <Content Remove="wwwroot\js\AdvertisementManagement\RightSideAd.js" />
     <Content Remove="wwwroot\js\ContentManagement\Article.js" />
     <Content Remove="wwwroot\js\ContentManagement\ContactUsReply.js" />
     <Content Remove="wwwroot\js\ContentManagement\Directory.js" />
@@ -71,6 +73,8 @@
     <None Include="wwwroot\js\Components\TagSelectModal.js" />
     <None Include="wwwroot\js\Components\TechCertListModal.js" />
     <None Include="wwwroot\js\Components\WebmenuListModal.js" />
+    <None Include="wwwroot\js\AdvertisementManagement\EnterAd.js" />
+    <None Include="wwwroot\js\AdvertisementManagement\RightSideAd.js" />
     <None Include="wwwroot\js\ContentManagement\Article.js" />
     <None Include="wwwroot\js\ContentManagement\ContactUsReply.js" />
     <None Include="wwwroot\js\ContentManagement\Directory.js" />

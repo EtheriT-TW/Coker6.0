@@ -75,8 +75,10 @@ function ready() {
     if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
     if ($(".link_with_icon").length > 0) LinkWithIconInit();
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
-    if ($(".shareBlock").length > 0) ShareBlockInit();
-    if ($(".ContactForm").length > 0) setContact();
+    if ($(".shareBlock").length > 0) ShareBlockInit();  
+    if ($(".ContactForm").length > 0) {
+        setContact();//From表單驗證碼
+    }
     if ($(".BGCanvas").length > 0) setBGCanvas();
     if ($(".FlipBook").length > 0) FlipBookInit();
     if ($(".FlipBookModal").length > 0) FlipBookModalInit();
@@ -370,6 +372,7 @@ function RegisterAction() {
 
 function NewCaptcha($self, $input, name = "") {
     if (!!!$self.data("id")) {
+        
         $self.data("id", Math.floor(Math.random() * 10000));
         const $form = $self.parents("form")
         let captchaId = $form.find("[name='captchaId']");

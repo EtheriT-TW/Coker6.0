@@ -2,70 +2,60 @@
 @using EtheriT.Coker.Application.Shared.Dto.EnterAd
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal;
 @{
-    ViewData["Title"] = "RightSideAd";
+    ViewData["Title"] = "EnterAd";
 }
 
-<link rel="stylesheet" href="~/css/ContentManagement/RightSideAd.min.css" asp-append-version="true" />
-<script src="~/js/ContentManagement/RightSideAd.min.js" asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/AdvertisementManagement/EnterAd.min.css" asp-append-version="true" />
+<script src="~/js/AdvertisementManagement/EnterAd.min.js" asp-append-version="true"></script>
 
 <div class="">
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
-        <div class="title fw-bold fs-3">右側浮動廣告</div>
+        <div class="title fw-bold fs-3">進入廣告</div>
     </div>
 
-
     <div id="" class="py-2">
-        <div id="RightSideAdList" class="card border-0">
+        <div id="EnterAdList" class="card border-0">
             <div class="card-body position-relative">
                 <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
                     <span class="material-symbols-outlined">add</span>
                 </button>
                 @(
-                        Html.DevExtreme().DataGrid<HtmlContentGetAllListDto>()
-                        .DataSource(d => d.RemoteController().Key("Id")
-                        .LoadUrl("/api/HtmlContent/GetRightSideAdAllList").LoadMethod("Get")
-                        )
-                        .RemoteOperations(true)
-                        .ColumnHidingEnabled(true)
-                        .ShowBorders(true)
-                        .FilterRow(filterRow => filterRow
-                        .Visible(true)
-                        .ApplyFilter(GridApplyFilterMode.Auto)
-                        )
-                        .SearchPanel(searchPanel => searchPanel
-                        .Visible(true)
-                        .Width(480)
-                        .Placeholder("請輸入要搜尋的資料")
-                        )
-                        .ShowRowLines(true)
-                        .Columns(c =>
+                    Html.DevExtreme().DataGrid<HtmlContentGetAllListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/HtmlContent/GetEnterAdAllList").LoadMethod("Get")
+                    )
+                    .ID("TagGrid")
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Title).Caption("名稱");
+                        c.AddFor(e => e.Link).Caption("連結");
+                        c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
+                        c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
+                        c.AddFor(e => e.Target).Caption("另開視窗").Width(90);
+                        c.AddFor(e => e.StartDate).Caption("起始日期").Width(125);
+                        c.AddFor(e => e.EndDate).Caption("結束日期").Width(125);
+                        c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
                         {
-                            c.AddFor(e => e.Title).Caption("名稱").Width(200);
-                            c.AddFor(e => e.Img).Caption("圖示")
-                        .AllowFiltering(false)
-                        .AllowSorting(false)
-                        .CellTemplate(
-                        @<text>
-                            <div class="list_img">
-                                <img class="" src="<%- value %>" alt="" />
-                            </div>
-                        </text>
-                    );
-                            c.AddFor(e => e.Link).Caption("連結").Width(200);
-                            c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
-                            c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
-                            c.AddFor(e => e.Target).Caption("另開視窗").Width(90);
-                            c.AddFor(e => e.StartDate).Caption("起始日期").Width(125);
-                            c.AddFor(e => e.EndDate).Caption("結束日期").Width(125);
-                            c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
-                            c.Add()
-                            .Type(GridCommandColumnType.Buttons)
-                            .Buttons(b =>
-                            {
-                                b.Add().Name("edit").OnClick("editButtonClicked");
-                                b.Add().Name("delete").OnClick("deleteButtonClicked");
-                            });
-                        })
+                            b.Add().Name("edit").OnClick("editButtonClicked");
+                            b.Add().Name("delete").OnClick("deleteButtonClicked");
+                        });
+                    })
                     .ColumnAutoWidth(true)
                     .Paging(paging => paging.PageSize(30))
                     .Pager(pager =>
@@ -86,7 +76,7 @@
             </div>
         </div>
 
-        <div id="RightSideAdContent" class="card border-0 d-none">
+        <div id="EnterAdContent" class="card border-0 d-none">
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 d-flex align-items-center">
                     <button class="btn_back d-flex bg-transparent border-0 align-items-center">
@@ -103,12 +93,10 @@
 
             <form id="AdForm" class="card-body needs-validation">
                 <div class="d-flex align-self-center justify-content-between mb-3">
-                    <div class="d-flex flex-column align-items-center mb-1">
-                        <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
-                            @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
-                        </div>
+                    <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="false" data-needcompress="false">
+                        @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
                     </div>
-                    <button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
+                    <button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-md-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
                         <span class="material-symbols-outlined fs-2">visibility</span>
                     </button>
                 </div>
@@ -127,7 +115,7 @@
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
                     </div>
-                    <input id="InputSort" class="form-control rounded" type="number" aria-label="Input Sort of RightSideAd" disabled="disabled" required>
+                    <input id="InputSort" class="form-control rounded" type="number" aria-label="Input Sort of EnterAd" disabled="disabled" required>
                     <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
                         <input id="SortCheck" class="form-check-input" type="checkbox" value="">
                         <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
@@ -138,7 +126,7 @@
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">link</span>
                     </div>
-                    <input id="InputLink" class="form-control rounded" type="text" aria-label="Input Link of RightSideAd" value="https://" required>
+                    <input id="InputLink" class="form-control rounded" type="text" aria-label="Input Link of EnterAd" value="https://" required>
                     <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
                         <input id="TargetCheck" class="form-check-input" type="checkbox" value="">
                         <label class="form-check-label fs-6 pe-2" for="TargetCheck">開新視窗</label>
@@ -149,7 +137,7 @@
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>調整顯示日期
                     </div>
-                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of RightSideAd" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of EnterAd" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
                     <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
                         <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
                         <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
@@ -158,6 +146,6 @@
             </form>
         </div>
 
-        <div class="text-end my-2 text-danger">※前台最多顯示4筆資料</div>
+        <div class="text-end my-2 text-danger">※僅首次進入網站時有效，且前台最多僅顯示1筆資料</div>
     </div>
 </div>

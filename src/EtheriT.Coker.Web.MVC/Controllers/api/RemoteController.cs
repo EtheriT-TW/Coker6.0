@@ -24,5 +24,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		{
 			return await remoteAppService.GetPageList(loadOptions);
 		}
-	}
+        [HttpGet]
+        public async Task<JsonResult> Get_7day_remoteCount(DataSourceLoadOptions loadOptions)
+        {
+            return await remoteAppService.Get_7day_remoteCount(loadOptions);
+        }
+    }
 }

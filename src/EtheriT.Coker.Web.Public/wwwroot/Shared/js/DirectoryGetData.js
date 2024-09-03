@@ -53,6 +53,7 @@ function initElemntAndLoadDir($dir, page) {
             Longitude: Longitude,
             Latitude: Latitude,
         }
+        console.log(option);
         $self.find(".catalog>.template").remove();
         DirectoryDataGet($self, option);
 

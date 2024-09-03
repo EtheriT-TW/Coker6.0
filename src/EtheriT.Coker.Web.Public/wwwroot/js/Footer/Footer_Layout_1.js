@@ -5,8 +5,8 @@ function FooterInit() {
     $content = $("#Footer_Menu > ul > li > ul > li")
     MenuItemResize();
     toggleFooterMenu();
-    $("#Collapse_Button").on("click", toggleFooterMenu);
-    $(window).on("resize",function () {
+
+    $(window).resize(function () {
         MenuItemResize();
     })
 }

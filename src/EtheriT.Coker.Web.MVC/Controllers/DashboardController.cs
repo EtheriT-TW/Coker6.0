@@ -1,16 +1,70 @@
-﻿using EtheriT.Coker.Web.MVC.Models.Dacshboard;
+﻿using DevExtreme.AspNet.Data.ResponseModel;
+using DevExtreme.AspNet.Mvc.FileManagement;
+using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Remote;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.EntityFrameworkCore.Migrations;
+using EtheriT.Coker.Web.MVC.Models.Dacshboard;
+using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp;
+using Newtonsoft.Json;
+using System.Collections;
+using System.IO.Pipelines;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class DashboardController : Controller
     {
-        public IActionResult Index()
-        {
+
+        private readonly LoginUserData loginUserData;//獲取後台登入後選擇編輯哪個站點
+		private readonly IRemoteAppService remoteAppService;
+        private List<long> remoteList = new List<long>();
+        private List<DateTime> dateList = new List<DateTime>();
+		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService) { 
+            this.loginUserData = loginUserData;
+            this.remoteAppService = remoteAppService;
+        }
+        //非同步 用Task的模式讀取
+        public async Task<IActionResult> Index()
+        {			
+			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
+			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
+            string filePath = $"D:\\ET\\upload\\{orgName}";
+            var obj = await remoteAppService.Get_7day_remoteCount(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
+            var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
+			var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();
+            var remoteItem =new List<long>();
+            var remoteMemCount = new List<long>();
+            var dateItem = new List<string>();
+            for(int i = 0;i < 7;i++)
+            {
+                DateTime d = DateTime.Now.Date.AddDays(-i);
+                RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
+
+                if (item == null)
+                {
+                    remoteItem.Add(0);
+                    remoteMemCount.Add(0);
+                }
+                else
+                {
+                    remoteItem.Add(item.count);
+                    remoteMemCount.Add(item.MemCount);
+                }
+                dateItem.Add(d.ToString("MM/dd"));
+            }
+            dateItem.Reverse();
+            remoteMemCount.Reverse();
+            //var remoteItem = item.Select(e => e.count).ToList();
+            remoteItem.Reverse();
+            
+
             DashboardModel model = new DashboardModel
             {
-                Orders = new List<OrderItem> { 
-                    new OrderItem{ 
+                //客戶訂單
+                Orders = new List<OrderItem> {
+                    new OrderItem{
                         Id="000000317",
                         Name="黃○瑜",
                         Time=DateTime.Now.AddHours(-12),
@@ -35,9 +89,72 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                         Price=420.0,
                         Statues="審核中"
                     }
+                },
+                //使用空間
+                CalcuateDirectorySize = CalculateDirectorySize(filePath),
+                LastChangDate = LastChangDate(filePath),
+                Remote = new WebsitesRemote {
+                    WebsitesRemotesCount = remoteItem, //全站導覽人次
+                    WebsitesRemotesDate = dateItem, //最近7天的時間
+                    WebsitesRemotesMemCount = remoteMemCount,
+                    LoadDate = ""
                 }
             };
             return View(model);
         }
-    }
+
+		// 獲取資料夾的最後修改時間
+		public static string LastChangDate(string DirRoute)
+        {
+			try
+			{
+				DirectoryInfo directoryInfo = new DirectoryInfo(DirRoute);
+				DateTime lastModified = directoryInfo.LastWriteTime;
+                return lastModified.ToString();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("錯誤: " + ex.Message);
+                return "發生錯誤";
+			}
+		}
+
+		//計算某個資料夾的大小 參數=資料夾路徑
+		public static string CalculateDirectorySize(string DirRoute)
+		{
+			try
+			{
+				var directoryInfo = new DirectoryInfo(DirRoute);
+                //如果資料夾存在
+                if (directoryInfo.Exists)
+                {
+                    long totalSizeInBytes = directoryInfo
+                    .EnumerateFiles("*", SearchOption.AllDirectories)
+                    .Sum(file => file.Length);
+
+					// 單位換算
+					return FormatSize(totalSizeInBytes);
+				}
+                return "請確認資料路徑是否正確";
+			}
+			catch
+			{
+				return "發生錯誤";
+			}
+		}
+
+		//給CalculateDirectorySize換算目前容量最適合使用得單位
+		private static string FormatSize(long bytes)
+		{
+			string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+			double len = bytes;
+			int order = 0;
+			while (len >= 1024 && order < sizes.Length - 1)
+			{
+				order++;
+				len = len / 1024;
+			}
+			return $"{len:0.##} {sizes[order]}";
+		}
+	}
 }

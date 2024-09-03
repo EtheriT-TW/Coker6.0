@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using DevExtreme.AspNet.Mvc;
 using System.Collections;
+using System.Data;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -73,7 +74,7 @@ namespace EtheriT.Coker.Application.Remote
                     Count = g.Count()
                 }
             ).ToListAsync();
-			;
+            ;
 
             if (data != null)
 			{
@@ -139,10 +140,11 @@ namespace EtheriT.Coker.Application.Remote
 			}
 			else throw new Exception("查無資料");
 		}
+        //從資料庫撈使用者紀錄
 		public async Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions) {
 			long siteId = await loginUserData.GetWebsiteId();
 			var data =
-                from d in db.Remotes
+                from d in db.Remotes //使用者瀏覽紀錄
                 join m in db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted) on d.FK_WebmenuId equals m.Id
                 group d by new
                 {
@@ -178,9 +180,60 @@ namespace EtheriT.Coker.Application.Remote
                     loadOptions.Sort = Sort.ToArray();
                 }
                 var output = DataSourceLoader.Load(dataQuery, loadOptions);
+                //取日期跟時間
 				return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
 			}
 			else throw new Exception("查無資料");
 		}
-	}
+
+        public async Task<JsonResult> Get_7day_remoteCount(DataSourceLoadOptions loadOptions)
+        {
+            long siteId = await loginUserData.GetWebsiteId();
+            DateTime startDate = DateTime.Today; // 示例开始日期
+            DateTime endDate = startDate.AddDays(-7); // 示例结束日期
+            var data =
+                from d in db.Remotes //使用者瀏覽紀錄
+                join m in db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted) on d.FK_WebmenuId equals m.Id
+                where d.ExecutionTime.Date <= startDate && d.ExecutionTime.Date > endDate
+
+                group d by new
+                {
+                    d.ExecutionTime.Date,
+                    d.ClientIpAddress
+                } into g
+                select new
+                {
+                    g.Key.Date,
+                    count = g.Count(),
+                };
+            if (data != null)
+            {
+                var dataQuery = from d in data
+                                group d by new
+                                {
+                                    d.Date,
+                                } into d
+                                select new RemoteListOtputDto
+                                {
+                                    date = d.Key.Date,
+                                    count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),
+                                    
+                                    MemCount = d.Count(),  //人數
+                                };
+                if (loadOptions.Sort == null)
+                {
+                    var Sort = new List<SortingInfo>{new SortingInfo
+                    {
+                        Selector = "date",
+                        Desc = true
+                    } };
+                    loadOptions.Sort = Sort.ToArray();
+                }
+                var output = DataSourceLoader.Load(dataQuery, loadOptions);
+                //取日期跟時間
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            else throw new Exception("查無資料");
+        }
+    };
 }

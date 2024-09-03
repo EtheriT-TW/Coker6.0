@@ -134,6 +134,7 @@ function DirectoryGetDataInit() {
                         }
                     })
                     $(".selectList").length > 0 && $(window).trigger("resize.selectList");
+
                 }
             });
         }
@@ -250,6 +251,15 @@ function DirectoryDataGet($item, option) {
         $item.data("init", "true");
         DirectoryDataInsert($item, result.releInfos);
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");
+
+        if ($item.hasClass("swiper") || $item.find(".swiper").length > 0 || $item.hasClass("swiper-wrapper")) {
+            let c;
+            if ($item.hasClass("swiper")) c = $item;
+            else if ($item.find(".swiper").length > 0) c = $item.find(".swiper");
+            else c = $item.parents(".swiper");
+            c.parents(`[class*="_swiper"]`).data("isInit", false);
+            SwiperInit({ autoplay: true });
+        }
     })
 }
 

@@ -5,7 +5,7 @@
     }, {
         version: "pdfjs-2.1.266-dist", ext: "js"
     }];
-    const usePdf = pdfVersion[0];
+    const usePdf = pdfVersion[1];
     $this.addClass("d-none");
 
     if (typeof ($this.data("pdf")) == "undefined" || !$this.data("pdf")) {
@@ -21,7 +21,9 @@
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function () {
         if (this.readyState == 4) {
-            if (this.status == 200) { flipbook_container.innerHTML = this.responseText; }
+            if (this.status == 200) {
+                flipbook_container.innerHTML = this.responseText;
+            }
             if (this.status == 404) { flipbook_container.innerHTML = "Page not found."; }
             $(flipbook_container).find("meta,title,script").remove();
             const loadJs = [];
@@ -48,19 +50,27 @@
 function FlipBookModalInit() {
     var $this = $(".FlipBookModal");
     const modal = bootstrap.Modal.getOrCreateInstance($this[0]);
+    let timer = null;
+    const init = function () {
+        if (typeof (PDFViewerApplication) != "undefined") {
+            if (typeof ($(this).data("init")) == "undefined" && !$(this).data("init")) {
+                console.log("bookFlip.init");
+                $(this).data("init", true);
+                PDFViewerApplication.closeModal = function () {
+                    modal.hide();
+                };
+                //bookFlip.init();
+            }
+        } else timer = setTimeout(init, 100);
+    }
+    timer = setTimeout(init, 100);
     $this.on('show.bs.modal', event => {
         // Button that triggered the modal
         var button = event.relatedTarget;
         var target_pdf = button.getAttribute('data-pdf-url');
-        PDFViewerApplication.closeModal = function () {
-            modal.hide();
-        };
         PDFViewerApplication.setInitialView();
         PDFViewerApplication.open({ url: target_pdf, originalUrl: target_pdf });
-        if (typeof ($(this).data("init")) == "undefined" && !$(this).data("init")) {
-            $(this).data("init", true);
-            bookFlip.init();
-        }
+        
     });
 }
 

@@ -30,13 +30,12 @@ function SwiperInit(obj) {
 
     $(".one_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
-
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
+            if ($(Id).find(".swiper-slide").length == 1 && $(Id).find(".swiper-slide").parents(".templatecontent").length > 0) return false;
             const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed")
-            
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -58,8 +57,8 @@ function SwiperInit(obj) {
             } : {},
                 canNext ? {
                     navigation: {
-                        nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                        nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                     }
                 } : {});
             if (!canNext) {
@@ -114,8 +113,8 @@ function SwiperInit(obj) {
             } : {},
                 canNext ? {
                     navigation: {
-                        nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                        nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                     },
                     
                 } : {});
@@ -148,8 +147,8 @@ function SwiperInit(obj) {
                     },
                 },
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button"
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev"
                 }, breakpoints: {
                     400: {
                         slidesPerView: 1,
@@ -182,8 +181,8 @@ function SwiperInit(obj) {
                     clickable: true,
                 },
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                 }, breakpoints: {
                     375: {
                         slidesPerView: 1,
@@ -218,8 +217,8 @@ function SwiperInit(obj) {
                     clickable: true,
                 },
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                 }, breakpoints: {
                     375: {
                         slidesPerView: 1,
@@ -260,8 +259,8 @@ function SwiperInit(obj) {
                 },
 
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                 }, breakpoints: {
                     320: {
                         slidesPerView: 2,
@@ -306,8 +305,8 @@ function SwiperInit(obj) {
                     draggable: true,
                 },
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next > button",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev > button",
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                 }, breakpoints: {
                     320: {
                         slidesPerView: 2,

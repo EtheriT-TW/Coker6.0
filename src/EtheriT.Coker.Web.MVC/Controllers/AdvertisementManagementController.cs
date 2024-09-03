@@ -1,0 +1,21 @@
+﻿using EtheriT.Coker.Web.MVC.Startup;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EtheriT.Coker.Web.MVC.Controllers
+{
+    public class AdvertisementManagementController : Controller
+    {
+        private readonly NavigationProvider navigation;
+        public AdvertisementManagementController(NavigationProvider navigation) {
+            this.navigation = navigation;
+        }
+        public IActionResult EnterAd(int id)
+        {
+            return View("EnterAd");
+        }
+        public IActionResult RightSideAd(int id)
+        {
+            return View("RightSideAd");
+        }
+    }
+}

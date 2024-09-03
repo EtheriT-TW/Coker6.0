@@ -48,6 +48,26 @@
         }
     </style>
     <style id="frameCss" nonce="@ViewBag.Nonce"></style>
+    <script nonce="@ViewBag.Nonce">
+        window.CI360 = { notInitOnLoad: true }
+        document.addEventListener('DOMContentLoaded', (event) => {
+            ready();
+        });
+        const originalAppendChild = Element.prototype.appendChild;
+
+        // 覆寫 appendChild 方法
+        Element.prototype.appendChild = function (child) {
+            // 檢查是否為 <script> 或 <style> 元素
+            if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE') {
+                // 為元素添加 nonce 屬性
+                const nonce = '@Html.Raw(ViewBag.Nonce)'; // 這裡替換為實際的 nonce 值
+                child.setAttribute('nonce', nonce);
+            }
+
+            // 調用原始的 appendChild 方法
+            return originalAppendChild.call(this, child);
+        };
+    </script>
     @if (ViewData["GA4"] != null && !string.IsNullOrEmpty(ViewData["GA4"].ToString() ?? ""))
     {
         <!-- Google tag (gtag.js) -->
@@ -279,12 +299,7 @@
     <script src="~/lib/jquery-twzipcode/jquery.twzipcode.min.js"></script>
     <script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
     <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
-    <script nonce="@ViewBag.Nonce">
-        window.CI360 = { notInitOnLoad: true }
-        document.addEventListener('DOMContentLoaded', (event) => {
-            ready();
-        });
-    </script>
+    <script defer src="/lib/jscloudimage360/js-cloudimage-360-view.min.js" asp-append-version="true"></script>
     <script src="~/js/site.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

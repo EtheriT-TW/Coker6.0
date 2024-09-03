@@ -6,7 +6,7 @@
                 const longitude = position.coords.longitude;
                 $(".getlatlng").data("longitude", longitude);
                 $(".getlatlng").data("latitude", latitude);
-                DirectoryReload();
+                DirectoryGetDataInit();
                 console.log(`Latitude: ${latitude}, Longitude: ${longitude}`)
             },
             (error) => {

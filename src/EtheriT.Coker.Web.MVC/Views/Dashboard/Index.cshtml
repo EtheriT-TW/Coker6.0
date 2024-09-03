@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Web.MVC.Models.Dacshboard
+@using Newtonsoft.Json
 @model DashboardModel
 @{
     ViewData["Title"] = "Dashboard";
@@ -51,7 +52,7 @@
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
                     <div class="bg-gradient-info shadow-primary border-radius-lg py-3 pe-1">
                         <div class="chart">
-                            <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
+                                <canvas id="chart-bars" class="chart-canvas" height="170" data-Remotes="@JsonConvert.SerializeObject(Model.Remote)"></canvas>
                         </div>
                     </div>
                 </div>
@@ -59,59 +60,10 @@
                     <h6 class="mb-0 ">全站導覽人數</h6>
                     <p class="text-sm d-none">Last Campaign Performance</p>
                     <hr class="dark horizontal">
-                    <div class="d-flex ">
+                    <div class="d-flex">
                         <i class="material-icons text-sm my-auto me-1">schedule</i>
                         <p class="mb-0 text-sm"> 最後更新時間2小時前 </p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row mt-4">
-        <div class="col-xl-12 col-sm-12 mb-xl-0 mb-4">
-            <div class="card orders">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-primary shadow-success border-radius-lg py-3 pe-1">
-                        <h4 class="title text-bolder">本日最新訂單</h4>
-                        <span class="memo text-xs"><span class="text-2xl font-weight-bolder">4</span>筆尚未處理</span>
-                    </div>
-                </div>
-                <div class="card-body p-3">
-                    @(
-                        Html.DevExtreme().DataGrid<OrderItem>()
-                            .ID("Oders")
-                            .ColumnHidingEnabled(true)
-                            .ShowBorders(true)
-                            .FilterRow(filterRow => filterRow
-                                .Visible(true)
-                                .ApplyFilter(GridApplyFilterMode.Auto)
-                            )
-                            .SearchPanel(searchPanel => searchPanel
-                                .Visible(true)
-                                .Width(480)
-                                .Placeholder("請輸入要搜尋的資料")
-                            )
-                            .ShowRowLines(true)
-                            .HeaderFilter(headerFilter => headerFilter.Visible(true))
-                            .Columns(c =>
-                            {
-                                c.AddFor(e => e.Id).Caption("質借單號");
-                                c.AddFor(e => e.Time).Caption("成立時間");
-                                c.AddFor(e => e.Name).Caption("姓名");
-                                c.AddFor(e => e.Price).Caption("結帳金額");
-                                c.AddFor(e => e.Statues).Caption("訂單狀態");
-                            })
-                            .Paging(paging => paging.PageSize(30))
-                            .Pager(pager =>
-                            {
-                                pager.Visible(true);
-                                pager.ShowPageSizeSelector(true);
-                                pager.AllowedPageSizes(new[] { 10, 20, 30 });
-                                pager.ShowInfo(true);
-                            })
-                            .DataSource(Model.Orders)
-                        )
-                    <p class="mb-0">最後更新日期<span class="text-success text-sm font-weight-bolder">2022/10/3</span></p>
                 </div>
             </div>
         </div>

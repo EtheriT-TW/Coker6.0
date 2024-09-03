@@ -1,11 +1,16 @@
-﻿using DevExtreme.AspNet.Mvc.FileManagement;
+﻿using DevExtreme.AspNet.Data.ResponseModel;
+using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using EtheriT.Coker.Web.MVC.Models.Dacshboard;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp;
+using Newtonsoft.Json;
 using System.Collections;
+using System.IO.Pipelines;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
@@ -13,10 +18,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers
     {
 
         private readonly LoginUserData loginUserData;//獲取後台登入後選擇編輯哪個站點
-		private readonly CokerDbContext db;//資料庫連接
-		public DashboardController(LoginUserData loginUserData, CokerDbContext db) { 
+		private readonly IRemoteAppService remoteAppService;
+        private List<long> remoteList = new List<long>();
+        private List<DateTime> dateList = new List<DateTime>();
+		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService) { 
             this.loginUserData = loginUserData;
-            this.db = db;
+            this.remoteAppService = remoteAppService;
         }
         //非同步 用Task的模式讀取
         public async Task<IActionResult> Index()
@@ -24,8 +31,37 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
 			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
             string filePath = $"D:\\ET\\upload\\{orgName}";
-			DashboardModel model = new DashboardModel
-            {                
+            var obj = await remoteAppService.Get_7day_remoteCount(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
+            var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
+			var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();
+            var remoteItem =new List<long>();
+            var remoteMemCount = new List<long>();
+            var dateItem = new List<string>();
+            for(int i = 0;i < 7;i++)
+            {
+                DateTime d = DateTime.Now.Date.AddDays(-i);
+                RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
+
+                if (item == null)
+                {
+                    remoteItem.Add(0);
+                    remoteMemCount.Add(0);
+                }
+                else
+                {
+                    remoteItem.Add(item.count);
+                    remoteMemCount.Add(item.MemCount);
+                }
+                dateItem.Add(d.ToString("MM/dd"));
+            }
+            dateItem.Reverse();
+            remoteMemCount.Reverse();
+            //var remoteItem = item.Select(e => e.count).ToList();
+            remoteItem.Reverse();
+            
+
+            DashboardModel model = new DashboardModel
+            {
                 //客戶訂單
                 Orders = new List<OrderItem> {
                     new OrderItem{
@@ -57,39 +93,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 //使用空間
                 CalcuateDirectorySize = CalculateDirectorySize(filePath),
                 LastChangDate = LastChangDate(filePath),
-
-                //全站導覽人次
-                WebsitesRemotes = WebsitesRemotes(orgId, db)
+                Remote = new WebsitesRemote {
+                    WebsitesRemotesCount = remoteItem, //全站導覽人次
+                    WebsitesRemotesDate = dateItem, //最近7天的時間
+                    WebsitesRemotesMemCount = remoteMemCount,
+                    LoadDate = ""
+                }
             };
             return View(model);
-        }
-		
-		//站點的瀏覽人次
-		public static List<long> WebsitesRemotes(long websiteId, CokerDbContext db)
-        {
-			List<long> RemoteCount = new List<long>();
-            DateTime time = new DateTime();
-			try
-            {               
-                for (int i = 0; i < 7; i++)
-                {
-                    long data = db.Remotes //使用者瀏覽紀錄
-                        .Where(e => e.FK_WebsiteId == websiteId && e.ExecutionTime.Date == time.Date.AddDays(-i))
-                        .Count();
-					RemoteCount.Add(data);
-					Console.WriteLine("///////////////" + time + "//////////////////////");
-				}
-                foreach (int i in RemoteCount)
-                {
-					Console.WriteLine("///////////////" + i + "//////////////////////");
-				}				
-				return RemoteCount;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("\\\\\\\\\\\\\\\\\\\\\\\\"+ex.Message+"////////////////////////////");
-                return RemoteCount;
-            }
         }
 
 		// 獲取資料夾的最後修改時間
@@ -121,7 +132,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     .EnumerateFiles("*", SearchOption.AllDirectories)
                     .Sum(file => file.Length);
 
-					// 將總大小從位元組轉換為 GB
+					// 單位換算
 					return FormatSize(totalSizeInBytes);
 				}
                 return "請確認資料路徑是否正確";

@@ -1,28 +1,38 @@
 ﻿var PageReady = function () {
-    var remoteCounts = @Html.Raw(Json.Serialize(Model.WebsitesRemotes)); //後端寫好的全站瀏覽人次
+    const $bars = $("#chart-bars")
+    var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
-
+    console.log(remote);
     new Chart(ctx, {
         type: "bar",
         data: {
-            labels: ["M", "T", "W", "T", "F", "S", "S"],
+            labels: remote.WebsitesRemotesDate,
             datasets: [{
-                label: "Sales",
+                label: "人次",
                 tension: 0.4,
                 borderWidth: 0,
                 borderRadius: 4,
                 borderSkipped: false,
-                backgroundColor: "rgba(255, 255, 255, .8)",
-                data: remoteCounts,
+                backgroundColor: "rgba(255, 255, 255, .8)",    
+                data: remote.WebsitesRemotesCount,
                 maxBarThickness: 6
-            },],
+            }, {
+                label: "人數",
+                tension: 0.4,
+                borderWidth: 0,
+                borderRadius: 4,
+                borderSkipped: false,
+                backgroundColor: "rgba(255, 0, 0, .8)",
+                data: remote.WebsitesRemotesMemCount,
+                maxBarThickness: 6
+            }],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false,
+                    display: true,
                 }
             },
             interaction: {
@@ -79,9 +89,7 @@
             },
         },
     });
-
-
-    var ctx2 = document.getElementById("chart-line").getContext("2d");
+    /*var ctx2 = document.getElementById("chart-line").getContext("2d");
 
     new Chart(ctx2, {
         type: "line",
@@ -245,4 +253,5 @@
             },
         },
     });
+ */
 }

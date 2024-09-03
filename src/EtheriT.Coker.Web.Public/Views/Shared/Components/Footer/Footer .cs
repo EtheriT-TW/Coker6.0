@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application;
+﻿
+using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;

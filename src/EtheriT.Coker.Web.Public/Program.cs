@@ -46,6 +46,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.CookiePolicy;
 using SimpleCaptcha;
 using System.Net;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -78,6 +79,15 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.HttpOnly = true;
     //iis setting
     //options.SuppressXFrameOptionsHeader = false;
+});
+
+// Configure Kestrel to allow only HTTP/1.1 and HTTP/2
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureEndpointDefaults(lo =>
+    {
+        lo.Protocols = HttpProtocols.Http1AndHttp2; // 只允許 HTTP/1.1 和 HTTP/2
+    });
 });
 
 // Add services to the container.
@@ -163,6 +173,7 @@ if (!app.Environment.IsProduction())
     });
 }
 
+app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

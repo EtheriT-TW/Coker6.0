@@ -65,3 +65,6 @@ a[href="https://translate.google.com"] {
     display: none;
     visibility: hidden
 }
+.modal.show {
+    display: block;
+}

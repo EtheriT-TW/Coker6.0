@@ -1,4 +1,5 @@
-﻿#foot {
+﻿
+#foot {
     font-size: 0.909090909090909rem;
     color: #FFFF;
     background: url(/upload/20170818023503.png) center top;
@@ -9,14 +10,31 @@
     line-height: normal;
     width: 100%;
     max-width: 100%;
-    background-color: #002153;
+    background-color: #2566c9;
 }
 
 #d1 {
     text-align: center;
 }
 
-.ft-size {
+a#a1 {
+    font-size: 0.7rem;
+    color: rgb(102, 102, 102);
+    line-height: 16pt;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+img#img1 {
+    margin-left: -4px;
+    border: 0;
+    width: 131px;
+    height: 22px;
+}
+
+.ft-size ::before {
     font-size: 9pt;
 }
 

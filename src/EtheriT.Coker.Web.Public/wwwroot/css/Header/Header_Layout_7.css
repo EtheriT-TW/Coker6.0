@@ -1,5 +1,14 @@
-﻿.bg-kao-feng {
+﻿
+.bg-kao-feng {
     background: url(/upload/20170818112557.jpg) no-repeat top;
+}
+
+#iswrap {
+    display: none !important;
+}
+
+#is-block {
+    display: block;
 }
 
 /* Button Car Dropdown */
@@ -127,7 +136,7 @@
 
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
-    background-color: #002153;
+    background-color: #2566c9;
 }
 
     #Offcanvas_Mega_Menu > * {
@@ -158,7 +167,7 @@
         /* Mega Menu Content */
         #Offcanvas_Mega_Menu > ul > .title > .content {
             visibility: hidden;
-            background-color: #002153;
+            background-color: #2566c9;
             opacity: 0.9;
             padding: 1rem 0;
             cursor: default;
@@ -168,7 +177,7 @@
         }
 
             #Offcanvas_Mega_Menu > ul > .title > .content li {
-                width: 20%;
+                width: 30%;
             }
 
                 #Offcanvas_Mega_Menu > ul > .title > .content li > a {
@@ -187,7 +196,7 @@
 
 
                     #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
-                        background: #0dbbfd57;
+                        background: #002153/*#0dbbfd57*/;
                         margin-left: 0;
                     }
 
@@ -565,6 +574,10 @@
 
     .langMenu {
         display: list-item;
+    }
+
+    #iswrap {
+        display: flex !important;
     }
 }
 

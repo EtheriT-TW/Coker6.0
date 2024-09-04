@@ -82,8 +82,8 @@ function SwiperInit(obj) {
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");      
             
-            var swiperThumbs = new Swiper(".six_thumbs", {               
-                loop: loopOption,
+            var swiperThumbs = new Swiper(".six_thumbs", {
+                loop: true,
                 spaceBetween: 10,
                 slidesPerView: 6,
                 freeMode: true,
@@ -370,6 +370,7 @@ function SwiperInit(obj) {
                 }
             },
             loop: loopOption,
+            simulateTouch: loopOption, //不可用滑鼠點擊拖動
             freeMode: true,
             watchSlidesProgress: true,
             

@@ -37,7 +37,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var remoteItem =new List<long>();
             var remoteMemCount = new List<long>();
             var dateItem = new List<string>();
-            for(int i = 0;i < 7;i++)
+            var today = DateTime.Today;
+            for (int i = 0;i < 7;i++)
             {
                 DateTime d = DateTime.Now.Date.AddDays(-i);
                 RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
@@ -56,9 +57,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             }
             dateItem.Reverse();
             remoteMemCount.Reverse();
-            //var remoteItem = item.Select(e => e.count).ToList();
             remoteItem.Reverse();
-            
+
 
             DashboardModel model = new DashboardModel
             {
@@ -93,11 +93,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 //使用空間
                 CalcuateDirectorySize = CalculateDirectorySize(filePath),
                 LastChangDate = LastChangDate(filePath),
-                Remote = new WebsitesRemote {
+                Remote = new WebsitesRemote
+                {
                     WebsitesRemotesCount = remoteItem, //全站導覽人次
                     WebsitesRemotesDate = dateItem, //最近7天的時間
                     WebsitesRemotesMemCount = remoteMemCount,
-                    LoadDate = ""
+                    SumCount = remoteItem.Sum(),
+                    SumMemCount = remoteMemCount.Sum(),
+                    LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd")
                 }
             };
             return View(model);

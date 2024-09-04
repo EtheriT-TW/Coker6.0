@@ -6,25 +6,25 @@
     new Chart(ctx, {
         type: "bar",
         data: {
-            labels: remote.WebsitesRemotesDate,
+            labels: remote.WebsitesRemotesDate, //X軸日期資料來源
             datasets: [{
                 label: "人次",
                 tension: 0.4,
-                borderWidth: 0,
+                borderWidth: 0, //長條圖的外框粗細
                 borderRadius: 4,
                 borderSkipped: false,
-                backgroundColor: "rgba(255, 255, 255, .8)",    
-                data: remote.WebsitesRemotesCount,
-                maxBarThickness: 6
+                backgroundColor: "rgba(255, 255, 255, .8)",
+                data: remote.WebsitesRemotesCount, //Y軸數量資料來源
+                maxBarThickness: 25 //長條圖粗細
             }, {
                 label: "人數",
                 tension: 0.4,
                 borderWidth: 0,
                 borderRadius: 4,
                 borderSkipped: false,
-                backgroundColor: "rgba(255, 0, 0, .8)",
+                backgroundColor: "#ffe2c7", //"rgba(255, 0, 0, .8)",
                 data: remote.WebsitesRemotesMemCount,
-                maxBarThickness: 6
+                maxBarThickness: 20
             }],
         },
         options: {

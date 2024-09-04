@@ -5,24 +5,29 @@
                 $(this).setContact();
             });
         },
-        setContact: function () {
+        setContact: function () {           
             const form = this.get(0);
             const $forms = this;
-            const $captcha_input = $forms.find(`[name="captcha"]`);
-            const $imgCaptcha = $forms.find('.img-fluid').last();
-
+            const $captcha_input = $forms.find(`[name="captcha"]`);//獲取驗證碼輸入框
+            const $imgCaptcha = $forms.find('.img-fluid').last();//獲取有.img-fluid的圖片
+            //重整驗證碼，找尋id是ContactForm的form去執行btn_refresh的按鈕事件
             $('#ContactForm .btn_refresh').off("click").on('click', () => {
+
                 NewCaptcha($imgCaptcha, $captcha_input, "ContactUs");
+                
             });
+            //點擊驗證碼刷新 (用trigger在網頁重整時直接觸發click事件)
             $('#ContactForm .btn_refresh').trigger("click");
-            $forms.getFormJson();
+            $forms.getFormJson();//初始化表單的Json方法
+
+            //表單提交
             form.addEventListener('submit', event => {
-                event.preventDefault();
+                event.preventDefault(); //阻止默認提交
                 event.stopPropagation();
-                form.classList.add('was-validated')
-                if (!form.checkValidity()) {
-                    NewCaptcha($imgCaptcha, $captcha_input, "ContactUs");
-                    Coker.sweet.error(local.Error, local.FormSubmitMessage, null, true);
+                form.classList.add('was-validated') //添加驗證樣式
+                if (!form.checkValidity()) { //檢查表單
+                    NewCaptcha($imgCaptcha, $captcha_input, "ContactUs"); //刷新驗證碼
+                    Coker.sweet.error(local.Error, local.FormSubmitMessage, null, true); //顯示錯誤訊息
                 } else {
                     event.preventDefault();
                     const sender = { Email: "", Name: "" };
@@ -86,4 +91,5 @@
 });
 function setContact() {
     $('.ContactForm').contactInit();
+
 }

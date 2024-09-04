@@ -215,8 +215,8 @@ namespace EtheriT.Coker.Application.Remote
                                 } into d
                                 select new RemoteListOtputDto
                                 {
-                                    date = d.Key.Date,
-                                    count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),
+                                    date = d.Key.Date,//時間
+                                    count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),//人次
                                     
                                     MemCount = d.Count(),  //人數
                                 };

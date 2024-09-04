@@ -57,12 +57,30 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <h6 class="mb-0 ">全站導覽人數</h6>
+                    <div class="d-flex">
+                        <div class="align-content-center">
+                            <h6 class="mb-0 ">全站導覽人數</h6>
+                        </div>
+                        <div class="text-end pt-1 col-md-9">
+                            <p class="mb-0 ">總人數<span class="text-success text-sm font-weight-bolder">@Model.Remote.SumMemCount</span></p>
+                            <p class="mb-0 ">總人次<span class="text-success text-sm font-weight-bolder">@Model.Remote.SumCount</span></p>
+                        </div>
+                    </div>
                     <p class="text-sm d-none">Last Campaign Performance</p>
                     <hr class="dark horizontal">
                     <div class="d-flex">
                         <i class="material-icons text-sm my-auto me-1">schedule</i>
-                        <p class="mb-0 text-sm"> 最後更新時間2小時前 </p>
+                        <p class="mb-0 text-sm"> 最後統計區間<span class="text-success text-sm font-weight-bolder">@Model.Remote.LastUpdateDate</span> </p>
+                        <form>
+                            <label for="statistics">統計區間</label>
+                            <select id="statistics" name="statistics">
+                                <option value="aaa"> 1 </option>
+                                <option value="aaa"> 1 </option>
+                                <option value="aaa"> 1 </option>
+                                <option value="aaa"> 1 </option>
+                                <option value="aaa"> 1 </option>
+                            </select>
+                        </form>
                     </div>
                 </div>
             </div>

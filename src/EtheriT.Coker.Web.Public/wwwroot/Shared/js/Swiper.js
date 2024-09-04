@@ -71,10 +71,10 @@ function SwiperInit(obj) {
             }
         }
     });
-
     //單欄輪播+兩欄縮圖
     $(".one_swiper_thumbs").prop("draggable", true).each(function () {
         var $self = $(this);
+        const index = $(".one_swiper_thumbs").index(this);
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
@@ -88,8 +88,7 @@ function SwiperInit(obj) {
                 slidesPerView: 6,
                 freeMode: true,
                 watchSlidesProgress: true,
-            });
-            
+            }); 
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -121,14 +120,26 @@ function SwiperInit(obj) {
             if (!canNext) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
             }
+            
+            if (!$self.find(".swiper").hasClass(".selfThumbs")) { //如果有swiper class的元素
+                const $images = [];
+                $self.find(".swiper-slide img").each(function () { //遍歷所有thumns-image底下的img
+                    $images.push($(this).attr("src")); //儲存到$images變數
+                });
+                for (let i = 0; i < $images.length; i++) { //生成Thumbs
+                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
+                    swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
+                }
+            }
+             swiperThumbs.slideTo(index, 0);
+
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             if (autoplay && swiper.slides.length - 2 > 1) {
                 $self.swiperBindEven(swiper);
-            }
+            }           
         }
     });
-
     $(".two_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
 
@@ -375,12 +386,6 @@ function SwiperInit(obj) {
             },
             thumbs: {
                 swiper: pictureSwiperThumbs,
-            }
-        });
-        $(".picture-category").each(function () {
-            const $self = $(this);
-            if ($self.hasClass("swiper")) { //找到有swiper class的元素
-
             }
         });
         $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {

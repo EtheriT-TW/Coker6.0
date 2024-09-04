@@ -11,31 +11,31 @@
                 case "jpeg":
                 case "png":
                 case "gif":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-image" style="color: #ff9500;"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-image font-yellow"></i>');
                     break;
                 case "pdf":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-pdf" style="color: #b30b00;"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-pdf font-rad"></i>');
                     break;
                 case "doc":
                 case "docx":
                 case "odt":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-word" style="color: #2c599d;"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-word font-blue"></i>');
                     break;
                 case "ppt":
                 case "pptx":
                 case "odp":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-powerpoint" style="color: #D04323;"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-powerpoint font-orange"></i>');
                 case "xls":
                 case "xlsx":
                 case "ods":
-                    $self.find(".icon").append('<i class="fa-solid fa-file-excel" style="color: #037945;"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file-excel font-green"></i>');
                     break;
                 case "zip":
                 case "rar":
                     $self.find(".icon").append('<i class="fa-solid fa-file-zipper"></i>');
                     break;
                 default:
-                    $self.find(".icon").append('<i class="fa-solid fa-file" style="color: #999999;"></i>');
+                    $self.find(".icon").append('<i class="fa-solid fa-file font-gray"></i>');
                     break;
             }
         }

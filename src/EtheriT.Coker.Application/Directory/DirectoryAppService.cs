@@ -837,7 +837,7 @@ namespace EtheriT.Coker.Application.Directory
         {
             var websiteid = dto.WebsiteId;
             if (websiteid == 0) websiteid = await loginUserData.GetWebsiteId();
-            var output = await (from e in db.Directory where e.Id == dto.Id && !e.IsDeleted select e.FK_Mid).FirstOrDefaultAsync();
+            var output = await (from e in db.Directory where dto.Ids.Contains(e.Id) && !e.IsDeleted select e.FK_Mid).FirstOrDefaultAsync();
             if (output != null) return await webMenuApplicationService.GetDisplayOne(new DataIdWebsiteIdDto()
             {
                 Id = (long)output,

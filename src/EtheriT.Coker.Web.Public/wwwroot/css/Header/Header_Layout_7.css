@@ -441,7 +441,6 @@
 
 
 .navbar-expand-lg {
-    background: rgba(100,128,108,.9) !important;
     flex-direction: column;
 }
 
@@ -454,7 +453,7 @@
     }
 
 #SearchInput {
-    border: solid 1px rgba(100,128,108,.9);
+    border: solid 1px #555555;
     border-radius: 20px;
     width: 200px;
     height: 32px;

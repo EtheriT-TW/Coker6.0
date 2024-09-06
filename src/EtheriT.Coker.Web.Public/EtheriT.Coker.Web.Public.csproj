@@ -16,6 +16,7 @@
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
+		<Content Remove="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\LICENSE" />
 		<Content Remove="wwwroot\lib\pdf-viewer\README.md" />
 		<Content Remove="wwwroot\Shared\css\Activity.less" />
@@ -70,6 +71,7 @@
 		<None Include="appsettings.kao-feng.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
+		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\LICENSE" />
 		<None Include="wwwroot\lib\pdf-viewer\README.md" />
 		<None Include="wwwroot\Shared\css\Activity.less" />

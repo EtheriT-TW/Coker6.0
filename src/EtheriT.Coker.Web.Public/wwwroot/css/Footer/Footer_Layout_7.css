@@ -154,6 +154,12 @@ img#img1 {
     }
 }
 
+@media(max-width: 576px) {
+    #iswrap { /*啟動br換行*/
+        display: unset;
+    }
+}
+
 .span12 {
     width: 940px;
 }

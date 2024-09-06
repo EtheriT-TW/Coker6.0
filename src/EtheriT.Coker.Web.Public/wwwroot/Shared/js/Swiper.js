@@ -78,12 +78,11 @@ function SwiperInit(obj) {
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
-            const loopOption = $(Id).find(".swiper-slide").length > 6;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");      
             
             var swiperThumbs = new Swiper(".six_thumbs", {
-                loop: true,
+                loop: false, //改為false阻止thumbs跳過太多張圖
                 spaceBetween: 10,
                 slidesPerView: 6,
                 freeMode: true,
@@ -351,7 +350,6 @@ function SwiperInit(obj) {
 
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
         const imgCount = $(".picture-category .templatecontent img").length - 2;
-        const loopOption = imgCount > 6; //給loop用的，輪播數量大於6就loop:true
         const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
             spaceBetween: 10,
             breakpoints: {
@@ -369,8 +367,7 @@ function SwiperInit(obj) {
 
                 }
             },
-            loop: loopOption,
-            simulateTouch: loopOption, //不可用滑鼠點擊拖動
+            loop: false, //改為false阻止點選最後一張圖連跳太多張
             freeMode: true,
             watchSlidesProgress: true,
             
@@ -398,7 +395,8 @@ function SwiperInit(obj) {
             });
             pictureSwiper.removeAllSlides();
             pictureSwiperThumbs.removeAllSlides();
-            for (let i = 0; i < $images.length; i++) {
+            //Siwper多會複製兩張圖所以$images.length - 2
+            for (let i = 0; i < $images.length - 2; i++) {
                 const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
                 
                 pictureSwiper.appendSlide(newSlide);

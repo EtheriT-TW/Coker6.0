@@ -28,22 +28,23 @@ using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 
 namespace EtheriT.Coker.Application
 {
-	public class CustomDtoMapper : Profile
-	{
-		// Mapping
-		// 第一個參數是來源，第二個參數是目標
-		public CustomDtoMapper()
-		{
-			//Users
-			CreateMap<UserSimplifyDto, User>()
-				.ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
-				.ReverseMap();
-			CreateMap<MemberGetAllDataDto, User>().ReverseMap();
-			CreateMap<MemberUpdateDto, User>().ReverseMap();
-			CreateMap<ManagerAllListDto, User>().ReverseMap();
+    public class CustomDtoMapper : Profile
+    {
+        // Mapping
+        // 第一個參數是來源，第二個參數是目標
+        public CustomDtoMapper()
+        {
+            //Users
+            CreateMap<UserSimplifyDto, User>()
+                .ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
+                .ReverseMap();
+            CreateMap<MemberGetAllDataDto, User>().ReverseMap();
+            CreateMap<MemberUpdateDto, User>().ReverseMap();
+            CreateMap<ManagerAllListDto, User>().ReverseMap();
             CreateMap<EditUserDto, User>().ReverseMap();
             CreateMap<AddUser, User>().ReverseMap();
 
@@ -55,35 +56,35 @@ namespace EtheriT.Coker.Application
             CreateMap<Core.Models.Company, CompanyDto>()
                 .ReverseMap();
 
-			//AuditLog
-			CreateMap<Core.Models.AuditLog, AuditLogListDto>()
-				.ReverseMap();
+            //AuditLog
+            CreateMap<Core.Models.AuditLog, AuditLogListDto>()
+                .ReverseMap();
 
-			//WebMenu
-			CreateMap<SiteMapDto, WebMenu>().ReverseMap();
-			CreateMap<MenuItemDto, WebMenu>()
+            //WebMenu
+            CreateMap<SiteMapDto, WebMenu>().ReverseMap();
+            CreateMap<MenuItemDto, WebMenu>()
                 .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => !c.IsFromShelves))
                 .ReverseMap()
                 .ForMember(e => e.IsFromShelves, option => option.MapFrom(c => !c.RemovedFromShelves))
                 .ForMember(e => e.hasContan, option => option.MapFrom(c => !string.IsNullOrEmpty(c.Html)));
-			CreateMap<MenuContenDto, WebMenu>().ReverseMap();
-			CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();
-			CreateMap<GetFrontContenOutputDto, WebMenu>()
-				.ReverseMap()
-				.ForMember(e => e.Html, option => option.MapFrom(c => c.Html ?? ""));
-			CreateMap<UpdateSerNoDto, WebMenu>().ReverseMap();
-			CreateMap<MenuSaveContenDto, MenuContenDto>()
-				.ForMember(e => e.Html, option => option.MapFrom(c => c.SaveHtml))
-				.ForMember(e => e.Css, option => option.MapFrom(c => c.SaveCss))
-				.ReverseMap();
-			CreateMap<WebMenu, MenuGetAllListDto>()
-				.ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
-				.ReverseMap();
-			CreateMap<MenuItemDto, MenuGetAllListDto>()
-				.ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
-				.ReverseMap();
-			CreateMap<SelectDto, WebMenu>()
-				.ForMember(e => e.Title, option => option.MapFrom(c => c.Name))
+            CreateMap<MenuContenDto, WebMenu>().ReverseMap();
+            CreateMap<MenuSaveContenDto, WebMenu>().ReverseMap();
+            CreateMap<GetFrontContenOutputDto, WebMenu>()
+                .ReverseMap()
+                .ForMember(e => e.Html, option => option.MapFrom(c => c.Html ?? ""));
+            CreateMap<UpdateSerNoDto, WebMenu>().ReverseMap();
+            CreateMap<MenuSaveContenDto, MenuContenDto>()
+                .ForMember(e => e.Html, option => option.MapFrom(c => c.SaveHtml))
+                .ForMember(e => e.Css, option => option.MapFrom(c => c.SaveCss))
+                .ReverseMap();
+            CreateMap<WebMenu, MenuGetAllListDto>()
+                .ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
+                .ReverseMap();
+            CreateMap<MenuItemDto, MenuGetAllListDto>()
+                .ForMember(e => e.Link, option => option.MapFrom(c => c.RouterName))
+                .ReverseMap();
+            CreateMap<SelectDto, WebMenu>()
+                .ForMember(e => e.Title, option => option.MapFrom(c => c.Name))
                 .ForMember(e => e.Visible, option => option.MapFrom(c => true))
                 .ForMember(e => e.SerNO, option => option.MapFrom(c => 500))
                 .ForMember(e => e.Popular, option => option.MapFrom(c => 0))
@@ -93,103 +94,103 @@ namespace EtheriT.Coker.Application
 
             //Html_Content
             CreateMap<HtmlContentDto, Html_Content>()
-				.ReverseMap()
+                .ReverseMap()
                 .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
-			CreateMap<ObjectTypeItemDto, Html_Content>()
+            CreateMap<ObjectTypeItemDto, Html_Content>()
                .ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
                .ForMember(e => e.Disp_opt, option => option.MapFrom(c => c.Visible))
                .ReverseMap()
-			   .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
-			   .ForMember(e => e.MinLevel, option => option.MapFrom(c => 1));
-			CreateMap<UpdateSerNoDto, Html_Content>()
-				.ForMember(e => e.Ser_no, option => option.MapFrom(c => c.SerNO))
-				.ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
-				.ReverseMap();
-			CreateMap<HtmlContentDetailDto, Html_Content>().ReverseMap();
+               .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
+               .ForMember(e => e.MinLevel, option => option.MapFrom(c => 1));
+            CreateMap<UpdateSerNoDto, Html_Content>()
+                .ForMember(e => e.Ser_no, option => option.MapFrom(c => c.SerNO))
+                .ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
+                .ReverseMap();
+            CreateMap<HtmlContentDetailDto, Html_Content>().ReverseMap();
 
-			//ObjectType
-			CreateMap<UpdateSerNoDto, ObjectType>()
-				.ReverseMap();
-			CreateMap<ObjectTypeItemDto, ObjectType>()
-				.ReverseMap()
-				.ForMember(e => e.FK_TopNodeId, option => option.MapFrom(c => 0))
-				.ForMember(e => e.CanEdit, option => option.MapFrom(c => false))
-				.ForMember(e => e.CanDel, option => option.MapFrom(c => false))
-				.ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
-				.ForMember(e => e.MaxLevel, option => option.MapFrom(c => 0));
+            //ObjectType
+            CreateMap<UpdateSerNoDto, ObjectType>()
+                .ReverseMap();
+            CreateMap<ObjectTypeItemDto, ObjectType>()
+                .ReverseMap()
+                .ForMember(e => e.FK_TopNodeId, option => option.MapFrom(c => 0))
+                .ForMember(e => e.CanEdit, option => option.MapFrom(c => false))
+                .ForMember(e => e.CanDel, option => option.MapFrom(c => false))
+                .ForMember(e => e.CanAdd, option => option.MapFrom(c => false))
+                .ForMember(e => e.MaxLevel, option => option.MapFrom(c => 0));
 
-			//Product
-			CreateMap<ProductImportDto, Prod>()
+            //Product
+            CreateMap<ProductImportDto, Prod>()
                 .ForMember(e => e.Title, option => option.MapFrom(c => c.ProdName ?? ""))
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
-				.ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
-				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
-                .ForMember(e => e.Status, option => option.MapFrom(c =>  (int) Enum.Parse(typeof(ProdStatusEnum), c.Status)))
+                .ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
+                .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
+                .ForMember(e => e.Status, option => option.MapFrom(c => (int)Enum.Parse(typeof(ProdStatusEnum), c.Status)))
                 .ForMember(e => e.permanent, option => option.MapFrom(c => true))
-				.ReverseMap();
-			CreateMap<ProductImportUpateDto, Prod>()
+                .ReverseMap();
+            CreateMap<ProductImportUpateDto, Prod>()
                 .ForMember(e => e.Title, option => option.MapFrom(c => c.ProdName))
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Description ?? ""))
-				.ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
-				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
-				.ForMember(e => e.permanent, option => option.MapFrom(c => true))
+                .ForMember(e => e.Introduction, option => option.MapFrom(c => c.Introduction ?? ""))
+                .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
+                .ForMember(e => e.permanent, option => option.MapFrom(c => true))
                 .ForMember(e => e.Status, option => option.MapFrom(c => 0))
                 .ForMember(e => e.Visible, option => option.MapFrom(c => true))
                 .ForMember(e => e.RemovedFromShelves, option => option.MapFrom(c => false))
                 .ReverseMap();
-			CreateMap<ProdAddUpDto, Prod>()
+            CreateMap<ProdAddUpDto, Prod>()
                 .ForMember(e => e.permanent, option => option.MapFrom(c => c.Permanent))
                 .ReverseMap();
-			CreateMap<ProductImportDto, ProdAddUpDto>()
-				.ForMember(e => e.Id, option => option.MapFrom(c => 0))
-				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
-				.ForMember(e => e.Permanent, option => option.MapFrom(c => true))
-				.ReverseMap();
-			CreateMap<ProdGetDataDto, Prod>()
+            CreateMap<ProductImportDto, ProdAddUpDto>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => 0))
+                .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500))
+                .ForMember(e => e.Permanent, option => option.MapFrom(c => true))
+                .ReverseMap();
+            CreateMap<ProdGetDataDto, Prod>()
                 .ForMember(e => e.permanent, option => option.MapFrom(c => c.Permanent))
                 .ReverseMap();
-			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
-				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
-				.ReverseMap();
-			CreateMap<ProductStockDto, ProductImportDto>()
-				.ReverseMap()
-				.ForMember(e => e.S1_Name, option => option.MapFrom(c => c.Spec1Name))
-				.ForMember(e => e.S2_Name, option => option.MapFrom(c => c.Spec2Name))
-				.ForMember(e => e.S1_Title, option => option.MapFrom(c => c.Spec1))
-				.ForMember(e => e.S2_Title, option => option.MapFrom(c => c.Spec2))
-				.ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price, FK_RId = 1 } }));
+            CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+                .ReverseMap();
+            CreateMap<ProductStockDto, ProductImportDto>()
+                .ReverseMap()
+                .ForMember(e => e.S1_Name, option => option.MapFrom(c => c.Spec1Name))
+                .ForMember(e => e.S2_Name, option => option.MapFrom(c => c.Spec2Name))
+                .ForMember(e => e.S1_Title, option => option.MapFrom(c => c.Spec1))
+                .ForMember(e => e.S2_Title, option => option.MapFrom(c => c.Spec2))
+                .ForMember(e => e.Prices, option => option.MapFrom(c => new List<ProductPriceDto> { new ProductPriceDto { Price = c.Price, FK_RId = 1 } }));
 
-			CreateMap<Prod_Stock, ProductStockDto>()
-				.ReverseMap()
-				.ForMember(e => e.Alert_Qty, option => option.MapFrom(c => (c.Stock ?? 0) / 10))
-				.ForMember(e => e.Min_Qty, option => option.MapFrom(c => 1))
-				.ForMember(e => e.Ser_No, option => option.MapFrom(c => 500));
+            CreateMap<Prod_Stock, ProductStockDto>()
+                .ReverseMap()
+                .ForMember(e => e.Alert_Qty, option => option.MapFrom(c => (c.Stock ?? 0) / 10))
+                .ForMember(e => e.Min_Qty, option => option.MapFrom(c => 1))
+                .ForMember(e => e.Ser_No, option => option.MapFrom(c => 500));
 
-			CreateMap<ProductImportDto, ProductImportUpateDto>()
-				.ReverseMap();
-			CreateMap<Prod_Price, ProductPriceDto>()
-				.ReverseMap();
-			CreateMap<TechCertDto, TechCertImportDto>()
-				.ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
-				.ReverseMap();
-			
+            CreateMap<ProductImportDto, ProductImportUpateDto>()
+                .ReverseMap();
+            CreateMap<Prod_Price, ProductPriceDto>()
+                .ReverseMap();
+            CreateMap<TechCertDto, TechCertImportDto>()
+                .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
+                .ReverseMap();
 
-			//Tags
-			CreateMap<TagSelectedDto, Core.Models.Tag>()
-				.ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
-				.ReverseMap();
-			CreateMap<SelectDto, Core.Models.Tag>()
-				.ForMember(e => e.Title, option => option.MapFrom(c => c.Name))
-				.ReverseMap();
-			
 
-			//Article
-			CreateMap<ArticleDto, Core.Models.Article>()
-				.ReverseMap();
+            //Tags
+            CreateMap<TagSelectedDto, Core.Models.Tag>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_TId))
+                .ReverseMap();
+            CreateMap<SelectDto, Core.Models.Tag>()
+                .ForMember(e => e.Title, option => option.MapFrom(c => c.Name))
+                .ReverseMap();
+
+
+            //Article
+            CreateMap<ArticleDto, Core.Models.Article>()
+                .ReverseMap();
             CreateMap<ArticleGetDataDto, Core.Models.Article>()
                 .ReverseMap()
-                .ForMember(e => e.NodeDate, option => option.MapFrom(c => c.NodeDate==null?null: c.NodeDate.Value.ToString("yyyy/MM/dd")));
-			CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
+                .ForMember(e => e.NodeDate, option => option.MapFrom(c => c.NodeDate == null ? null : c.NodeDate.Value.ToString("yyyy/MM/dd")));
+            CreateMap<ArticleGetDataDto, DirectoryReleInfoDto>().ReverseMap();
             CreateMap<ArticleListGetDto, DirectoryReleInfoDto>().ReverseMap();
             CreateMap<ArticleListGetDto, Core.Models.Article>()
                 .ReverseMap()
@@ -197,21 +198,30 @@ namespace EtheriT.Coker.Application
             CreateMap<NewslatterContenDto, DirectoryReleInfoDto>()
                 .ForMember(e => e.Title, option => option.MapFrom(c => c.Title))
                 .ForMember(e => e.Description, option => option.MapFrom(c => c.Conten))
-                .ForMember(e => e.MainImage, option => option.MapFrom(c => c.image == null? "" : c.image.Path))
+                .ForMember(e => e.MainImage, option => option.MapFrom(c => c.image == null ? "" : c.image.Path))
                 .ReverseMap();
-            
+
+            //Advertise
+            CreateMap<AdvertiseDto, Core.Models.Advertise>()
+                .ForMember(e => e.StartDate, option => option.MapFrom(c => c.StartTime))
+                .ForMember(e => e.EndDate, option => option.MapFrom(c => c.EndTime))
+                .ReverseMap();
+            CreateMap<Core.Models.Advertise, AdvertiseGetDataDto>()
+                .ForMember(e => e.StartTime, option => option.MapFrom(c => c.StartDate))
+                .ForMember(e => e.EndTime, option => option.MapFrom(c => c.EndDate))
+                .ReverseMap();
 
             //Directory
             CreateMap<DirectoryAddUpDto, Core.Models.Directory>().ReverseMap();
-			CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
-				.ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
-				.ReverseMap();
+            CreateMap<ProdGetDataDto, DirectoryReleInfoDto>()
+                .ForMember(e => e.Description, option => option.MapFrom(c => c.Introduction))
+                .ReverseMap();
 
-			//StoreSet
-			CreateMap<StoreSetOutputDto, Core.Models.StoreSet>()
+            //StoreSet
+            CreateMap<StoreSetOutputDto, Core.Models.StoreSet>()
                 .ForMember(e => e.type, option => option.MapFrom(c => c.type))
-				.ReverseMap();
-			CreateMap<StoreSetDetailOutputDto, Core.Models.StoreSetDetail>()
+                .ReverseMap();
+            CreateMap<StoreSetDetailOutputDto, Core.Models.StoreSetDetail>()
                 .ForMember(e => e.IsDeleted, option => option.MapFrom(c => false))
                 .ForMember(e => e.CreationTime, option => option.MapFrom(c => DateTime.Now))
                 .ReverseMap()
@@ -229,16 +239,16 @@ namespace EtheriT.Coker.Application
 
             //Permissions
             CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();
-			//FileUpload
-			//CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
-			//    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
-			//    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
-			//    .ReverseMap();
+            //FileUpload
+            //CreateMap<FileYTLinkUploadDto, Core.Models.FileUpload>()
+            //    .ForMember(e => e.OriginalFileName, option => option.MapFrom(c => c.File))
+            //    .ForMember(e => e.DownloadFileName, option => option.MapFrom(c => c.File))
+            //    .ReverseMap();
 
-			//remote
-			CreateMap<RemoteInputDto, Core.Models.Remote>()
-				.ForMember(e => e.ExecutionTime, option => option.MapFrom(c => DateTime.Now))
-				.ReverseMap();
+            //remote
+            CreateMap<RemoteInputDto, Core.Models.Remote>()
+                .ForMember(e => e.ExecutionTime, option => option.MapFrom(c => DateTime.Now))
+                .ReverseMap();
 
             //Contact
             CreateMap<ContactListDto, Core.Models.Contact>().ReverseMap();

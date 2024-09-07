@@ -30,6 +30,7 @@ namespace EtheriT.Coker.Core.Models
         public List<TechnicalCertificate> TechnicalCertificates { get; set; }
         public List<Tag> Tags { get; set; }
         public List<FileUpload> Files { get; set; }
+        public List<Advertise> Advertise { get; set; }
         public List<Article> Articles { get; set; }
         public List<Directory> Directory { get; set; }
         public List<StoreSetDetail> StoreSetDetails { get; set; }

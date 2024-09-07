@@ -53,6 +53,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await directoryAppService.GetDirectoryProductsList(id, loadOptions);
                 case "Menus":
                     return await directoryAppService.GetDirectoryMenusList(id, loadOptions);
+                case "Advertise":
+                    return await directoryAppService.GetDirectoryAdvertiseList(id, loadOptions);
                 default:
                     return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
@@ -61,6 +63,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             return await directoryAppService.GetAllList(loadOptions);
+        }
+        public async Task<JsonResult> GetAdvertiseList(DataSourceLoadOptions loadOptions)
+        {
+            return await directoryAppService.GetAdvertiseList(loadOptions);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(long Id)

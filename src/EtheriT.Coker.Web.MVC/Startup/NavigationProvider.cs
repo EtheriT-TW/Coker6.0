@@ -163,6 +163,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         CollapseId="#AdvertisementManagement",
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
+                                PageName="CustomAd",
+                                Title="自訂廣告",
+                                Controller="AdvertisementManagement",
+                                Action="CustomAd",
+                                Icon="",
+                            },
+                            new JobMenu{
                                 PageName="EnterAd",
                                 Title="進入廣告",
                                 Controller="AdvertisementManagement",

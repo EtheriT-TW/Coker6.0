@@ -109,7 +109,7 @@ namespace EtheriT.Coker.Application.Directory
                     else throw new Exception("查無資料");
                 }
 
-                if (asoid != null && (dto.Type == (int)DirectoryTypeEnum.商品 || dto.Type == (int)DirectoryTypeEnum.文章))
+                if (asoid != null && (dto.Type != (int)DirectoryTypeEnum.選單))
                 {
                     var tagitem = new List<TagAssociateDto>();
                     foreach (var data in dto.TagSelected)
@@ -686,12 +686,12 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
-                
+
                 tags.ForEach(t =>
                 {
                     corr[corr.FindIndex(c => c.DirectoryId == t.FK_AId)].TagId = t.FK_TId;
                 });
-                
+
                 var notTags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => dto.Ids.Contains(e.FK_AId))
                     .Where(e => !e.IsDeleted)
@@ -740,7 +740,7 @@ namespace EtheriT.Coker.Application.Directory
                             db_as.ForEach(a =>
                             {
                                 var dindex = corr.FindIndex(c => c.TagId == a.FK_TId);
-                                if(dindex!= -1)
+                                if (dindex != -1)
                                 {
                                     tempcorr.Add(new CorrDTAID
                                     {
@@ -816,7 +816,7 @@ namespace EtheriT.Coker.Application.Directory
                                     foreach (var item in temparticledata)
                                     {
                                         var dindex = corr.FindIndex(c => c.ArticleId == item.Id);
-                                        if(dindex != -1)
+                                        if (dindex != -1)
                                         {
                                             item.Dirname = corr[dindex].DirectoryName;
                                         }
@@ -907,6 +907,63 @@ namespace EtheriT.Coker.Application.Directory
                                     data.GetType().GetProperty("Items").SetValue(data, webmenu);
                                     break;
                             }
+                        }
+                    }
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                else throw new Exception("查無目錄資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<DirectoryGetListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetAdvertiseList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                long UserID = await loginUserData.GetUserId();
+                List<long> RoleIds = await loginUserData.GetUserRoleIds();
+                bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
+                IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
+                if (!isSuperUser)
+                {
+                    var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
+                        .Where(e => e.FK_UserId == UserID || (e.FK_RoleId != null && RoleIds.Contains(e.FK_RoleId.Value)))
+                        .Where(e => e.Type == (int)PermissionDetailsTypeEnum.目錄)
+                        .Where(e => e.IsGranted).Select(e => e.FK_TargetId).ToListAsync();
+                    if (per != null && per.Any()) result = result.Where(e => per.Contains(e.Id));
+                }
+                if (result != null)
+                {
+                    var dataQuery = from e in result
+                                    where e.Type == 4
+                                    select new DirectoryGetListDto
+                                    {
+                                        Id = e.Id,
+                                        Title = e.Title,
+                                        Description = e.Description,
+                                        Type = ((DirectoryTypeEnum)e.Type).ToString(),
+                                        Visible = e.Visible,
+                                        Items = "",
+                                        FK_Mid = e.FK_Mid,
+                                    };
+                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                    if (output != null)
+                    {
+                        foreach (var data in output.data)
+                        {
+                            var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                            {
+                                Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
+                                Type = (int)TagAssociateTypeEnum.目錄
+                            });
+                            var tag_text = "";
+                            foreach (var tagData in tagDatas) tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
+                            data.GetType().GetProperty("Items").SetValue(data, tag_text == "" ? "無" : tag_text);
                         }
                     }
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -1060,6 +1117,59 @@ namespace EtheriT.Coker.Application.Directory
 
             }
             return new JsonResult(new List<DirectoryGetListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<JsonResult> GetDirectoryAdvertiseList(long id, DataSourceLoadOptions loadOptions)
+        {
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            string error = string.Empty;
+            try
+            {
+                var db_d = db.Directory.Where(e => e.Id == id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted).FirstOrDefault();
+                var DataIds = new List<long>();
+                if (db_d != null)
+                {
+                    var d_tags = await db.Tag_Associates.Include(e => e.Tag)
+                        .Where(e => e.FK_AId == id)
+                        .Where(e => !e.IsDeleted)
+                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
+                        .ToListAsync();
+
+                    if (d_tags != null)
+                    {
+                        var tlist = d_tags.Select(e => e.FK_TId).ToList();
+                        var a_tags = await db.Tag_Associates.Include(e => e.Tag)
+                            .Where(e => tlist.Contains(e.FK_TId))
+                            .Where(e => !e.IsDeleted)
+                            .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
+                            .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
+                            .ToListAsync();
+                        if (!a_tags.Any()) throw new Exception("資料不存在");
+                        var aids = a_tags.Select(e => e.FK_AId).ToList();
+                        var dataQuery = from p in db.Advertise.Where(e => !e.IsDeleted)
+                                        where aids.Contains(p.Id)
+                                        select new DirectoryReleInfoDto
+                                        {
+                                            Id = p.Id,
+                                            Title = p.Title,
+                                            StartTime = p.StartDate,
+                                            EndTime = p.EndDate,
+                                            SerNo = p.SerNO,
+                                            Visible = p.Visible,
+                                            LastModificationTime = p.LastModificationTime ?? p.CreationTime
+                                        };
+                        var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                        return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                    }
+                    else new Exception("無綁定標籤");
+                }
+                throw new Exception("目錄不存在");
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
+            return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
     }
 }

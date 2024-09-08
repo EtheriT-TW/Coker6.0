@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public string? Title { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
+        public string Link { get; set; }
+        public bool Target { get; set; }
         public long FK_WebsiteId { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }

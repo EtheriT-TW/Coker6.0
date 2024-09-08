@@ -1,4 +1,4 @@
-﻿var $btn_display, title, $title_text, $description, $description_text
+﻿var $btn_display, title, $title_text, $description, $description_text, $ad_type
 var keyId, disp_opt = true, DirectoryId = 0, DirectoryType = "n";
 let directory_list, editor, permissionDetailsModal;
 let DirectoryForms, $DirectoryTags;
@@ -13,6 +13,29 @@ function PageReady() {
     });
 
     ElementInit();
+    /*ImageUploadModalInit($("#ImageUpload"));*/
+    $(".btn_input_pic").on("click", function (even) {
+        even.preventDefault();
+        $(".btn_input_pic").prev(".input_pic").click();
+    });
+
+    $(".input_pic").on("change", function (e) {
+        $ad_type.data("fileid", 0);
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (e) {
+            var obj = {};
+            obj["id"] = 0;
+            obj["File"] = file;
+            obj["name"] = file.name;
+            obj["link"] = e.target.result
+            $(".img_preview").attr("src", e.target.result);
+            $(".btn_input_pic > span").addClass("d-none");
+            $(".img_preview").removeClass("d-none");
+            $ad_type.data("file", obj);
+        };
+    })
 
     $DirectoryTags = $(DirectoryForms).find(".InputTag").TagListModalInit();
     $AdvertiseTags = $(AdvertiseForms).find(".InputTag").TagListModalInit();
@@ -66,6 +89,9 @@ function PageReady() {
         const dir = $("#DirectoryItemps").data("dir");
         Coker.sweet.confirm(`返回${dir.title}廣告列表`, "資料將不被保存", "確定", "取消", function () {
             directoryDatailList.component.refresh();
+            $ad_type.data("fileid", 0);
+            $ad_type.val(null);
+            $ad_type.change();
             location.hash = `Advertise_${dir.id}`
         });
     })
@@ -80,6 +106,18 @@ function PageReady() {
     });
     $("#DirectoryItemps .btn_back").off("click").on("click", function () {
         BackToList();
+    });
+
+    $(".btn_preview").off("click").on("click", function () {
+        $(".ad_preview > div").each(function (i) {
+            $(this).addClass("d-none");
+        });
+        $(".ad_preview > .youtube").removeClass("d-none");
+        var ytlink = $(".btn_preview").prev().val();
+        var file = ytlink.substr(ytlink.indexOf("v=") + 2);
+        $ad_type.data("file", file);
+        var videostring = "https://www.youtube.com/embed/" + file;
+        $(".ad_preview > .youtube > iframe").attr("src", videostring);
     });
 
     $btn_display.on("click", function () {
@@ -101,6 +139,49 @@ function PageReady() {
         var $self = $(this);
         $description.children("div").children(".count").text($self.val().length)
     });
+    $ad_type.on("change", function () {
+        $(".ad_preview > div").each(function (i) {
+            $(this).addClass("d-none");
+        });
+        $ad_type.data("fileid", 0);
+        $(".ad_link > input").val("");
+        $(".ad_preview > .youtube > iframe").attr("src", "");
+        $(".btn_input_pic > span").removeClass("d-none");
+        $(".img_preview").addClass("d-none");
+        $(".img_preview").attr("src", "");
+        $ad_type.data("file", "");
+        if ($ad_type.val() == null) {
+            $(".ad_link").addClass("d-none");
+            $(".ad_link > input").removeAttr("name");
+            $(".ad_link > input").removeAttr("required");
+            $(".ad_preview > .preview").removeClass("d-none");
+        } else {
+            switch (parseInt($ad_type.val())) {
+                case 1:
+                    $(".ad_preview > .image").removeClass("d-none");
+                    $(".ad_link > input").attr("placeholder", "輸入連結網址");
+                    $(".ad_link > input").attr("name", "Link");
+                    $(".ad_link > input").attr("required", "required");
+                    $(".ad_link").removeClass("d-none");
+                    $(".ad_link > .checkbox").removeClass("d-none");
+                    $(".ad_link > button").addClass("d-none");
+                    break;
+                case 2:
+                    $(".ad_link").addClass("d-none");
+                    $(".ad_link > input").removeAttr("name");
+                    $(".ad_link > input").removeAttr("required");
+                    break;
+                case 3:
+                    $(".ad_link > input").attr("placeholder", "https://www.youtube.com/watch?v=");
+                    $(".ad_link > input").removeAttr("name");
+                    $(".ad_link > input").attr("required", "required");
+                    $(".ad_link").removeClass("d-none");
+                    $(".ad_link > .checkbox").addClass("d-none");
+                    $(".ad_link > button").removeClass("d-none");
+                    break;
+            }
+        }
+    });
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -110,6 +191,7 @@ function PageReady() {
 }
 
 function ElementInit() {
+    $ad_type = $("#AdType");
     $btn_display = $(".btn_display");
     $title = $(".title");
     $title_text = $title.children("textarea");
@@ -233,7 +315,6 @@ function AddUp(success_text, error_text) {
 }
 function AddUpAdvertise(success_text, error_text) {
     const data = co.Form.getJson($(AdvertiseForms).attr("id"));
-    console.log(data)
     if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
         co.File.DeleteFileById({
             Sid: data.id,
@@ -247,17 +328,43 @@ function AddUpAdvertise(success_text, error_text) {
             directoryDatailList.component.refresh();
             location.hash = `Advertise_${DirectoryId}`;
         }
-
-        if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
-            var formData = new FormData();
-            formData.append("files", $("#ImageUpload .img_input").data("file").File);
-            formData.append("type", 6);
-            formData.append("sid", result.message);
-            formData.append("serno", 500);
-            co.File.Upload(formData).done(function () {
-                success();
-            });
-        } else success();
+        console.log($ad_type.data("fileid"))
+        if ($ad_type.data("fileid") == 0) {
+            switch (parseInt($ad_type.val())) {
+                case 1:
+                    console.log($ad_type.data("file").File)
+                    var formData = new FormData();
+                    formData.append("files", $ad_type.data("file").File);
+                    formData.append("type", 10);
+                    formData.append("sid", result.message);
+                    formData.append("serno", 500);
+                    co.File.Upload(formData).done(function () {
+                        success();
+                    });
+                    break;
+                case 2:
+                    console.log("上傳影片")
+                    break;
+                case 3:
+                    var ytlink = $(".btn_preview").prev().val();
+                    var file = ytlink.substr(ytlink.indexOf("v=") + 2);
+                    $ad_type.data("file", file);
+                    if (typeof (result.message) != "undefined") {
+                        co.File.UploadYTLink({
+                            Id: typeof ($ad_type.data("fileid")) == "undefined" ? 0 : $ad_type.data("fileid"),
+                            SId: result.message,
+                            File: $ad_type.data("file"),
+                            Type: 10,
+                            SerNo: 500,
+                        }).done(function () {
+                            success();
+                        })
+                    }
+                    break;
+            }
+        } else {
+            success();
+        }
     });
 }
 
@@ -286,6 +393,7 @@ function MoveToItemList() {
         DirectoryType = para[0];
         switch (DirectoryType) {
             case "Advertise":
+                $(AdvertiseForms).removeClass("was-validated");
                 directoryDatailList.component.refresh();
                 break
             default:
@@ -311,11 +419,30 @@ function MoveToItemAdvertise() {
                 if (id > 0) {
                     co.Advertise.GetDataOne(id).done(function (result) {
                         if (result != null) {
-                            console.log(result)
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;
                             co.Form.insertData(result, "#AdvertiseForm");
+                            co.File.getAdFile(result.id).done(function (Fresult) {
+                                console.log(Fresult);
+                                $ad_type.val(Fresult.fileType);
+                                $ad_type.change();
+                                $ad_type.data("fileid", Fresult.id);
+                                switch (parseInt($ad_type.val())) {
+                                    case 1:
+                                        $(".img_preview").attr("src", Fresult.link);
+                                        $(".img_preview").attr("alt", Fresult.name);
+                                        $(".btn_input_pic > span").addClass("d-none");
+                                        $(".img_preview").removeClass("d-none");
+                                        break;
+                                    case 2:
+                                        break;
+                                    case 3:
+                                        $(".ad_link > input").val(Fresult.link);
+                                        $(".btn_preview").click();
+                                        break;
+                                }
+                            });
                             $AdvertiseTags.TagDataSet(result.tagDatas);
                         } else BackToList();
                     })

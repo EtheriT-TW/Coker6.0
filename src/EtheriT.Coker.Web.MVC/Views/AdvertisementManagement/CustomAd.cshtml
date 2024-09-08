@@ -226,25 +226,54 @@
             <form id="AdvertiseForm" class="card-body needs-validation">
                 <input name="id" type="hidden" />
                 <input name="fk_websiteId" type="hidden" />
-                <div class="d-flex align-self-center mb-3 justify-content-between flex-wrap-reverse flex-md-nowrap">
-                    @* <div id="ImageUpload" name="ImageUpload" data-form-type="images" data-image-type="6" data-image-size="3" data-target="id" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
-                    @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
-                    </div> *@
-                    <div class="d-flex">
-                        <input type="checkbox" id="AdvertiseFormVisible" class="selectedItem" name="visible" value="true" />
-                        <label for="AdvertiseFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
-                            <span class="material-symbols-outlined fs-2">visibility</span>
-                            <span class="material-symbols-outlined fs-2">visibility_off</span>
-                        </label>
+                <div class="flex-nowrap row mb-4">
+                    <div class="ad_type col d-flex">
+                        <label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="AdType">廣告類型</label>
+                        <select id="AdType" class="form-select" aria-label="Advertise Type Select" required>
+                            <option selected disabled value="" class="d-none">請選擇</option>
+                            <option value="1">圖片</option>
+                            <option value="2">影片</option>
+                            <option value="3">Youtube影片</option>
+                        </select>
+                    </div>
+                    <input type="checkbox" id="AdvertiseFormVisible" class="selectedItem" name="visible" value="true" />
+                    <label for="AdvertiseFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上" class="col-auto d-flex m-auto p-0">
+                        <span class="material-symbols-outlined fs-2">visibility</span>
+                        <span class="material-symbols-outlined fs-2">visibility_off</span>
+                    </label>
+                </div>
+                <div class="ad_preview mb-3 d-flex justify-content-center align-items-center" data-fileid="" data-file="">
+                    <div class="preview fs-1">預覽</div>
+                    <div class="youtube w-100 h-100 d-none">
+                        <iframe src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen class="w-100 h-100"></iframe>
+                    </div>
+                    <div class="image w-100 h-100 d-none">
+                        <div class="d-flex  w-100 h-100">
+                            <input class="input_pic d-none flex-grow-0" type="file" accept="image/*" />
+                            <button class="btn_input_pic d-flex align-items-center justify-content-center bg-transparent flex-grow-1 border-0 w-100 -100">
+                                <span class="material-symbols-outlined">add_photo_alternate</span>
+                                <img class="img_preview d-none" src="" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="ad_link input-group mb-3 d-none">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">link</span>連結網址
+                    </div>
+                    <input type="text" class="form-control rounded" placeholder="輸入連結網址" aria-label="Recipient's username" aria-describedby="button-addon2">
+                    <button class="btn_preview btn btn-outline-secondary px-3 rounded-right d-none" type="button" id="button-addon2">影片預覽</button>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up d-none mr-4">
+                        <input id="TargetCheck" class="form-check-input" type="checkbox" value="true" name="Target">
+                        <label class="form-check-label fs-6 pe-2" for="TargetCheck">開新視窗</label>
                     </div>
                 </div>
 
-                <div class="title border mb-3 p-2 rounded">
-                    <div class="d-flex justify-content-between w-100">
-                        <span class="input-group-text bg-transparent border-0 p-0 required_all">標題</span>
-                        <div class="count">0</div>
+                <div class="title input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">title</span>廣告標題
                     </div>
-                    <textarea name="title" class="form-control border-0" aria-label="With textarea" maxlength="50" placeholder="輸入廣告標題" required></textarea>
+                    <input name="title" id="InputTitle" class="form-control rounded" type="text" aria-label="Input Title of Advertise" autocomplete="off" required placeholder="輸入廣告標題">
                 </div>
                 <div class="date input-group mb-3">
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
@@ -258,7 +287,7 @@
                 </div>
                 <div class="tag input-group mb-3" name="tagSelected" data-form-type="tags">
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1">alternate_email</span>標籤
+                        <span class="material-symbols-outlined me-1 required_sign">alternate_email</span>標籤
                     </div>
                     <input class="form-control rounded text-start InputTag" name="tagDatas" type="button" aria-label="Input Tag" data-bs-toggle="modal" data-bs-target="#TagModal">
                 </div>

@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Freight;
 using Microsoft.AspNetCore.Authorization;
@@ -46,6 +48,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Article");
                 case FileBindTypeEnum.進入廣告:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "EnterAd");
+                case FileBindTypeEnum.自訂廣告:
+                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "CustomAd");
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
@@ -69,6 +73,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             switch (s)
             {
                 case FileBindTypeEnum.產品:
+                case FileBindTypeEnum.自訂廣告:
                     return await fileUploadAppService.uploadYTLink(dto);
                 default:
                     return null;
@@ -77,12 +82,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> getFileList(GetFileListDto dto)
         {
-			return await fileUploadAppService.getHtmlContentFiles(dto);
-		}
+            return await fileUploadAppService.getHtmlContentFiles(dto);
+        }
         [HttpPost]
         public async Task<List<FileGetImgDto>> getImgFiles(FileGetImgInputDto dto)
         {
             return await fileUploadAppService.getImgFiles(dto);
+        }
+        [HttpGet]
+        public async Task<FileGetAdvertiseDisplayDto> getAdvertiseFiles(long Aid)
+        {
+            return await fileUploadAppService.getAdvertiseFiles(Aid);
         }
         [HttpPost]
         public async Task<ResponseMessageDto> fileSortChange(FileChangeSortDto dto)

@@ -59,7 +59,6 @@ namespace EtheriT.Coker.Application.Advertise
                 {
                     Core.Models.Advertise a = mapper.Map<Core.Models.Advertise>(dto);
                     a.FK_WebsiteId = WebsiteID;
-                    //a.RemovedFromShelves = !a.RemovedFromShelves;
                     db.Advertise.Add(a);
                     await loginUserData.SaveChanges(a);
                     asoid = a.Id;
@@ -71,7 +70,6 @@ namespace EtheriT.Coker.Application.Advertise
                     if (result != null)
                     {
                         mapper.Map(dto, result);
-                        //result.RemovedFromShelves = !result.RemovedFromShelves;
                         await loginUserData.SaveChanges(result);
                     }
                     else throw new Exception("查無廣告資料");
@@ -123,6 +121,8 @@ namespace EtheriT.Coker.Application.Advertise
                                             Title = e.Title,
                                             Visible = e.Visible,
                                             SerNO = e.SerNO,
+                                            Link = e.Link,
+                                            Target = e.Target,
                                             TagDatas = new List<TagGetSelectedDto>(),
                                             StartTime = e.StartDate,
                                             EndTime = e.EndDate,

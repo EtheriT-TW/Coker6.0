@@ -21,7 +21,7 @@ input[type="number"] {
 }
 
 /* Directory Content */
-#DirectoryContent > .card-header {
+#DirectoryContent > .card-header, #AdvertiseContent .card-header {
     background-color: var(--color-gray-bg-dark);
 }
 
@@ -37,14 +37,9 @@ input[type="number"] {
     padding-left: 7rem;
 }
 
-.has_image {
-    height: 150px !important;
-    width: 150px !important;
-}
-
 .img_preview {
-    max-height: 150px;
-    max-width: 150px;
+    max-height: 100%;
+    max-width: 100%;
 }
 
 textarea.h300 {
@@ -52,25 +47,33 @@ textarea.h300 {
 }
 
 /* Advertise Content */
-#AdvertiseContent .card-header {
+#AdvertiseContent .ad_preview {
     background-color: var(--color-gray-bg-dark);
+    height: 300px;
+    max-height: 75vh;
+    cursor: default;
 }
 
-#AdvertiseContent .count::after {
-    content: '/300';
+#AdvertiseContent .btn_input_pic > span {
+    font-size: 5rem;
+    color: white;
 }
 
-#AdvertiseContent .count.l-150::after {
-    content: '/150';
+#AdvertiseContent .file_name {
+    font-size: 1.5rem;
 }
 
-#AdvertiseContent .subtitle > input {
-    padding-left: 4rem;
+#AdvertiseContent .title > input, #AdvertiseContent .ad_link > input {
+    padding-left: 7rem;
 }
 
 #AdvertiseContent .sort > input {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
+}
+
+#AdvertiseContent .tag > input {
+    padding-left: 5.25rem;
 }
 
 #AdvertiseContent .date > input {

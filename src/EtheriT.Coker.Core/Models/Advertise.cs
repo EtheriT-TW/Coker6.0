@@ -12,7 +12,7 @@ namespace EtheriT.Coker.Core.Models
         public bool Visible { get; set; }
         [StringLength(300)] public string Title { get; set; }
         public bool Target { get; set; }
-        [StringLength(255)] public string Link { get; set; }
+        [StringLength(255)] public string? Link { get; set; }
         public virtual DateTime? StartDate { get; set; }
         public virtual DateTime? EndDate { get; set; }
         public bool Permanent { get; set; }

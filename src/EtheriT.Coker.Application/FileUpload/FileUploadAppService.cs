@@ -94,7 +94,6 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-
         public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
@@ -434,41 +433,43 @@ namespace EtheriT.Coker.Application
                 long websiteId = await loginUserData.GetWebsiteId();
                 string orgName = await loginUserData.GetWebsiteOrgName();
                 string html = string.Empty;
-                switch (dto.type) {
+                switch (dto.type)
+                {
                     case GrapesPageTypeEnum.頁面:
                         var menu = await db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
                         if (menu != null) html = menu.SaveCss + menu.SaveHtml;
-						break;
+                        break;
                     case GrapesPageTypeEnum.文章:
-						var art = await db.Article.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-						if (art != null) html = art.SaveCss + art.SaveHtml;
-						break;
-					case GrapesPageTypeEnum.商品:
-						var prod = await db.Prods.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-						if (prod != null) html = prod.SaveCss + prod.SaveHtml;
-						break;
-					case GrapesPageTypeEnum.技術文件:
-						var tech = await db.TechnicalCertificates.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
-						if (tech != null) html = tech.Css + tech.Html;
-						break;
-				}
+                        var art = await db.Article.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (art != null) html = art.SaveCss + art.SaveHtml;
+                        break;
+                    case GrapesPageTypeEnum.商品:
+                        var prod = await db.Prods.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (prod != null) html = prod.SaveCss + prod.SaveHtml;
+                        break;
+                    case GrapesPageTypeEnum.技術文件:
+                        var tech = await db.TechnicalCertificates.Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                        if (tech != null) html = tech.Css + tech.Html;
+                        break;
+                }
                 if (!string.IsNullOrEmpty(html))
                 {
                     List<string> list = new List<string>();
                     Regex r = new Regex(@"\/upload\/(.*?)(\.)");
-					var match = r.Match(html);
+                    var match = r.Match(html);
                     while (match.Success)
                     {
                         var s = match.Value.ToString().Split("/");
-                        if (s.Length != 0) {
+                        if (s.Length != 0)
+                        {
                             list.Add(s[s.Length - 1].Replace(".", "").ToLower());
-						}
-						match = match.NextMatch();
-					}
-					var files = db.FileUploads
+                        }
+                        match = match.NextMatch();
+                    }
+                    var files = db.FileUploads
                                 .Where(e => e.FK_WebsiteId == websiteId)
                                 .Where(e => !e.IsDeleted)
-                                .Where(e => e.FileGuid!=null && list.Contains(e.FileGuid.ToString().ToLower()));
+                                .Where(e => e.FileGuid != null && list.Contains(e.FileGuid.ToString().ToLower()));
                     var result = from file in files
                                  select new FileItemDto
                                  {
@@ -480,7 +481,7 @@ namespace EtheriT.Coker.Application
                 }
                 else response.Files = new List<FileItemDto>();
 
-				response.Success = true;
+                response.Success = true;
             }
             catch (Exception ex)
             {
@@ -702,7 +703,53 @@ namespace EtheriT.Coker.Application
             }
             return output;
         }
+        public async Task<FileGetAdvertiseDisplayDto> getAdvertiseFiles(long Aid)
+        {
+            var output = new FileGetAdvertiseDisplayDto();
+            string orgName = await loginUserData.GetWebsiteOrgName();
+            try
+            {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (websiteId == 0)
+                {
+                    websiteId = await loginUserData.GetWebsiteId();
+                }
 
+                var fb = await (db.FileBinds.Where(e => e.Sid == Aid && e.type == (int)FileBindTypeEnum.自訂廣告).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo)).FirstOrDefaultAsync();
+                if (fb != null)
+                {
+                    var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
+                    if (fu != null)
+                    {
+                        string MediaLink = fb.MediaLink == ""? fu.DownloadFileName: fb.MediaLink;
+                        if (orgName != "")
+                        {
+                            MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
+                        }
+                        var filetype = 0;
+                        switch (fu.ContentType)
+                        {
+                            case "image/jpeg":
+                            case "image/png":
+                                filetype = 1;
+                                break;
+                            case "youtube":
+                                filetype = 3;
+                                break;
+                        }
+                        output.Id = fu.Id;
+                        output.Link = MediaLink;
+                        output.Name = fb.Name;
+                        output.FileType = filetype;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return output;
+        }
         public async Task<List<FileGetProdDisplayDto>> getProdMultimedia(long Pid, int size)
         {
             var output = new List<FileGetProdDisplayDto>();
@@ -1107,7 +1154,6 @@ namespace EtheriT.Coker.Application
             db.SaveChanges();
             return outputs;
         }
-
         private async Task<FileItemDto> SaveFile(IFormFile file, string directory, bool isTemp = false)
         {
             if (file.Length > 0)

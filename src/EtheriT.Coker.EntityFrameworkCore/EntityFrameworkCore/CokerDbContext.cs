@@ -54,6 +54,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileBindMore> FileBindMores { get; set; }
         public DbSet<ObjectType> ObjectTypes { get; set; }
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
+        public DbSet<Advertise> Advertise { get; set; }
         public DbSet<Article> Article { get; set; }
         public DbSet<Directory> Directory { get; set; }
 		public DbSet<StoreSetGroup> StoreSetGroup { get; set; }
@@ -215,6 +216,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(b => b.fileUpload).WithMany(f => f.fileBinds).HasForeignKey(f => f.FK_FileUploadId);
                 o.HasKey(b => b.Guid);
             });
+            modelBuilder.Entity<Advertise>(o =>
+            {
+                o.HasOne(f => f.Website).WithMany(u => u.Advertise).HasForeignKey(f => f.FK_WebsiteId);
+            });
             modelBuilder.Entity<Article>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
@@ -260,8 +265,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Remote>(o => {
 				o.HasOne(f => f.User).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_UserId);
 				o.HasOne(f => f.WebMenu).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_WebmenuId);
-				o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
-				o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
+                o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
+                o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
             });
             modelBuilder.Entity<NotFoundImage>(o => {

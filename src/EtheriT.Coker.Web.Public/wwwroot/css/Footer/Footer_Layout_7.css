@@ -1,10 +1,10 @@
 ﻿
-#foot {
+#footer {
     font-size: 0.909090909090909rem;
     color: #FFFF;
     background: url(/upload/20170818023503.png) center top;
     background-repeat: repeat-x;
-    min-height: 0px;
+    min-height: 100px;
     overflow: hidden;
     text-align: center;
     line-height: normal;

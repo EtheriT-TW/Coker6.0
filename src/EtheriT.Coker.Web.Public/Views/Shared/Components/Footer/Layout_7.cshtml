@@ -10,65 +10,34 @@
 			break;
 	}
 }
-<!--<script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>-->
 
-<div id="foot" class="container" cockeraffix-bottom="leftMenu">
-	<div class="row-fluid">
-		<div class="span12">
-			<div id="d1">
-				<br>
-				<br>
-				<span class="ft-size">
-					Copyright©高鋒開發有限公司 版權所有 | <br id="iswrap"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>
-					電話：07-3737909 &nbsp;&nbsp;傳真：07-3737915 <br id="iswrap">地址：高雄市仁武區鳳仁路177-2號
-				</span>
-				</span>
-			</div>
-			<br>
+@if (Model.footerViewModels != null && Model.footerViewModels.Count > 0)
+{
+	<div id="FootContainer" class="container listMenu d-flex justify-content-center align-items-center">
+		<div id="Footer_Menu" class="abreast row w-100">
+			@foreach (var menu in Model.footerViewModels)
+			{
+				<div class="paging_frame">
+					<p>@menu.Title</p>
+					<div class="abreast">
+						<ul>
+							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+							{
+								<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
+							}
+						</ul>
+					</div>
+				</div>
+			}
 		</div>
-	</div><!--end .row-->
-
-	<script type="text/template" id="Footer-Template">
-		<!--桌機-->
-		<div class="container visible-desktop hidden-phone hidden-tablet text-center">
-			<ul class=" nav-justified list-unstyled" data-bind="foreach: { data: FooterInfo().Nodes, as: 'ParentNode' }">
-				<li>
-					<a href="#" data-bind="attr: { href: Url }">
-						<!--ko if:ImageUrl-->
-						<img src="Images/loading.gif" data-bind="attr: { src: ImageUrl }">
-						<!--/ko-->
-						<!--ko ifnot:ImageUrl-->
-						<span data-bind="text: Title"></span>
-						<!--/ko-->
-					</a>
-					<ul class="list-unstyled" data-bind="foreach: ChildrenNodes">
-						<li>
-							<a id="a1" data-bind="attr: { href: Url }, text: Title"></a>
-						</li>
-					</ul>
-				</li>
-			</ul>
-		</div>
-		<!--平板及手機-->
-		<div class="row hidden-desktop visible-phone visible-tablet text-center" data-bind="foreach: { data: FooterInfo().Nodes, as: 'ParentNode' }">
-			<ul class="list-unstyled" data-bind="css: $parent.FooterInfo().Span_sm">
-				<li>
-					<span class="cursor-pointer" data-bind="css: { 'icon-minus': IsOpen() == true, 'icon-plus': IsOpen() == false }, click: $parent.FooterInfo().OpenOrCloseChildNodes"></span>
-					<!--ko if:ImageUrl-->
-					<a href="#" data-bind="attr: { href: Url }">
-						<img id="img1" src="Images/loading.gif" data-bind="attr: { src: ImageUrl }">
-					</a>
-					<!--/ko-->
-					<!--ko ifnot:ImageUrl-->
-					<span data-bind="text: Title"></span>
-					<!--/ko-->
-				</li>
-				<!-- ko foreach: ChildrenNodes -->
-				<li data-bind="if: ParentNode.IsOpen() == true">
-					<a data-bind="attr: { href: Url }, text: Title"></a>
-				</li>
-				<!--/ko-->
-			</ul>
-		</div>
-	</script>
+	</div>
+}
+<div id="footer" class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg">
+	<h5 class="my-1">@Model.Title</h5>
+	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">
+		@for (int i = 0; i < Model.Content.Count; i++)
+		{
+			<p>@Html.Raw(Model.Content[i])</p>
+		}
+	</div>
 </div>

@@ -76,6 +76,15 @@
                 }
             });
         },
+        getAdFile: function (Aid) {
+            return $.ajax({
+                url: "/api/FileUpload/getAdvertiseFiles/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { Aid: Aid },
+            });
+        },
         fileSortChange: function (data) {
             return $.ajax({
                 url: "/api/FileUpload/fileSortChange",

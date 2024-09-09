@@ -298,20 +298,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                 case 7:
 					footerViewModel = new FooterViewModel
 					{
-						Title = "kao-feng.cocker.com.tw",
-						footerViewModels = new List<FooterViewModel> {
-									new FooterViewModel { Title = "關於高峰", Link = "", footerViewModels = new List<FooterViewModel> {
-											new FooterViewModel { Title = "公司介紹", Link = "/kao-feng/introduce" },
-											new FooterViewModel { Title = "領導專業團隊", Link = "/kao-feng/team" },
-											new FooterViewModel { Title = "聯絡我們", Link = "/kao-feng/contactUs" },
-										}
-									}
-								},
 						Content = new List<string>
 								{
-									"© Kao Feng",
-									"International Enterprise Co, Ltd.",
-									" ALL RIGHTS RESERVED. Design by EtheriT"
+									"Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：07-3737909 &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：高雄市仁武區鳳仁路177-2號",
 								}
 					};
 					break;

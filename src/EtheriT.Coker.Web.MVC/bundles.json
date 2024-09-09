@@ -15,6 +15,7 @@
         "wwwroot/js/CokerCore/Initialize.js",
         "wwwroot/js/CokerCore/Default.js",
         "wwwroot/js/CokerCore/Directory.js",
+        "wwwroot/js/CokerCore/Advertise.js",
         "wwwroot/js/CokerCore/Articles.js",
         "wwwroot/js/CokerCore/Company.js",
         "wwwroot/js/CokerCore/Contact.js",

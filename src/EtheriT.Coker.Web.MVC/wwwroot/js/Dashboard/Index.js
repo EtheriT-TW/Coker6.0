@@ -2,7 +2,7 @@
     const $bars = $("#chart-bars")
     var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
-    console.log(remote);
+    co.Picker.Init($("#InputDate"), {});
     new Chart(ctx, {
         type: "bar",
         data: {
@@ -33,6 +33,22 @@
             plugins: {
                 legend: {
                     display: true,
+                    labels: {
+                        generateLabels: function (chart) {
+                            const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                            const labels = original.apply(this, [chart]);
+
+                            // Apply different colors for each dataset
+                            labels.forEach(function (label, i) {
+                                if (i === 0) {
+                                    label.fontColor = "rgba(255, 255, 255, .8)"; // 人次的顏色
+                                } else if (i === 1) {
+                                    label.fontColor = "#ffe2c7"; // 人數的顏色
+                                }
+                            });
+                            return labels;
+                        }
+                    }
                 }
             },
             interaction: {
@@ -252,6 +268,43 @@
                 },
             },
         },
-    });
- */
+    });*/
 }
+/*----------------------------------未完成----------------------------------
+$(document).ready(function () {
+    $('#sendData').on('click', function () {
+        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍
+        console.log('Selected Dates:', selectedDates); // 確認值是否存在
+
+        if (selectedDates) {
+            $.ajax({
+                url: '/Dashboard/ProcessDateRange',
+                method: 'POST', // 使用 POST 請求
+                data: { datetimes: selectedDates },
+                success: function (response) {
+                    console.log('Server Response:', response);
+                    console.log("時間"+response.websitesRemotesDate);
+                    // 根據需要更新 UI 或執行其他操作
+                    //updateChart(response.WebsitesRemotesDate, response.WebsitesRemotesCount, response.WebsitesRemotesMemCount);
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        } else {
+            alert('請選擇日期範圍');
+        }
+    });
+    //更新統計表
+    function updateChart(dates, counts, memCounts) {
+        const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
+        if (chart) {
+            chart.data.labels = dates; // 更新X軸日期資料
+            chart.data.datasets[0].data = counts; // 更新Y軸人次資料
+            chart.data.datasets[1].data = memCounts; // 更新Y軸人數資料
+            chart.update(); // 重新渲染圖表
+        } else {
+            console.error('Chart instance not found');
+        }
+    }
+});*/

@@ -7,6 +7,7 @@
 }
 <script src="~/lib/chart.js/chart.min.js"></script>
 <script src="~/js/Dashboard/Index.min.js" asp-append-version="true"></script>
+<script src="/lib/grapesjs/plugin/grapesjs-preset-newsletter/index.js"></script>
 <link rel="stylesheet" href="~/css/Dashboard/index.min.css" asp-append-version="true" />
 
 <div class="container-fluid py-4">
@@ -68,20 +69,16 @@
                     </div>
                     <p class="text-sm d-none">Last Campaign Performance</p>
                     <hr class="dark horizontal">
-                    <div class="d-flex">
-                        <i class="material-icons text-sm my-auto me-1">schedule</i>
-                        <p class="mb-0 text-sm"> 最後統計區間<span class="text-success text-sm font-weight-bolder">@Model.Remote.LastUpdateDate</span> </p>
-                        <form>
-                            <label for="statistics">統計區間</label>
-                            <select id="statistics" name="statistics">
-                                <option value="aaa"> 1 </option>
-                                <option value="aaa"> 1 </option>
-                                <option value="aaa"> 1 </option>
-                                <option value="aaa"> 1 </option>
-                                <option value="aaa"> 1 </option>
-                            </select>
-                        </form>
-                    </div>
+                    <form method="post" action="/DashboardController/Index">
+                        <div class="d-flex align-content-center">
+                            <i class="material-icons text-sm my-auto me-1">schedule</i>
+                            <p>統計區間</p>             
+                        </div>
+                        <div class="date input-group mb-3">
+                            <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">                            
+                        </div>
+                        <button id="sendData" type="button" class="btn btn-light">查詢</button>
+                    </form>
                 </div>
             </div>
         </div>

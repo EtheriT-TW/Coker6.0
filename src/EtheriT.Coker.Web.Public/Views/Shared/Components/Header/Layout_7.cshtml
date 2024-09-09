@@ -8,8 +8,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
+<script src="~/js/Header/Header_Layout_7.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
+@{
+    string imgurl = Model.LogoImageUrl.Substring(0, Model.LogoImageUrl.LastIndexOf("/"));
+}
 
 <nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
     <!-- Mega Menu -->
@@ -245,3 +249,30 @@
         </div> -->
     </div>
 </nav>
+<div class="headernews m-auto d-block position-relative mb-5 mt-5">
+    <img class="d-md-flex d-none m-auto d-block w-img" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
+    <img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
+    <div class="content position-absolute row align-items-center w-100">
+        <div class="title  fw-bold  col-md-1 p-0 col-12 text-center fs-3">近期訊息</div>
+        <div class="text overflow-hidden text-white p-0 ps-3 col">
+            <div class="swiper marqueeSwiper">
+                <div class="swiper-wrapper">
+                    @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
+                    {
+                        var target = marquee.target == true ? "_blank" : "_self";
+                        var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+                        var link = marquee.link;
+                        if (string.IsNullOrEmpty(link))
+                        {
+                            <div class="swiper-slide"><div class="overflow-hidden text">@marquee.title <span class="sr-only">(current)</span></div></div>
+                        }
+                        else
+                        {
+                            <div class="swiper-slide"><a class="overflow-hidden text" href="@link" title="@title" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

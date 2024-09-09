@@ -53,7 +53,21 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         Title = website_data[0].Title,
                         LogoImageUrl = "/upload/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
+                        marqueeModels = new List<MarqueeDisplayDto> { },
+
                     };
+                    if (marquee.Count > 0)
+                    {
+                        marquee.ForEach(data =>
+                        {
+                            headerViewModel.marqueeModels.Add(new MarqueeDisplayDto
+                            {
+                                title = data.title,
+                                link = data.link,
+                                target = data.target,
+                            });
+                        });
+                    }
                     webmenus_data.ForEach(data_f =>
                     {
                         if (data_f.PageType == (int)PageTypeEnum.首頁)
@@ -246,6 +260,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
+
                     };
                     webmenus_data.ForEach(data =>
                     {

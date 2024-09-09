@@ -199,7 +199,8 @@ namespace EtheriT.Coker.Application.Directory
                 .Where(e => dataQuery.Contains(e.Id));
             output.TotalCount = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
-            var dataMargin = prods.OrderBy(e => e.Ser_No)
+            var dataMargin = prods
+                       .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                        .ThenByDescending(e => e.Id)
                        .Skip(skip).Take(shownum);
             var list = await (from p in dataMargin

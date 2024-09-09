@@ -59,8 +59,8 @@ textarea.h300 {
     color: white;
 }
 
-#AdvertiseContent .file_name {
-    font-size: 1.5rem;
+#AdvertiseContent .ad_preview video {
+    max-width: 100%;
 }
 
 #AdvertiseContent .title > input, #AdvertiseContent .ad_link > input {

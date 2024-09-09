@@ -160,7 +160,7 @@ function PageReady() {
                 case 1:
                     $(".ad_preview > .image").removeClass("d-none");
                     $(".ad_link > input").attr("placeholder", "輸入連結網址");
-                    $(".ad_link > input").attr("name", "Link");
+                    $(".ad_link > input").attr("name", "link");
                     $(".ad_link > input").attr("required", "required");
                     $(".ad_link").removeClass("d-none");
                     $(".ad_link > .checkbox").removeClass("d-none");
@@ -422,11 +422,10 @@ function MoveToItemAdvertise() {
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;
-                            co.Form.insertData(result, "#AdvertiseForm");
                             co.File.getAdFile(result.id).done(function (Fresult) {
-                                console.log(Fresult);
                                 $ad_type.val(Fresult.fileType);
-                                $ad_type.change();
+                                $ad_type.trigger("change");
+                                co.Form.insertData(result, "#AdvertiseForm");
                                 $ad_type.data("fileid", Fresult.id);
                                 switch (parseInt($ad_type.val())) {
                                     case 1:
@@ -439,11 +438,11 @@ function MoveToItemAdvertise() {
                                         break;
                                     case 3:
                                         $(".ad_link > input").val(Fresult.link);
-                                        $(".btn_preview").click();
+                                        $(".btn_preview").trigger("click");
                                         break;
                                 }
+                                $AdvertiseTags.TagDataSet(result.tagDatas);
                             });
-                            $AdvertiseTags.TagDataSet(result.tagDatas);
                         } else BackToList();
                     })
                 } else {

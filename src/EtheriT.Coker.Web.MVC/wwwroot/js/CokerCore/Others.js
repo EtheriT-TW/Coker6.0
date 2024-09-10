@@ -80,6 +80,7 @@
                 }
             }, setting || {})
             const s = $picker.daterangepicker(target);
+            $picker.data("picker",s);
             $picker.on('cancel.daterangepicker', function (ev, picker) {
                 $(this).val("");
             });

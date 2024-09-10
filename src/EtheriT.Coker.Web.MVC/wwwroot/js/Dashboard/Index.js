@@ -2,7 +2,7 @@
     const $bars = $("#chart-bars")
     var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
-    co.Picker.Init($("#InputDate"), {});
+    co.Picker.Init($("#InputDate"), { timePicker :false});
     $("#InputDate").on("change", function () {
         co.Remote.GetRemoteCount({ StareDate: "2024/9/3", EndDate: "2024/9/10" }).done(function (result) {
             console.log(result);

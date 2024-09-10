@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_7.min.js" asp-append-version="true"></script>
-<script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
 @{
     string imgurl = Model.LogoImageUrl.Substring(0, Model.LogoImageUrl.LastIndexOf("/"));
@@ -249,13 +248,13 @@
         </div> -->
     </div>
 </nav>
-<div class="headernews m-auto d-block position-relative mb-5 mt-5">
-    <img class="d-md-flex d-none m-auto d-block w-img" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
+<img class="titleimage m-auto d-block" src="@imgurl/headertitile.png" alt="Header Titile" />
+<div class="headernews m-auto d-block position-relative mt-5">
+    <img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
     <img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
     <div class="content position-absolute row align-items-center w-100">
-        <div class="title  fw-bold  col-md-1 p-0 col-12 text-center fs-3">近期訊息</div>
         <div class="text overflow-hidden text-white p-0 ps-3 col">
-            <div class="swiper marqueeSwiper">
+            <div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
                 <div class="swiper-wrapper">
                     @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
                     {

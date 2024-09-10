@@ -16,6 +16,6 @@ namespace EtheriT.Coker.Application.Shared.Remote
 		public Task<ResponseMessageDto> insertRemote(RemoteInputDto dto);
 		public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
 		public Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions);
-		public Task<JsonResult> Get_7day_remoteCount(DataSourceLoadOptions loadOptions);
-    }
+		public Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto);
+	}
 }

@@ -21,18 +21,20 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 
         private readonly LoginUserData loginUserData;//獲取後台登入後選擇編輯哪個站點
 		private readonly IRemoteAppService remoteAppService;
+        private readonly IConfiguration configuration;
         private List<long> remoteList = new List<long>();
         private List<DateTime> dateList = new List<DateTime>();
-		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService) { 
+		public DashboardController(LoginUserData loginUserData, IRemoteAppService remoteAppService, IConfiguration configuration) { 
             this.loginUserData = loginUserData;
             this.remoteAppService = remoteAppService;
+            this.configuration = configuration;
         }
         //非同步 用Task的模式讀取
         public async Task<IActionResult> Index()
         {			
 			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
 			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
-            string filePath = $"D:\\ET\\upload\\{orgName}";
+            string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
             var obj = await remoteAppService.Get_7day_remoteCount(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
             var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
 			var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();

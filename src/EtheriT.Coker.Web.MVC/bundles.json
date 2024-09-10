@@ -27,6 +27,7 @@
         "wwwroot/js/CokerCore/Others.js",
         "wwwroot/js/CokerCore/PowerManagement.js",
         "wwwroot/js/CokerCore/Product.js",
+        "wwwroot/js/CokerCore/Remote.js",
         "wwwroot/js/CokerCore/sweet.js",
         "wwwroot/js/CokerCore/TechnicalCertificate.js",
         "wwwroot/js/CokerCore/User.js",

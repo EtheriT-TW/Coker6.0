@@ -1,4 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Remote;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,10 +26,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		{
 			return await remoteAppService.GetPageList(loadOptions);
 		}
-        [HttpGet]
-        public async Task<JsonResult> Get_7day_remoteCount(DataSourceLoadOptions loadOptions)
+        [HttpPost]
+        public async Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto)
         {
-            return await remoteAppService.Get_7day_remoteCount(loadOptions);
+            return await remoteAppService.GetRemoteCount(dto);
         }
     }
 }

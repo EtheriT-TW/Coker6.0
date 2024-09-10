@@ -1,6 +1,7 @@
 ﻿using DevExtreme.AspNet.Data.ResponseModel;
 using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
@@ -35,33 +36,38 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
 			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
             string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
-            var obj = await remoteAppService.Get_7day_remoteCount(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
-            var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
-			var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();
-            var remoteItem =new List<long>();
+            var result = await remoteAppService.GetRemoteCount(new GetRemoteCountInputDto { 
+                StareDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(-7)
+            });
+            var remoteItem = new List<long>();
             var remoteMemCount = new List<long>();
             var dateItem = new List<string>();
             var today = DateTime.Today;
-            for (int i = 0;i < 7;i++)
-            {
-                DateTime d = DateTime.Now.Date.AddDays(-i);
-                RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
+            if (result.Success) {
+                var items = ((GetRemoteCountOutputDto)result.Object).remoteListOtputDtos;
+                for (int i = 0; i < 7; i++)
+                {
+                    DateTime d = DateTime.Now.Date.AddDays(-i);
+                    RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
 
-                if (item == null)
-                {
-                    remoteItem.Add(0);
-                    remoteMemCount.Add(0);
+                    if (item == null)
+                    {
+                        remoteItem.Add(0);
+                        remoteMemCount.Add(0);
+                    }
+                    else
+                    {
+                        remoteItem.Add(item.count);
+                        remoteMemCount.Add(item.MemCount);
+                    }
+                    dateItem.Add(d.ToString("MM/dd"));
                 }
-                else
-                {
-                    remoteItem.Add(item.count);
-                    remoteMemCount.Add(item.MemCount);
-                }
-                dateItem.Add(d.ToString("MM/dd"));
+                dateItem.Reverse();
+                remoteMemCount.Reverse();
+                remoteItem.Reverse();
             }
-            dateItem.Reverse();
-            remoteMemCount.Reverse();
-            remoteItem.Reverse();
+			
 
 
             DashboardModel model = new DashboardModel

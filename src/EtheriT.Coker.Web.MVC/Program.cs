@@ -32,6 +32,8 @@ using EtheriT.Coker.Application.Configuration;
 using Microsoft.AspNetCore.Mvc.Razor;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Article;
+using EtheriT.Coker.Application.Shared.Advertise;
+using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Import;
@@ -65,10 +67,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews().AddNewtonsoftJson();
 builder.Services.AddSingleton<JwtHelpers>();
 builder.Services.AddMemoryCache()
-	.AddSimpleCaptcha(builder =>
-	{
-		builder.UseMemoryStore();
-	});
+    .AddSimpleCaptcha(builder =>
+    {
+        builder.UseMemoryStore();
+    });
 
 builder.Services
     .AddAuthentication(options =>
@@ -160,6 +162,7 @@ builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 builder.Services.AddTransient<IObjectTypeAppService, ObjectTypeAppService>();
 builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
+builder.Services.AddTransient<IAdvertiseAppService, AdvertiseAppService>();
 builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
 builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();

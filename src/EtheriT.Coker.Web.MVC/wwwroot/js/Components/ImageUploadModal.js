@@ -87,7 +87,7 @@ function ImageSetData($select, file) {
         $img_preview.removeClass("d-none");
         $img_preview.siblings("span").addClass("d-none");
         $img_preview.parents("button").first().addClass("border-0");
-        $img_preview.attr("src", !!file.link ? file.link: file.path);
+        $img_preview.attr("src", !!file.link ? file.link : file.path);
         $img_preview.attr("alt", file.name);
 
         var $img_btn = input_frame.find(".btn_input_pic");

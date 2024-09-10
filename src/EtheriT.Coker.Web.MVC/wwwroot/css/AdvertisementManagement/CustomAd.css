@@ -1,0 +1,81 @@
+﻿
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.z-index-up {
+    z-index: 10;
+}
+
+.btn_back {
+    color: #4E565A;
+}
+
+.btn_add {
+    z-index: 1;
+}
+
+/* Directory Content */
+#DirectoryContent > .card-header, #AdvertiseContent .card-header {
+    background-color: var(--color-gray-bg-dark);
+}
+
+#DirectoryForm > .title .count::after {
+    content: '/60';
+}
+
+#DirectoryForm > .description .count::after {
+    content: '/150';
+}
+
+#DirectoryForm > .tag > input {
+    padding-left: 7rem;
+}
+
+.img_preview {
+    max-height: 100%;
+    max-width: 100%;
+}
+
+textarea.h300 {
+    height: 300px;
+}
+
+/* Advertise Content */
+#AdvertiseContent .ad_preview {
+    background-color: var(--color-gray-bg-dark);
+    height: 300px;
+    max-height: 75vh;
+    cursor: default;
+}
+
+#AdvertiseContent .btn_input_pic > span {
+    font-size: 5rem;
+    color: white;
+}
+
+#AdvertiseContent .ad_preview video {
+    max-width: 100%;
+}
+
+#AdvertiseContent .title > input, #AdvertiseContent .ad_link > input {
+    padding-left: 7rem;
+}
+
+#AdvertiseContent .sort > input {
+    padding-left: 5.25rem;
+    padding-right: 7.5rem;
+}
+
+#AdvertiseContent .tag > input {
+    padding-left: 5.25rem;
+}
+
+#AdvertiseContent .date > input {
+    padding-left: 9.5rem;
+}

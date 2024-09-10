@@ -28,6 +28,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? ItemNo { get; set; }
         public int Status { get; set; }
         public string StatusName { get; set; } = string.Empty;
+        public bool Visible { get; set; }
         public List<TagGetSelectedDto>? tags { get; set; }
 
     }

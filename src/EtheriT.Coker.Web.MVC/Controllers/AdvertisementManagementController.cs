@@ -9,6 +9,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         public AdvertisementManagementController(NavigationProvider navigation) {
             this.navigation = navigation;
         }
+        public IActionResult CustomAd(int id)
+        {
+            return View("CustomAd");
+        }
         public IActionResult EnterAd(int id)
         {
             return View("EnterAd");

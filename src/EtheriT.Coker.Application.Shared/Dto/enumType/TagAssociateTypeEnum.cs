@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         文章 = 2,
         目錄 = 3,
         自訂搜尋 = 4,
-        目錄拒絕 = 5
+        目錄拒絕 = 5,
+        廣告 = 6,
     }
 }

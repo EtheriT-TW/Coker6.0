@@ -177,12 +177,12 @@ namespace EtheriT.Coker.Application.Advertise
                         }
                     }
 
-                    //var delete_img_dto = new FileDeleteDto
-                    //{
-                    //    Sid = result.Id,
-                    //    Type = (int)FileBindTypeEnum.自訂廣告
-                    //};
-                    //var imgdelete_response = await fileUploadAppService.deleteFileById(delete_img_dto);
+                    var delete_img_dto = new FileDeleteDto
+                    {
+                        Sid = result.Id,
+                        Type = (int)FileBindTypeEnum.自訂廣告
+                    };
+                    var imgdelete_response = await fileUploadAppService.deleteFileById(delete_img_dto);
 
                     result.IsDeleted = true;
                     result.DeletionTime = DateTime.Now;
@@ -190,8 +190,7 @@ namespace EtheriT.Coker.Application.Advertise
 
                     db.SaveChanges();
 
-                    output.Success = tagdeleteresponse.Success;
-                    //output.Success = tagdeleteresponse.Success && imgdelete_response.Success;
+                    output.Success = tagdeleteresponse.Success && imgdelete_response.Success;
                 }
                 else throw new Exception("查無廣告資料");
             }

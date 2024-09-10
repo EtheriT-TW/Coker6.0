@@ -23,7 +23,6 @@ function PageReady() {
     });
 
     $(".input_pic").on("change", function (e) {
-        $ad_type.data("fileid", 0);
         var file = e.target.files[0];
         var reader = new FileReader();
         reader.readAsDataURL(file);
@@ -40,7 +39,6 @@ function PageReady() {
         };
     })
     $(".input_video").on("change", function (e) {
-        $ad_type.data("fileid", 0);
         var file = e.target.files[0];
         var reader = new FileReader();
 
@@ -327,47 +325,46 @@ function AddUpAdvertise(success_text, error_text) {
             directoryDatailList.component.refresh();
             location.hash = `Advertise_${DirectoryId}`;
         }
-        if ($ad_type.data("fileid") == 0) {
-            switch (parseInt($ad_type.val())) {
-                case 1:
-                    var formData = new FormData();
-                    formData.append("files", $ad_type.data("file").File);
-                    formData.append("type", 10);
-                    formData.append("sid", result.message);
-                    formData.append("serno", 500);
-                    co.File.Upload(formData).done(function () {
+        switch (parseInt($ad_type.val())) {
+            case 1:
+                var formData = new FormData();
+                formData.append("files", $ad_type.data("file").File);
+                formData.append("type", 10);
+                formData.append("sid", result.message);
+                formData.append("serno", 500);
+                co.File.Upload(formData).done(function () {
+                    success();
+                });
+                break;
+            case 2:
+                var formData = new FormData();
+                formData.append("files", $ad_type.data("file").File);
+                formData.append("type", 10);
+                formData.append("sid", result.message);
+                formData.append("serno", 500);
+                co.File.Upload(formData).done(function () {
+                    success();
+                });
+                break;
+            case 3:
+                var ytlink = $(".btn_preview").prev().val();
+                var file = ytlink.substr(ytlink.indexOf("v=") + 2);
+                $ad_type.data("file", file);
+                if (typeof (result.message) != "undefined") {
+                    co.File.UploadYTLink({
+                        Id: typeof ($ad_type.data("fileid")) == "undefined" ? 0 : $ad_type.data("fileid"),
+                        SId: result.message,
+                        File: $ad_type.data("file"),
+                        Type: 10,
+                        SerNo: 500,
+                    }).done(function () {
                         success();
-                    });
-                    break;
-                case 2:
-                    var formData = new FormData();
-                    formData.append("files", $ad_type.data("file").File);
-                    formData.append("type", 10);
-                    formData.append("sid", result.message);
-                    formData.append("serno", 500);
-                    co.File.Upload(formData).done(function () {
-                        success();
-                    });
-                    break;
-                case 3:
-                    var ytlink = $(".btn_preview").prev().val();
-                    var file = ytlink.substr(ytlink.indexOf("v=") + 2);
-                    $ad_type.data("file", file);
-                    if (typeof (result.message) != "undefined") {
-                        co.File.UploadYTLink({
-                            Id: typeof ($ad_type.data("fileid")) == "undefined" ? 0 : $ad_type.data("fileid"),
-                            SId: result.message,
-                            File: $ad_type.data("file"),
-                            Type: 10,
-                            SerNo: 500,
-                        }).done(function () {
-                            success();
-                        })
-                    }
-                    break;
-            }
-        } else {
-            success();
+                    })
+                }
+                break;
+            default:
+                success();
+                break;
         }
     });
 }
@@ -413,6 +410,8 @@ function MoveToItemAdvertise() {
     $("#pages>.card,#TopLine").addClass("d-none");
     $AdvertiseTags.TagDataClear();
     FileTypeInit();
+    $ad_type.data("fileid", 0);
+    $ad_type.data("file", "");
     if (para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
         const id = parseInt(para[2]);
         DirectoryId = parseInt(para[1]);
@@ -468,7 +467,6 @@ function MoveToItemAdvertise() {
                 BackToList();
                 break
         }
-
     }
 }
 function editAdvertiseButtonClicked(e) {
@@ -488,17 +486,11 @@ function deleteAdvertiseButtonClicked(e) {
 }
 
 function FileTypeInit() {
-    // 每個都藏起來
     $(".ad_preview > div").each(function (i) {
         $(this).addClass("d-none");
     });
     $(".ad_preview > .preview").removeClass("d-none");
 
-    //主要資料清空
-    $ad_type.data("fileid", 0);
-    $ad_type.data("file", "");
-
-    // 圖片&Youtube該藏的
     $(".img_preview").attr("src", "");
     $(".img_preview").addClass("d-none");
     $(".btn_input_pic > span").removeClass("d-none");
@@ -509,7 +501,6 @@ function FileTypeInit() {
     $(".ad_link > .checkbox").addClass("d-none");
     $(".ad_link > button").addClass("d-none");
 
-    //影片該藏的
     $(".video_preview").attr("type", "");
     $(".video_preview").attr("src", "");
 }

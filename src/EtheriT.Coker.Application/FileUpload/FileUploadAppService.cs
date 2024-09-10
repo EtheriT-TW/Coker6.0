@@ -96,6 +96,8 @@ namespace EtheriT.Coker.Application
         }
         public async Task<UploadFileOutputDto> uploadMediaFiles(IList<IFormFile> files, int type, long sid, int serno, string page)
         {
+            long usetId = await loginUserData.GetUserId();
+            ResponseMessageDto DeleResponse;
             UploadFileOutputDto response = new UploadFileOutputDto
             {
                 Files = new List<FileItemDto>(),
@@ -103,6 +105,26 @@ namespace EtheriT.Coker.Application
             };
             try
             {
+                if (type == (int)FileBindTypeEnum.自訂廣告)
+                {
+                    var db_fb = await db.FileBinds.Where(e => e.Sid == sid && e.type == (int)FileBindTypeEnum.自訂廣告 && !e.IsDeleted).FirstOrDefaultAsync();
+                    if (db_fb != null)
+                    {
+                        var db_fu = await db.FileUploads.Where(e => e.Id == db_fb.FK_FileUploadId).FirstOrDefaultAsync();
+                        if (db_fu != null)
+                        {
+                            DeleResponse = await this.deleteFile(db_fu.GuidKey);
+                            db_fu.IsDeleted = true;
+                            db_fu.DeletionTime = DateTime.Now;
+                            db_fu.DeleterUserId = usetId;
+                            db.SaveChanges();
+                        }
+                        db_fb.IsDeleted = true;
+                        db_fb.DeletionTime = DateTime.Now;
+                        db_fb.DeleterUserId = usetId;
+                        db.SaveChanges();
+                    }
+                }
                 List<FileItemDto> items = await SaveImage(files, type, (int)FileBindMoreEnum.壓縮圖片, serno, page, sid);
                 foreach (var item in items)
                 {
@@ -721,7 +743,7 @@ namespace EtheriT.Coker.Application
                     var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
                     if (fu != null)
                     {
-                        string MediaLink = fb.MediaLink == ""? fu.DownloadFileName: fb.MediaLink;
+                        string MediaLink = fb.MediaLink == "" ? fu.DownloadFileName : fb.MediaLink;
                         if (orgName != "")
                         {
                             MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
@@ -732,7 +754,7 @@ namespace EtheriT.Coker.Application
                         {
                             filetype = 3;
                         }
-                        else if(fu.ContentType.Substring(0, temp_index) == "image")
+                        else if (fu.ContentType.Substring(0, temp_index) == "image")
                         {
                             filetype = 1;
                         }
@@ -1072,9 +1094,20 @@ namespace EtheriT.Coker.Application
                 }
                 else
                 {
-                    var result = await (from fb in db.FileBinds
+                    var result = new List<long?>();
+                    if (dto.Type == (int)FileBindTypeEnum.自訂廣告)
+                    {
+                        result = await (from fb in db.FileBinds
+                                        where fb.Sid == dto.Sid && !fb.IsDeleted
+                                        where fb.type == dto.Type
+                                        select fb.FK_FileUploadId).ToListAsync();
+                    }
+                    else
+                    {
+                        result = await (from fb in db.FileBinds
                                         where fb.Sid == dto.Sid && !fb.IsDeleted
                                         select fb.FK_FileUploadId).ToListAsync();
+                    }
 
                     if (result.Count > 0)
                     {

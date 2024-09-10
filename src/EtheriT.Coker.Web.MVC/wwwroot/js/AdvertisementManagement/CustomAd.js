@@ -13,10 +13,13 @@ function PageReady() {
     });
 
     ElementInit();
-    /*ImageUploadModalInit($("#ImageUpload"));*/
     $(".btn_input_pic").on("click", function (even) {
         even.preventDefault();
-        $(".btn_input_pic").prev(".input_pic").click();
+        $(".input_pic").click();
+    });
+    $(".btn_input_video").on("click", function (even) {
+        even.preventDefault();
+        $(".input_video").click();
     });
 
     $(".input_pic").on("change", function (e) {
@@ -36,6 +39,23 @@ function PageReady() {
             $ad_type.data("file", obj);
         };
     })
+    $(".input_video").on("change", function (e) {
+        $ad_type.data("fileid", 0);
+        var file = e.target.files[0];
+        var reader = new FileReader();
+
+        reader.readAsDataURL(file);
+        reader.onload = function (e) {
+            var obj = {};
+            obj["id"] = 0;
+            obj["File"] = file;
+            obj["name"] = file.name;
+            obj["link"] = e.target.result
+            $(".video_preview").attr("type", obj["File"].type);
+            $(".video_preview").attr("src", obj["link"]);
+            $ad_type.data("file", obj);
+        };
+    });
 
     $DirectoryTags = $(DirectoryForms).find(".InputTag").TagListModalInit();
     $AdvertiseTags = $(AdvertiseForms).find(".InputTag").TagListModalInit();
@@ -140,46 +160,17 @@ function PageReady() {
         $description.children("div").children(".count").text($self.val().length)
     });
     $ad_type.on("change", function () {
-        $(".ad_preview > div").each(function (i) {
-            $(this).addClass("d-none");
-        });
-        $ad_type.data("fileid", 0);
-        $(".ad_link > input").val("");
-        $(".ad_preview > .youtube > iframe").attr("src", "");
-        $(".btn_input_pic > span").removeClass("d-none");
-        $(".img_preview").addClass("d-none");
-        $(".img_preview").attr("src", "");
-        $ad_type.data("file", "");
-        if ($ad_type.val() == null) {
-            $(".ad_link").addClass("d-none");
-            $(".ad_link > input").removeAttr("name");
-            $(".ad_link > input").removeAttr("required");
-            $(".ad_preview > .preview").removeClass("d-none");
-        } else {
-            switch (parseInt($ad_type.val())) {
-                case 1:
-                    $(".ad_preview > .image").removeClass("d-none");
-                    $(".ad_link > input").attr("placeholder", "輸入連結網址");
-                    $(".ad_link > input").attr("name", "link");
-                    $(".ad_link > input").attr("required", "required");
-                    $(".ad_link").removeClass("d-none");
-                    $(".ad_link > .checkbox").removeClass("d-none");
-                    $(".ad_link > button").addClass("d-none");
-                    break;
-                case 2:
-                    $(".ad_link").addClass("d-none");
-                    $(".ad_link > input").removeAttr("name");
-                    $(".ad_link > input").removeAttr("required");
-                    break;
-                case 3:
-                    $(".ad_link > input").attr("placeholder", "https://www.youtube.com/watch?v=");
-                    $(".ad_link > input").removeAttr("name");
-                    $(".ad_link > input").attr("required", "required");
-                    $(".ad_link").removeClass("d-none");
-                    $(".ad_link > .checkbox").addClass("d-none");
-                    $(".ad_link > button").removeClass("d-none");
-                    break;
-            }
+        FileTypeInit();
+        switch (parseInt($ad_type.val())) {
+            case 1:
+                ImageTypeInit();
+                break;
+            case 2:
+                VideoTypeInit();
+                break;
+            case 3:
+                YoutubeTypeInit()
+                break;
         }
     });
 
@@ -198,7 +189,6 @@ function ElementInit() {
     $description = $(".description");
     $description_text = $description.children("textarea");
 }
-
 
 function hashChange(e) {
     if (!!e) {
@@ -337,11 +327,9 @@ function AddUpAdvertise(success_text, error_text) {
             directoryDatailList.component.refresh();
             location.hash = `Advertise_${DirectoryId}`;
         }
-        console.log($ad_type.data("fileid"))
         if ($ad_type.data("fileid") == 0) {
             switch (parseInt($ad_type.val())) {
                 case 1:
-                    console.log($ad_type.data("file").File)
                     var formData = new FormData();
                     formData.append("files", $ad_type.data("file").File);
                     formData.append("type", 10);
@@ -352,7 +340,14 @@ function AddUpAdvertise(success_text, error_text) {
                     });
                     break;
                 case 2:
-                    console.log("上傳影片")
+                    var formData = new FormData();
+                    formData.append("files", $ad_type.data("file").File);
+                    formData.append("type", 10);
+                    formData.append("sid", result.message);
+                    formData.append("serno", 500);
+                    co.File.Upload(formData).done(function () {
+                        success();
+                    });
                     break;
                 case 3:
                     var ytlink = $(".btn_preview").prev().val();
@@ -403,6 +398,8 @@ function MoveToItemList() {
         switch (DirectoryType) {
             case "Advertise":
                 $(AdvertiseForms).removeClass("was-validated");
+                $("#InputDate").val("");
+                $("#InputDate").attr("disabled", "disabled");
                 directoryDatailList.component.refresh();
                 break
             default:
@@ -415,6 +412,7 @@ function MoveToItemAdvertise() {
     const para = window.location.hash.replace("#", "").split("_");
     $("#pages>.card,#TopLine").addClass("d-none");
     $AdvertiseTags.TagDataClear();
+    FileTypeInit();
     if (para.length > 2 && !isNaN(para[1]) && !isNaN(para[2])) {
         const id = parseInt(para[2]);
         DirectoryId = parseInt(para[1]);
@@ -438,12 +436,15 @@ function MoveToItemAdvertise() {
                                 $ad_type.data("fileid", Fresult.id);
                                 switch (parseInt($ad_type.val())) {
                                     case 1:
+                                        $(".btn_input_pic > span").addClass("d-none");
                                         $(".img_preview").attr("src", Fresult.link);
                                         $(".img_preview").attr("alt", Fresult.name);
-                                        $(".btn_input_pic > span").addClass("d-none");
                                         $(".img_preview").removeClass("d-none");
+                                        $(".ad_link > input").val(result.link);
                                         break;
                                     case 2:
+                                        $(".video_preview").attr("type", Fresult.video_Type);
+                                        $(".video_preview").attr("src", Fresult.link);
                                         break;
                                     case 3:
                                         $(".ad_link > input").val(Fresult.link);
@@ -479,10 +480,59 @@ function groupAdvertiseButtonClicked(e) {
 function deleteAdvertiseButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.Advertise.Delete(e.row.key).done(function (result) {
-            console.log(result)
             if (result.success) {
                 e.component.refresh();
             }
         });
     });
+}
+
+function FileTypeInit() {
+    // 每個都藏起來
+    $(".ad_preview > div").each(function (i) {
+        $(this).addClass("d-none");
+    });
+    $(".ad_preview > .preview").removeClass("d-none");
+
+    //主要資料清空
+    $ad_type.data("fileid", 0);
+    $ad_type.data("file", "");
+
+    // 圖片&Youtube該藏的
+    $(".img_preview").attr("src", "");
+    $(".img_preview").addClass("d-none");
+    $(".btn_input_pic > span").removeClass("d-none");
+    $(".ad_preview > .youtube > iframe").attr("src", "");
+    $(".ad_link > input").val("");
+    $(".ad_link > input").removeAttr("required");
+    $(".ad_link").addClass("d-none");
+    $(".ad_link > .checkbox").addClass("d-none");
+    $(".ad_link > button").addClass("d-none");
+
+    //影片該藏的
+    $(".video_preview").attr("type", "");
+    $(".video_preview").attr("src", "");
+}
+
+function ImageTypeInit() {
+    $(".ad_preview > .preview").addClass("d-none");
+    $(".ad_preview > .image").removeClass("d-none");
+    $(".ad_link").removeClass("d-none");
+    $(".ad_link > input").attr("required", "required");
+    $(".ad_link > input").attr("placeholder", "輸入連結網址");
+    $(".ad_link > .checkbox").removeClass("d-none");
+}
+
+function VideoTypeInit() {
+    $(".ad_preview > .preview").addClass("d-none");
+    $(".ad_preview > .video").removeClass("d-none");
+}
+
+function YoutubeTypeInit() {
+    // 影片預覽才顯示iframe
+    $(".ad_preview > .preview").addClass("d-none");
+    $(".ad_link").removeClass("d-none");
+    $(".ad_link > input").attr("required", "required");
+    $(".ad_link > input").attr("placeholder", "https://www.youtube.com/watch?v=");
+    $(".ad_link > button").removeClass("d-none");
 }

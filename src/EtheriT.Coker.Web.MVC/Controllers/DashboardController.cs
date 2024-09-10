@@ -9,7 +9,9 @@ using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp;
 using Newtonsoft.Json;
+using System;
 using System.Collections;
+using System.Globalization;
 using System.IO.Pipelines;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
@@ -105,9 +107,64 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             };
             return View(model);
         }
+        /*-----------------------------未完成-----------------------------------
+        [HttpPost]
+        public async Task<IActionResult> ProcessDateRange(string datetimes)
+        {
+            var obj = await remoteAppService.GetPageList(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
+            var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
+            var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();
+            var remoteItem = new List<long>();
+            var remoteMemCount = new List<long>();
+            var dateItem = new List<string>();
+            
+            var dateRange = datetimes;
+            //設置區間
+            if (!string.IsNullOrEmpty(dateRange))
+            {
+                var dates = dateRange.Split(" ~ ");
+                startDate = DateTime.ParseExact(dates[0], "yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture);
+                endDate = DateTime.ParseExact(dates[1], "yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                // 如果沒有提供日期範圍，默認查詢最近 7 天
+                startDate = DateTime.Today.AddDays(-7);
+                endDate = DateTime.Today;
+            }
 
-		// 獲取資料夾的最後修改時間
-		public static string LastChangDate(string DirRoute)
+
+            /*RemoteListOtputDto? item = items.Find(e => e.date.Day >= startDate.Day && e.date.Day <= endDate.Day);
+            if (item == null)
+            {
+                remoteItem.Add(0);
+                remoteMemCount.Add(0);
+            }
+            else
+            {
+                remoteItem.Add(item.count);
+                remoteMemCount.Add(item.MemCount);
+            }
+            dateItem.Add(item.date.ToString("MM/dd"));*/
+            // 構建返回的數據模型
+            //var item = items.Find(x => x.date.Date >= startDate && x.date.Date <= endDate);
+            /*for (int i = 0;i < endDate.Date.Day-startDate.Day;i++)
+            {
+                var item = items.Find(x => x.date.Date == startDate.AddDays(i));
+                dateItem.Add(item.date.ToString());
+            }
+            var result = new
+            {
+                WebsitesRemotesDate = items.Select(x => x.date.Date >= startDate.Date && x.date.Date <= endDate.Date).ToList(),
+                //WebsitesRemotesCount = items.Select(x => x.Count).ToList(),
+                WebsitesRemotesMemCount = items.Select(x => x.MemCount).ToList()
+            };
+            Console.WriteLine("//////////////////////////////////"+datetimes+"aaa");
+            return Json(result);
+        }*/
+
+        // 獲取資料夾的最後修改時間
+        public static string LastChangDate(string DirRoute)
         {
 			try
 			{

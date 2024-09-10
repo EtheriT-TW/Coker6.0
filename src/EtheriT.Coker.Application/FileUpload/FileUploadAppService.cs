@@ -727,15 +727,19 @@ namespace EtheriT.Coker.Application
                             MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
                         }
                         var filetype = 0;
-                        switch (fu.ContentType)
+                        var temp_index = fu.ContentType.IndexOf("/");
+                        if (temp_index == -1 && fu.ContentType == "youtube")
                         {
-                            case "image/jpeg":
-                            case "image/png":
-                                filetype = 1;
-                                break;
-                            case "youtube":
-                                filetype = 3;
-                                break;
+                            filetype = 3;
+                        }
+                        else if(fu.ContentType.Substring(0, temp_index) == "image")
+                        {
+                            filetype = 1;
+                        }
+                        else if (fu.ContentType.Substring(0, temp_index) == "video")
+                        {
+                            filetype = 2;
+                            output.Video_Type = fu.ContentType;
                         }
                         output.Id = fu.Id;
                         output.Link = MediaLink;

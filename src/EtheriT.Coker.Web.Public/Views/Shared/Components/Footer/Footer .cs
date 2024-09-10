@@ -300,7 +300,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 					{
 						Content = new List<string>
 								{
-									"Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：07-3737909 &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：高雄市仁武區鳳仁路177-2號",
+                                    "Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：<a href=\"tel:07-3737909\">07-3737909</a> &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：<a href=\"https://maps.app.goo.gl/6Q8ggmAWi6VCQ9us5\" target=\"_blank\"> 高雄市仁武區鳳仁路177-2號</a>",
 								}
 					};
 					break;

@@ -12,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Files
         public int FileType { get; set; }
         public string Link { get; set; }
         public string? Name { get; set; }
+        public string? Video_Type { get; set; }
     }
 }

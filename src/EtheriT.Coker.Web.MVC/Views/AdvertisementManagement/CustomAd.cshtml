@@ -208,7 +208,7 @@
             </div>
         </div>
 
-        <div id="AdvertiseContent" class="card py-2 border-0 d-none">
+        <div id="AdvertiseContent" class="card border-0 d-none">
             <div class="card-header d-flex justify-content-between">
                 <div class="fw-bold fs-5 d-flex align-items-center">
                     <button class="btn_back d-flex bg-transparent border-0 align-items-center">
@@ -236,7 +236,7 @@
                             <option value="3">Youtube影片</option>
                         </select>
                     </div>
-                    <input type="checkbox" id="AdvertiseFormVisible" class="selectedItem" name="visible" value="true" />
+                    <input type="checkbox" id="AdvertiseFormVisible" class="selectedItem" name="visible" value="true" checked />
                     <label for="AdvertiseFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上" class="col-auto d-flex m-auto p-0">
                         <span class="material-symbols-outlined fs-2">visibility</span>
                         <span class="material-symbols-outlined fs-2">visibility_off</span>
@@ -244,9 +244,6 @@
                 </div>
                 <div class="ad_preview mb-3 d-flex justify-content-center align-items-center" data-fileid="" data-file="">
                     <div class="preview fs-1">預覽</div>
-                    <div class="youtube w-100 h-100 d-none">
-                        <iframe src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen class="w-100 h-100"></iframe>
-                    </div>
                     <div class="image w-100 h-100 d-none">
                         <div class="d-flex  w-100 h-100">
                             <input class="input_pic d-none flex-grow-0" type="file" accept="image/*" />
@@ -256,12 +253,22 @@
                             </button>
                         </div>
                     </div>
+                    <div class="video w-100 h-100 d-none">
+                        <div class="align-items-center d-flex flex-column h-100 w-100">
+                            <input class="input_video d-none flex-grow-0" type="file" accept="video/*" />
+                            <video class="flex-grow-1 mt-2 video_preview" controls></video>
+                            <button class="btn_input_video bg-transparent border-0 d-flex justify-content-center my-2">點擊上傳影片</button>
+                        </div>
+                    </div>
+                    <div class="youtube w-100 h-100 d-none">
+                        <iframe src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen class="w-100 h-100"></iframe>
+                    </div>
                 </div>
                 <div class="ad_link input-group mb-3 d-none">
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">link</span>連結網址
                     </div>
-                    <input type="text" class="form-control rounded" placeholder="輸入連結網址" aria-label="Recipient's username" aria-describedby="button-addon2">
+                    <input type="text" class="form-control rounded" placeholder="輸入連結網址" aria-label="Recipient's username" aria-describedby="button-addon2" name="Link">
                     <button class="btn_preview btn btn-outline-secondary px-3 rounded-right d-none" type="button" id="button-addon2">影片預覽</button>
                     <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up d-none mr-4">
                         <input id="TargetCheck" class="form-check-input" type="checkbox" value="true" name="Target">

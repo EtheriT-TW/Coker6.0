@@ -34,7 +34,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {			
 			string orgName = await loginUserData.GetWebsiteOrgName();//獲取後台登入後選擇編輯哪個站點
 			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
-            string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
+            string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}"; //從設定檔撈VirtualDirectory底下的upload的資料
             var obj = await remoteAppService.Get_7day_remoteCount(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
             var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
 			var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();

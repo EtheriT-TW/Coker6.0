@@ -215,7 +215,16 @@ function HashDataEdit() {
             var hash = window.location.hash.replace("#", "");
             if (!!hash && isNaN(hash)) {
                 if (hash.indexOf("Editor") > -1) MoveToItemAdvertise();
-                else MoveToItemList();
+                else {
+                    let t = null;
+                    const f = function () {
+                        clearTimeout(t);
+                        if (directoryDatailList != null) {
+                            MoveToItemList();
+                        } else t = setTimeout(f, 100);
+                    }
+                    f();
+                }
             } else if (parseInt(hash) == 0) {
                 window.location.hash = 0;
                 keyId = 0;

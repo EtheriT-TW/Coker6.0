@@ -52,19 +52,18 @@ function jqueryExtend() {
         LoadJs: function (src) {
             const _dfr = $.Deferred();
             let head = document.getElementsByTagName('HEAD')[0];
-
-            // Create new link Element
             let link = document.createElement('script');
-
-            // set the attributes for link element
             link.type = 'text/javascript';
-
             link.src = src;
+
             if (/.mjs$/.test(src)) {
                 link.type = "module";
             }
             link.onload = function () {
                 _dfr.resolve();
+            };
+            link.onerror = function () {
+                _dfr.reject(new Error(`Failed to load script: ${src}`));
             };
             // Append link element to HTML head
             head.appendChild(link);

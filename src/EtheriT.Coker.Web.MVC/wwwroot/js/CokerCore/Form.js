@@ -188,6 +188,7 @@
                 }
             });
             form.reset();
+            if ($(form).find("[name='id']").length > 0) $(form).find("[name='id']").val(0);
         }
     }
 });

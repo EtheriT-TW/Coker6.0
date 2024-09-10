@@ -81,7 +81,6 @@ function ready() {
     }
     if ($(".BGCanvas").length > 0) setBGCanvas();
     if ($(".FlipBook").length > 0) FlipBookInit();
-    if ($(".FlipBookModal").length > 0) FlipBookModalInit();
     if ($(".MapMessage").length > 0) MapMessage();
     if ($(".getlatlng").length > 0) GetLatLng();
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));

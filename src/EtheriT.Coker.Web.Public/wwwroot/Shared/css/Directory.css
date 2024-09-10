@@ -125,8 +125,12 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    height: calc(1.25rem * 3.6);
     position: relative;
+    line-height: 1.2em;
+    height: calc(1.25rem* 1.2* 2 + 10px);
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    word-break: break-all;
 }
 
 .type_change_frame .type2-title {
@@ -212,7 +216,7 @@
 }
 
 .type_change_frame .pb1 {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 /* Button Share */

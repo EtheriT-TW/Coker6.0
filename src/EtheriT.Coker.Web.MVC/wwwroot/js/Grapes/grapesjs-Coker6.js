@@ -221,38 +221,38 @@
                             var $selected = $(editor.getSelected().getEl());
                             if ($selected.find(".swiper-slide").length > 0 && $("#SwiperModal").length < 1) {
                                 $(`<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel" aria-hidden="true">
-                                          <div class="modal-dialog">
-                                            <div class="modal-content">
-                                              <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="SwiperModalLabel">輪播編輯</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                              </div>
-                                              <div class="modal-body">
-                                                    <ul id="SwiperList" class="px-0"></ul>
-                                                    <template id="TemplateSwiperList">
-                                                        <li class="bg-white d-flex mb-3 border p-2 border-dark rounded">
-                                                            <img class="me-2" src="" alt="" />
-                                                            <div class="align-self-center">
-                                                                <div class="img_alt"></div>
-                                                                <div class="a_href"></div>
-                                                                <div class="a_title"></div>
-                                                            </div>
-                                                        </li>
-                                                    </template>
-                                              </div>
-                                              <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                                                <button type="button" class="btn btn-primary sava">完成編輯</button>
-                                              </div>
+                                        <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="SwiperModalLabel">輪播編輯</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                          </div>
+                                            <div class="modal-body">
+                                                <ul id="SwiperList" class="px-0"></ul>
+                                                <template id="TemplateSwiperList">
+                                                    <li class="bg-white d-flex mb-3 border p-2 border-dark rounded">
+                                                        <img class="me-2" src="" alt="" />
+                                                        <div class="align-self-center">
+                                                            <div class="img_alt"></div>
+                                                            <div class="a_href"></div>
+                                                            <div class="a_title"></div>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </div>
+                                            <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                            <button type="button" class="btn btn-primary sava">完成編輯</button>
+                                            </div>
                                         </div>
-                                        <style>
-                                            #SwiperModal img {
-                                                   max-width: 100px;
-                                            }
-                                        </style>
-                                    `).appendTo("body");
+                                        </div>
+                                    </div>
+                                    <style>
+                                        #SwiperModal img {
+                                                max-width: 100px;
+                                        }
+                                    </style>
+                                `).appendTo("body");
                             }
                             var $body = $("#SwiperList");
                             var datas = [];
@@ -281,16 +281,17 @@
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
-                            $("#SwiperModal .sava").on("click", function () {
+                            $("#SwiperModal .sava").off("click").on("click", function () {
                                 const $s = $selected.clone();
-                                const $slides = $s.find(".swiper-slide").clone();
-                                const $b = $s.find(".swiper-wrapper");
+                                const $slides = $s.find(".swiper-wrapper>.swiper-slide").clone();
+                                const $b = $s.find(".swiper-wrapper").empty();
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     $b.append($slides[$(element).data("order")]);
                                 });
-                                
-                                //editor.getSelected().components($b.html());
+                                editor.getSelected().components($s.html());
+                                $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
+                                $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });
                                 SwiperModal.hide();
                             });
                         },

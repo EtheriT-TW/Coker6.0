@@ -59,10 +59,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex">
-                        <div class="align-content-center">
+                        <div id="width-auto" class="align-content-center">
                             <h6 class="mb-0 ">全站導覽人數</h6>
                         </div>
-                        <div class="text-end pt-1 col-md-9">
+                        <div class="text-end pt-1 inline-flex">
                             <p class="mb-0 ">總人數<span class="text-success text-sm font-weight-bolder">@Model.Remote.SumMemCount</span></p>
                             <p class="mb-0 ">總人次<span class="text-success text-sm font-weight-bolder">@Model.Remote.SumCount</span></p>
                         </div>
@@ -72,8 +72,8 @@
                     <form method="post" action="/DashboardController/Index">
                         <div class="d-flex align-content-center">
                             <i class="material-icons text-sm my-auto me-1">schedule</i>
-                            <p>統計區間</p>             
-                        </div>
+                            <p class="mb-0">&nbsp;統計區間</p>
+                            </div>
                         <div class="date input-group mb-3">
                             <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">                            
                         </div>

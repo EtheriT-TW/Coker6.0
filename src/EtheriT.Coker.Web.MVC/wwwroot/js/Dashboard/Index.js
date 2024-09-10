@@ -13,7 +13,7 @@
                 borderWidth: 0, //長條圖的外框粗細
                 borderRadius: 4,
                 borderSkipped: false,
-                backgroundColor: "rgba(255, 255, 255, .8)",
+                backgroundColor: "rgba(255, 255, 255, 1)",
                 data: remote.WebsitesRemotesCount, //Y軸數量資料來源
                 maxBarThickness: 25 //長條圖粗細
             }, {
@@ -22,7 +22,7 @@
                 borderWidth: 0,
                 borderRadius: 4,
                 borderSkipped: false,
-                backgroundColor: "#ffe2c7", //"rgba(255, 0, 0, .8)",
+                backgroundColor: "#fea11d", //"rgba(255, 0, 0, .8)",
                 data: remote.WebsitesRemotesMemCount,
                 maxBarThickness: 20
             }],
@@ -41,7 +41,7 @@
                             // Apply different colors for each dataset
                             labels.forEach(function (label, i) {
                                 if (i === 0) {
-                                    label.fontColor = "rgba(255, 255, 255, .8)"; // 人次的顏色
+                                    label.fontColor = "rgba(255, 255, 255, 1)"; // 人次的顏色
                                 } else if (i === 1) {
                                     label.fontColor = "#ffe2c7"; // 人數的顏色
                                 }

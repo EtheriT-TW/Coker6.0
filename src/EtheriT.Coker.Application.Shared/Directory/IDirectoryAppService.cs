@@ -1,6 +1,7 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,5 +20,6 @@ namespace EtheriT.Coker.Application.Shared.Directory
         public Task<JsonResult> GetDirectoryProductsList(long id, DataSourceLoadOptions loadOptions);
         public Task<JsonResult> GetDirectoryMenusList(long id, DataSourceLoadOptions loadOptions);
         public Task<JsonResult> GetDirectoryAdvertiseList(long id, DataSourceLoadOptions loadOptions);
+        public Task<List<AdvertiseDto>> GetReleAd(DataIdWebsiteIdDto dto);
     }
 }

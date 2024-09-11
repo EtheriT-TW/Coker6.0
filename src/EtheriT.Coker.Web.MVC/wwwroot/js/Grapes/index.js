@@ -315,6 +315,7 @@ var grapesInit = function (options) {
                                 break;
                             case "catalog_frame":
                             case "menu_directory":
+                            case "advertise_directory":
                                 setConfig(5, s);
                                 break;
                             case "link_with_icon":

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -72,6 +73,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> Delete(long Id)
         {
             return await directoryAppService.Delete(Id);
+        }
+        [HttpPost]
+        public async Task<List<AdvertiseDto>> GetReleAd(DataIdWebsiteIdDto dto)
+        {
+            return await directoryAppService.GetReleAd(dto);
         }
     }
 }

@@ -439,7 +439,7 @@
     var PopupDirectory = null;
     //目錄
     editor.DomComponents.addType('目錄', {
-        isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame'),
+        isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame') || el.classList?.contains('advertise_directory'),
         model: {
             defaults: {
                 droppable: false,

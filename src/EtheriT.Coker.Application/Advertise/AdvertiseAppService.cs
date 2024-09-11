@@ -162,7 +162,7 @@ namespace EtheriT.Coker.Application.Advertise
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var result = db.Article.Where(e => e.Id == Id).FirstOrDefault();
+                var result = db.Advertise.Where(e => e.Id == Id).FirstOrDefault();
 
                 if (result != null)
                 {

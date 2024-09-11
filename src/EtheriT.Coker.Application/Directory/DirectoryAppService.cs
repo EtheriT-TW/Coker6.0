@@ -30,6 +30,7 @@ using EtheriT.Coker.Application.Shared.Dto.Files;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Dto.Search;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -867,7 +868,7 @@ namespace EtheriT.Coker.Application.Directory
                 if (result != null)
                 {
                     var dataQuery = from e in result
-                                    where new List<int> { 1, 2, 3 }.Contains(e.Type)
+                                    where new List<int> { 1, 2, 3, 4 }.Contains(e.Type)
                                     select new DirectoryGetListDto
                                     {
                                         Id = e.Id,
@@ -1171,6 +1172,58 @@ namespace EtheriT.Coker.Application.Directory
                 error = e.Message;
             }
             return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        public async Task<List<AdvertiseDto>> GetReleAd(DataIdWebsiteIdDto dto)
+        {
+            var websiteid = dto.WebsiteId;
+            if (websiteid == 0) websiteid = await loginUserData.GetWebsiteId();
+            try
+            {
+                var db_d = db.Directory.Where(e => dto.Ids.Contains(e.Id) && e.FK_WebsiteId == websiteid && !e.IsDeleted).FirstOrDefault();
+                var DataIds = new List<long>();
+                if (db_d != null)
+                {
+                    var d_tags = await db.Tag_Associates.Include(e => e.Tag)
+                        .Where(e => dto.Ids.Contains(e.FK_AId))
+                        .Where(e => !e.IsDeleted)
+                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Tag.FK_WebsiteId == websiteid)
+                        .ToListAsync();
+
+                    if (d_tags != null)
+                    {
+                        var tlist = d_tags.Select(e => e.FK_TId).ToList();
+                        var a_tags = await db.Tag_Associates.Include(e => e.Tag)
+                            .Where(e => tlist.Contains(e.FK_TId))
+                            .Where(e => !e.IsDeleted)
+                            .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
+                            .Where(e => e.Tag.FK_WebsiteId == websiteid)
+                            .ToListAsync();
+                        if (!a_tags.Any()) throw new Exception("資料不存在");
+                        var aids = a_tags.Select(e => e.FK_AId).ToList();
+                        var adresult = db.Advertise;
+                        var output = await (from e in adresult
+                                               where aids.Contains(e.Id)
+                                               where !e.IsDeleted
+                                               where e.Permanent || ((DateTime.Compare((DateTime)e.StartDate, DateTime.Now) < 0) && (DateTime.Compare((DateTime)e.EndDate, DateTime.Now) > 0))
+                                               select new AdvertiseDto
+                                               {
+                                                   Id = e.Id,
+                                                   Title = e.Title,
+                                                   Link = e.Link,
+                                                   Target = e.Target,
+                                                   Visible = e.Visible,
+                                                   SerNO = e.SerNO,
+                                               }).ToListAsync();
+                        return output;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+            return null;
         }
     }
 }

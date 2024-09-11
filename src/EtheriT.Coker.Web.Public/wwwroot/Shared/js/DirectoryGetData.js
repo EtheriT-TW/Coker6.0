@@ -16,10 +16,20 @@
             data: JSON.stringify(data),
             dataType: "json"
         });
+    },
+    getDirectoryAdvertiseData: function (data) {
+        return $.ajax({
+            url: "/api/Directory/GetReleAd",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(data),
+            dataType: "json"
+        });
     }
 }
 
 function initElemntAndLoadDir($dir, page) {
+    console.log("InitLoad")
     const $self = $dir || $(".catalog_frame").first();
     var temp_siblings = $self.find(".templatecontent").siblings();
     if (temp_siblings.length > 0) {
@@ -139,7 +149,21 @@ function DirectoryGetDataInit() {
                 }
             });
         }
-    })
+    });
+
+    $(".advertise_directory").each(function () {
+        const $self = $(this);
+        const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
+        console.log(dirid)
+        Directory.getDirectoryAdvertiseData({
+            Ids: dirid,
+            WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0,
+            showUnvisible: true
+        }).done(function (result) {
+            console.log(result)
+        })
+    });
+
     if (dirLength == 1) {
         if ("onhashchange" in window) {
             window.onhashchange = hashChangeDirectory;
@@ -156,8 +180,8 @@ function hashChangeDirectory(e) {
         console.log("HashChange錯誤")
     }
 }
-
 function DirectoryDataGet($item, option) {
+    console.log("DataGet")
     const dirLength = $(".catalog_frame").length;
     let page = parseInt(option.Page);
     if ($item.data("type") == "search") {
@@ -263,8 +287,8 @@ function DirectoryDataGet($item, option) {
         }
     })
 }
-
 function DirectoryDataInsert($item, result) {
+    console.log("Insert")
     if (result == null) return;
     const temp = $item.find(".templatecontent").html();
     const temp_tag = $item.find(".templatecontent-tag").html();

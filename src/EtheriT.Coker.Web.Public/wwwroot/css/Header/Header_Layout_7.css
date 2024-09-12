@@ -3,8 +3,12 @@
     background: url(/upload/20170818112557.jpg) no-repeat top;
 }
 
+.titleimage {
+    margin-top:80px !important;
+}
+
 .marqueeSwiper {
-    height:1.5rem;
+    height: 1.5rem;
 }
 
     .marqueeSwiper .swiper-slide {
@@ -685,6 +689,10 @@
         margin-left: 1rem;
         padding: 0.25rem 0;
         margin: 0;
+    }
+
+    .headernews {
+        width: 100%;
     }
 }
 

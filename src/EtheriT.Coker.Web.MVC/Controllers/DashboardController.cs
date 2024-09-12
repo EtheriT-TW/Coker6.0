@@ -37,7 +37,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
             string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
             var result = await remoteAppService.GetRemoteCount(new GetRemoteCountInputDto { 
-                StareDate = DateTime.Now,
+                StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(-7)
             });
             var remoteItem = new List<long>();

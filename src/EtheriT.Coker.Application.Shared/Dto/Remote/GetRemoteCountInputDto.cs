@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Remote
 {
     public class GetRemoteCountInputDto
     {
-        public DateTime StareDate { get; set; }
+        public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
     }
 }

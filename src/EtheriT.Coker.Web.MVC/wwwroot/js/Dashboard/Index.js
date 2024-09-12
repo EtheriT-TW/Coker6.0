@@ -4,7 +4,11 @@
     var ctx = document.getElementById("chart-bars").getContext("2d");
     co.Picker.Init($("#InputDate"), { timePicker :false});
     $("#InputDate").on("change", function () {
-        co.Remote.GetRemoteCount({ StareDate: "2024/9/3", EndDate: "2024/9/10" }).done(function (result) {
+        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍        
+        const datesArray = selectedDates.split('~');
+        const startDate = new Date(datesArray[0]);
+        const endDate = new Date(datesArray[1]);
+        co.Remote.GetRemoteCount({ StartDate: startDate, EndDate: endDate }).done(function (result) {
             console.log(result);
         });
     });

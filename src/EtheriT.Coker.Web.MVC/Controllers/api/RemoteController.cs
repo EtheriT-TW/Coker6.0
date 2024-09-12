@@ -29,6 +29,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto)
         {
+            Console.WriteLine($"StartDate: {dto.StartDate}, EndDate: {dto.EndDate}"+"////////////////");
             return await remoteAppService.GetRemoteCount(dto);
         }
     }

@@ -154,13 +154,12 @@ function DirectoryGetDataInit() {
     $(".advertise_directory").each(function () {
         const $self = $(this);
         const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
-        console.log(dirid)
         Directory.getDirectoryAdvertiseData({
             Ids: dirid,
             WebsiteId: typeof (SiteId) != "undefined" ? SiteId : 0,
             showUnvisible: true
         }).done(function (result) {
-            console.log(result)
+            DirectoryAdDataInsert($self, result)
         })
     });
 
@@ -452,4 +451,40 @@ function DirectoryDataInsert($item, result) {
     });
     HoverEffectInit();
     ShareBlockInit();
+}
+
+function DirectoryAdDataInsert($item, result) {
+    console.log($item)
+    console.log(result)
+    $item.children(".File_Frame").each(function (index) {
+        var $this = $(this);
+        var thisreslut = result[index];
+        var filetype = result[index].fileLink.fileType;
+        if ($this.data("type") == 0 || $this.data("type") == filetype) {
+            console.log(filetype)
+            var linktitle = thisreslut.target ? "(開新分頁)" : "";
+            switch (parseInt(filetype)) {
+                case 1:
+                    var html = `<a href="${thisreslut.link} target="${thisreslut.target}" title="連結至：${thisreslut.link}${linktitle}" ><img src="${thisreslut.fileLink.link}" alt="${thisreslut.title}圖片"  class="w-100"/></a>`
+                    $this.find(".frame").append(html);
+                    break;
+                case 2:
+                    var html = `<video class="w-100" controls src="${thisreslut.fileLink.link}" type="${thisreslut.fileLink.video_Type}"></video>`
+                    $this.find(".frame").append(html);
+                    break;
+                case 3:
+                    var html = `<iframe src="https://www.youtube.com/embed/${thisreslut.fileLink.name}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
+                    $this.find(".frame").append(html);
+                    break;
+            }
+            $this.find(".title").text(thisreslut.title);
+            if ($this.find(".tag").length > 0) {
+                var tagList = "";
+                $.each(thisreslut.tagDatas, function (index, value) {
+                    tagList += "#" + value.title;
+                })
+                $this.find(".tag").text(tagList);
+            }
+        }
+    })
 }

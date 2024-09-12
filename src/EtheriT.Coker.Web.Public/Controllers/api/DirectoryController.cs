@@ -29,7 +29,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await directoryAppService.GetReleMenu(dto);
         }
         [HttpPost]
-        public async Task<List<AdvertiseDto>> GetReleAd(DataIdWebsiteIdDto dto)
+        public async Task<List<AdvertiseDisplayDto>> GetReleAd(DataIdWebsiteIdDto dto)
         {
             return await directoryAppService.GetReleAd(dto);
         }

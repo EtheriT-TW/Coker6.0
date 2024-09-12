@@ -11,6 +11,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.Tag
 {
@@ -338,6 +339,30 @@ namespace EtheriT.Coker.Application.Tag
             {
                 var output = await (from ta in db.Tag_Associates
                                     where !ta.IsDeleted && ta.FK_AId == PId && ta.Type == 1
+                                    from t in db.Tags
+                                    where ta.FK_TId == t.Id
+                                    select new TagGetAllDataDto
+                                    {
+                                        Id = ta.Id,
+                                        FK_TId = ta.FK_TId,
+                                        Title = t.Title
+                                    }).ToListAsync();
+
+                return output;
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<List<TagGetAllDataDto>> GetAdvertiseDataAll(long AdId)
+        {
+            try
+            {
+                var output = await (from ta in db.Tag_Associates
+                                    where !ta.IsDeleted && ta.FK_AId == AdId && ta.Type == (int)TagAssociateTypeEnum.廣告
                                     from t in db.Tags
                                     where ta.FK_TId == t.Id
                                     select new TagGetAllDataDto

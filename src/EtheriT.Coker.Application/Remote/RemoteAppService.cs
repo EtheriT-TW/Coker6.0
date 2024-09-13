@@ -194,7 +194,7 @@ namespace EtheriT.Coker.Application.Remote
             var data =
                 from d in db.Remotes //使用者瀏覽紀錄
                 join m in db.WebMenus.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted) on d.FK_WebmenuId equals m.Id
-                where d.ExecutionTime.Date <= dto.StartDate && d.ExecutionTime.Date > dto.EndDate
+                where d.ExecutionTime.Date >= dto.StartDate && d.ExecutionTime.Date < dto.EndDate
 
                 group d by new
                 {

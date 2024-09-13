@@ -2,14 +2,30 @@
     const $bars = $("#chart-bars")
     var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
-    co.Picker.Init($("#InputDate"), { timePicker :false});
+    co.Picker.Init($("#InputDate"), { timePicker: false });
+    function updateChart(dates, counts, memCounts) {
+        const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
+        if (chart) {
+            chart.data.labels = dates; // 更新X軸日期資料
+            chart.data.datasets[0].data = counts; // 更新Y軸人次資料
+            chart.data.datasets[1].data = memCounts; // 更新Y軸人數資料
+            chart.update(); // 重新渲染圖表
+        } else {
+            console.error('Chart instance not found');
+        }
+    }
     $("#InputDate").on("change", function () {
-        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍        
+        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍      
         const datesArray = selectedDates.split('~');
         const startDate = new Date(datesArray[0]);
         const endDate = new Date(datesArray[1]);
         co.Remote.GetRemoteCount({ StartDate: startDate, EndDate: endDate }).done(function (result) {
-            console.log(result);
+            // result 包含 remoteItem, remoteMemCount 和 dateItem
+            var remoteItems = result.websitesRemotesCount;
+            var remoteMemCounts = result.websitesRemotesMemCount;
+            var dateItems = result.websitesRemotesDate;
+
+            updateChart(dateItems, remoteItems, remoteMemCounts);
         });
     });
     new Chart(ctx, {
@@ -279,9 +295,8 @@
         },
     });*/
 }
-/*----------------------------------未完成----------------------------------
 $(document).ready(function () {
-    $('#sendData').on('click', function () {
+    /*$('#sendData').on('click', function () {
         const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍
         console.log('Selected Dates:', selectedDates); // 確認值是否存在
 
@@ -303,7 +318,7 @@ $(document).ready(function () {
         } else {
             alert('請選擇日期範圍');
         }
-    });
+    });*/
     //更新統計表
     function updateChart(dates, counts, memCounts) {
         const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
@@ -316,4 +331,4 @@ $(document).ready(function () {
             console.error('Chart instance not found');
         }
     }
-});*/
+});

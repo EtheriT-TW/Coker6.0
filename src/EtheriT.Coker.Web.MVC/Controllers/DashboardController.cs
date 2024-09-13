@@ -37,8 +37,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			long orgId = loginUserData.GetFrontWebsiteId();//獲取站台Id
             string filePath = $"{configuration.GetValue<string>("VirtualDirectory:upload")}\\{orgName}";
             var result = await remoteAppService.GetRemoteCount(new GetRemoteCountInputDto { 
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddDays(-7)
+                StartDate = DateTime.Now.AddDays(-7),
+                EndDate = DateTime.Now
             });
             var remoteItem = new List<long>();
             var remoteMemCount = new List<long>();
@@ -50,14 +50,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 {
                     DateTime d = DateTime.Now.Date.AddDays(-i);
                     RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
-
                     if (item == null)
-                    {
+                    {                        
                         remoteItem.Add(0);
                         remoteMemCount.Add(0);
                     }
                     else
-                    {
+                    {                       
                         remoteItem.Add(item.count);
                         remoteMemCount.Add(item.MemCount);
                     }

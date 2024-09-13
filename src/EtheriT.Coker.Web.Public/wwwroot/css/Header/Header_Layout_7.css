@@ -3,8 +3,12 @@
     background: url(/upload/20170818112557.jpg) no-repeat top;
 }
 
+#swiper-light {
+    margin-top :30px !important;
+}
+
 .titleimage {
-    margin-top:80px !important;
+    margin-top: 80px !important;
 }
 
 .marqueeSwiper {

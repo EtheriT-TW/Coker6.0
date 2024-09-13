@@ -1173,8 +1173,9 @@ namespace EtheriT.Coker.Application.Directory
             }
             return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<List<AdvertiseDto>> GetReleAd(DataIdWebsiteIdDto dto)
+        public async Task<List<AdvertiseDisplayDto>> GetReleAd(DataIdWebsiteIdDto dto)
         {
+            var output = new List<AdvertiseDisplayDto>();
             var websiteid = dto.WebsiteId;
             if (websiteid == 0) websiteid = await loginUserData.GetWebsiteId();
             try
@@ -1202,20 +1203,23 @@ namespace EtheriT.Coker.Application.Directory
                         if (!a_tags.Any()) throw new Exception("資料不存在");
                         var aids = a_tags.Select(e => e.FK_AId).ToList();
                         var adresult = db.Advertise;
-                        var output = await (from e in adresult
-                                               where aids.Contains(e.Id)
-                                               where !e.IsDeleted
-                                               where e.Permanent || ((DateTime.Compare((DateTime)e.StartDate, DateTime.Now) < 0) && (DateTime.Compare((DateTime)e.EndDate, DateTime.Now) > 0))
-                                               select new AdvertiseDto
-                                               {
-                                                   Id = e.Id,
-                                                   Title = e.Title,
-                                                   Link = e.Link,
-                                                   Target = e.Target,
-                                                   Visible = e.Visible,
-                                                   SerNO = e.SerNO,
-                                               }).ToListAsync();
-                        return output;
+                        output = await (from e in adresult
+                                        where aids.Contains(e.Id)
+                                        where !e.IsDeleted && e.Visible
+                                        where e.Permanent || ((DateTime.Compare((DateTime)e.StartDate, DateTime.Now) < 0) && (DateTime.Compare((DateTime)e.EndDate, DateTime.Now) > 0))
+                                        orderby e.SerNO
+                                        select new AdvertiseDisplayDto
+                                        {
+                                            Id = e.Id,
+                                            Title = e.Title,
+                                            Link = e.Link,
+                                            Target = e.Target,
+                                        }).ToListAsync();
+                        for (var i = 0; i < output.Count; i++)
+                        {
+                            output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id);
+                            output[i].TagDatas = await tagAppService.GetAdvertiseDataAll(output[i].Id);
+                        }
                     }
                 }
             }
@@ -1223,7 +1227,7 @@ namespace EtheriT.Coker.Application.Directory
             {
 
             }
-            return null;
+            return output;
         }
     }
 }

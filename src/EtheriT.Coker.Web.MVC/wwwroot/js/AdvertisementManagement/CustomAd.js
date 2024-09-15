@@ -278,12 +278,15 @@ function FormDataClear() {
     $btn_display.children("span").text("visibility");
     $title_text.val("");
     $description_text.val("");
+    $("#SortBy").val(0);
 }
 
 function FormDataSet(result) {
+    console.log(result);
     FormDataClear();
     keyId = result.id;
     disp_opt = result.visible;
+    $("#SortBy").val(result.sortByInt)
     if (disp_opt) {
         $btn_display.children("span").text("visibility");
     } else {
@@ -302,6 +305,7 @@ function AddUp(success_text, error_text) {
         Type: 4,
         Visible: disp_opt,
         TagSelected: $DirectoryTags.data("tagList"),
+        SortBy: $("#SortBy").val()
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         directory_list.component.refresh();

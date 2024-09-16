@@ -16,7 +16,7 @@
     overflow: hidden; /* 确保超出的部分被裁剪 */
 }
 
-.home{
+.home, .page{
     padding-top: 132px;
 }
 

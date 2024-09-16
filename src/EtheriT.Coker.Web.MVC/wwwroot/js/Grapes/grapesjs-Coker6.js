@@ -319,13 +319,20 @@
                             });
 
                             $("#SwiperModal .sava").off("click").on("click", function () {
+                                /*$("#SwiperList li").each(function (index, element) {
+                                    const updatedSrc = $(element).find('img').attr('src'); // 獲取 li 中的 img src
+                                    $selected.find(`.swiper-slide:eq(${index}) img`).attr('src', updatedSrc); // 更新對應的 img src
+                                });*/
+
                                 const $s = $selected.clone();
                                 const $slides = $s.find(".swiper-wrapper>.swiper-slide").clone();
                                 const $b = $s.find(".swiper-wrapper").empty();
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     $b.append($slides[$(element).data("order")]);
+                                    console.log($slides[$(element).data("order")]);
                                 });
+                                console.log($s);
                                 editor.getSelected().components($s.html());
                                 $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });

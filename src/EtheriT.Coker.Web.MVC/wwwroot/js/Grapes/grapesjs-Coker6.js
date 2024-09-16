@@ -231,17 +231,17 @@
                                                 <ul id="SwiperList" class="px-0"></ul>
                                                 <template id="TemplateSwiperList">
                                                     <li class="bg-white d-flex mb-3 border p-2 border-dark rounded position-relative">
-                                                        <img class="me-2" src="" alt="" />
+                                                        <img class="me-2 update-img" src="" alt="" />
                                                         <div class="align-self-center">
                                                             <div class="img_alt"></div>
                                                             <div class="a_href"></div>
                                                             <div class="a_title"></div>
                                                         </div>
                                                         <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
-                                                            <a href="#" class="gjs-plh-image gjs-selected mr-1 update-img" title="更換圖片">
+                                                            <a href="#" class="mr-1" title="編輯內容">
                                                                 <span class="material-symbols-outlined">edit_square</span>
                                                             </a>
-                                                            <a href="#" class="gjs-plh-image gjs-selected mr-1 delete-slide" title="刪除">
+                                                            <a href="#" class="mr-1 delete-slide" title="刪除">
                                                                 <span class="material-symbols-outlined">delete</span>
                                                             </a>
                                                         </div>
@@ -319,11 +319,6 @@
                             });
 
                             $("#SwiperModal .sava").off("click").on("click", function () {
-                                /*$("#SwiperList li").each(function (index, element) {
-                                    const updatedSrc = $(element).find('img').attr('src'); // 獲取 li 中的 img src
-                                    $selected.find(`.swiper-slide:eq(${index}) img`).attr('src', updatedSrc); // 更新對應的 img src
-                                });*/
-
                                 const $s = $selected.clone();
                                 const $slides = $s.find(".swiper-wrapper>.swiper-slide").clone();
                                 const $b = $s.find(".swiper-wrapper").empty();
@@ -333,6 +328,7 @@
                                     console.log($slides[$(element).data("order")]);
                                 });
                                 console.log($s);
+                                console.log(editor);
                                 editor.getSelected().components($s.html());
                                 $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });

@@ -10,6 +10,8 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(100)] public string? Img { get; set; }
         public int SerNO { get; set; }
         public bool Visible { get; set; }
+        public int Exposure { get; set; } = 0;
+        public int Clicks { get; set; } = 0;
         [StringLength(300)] public string Title { get; set; }
         public bool Target { get; set; }
         [StringLength(255)] public string? Link { get; set; }

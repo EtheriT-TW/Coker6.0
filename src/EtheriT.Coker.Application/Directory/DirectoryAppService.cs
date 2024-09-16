@@ -31,6 +31,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using MailKit.Search;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -154,6 +156,7 @@ namespace EtheriT.Coker.Application.Directory
                                             Visible = e.Visible,
                                             Type = e.Type,
                                             TagDatas = new List<TagGetSelectedDto>(),
+                                            SortBy = e.SortBy,
                                             FK_MId = e.FK_Mid
                                         }).FirstOrDefaultAsync();
 
@@ -952,6 +955,7 @@ namespace EtheriT.Coker.Application.Directory
                                         Visible = e.Visible,
                                         Items = "",
                                         FK_Mid = e.FK_Mid,
+                                        SortBy = e.SortBy == (int)SortByEnum.隨機 ? "隨機排序" : e.SortBy == (int)SortByEnum.人氣值 ? "人氣值排序" : "預設排序",
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     if (output != null)
@@ -1214,7 +1218,18 @@ namespace EtheriT.Coker.Application.Directory
                                             Title = e.Title,
                                             Link = e.Link,
                                             Target = e.Target,
+                                            Clicks = e.Clicks,
+                                            Exposure = e.Exposure
                                         }).ToListAsync();
+                        switch (db_d.SortBy)
+                        {
+                            case 1:
+                                output = output.OrderBy(o => Guid.NewGuid()).ToList();
+                                break;
+                            case 2:
+                                output = output.OrderByDescending(o => o.Clicks).ToList();
+                                break;
+                        }
                         for (var i = 0; i < output.Count; i++)
                         {
                             output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id);

@@ -4,13 +4,17 @@
     color: #FFFF;
     background: url(/upload/20170818023503.png) center top;
     background-repeat: repeat-x;
-    min-height: 100px;
+    min-height: 80px;
     overflow: hidden;
     text-align: center;
     line-height: normal;
     width: 100%;
     max-width: 100%;
     background-color: #2566c9;
+}
+
+.title > .content{
+    padding:0.85rem !important;
 }
 
 #d1 {

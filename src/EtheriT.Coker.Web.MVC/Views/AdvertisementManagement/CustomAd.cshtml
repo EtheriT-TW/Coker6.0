@@ -54,6 +54,7 @@
                         c.AddFor(e => e.Title).Caption("標題");
                         c.AddFor(e => e.Description).Caption("描述");
                         c.AddFor(e => e.Items).Caption("綁定標籤、選單");
+                        c.AddFor(e => e.SortBy).Caption("排序方式");
                         c.AddFor(e => e.Visible).Caption("是否顯示").Width(100);
                         c.Add()
                         .Type(GridCommandColumnType.Buttons)
@@ -101,6 +102,14 @@
 
             <form id="DirectoryForm" class="card-body needs-validation">
                 <div class="d-flex align-self-center mb-3 justify-content-between">
+                    <div class="sortby col d-flex">
+                        <label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="SortBy">排序方式</label>
+                        <select id="SortBy" class="form-select" aria-label="Sort Type Select" required>
+                            <option selected value="0">預設排序</option>
+                            <option value="1">隨機排序</option>
+                            <option value="2">人氣值排序</option>
+                        </select>
+                    </div>
                     <button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
                         <span class="material-symbols-outlined fs-2">visibility</span>
                     </button>

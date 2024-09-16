@@ -5,7 +5,22 @@
 .titleimage {
     width: 100%;
     height: 100%;
-    object-fit: cove;
+    object-fit: cove
+}
+
+.image-wh {
+    width: 100%; /* 容器的宽度 */
+    height: 100%; /* 容器的高度 */
+    position: relative;
+    overflow: hidden; /* 确保超出的部分被裁剪 */
+}
+
+.home, .page{
+    padding-top: 132px;
+}
+
+#swiper-light {
+    margin-top :15px !important;
 }
 
 .image-wh {

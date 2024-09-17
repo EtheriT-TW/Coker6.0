@@ -1152,17 +1152,19 @@ namespace EtheriT.Coker.Application.Directory
                             .ToListAsync();
                         if (!a_tags.Any()) throw new Exception("資料不存在");
                         var aids = a_tags.Select(e => e.FK_AId).ToList();
-                        var dataQuery = from p in db.Advertise.Where(e => !e.IsDeleted)
-                                        where aids.Contains(p.Id)
+                        var dataQuery = from a in db.Advertise.Where(e => !e.IsDeleted)
+                                        where aids.Contains(a.Id)
                                         select new DirectoryReleInfoDto
                                         {
-                                            Id = p.Id,
-                                            Title = p.Title,
-                                            StartTime = p.StartDate,
-                                            EndTime = p.EndDate,
-                                            SerNo = p.SerNO,
-                                            Visible = p.Visible,
-                                            LastModificationTime = p.LastModificationTime ?? p.CreationTime
+                                            Id = a.Id,
+                                            Title = a.Title,
+                                            StartTime = a.StartDate,
+                                            EndTime = a.EndDate,
+                                            SerNo = a.SerNO,
+                                            Visible = a.Visible,
+                                            ClickTimes = a.Clicks,
+                                            ExposureTimes = a.Exposure,
+                                            LastModificationTime = a.LastModificationTime ?? a.CreationTime
                                         };
                         var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                         return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });

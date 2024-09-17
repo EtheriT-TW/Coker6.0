@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Core.Models
         public virtual DateTime? StartDate { get; set; }
         public virtual DateTime? EndDate { get; set; }
         public bool Permanent { get; set; }
+        public List<Advertise_Log> Advertise_Logs { get; set; }
         public Website? Website { get; set; }
     }
 }

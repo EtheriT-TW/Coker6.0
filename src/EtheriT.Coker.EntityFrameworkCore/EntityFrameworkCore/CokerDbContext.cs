@@ -31,7 +31,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<LogisticsType_PaymentType> LogisticsType_Payments { get; set; }
         public DbSet<ThirdParty> ThirdParties { get; set; }
         public DbSet<ThirdPartyKeypair> ThirdPartyKeypairs { get; set; }
-        public DbSet<ThirdPartyKeypairValue> ThirdPartyKeypairValues { get; set; }        
+        public DbSet<ThirdPartyKeypairValue> ThirdPartyKeypairValues { get; set; }
         public DbSet<Prod_Spec> Prod_Specs { get; set; }
         public DbSet<Prod_Spec_Type> Prod_Spec_Types { get; set; }
         public DbSet<Prod_Stock> Prod_Stocks { get; set; }
@@ -55,10 +55,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<ObjectType> ObjectTypes { get; set; }
         public DbSet<MappingWebsiteRelationship> MappingWebsiteRelationship { get; set; }
         public DbSet<Advertise> Advertise { get; set; }
+        public DbSet<Advertise_Log> Advertise_Logs { get; set; }
         public DbSet<Article> Article { get; set; }
         public DbSet<Directory> Directory { get; set; }
-		public DbSet<StoreSetGroup> StoreSetGroup { get; set; }
-		public DbSet<StoreSet> StoreSet { get; set; }
+        public DbSet<StoreSetGroup> StoreSetGroup { get; set; }
+        public DbSet<StoreSet> StoreSet { get; set; }
         public DbSet<StoreSetDetail> StoreSetDetail { get; set; }
         public DbSet<storeSetItem> StoreSetItems { get; set; }
         public DbSet<CustSearch> CustSearch { get; set; }
@@ -78,11 +79,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-			modelBuilder.Entity<Website>(o =>
-			{
+            modelBuilder.Entity<Website>(o =>
+            {
                 o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-			});
-			modelBuilder.Entity<MappingUserAndWebsite>(o =>
+            });
+            modelBuilder.Entity<MappingUserAndWebsite>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
@@ -166,7 +167,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PSid);
                 o.HasOne(u => u.Token).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_Tid);
-            }); 
+            });
             modelBuilder.Entity<SearchLog>(o =>
             {
                 o.HasOne(s => s.Website).WithMany(w => w.SearchLogs).HasForeignKey(f => f.FK_WebsiteId);
@@ -220,6 +221,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Advertise).HasForeignKey(f => f.FK_WebsiteId);
             });
+            modelBuilder.Entity<Advertise_Log>(o =>
+            {
+                o.HasOne(u => u.Advertise).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Adid);
+                o.HasOne(u => u.User).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Uid);
+                o.HasOne(u => u.Token).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Tid);
+            });
             modelBuilder.Entity<Article>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
@@ -233,51 +240,63 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Website).WithMany(u => u.StoreSetDetails).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(f => f.StoreSet).WithMany(u => u.storeSetDetails).HasForeignKey(f => f.FK_StoreSetId);
             });
-            modelBuilder.Entity<StoreSetGroup>(o => {
+            modelBuilder.Entity<StoreSetGroup>(o =>
+            {
                 o.HasMany(f => f.StoreSets).WithOne(u => u.storeSetGroup).HasForeignKey(f => f.FK_StoreSetGroupId);
-			});
-            modelBuilder.Entity<storeSetItem>(o => {
+            });
+            modelBuilder.Entity<storeSetItem>(o =>
+            {
                 o.HasOne(f => f.storeSet).WithMany(u => u.storeSetItem).HasForeignKey(f => f.FK_StoreSetId);
             });
-            modelBuilder.Entity<CustSearch>(o => {
+            modelBuilder.Entity<CustSearch>(o =>
+            {
                 o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
             });
-            modelBuilder.Entity<AuditLog>(o => {
+            modelBuilder.Entity<AuditLog>(o =>
+            {
                 o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
             });
-            modelBuilder.Entity<MappingCompanyAndWebsites>(o => {
+            modelBuilder.Entity<MappingCompanyAndWebsites>(o =>
+            {
                 o.HasOne(f => f.Website).WithMany(w => w.Company).HasForeignKey(e => e.FK_WebsiteId);
                 o.HasOne(f => f.Company).WithMany(w => w.Websites).HasForeignKey(e => e.FK_CompanyId);
             });
-            modelBuilder.Entity<Recipient>(o => {
+            modelBuilder.Entity<Recipient>(o =>
+            {
                 o.HasOne(f => f.Website).WithMany(u => u.Recipients).HasForeignKey(f => f.FK_WebsiteId);
             });
-            modelBuilder.Entity<Permissions>(o => {
+            modelBuilder.Entity<Permissions>(o =>
+            {
                 o.HasOne(f => f.User).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_UserId);
                 o.HasOne(f => f.Role).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_RoleId);
                 o.HasOne(f => f.Website).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_WebsiteId);
             });
-            modelBuilder.Entity<PermissionDetail>(o => {
+            modelBuilder.Entity<PermissionDetail>(o =>
+            {
                 o.HasOne(f => f.User).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_UserId);
                 o.HasOne(f => f.Role).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_RoleId);
                 o.HasOne(f => f.Website).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_WebsiteId);
             });
-            modelBuilder.Entity<Remote>(o => {
-				o.HasOne(f => f.User).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_UserId);
-				o.HasOne(f => f.WebMenu).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_WebmenuId);
+            modelBuilder.Entity<Remote>(o =>
+            {
+                o.HasOne(f => f.User).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_UserId);
+                o.HasOne(f => f.WebMenu).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_WebmenuId);
                 o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
                 o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
             });
-            modelBuilder.Entity<NotFoundImage>(o => {
+            modelBuilder.Entity<NotFoundImage>(o =>
+            {
                 o.Property(t => t.CreateDate).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.Website).WithMany(w => w.NotFoundImages).HasForeignKey(e => e.FK_WebsiteId);
             });
-            modelBuilder.Entity<Core.Models.JsonObject>(o => {
+            modelBuilder.Entity<Core.Models.JsonObject>(o =>
+            {
                 o.Property(t => t.CreationTime).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.FK_Website).WithMany(w => w.jsonObjects).HasForeignKey(e => e.FK_WebsiteId);
             });
-            modelBuilder.Entity<Contact>(o => {
+            modelBuilder.Entity<Contact>(o =>
+            {
                 o.HasOne(f => f.WebMenu).WithMany(w => w.Contacts).HasForeignKey(e => e.FK_WebMenuId);
             });
             base.OnModelCreating(modelBuilder);

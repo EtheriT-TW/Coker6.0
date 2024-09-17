@@ -9,7 +9,6 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
-using Microsoft.CodeAnalysis.Semantics;
 
 namespace EtheriT.Coker.Application.Advertise
 {
@@ -225,8 +224,19 @@ namespace EtheriT.Coker.Application.Advertise
                                 await loginUserData.SaveChanges(db_ad);
                                 break;
                         }
+
+                        Core.Models.Advertise_Log adl = new Core.Models.Advertise_Log
+                        {
+                            FK_Adid = dto.FK_Aid,
+                            FK_Tid = dto.FK_Tid,
+                            FK_Uid = db_t.UserID,
+                            Action = dto.Action,
+                        };
+                        db.Advertise_Logs.Add(adl);
+                        db.SaveChanges();
                     }
                 }
+
                 output.Success = true;
             }
             catch (Exception e)

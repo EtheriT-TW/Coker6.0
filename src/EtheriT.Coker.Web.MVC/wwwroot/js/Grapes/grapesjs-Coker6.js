@@ -377,7 +377,7 @@
                 droppable: false,
                 copyable: false,
                 traits: [
-                    { name: 'data-dateRange', type: 'date-range', label: '起訖日期' },
+                    { name: 'data-daterange', type: 'date-range', label: '起訖日期' },
                     { name: 'data-location', type: 'text', label: '地點', placeholder: '請輸入地點' },
                     { name: 'data-addr', type: 'text', label: '地址', placeholder: '請輸入地址' },
                     { name: 'data-link', type: 'text', label: '連結', placeholder: '請輸入連結' },
@@ -416,10 +416,17 @@
               </div>
             `;
             const $d = $(el).find(".date-range");
+            const timeStr = self.model.getValue();
             co.Picker.Init($d);
-            $d.data('daterangepicker').setStartDate(Date.now);
+            try {
+                const array = timeStr.split(" ~ ");
+                $d.data('daterangepicker').setStartDate(array[0]);
+                $d.data('daterangepicker').setEndDate(array[1]);
+            } catch {
+                $d.data('daterangepicker').setStartDate(Date.now);
+            }
             $d.on("change", function () {
-                editor.getSelected().addAttributes({ "date-dateRange": this.value })
+                editor.getSelected().addAttributes({ "data-daterange": this.value })
             });
             return el;
         }

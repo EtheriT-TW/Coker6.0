@@ -1,6 +1,6 @@
 ﻿function date_input_change(id) {
     var $self = $(`#${id}`);
-    var dateRange = $self.attr('date-dateRange'); 
+    var dateRange = $self.attr('data-daterange'); 
     var location = $self.attr('data-location'); 
     var addr = $self.attr('data-addr'); 
     var organizer = $self.attr('data-organizer');
@@ -8,7 +8,6 @@
     var rorganizer = $self.attr('data-r-organizer'); 
     var link = $self.attr('data-link'); 
     var tel = $self.attr('data-tel');
-
     var parenttime = $self.find(".activity_start_time").parents("div").eq(1);
     if (dateRange == "") {
         $(parenttime).addClass("d-none");

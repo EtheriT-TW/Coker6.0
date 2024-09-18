@@ -503,6 +503,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "S001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2023, 7, 25, 19, 08, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 6,
+                    key = "linkMore",
+                    name = "了解更多",
+                    memo = "輸入一段連結，在商品頁中可以顯示了解更多按鈕。",
+                    FK_StoreSetGroupId = 2,
+                    type = 1,
+                    maxlength = 255,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(

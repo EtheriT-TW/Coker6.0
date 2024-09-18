@@ -480,18 +480,19 @@ function DirectoryAdDataInsert($item, result) {
         var filetype = result[index].fileLink.fileType;
         if ($this.data("type") == 0 || $this.data("type") == filetype) {
             var $frame = $this.find(".frame");
+            $frame.empty();
             switch (parseInt(filetype)) {
                 case 1:
                     var linktitle = thisreslut.target ? "(開新分頁)" : "";
-                    var html = `<a href="${thisreslut.link} target="${thisreslut.target}" title="連結至：${thisreslut.link}${linktitle}" ><img src="${thisreslut.fileLink.link}" alt="${thisreslut.title}圖片"  class="w-100"/></a>`
+                    var html = `<a href="${thisreslut.link} target="${thisreslut.target}" title="連結至：${thisreslut.link}${linktitle}" ><img src="${thisreslut.fileLink.link}" alt="${thisreslut.title}圖片"  class="h-100 w-100"/></a>`
                     $frame.append(html);
                     break;
                 case 2:
-                    var html = `<video class="w-100" controls src="${thisreslut.fileLink.link}" type="${thisreslut.fileLink.video_Type}"></video>`
+                    var html = `<video class="w-100 h-100" controls src="${thisreslut.fileLink.link}" type="${thisreslut.fileLink.video_Type}"></video>`
                     $frame.append(html);
                     break;
                 case 3:
-                    var html = `<iframe class="yt_preview" src="https://www.youtube.com/embed/${thisreslut.fileLink.name}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
+                    var html = `<iframe class="yt_preview h-100" src="https://www.youtube.com/embed/${thisreslut.fileLink.name}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
                     $frame.append(html);
                     break;
             }
@@ -499,7 +500,7 @@ function DirectoryAdDataInsert($item, result) {
             if ($this.find(".tag").length > 0) {
                 var tagList = "";
                 $.each(thisreslut.tagDatas, function (index, value) {
-                    tagList += "#" + value.title;
+                    tagList += "#" + value.title + "　";
                 })
                 $this.find(".tag").text(tagList);
             }
@@ -512,6 +513,7 @@ function DirectoryAdDataInsert($item, result) {
                 })
             }
             $frame.on("click", function () {
+                console.log("AAIsClick")
                 if (!$frame.hasClass("isClick")) {
                     $frame.addClass("isClick");
                     Advertise.ActivityClick({

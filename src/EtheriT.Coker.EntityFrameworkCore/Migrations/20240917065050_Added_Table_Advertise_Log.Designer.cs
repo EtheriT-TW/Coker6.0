@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240917065050_Added_Table_Advertise_Log")]
+    partial class Added_Table_Advertise_Log
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3119,21 +3121,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             memo = "請輸入GOOGLE提供之驗證碼：GTM-xxxxxxx",
                             name = "Google Tag Manager",
                             pattern = "^GTM-\\w+",
-                            type = 1
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 2L,
-                            IsDeleted = false,
-                            jobID = "E001",
-                            key = "linkMore",
-                            maxlength = 255,
-                            memo = "輸入一段連結，在商品頁中可以顯示了解更多按鈕。",
-                            name = "了解更多",
-                            pattern = "",
                             type = 1
                         });
                 });

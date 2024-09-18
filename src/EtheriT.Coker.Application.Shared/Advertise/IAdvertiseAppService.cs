@@ -8,5 +8,6 @@ namespace EtheriT.Coker.Application.Shared.Advertise
         public Task<ResponseMessageDto> AddUp(AdvertiseDto dto);
         public Task<AdvertiseGetDataDto> GetDataOne(long Id);
         public Task<ResponseMessageDto> Delete(long Id);
+        public  Task<ResponseMessageDto> ActivityLog(AdvertiseLogDto dto);
     }
 }

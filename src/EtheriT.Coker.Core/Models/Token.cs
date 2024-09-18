@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Core.Models
         public string ip { get; set; }
         public long websiteId { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }
+        public List<Advertise_Log> Advertise_Logs { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }
     }
 }

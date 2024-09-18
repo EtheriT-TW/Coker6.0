@@ -28,6 +28,27 @@
     }
 }
 
+var Advertise = {
+    ActivityClick: function (data) {
+        return $.ajax({
+            url: "/api/Advertise/ActivityClick",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(data),
+            dataType: "json"
+        });
+    },
+    ActivityExposure: function (data) {
+        return $.ajax({
+            url: "/api/Advertise/ActivityExposure",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(data),
+            dataType: "json"
+        });
+    },
+}
+
 function initElemntAndLoadDir($dir, page) {
     console.log("InitLoad")
     const $self = $dir || $(".catalog_frame").first();
@@ -63,7 +84,6 @@ function initElemntAndLoadDir($dir, page) {
             Longitude: Longitude,
             Latitude: Latitude,
         }
-        console.log(option);
         $self.find(".catalog>.template").remove();
         DirectoryDataGet($self, option);
 
@@ -452,29 +472,27 @@ function DirectoryDataInsert($item, result) {
     HoverEffectInit();
     ShareBlockInit();
 }
-
 function DirectoryAdDataInsert($item, result) {
-    console.log($item)
-    console.log(result)
+    var isFront = typeof ($item.attr("draggable")) == "undefined";
     $item.children(".File_Frame").each(function (index) {
         var $this = $(this);
         var thisreslut = result[index];
         var filetype = result[index].fileLink.fileType;
         if ($this.data("type") == 0 || $this.data("type") == filetype) {
-            console.log(filetype)
-            var linktitle = thisreslut.target ? "(開新分頁)" : "";
+            var $frame = $this.find(".frame");
             switch (parseInt(filetype)) {
                 case 1:
+                    var linktitle = thisreslut.target ? "(開新分頁)" : "";
                     var html = `<a href="${thisreslut.link} target="${thisreslut.target}" title="連結至：${thisreslut.link}${linktitle}" ><img src="${thisreslut.fileLink.link}" alt="${thisreslut.title}圖片"  class="w-100"/></a>`
-                    $this.find(".frame").append(html);
+                    $frame.append(html);
                     break;
                 case 2:
                     var html = `<video class="w-100" controls src="${thisreslut.fileLink.link}" type="${thisreslut.fileLink.video_Type}"></video>`
-                    $this.find(".frame").append(html);
+                    $frame.append(html);
                     break;
                 case 3:
-                    var html = `<iframe src="https://www.youtube.com/embed/${thisreslut.fileLink.name}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
-                    $this.find(".frame").append(html);
+                    var html = `<iframe class="yt_preview" src="https://www.youtube.com/embed/${thisreslut.fileLink.name}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
+                    $frame.append(html);
                     break;
             }
             $this.find(".title").text(thisreslut.title);
@@ -485,6 +503,25 @@ function DirectoryAdDataInsert($item, result) {
                 })
                 $this.find(".tag").text(tagList);
             }
+            if (isFront) {
+                Advertise.ActivityExposure({
+                    FK_Aid: thisreslut.id,
+                    FK_Tid: $.cookie("Token"),
+                }).done(function (result) {
+                    console.log(result)
+                })
+            }
+            $frame.on("click", function () {
+                if (!$frame.hasClass("isClick")) {
+                    $frame.addClass("isClick");
+                    Advertise.ActivityClick({
+                        FK_Aid: thisreslut.id,
+                        FK_Tid: $.cookie("Token"),
+                    }).done(function (result) {
+                        console.log(result)
+                    })
+                }
+            });
         }
     })
 }

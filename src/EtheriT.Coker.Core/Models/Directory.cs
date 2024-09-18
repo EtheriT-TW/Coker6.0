@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Core.Models
         public int Type { get; set; }
         public long? FK_Mid { get; set; }
         public bool Visible { get; set; }
+        public int SortBy { get; set; } = 0;
         public Website? Website { get; set; }
     }
 }

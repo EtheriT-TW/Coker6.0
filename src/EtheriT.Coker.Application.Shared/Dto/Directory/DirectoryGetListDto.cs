@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string Type { get; set; }
         public long? FK_Mid { get; set; }
         public string Items { get; set; }
+        public string SortBy { get; set; }
         public bool Visible { get; set; }
     }
 }

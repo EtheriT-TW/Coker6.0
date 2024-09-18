@@ -13,6 +13,10 @@
     background-color: #2566c9;
 }
 
+.title > .content{
+    padding:0.85rem !important;
+}
+
 #d1 {
     text-align: center;
 }

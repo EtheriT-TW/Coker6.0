@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240915083750_Update_Table_Diectory_SortBy")]
+    partial class Update_Table_Diectory_SortBy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,58 +101,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("Advertise");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Advertise_Log", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<int>("Action")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("FK_Adid")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("FK_Tid")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<long?>("FK_Uid")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_Adid");
-
-                    b.HasIndex("FK_Tid");
-
-                    b.HasIndex("FK_Uid");
-
-                    b.ToTable("Advertise_Logs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
@@ -3120,21 +3070,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "Google Tag Manager",
                             pattern = "^GTM-\\w+",
                             type = 1
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            CreationTime = new DateTime(2024, 7, 23, 14, 38, 0, 0, DateTimeKind.Local).AddTicks(1459),
-                            CreatorUserId = 1L,
-                            FK_StoreSetGroupId = 2L,
-                            IsDeleted = false,
-                            jobID = "E001",
-                            key = "linkMore",
-                            maxlength = 255,
-                            memo = "輸入一段連結，在商品頁中可以顯示了解更多按鈕。",
-                            name = "了解更多",
-                            pattern = "",
-                            type = 1
                         });
                 });
 
@@ -4313,31 +4248,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Advertise_Log", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Advertise", "Advertise")
-                        .WithMany("Advertise_Logs")
-                        .HasForeignKey("FK_Adid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EtheriT.Coker.Core.Models.Token", "Token")
-                        .WithMany("Advertise_Logs")
-                        .HasForeignKey("FK_Tid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
-                        .WithMany("Advertise_Logs")
-                        .HasForeignKey("FK_Uid");
-
-                    b.Navigation("Advertise");
-
-                    b.Navigation("Token");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
@@ -4972,11 +4882,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Advertise", b =>
-                {
-                    b.Navigation("Advertise_Logs");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
                 {
                     b.Navigation("Remotes");
@@ -5098,8 +5003,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
                 {
-                    b.Navigation("Advertise_Logs");
-
                     b.Navigation("Prod_Logs");
 
                     b.Navigation("ShoppingCarts");
@@ -5169,8 +5072,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>
                 {
-                    b.Navigation("Advertise_Logs");
-
                     b.Navigation("PermissionDetails");
 
                     b.Navigation("Permissions");

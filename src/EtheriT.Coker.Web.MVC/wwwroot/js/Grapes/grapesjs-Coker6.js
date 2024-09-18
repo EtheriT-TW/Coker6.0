@@ -230,12 +230,20 @@
                                             <div class="modal-body">
                                                 <ul id="SwiperList" class="px-0"></ul>
                                                 <template id="TemplateSwiperList">
-                                                    <li class="bg-white d-flex mb-3 border p-2 border-dark rounded">
+                                                    <li class="bg-white d-flex mb-3 border p-2 border-dark rounded position-relative">
                                                         <img class="me-2" src="" alt="" />
                                                         <div class="align-self-center">
                                                             <div class="img_alt"></div>
                                                             <div class="a_href"></div>
                                                             <div class="a_title"></div>
+                                                        </div>
+                                                        <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
+                                                            <a href="#" class="gjs-plh-image gjs-selected mr-1 update-img" title="更換圖片">
+                                                                <span class="material-symbols-outlined">edit_square</span>
+                                                            </a>
+                                                            <a href="#" class="gjs-plh-image gjs-selected mr-1 delete-slide" title="刪除">
+                                                                <span class="material-symbols-outlined">delete</span>
+                                                            </a>
                                                         </div>
                                                     </li>
                                                 </template>
@@ -281,14 +289,50 @@
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
+                            $("#SwiperModal .update-img").off("click").on("click", function () {
+                                // 找到這個的元素的li中的img标签
+                                const imgElement = $(this).closest("li").find("img");
+                                const input = document.createElement('input');
+                                input.type = 'file';
+                                input.accept = 'image/*';
+                                input.click();
+
+                                // 上傳圖片
+                                input.onchange = function (event) {
+                                    const file = event.target.files[0];
+                                    const reader = new FileReader();
+
+                                    reader.onload = function (e) {
+                                        // 使用 jQuery 修改该图片的 src 属性
+                                        imgElement.attr('src', e.target.result);
+                                    };
+
+                                    reader.readAsDataURL(file);
+                                };
+                            });
+
+                            $("#SwiperModal .delete-slide").off("click").on("click", function () {
+                                var isConfirmed = window.confirm("確定要刪除此欄位嗎?");
+                                if (isConfirmed) {
+                                    $(this).closest("li").remove();
+                                }
+                            });
+
                             $("#SwiperModal .sava").off("click").on("click", function () {
+                                /*$("#SwiperList li").each(function (index, element) {
+                                    const updatedSrc = $(element).find('img').attr('src'); // 獲取 li 中的 img src
+                                    $selected.find(`.swiper-slide:eq(${index}) img`).attr('src', updatedSrc); // 更新對應的 img src
+                                });*/
+
                                 const $s = $selected.clone();
                                 const $slides = $s.find(".swiper-wrapper>.swiper-slide").clone();
                                 const $b = $s.find(".swiper-wrapper").empty();
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     $b.append($slides[$(element).data("order")]);
+                                    console.log($slides[$(element).data("order")]);
                                 });
+                                console.log($s);
                                 editor.getSelected().components($s.html());
                                 $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });

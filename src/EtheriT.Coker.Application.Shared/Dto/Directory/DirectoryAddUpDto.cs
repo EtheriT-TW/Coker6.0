@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? Description { get; set; }
         public int Type { get; set; }
         public long? FK_Mid { get; set; }
+        public int SortBy { get; set; }
         public bool Visible { get; set; }
         public List<TagSelectedDto> TagSelected { get; set; }
     }

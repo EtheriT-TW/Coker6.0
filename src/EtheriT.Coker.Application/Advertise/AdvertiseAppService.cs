@@ -3,13 +3,10 @@ using Newtonsoft.Json;
 using EtheriT.Coker.Application.Dto;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
-using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
-using EtheriT.Coker.Application.Common;
-using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 
@@ -19,18 +16,14 @@ namespace EtheriT.Coker.Application.Advertise
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        private readonly StringHandler stringHandler;
         private readonly IMapper mapper;
-        private readonly IConfiguration configuration;
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
-        private readonly string ServiceName;
+        private readonly string ApplicationName;
         public AdvertiseAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            StringHandler stringHandler,
             IMapper mapper,
-            IConfiguration configuration,
             ITagAppService tagAppService,
             IFileUploadAppService fileUploadAppService
         )
@@ -38,22 +31,21 @@ namespace EtheriT.Coker.Application.Advertise
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
-            this.configuration = configuration;
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
-            this.stringHandler = stringHandler;
-            ServiceName = "Advertise";
+            this.ApplicationName = "Advertise";
         }
         public async Task<ResponseMessageDto> AddUp(AdvertiseDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             ResponseMessageDto tag_response = new ResponseMessageDto() { Success = false };
+            var asoid = dto.Id;
 
             try
             {
+                var datatata = loginUserData;
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long usetId = await loginUserData.GetUserId();
-                var asoid = dto.Id;
 
                 if (dto.Id == null || dto.Id == 0)
                 {
@@ -101,6 +93,10 @@ namespace EtheriT.Coker.Application.Advertise
             {
                 output.Success = false;
                 output.Error = e.Message;
+            }
+            finally
+            {
+                await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(new { asoid }), JsonConvert.SerializeObject(output));
             }
             return output;
         }
@@ -201,7 +197,52 @@ namespace EtheriT.Coker.Application.Advertise
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "Delete", JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(ApplicationName, "Delete", JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
+            }
+            return output;
+        }
+        public async Task<ResponseMessageDto> ActivityLog(AdvertiseLogDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
+                if (db_t != null)
+                {
+                    var db_ad = db.Advertise.Where(e => e.Id == dto.FK_Aid).FirstOrDefault();
+                    if(db_ad != null)
+                    {
+                        switch (dto.Action)
+                        {
+                            case (int)LogActionEnum.顯示:
+                                db_ad.Exposure += 1;
+                                await loginUserData.SaveChanges(db_ad);
+                                break;
+                            case (int)LogActionEnum.點擊:
+                                db_ad.Clicks += 1;
+                                await loginUserData.SaveChanges(db_ad);
+                                break;
+                        }
+
+                        Core.Models.Advertise_Log adl = new Core.Models.Advertise_Log
+                        {
+                            FK_Adid = dto.FK_Aid,
+                            FK_Tid = dto.FK_Tid,
+                            FK_Uid = db_t.UserID,
+                            Action = dto.Action,
+                        };
+                        db.Advertise_Logs.Add(adl);
+                        db.SaveChanges();
+                    }
+                }
+
+                output.Success = true;
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
             }
             return output;
         }

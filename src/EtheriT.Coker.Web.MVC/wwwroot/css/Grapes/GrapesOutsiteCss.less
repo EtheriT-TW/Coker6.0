@@ -70,3 +70,16 @@ body.grapesEdit {
 #gjs-tools {
     min-width: 220px;
 }
+
+#SwiperModal img {
+    max-width: 100px;
+}
+
+.modal-body:not(#SwiperList) {
+    display: flex;
+}
+
+//圖庫的優先級在SwiperModal之上
+.gjs-mdl-container {
+    z-index: 1051;
+}

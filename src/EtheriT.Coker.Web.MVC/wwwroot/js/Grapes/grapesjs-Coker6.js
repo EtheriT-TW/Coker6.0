@@ -221,24 +221,29 @@
                             var $selected = $(editor.getSelected().getEl());
                             if ($selected.find(".swiper-slide").length > 0 && $("#SwiperModal").length < 1) {
                                 $(`<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
+                                        <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
                                             <h1 class="modal-title fs-5" id="SwiperModalLabel">輪播編輯</h1>
+                                            <button type="button" class="btn-add-column">新增一欄</button>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <ul id="SwiperList" class="px-0"></ul>
+                                                <ul id="SwiperList" class="px-0 w-100"></ul>
                                                 <template id="TemplateSwiperList">
                                                     <li class="bg-white d-flex mb-3 border p-2 border-dark rounded position-relative">
                                                         <img class="me-2 update-img" src="" alt="" />
                                                         <div class="align-self-center">
                                                             <div class="img_alt"></div>
+                                                            <p class="setting d-none h3">正在編輯</>
                                                             <div class="a_href"></div>
                                                             <div class="a_title"></div>
+                                                            <div class="synopsis_title"></div>
+                                                            <div class="synopsis_caption"></div>
                                                         </div>
+
                                                         <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
-                                                            <a href="#" class="mr-1" title="編輯內容">
+                                                            <a href="#" class="mr-1 show-form" title="編輯內容">
                                                                 <span class="material-symbols-outlined">edit_square</span>
                                                             </a>
                                                             <a href="#" class="mr-1 delete-slide" title="刪除">
@@ -247,6 +252,21 @@
                                                         </div>
                                                     </li>
                                                 </template>
+                                                <div class="w-50 ps-3 d-none set-caption">
+                                                  <h5>編輯內文</h5>
+                                                  <form id="EditContentForm">
+                                                    <div class="mb-3">
+                                                      <label for="slideTitle" class="form-label">標題</label>
+                                                      <input type="text" class="form-control" id="slideTitle" placeholder="輸入標題" />
+                                                    </div>
+                                                    <div class="mb-3">
+                                                      <label for="slideAlt" class="form-label">內文</label>
+                                                      <textarea class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary save-content">儲存變更</button>
+                                                    <button type="button" class="btn btn-secondary set-caption">關閉</button>
+                                                  </form>
+                                                </div>
                                             </div>
                                             <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -255,11 +275,6 @@
                                         </div>
                                         </div>
                                     </div>
-                                    <style>
-                                        #SwiperModal img {
-                                                max-width: 100px;
-                                        }
-                                    </style>
                                 `).appendTo("body");
                             }
                             var $body = $("#SwiperList");
@@ -289,43 +304,108 @@
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
-                            $("#SwiperModal .update-img").off("click").on("click", function () {
-                                // 找到這個的元素的li中的img标签
-                                const imgElement = $(this).closest("li").find("img");
-                                const input = document.createElement('input');
-                                input.type = 'file';
-                                input.accept = 'image/*';
-                                input.click();
+                            $("#SwiperList").on("click", ".show-form", function () {
+                                const $li = $(this).closest('li');
+                                const $setting = $li.find('.setting');
 
-                                // 上傳圖片
-                                input.onchange = function (event) {
-                                    const file = event.target.files[0];
-                                    const reader = new FileReader();
+                                $("#SwiperList .setting").addClass('d-none');
+                                //被上面的程式吃掉沒辦法隱藏
+                                $setting.toggleClass('d-none');
+                                $('.set-caption').toggleClass('d-none');
 
-                                    reader.onload = function (e) {
-                                        // 使用 jQuery 修改该图片的 src 属性
-                                        imgElement.attr('src', e.target.result);
-                                    };
+                                if ($setting.is(':visible')) {
+                                    $li.removeClass('bg-white').addClass('bg-info');
+                                } else {
+                                    $li.addClass('bg-white').removeClass('bg-info');
+                                }
+                            });
+                            $("#SwiperModal .btn-add-column").off("click").on("click", function () {
+                                // 創建新的 li 結構
+                                const newLi = $(`
+                                    <li class="bg-white d-flex mb-3 border p-2 border-dark rounded position-relative ui-sortable-handle">
+                                        <img class="me-2 update-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgc3R5bGU9ImZpbGw6IHJnYmEoMCwwLDAsMC4xNSk7IHRyYW5zZm9ybTogc2NhbGUoMC43NSkiPgogICAgICAgIDxwYXRoIGQ9Ik04LjUgMTMuNWwyLjUgMyAzLjUtNC41IDQuNSA2SDVtMTYgMVY1YTIgMiAwIDAgMC0yLTJINWMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxNGMxLjEgMCAyLS45IDItMnoiPjwvcGF0aD4KICAgICAgPC9zdmc+" alt="">
+                                        <div class="align-self-center">
+                                            <div class="img_alt"></div>
+                                            <p class="setting d-none h3">正在編輯</p>
+                                            <div class="a_href"></div>
+                                            <div class="a_title"></div>
+                                            <div class="synopsis_title"></div>
+                                            <div class="synopsis_caption"></div>
+                                        </div>
+                                        <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
+                                            <a href="#" class="mr-1 show-form" title="編輯內容">
+                                                <span class="material-symbols-outlined">edit_square</span>
+                                            </a>
+                                            <a href="#" class="mr-1 delete-slide" title="刪除">
+                                                <span class="material-symbols-outlined">delete</span>
+                                            </a>
+                                        </div>
+                                    </li>
+                                `);
+                                // 在 SwiperList 中添加新 li
+                                $("#SwiperList").append(newLi);
+                            });
+                            $("#SwiperList").on("click", ".save-content", function () {
+                                //編輯內文存檔
+                                // 獲取當前選中的 li
+                                const $li = $("#SwiperList .setting:visible").closest('li'); // 獲取顯示的 setting 所在的 li
 
-                                    reader.readAsDataURL(file);
-                                };
+                                // 獲取標題和內文
+                                const title = $('#slideTitle').val();
+                                const content = $('#slideAlt').val();
+
+                                // 生成 HTML
+                                const html = `<h5>${title}</h5>
+                                              <p>${content}</p>`;
+
+                                // 將生成的 HTML 注入到 li 內
+                                $li.find('.synopsis_title').html(title); // 更新標題
+                                $li.find('.synopsis_caption').html(content); // 更新內文
+
+                                // 隱藏編輯區域
+                                $('#set-caption').addClass('d-none');
+                            });
+                            $("#SwiperList").on("click", ".update-img", function () {
+                                const $imgElement = $(this).closest("li").find("img"); // 找到對應的 img 標籤
+                                AssetManager.open();
+
+                                AssetManager.onSelect((result) => {
+                                    // 使用選擇的圖片更新 img 的 src 屬性
+                                    if (result && result.id) {
+                                        $imgElement.attr("src", result.id); // 假設 result.id 是圖片的 URL
+                                    }
+                                    AssetManager.close();
+                                });
                             });
 
-                            $("#SwiperModal .delete-slide").off("click").on("click", function () {
+                            $("#SwiperList").on("click", ".delete-slide", function () {
                                 var isConfirmed = window.confirm("確定要刪除此欄位嗎?");
                                 if (isConfirmed) {
                                     $(this).closest("li").remove();
                                 }
                             });
 
-                            $("#SwiperModal .sava").off("click").on("click", function () {
+                            $("#SwiperModal").on("click", ".sava", function () {
                                 const $s = $selected.clone();
                                 const $slides = $s.find(".swiper-wrapper>.swiper-slide").clone();
-                                const $b = $s.find(".swiper-wrapper").empty();
+                                const $b = $s.find(".swiper-wrapper");
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
-                                    $b.append($slides[$(element).data("order")]);
-                                    console.log($slides[$(element).data("order")]);
+                                    const newImgSrc = $(element).find('img').attr('src');
+                                    // 更新slides中的圖片
+                                    const order = $(element).data("order");
+                                    const slide = $slides[order];
+                                    if (slide) {
+                                        $(slide).find('img').attr('src', newImgSrc);
+                                        $b.append(slide);
+                                    } else {
+                                        const newSlide = `<div data-gjs-highlightable="true" id="iifxj-3" data-gjs-type="輪播容器" draggable="true" class="swiper-slide image_link_slide allowedit d-flex align-self-center swiper-slide-active" role="group" aria-label="3 / 3" style="width: 1543px; margin-right: 15px;">
+                                                            <a data-gjs-highlightable="true" id="itzrl-3" data-gjs-type="連結" draggable="true" class="allowedit w-100">
+                                                                <img id="iv499-3" data-gjs-type="image" draggable="true" src="${newImgSrc}" class="w-100 allowedit gjs-plh-image">
+                                                            </a>
+                                                          </div>`;
+                                        $b.append(newSlide);
+                                    }
                                 });
                                 console.log($s);
                                 console.log(editor);
@@ -1017,7 +1097,9 @@
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
             if (typeof (editor.getSelected()) != "undefined") {
-                var swiper = editor.getSelected().parent().parent().getEl().swiper;
+                console.log(editor.getSelected().parent());
+                var swiper = editor.getSelected().parent().getEl().swiper;
+                console.log(456);
                 if (typeof (swiper) != "undefined") {
                     var cont = iframe.document.getElementsByClassName("swiper-slide").length;
                     const timmer = function () {

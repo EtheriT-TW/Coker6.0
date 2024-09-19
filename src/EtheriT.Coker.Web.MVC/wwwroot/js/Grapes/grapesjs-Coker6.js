@@ -263,8 +263,12 @@
                                                       <label for="slideAlt" class="form-label">內文</label>
                                                       <textarea class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
                                                     </div>
+                                                    <div class="mb-3">
+                                                      <label for="slideHref" class="form-label">連結網址</label>
+                                                      <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
+                                                    </div>
                                                     <button type="button" class="btn btn-primary save-content">儲存變更</button>
-                                                    <button type="button" class="btn btn-secondary set-caption">關閉</button>
+                                                    <button type="button" class="btn btn-secondary cancel-form">取消</button>
                                                   </form>
                                                 </div>
                                             </div>
@@ -307,16 +311,13 @@
                             $("#SwiperList").on("click", ".show-form", function () {
                                 const $li = $(this).closest('li');
                                 const $setting = $li.find('.setting');
-
-                                $("#SwiperList .setting").addClass('d-none');
-                                //被上面的程式吃掉沒辦法隱藏
                                 $setting.toggleClass('d-none');
-                                $('.set-caption').toggleClass('d-none');
+                                $('.set-caption').removeClass('d-none');
 
                                 if ($setting.is(':visible')) {
-                                    $li.removeClass('bg-white').addClass('bg-info');
+                                    $li.removeClass('bg-white').addClass('bg-primary');
                                 } else {
-                                    $li.addClass('bg-white').removeClass('bg-info');
+                                    $li.addClass('bg-white').removeClass('bg-primary');
                                 }
                             });
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
@@ -345,14 +346,21 @@
                                 // 在 SwiperList 中添加新 li
                                 $("#SwiperList").append(newLi);
                             });
-                            $("#SwiperList").on("click", ".save-content", function () {
+                            $("#SwiperModal").on("click", ".cancel-form", function () {
+                                const $li = $("#SwiperList .setting").closest('li');
+                                $('.set-caption').addClass('d-none');
+                                $('.setting').addClass('d-none');
+                                $li.addClass('bg-white').removeClass('bg-primary');
+                            });
+                            $("#SwiperModal").on("click", ".save-content", function () {
                                 //編輯內文存檔
                                 // 獲取當前選中的 li
                                 const $li = $("#SwiperList .setting:visible").closest('li'); // 獲取顯示的 setting 所在的 li
-
+                                console.log($li);
                                 // 獲取標題和內文
                                 const title = $('#slideTitle').val();
                                 const content = $('#slideAlt').val();
+                                const link = $('#slideHref').val();
 
                                 // 生成 HTML
                                 const html = `<h5>${title}</h5>
@@ -361,6 +369,7 @@
                                 // 將生成的 HTML 注入到 li 內
                                 $li.find('.synopsis_title').html(title); // 更新標題
                                 $li.find('.synopsis_caption').html(content); // 更新內文
+                                $li.find('.a_href').html(link)
 
                                 // 隱藏編輯區域
                                 $('#set-caption').addClass('d-none');
@@ -392,23 +401,24 @@
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find('img').attr('src');
+                                    const newLink = $(element).find('.a_href').text();
+                                    console.log(newLink);
                                     // 更新slides中的圖片
                                     const order = $(element).data("order");
                                     const slide = $slides[order];
                                     if (slide) {
                                         $(slide).find('img').attr('src', newImgSrc);
+                                        $(slide).find('a').attr('href', newLink);
                                         $b.append(slide);
                                     } else {
                                         const newSlide = `<div data-gjs-highlightable="true" id="iifxj-3" data-gjs-type="輪播容器" draggable="true" class="swiper-slide image_link_slide allowedit d-flex align-self-center swiper-slide-active" role="group" aria-label="3 / 3" style="width: 1543px; margin-right: 15px;">
-                                                            <a data-gjs-highlightable="true" id="itzrl-3" data-gjs-type="連結" draggable="true" class="allowedit w-100">
+                                                            <a href="${newLink}" data-gjs-highlightable="true" id="itzrl-3" data-gjs-type="連結" draggable="true" class="allowedit w-100">
                                                                 <img id="iv499-3" data-gjs-type="image" draggable="true" src="${newImgSrc}" class="w-100 allowedit gjs-plh-image">
                                                             </a>
                                                           </div>`;
                                         $b.append(newSlide);
                                     }
                                 });
-                                console.log($s);
-                                console.log(editor);
                                 editor.getSelected().components($s.html());
                                 $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });
@@ -1097,9 +1107,7 @@
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
             if (typeof (editor.getSelected()) != "undefined") {
-                console.log(editor.getSelected().parent());
-                var swiper = editor.getSelected().parent().getEl().swiper;
-                console.log(456);
+                var swiper = editor.getSelected().getEl().swiper;
                 if (typeof (swiper) != "undefined") {
                     var cont = iframe.document.getElementsByClassName("swiper-slide").length;
                     const timmer = function () {

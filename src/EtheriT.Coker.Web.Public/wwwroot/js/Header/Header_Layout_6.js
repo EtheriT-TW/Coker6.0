@@ -68,8 +68,7 @@ window.addEventListener("load", function () {
         breakpoints: {
             768: {
                 direction: "vertical",
-                watchSlidesProgress: true,
-                allowTouchMove: false,
+                watchSlidesProgress: true
             },
         },
         keyboard: {
@@ -121,9 +120,9 @@ window.addEventListener("load", function () {
         },
         breakpoints: {
             768: {
+                loop:false,
                 slidesPerView: 3,
-                spaceBetween: 50,
-                allowTouchMove: false,
+                spaceBetween: 50
             },
         },
     });

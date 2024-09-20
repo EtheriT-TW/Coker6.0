@@ -24,27 +24,43 @@ function HeaderInit() {
     }
     checkFunction();
 
-    /* ThreeSwiper */
-    var threeSwiper = new Swiper(".threeSwiper", {
-        slidesPerView: 1,
-        loop: true,
-        allowTouchMove: true,
-        navigation: {
-            nextEl: ".threeSwiper>.swiper-button-next",
-            prevEl: ".threeSwiper>.swiper-button-prev",
+    /*Outcome Swiper */
+    var outcomeswiper = new Swiper(".outcomeSwiper", {
+        slidesPerView: 2,
+        grid: {
+            rows: 2,
+        },
+        breakpoints: {
+            768: {
+                slidesPerView: 4,
+            },
         },
         keyboard: {
             enabled: true,
         },
-        breakpoints: {
-            768: {
-                slidesPerView: 3,
-                spaceBetween: 50,
-                allowTouchMove: false,
-            },
+        pagination: {
+            el: ".outcomeSwiper .swiper-pagination",
+        },
+        navigation: {
+            nextEl: ".outcomeSwiper>.swiper-button-next",
+            prevEl: ".outcomeSwiper>.swiper-button-prev",
         },
     });
 
+    $(window).on("scroll",function () {
+        $('.hideme:not(.show)').each(function (i) {
+            var $self = $(this);
+            var bottom_of_object = $self.offset().top + $self.outerHeight();
+            var bottom_of_window = $(window).scrollTop() + $(window).height();
+            if (bottom_of_window > bottom_of_object) {
+                $self.addClass("show");
+                time = $self.data("swiper-slide-index") * 500;
+                $self.delay(time).animate({ 'opacity': '1' }, 500);
+            }
+        });
+    });
+}
+window.addEventListener("load", function () {
     /*Planning Swiper */
     var planningSwiper = new Swiper(".planningSwiper", {
         loop: true,
@@ -91,40 +107,24 @@ function HeaderInit() {
             swiper: planningSwiper,
         },
     });
-
-    /*Outcome Swiper */
-    var outcomeswiper = new Swiper(".outcomeSwiper", {
-        slidesPerView: 2,
-        grid: {
-            rows: 2,
-        },
-        breakpoints: {
-            768: {
-                slidesPerView: 4,
-            },
+    /* ThreeSwiper */
+    var threeSwiper = new Swiper(".threeSwiper", {
+        slidesPerView: 1,
+        loop: true,
+        allowTouchMove: true,
+        navigation: {
+            nextEl: ".threeSwiper>.swiper-button-next",
+            prevEl: ".threeSwiper>.swiper-button-prev",
         },
         keyboard: {
             enabled: true,
         },
-        pagination: {
-            el: ".outcomeSwiper .swiper-pagination",
-        },
-        navigation: {
-            nextEl: ".outcomeSwiper>.swiper-button-next",
-            prevEl: ".outcomeSwiper>.swiper-button-prev",
+        breakpoints: {
+            768: {
+                slidesPerView: 3,
+                spaceBetween: 50,
+                allowTouchMove: false,
+            },
         },
     });
-
-    $(window).scroll(function () {
-        $('.hideme:not(.show)').each(function (i) {
-            var $self = $(this);
-            var bottom_of_object = $self.offset().top + $self.outerHeight();
-            var bottom_of_window = $(window).scrollTop() + $(window).height();
-            if (bottom_of_window > bottom_of_object) {
-                $self.addClass("show");
-                time = $self.data("swiper-slide-index") * 500;
-                $self.delay(time).animate({ 'opacity': '1' }, 500);
-            }
-        });
-    });
-}
+});

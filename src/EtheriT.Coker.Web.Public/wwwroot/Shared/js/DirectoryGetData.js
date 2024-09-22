@@ -473,51 +473,93 @@ function DirectoryDataInsert($item, result) {
     ShareBlockInit();
 }
 function DirectoryAdDataInsert($item, result) {
+    console.log(result)
     var isFront = typeof ($item.attr("draggable")) == "undefined";
-    $item.children(".File_Frame").each(function (index) {
-        var $this = $(this);
-        var thisreslut = result[index];
-        var filetype = result[index].fileLink.fileType;
-        if ($this.data("type") == 0 || $this.data("type") == filetype) {
-            var $frame = $this.find(".frame");
-            $frame.empty();
+    $item.find(".File_Frame").each(function (index) {
+        var $frame = $(this);
+        if (result.length > index) {
+            var thisresult = result[index];
+            var filetype = thisresult.fileLink.fileType;
+            var html;
             switch (parseInt(filetype)) {
                 case 1:
-                    var linktitle = thisreslut.target ? "(開新分頁)" : "";
-                    var html = `<a href="${thisreslut.link} target="${thisreslut.target}" title="連結至：${thisreslut.link}${linktitle}" ><img src="${thisreslut.fileLink.link}" alt="${thisreslut.title}圖片"  class="h-100 w-100"/></a>`
-                    $frame.append(html);
+                    var $img_frame = $frame.find(".img_frame");
+                    $img_frame.find("img").attr("src", thisresult.fileLink.link);
+                    $img_frame.find("img").attr("alt", thisresult.title);
+                    $img_frame.find("a").attr("href", thisresult.link);
+                    $img_frame.find("a").attr("title", "連結至" + thisresult.title + (thisresult.target ? "(開新視窗)" : ""));
+                    $img_frame.find("a").attr("target", (thisresult.target ? "_blank" : "_self"));
+                    if ($frame.find(".title").length > 0) {
+                        $frame.find(".title").text(thisresult.title);
+                        $frame.find(".title").removeClass("d-none");
+                    }
+                    $img_frame.removeClass("d-none");
+                    $img_frame.parent().find("div").not(".img_frame").not(".title").remove();
                     break;
                 case 2:
-                    var html = `<video class="w-100 h-100" controls src="${thisreslut.fileLink.link}" type="${thisreslut.fileLink.video_Type}"></video>`
-                    $frame.append(html);
+                    var $video_frame = $frame.find(".video_frame");
+                    $video_frame.find("video").attr("src", thisresult.fileLink.link);
+                    $video_frame.find("video").attr("type", thisresult.fileLink.video_Type);
+                    $video_frame.removeClass("d-none");
+                    $video_frame.parent().find("div").not(".video_frame").remove();
                     break;
                 case 3:
-                    var html = `<iframe class="yt_preview h-100" src="https://www.youtube.com/embed/${thisreslut.fileLink.name}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
-                    $frame.append(html);
+                    var $YT_frame = $frame.find(".YT_frame");
+                    $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + thisresult.fileLink.name + "/maxresdefault.jpg");
+                    $YT_frame.find("img").attr("alt", thisresult.title);
+                    $YT_frame.removeClass("d-none");
+                    $YT_frame.parent().find("div").not(".YT_frame").remove();
+                    if ($("body").find("#YTPreviewModal").length == 0) {
+                        var html = `<div class="modal fade" id="YTPreviewModal" tabindex="-1" aria-labelledby="YTPreviewModal" aria-hidden="true">
+                                                  <div class="modal-dialog modal-xl">
+                                                    <div class="modal-content position-relative bg-black">
+                                                        <div class="modal-header">
+                                                        <button type="button" data-bs-dismiss="modal" aria-label="Close" class="bg-light btn-close rounded-circle"</button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <iframe src="" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                                                        </div>
+                                                    </div>
+                                                  </div>
+                                                </div>`
+                        $("body").prepend(html);
+                        $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
+                    }
+                    $("#YTPreviewModal").find("iframe").attr("src", "https://www.youtube.com/embed/" + thisresult.fileLink.name);
+                    $YT_frame.parent().find("div").not(".video_frame").remove();
                     break;
-            }
-            $this.find(".title").text(thisreslut.title);
-            if ($this.find(".tag").length > 0) {
-                var tagList = "";
-                $.each(thisreslut.tagDatas, function (index, value) {
-                    tagList += "#" + value.title + "　";
-                })
-                $this.find(".tag").text(tagList);
             }
             if (isFront) {
                 Advertise.ActivityExposure({
-                    FK_Aid: thisreslut.id,
+                    FK_Aid: thisresult.id,
                     FK_Tid: $.cookie("Token"),
                 }).done(function (result) {
                     console.log(result)
                 })
             }
-            $frame.on("click", function () {
-                console.log("AAIsClick")
-                if (!$frame.hasClass("isClick")) {
-                    $frame.addClass("isClick");
+            $frame.find(".video_frame").find("video").on("play", function () {
+                var $this = $(this);
+                if (!$this.hasClass("playing")) {
+                    $(this).addClass("playing")
                     Advertise.ActivityClick({
-                        FK_Aid: thisreslut.id,
+                        FK_Aid: thisresult.id,
+                        FK_Tid: $.cookie("Token"),
+                    }).done(function (result) {
+                        console.log(result)
+                    })
+                }
+
+            })
+            $frame.find(".video_frame").find("video").on("ended", function () {
+                var $this = $(this);
+                if ($this.hasClass("playing")) {
+                    $(this).removeClass("playing")
+                }
+            })
+            $frame.on("click", function () {
+                if ($frame.find(".video_frame").length == 0) {
+                    Advertise.ActivityClick({
+                        FK_Aid: thisresult.id,
                         FK_Tid: $.cookie("Token"),
                     }).done(function (result) {
                         console.log(result)

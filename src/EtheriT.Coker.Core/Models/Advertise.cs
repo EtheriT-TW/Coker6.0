@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Core.Models
         public int Exposure { get; set; } = 0;
         public int Clicks { get; set; } = 0;
         [StringLength(300)] public string Title { get; set; }
+        [StringLength(300)] public string? Describe { get; set; }
         public bool Target { get; set; }
         [StringLength(255)] public string? Link { get; set; }
         public virtual DateTime? StartDate { get; set; }

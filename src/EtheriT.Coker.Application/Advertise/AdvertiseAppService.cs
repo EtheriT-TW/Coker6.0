@@ -115,6 +115,7 @@ namespace EtheriT.Coker.Application.Advertise
                                         {
                                             Id = e.Id,
                                             Title = e.Title,
+                                            Describe = e.Describe,
                                             Visible = e.Visible,
                                             SerNO = e.SerNO,
                                             Link = e.Link,

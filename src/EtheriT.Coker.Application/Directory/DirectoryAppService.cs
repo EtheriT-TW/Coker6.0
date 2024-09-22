@@ -1158,6 +1158,7 @@ namespace EtheriT.Coker.Application.Directory
                                         {
                                             Id = a.Id,
                                             Title = a.Title,
+                                            Description = a.Describe,
                                             StartTime = a.StartDate,
                                             EndTime = a.EndDate,
                                             SerNo = a.SerNO,
@@ -1218,6 +1219,7 @@ namespace EtheriT.Coker.Application.Directory
                                         {
                                             Id = e.Id,
                                             Title = e.Title,
+                                            Describe = e.Describe,
                                             Link = e.Link,
                                             Target = e.Target,
                                             Clicks = e.Clicks,

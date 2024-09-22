@@ -529,6 +529,23 @@ function DirectoryAdDataInsert($item, result) {
                     $YT_frame.parent().find("div").not(".video_frame").remove();
                     break;
             }
+            if (thisresult.describe != null) {
+                var temp = (thisresult.describe + "").split("\n");
+                var describe;
+                temp.forEach(function (v, i) {
+                    if (i == 0) {
+                        describe = v;
+                    } else {
+                        describe += `<br/>${v}`;
+                    }
+                });
+                $frame.find(".describe").append(describe);
+            }
+            var tags = "";
+            for (var i = 0; i < thisresult.tagDatas.length; i++) {
+                tags += `#${thisresult.tagDatas[i].title}　`
+            }
+            $frame.find(".tag").text(tags);
             if (isFront) {
                 Advertise.ActivityExposure({
                     FK_Aid: thisresult.id,
@@ -548,7 +565,6 @@ function DirectoryAdDataInsert($item, result) {
                         console.log(result)
                     })
                 }
-
             })
             $frame.find(".video_frame").find("video").on("ended", function () {
                 var $this = $(this);

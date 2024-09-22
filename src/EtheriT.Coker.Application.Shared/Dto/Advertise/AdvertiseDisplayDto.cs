@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
     {
         public long Id { get; set; }
         public string? Title { get; set; }
+        public string? Describe { get; set; }
         public string Link { get; set; }
         public bool Target { get; set; }
         public int Exposure { get; set; }

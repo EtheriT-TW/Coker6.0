@@ -32,8 +32,9 @@ function SwiperInit(obj) {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper";
-            if ($(Id).find(".swiper-slide").length == 1 && $(Id).find(".swiper-slide").parents(".templatecontent").length > 0) return false;
-            const canNext = $(Id).find(".swiper-slide").length >= 2;
+            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
+            if ($(Id).find(".swiper-slide").length == 1 && $template.length > 0) return false;
+            const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1: $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed")
             if (typeof effect === 'undefined' || effect === false) effect = "slide";

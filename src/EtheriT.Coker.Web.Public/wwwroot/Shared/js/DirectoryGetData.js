@@ -541,11 +541,15 @@ function DirectoryAdDataInsert($item, result) {
                 });
                 $frame.find(".describe").append(describe);
             }
-            var tags = "";
+            var tags;
             for (var i = 0; i < thisresult.tagDatas.length; i++) {
-                tags += `#${thisresult.tagDatas[i].title}　`
+                if (i == 0) {
+                    tags = `<a href="/lcb/Search/Get/2/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
+                } else {
+                    tags += `<a href="/lcb/Search/Get/2/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
+                }
             }
-            $frame.find(".tag").text(tags);
+            $frame.find(".tag").append(tags);
             if (isFront) {
                 Advertise.ActivityExposure({
                     FK_Aid: thisresult.id,

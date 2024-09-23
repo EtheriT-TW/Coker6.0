@@ -260,6 +260,10 @@
                                                   <h5>編輯內文</h5>
                                                   <form id="EditContentForm">
                                                     <div class="mb-3">
+                                                      <label for="imgAlt" class="form-label">圖片名稱</label>
+                                                      <input type="text" class="form-control" id="imgAlt" placeholder="輸入名稱" />
+                                                    </div>
+                                                    <div class="mb-3">
                                                       <label for="slideTitle" class="form-label">標題</label>
                                                       <input type="text" class="form-control" id="slideTitle" placeholder="輸入標題" />
                                                     </div>
@@ -268,11 +272,15 @@
                                                       <textarea class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
                                                     </div>
                                                     <div class="mb-3">
+                                                      <label for="href_title" class="form-label">連結名稱</label>
+                                                      <input type="text" class="form-control" id="href_title" placeholder="輸入名稱" />
+                                                    </div>
+                                                    <div class="mb-3">
                                                       <label for="slideHref" class="form-label">連結網址</label>
                                                       <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
                                                     </div>
                                                     <button type="button" class="btn btn-primary save-content">儲存變更</button>
-                                                    <button type="button" class="btn btn-secondary cancel-form">取消</button>
+                                                    <button type="button" class="btn btn-secondary cancel-form">隱藏</button>
                                                   </form>
                                                 </div>
                                             </div>
@@ -315,6 +323,7 @@
                                 }, data);
                                 var content = $($("#TemplateSwiperList").html());
                                 content.data(o);
+                                console.log(o);
                                 content.find("[name='label']").attr("id", `selectSwiper${index}`);
                                 content.find("label").attr("for", `selectSwiper${index}`);
                                 content.find("img").attr({ "src": o.src, "alt": o.alt });
@@ -326,18 +335,30 @@
                                 content.data("order", index);
                                 content.find("label").on("click", function () {
                                     const $li = $(this).closest('li');
+                                    $("input").removeAttr("disabled");
                                     const $caption = $('.set-caption');
                                     const $setting = $li.find('.setting');
+                                    const $formSetting = [$("#imgAlt"), $("#slideTitle"), $("#slideAlt"), $("#href_title"), $("#slideHref")];
+                                    if ($li.data("href") === "#SwiperModal") {
+                                        $formSetting[4].attr("disabled", true);
+                                        $formSetting[0].attr("disabled", true);
+                                    } else if () {
+                                        $formSetting[0].attr("disabled", true);
+                                    }
+                                    if (!$li.data(".synopsis_title") && !$li.data(".synopsis_caption")) {
+                                        $formSetting[1].attr("disabled", true);
+                                        $formSetting[2].attr("disabled", true);
+                                    }
                                     $("#SwiperList").find('.setting').addClass('d-none');
                                     $setting.removeClass('d-none');
                                     $caption.removeClass('d-none');
                                     $("#SwiperList").find("[name='label']").prop("checked", false);
                                     $li.find("[name='label']").prop("checked", true);
+                                    $caption.find('#imgAlt').val($li.data().alt);
                                     $caption.find('#slideTitle').val($li.data().synopsis_title);
                                     $caption.find('#slideAlt').val($li.data().synopsis_caption);
                                     $caption.find('#slideHref').val($li.data().href);
-                                    /*$li.toggleClass('bg-white bg-primary text-white');
-                                    $li.find('.material-symbols-outlined').toggleClass('text-white');*/
+                                    $caption.find('#href_title').val($li.data().title);
                                 });
 
                                 content.find(".cancel-form").on("click", function () {
@@ -381,13 +402,17 @@
                                 // 獲取當前選中的 li
                                 const $li = $("#SwiperList .setting:visible").closest('li'); // 獲取顯示的 setting 所在的 li
                                 // 獲取標題、內文、連結
+                                const img_alt = $('#imgAlt').val();
                                 const title = $('#slideTitle').val();
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
+                                const a_title = $('#href_title').val();
                                 $li.data({
+                                    alt: img_alt,
                                     synopsis_title: title,
                                     synopsis_caption: content,
-                                    href: link
+                                    href: link,
+                                    title: a_title
                                 });
 
                                 // 生成 HTML
@@ -395,9 +420,11 @@
                                               <p>${content}</p>`;
 
                                 // 將生成的 HTML 注入到 li 內
+                                $li.find('.img_alt').html(img_alt);//更新圖片名稱
                                 $li.find('.synopsis_title').html(title); // 更新標題
                                 $li.find('.synopsis_caption').html(content); // 更新內文
-                                $li.find('.a_href').html(link);
+                                $li.find('.a_href').html(link);//更新連結
+                                $li.find('.a_title').html(a_title);//更新連結名稱
 
                                 // 隱藏編輯區域
                                 $('#set-caption').addClass('d-none');
@@ -410,7 +437,9 @@
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find('img').attr('src');
+                                    const newImgAlt = $(element).find('.img_alt').text();
                                     const newLink = $(element).find('.a_href').text();
+                                    const newHrefTitle = $(element).find('.a_title').text();
                                     const newTitle = $(element).find('.synopsis_title').text();
                                     const newCaption = $(element).find('.synopsis_caption').text();
                                     // 更新slides中的圖片
@@ -420,7 +449,9 @@
 
                                     if (slide) {
                                         $(slide).find('img').attr('src', newImgSrc);
+                                        $(slide).find('img').attr('alt', newImgAlt);
                                         $(slide).find('a').attr('href', newLink);
+                                        $(slide).find('a').attr('title', newHrefTitle);
                                         $(slide).find('.synopsis_title').text(newTitle);
                                         $(slide).find('.synopsis_caption').text(newCaption);
                                         $b.append(slide);
@@ -432,14 +463,18 @@
                                             var new_slide = $("<div>").append($($selected.find(".template_slide>.swiper-slide")[0].toHTML())).html();
                                             var $new_slide = $(new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
+                                            $new_slide.find('img').attr('alt', newImgAlt);
                                             $new_slide.find('a').attr('href', newLink);
+                                            $new_slide.find('a').attr('title', newHrefTitle);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         } else {
                                             var new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
                                             $new_slide = $(new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
+                                            $new_slide.find('img').attr('alt', newImgAlt);
                                             $new_slide.find('a').attr('href', newLink);
+                                            $new_slide.find('a').attr('title', newHrefTitle);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         }

@@ -220,7 +220,6 @@
                         command: editor => {
                             const selectedComponent = editor.getSelected();
                             var $selected = $(selectedComponent.getEl());
-                            console.log($selected);
                             if ($selected.find(".swiper-slide").length > 0 && $("#SwiperModal").length < 1) {
                                 $(`<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel" aria-hidden="true">
                                         <div class="modal-dialog modal-lg">
@@ -381,7 +380,6 @@
                                 //編輯內文存檔
                                 // 獲取當前選中的 li
                                 const $li = $("#SwiperList .setting:visible").closest('li'); // 獲取顯示的 setting 所在的 li
-                                console.log($li);
                                 // 獲取標題、內文、連結
                                 const title = $('#slideTitle').val();
                                 const content = $('#slideAlt').val();

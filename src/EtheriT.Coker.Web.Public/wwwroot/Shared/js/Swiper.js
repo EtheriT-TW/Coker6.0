@@ -76,6 +76,7 @@ function SwiperInit(obj) {
     $(".one_swiper_thumbs").prop("draggable", true).each(function () {
         var $self = $(this);
         const index = $self.index(this);
+        $self.find(".six_thumbs > .swiper-wrapper").empty();
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
@@ -121,9 +122,9 @@ function SwiperInit(obj) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
             }
             
-            if (!$self.find(".swiper").hasClass(".selfThumbs")) { //如果有swiper class的元素
+            if (!$self.find(".swiper").hasClass(".selfThumbs")) { //如果沒有swiper class的元素
                 const $images = [];
-                $self.find(".swiper-slide img").each(function () { //遍歷所有thumns-image底下的img
+                $self.find(".swiper-slide img").each(function () { //遍歷所有thumnbs-image底下的img
                     $images.push($(this).attr("src")); //儲存到$images變數
                 });
                 for (let i = 0; i < $images.length; i++) { //生成Thumbs

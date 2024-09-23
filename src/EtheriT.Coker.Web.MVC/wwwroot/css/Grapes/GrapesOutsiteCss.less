@@ -67,6 +67,58 @@ body.grapesEdit {
         display: none;
     }
 }
+
+ul {
+    list-style: none;
+}
+
 #gjs-tools {
     min-width: 220px;
+}
+
+#SwiperModal img {
+    max-width: 100px;
+}
+
+#SwiperList input[type="radio"] {
+    display: none;
+}
+
+#SwiperList input:checked + label{
+    background-color:aqua;
+}
+
+#SwiperList input:checked + label .button {
+    cursor: default;
+}
+
+#radio .button {
+    display: inline-block;
+    margin: 0 5px 10px 0;
+    padding: 5px 10px;
+    background: #f7f7f7;
+    color: #333;
+    cursor: pointer;
+}
+
+#radio .button:hover {
+    background: #bbb;
+    color: #fff;
+}
+
+#radio .button {
+    border-radius: 5px;
+}
+
+.modal-body:not(#SwiperList) {
+    display: flex;
+}
+
+.material-symbols-outlined {
+    color: gray;
+}
+
+//圖庫的優先級在SwiperModal之上
+.gjs-mdl-container {
+    z-index: 1051;
 }

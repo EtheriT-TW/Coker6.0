@@ -33,10 +33,6 @@
     /* 确保超出的部分被裁剪 */
 }
 
-.home {
-    padding-top: 132px;
-}
-
 #swiper-light {
     margin-top: 15px !important;
 }
@@ -381,7 +377,7 @@
 }
 
 @media only screen and (max-width: 992px) {
-    .home {
+    .home, .page {
         padding-top: 83px;
     }
 
@@ -579,7 +575,7 @@
 }
 
 .icon-search-bg {
-    background: #64806c;
+    background: #756480;
     border-radius: 50%;
     width: 30px;
     height: 30px;

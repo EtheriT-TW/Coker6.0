@@ -1,6 +1,6 @@
 ﻿var time = 0;
 function HeaderInit() {
-    const $main = $("<div class='container'>")
+    const $main = $("<div class='header'>") //高峰重複的container
     const $contain = $("body:not(.home) #main > *");
     $("#breadcrumb").prependTo($main);
     $contain.appendTo($main);

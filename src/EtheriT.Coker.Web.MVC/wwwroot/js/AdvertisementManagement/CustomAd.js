@@ -286,7 +286,7 @@ function FormDataSet(result) {
     FormDataClear();
     keyId = result.id;
     disp_opt = result.visible;
-    $("#SortBy").val(result.sortByInt)
+    $("#SortBy").val(result.sortBy)
     if (disp_opt) {
         $btn_display.children("span").text("visibility");
     } else {

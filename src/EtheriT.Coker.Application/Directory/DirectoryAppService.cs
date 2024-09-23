@@ -1151,7 +1151,17 @@ namespace EtheriT.Coker.Application.Directory
                             .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
                             .ToListAsync();
                         if (!a_tags.Any()) throw new Exception("資料不存在");
-                        var aids = a_tags.Select(e => e.FK_AId).ToList();
+                        var temp_aid = new Dictionary<long, long>();
+                        a_tags.ForEach(tag =>
+                        {
+                            if (!temp_aid.ContainsKey(tag.FK_AId)) { temp_aid.Add(tag.FK_AId, 1); }
+                            else { temp_aid[tag.FK_AId] = temp_aid[tag.FK_AId] + 1; }
+                        });
+                        var aids = new List<long>();
+                        foreach (var aid in temp_aid)
+                        {
+                            if (aid.Value == tlist.Count) { aids.Add(aid.Key); }
+                        }
                         var dataQuery = from a in db.Advertise.Where(e => !e.IsDeleted)
                                         where aids.Contains(a.Id)
                                         select new DirectoryReleInfoDto

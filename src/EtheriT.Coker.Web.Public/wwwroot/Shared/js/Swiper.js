@@ -75,9 +75,9 @@ function SwiperInit(obj) {
     //單欄輪播+兩欄縮圖
     $(".one_swiper_thumbs").prop("draggable", true).each(function () {
         var $self = $(this);
-        const index = $(".one_swiper_thumbs").index(this);
+        const index = $self.index(this);
         if (!!!$self.data("isInit")) {
-            var Id = "#" + $self.attr("id") + " > .swiper";
+            var Id = "#" + $self.attr("id") + " .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");      
@@ -131,7 +131,7 @@ function SwiperInit(obj) {
                     swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
                 }
             }
-             swiperThumbs.slideTo(index, 0);
+            swiperThumbs.slideTo(index, 0);
 
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)

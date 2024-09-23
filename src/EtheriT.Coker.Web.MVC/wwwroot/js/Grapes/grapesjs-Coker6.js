@@ -182,7 +182,7 @@
                 ],
             }, init() {
                 this.on('change:attributes:download', function (component) {
-                    if (typeof(component.getEl())!="undefined")
+                    if (typeof (component.getEl()) != "undefined")
                         component.find(".name")[0].components(component.getAttributes().download);
                 });
             }
@@ -218,7 +218,9 @@
                     {
                         type: 'button', text: "開啟編輯",
                         command: editor => {
-                            var $selected = $(editor.getSelected().getEl());
+                            const selectedComponent = editor.getSelected();
+                            var $selected = $(selectedComponent.getEl());
+                            console.log($selected);
                             if ($selected.find(".swiper-slide").length > 0 && $("#SwiperModal").length < 1) {
                                 $(`<div class="modal fade" id="SwiperModal" tabindex="-1" aria-labelledby="SwiperModalLabel" aria-hidden="true">
                                         <div class="modal-dialog modal-lg">
@@ -245,10 +247,10 @@
                                                             </div>
 
                                                             <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
-                                                                <a href="#" class="mr-1 show-form" title="編輯內容">
+                                                                <a class="mr-1 show-form " title="編輯內容">
                                                                     <span class="material-symbols-outlined text-black button">edit_square</span>
                                                                 </a>
-                                                                <a href="#" class="mr-1 delete-slide" title="刪除">
+                                                                <a class="mr-1 delete-slide" title="刪除">
                                                                     <span class="material-symbols-outlined text-black button">delete</span>
                                                                 </a>
                                                             </div>
@@ -286,7 +288,7 @@
                             }
                             var $body = $("#SwiperList");
                             var datas = [];
-                            $selected.find(".swiper-slide").each(function () {
+                            $selected.find(".swiper .swiper-slide").each(function () {
                                 var $self = $(this);
                                 if (!$self.parent().hasClass("template_slide")) {
                                     var obj = {
@@ -294,8 +296,8 @@
                                         "title": $self.find("a").attr("title"),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
-                                        "synopsis_title": $self.find('.title').text(), //文章標題
-                                        "synopsis_caption": $self.find('.caption').text() //文章內容
+                                        "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
+                                        "synopsis_caption": $self.find('.synopsis_caption').text() //文章內容
                                     };
                                     datas.push(obj);
                                 } else {
@@ -308,7 +310,7 @@
                                     src: "/images/noImg.jpg",
                                     alt: "",
                                     href: "",
-                                    title:"",
+                                    title: "",
                                     synopsis_title: "",
                                     synopsis_caption: "",
                                 }, data);
@@ -337,7 +339,6 @@
                                     $caption.find('#slideHref').val($li.data().href);
                                     /*$li.toggleClass('bg-white bg-primary text-white');
                                     $li.find('.material-symbols-outlined').toggleClass('text-white');*/
-                                    console.log($li.data());
                                 });
 
                                 content.find(".cancel-form").on("click", function () {
@@ -372,7 +373,7 @@
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
-                            
+
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
                                 newLi($("#SwiperList>li").length, {});
                             });
@@ -406,8 +407,8 @@
 
                             $("#SwiperModal").on("click", ".sava", function () {
                                 const $s = $selected.clone();
-                                const $slides = $s.find(".swiper-wrapper>.swiper-slide").clone();
-                                const $b = $s.find(".swiper-wrapper");
+                                const $slides = $s.find(".swiper .swiper-wrapper>.swiper-slide").clone();
+                                const $b = $s.find(".swiper .swiper-wrapper");
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find('img').attr('src');
@@ -418,12 +419,12 @@
                                     const order = $(element).data("order");
                                     const slide = $slides[order];
                                     const existingTitle = $(slide).find('h2').text().trim();
-                                    
+
                                     if (slide) {
                                         $(slide).find('img').attr('src', newImgSrc);
                                         $(slide).find('a').attr('href', newLink);
-                                        $(slide).find('h2').text(newTitle);
-                                        $(slide).find('span').text(newCaption);
+                                        $(slide).find('.synopsis_title').text(newTitle);
+                                        $(slide).find('.synopsis_caption').text(newCaption);
                                         $b.append(slide);
                                     } else {
                                         var $selected = editor.getSelected();
@@ -434,20 +435,25 @@
                                             var $new_slide = $(new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
                                             $new_slide.find('a').attr('href', newLink);
-                                            $new_slide.find('h2').text(newTitle);
-                                            $new_slide.find('span').text(newCaption);
+                                            $new_slide.find('.synopsis_title').text(newTitle);
+                                            $new_slide.find('.synopsis_caption').text(newCaption);
                                         } else {
                                             var new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
                                             $new_slide = $(new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
                                             $new_slide.find('a').attr('href', newLink);
-                                            $new_slide.find('h2').text(newTitle);
-                                            $new_slide.find('span').text(newCaption);
+                                            $new_slide.find('.synopsis_title').text(newTitle);
+                                            $new_slide.find('.synopsis_caption').text(newCaption);
                                         }
                                         $b.append($new_slide);
                                     }
                                 });
-                                editor.getSelected().components($s.html());
+                                $s.find(".six_thumbs .swiper-wrapper").empty();
+                                selectedComponent.components([]);
+                                $s.children().each(function () {
+                                    selectedComponent.append($(this).prop('outerHTML'));
+                                });
+                                //editor.getSelected().addComponents($s.html());
                                 $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });
                                 SwiperModal.hide();
@@ -478,8 +484,8 @@
                 window.setTimeout(function () {
                     const a = self.find("a.btn")[0];
                     const collapse = self.find(".collapse")[0];
-                    a.addAttributes({ "href": `#${ccid}_content`, "Title": "展開QA", "data-bs-toggle":"collapse" })
-                    collapse.addAttributes({ "id": `${ccid}_content`});
+                    a.addAttributes({ "href": `#${ccid}_content`, "Title": "展開QA", "data-bs-toggle": "collapse" })
+                    collapse.addAttributes({ "id": `${ccid}_content` });
                     c(`#${ccid} a`).attr({ "data-bs-toggle": `` });
                 }, 200)
             }
@@ -492,8 +498,8 @@
         },
         model: {
             defaults: {
-                hoverable :false,
-                selectable:false,
+                hoverable: false,
+                selectable: false,
                 droppable: false,
                 copyable: false,
                 removable: false,
@@ -510,7 +516,7 @@
                 copyable: false
             },
             init() {
-             
+
             }
         },
     });
@@ -564,7 +570,7 @@
     });
     //日期區間型態
     editor.TraitManager.addType("date-range", {
-        
+
         createInput({ trait }) {
             const self = this;
             const el = document.createElement('div');
@@ -816,7 +822,7 @@
     });
 
     //產生元件
-    const getCssRules = (selected,myRule,top) => {
+    const getCssRules = (selected, myRule, top) => {
         const id = selected.getId();
         const itemClass = selected.getClasses();
         const tagName = selected.get('tagName');
@@ -843,7 +849,7 @@
                     findComponentStyles(model, myRule, top)
                 }
             }
-            getCssRules(selected, myRule,top);
+            getCssRules(selected, myRule, top);
         }
     }
     const createBlockTemplate = function (selected, name_blockId) {

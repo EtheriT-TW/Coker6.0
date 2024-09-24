@@ -24,6 +24,19 @@ function HeaderInit() {
     }
     checkFunction();
 
+    const clickBtnMenu = function () {
+        var icon = document.getElementById("menuIcon");
+        if (icon.classList.contains("fa-bars")) {
+            icon.classList.remove("fa-bars");
+            icon.classList.add("fa-times-square"); // 切換成叉叉
+        } else {
+            icon.classList.remove("fa-times-square");
+            icon.classList.add("fa-bars"); // 切換回漢堡
+        }
+    }
+
+    document.getElementById("btnMenu").addEventListener("click", clickBtnMenu);
+
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {
         slidesPerView: 1,

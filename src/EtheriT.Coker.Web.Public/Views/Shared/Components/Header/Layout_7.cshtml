@@ -18,11 +18,12 @@
     <!-- Mega Menu -->
     <div id="Mega_Menu" class=" navbar navbar-expand-lg w-100">
         <div id="iswrap" class="d-flex justify-content-center align-items-center w-100 bg-white">
-            <div class="btn_menu navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
-                <div class="">
+            <div id="btnMenu" class="btn_menu navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
+                <div class="menu">
+                    <!--<div class="bar"></div>
                     <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
+                    <div class="bar"></div>-->
+                    <i id="menuIcon" class="fas fa-bars h2"></i>
                 </div>
 
             </div>
@@ -91,7 +92,7 @@
         <!-- Menu Canvas -->
         <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start  col-12 col w-100 visible d-flex justify-content-center align-items-center " tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <!-- Menu Canvas Search Block -->
-            <div class="offcanvas-header pt-2 ps-5">
+            <div class="offcanvas-header pt-4 ps-5">
                 <h5 class="offcanvas-title fs-2 fw-bold" id="offcanvasLabel">@Model.Title</h5>
             </div>
 
@@ -249,7 +250,8 @@
     </div>
 </nav>
 <div class="image-wh">
-    <img class="titleimage m-auto d-block" src="@imgurl/headertitile.jpg" alt="Header Titile" />
+    <img id="header-title" class="titleimage m-auto d-block" src="@imgurl/headertitile.jpg" alt="Header Titile" />
+    <img id="header-title-phone" class="titleimage m-auto d-block" src="@imgurl/headertitle_phone.jpg" alt="Header Titile" />
 </div>
 <div id="swiper-light" class="headernews m-auto d-block position-relative">
     <img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />

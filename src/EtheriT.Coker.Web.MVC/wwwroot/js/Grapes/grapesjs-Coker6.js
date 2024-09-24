@@ -342,7 +342,7 @@
                                     if ($li.data("href") === "#SwiperModal") {
                                         $formSetting[4].attr("disabled", true);
                                         $formSetting[0].attr("disabled", true);
-                                    } else if () {
+                                    } else if (true/*沒有連結的時候*/) {
                                         $formSetting[0].attr("disabled", true);
                                     }
                                     if (!$li.data(".synopsis_title") && !$li.data(".synopsis_caption")) {

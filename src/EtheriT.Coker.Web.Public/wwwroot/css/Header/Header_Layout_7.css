@@ -2,10 +2,19 @@
     background: url(/upload/20170818112557.jpg) no-repeat top;
 }
 
+.fa-times-square {
+    font-size: 40px;
+    color: white;
+}
+
+#header-title-phone {
+    display: none !important;
+}
+
 .titleimage {
     width: 100%;
     height: 100%;
-    object-fit: cove
+    object-fit: cover;
 }
 
 .image-wh {
@@ -715,11 +724,27 @@
     .headernews {
         width: 100%;
     }
+
+    #header-title {
+        display:none !important;
+    }
+
+    #header-title-phone {
+        display:unset !important;
+    }
 }
 
 @media (max-width: 440px) {
     .subtitle > .subtitle_title {
         font-weight: 400;
+    }
+
+    .offcanvas-header {
+        padding: 1.6rem !important;
+    }
+
+    .home, .page {
+        padding-top: 68px;
     }
 
     .font {
@@ -728,5 +753,9 @@
 
     .logo img {
         width: 80%;
+    }
+
+    #menuIcon {
+        padding-top: 1rem !important;
     }
 }

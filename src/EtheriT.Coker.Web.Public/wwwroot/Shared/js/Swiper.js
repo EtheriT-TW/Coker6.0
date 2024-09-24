@@ -351,7 +351,6 @@ function SwiperInit(obj) {
     });
 
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
-        const imgCount = $(".picture-category .templatecontent img").length - 2;
         const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
             spaceBetween: 10,
             breakpoints: {
@@ -390,15 +389,16 @@ function SwiperInit(obj) {
         });
         $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
             const $self = $(this).parents(".picture-category");
-            const index = $(".picture-category a").index(this);
+            //因為主輪播是loop=true前後會被個複製一張圖，所以索引會多2
+            const index = $(".picture-category a").index(this) > $(".picture-category a").length-2 ? $(".picture-category a").length - $(".picture-category a").index(this)-1 : $(".picture-category a").index(this)-1;
             const $images = [];           
             $self.find(".templatecontent img").each(function () {
                 $images.push($(this).attr("src"));
             });
             pictureSwiper.removeAllSlides();
             pictureSwiperThumbs.removeAllSlides();
-            //Siwper多會複製兩張圖所以$images.length - 2
-            for (let i = 0; i < $images.length - 2; i++) {
+            //Siwper會多複製兩張圖所以$images.length - 2，前面一張後面一張所以從第一張圖1開始
+            for (let i = 1; i < $images.length - 1; i++) {
                 const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
                 
                 pictureSwiper.appendSlide(newSlide);

@@ -205,17 +205,6 @@
             defaults: {
                 traits: [
                     {
-                        name: 'swiper-slide', type: 'button',
-                        text: "新增一欄",
-                        command: editor => {
-                            var $selected = editor.getSelected();
-                            var swiper = $selected.find(".swiper")[0].getEl().swiper;
-                            var new_slide = $("<div>").append($($selected.find(".template_slide>.swiper-slide")[0].toHTML())).html();
-                            $selected.find(".swiper-wrapper")[0].append(new_slide);
-                            swiper.update();
-                        },
-                    },
-                    {
                         type: 'button', text: "開啟編輯",
                         command: editor => {
                             const selectedComponent = editor.getSelected();
@@ -226,40 +215,44 @@
                                         <div class="modal-content">
                                             <div class="modal-header">
                                             <h1 class="modal-title fs-5" id="SwiperModalLabel">輪播編輯</h1>
-                                            <button type="button" class="btn-add-column">新增一欄</button>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <ul id="SwiperList" class="px-0 w-100"></ul>
+                                                <div id="scroll" class="px-0 w-50">
+                                                <ul id="SwiperList" class="px-0 p-1"></ul>
                                                 <template id="TemplateSwiperList">
-                                                    <li class="">
+                                                    <li>
                                                         <input type="radio" name="label" checked="checked">
-                                                        <label class="d-flex mb-3 border p-2 border-dark rounded position-relative">
-                                                            <img class="me-2 update-img" src="" alt="" />
+                                                        <label class="d-flex mb-3 border p-2 border-dark rounded position-relative isScroll">
+                                                            <img class="me-2 update-img isPointer" src="" alt="" />
                                                             <div class="align-self-center">
                                                                 <div class="img_alt d-none"></div>
                                                                 <p class="setting d-none h3">正在編輯</>
-                                                                <div class="a_href"></div>
+                                                                <div class="a_href d-none"></div>
                                                                 <div class="a_title d-none"></div>
-                                                                <div class="synopsis_title"></div>
+                                                                <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
+                                                                <span class="material-symbols-outlined eyes">visibility</span>
+                                                                <span class="material-symbols-outlined eyes d-none">visibility_off</span>
                                                             </div>
 
                                                             <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
-                                                                <a class="mr-1 show-form " title="編輯內容">
-                                                                    <span class="material-symbols-outlined text-black button">edit_square</span>
+                                                                <a class="mr-1 show-form isPointer" title="編輯內容">
+                                                                    <span class="material-symbols-outlined text-black button">border_color</span>
                                                                 </a>
-                                                                <a class="mr-1 delete-slide" title="刪除">
+                                                                <a class="mr-1 delete-slide isPointer" title="刪除">
                                                                     <span class="material-symbols-outlined text-black button">delete</span>
                                                                 </a>
                                                             </div>
                                                         </label>
                                                     </li>
                                                 </template>
-                                                <div class="w-50 ps-3 d-none set-caption">
+                                                </div>
+                                                <button id="add" type="button" class="btn-add-column">新增一欄</button>
+                                                <div class="w-50 ps-3 set-caption">
                                                   <h5>編輯內文</h5>
                                                   <form id="EditContentForm">
-                                                    <div class="mb-3">
+                                                    <div class="mb-3 d-none">
                                                       <label for="imgAlt" class="form-label">圖片名稱</label>
                                                       <input type="text" class="form-control" id="imgAlt" placeholder="輸入名稱" />
                                                     </div>
@@ -271,7 +264,7 @@
                                                       <label for="slideAlt" class="form-label">內文</label>
                                                       <textarea class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
                                                     </div>
-                                                    <div class="mb-3">
+                                                    <div class="mb-3 d-none">
                                                       <label for="href_title" class="form-label">連結名稱</label>
                                                       <input type="text" class="form-control" id="href_title" placeholder="輸入名稱" />
                                                     </div>
@@ -279,8 +272,6 @@
                                                       <label for="slideHref" class="form-label">連結網址</label>
                                                       <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
                                                     </div>
-                                                    <button type="button" class="btn btn-primary save-content">儲存變更</button>
-                                                    <button type="button" class="btn btn-secondary cancel-form">隱藏</button>
                                                   </form>
                                                 </div>
                                             </div>
@@ -323,7 +314,6 @@
                                 }, data);
                                 var content = $($("#TemplateSwiperList").html());
                                 content.data(o);
-                                console.log(o);
                                 content.find("[name='label']").attr("id", `selectSwiper${index}`);
                                 content.find("label").attr("for", `selectSwiper${index}`);
                                 content.find("img").attr({ "src": o.src, "alt": o.alt });
@@ -339,11 +329,14 @@
                                     const $caption = $('.set-caption');
                                     const $setting = $li.find('.setting');
                                     const $formSetting = [$("#imgAlt"), $("#slideTitle"), $("#slideAlt"), $("#href_title"), $("#slideHref")];
+                                    console.log(selectedComponent);
                                     if ($li.data("href") === "#SwiperModal") {
                                         $formSetting[4].attr("disabled", true);
                                         $formSetting[0].attr("disabled", true);
                                     } else if (true/*沒有連結的時候*/) {
                                         $formSetting[0].attr("disabled", true);
+                                        $formSetting[3].attr("disabled", true);
+                                        $formSetting[4].attr("disabled", true);
                                     }
                                     if (!$li.data(".synopsis_title") && !$li.data(".synopsis_caption")) {
                                         $formSetting[1].attr("disabled", true);

@@ -72,12 +72,18 @@ ul {
     list-style: none;
 }
 
+#scroll {
+    height:430px;
+    overflow-y: auto;
+}
+
 #gjs-tools {
     min-width: 220px;
 }
 
 #SwiperModal img {
     max-width: 100px;
+    height: 100px;
 }
 
 #SwiperList input[type="radio"] {
@@ -110,6 +116,19 @@ ul {
     border-radius: 5px;
 }
 
+#add {
+    height: 50px;
+    width: 40%;
+    font-size: 20px;
+    position: absolute;
+    top: 90%;
+    left: 6%;
+}
+
+.modal-body{
+    height:523px;
+}
+
 .modal-body:not(#SwiperList) {
     display: flex;
 }
@@ -121,4 +140,20 @@ ul {
 //圖庫的優先級在SwiperModal之上
 .gjs-mdl-container {
     z-index: 1051;
+}
+
+.isScroll {
+    cursor: all-scroll;
+}
+
+.isPointer {
+    cursor: pointer;
+}
+
+.eyes {
+    color:#FFF;
+    text-shadow: 0px 0px 3px #000;
+    position: absolute;
+    top: 7%;
+    left: 3%;
 }

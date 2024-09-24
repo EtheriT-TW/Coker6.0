@@ -394,6 +394,11 @@
         width: 100%;
     }
 
+    .offcanvas-title {
+        margin-top: 16px;
+        margin-left: 80px;
+    }
+
     #Header_Top {
         height: 3rem;
     }
@@ -401,6 +406,11 @@
     #Mega_Menu > .logo > a > img {
         max-height: 50px;
         max-width: 50%;
+    }
+
+    #Offcanvas_Mega_Menu {
+        background-color: rgb(101 169 239 / 95%);
+        width: 85% !important;
     }
 
     #Offcanvas_Mega_Menu > ul {
@@ -721,6 +731,10 @@
         margin: 0;
     }
 
+    .offcanvas-title {
+        margin-left: unset;
+    }
+
     .headernews {
         width: 100%;
     }
@@ -737,6 +751,10 @@
 @media (max-width: 440px) {
     .subtitle > .subtitle_title {
         font-weight: 400;
+    }
+
+    .offcanvas-title {
+        margin-top: unset;
     }
 
     .offcanvas-header {

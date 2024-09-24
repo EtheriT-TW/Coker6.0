@@ -544,9 +544,9 @@ function DirectoryAdDataInsert($item, result) {
             var tags;
             for (var i = 0; i < thisresult.tagDatas.length; i++) {
                 if (i == 0) {
-                    tags = `<a href="/lcb/Search/Get/2/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
+                    tags = `<a href="/${OrgName}/Search/Get/4/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
                 } else {
-                    tags += `<a href="/lcb/Search/Get/2/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
+                    tags += `<a href="/${OrgName}/Search/Get/4/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
                 }
             }
             $frame.find(".tag").append(tags);

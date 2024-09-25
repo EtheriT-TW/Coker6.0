@@ -1317,9 +1317,7 @@ namespace EtheriT.Coker.Application
                                 };
                                 db.FileBinds.Add(fb);
                                 db.SaveChanges();
-
                             }
-
                             return_item.Add(new FileItemDto
                             {
                                 Id = fileUpload.Id,

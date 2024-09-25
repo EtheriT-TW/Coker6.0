@@ -141,27 +141,9 @@ namespace EtheriT.Coker.Application.Directory
                     {
                         if (oldtaglist != null)
                         {
-                            var tlist = oldtaglist.Select(e => e.FK_TId).ToList();
-                            var a_tags = await db.Tag_Associates.Include(e => e.Tag)
-                                .Where(e => tlist.Contains(e.FK_TId))
-                                .Where(e => !e.IsDeleted)
-                                .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
-                                .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
-                                .ToListAsync();
-                            if (!a_tags.Any()) throw new Exception("資料不存在");
-                            var temp_aid = new Dictionary<long, long>();
-                            a_tags.ForEach(tag =>
-                            {
-                                if (!temp_aid.ContainsKey(tag.FK_AId)) { temp_aid.Add(tag.FK_AId, 1); }
-                                else { temp_aid[tag.FK_AId] = temp_aid[tag.FK_AId] + 1; }
-                            });
-                            var aids = new List<long>();
-                            foreach (var aid in temp_aid)
-                            {
-                                if (aid.Value == tlist.Count) { aids.Add(aid.Key); }
-                            }
+                            var adids = await GetReleAdId(oldtaglist.Select(e => e.FK_TId).ToList());
                             var adlist = await (from a in db.Advertise.Where(e => !e.IsDeleted)
-                                                where aids.Contains(a.Id)
+                                                where adids.Contains(a.Id)
                                                 select new DirectoryReleInfoDto
                                                 {
                                                     Id = a.Id,
@@ -1211,27 +1193,9 @@ namespace EtheriT.Coker.Application.Directory
 
                     if (d_tags != null)
                     {
-                        var tlist = d_tags.Select(e => e.FK_TId).ToList();
-                        var a_tags = await db.Tag_Associates.Include(e => e.Tag)
-                            .Where(e => tlist.Contains(e.FK_TId))
-                            .Where(e => !e.IsDeleted)
-                            .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
-                            .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
-                            .ToListAsync();
-                        if (!a_tags.Any()) throw new Exception("資料不存在");
-                        var temp_aid = new Dictionary<long, long>();
-                        a_tags.ForEach(tag =>
-                        {
-                            if (!temp_aid.ContainsKey(tag.FK_AId)) { temp_aid.Add(tag.FK_AId, 1); }
-                            else { temp_aid[tag.FK_AId] = temp_aid[tag.FK_AId] + 1; }
-                        });
-                        var aids = new List<long>();
-                        foreach (var aid in temp_aid)
-                        {
-                            if (aid.Value == tlist.Count) { aids.Add(aid.Key); }
-                        }
+                        var adids = await GetReleAdId(d_tags.Select(e => e.FK_TId).ToList());
                         var dataQuery = from a in db.Advertise.Where(e => !e.IsDeleted)
-                                        where aids.Contains(a.Id)
+                                        where adids.Contains(a.Id)
                                         select new DirectoryReleInfoDto
                                         {
                                             Id = a.Id,
@@ -1278,18 +1242,10 @@ namespace EtheriT.Coker.Application.Directory
 
                     if (d_tags != null)
                     {
-                        var tlist = d_tags.Select(e => e.FK_TId).ToList();
-                        var a_tags = await db.Tag_Associates.Include(e => e.Tag)
-                            .Where(e => tlist.Contains(e.FK_TId))
-                            .Where(e => !e.IsDeleted)
-                            .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
-                            .Where(e => e.Tag.FK_WebsiteId == websiteid)
-                            .ToListAsync();
-                        if (!a_tags.Any()) throw new Exception("資料不存在");
-                        var aids = a_tags.Select(e => e.FK_AId).ToList();
+                        var adids = await GetReleAdId(d_tags.Select(e => e.FK_TId).ToList());
                         var adresult = db.Advertise;
                         output = await (from e in adresult
-                                        where aids.Contains(e.Id)
+                                        where adids.Contains(e.Id)
                                         where !e.IsDeleted && e.Visible
                                         where e.Permanent || ((DateTime.Compare((DateTime)e.StartDate, DateTime.Now) < 0) && (DateTime.Compare((DateTime)e.EndDate, DateTime.Now) > 0))
                                         orderby e.SerNO
@@ -1325,6 +1281,34 @@ namespace EtheriT.Coker.Application.Directory
 
             }
             return output;
+        }
+        public async Task<List<long>> GetReleAdId(List<long> FK_Tid_List)
+        {
+            var adlist = new List<long>();
+            try
+            {
+                var a_tags = await db.Tag_Associates.Include(e => e.Tag)
+                    .Where(e => FK_Tid_List.Contains(e.FK_TId))
+                    .Where(e => !e.IsDeleted)
+                    .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
+                    .ToListAsync();
+                if (!a_tags.Any()) throw new Exception("資料不存在");
+                var temp_aid = new Dictionary<long, long>();
+                a_tags.ForEach(tag =>
+                {
+                    if (!temp_aid.ContainsKey(tag.FK_AId)) { temp_aid.Add(tag.FK_AId, 1); }
+                    else { temp_aid[tag.FK_AId] = temp_aid[tag.FK_AId] + 1; }
+                });
+                foreach (var aid in temp_aid)
+                {
+                    if (aid.Value == FK_Tid_List.Count) { adlist.Add(aid.Key); }
+                }
+            }
+            catch(Exception e)
+            {
+                return null;
+            }
+            return adlist;
         }
     }
 }

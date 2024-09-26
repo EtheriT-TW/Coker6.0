@@ -230,10 +230,13 @@
                                                                 <p class="setting d-none h3">正在編輯</>
                                                                 <div class="a_href d-none"></div>
                                                                 <div class="a_title d-none"></div>
+                                                                <div class="a_targer d-none"></div>
                                                                 <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
-                                                                <span class="material-symbols-outlined eyes">visibility</span>
-                                                                <span class="material-symbols-outlined eyes d-none">visibility_off</span>
+                                                                <div class="eyes">
+                                                                    <span class="material-symbols-outlined">visibility</span>
+                                                                    <span class="material-symbols-outlined d-none">visibility_off</span>
+                                                                </div>
                                                             </div>
 
                                                             <div class="align-items-center d-flex position-absolute top-50 end-0 translate-middle-y mr-1">
@@ -252,25 +255,23 @@
                                                 <div class="w-50 ps-3 set-caption">
                                                   <h5>編輯內文</h5>
                                                   <form id="EditContentForm">
-                                                    <div class="mb-3 d-none">
-                                                      <label for="imgAlt" class="form-label">圖片名稱</label>
-                                                      <input type="text" class="form-control" id="imgAlt" placeholder="輸入名稱" />
-                                                    </div>
-                                                    <div class="mb-3">
+                                                    <div id=set-title class="mb-3 d-none">
                                                       <label for="slideTitle" class="form-label">標題</label>
-                                                      <input type="text" class="form-control" id="slideTitle" placeholder="輸入標題" />
+                                                      <input type="text" class="form-control" id="slideTitle" placeholder="輸入名稱" />
                                                     </div>
-                                                    <div class="mb-3">
+                                                    <div id="set-content" class="mb-3">
                                                       <label for="slideAlt" class="form-label">內文</label>
-                                                      <textarea class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
+                                                      <input class="form-control" id="slideAlt" rows="3" placeholder="輸入內文"></textarea>
                                                     </div>
-                                                    <div class="mb-3 d-none">
-                                                      <label for="href_title" class="form-label">連結名稱</label>
-                                                      <input type="text" class="form-control" id="href_title" placeholder="輸入名稱" />
-                                                    </div>
-                                                    <div class="mb-3">
+                                                    <div id="set-link" class="mb-4">
                                                       <label for="slideHref" class="form-label">連結網址</label>
+                                                      <input class="form-check-input ms-4" type="checkbox" value="" id="CheckOpenWindow">
+                                                      <label class="form-check-label ms-3 ps-4" for="CheckOpenWindow">另開新視窗</label>
                                                       <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
+                                                    </div>
+                                                    <div id="img-hidden" class="ms-3">
+                                                        <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
+                                                        <label class="form-check-label" for="CheckHidden">隱藏</label>
                                                     </div>
                                                   </form>
                                                 </div>
@@ -294,15 +295,52 @@
                                         "title": $self.find("a").attr("title"),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
+                                        "target": $self.find("a").attr("target"),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
-                                        "synopsis_caption": $self.find('.synopsis_caption').text() //文章內容
+                                        "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
+                                        "visible": !$self.hasClass("backstageType")
                                     };
                                     datas.push(obj);
-                                } else {
-
                                 }
                             });
                             $body.empty();
+                            $("#EditContentForm input").on("change", function () {
+                                console.log("in");
+                                //編輯內文存檔
+                                // 獲取當前選中的 li
+                                const $li = $(`#SwiperList [name="label"]:checked`).closest('li'); // 獲取顯示的 setting 所在的 li
+                                // 獲取標題、內文、連結
+                                const title = $('#slideTitle').val();
+                                const content = $('#slideAlt').val();
+                                const link = $('#slideHref').val();
+                                const targer = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
+                                const visible = $("#CheckHidden").prop("checked") ? true : false;
+                                $li.data({
+                                    alt: title,
+                                    synopsis_title: title,
+                                    synopsis_caption: content,
+                                    href: link,
+                                    title: title,
+                                    targer: targer,
+                                    visible: visible
+                                });
+                                if (visible) {
+                                    $li.find('.eyes>span:first-child').addClass('d-none');
+                                    $li.find('.eyes>span:last-child').removeClass('d-none');
+                                }
+                                else {
+                                    $li.find('.eyes>span:last-child').addClass('d-none');
+                                    $li.find('.eyes>span:first-child').removeClass('d-none');
+                                }
+                                // 將生成的 HTML 注入到 li 內
+                                $li.find('.img_alt').html(title);//更新圖片名稱
+                                $li.find('.synopsis_title').html(title); // 更新標題
+                                $li.find('.synopsis_caption').html(content); // 更新內文
+                                $li.find('.a_href').html(link);//更新連結
+                                $li.find('.a_title').html(title);//更新連結名稱
+                                $li.find('.a_targer').html(targer);//是否另開連結
+                                $li.find('.a_visible').html(visible);//是否隱藏
+                            });
                             const newLi = function (index, data) {
                                 var o = co.Object.merge({
                                     src: "/images/noImg.jpg",
@@ -319,47 +357,39 @@
                                 content.find("img").attr({ "src": o.src, "alt": o.alt });
                                 content.find(".img_alt").text(o.alt);
                                 content.find(".a_href").text(o.href);
-                                content.find(".a_title").text(o.title);
-                                content.find(".synopsis_title").text(o.synopsis_title);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
                                 content.data("order", index);
                                 content.find("label").on("click", function () {
+                                    $("#EditContentForm input:focus").trigger("change");
                                     const $li = $(this).closest('li');
-                                    $("input").removeAttr("disabled");
                                     const $caption = $('.set-caption');
                                     const $setting = $li.find('.setting');
-                                    const $formSetting = [$("#imgAlt"), $("#slideTitle"), $("#slideAlt"), $("#href_title"), $("#slideHref")];
-                                    console.log(selectedComponent);
-                                    if ($li.data("href") === "#SwiperModal") {
-                                        $formSetting[4].attr("disabled", true);
-                                        $formSetting[0].attr("disabled", true);
-                                    } else if (true/*沒有連結的時候*/) {
-                                        $formSetting[0].attr("disabled", true);
-                                        $formSetting[3].attr("disabled", true);
-                                        $formSetting[4].attr("disabled", true);
+                                    const $setTitle = $caption.find('#slideTitle');
+                                    const $setContent = $caption.find('#slideAlt');
+                                    const $setLink = $caption.find('#slideHref');
+                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link")];
+                                    $caption.find('*:not(.a_targer)').removeClass('d-none');
+                                    if ($li.data("href") === "#SwiperModal" || selectedComponent.getEl('a')) {
+                                        $formSetting[2].addClass('d-none');
                                     }
-                                    if (!$li.data(".synopsis_title") && !$li.data(".synopsis_caption")) {
-                                        $formSetting[1].attr("disabled", true);
-                                        $formSetting[2].attr("disabled", true);
+                                    if (!selectedComponent.getEl(".synopsis_title, .synopsis_caption")) {
+                                        $formSetting[1].addClass('d-none');
                                     }
+                                    $("#CheckHidden").prop("checked", $li.data("visible"));
+                                    $("#CheckOpenWindow").prop("checked", $li.data("target")=="_blank");
                                     $("#SwiperList").find('.setting').addClass('d-none');
                                     $setting.removeClass('d-none');
                                     $caption.removeClass('d-none');
                                     $("#SwiperList").find("[name='label']").prop("checked", false);
                                     $li.find("[name='label']").prop("checked", true);
-                                    $caption.find('#imgAlt').val($li.data().alt);
-                                    $caption.find('#slideTitle').val($li.data().synopsis_title);
-                                    $caption.find('#slideAlt').val($li.data().synopsis_caption);
-                                    $caption.find('#slideHref').val($li.data().href);
-                                    $caption.find('#href_title').val($li.data().title);
+                                    //注入已有資料到form的input
+                                    $setTitle.val($li.data().alt); //圖片alt
+                                    //$setTitle.val($li.data().title); //連結title
+                                    //$setTitle.val($li.data().synopsis_title); //文章標題
+                                    $setContent.val($li.data().synopsis_caption); //內文
+                                    $setLink.val($li.data().href); //連結
                                 });
 
-                                content.find(".cancel-form").on("click", function () {
-                                    const $li = $("#SwiperList .setting").closest('li');
-                                    $('.set-caption').addClass('d-none');
-                                    $('.setting').addClass('d-none');
-                                    $li.addClass('bg-white').removeClass('bg-primary');
-                                });
                                 content.find(".update-img").on("click", function () {
                                     const $imgElement = $(this).closest("li").find("img"); // 找到對應的 img 標籤
                                     AssetManager.open();
@@ -390,38 +420,6 @@
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
                                 newLi($("#SwiperList>li").length, {});
                             });
-                            $("#SwiperModal .save-content").off("click").on("click", function () {
-                                //編輯內文存檔
-                                // 獲取當前選中的 li
-                                const $li = $("#SwiperList .setting:visible").closest('li'); // 獲取顯示的 setting 所在的 li
-                                // 獲取標題、內文、連結
-                                const img_alt = $('#imgAlt').val();
-                                const title = $('#slideTitle').val();
-                                const content = $('#slideAlt').val();
-                                const link = $('#slideHref').val();
-                                const a_title = $('#href_title').val();
-                                $li.data({
-                                    alt: img_alt,
-                                    synopsis_title: title,
-                                    synopsis_caption: content,
-                                    href: link,
-                                    title: a_title
-                                });
-
-                                // 生成 HTML
-                                const html = `<h5>${title}</h5>
-                                              <p>${content}</p>`;
-
-                                // 將生成的 HTML 注入到 li 內
-                                $li.find('.img_alt').html(img_alt);//更新圖片名稱
-                                $li.find('.synopsis_title').html(title); // 更新標題
-                                $li.find('.synopsis_caption').html(content); // 更新內文
-                                $li.find('.a_href').html(link);//更新連結
-                                $li.find('.a_title').html(a_title);//更新連結名稱
-
-                                // 隱藏編輯區域
-                                $('#set-caption').addClass('d-none');
-                            });
 
                             $("#SwiperModal").on("click", ".sava", function () {
                                 const $s = $selected.clone();
@@ -429,12 +427,13 @@
                                 const $b = $s.find(".swiper .swiper-wrapper");
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
-                                    const newImgSrc = $(element).find('img').attr('src');
-                                    const newImgAlt = $(element).find('.img_alt').text();
-                                    const newLink = $(element).find('.a_href').text();
-                                    const newHrefTitle = $(element).find('.a_title').text();
-                                    const newTitle = $(element).find('.synopsis_title').text();
-                                    const newCaption = $(element).find('.synopsis_caption').text();
+                                    console.log($(element).data(), $(element).data("visible"));
+                                    const newImgSrc = $(element).data("src");
+                                    const newTitle = $(element).data("alt");
+                                    const newLink = $(element).data("href");
+                                    const newTarger = $(element).data("targer");
+                                    const isVisible = $(element).data("visible");
+                                    const newCaption = $(element).data("synopsis_caption");
                                     // 更新slides中的圖片
                                     const order = $(element).data("order");
                                     const slide = $slides[order];
@@ -442,11 +441,17 @@
 
                                     if (slide) {
                                         $(slide).find('img').attr('src', newImgSrc);
-                                        $(slide).find('img').attr('alt', newImgAlt);
+                                        $(slide).find('img').attr('alt', newTitle);
                                         $(slide).find('a').attr('href', newLink);
-                                        $(slide).find('a').attr('title', newHrefTitle);
+                                        $(slide).find('a').attr('title', newTitle);
+                                        $(slide).find('a').attr('targer', newTarger);
                                         $(slide).find('.synopsis_title').text(newTitle);
                                         $(slide).find('.synopsis_caption').text(newCaption);
+                                        if (isVisible) {
+                                            $(slide).addClass('backstageType');
+                                        } else {
+                                            $(slide).removeClass('backstageType');
+                                        }
                                         $b.append(slide);
                                     } else {
                                         var $selected = editor.getSelected();
@@ -456,21 +461,26 @@
                                             var new_slide = $("<div>").append($($selected.find(".template_slide>.swiper-slide")[0].toHTML())).html();
                                             var $new_slide = $(new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
-                                            $new_slide.find('img').attr('alt', newImgAlt);
+                                            $new_slide.find('img').attr('alt', newTitle);
                                             $new_slide.find('a').attr('href', newLink);
-                                            $new_slide.find('a').attr('title', newHrefTitle);
+                                            $new_slide.find('a').attr('title', newTitle);
+                                            $new_slide.find('a').attr('targer', newTarger);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         } else {
                                             var new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
                                             $new_slide = $(new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
-                                            $new_slide.find('img').attr('alt', newImgAlt);
+                                            $new_slide.find('img').attr('alt', newTitle);
                                             $new_slide.find('a').attr('href', newLink);
-                                            $new_slide.find('a').attr('title', newHrefTitle);
+                                            $new_slide.find('a').attr('title', newTitle);
+                                            $new_slide.find('a').attr('targer', newTarger);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         }
+                                        if (isVisible) {
+                                            $(slide).addClass('d-none');
+                                        } 
                                         $b.append($new_slide);
                                     }
                                 });

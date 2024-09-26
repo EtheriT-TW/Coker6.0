@@ -1,11 +1,12 @@
 ﻿#TopLine {
     display: flex;
 
-    >.d-flex {
+    > .d-flex {
         width: 100%;
         justify-content: space-between;
     }
 }
+
 body.grapesEdit {
     #TopLine {
         z-index: 1024;
@@ -37,12 +38,12 @@ body.grapesEdit {
         }
 
         .d-flex {
-            >.btn {
+            > .btn {
                 font-size: 1rem;
                 padding: 0 0.5rem;
             }
 
-            >.title {
+            > .title {
                 margin-right: 1rem;
                 max-width: 20rem;
                 display: -webkit-box;
@@ -73,7 +74,7 @@ ul {
 }
 
 #scroll {
-    height:430px;
+    height: 430px;
     overflow-y: auto;
 }
 
@@ -90,8 +91,8 @@ ul {
     display: none;
 }
 
-#SwiperList input:checked + label{
-    background-color:aqua;
+#SwiperList input:checked + label {
+    background-color: aqua;
 }
 
 #SwiperList input:checked + label .button {
@@ -125,8 +126,8 @@ ul {
     left: 6%;
 }
 
-.modal-body{
-    height:523px;
+.modal-body {
+    height: 523px;
 }
 
 .modal-body:not(#SwiperList) {
@@ -151,9 +152,11 @@ ul {
 }
 
 .eyes {
-    color:#FFF;
     text-shadow: 0px 0px 3px #000;
     position: absolute;
     top: 7%;
     left: 3%;
+    span {
+        color: #FFF;
+    }
 }

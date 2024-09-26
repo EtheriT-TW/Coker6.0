@@ -473,9 +473,6 @@ function MoveToItemAdvertise() {
 function editAdvertiseButtonClicked(e) {
     window.location.hash = `AdvertiseEditor_${DirectoryId}_${e.row.key}`;
 }
-function groupAdvertiseButtonClicked(e) {
-    $("#PermissionDetailsModal").setData({ pageId: e.row.key, title: e.row.data.Title, type: 3 }).modal("show");
-}
 function deleteAdvertiseButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.Advertise.Delete(e.row.key).done(function (result) {

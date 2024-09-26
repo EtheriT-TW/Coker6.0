@@ -1248,7 +1248,7 @@ namespace EtheriT.Coker.Application.Directory
                                         where adids.Contains(e.Id)
                                         where !e.IsDeleted && e.Visible
                                         where e.Permanent || ((DateTime.Compare((DateTime)e.StartDate, DateTime.Now) < 0) && (DateTime.Compare((DateTime)e.EndDate, DateTime.Now) > 0))
-                                        orderby e.SerNO
+                                        orderby Guid.NewGuid()
                                         select new AdvertiseDisplayDto
                                         {
                                             Id = e.Id,
@@ -1257,15 +1257,16 @@ namespace EtheriT.Coker.Application.Directory
                                             Link = e.Link,
                                             Target = e.Target,
                                             Clicks = e.Clicks,
-                                            Exposure = e.Exposure
+                                            Exposure = e.Exposure,
+                                            SerNO = e.SerNO,
                                         }).ToListAsync();
                         switch (db_d.SortBy)
                         {
-                            case 1:
-                                output = output.OrderBy(o => Guid.NewGuid()).ToList();
+                            case 0:
+                                output = output.OrderBy(o => o.SerNO).ToList();
                                 break;
                             case 2:
-                                output = output.OrderByDescending(o => o.Clicks).ToList();
+                                output = output.OrderByDescending(o => (double)o.Clicks / (double)o.Exposure).ToList();
                                 break;
                         }
                         for (var i = 0; i < output.Count; i++)
@@ -1304,7 +1305,7 @@ namespace EtheriT.Coker.Application.Directory
                     if (aid.Value == FK_Tid_List.Count) { adlist.Add(aid.Key); }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return null;
             }

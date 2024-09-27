@@ -230,7 +230,7 @@
                                                                 <p class="setting d-none h3">正在編輯</>
                                                                 <div class="a_href d-none"></div>
                                                                 <div class="a_title d-none"></div>
-                                                                <div class="a_targer d-none"></div>
+                                                                <div class="a_target d-none"></div>
                                                                 <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
                                                                 <div class="eyes">
@@ -295,17 +295,17 @@
                                         "title": $self.find("a").attr("title"),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
+                                        "a_tag": $self.find("a").length > 0 ? true : flase,
                                         "target": $self.find("a").attr("target"),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
-                                        "visible": !$self.hasClass("backstageType")
+                                        "visible": $self.hasClass("backstageType")
                                     };
                                     datas.push(obj);
                                 }
                             });
                             $body.empty();
-                            $("#EditContentForm input").on("change", function () {
-                                console.log("in");
+                            $("#EditContentForm input").off("change").on("change", function () {
                                 //編輯內文存檔
                                 // 獲取當前選中的 li
                                 const $li = $(`#SwiperList [name="label"]:checked`).closest('li'); // 獲取顯示的 setting 所在的 li
@@ -313,7 +313,7 @@
                                 const title = $('#slideTitle').val();
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
-                                const targer = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
+                                const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,
@@ -321,7 +321,7 @@
                                     synopsis_caption: content,
                                     href: link,
                                     title: title,
-                                    targer: targer,
+                                    target: target,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -338,7 +338,7 @@
                                 $li.find('.synopsis_caption').html(content); // 更新內文
                                 $li.find('.a_href').html(link);//更新連結
                                 $li.find('.a_title').html(title);//更新連結名稱
-                                $li.find('.a_targer').html(targer);//是否另開連結
+                                $li.find('.a_target').html(target);//是否另開連結
                                 $li.find('.a_visible').html(visible);//是否隱藏
                             });
                             const newLi = function (index, data) {
@@ -349,6 +349,8 @@
                                     title: "",
                                     synopsis_title: "",
                                     synopsis_caption: "",
+                                    visible:false,
+                                    a_tag: true
                                 }, data);
                                 var content = $($("#TemplateSwiperList").html());
                                 content.data(o);
@@ -358,6 +360,14 @@
                                 content.find(".img_alt").text(o.alt);
                                 content.find(".a_href").text(o.href);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
+                                console.log(content.find(".eyes > span:first-child"));
+                                if (data.visible) {
+                                    content.find(".eyes > span:first-child").addClass("d-none");
+                                    content.find(".eyes > span:last-child").removeClass("d-none");
+                                } else {
+                                    content.find(".eyes > span:first-child").removeClass("d-none");
+                                    content.find(".eyes > span:last-child").addClass("d-none");
+                                }
                                 content.data("order", index);
                                 content.find("label").on("click", function () {
                                     $("#EditContentForm input:focus").trigger("change");
@@ -368,15 +378,15 @@
                                     const $setContent = $caption.find('#slideAlt');
                                     const $setLink = $caption.find('#slideHref');
                                     const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link")];
-                                    $caption.find('*:not(.a_targer)').removeClass('d-none');
-                                    if ($li.data("href") === "#SwiperModal" || selectedComponent.getEl('a')) {
+                                    $caption.find('*:not(.a_target)').removeClass('d-none');
+                                    if ($li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
                                         $formSetting[2].addClass('d-none');
                                     }
-                                    if (!selectedComponent.getEl(".synopsis_title, .synopsis_caption")) {
+                                    if (!$li.data("synopsis_caption")) {
                                         $formSetting[1].addClass('d-none');
                                     }
                                     $("#CheckHidden").prop("checked", $li.data("visible"));
-                                    $("#CheckOpenWindow").prop("checked", $li.data("target")=="_blank");
+                                    $("#CheckOpenWindow").prop("checked", $li.data("target") == "_blank");
                                     $("#SwiperList").find('.setting').addClass('d-none');
                                     $setting.removeClass('d-none');
                                     $caption.removeClass('d-none');
@@ -421,66 +431,63 @@
                                 newLi($("#SwiperList>li").length, {});
                             });
 
-                            $("#SwiperModal").on("click", ".sava", function () {
+                            $("#SwiperModal .sava").off("click").on("click", function () {
                                 const $s = $selected.clone();
                                 const $slides = $s.find(".swiper .swiper-wrapper>.swiper-slide").clone();
                                 const $b = $s.find(".swiper .swiper-wrapper");
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
-                                    console.log($(element).data(), $(element).data("visible"));
                                     const newImgSrc = $(element).data("src");
                                     const newTitle = $(element).data("alt");
                                     const newLink = $(element).data("href");
-                                    const newTarger = $(element).data("targer");
+                                    const newTarget = $(element).data("target");
                                     const isVisible = $(element).data("visible");
                                     const newCaption = $(element).data("synopsis_caption");
                                     // 更新slides中的圖片
                                     const order = $(element).data("order");
-                                    const slide = $slides[order];
-                                    const existingTitle = $(slide).find('h2').text().trim();
+                                    let $new_slide = $slides[order];
+                                    const existingTitle = $($new_slide).find('h2').text().trim();
 
-                                    if (slide) {
-                                        $(slide).find('img').attr('src', newImgSrc);
-                                        $(slide).find('img').attr('alt', newTitle);
-                                        $(slide).find('a').attr('href', newLink);
-                                        $(slide).find('a').attr('title', newTitle);
-                                        $(slide).find('a').attr('targer', newTarger);
-                                        $(slide).find('.synopsis_title').text(newTitle);
-                                        $(slide).find('.synopsis_caption').text(newCaption);
+                                    if ($new_slide) {
+                                        $($new_slide).find('img').attr('src', newImgSrc);
+                                        $($new_slide).find('img').attr('alt', newTitle);
+                                        $($new_slide).find('a').attr('href', newLink);
+                                        $($new_slide).find('a').attr('title', newTitle);
+                                        $($new_slide).find('a').attr('target', newTarget);
+                                        $($new_slide).find('.synopsis_title').text(newTitle);
+                                        $($new_slide).find('.synopsis_caption').text(newCaption);
                                         if (isVisible) {
-                                            $(slide).addClass('backstageType');
+                                            $($new_slide).addClass('backstageType');
                                         } else {
-                                            $(slide).removeClass('backstageType');
+                                            $($new_slide).removeClass('backstageType');
                                         }
-                                        $b.append(slide);
+                                        $b.append($new_slide);
+                                        
                                     } else {
                                         var $selected = editor.getSelected();
                                         var swiper = $selected.find(".swiper")[0].getEl().swiper;
                                         const have_template = $selected.find(".template_slide>.swiper-slide")[0];
                                         if (have_template) {
-                                            var new_slide = $("<div>").append($($selected.find(".template_slide>.swiper-slide")[0].toHTML())).html();
-                                            var $new_slide = $(new_slide);
-                                            $new_slide.find('img').attr('src', newImgSrc);
-                                            $new_slide.find('img').attr('alt', newTitle);
-                                            $new_slide.find('a').attr('href', newLink);
-                                            $new_slide.find('a').attr('title', newTitle);
-                                            $new_slide.find('a').attr('targer', newTarger);
+                                            $new_slide = $($selected.find(".template_slide>.swiper-slide")[0].toHTML());
+                                            $new_slide.find('a').attr('target', newTarget);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         } else {
-                                            var new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
-                                            $new_slide = $(new_slide);
+                                            $new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
+                                            $new_slide = $($new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
                                             $new_slide.find('img').attr('alt', newTitle);
                                             $new_slide.find('a').attr('href', newLink);
                                             $new_slide.find('a').attr('title', newTitle);
-                                            $new_slide.find('a').attr('targer', newTarger);
+                                            $new_slide.find('a').attr('target', newTarget);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         }
                                         if (isVisible) {
-                                            $(slide).addClass('d-none');
-                                        } 
+                                            $($new_slide).addClass('backstageType');
+                                        } else {
+                                            $($new_slide).removeClass('backstageType');
+                                        }
                                         $b.append($new_slide);
                                     }
                                 });

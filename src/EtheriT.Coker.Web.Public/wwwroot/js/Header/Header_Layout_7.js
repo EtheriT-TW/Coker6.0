@@ -7,12 +7,17 @@ function HeaderInit() {
     $("#main").append($main);
     $(".marqueeSwiper").each(function () {
         const $marquee = $(this).find(".swiper-wrapper"); 
+        console.log("網站的開設讓大眾能方便的瞭解與本公司相關的資訊，歡迎有需要買賣剪床、折床的客戶，".length);
         $marquee.find(".swiper-slide").each(function () {
             let maxLen = 100;
             let $slide = $(this);
             let txt = $slide.text().replace("(current)", "");
-            if ($(window).width() < 767) {
-                maxLen = 13;
+            if ($(window).width() < 576) { 
+                maxLen = 15;
+            } else if ($(window).width() < 768) {
+                maxLen = 21;
+            } else if ($(window).width() < 992) {
+                maxLen = 38;
             }
             const count = Math.floor(txt.length / maxLen) - (txt.length % maxLen > 0 ? 0 : 1);
             if (count > 0) $slide.find(".text").text(txt.substring(0, maxLen));

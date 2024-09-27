@@ -184,7 +184,7 @@ namespace EtheriT.Coker.Application.Tag
                 var dataQuery = from t in db.Tags
                                 join s in db.Websites on t.FK_WebsiteId equals s.Id
                                 where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
-                                orderby t.FK_WebsiteId
+                                orderby t.Id descending
                                 select new TagGetAllListDto
                                 {
                                     Id = t.Id,
@@ -280,7 +280,8 @@ namespace EtheriT.Coker.Application.Tag
                         };
                         TagBindings.Add(ta);
                     }
-                    else if (data.Id > 0 && !data.IsDeleted && ass!=null) {
+                    else if (data.Id > 0 && !data.IsDeleted && ass != null)
+                    {
                         ass.IsDeleted = false;
                         ass.DeleterUserId = null;
                         ass.DeletionTime = null;
@@ -319,7 +320,7 @@ namespace EtheriT.Coker.Application.Tag
                              where ta.FK_AId == dto.Fk_Aid && ta.Type == dto.Type && !ta.IsDeleted
                              join t in db.Tags on ta.FK_TId equals t.Id
                              where !t.IsDeleted && siteIds.Contains(t.FK_WebsiteId)
-                             group t by new { t.Id,t.Title} into g
+                             group t by new { t.Id, t.Title } into g
                              select new TagGetSelectedDto
                              {
                                  FK_TId = g.Key.Id,

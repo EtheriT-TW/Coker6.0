@@ -5,72 +5,88 @@
 <script src="~/js/Components/TagListModal.min.js" asp-append-version="true"></script>
 
 <div id="TagModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLabel">選擇標籤</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				<div class="bg-white p-3">
-					@(Html.DevExtreme().DataGrid<TagGetAllListDto>()
-					.DataSource(d => d.RemoteController().Key("Id")
-					.LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
-					)
-					.ID("TagList")
-					.Selection(s => 
-						s.Mode(SelectionMode.Multiple).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
-					)
-					.RemoteOperations(true)
-					.ColumnHidingEnabled(false)
-					.ShowBorders(true)
-					.FilterRow(filterRow => filterRow
-					.Visible(true)
-					.ApplyFilter(GridApplyFilterMode.Auto)
-					)
-					.SearchPanel(searchPanel => searchPanel
-					.Visible(true)
-					.Placeholder("請輸入要搜尋的資料")
-					)
-					.Columns(c =>
-					{
-						c.AddFor(e => e.Id).Caption("編號").Visible(false);
-						c.AddFor(e => e.SiteNameTitle).Caption("網站名稱").Width(150);
-						c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
-					})
-					.OnSelectionChanged("TagList_SelectChange")
-					.OnContentReady("tagContentReady")
-					.Toolbar(toolbar =>
-					{
-						toolbar.Items(items =>
-						{
-							items.Add()
-						.Location(ToolbarItemLocation.Before)
-						.Widget(w =>
-						w.Button()
-						.Text("選項清除")
-						.Disabled(true)
-						.OnClick("TagList_ClearBtnClick")
-						.OnInitialized("TagList_ClearBtnInit")
-						);
-						});
-
-						toolbar.Items(i =>
-						{
-							i.Add()
-						.Name(DataGridToolbarItem.SearchPanel)
-						.ShowText(ToolbarItemShowTextMode.Always)
-						.Location(ToolbarItemLocation.After);
-						});
-					})
-					.Paging(paging => paging.PageSize(10))
-					)
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-				<button type="button" class="btn_tag_save btn btn-primary">確認</button>
-			</div>
-		</div>
-	</div>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">選擇標籤</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-white p-3">
+                    @(Html.DevExtreme().DataGrid<TagGetAllListDto>()
+                        .DataSource(d => d.RemoteController().Key("Id")
+                        .LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
+                        .InsertUrl("/api/Tag/TagAddUp").InsertMethod("Post")
+                        )
+                        .ID("TagList")
+                        .Selection(s =>
+                        s.Mode(SelectionMode.Multiple).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                        )
+                        .RemoteOperations(true)
+                        .ColumnHidingEnabled(false)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(true);
+                            editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+                            editing.UseIcons(true);
+                        })
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
+                            c.AddFor(e => e.SiteNameTitle).Caption("網站名稱").Width(150).AllowEditing(false);
+                            c.AddFor(e => e.Title).Caption("標籤名稱").Width(150);
+                        })
+                        .Toolbar(toolbar =>
+                        {
+                            toolbar.Items(items =>
+                            {
+                                items.Add()
+                            .Location(ToolbarItemLocation.Before)
+                            .Widget(w =>
+                            w.Button()
+                            .Text("選項清除")
+                            .Disabled(true)
+                            .OnClick("TagList_ClearBtnClick")
+                            .OnInitialized("TagList_ClearBtnInit")
+                            );
+                            });
+                            toolbar.Items(i =>
+                            {
+                                i.Add()
+                            .Name(DataGridToolbarItem.AddRowButton)
+                            .ShowText(ToolbarItemShowTextMode.Always)
+                            .Location(ToolbarItemLocation.Before);
+                            });
+                            toolbar.Items(i =>
+                            {
+                                i.Add()
+                            .Name(DataGridToolbarItem.SearchPanel)
+                            .ShowText(ToolbarItemShowTextMode.Always)
+                            .Location(ToolbarItemLocation.After);
+                            });
+                        })
+                        .OnSelectionChanged("TagList_SelectChange")
+                        .OnContentReady("tagContentReady")
+                        .OnRowInserting("dataSaving")
+                        .OnRowUpdating("dataSaving")
+                        .Paging(paging => paging.PageSize(10))
+                        )
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn_tag_save btn btn-primary">確認</button>
+            </div>
+        </div>
+    </div>
 </div>

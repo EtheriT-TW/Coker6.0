@@ -1,4 +1,4 @@
-﻿var $btn_tag_save, $tag
+﻿var $btn_tag_save, $tag, TagList_dxData
 var tag_list = []
 var $price_modal, priceModal, $techcert_body, techcertModal;
 var tag_changedBySelectBox, tag_clearSelectionButton;
@@ -26,15 +26,15 @@ $.fn.extend({
         $self.TagDataClear = function () {
             $self.data({
                 tagList: [],
-                tagCheckList:[],
-                tagText:""
+                tagCheckList: [],
+                tagText: ""
             });
             $self.val("");
             getTagListDataGridInstance().done(function (result) {
                 result.clearSelection()
             });
         }
-        $self.TagDataSet = function(datas) {
+        $self.TagDataSet = function (datas) {
             var text = ""
             if (datas != null && datas.length > 0) {
                 var temp_list = [];
@@ -89,7 +89,7 @@ $.fn.extend({
                     }
                 })
                 if ($self.data("tagCheckList").length > 0) {
-                    
+
                     $self.data("tagCheckList").forEach(function (item) {
                         if (!!!$self.data("tagList").find((element) => element.FK_TId === item)) {
                             var obj = {};
@@ -244,4 +244,22 @@ function TagInitSet(datas) {
 
 function tagContentReady(e) {
     $(e.element).addClass("isReady");
+    TagList_dxData = $("#TagList").dxDataGrid("instance");
+}
+function dataSaving(e) {
+    var first_char;
+    if ((typeof (e.newData) != "undefined" && typeof (e.newData.Title) != "undefined") || (typeof (e.data) != "undefined" && typeof (e.data.Title) != "undefined")) {
+        if (typeof (e.newData) != "undefined") first_char = e.newData.Title.substring(0, 1);
+        else if (typeof (e.data) != "undefined") first_char = e.data.Title.substring(0, 1);
+        var specialChars = "~·`!！@#$￥%^…&*()（）—-_=+[]{}【】、|\\;:；：'\"“‘,./<>《》?？，。";
+        if (specialChars.indexOf(first_char) == -1) {
+            e.component.saveEditData();
+            TagList_dxData.refresh();
+        } else {
+            e.cancel = true;
+            co.sweet.error("資料錯誤", "標籤名稱不可以符號開頭", null, null);
+        }
+    } else {
+        TagList_dxData.refresh();
+    }
 }

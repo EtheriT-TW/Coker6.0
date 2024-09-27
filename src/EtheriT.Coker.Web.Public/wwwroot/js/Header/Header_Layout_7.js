@@ -47,18 +47,22 @@ function HeaderInit() {
     }
     checkFunction();
 
-    const clickBtnMenu = function () {
+    var Mega_Menu = document.getElementById("Offcanvas_Mega_Menu");
+    var observer = new MutationObserver(function (mutations) {
         var icon = document.getElementById("menuIcon");
-        if (icon.classList.contains("fa-bars")) {
-            icon.classList.remove("fa-bars");
-            icon.classList.add("fa-times-square"); // 切換成叉叉
-        } else {
-            icon.classList.remove("fa-times-square");
-            icon.classList.add("fa-bars"); // 切換回漢堡
-        }
-    }
-
-    document.getElementById("btnMenu").addEventListener("click", clickBtnMenu);
+        mutations.forEach(function (mutation) {
+            if (mutation.attributeName === 'class') {
+                if (Mega_Menu.classList.contains('show')) {
+                    icon.classList.remove("fa-bars");
+                    icon.classList.add("fa-times-square"); // 切換成叉叉
+                } else {
+                    icon.classList.remove("fa-times-square");
+                    icon.classList.add("fa-bars"); // 切換回漢堡
+                }
+            }
+        });
+    });
+     observer.observe(Mega_Menu, { attributes: true }); 
 
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {

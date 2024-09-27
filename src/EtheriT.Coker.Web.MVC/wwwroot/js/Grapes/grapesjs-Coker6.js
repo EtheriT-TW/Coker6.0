@@ -360,7 +360,6 @@
                                 content.find(".img_alt").text(o.alt);
                                 content.find(".a_href").text(o.href);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
-                                console.log(content.find(".eyes > span:first-child"));
                                 if (data.visible) {
                                     content.find(".eyes > span:first-child").addClass("d-none");
                                     content.find(".eyes > span:last-child").removeClass("d-none");
@@ -437,7 +436,7 @@
                                 const $b = $s.find(".swiper .swiper-wrapper");
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
-                                    const newImgSrc = $(element).data("src");
+                                    const newImgSrc = $(element).find("img").attr("src");
                                     const newTitle = $(element).data("alt");
                                     const newLink = $(element).data("href");
                                     const newTarget = $(element).data("target");
@@ -447,7 +446,7 @@
                                     const order = $(element).data("order");
                                     let $new_slide = $slides[order];
                                     const existingTitle = $($new_slide).find('h2').text().trim();
-
+                                    console.log(newImgSrc);
                                     if ($new_slide) {
                                         $($new_slide).find('img').attr('src', newImgSrc);
                                         $($new_slide).find('img').attr('alt', newTitle);

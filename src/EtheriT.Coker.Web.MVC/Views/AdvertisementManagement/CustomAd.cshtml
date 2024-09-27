@@ -62,7 +62,6 @@
                         {
                             b.Add().Name("edit").Visible(ThePermission.CanUpdate).OnClick("editButtonClicked");
                             b.Add().Icon("verticalaligncenter").Visible(ThePermission.CanVisble).OnClick("reladataButtonClicked");
-                            b.Add().Icon("group").Name("group").Visible(ThePermission.superManager).OnClick("groupAdvertiseButtonClicked");
                             b.Add().Name("delete").Visible(ThePermission.CanRemove).OnClick("deleteButtonClicked");
                         });
                     })

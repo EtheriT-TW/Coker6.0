@@ -316,59 +316,56 @@ function AddUp(success_text, error_text) {
 }
 function AddUpAdvertise(success_text, error_text) {
     const data = co.Form.getJson($(AdvertiseForms).attr("id"));
-    if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
-        co.File.DeleteFileById({
-            Sid: data.id,
-            Type: 6,
-            Fid: $("#ImageUpload .img_input_frame").data("delectList")
-        });
-    }
     co.Advertise.AddUp(data).done((result) => {
         const success = function () {
             Coker.sweet.success(success_text, null, true);
             directoryDatailList.component.refresh();
             location.hash = `Advertise_${DirectoryId}`;
         }
-        switch (parseInt($ad_type.val())) {
-            case 1:
-                var formData = new FormData();
-                formData.append("files", $ad_type.data("file").File);
-                formData.append("type", 10);
-                formData.append("sid", result.message);
-                formData.append("serno", 500);
-                co.File.Upload(formData).done(function () {
-                    success();
-                });
-                break;
-            case 2:
-                var formData = new FormData();
-                formData.append("files", $ad_type.data("file").File);
-                formData.append("type", 10);
-                formData.append("sid", result.message);
-                formData.append("serno", 500);
-                co.File.Upload(formData).done(function () {
-                    success();
-                });
-                break;
-            case 3:
-                var ytlink = $(".btn_preview").prev().val();
-                var file = ytlink.substr(ytlink.indexOf("v=") + 2);
-                $ad_type.data("file", file);
-                if (typeof (result.message) != "undefined") {
-                    co.File.UploadYTLink({
-                        Id: typeof ($ad_type.data("fileid")) == "undefined" ? 0 : $ad_type.data("fileid"),
-                        SId: result.message,
-                        File: $ad_type.data("file"),
-                        Type: 10,
-                        SerNo: 500,
-                    }).done(function () {
+        if (typeof ($ad_type.data("file").File) != "undefined") {
+            switch (parseInt($ad_type.val())) {
+                case 1:
+                    var formData = new FormData();
+                    formData.append("files", $ad_type.data("file").File);
+                    formData.append("type", 10);
+                    formData.append("sid", result.message);
+                    formData.append("serno", 500);
+                    co.File.Upload(formData).done(function () {
                         success();
-                    })
-                }
-                break;
-            default:
-                success();
-                break;
+                    });
+                    break;
+                case 2:
+                    var formData = new FormData();
+                    formData.append("files", $ad_type.data("file").File);
+                    formData.append("type", 10);
+                    formData.append("sid", result.message);
+                    formData.append("serno", 500);
+                    co.File.Upload(formData).done(function () {
+                        success();
+                    });
+                    break;
+                case 3:
+                    var ytlink = $(".btn_preview").prev().val();
+                    var file = ytlink.substr(ytlink.indexOf("v=") + 2);
+                    $ad_type.data("file", file);
+                    if (typeof (result.message) != "undefined") {
+                        co.File.UploadYTLink({
+                            Id: typeof ($ad_type.data("fileid")) == "undefined" ? 0 : $ad_type.data("fileid"),
+                            SId: result.message,
+                            File: $ad_type.data("file"),
+                            Type: 10,
+                            SerNo: 500,
+                        }).done(function () {
+                            success();
+                        })
+                    }
+                    break;
+                default:
+                    success();
+                    break;
+            }
+        } else {
+            success();
         }
     });
 }
@@ -475,9 +472,6 @@ function MoveToItemAdvertise() {
 }
 function editAdvertiseButtonClicked(e) {
     window.location.hash = `AdvertiseEditor_${DirectoryId}_${e.row.key}`;
-}
-function groupAdvertiseButtonClicked(e) {
-    $("#PermissionDetailsModal").setData({ pageId: e.row.key, title: e.row.data.Title, type: 3 }).modal("show");
 }
 function deleteAdvertiseButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {

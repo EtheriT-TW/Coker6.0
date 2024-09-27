@@ -124,11 +124,13 @@ function SwiperInit(obj) {
             
             if (!$self.find(".swiper").hasClass(".selfThumbs")) { //如果沒有swiper class的元素
                 const $images = [];
+                const $alts = [];
                 $self.find(".swiper-slide img").each(function () { //遍歷所有thumnbs-image底下的img
                     $images.push($(this).attr("src")); //儲存到$images變數
+                    $alts.push($(this).attr("alt"));
                 });
                 for (let i = 0; i < $images.length; i++) { //生成Thumbs
-                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
+                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt="${$alts[i]}" /></div>`;
                     swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
                 }
             }

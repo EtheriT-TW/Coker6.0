@@ -496,14 +496,14 @@ function DirectoryAdDataInsert($item, result) {
                         $frame.find(".title").removeClass("d-none");
                     }
                     $img_frame.removeClass("d-none");
-                    $img_frame.parent().find("div").not(".img_frame").not(".title").remove();
+                    $img_frame.parent().children().not(".img_frame").not(".title").remove();
                     break;
                 case 2:
                     var $video_frame = $frame.find(".video_frame");
                     $video_frame.find("video").attr("src", thisresult.fileLink.link);
                     $video_frame.find("video").attr("type", thisresult.fileLink.video_Type);
                     $video_frame.removeClass("d-none");
-                    $video_frame.parent().find("div").not(".video_frame").remove();
+                    $video_frame.parent().children().not(".video_frame").remove();
                     break;
                 case 3:
                     var $YT_frame = $frame.find(".YT_frame");
@@ -528,7 +528,7 @@ function DirectoryAdDataInsert($item, result) {
                         $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
                     }
                     $("#YTPreviewModal").find("iframe").attr("src", "https://www.youtube.com/embed/" + thisresult.fileLink.name);
-                    $YT_frame.parent().find("div").not(".video_frame").remove();
+                    $YT_frame.parent().children().not(".YT_frame").remove();
                     break;
             }
             if (thisresult.describe != null) {
@@ -545,11 +545,8 @@ function DirectoryAdDataInsert($item, result) {
             }
             var tags;
             for (var i = 0; i < thisresult.tagDatas.length; i++) {
-                if (i == 0) {
-                    tags = `<a href="/${OrgName}/Search/Get/3/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
-                } else {
-                    tags += `<a href="/${OrgName}/Search/Get/3/${thisresult.tagDatas[i].title}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
-                }
+                var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/3/${thisresult.tagDatas[i].title}`;
+                tags += `<a href="${taglink}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
             }
             $frame.find(".tag").append(tags);
             if (isFront) {

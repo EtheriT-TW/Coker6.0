@@ -92,22 +92,26 @@ function ready() {
             }
             $c.find(".qa .collapse").each((j, c) => {
                 $(c).attr("data-bs-parent", `#${$c.attr("id")}`);
-                if (j != 0 || $c.find(".qa .collapse").length == 1) $(c).collapse("hide");
+                if (j != 0 || $c.find(".qa .collapse").length == 1) {
+                    $(c).collapse("hide");
+                }
             });
         });
     }
     if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo(45);
     if ($("video").length > 0) {
         $("video").each(function () {
-            this.video.pause();
-            setTimeout(() => {
-                this.video.play().then((res) => {
-                    console.log("playing start", res);
-                })
-                    .catch((err) => {
-                        console.log("error playing", err);
-                    });
-            }, 0);
+            if (typeof (this.video) != "undefined") { 
+                this.video.pause();
+                setTimeout(() => {
+                    this.video.play().then((res) => {
+                        console.log("playing start", res);
+                    })
+                        .catch((err) => {
+                            console.log("error playing", err);
+                        });
+                }, 0);
+            }
         });
     }
     _c.Search.Init("#Search");

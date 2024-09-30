@@ -301,6 +301,8 @@ function DirectoryDataGet($item, option) {
             if ($item.hasClass("swiper")) c = $item;
             else if ($item.find(".swiper").length > 0) c = $item.find(".swiper");
             else c = $item.parents(".swiper");
+            if (typeof ($(c).data("isInit")) != "undefined" && $(c).data("isInit"))
+                c[0].swiper.destroy(true, true);
             c.parents(`[class*="_swiper"]`).data("isInit", false);
             SwiperInit({ autoplay: true });
         }

@@ -20,9 +20,9 @@ function SwiperInit(obj) {
                 swiper.autoplay.start()
             }
             $(this).find(".swiper").prepend($(this).find(".swiper_button_prev"));
-            $(this).on("mouseover", stop);
+            $(this).off().on("mouseover", stop);
             $(this).find("a").on("focus", stop);
-            $(this).on("mouseout", start);
+            $(this).off().on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled",false);
         }
@@ -145,9 +145,12 @@ function SwiperInit(obj) {
     });
     $(".two_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
-
         if (!!!$self.data("isInit")) {
             var Id = "#" + $self.attr("id") + " > .swiper"
+            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
+            const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
+            const canNext = length > 2;
+            var autoplay = obj.autoplay ? canNext : false;
             var selfConfig = Object.assign({}, config, {
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
@@ -171,18 +174,20 @@ function SwiperInit(obj) {
                         slidesPerView: 2,
                     }
                 }
-            }, obj.autoplay ? {
+            }, autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
                 },
                 loop: true
             } : {});
+            if (!canNext && length > 0) {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
+            }
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             obj.autoplay && $self.swiperBindEven(swiper);
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
-            console.log(selfConfig);
         }
     });
     $(".three_swiper").prop("draggable", true).each(function () {

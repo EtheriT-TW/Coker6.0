@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
     {
         public long? Id { get; set; }
         public string Title { get; set; }
+        public int? Type { get; set; }
         public string? Describe { get; set; }
         public string? Link { get; set; }
         public bool Target { get; set; } = false;
@@ -19,6 +20,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public bool permanent { get; set; } = false;
-        public List<TagSelectedDto> TagSelected { get; set; }
+        public List<TagSelectedDto>? TagSelected { get; set; }
     }
 }

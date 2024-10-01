@@ -36,26 +36,23 @@ input[type="number"] {
 }
 
 /* EnterAd Content */
-#EnterAdContent > .card-header {
-    background-color: var(--color-gray-bg-dark);
+#EnterAdContent .img_input {
+    padding-right: 2.5rem;
 }
 
-#EnterAdContent > form > .name > input {
-    padding-left: 7.25rem;
-    padding-right: 7.5rem;
+#EnterAdContent .image_upload .file_name {
+    display: none;
 }
 
-#EnterAdContent > form > .sort > input {
+#EnterAdContent .name > input, #EnterAdContent .title > input, #EnterAdContent .ad_link > input {
+    padding-left: 7rem;
+}
+
+#EnterAdContent .sort > input {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
 
-#EnterAdContent > form > .link > input {
-    padding-left: 3.25rem;
-    padding-right: 7.5rem;
-}
-
-#EnterAdContent > form > .date > input {
-    padding-left: 9rem;
-    padding-right: 7.5rem;
+#EnterAdContent .date > input {
+    padding-left: 9.5rem;
 }

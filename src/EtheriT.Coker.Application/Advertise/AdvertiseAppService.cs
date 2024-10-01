@@ -9,6 +9,12 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using DevExtreme.AspNet.Data;
+using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Shared.Dto.Article;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 
 namespace EtheriT.Coker.Application.Advertise
 {
@@ -67,7 +73,7 @@ namespace EtheriT.Coker.Application.Advertise
                     else throw new Exception("查無廣告資料");
                 }
 
-                if (asoid != null)
+                if (asoid != null && dto.TagSelected != null)
                 {
                     var tagitem = new List<TagAssociateDto>();
                     foreach (var data in dto.TagSelected)
@@ -84,9 +90,13 @@ namespace EtheriT.Coker.Application.Advertise
 
                     tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
                     output.Message = asoid.ToString();
+                    output.Success = tag_response.Success;
+                }
+                else if (dto.Type == (int)AdvertiseTypeEnum.進入廣告 || dto.Type == (int)AdvertiseTypeEnum.右側浮動廣告)
+                {
+                    output.Success = true;
                 }
 
-                output.Success = tag_response.Success;
                 output.Message = asoid.ToString();
             }
             catch (Exception e)
@@ -99,6 +109,33 @@ namespace EtheriT.Coker.Application.Advertise
                 await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(new { asoid }), JsonConvert.SerializeObject(output));
             }
             return output;
+        }
+        public async Task<JsonResult> GetList(DataSourceLoadOptions loadOptions)
+        {
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            string error = string.Empty;
+            try
+            {
+                var dataQuery = from a in db.Advertise.Where(e => !e.IsDeleted)
+                                where a.Type == (int)AdvertiseTypeEnum.進入廣告
+                                where a.IsDeleted == false
+                                select new AdvertiseDto
+                                {
+                                    Id = a.Id,
+                                    Title = a.Title,
+                                    StartTime = a.StartDate,
+                                    EndTime = a.EndDate,
+                                    SerNO = a.SerNO,
+                                    Visible = a.Visible,
+                                };
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
+            return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<AdvertiseGetDataDto> GetDataOne(long Id)
         {
@@ -212,7 +249,7 @@ namespace EtheriT.Coker.Application.Advertise
                 if (db_t != null)
                 {
                     var db_ad = db.Advertise.Where(e => e.Id == dto.FK_Aid).FirstOrDefault();
-                    if(db_ad != null)
+                    if (db_ad != null)
                     {
                         switch (dto.Action)
                         {

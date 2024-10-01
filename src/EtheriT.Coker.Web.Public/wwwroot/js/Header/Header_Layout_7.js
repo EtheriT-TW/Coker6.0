@@ -8,10 +8,12 @@ function HeaderInit() {
     $(".marqueeSwiper").each(function () {
         const $marquee = $(this).find(".swiper-wrapper");
         $marquee.find(".swiper-slide").each(function () {
-            let maxLen = 50;
+            let maxLen = 60;
             let $slide = $(this);
             let txt = $slide.text().replace("(current)", "");
-            if ($(window).width() < 576) { 
+            if ($(window).width() < 480) {
+                maxLen = 10;
+            } else if ($(window).width() < 576) { 
                 maxLen = 15;
             } else if ($(window).width() < 768) {
                 maxLen = 9;
@@ -24,16 +26,8 @@ function HeaderInit() {
             }
             const count = Math.floor(txt.length / maxLen) - (txt.length % maxLen > 0 ? 0 : 1);
             if (count > 0) $slide.find(".text").text(txt.substring(0, maxLen));
-            const getPhone = txt.indexOf("電洽07-3737909");
-            var inSlide = true;
             for (let i = count; i > 0; i--) {
                 let $newSlide = $slide.clone();
-                if (inSlide && ((i * maxLen > getPhone && i * maxLen < getPhone + 10) || ((i + 1) * maxLen > getPhone && (i + 1) * maxLen < getPhone + 10))) {
-                    $newSlide.find(".text").text(txt.substring((getPhone), (getPhone+10)));
-                    $slide.after($newSlide);
-                    inSlide = false;
-                    continue;
-                }
                 $newSlide.find(".text").text(txt.substring((i * maxLen), ((i + 1) * maxLen)));
                 $slide.after($newSlide);
             }

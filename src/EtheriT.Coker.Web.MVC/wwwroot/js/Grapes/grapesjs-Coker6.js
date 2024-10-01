@@ -305,6 +305,7 @@
                                 }
                             });
                             $body.empty();
+
                             $("#EditContentForm input").off("change").on("change", function () {
                                 //編輯內文存檔
                                 // 獲取當前選中的 li
@@ -406,6 +407,7 @@
                                     AssetManager.onSelect((result) => {
                                         // 使用選擇的圖片更新 img 的 src 屬性
                                         if (result && result.id) {
+                                            $("#slideTitle").val(result.attributes.name).trigger("change");
                                             $imgElement.attr("src", result.id); // 假設 result.id 是圖片的 URL
                                         }
                                         AssetManager.close();
@@ -425,6 +427,10 @@
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
+                            if ($("#SwiperList li:first").find("label").attr("for") === "selectSwiper0") {
+                                console.log("in");
+                                $("#SwiperList li:first").find("label").trigger("click");
+                            }
 
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
                                 newLi($("#SwiperList>li").length, {});
@@ -446,7 +452,6 @@
                                     const order = $(element).data("order");
                                     let $new_slide = $slides[order];
                                     const existingTitle = $($new_slide).find('h2').text().trim();
-                                    console.log(newImgSrc);
                                     if ($new_slide) {
                                         $($new_slide).find('img').attr('src', newImgSrc);
                                         $($new_slide).find('img').attr('alt', newTitle);

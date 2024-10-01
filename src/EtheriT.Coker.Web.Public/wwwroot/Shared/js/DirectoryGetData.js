@@ -526,8 +526,13 @@ function DirectoryAdDataInsert($item, result) {
                                                 </div>`
                         $("body").prepend(html);
                         $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
+                        $("#YTPreviewModal .modal-header .btn-close").on("click", function () {
+                            $("#YTPreviewModal").find("iframe").attr("src", "");
+                        });
                     }
-                    $("#YTPreviewModal").find("iframe").attr("src", "https://www.youtube.com/embed/" + thisresult.fileLink.name);
+                    $YT_frame.on("click", function () {
+                        $("#YTPreviewModal").find("iframe").attr("src", "https://www.youtube.com/embed/" + thisresult.fileLink.name);
+                    })
                     $YT_frame.parent().children().not(".YT_frame").remove();
                     break;
             }

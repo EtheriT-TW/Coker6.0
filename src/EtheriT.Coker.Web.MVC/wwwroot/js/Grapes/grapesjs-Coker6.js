@@ -409,7 +409,7 @@
                                         if (result && result.id) {const imgName = result.attributes.name.split(".");
                                             let newName = "";
                                             for (let i = 0; i < imgName.length; i++) {
-                                                if (i == imgName - 1) {
+                                                if (i == imgName.length - 1) {
                                                     break;
                                                 }
                                                 newName+= imgName[i];

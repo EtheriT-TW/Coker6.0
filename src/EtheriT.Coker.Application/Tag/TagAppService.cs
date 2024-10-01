@@ -39,10 +39,12 @@ namespace EtheriT.Coker.Application.Tag
             {
                 long usetId = await loginUserData.GetUserId();
                 long webid = await loginUserData.GetWebsiteId();
+                var db_t = new Core.Models.Tag();
 
                 if (data != null)
                 {
-                    if (dto.Key == null)
+                    db_t = db.Tags.Where(e => e.FK_WebsiteId == webid && e.Title == data.Title).FirstOrDefault();
+                    if (dto.Key == null && db_t == null)
                     {
                         Core.Models.Tag t = new Core.Models.Tag
                         {
@@ -53,9 +55,14 @@ namespace EtheriT.Coker.Application.Tag
                         db.Tags.Add(t);
                         db.SaveChanges();
                     }
+                    else if (db_t != null)
+                    {
+                        output.Success = false;
+                        output.Message = "標籤名稱已存在";
+                    }
                     else
                     {
-                        var db_t = db.Tags.Where(e => e.Id == dto.Key).FirstOrDefault();
+                        db_t = db.Tags.Where(e => e.Id == dto.Key).FirstOrDefault();
 
                         if (db_t != null)
                         {
@@ -362,11 +369,11 @@ namespace EtheriT.Coker.Application.Tag
         {
             try
             {
-				long WebsiteID = await loginUserData.GetWebsiteId();
-				if (WebsiteID == 0)
-				{
-					WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
-				}
+                long WebsiteID = await loginUserData.GetWebsiteId();
+                if (WebsiteID == 0)
+                {
+                    WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                }
                 var output = await (from ta in db.Tag_Associates
                                     where !ta.IsDeleted && ta.FK_AId == AdId && ta.Type == (int)TagAssociateTypeEnum.廣告
                                     from t in db.Tags
@@ -380,7 +387,7 @@ namespace EtheriT.Coker.Application.Tag
                                             db.Tag_Associates.Where(e => !e.IsDeleted && e.FK_TId == ta.FK_TId && e.Type == (int)TagAssociateTypeEnum.商品).Any() ?
                                                 3 :
                                                 db.TechnicalCertificates.Where(e => !e.IsDeleted && e.Title == t.Title && t.FK_WebsiteId == WebsiteID).Any() ? 3 :
-                                                    db.Prods.Where(e => !e.IsDeleted && (e.Title.Contains(t.Title) || (e.Html??"").Contains(t.Title)) && t.FK_WebsiteId == WebsiteID).Any() ? 3 : 0
+                                                    db.Prods.Where(e => !e.IsDeleted && (e.Title.Contains(t.Title) || (e.Html ?? "").Contains(t.Title)) && t.FK_WebsiteId == WebsiteID).Any() ? 3 : 0
                                     }).ToListAsync();
 
                 return output;

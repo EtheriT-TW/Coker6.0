@@ -362,15 +362,25 @@ namespace EtheriT.Coker.Application.Tag
         {
             try
             {
+				long WebsiteID = await loginUserData.GetWebsiteId();
+				if (WebsiteID == 0)
+				{
+					WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+				}
                 var output = await (from ta in db.Tag_Associates
                                     where !ta.IsDeleted && ta.FK_AId == AdId && ta.Type == (int)TagAssociateTypeEnum.廣告
                                     from t in db.Tags
-                                    where ta.FK_TId == t.Id
+                                    where ta.FK_TId == t.Id && t.FK_WebsiteId == WebsiteID
                                     select new TagGetAllDataDto
                                     {
                                         Id = ta.Id,
                                         FK_TId = ta.FK_TId,
-                                        Title = t.Title
+                                        Title = t.Title,
+                                        SearchId =
+                                            db.Tag_Associates.Where(e => !e.IsDeleted && e.FK_TId == ta.FK_TId && e.Type == (int)TagAssociateTypeEnum.商品).Any() ?
+                                                3 :
+                                                db.TechnicalCertificates.Where(e => !e.IsDeleted && e.Title == t.Title && t.FK_WebsiteId == WebsiteID).Any() ? 3 :
+                                                    db.Prods.Where(e => !e.IsDeleted && (e.Title.Contains(t.Title) || (e.Html??"").Contains(t.Title)) && t.FK_WebsiteId == WebsiteID).Any() ? 3 : 0
                                     }).ToListAsync();
 
                 return output;

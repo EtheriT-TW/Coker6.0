@@ -341,8 +341,10 @@ namespace EtheriT.Coker.Application.Directory
                             .Where(e =>
                                 (e.Title ?? "").Contains(dto.SearchText ?? "") ||
                                 (e.Description ?? "").Contains(dto.SearchText ?? "") ||
-                                (e.Html ?? "").Contains(dto.SearchText ?? "")
-                            );
+                                (e.Html ?? "").Contains(dto.SearchText ?? "") ||
+								db.Tag_Associates.Include(ta => ta.Tag)
+                                    .Where(ta => !ta.IsDeleted && ta.Type == (int)TagAssociateTypeEnum.文章 && ta.FK_AId == e.Id && ta.Tag!=null && ta.Tag.Title == dto.SearchText).Any()
+							);
             int skip = (page - 1) * shownum - 1;
             if (skip < 0) skip = 0;
             //Regex.Replace(m.Html, @"<(.|\n)*?>", "")

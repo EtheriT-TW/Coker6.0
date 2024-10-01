@@ -543,10 +543,10 @@ function DirectoryAdDataInsert($item, result) {
                 });
                 $frame.find(".describe").append(describe);
             }
-            var tags;
+            var tags = "";
             for (var i = 0; i < thisresult.tagDatas.length; i++) {
-                var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/3/${thisresult.tagDatas[i].title}`;
-                tags += `<a href="${taglink}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`
+                var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${thisresult.tagDatas[i].searchId}/${thisresult.tagDatas[i].title}`;
+                tags += `<a href="${taglink}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`;
             }
             $frame.find(".tag").append(tags);
             if (isFront) {

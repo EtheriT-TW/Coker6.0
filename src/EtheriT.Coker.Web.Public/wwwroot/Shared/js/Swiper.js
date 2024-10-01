@@ -20,9 +20,9 @@ function SwiperInit(obj) {
                 swiper.autoplay.start()
             }
             $(this).find(".swiper").prepend($(this).find(".swiper_button_prev"));
-            $(this).off().on("mouseover", stop);
+            $(this).off("mouseover").on("mouseover", stop);
             $(this).find("a").on("focus", stop);
-            $(this).off().on("mouseout", start);
+            $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled",false);
         }

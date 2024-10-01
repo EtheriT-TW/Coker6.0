@@ -11,6 +11,7 @@ function HeaderInit() {
             let maxLen = 60;
             let $slide = $(this);
             let txt = $slide.text().replace("(current)", "");
+            //console.log(txt);
             if ($(window).width() < 480) {
                 maxLen = 10;
             } else if ($(window).width() < 576) { 

@@ -253,7 +253,7 @@
                                                 </div>
                                                 <button id="add" type="button" class="btn-add-column">新增一欄</button>
                                                 <div class="w-50 ps-3 set-caption">
-                                                  <h5>編輯內文</h5>
+                                                  <h5>相關設定</h5>
                                                   <form id="EditContentForm">
                                                     <div id=set-title class="mb-3 d-none">
                                                       <label for="slideTitle" class="form-label">標題</label>
@@ -307,7 +307,7 @@
                             $body.empty();
 
                             $("#EditContentForm input").off("change").on("change", function () {
-                                //編輯內文存檔
+                                //相關設定存檔
                                 // 獲取當前選中的 li
                                 const $li = $(`#SwiperList [name="label"]:checked`).closest('li'); // 獲取顯示的 setting 所在的 li
                                 // 獲取標題、內文、連結
@@ -344,9 +344,9 @@
                             });
                             const newLi = function (index, data) {
                                 var o = co.Object.merge({
-                                    src: "/images/noImg.jpg",
+                                    src: "/images/set_image.svg",
                                     alt: "",
-                                    href: "",
+                                    href: $selected.find("a").attr("href") === "#SwiperModal" ? "#SwiperModal" : "",
                                     title: "",
                                     synopsis_title: "",
                                     synopsis_caption: "",
@@ -406,8 +406,15 @@
 
                                     AssetManager.onSelect((result) => {
                                         // 使用選擇的圖片更新 img 的 src 屬性
-                                        if (result && result.id) {
-                                            $("#slideTitle").val(result.attributes.name).trigger("change");
+                                        if (result && result.id) {const imgName = result.attributes.name.split(".");
+                                            let newName = "";
+                                            for (let i = 0; i < imgName.length; i++) {
+                                                if (i == imgName - 1) {
+                                                    break;
+                                                }
+                                                newName+= imgName[i];
+                                            }
+                                            $("#slideTitle").val(newName).trigger("change");//消除副檔名
                                             $imgElement.attr("src", result.id); // 假設 result.id 是圖片的 URL
                                         }
                                         AssetManager.close();
@@ -427,10 +434,7 @@
                             $("#SwiperList").sortable();
                             var SwiperModal = new bootstrap.Modal('#SwiperModal');
                             SwiperModal.show();
-                            if ($("#SwiperList li:first").find("label").attr("for") === "selectSwiper0") {
-                                console.log("in");
-                                $("#SwiperList li:first").find("label").trigger("click");
-                            }
+                            $("#SwiperList li:first").find("label").trigger("click");
 
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
                                 newLi($("#SwiperList>li").length, {});
@@ -455,7 +459,9 @@
                                     if ($new_slide) {
                                         $($new_slide).find('img').attr('src', newImgSrc);
                                         $($new_slide).find('img').attr('alt', newTitle);
-                                        $($new_slide).find('a').attr('href', newLink);
+                                        if (newLink) {
+                                            $($new_slide).find('a').attr('href', newLink);
+                                        }
                                         $($new_slide).find('a').attr('title', newTitle);
                                         $($new_slide).find('a').attr('target', newTarget);
                                         $($new_slide).find('.synopsis_title').text(newTitle);
@@ -481,7 +487,9 @@
                                             $new_slide = $($new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
                                             $new_slide.find('img').attr('alt', newTitle);
-                                            $new_slide.find('a').attr('href', newLink);
+                                            if (newLink) { 
+                                                 $new_slide.find('a').attr('href', newLink);
+                                            }
                                             $new_slide.find('a').attr('title', newTitle);
                                             $new_slide.find('a').attr('target', newTarget);
                                             $new_slide.find('.synopsis_title').text(newTitle);

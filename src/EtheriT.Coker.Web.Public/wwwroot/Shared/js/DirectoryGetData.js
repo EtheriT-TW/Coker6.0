@@ -518,21 +518,20 @@ function DirectoryAdDataInsert($item, result) {
                                                         <div class="modal-header">
                                                         <button type="button" data-bs-dismiss="modal" aria-label="Close" class="bg-light btn-close rounded-circle"</button>
                                                         </div>
-                                                        <div class="modal-body">
-                                                            <iframe src="" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                                                        </div>
+                                                        <div class="modal-body"></div>
                                                     </div>
                                                   </div>
                                                 </div>`
                         $("body").prepend(html);
                         $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
                         $("#YTPreviewModal .modal-header .btn-close").on("click", function () {
-                            $("#YTPreviewModal").find("iframe").attr("src", "");
+                            $("#YTPreviewModal").find(".modal-body").empty();
                         });
                     }
                     $YT_frame.on("click", function () {
-                        $("#YTPreviewModal").find("iframe").attr("src", "https://www.youtube.com/embed/" + thisresult.fileLink.name);
-                    })
+                        var temp_ytlink = "https://www.youtube.com/embed/" + thisresult.fileLink.name;
+                        $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
+                     })
                     $YT_frame.parent().children().not(".YT_frame").remove();
                     break;
             }

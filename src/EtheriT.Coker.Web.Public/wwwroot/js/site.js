@@ -75,7 +75,7 @@ function ready() {
     if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
     if ($(".link_with_icon").length > 0) LinkWithIconInit();
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
-    if ($(".shareBlock").length > 0) ShareBlockInit();  
+    if ($(".shareBlock").length > 0) ShareBlockInit();
     if ($(".ContactForm").length > 0) {
         setContact();//From表單驗證碼
     }
@@ -87,7 +87,7 @@ function ready() {
     if ($(".container .qa,.container-fluid .qa").length > 0) {
         $(".container,.container-fluid").each((i, e) => {
             var $c = $(e);
-            if (typeof ($c.attr("id")) == "undefined" && $c.find("qa").length>0) {
+            if (typeof ($c.attr("id")) == "undefined" && $c.find("qa").length > 0) {
                 $c.setRandenId();
             }
             $c.find(".qa .collapse").each((j, c) => {
@@ -101,7 +101,7 @@ function ready() {
     if (location.hash != "" && $(location.hash).length > 0) $(location.hash).goTo(45);
     if ($("video").length > 0) {
         $("video").each(function () {
-            if (typeof (this.video) != "undefined") { 
+            if (typeof (this.video) != "undefined") {
                 this.video.pause();
                 setTimeout(() => {
                     this.video.play().then((res) => {
@@ -187,6 +187,23 @@ function ready() {
             temp_idlist.push(enteradid);
             $.cookie('EnterAd_Show', temp_idlist, { path: '/' });
         })
+        var adid = $("#EnterAdModal .modal-content").data("aid");
+        if (adid != "undefined") {
+            Advertise.ActivityExposure({
+                FK_Aid: adid,
+                FK_Tid: $.cookie("Token"),
+            }).done(function (result) {
+                console.log(result)
+            })
+            $("#EnterAdModal img").on("click", function () {
+                Advertise.ActivityClick({
+                    FK_Aid: adid,
+                    FK_Tid: $.cookie("Token"),
+                }).done(function (result) {
+                    console.log(result)
+                })
+            });
+        }
     }
 
     SiteElementInit();
@@ -375,7 +392,7 @@ function RegisterAction() {
 
 function NewCaptcha($self, $input, name = "") {
     if (!!!$self.data("id")) {
-        
+
         $self.data("id", Math.floor(Math.random() * 10000));
         const $form = $self.parents("form")
         let captchaId = $form.find("[name='captchaId']");
@@ -563,19 +580,19 @@ $.fn.extend({
     goTo: function (offset) {
         $('html, body').animate({ scrollTop: $(this).offset().top + (!!offset ? offset : 0) }, 0);
     },
-    setRandenId: function(i) {
+    setRandenId: function (i) {
         const $self = $(this);
-        let className = typeof ($self.attr('class')) != "undefined" && $self.attr('class') != "" ? $self.attr('class').split(/\s+/)[0]+"Id" : "";
+        let className = typeof ($self.attr('class')) != "undefined" && $self.attr('class') != "" ? $self.attr('class').split(/\s+/)[0] + "Id" : "";
         let order = !!i ? i : 0;
         if (className == "") className = "RandenId";
         let id = className + (order == 0 ? "" : order);
         if ($(`#${id}`).length == 0) $self.attr("id", id);
-        else $self.setRandenId(order+1);
+        else $self.setRandenId(order + 1);
     },
     getFormJson: function () {
         const form = $(this);
         const formDataObject = $(form).serializeArray();
-        $(formDataObject).each(function(){
+        $(formDataObject).each(function () {
             const obj = this;
             const field = $(form).find(`[name="${obj.name}"]`);
             switch (field.attr("name")) {
@@ -595,9 +612,9 @@ $.fn.extend({
                                     obj.title = field.parents(".d-flex").prevAll(".title").text().trim();
                                     obj.value = "";
                                     $(form).find(`[name="${obj.name}"]:checked`).each(function () {
-                                        obj.value += $(this).nextAll("label").text().trim()+" ,";
+                                        obj.value += $(this).nextAll("label").text().trim() + " ,";
                                     });
-                                    obj.value = obj.value.substring(0, obj.value.length-2);
+                                    obj.value = obj.value.substring(0, obj.value.length - 2);
                                     break;
                                 default:
                                     obj.title = field.nextAll("label").text().trim();

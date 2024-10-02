@@ -725,9 +725,9 @@ namespace EtheriT.Coker.Application
             }
             return output;
         }
-        public async Task<FileGetAdvertiseDisplayDto> getAdvertiseFiles(long Aid)
+        public async Task<List<FileGetAdvertiseDisplayDto>> getAdvertiseFiles(long Aid, int type)
         {
-            var output = new FileGetAdvertiseDisplayDto();
+            var output = new List<FileGetAdvertiseDisplayDto>();
             string orgName = await loginUserData.GetWebsiteOrgName();
             try
             {
@@ -737,36 +737,42 @@ namespace EtheriT.Coker.Application
                     websiteId = await loginUserData.GetWebsiteId();
                 }
 
-                var fb = await (db.FileBinds.Where(e => e.Sid == Aid && e.type == (int)FileBindTypeEnum.自訂廣告).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo)).FirstOrDefaultAsync();
-                if (fb != null)
+                var fbs = await (db.FileBinds.Where(e => e.Sid == Aid && e.type == type).Where(e => !e.IsDeleted).OrderBy(e => e.SerNo)).ToListAsync();
+                if (fbs != null)
                 {
-                    var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
-                    if (fu != null)
+                    for (int i = 0; i < fbs.Count; i++)
                     {
-                        string MediaLink = fb.MediaLink == "" ? fu.DownloadFileName : fb.MediaLink;
-                        if (orgName != "")
+                        var fb = fbs[i]; ;
+                        var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
+                        if (fu != null)
                         {
-                            MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
+                            string MediaLink = fb.MediaLink == "" ? fu.DownloadFileName : fb.MediaLink;
+                            if (orgName != "")
+                            {
+                                MediaLink = MediaLink.Replace("upload", $"upload/{orgName}");
+                            }
+                            var filetype = 0;
+                            var temp_index = fu.ContentType.IndexOf("/");
+                            var obj = new FileGetAdvertiseDisplayDto();
+                            if (temp_index == -1 && fu.ContentType == "youtube")
+                            {
+                                filetype = 3;
+                            }
+                            else if (fu.ContentType.Substring(0, temp_index) == "image")
+                            {
+                                filetype = 1;
+                            }
+                            else if (fu.ContentType.Substring(0, temp_index) == "video")
+                            {
+                                filetype = 2;
+                                obj.Video_Type = fu.ContentType;
+                            }
+                            obj.Id = fu.Id;
+                            obj.Link = MediaLink;
+                            obj.Name = fb.Name;
+                            obj.FileType = filetype;
+                            output.Add(obj);
                         }
-                        var filetype = 0;
-                        var temp_index = fu.ContentType.IndexOf("/");
-                        if (temp_index == -1 && fu.ContentType == "youtube")
-                        {
-                            filetype = 3;
-                        }
-                        else if (fu.ContentType.Substring(0, temp_index) == "image")
-                        {
-                            filetype = 1;
-                        }
-                        else if (fu.ContentType.Substring(0, temp_index) == "video")
-                        {
-                            filetype = 2;
-                            output.Video_Type = fu.ContentType;
-                        }
-                        output.Id = fu.Id;
-                        output.Link = MediaLink;
-                        output.Name = fb.Name;
-                        output.FileType = filetype;
                     }
                 }
             }

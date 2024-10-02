@@ -1,5 +1,8 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Remote;
+using EtheriT.Coker.Application.Shared.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
@@ -32,6 +35,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRemoteAppService RemoteAppService;
+        private readonly IAdvertiseAppService advertiseAppService;
         public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
@@ -41,7 +45,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IWebMenuApplication webMenuApplication,
             IStoreSetAppService storeSetAppService,
             IHttpContextAccessor httpContextAccessor,
-            IRemoteAppService RemoteAppService
+            IRemoteAppService RemoteAppService,
+            IAdvertiseAppService advertiseAppService
             )
         {
             this._logger = logger;
@@ -53,6 +58,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.storeSetAppService = storeSetAppService;
             this.httpContextAccessor = httpContextAccessor;
             this.RemoteAppService = RemoteAppService;
+            this.advertiseAppService = advertiseAppService;
         }
 
         public async Task<IActionResult> IndexAsync(string key)
@@ -61,9 +67,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, key);
             var site_name = $"Layout_{defaultData.Id}_Site";
-            var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
+            var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
             await webMenuApplication.CheckDisplayAll(siteId);
-            if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
+            if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
             var GA4 = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
             var GTM = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "GTM", SiteId = siteId });

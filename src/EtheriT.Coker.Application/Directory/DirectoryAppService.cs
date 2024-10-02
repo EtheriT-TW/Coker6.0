@@ -1273,7 +1273,7 @@ namespace EtheriT.Coker.Application.Directory
                         }
                         for (var i = 0; i < output.Count; i++)
                         {
-                            output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id);
+                            output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.自訂廣告);
                             output[i].TagDatas = await tagAppService.GetAdvertiseDataAll(output[i].Id);
                         }
                     }

@@ -12,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.Advertise
         public Task<AdvertiseGetDataDto> GetDataOne(long Id);
         public Task<ResponseMessageDto> Delete(long Id);
         public  Task<ResponseMessageDto> ActivityLog(AdvertiseLogDto dto);
+        public  Task<JsonResult> GetDisplay(long webid, int type, int number);
     }
 }

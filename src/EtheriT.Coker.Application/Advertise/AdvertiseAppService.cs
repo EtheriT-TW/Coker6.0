@@ -15,6 +15,8 @@ using EtheriT.Coker.Application.Shared.Dto.Article;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace EtheriT.Coker.Application.Advertise
 {
@@ -246,33 +248,30 @@ namespace EtheriT.Coker.Application.Advertise
             try
             {
                 var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
-                if (db_t != null)
+                var db_ad = db.Advertise.Where(e => e.Id == dto.FK_Aid).FirstOrDefault();
+                if (db_ad != null)
                 {
-                    var db_ad = db.Advertise.Where(e => e.Id == dto.FK_Aid).FirstOrDefault();
-                    if (db_ad != null)
+                    switch (dto.Action)
                     {
-                        switch (dto.Action)
-                        {
-                            case (int)LogActionEnum.顯示:
-                                db_ad.Exposure += 1;
-                                await loginUserData.SaveChanges(db_ad);
-                                break;
-                            case (int)LogActionEnum.點擊:
-                                db_ad.Clicks += 1;
-                                await loginUserData.SaveChanges(db_ad);
-                                break;
-                        }
-
-                        Core.Models.Advertise_Log adl = new Core.Models.Advertise_Log
-                        {
-                            FK_Adid = dto.FK_Aid,
-                            FK_Tid = dto.FK_Tid,
-                            FK_Uid = db_t.UserID,
-                            Action = dto.Action,
-                        };
-                        db.Advertise_Logs.Add(adl);
-                        db.SaveChanges();
+                        case (int)LogActionEnum.顯示:
+                            db_ad.Exposure += 1;
+                            await loginUserData.SaveChanges(db_ad);
+                            break;
+                        case (int)LogActionEnum.點擊:
+                            db_ad.Clicks += 1;
+                            await loginUserData.SaveChanges(db_ad);
+                            break;
                     }
+
+                    Core.Models.Advertise_Log adl = new Core.Models.Advertise_Log
+                    {
+                        FK_Adid = dto.FK_Aid,
+                        FK_Tid = db_t == null ? null : dto.FK_Tid,
+                        FK_Uid = db_t == null ? null : db_t.UserID,
+                        Action = dto.Action,
+                    };
+                    db.Advertise_Logs.Add(adl);
+                    db.SaveChanges();
                 }
 
                 output.Success = true;
@@ -283,6 +282,48 @@ namespace EtheriT.Coker.Application.Advertise
                 output.Error = e.Message;
             }
             return output;
+        }
+        public async Task<JsonResult> GetDisplay(long webid, int type, int number)
+        {
+            try
+            {
+                var result = db.Advertise;
+
+                if (result != null)
+                {
+                    var output = await (from e in result
+                                        where !e.IsDeleted && e.Visible && e.Type == type && e.FK_WebsiteId == webid
+                                        where e.Permanent || (DateTime.Compare(DateTime.Now, (DateTime)e.StartDate) > 0 && DateTime.Compare(DateTime.Now, (DateTime)e.EndDate) < 0)
+                                        orderby e.SerNO
+                                        select new AdvertiseDisplayDto
+                                        {
+                                            Id = e.Id,
+                                            Title = e.Title,
+                                            Link = e.Link,
+                                            Target = e.Target,
+                                        }).Take(number).ToListAsync();
+
+                    if (output != null)
+                    {
+                        switch (type)
+                        {
+                            case (int)AdvertiseTypeEnum.右側浮動廣告:
+                                break;
+                            case (int)AdvertiseTypeEnum.進入廣告:
+
+                                for (var i = 0; i < output.Count; i++)
+                                {
+                                    output[0].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.進入廣告);
+                                }
+                                break;
+                        }
+                    }
+                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                }
+                else throw new Exception("查無資料");
+            }
+            catch (Exception e) { }
+            return new JsonResult(new List<AdvertiseDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
     }
 }

@@ -23,6 +23,9 @@
     max-width: 80vw;
     max-height: 90vh;
 }
+    #Car_Dropdown > ul {
+        list-style:none;
+    }
 
     #Car_Dropdown > ul > li > figure > a > .pro_image {
         max-width: 80px;

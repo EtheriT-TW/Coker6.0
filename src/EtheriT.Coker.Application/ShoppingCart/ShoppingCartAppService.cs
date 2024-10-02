@@ -1,7 +1,9 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
@@ -126,13 +128,14 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var db_shoppingcart = db.ShoppingCarts;
                 var db_prod_stock = db.Prod_Stocks;
                 var db_prod = db.Prods;
-
                 if (db_shoppingcart != null)
                 {
                     var output = await (from sc in db_shoppingcart
                                         where sc.FK_Tid == Guid.Parse(Tid) && !sc.IsDeleted
                                         from ps in db_prod_stock
                                         where !ps.IsDeleted && ps.Id == sc.FK_PSid
+                                        from pp in db.Prod_Prices
+                                        where !pp.IsDeleted && pp.FK_PSId == ps.Id
                                         from p in db_prod
                                         where !p.IsDeleted && p.FK_WebsiteId == siteId && p.Id == ps.FK_Pid
                                         select new ShoppingCartGetAllDto
@@ -143,8 +146,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                             S1Title = ps.FK_S1id.ToString(),
                                             S2Title = ps.FK_S2id.ToString(),
                                             Description = p.Description,
-                                            Price = ps.Price,
+                                            Price = pp.Price??0,
+                                            OldPrice = sc.Price,
                                             Quantity = sc.Quantity,
+                                            ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == siteId)
+                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                                  .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                          select new DirectoryReleInfoDto
+                                                          {
+                                                              Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                                          }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                         }).ToListAsync();
 
 
@@ -173,7 +186,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var db_sc = db.ShoppingCarts.Where(e => !e.IsDeleted && e.Id == id).FirstOrDefault();
                 var db_ps = db.Prod_Stocks.Where(e => !e.IsDeleted && e.Id == db_sc.FK_PSid).FirstOrDefault();
                 var db_prod = db.Prods.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && e.Id == db_ps.FK_Pid).FirstOrDefault();
-
+                var db_price = db.Prod_Prices.Where(e => !e.IsDeleted && e.FK_PSId == db_ps.Id).FirstOrDefault();
                 if (db_sc != null)
                 {
                     ShoppingCartGetDrop output = new ShoppingCartGetDrop()
@@ -184,7 +197,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         S1Title = db_ps.FK_S1id.ToString(),
                         S2Title = db_ps.FK_S2id.ToString(),
                         Quantity = db_sc.Quantity,
-                        Price = db_ps.Price
+                        Price = db_price==null? 0 : db_price.Price??0,
+                        ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == siteId)
+                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                                  .Where(e => e.Sid == db_prod.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                      select new DirectoryReleInfoDto
+                                      {
+                                          Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                      }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
+
                     };
 
                     var db_sp = db.Prod_Specs.ToList();

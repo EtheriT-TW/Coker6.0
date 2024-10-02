@@ -16,20 +16,6 @@
 	ViewData["Locale"] = Model.locale;
 	ViewData["PageView"] = Model.PageData.PageView;
 	ViewData["PageView"] = Model.PageData.PageView;
-    switch (Model.Level)
-    {
-        case WebsiteLevelEnum.會員:
-            ViewData["LoginEnable"] = true;
-            break;
-        case WebsiteLevelEnum.購物:
-            ViewData["LoginEnable"] = true;
-            ViewData["ShoppingEnable"] = true;
-            break;
-        default:
-            ViewData["LoginEnable"] = false;
-            ViewData["ShoppingEnable"] = false;
-            break;
-    }
 }
 <script type="text/javascript">
 	const PageKey = "Search";

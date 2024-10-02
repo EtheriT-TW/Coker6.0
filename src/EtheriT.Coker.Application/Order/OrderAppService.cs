@@ -9,6 +9,8 @@ using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -232,7 +234,9 @@ namespace EtheriT.Coker.Application.Order
         {
             try
             {
-                var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
+                var webSiteId = await loginUserData.GetWebsiteId();
+                var orgName = await loginUserData.GetWebsiteOrgName();
+                var db_oh = db.Order_Headers.Where(e => e.Id == id && e.FK_WebsiteId == webSiteId).FirstOrDefault();
                 if (db_oh != null)
                 {
                     var output = await (from od in db.Order_Details
@@ -241,6 +245,8 @@ namespace EtheriT.Coker.Application.Order
                                         where sc.Id == od.FK_SCId
                                         from ps in db.Prod_Stocks
                                         where ps.Id == sc.FK_PSid
+                                        from pp in db.Prod_Prices
+                                        where !pp.IsDeleted && pp.FK_PSId == ps.Id
                                         from p in db.Prods
                                         where p.Id == ps.FK_Pid
                                         select new OrderDetailsGetAllDto
@@ -250,9 +256,18 @@ namespace EtheriT.Coker.Application.Order
                                             S1Title = ps.FK_S1id.ToString(),
                                             S2Title = ps.FK_S2id.ToString(),
                                             Description = p.Description,
-                                            Price = ps.Price,
+                                            Price = pp.Price ?? 0,
                                             Quantity = sc.Quantity,
-                                            Subtotal = ps.Price * sc.Quantity
+                                            Subtotal = ps.Price * sc.Quantity,
+                                            ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId)
+                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                                  .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                          select new DirectoryReleInfoDto
+                                                          {
+                                                              Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                          }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                         }).ToListAsync();
 
                     var db_sp = db.Prod_Specs.ToList();

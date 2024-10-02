@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.i18n;
 using System.Web;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Dto;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -98,9 +99,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
-            var GA4 = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
-            var GoogleTranslate = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "google.translate", SiteId = siteId });
-            var GTM = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "GTM", SiteId = siteId });
+            var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
+            var GA4 = SEO.storeSetDetails?.Find(e => e.key == "SEO");
+            var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
+            var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
+
+            var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 2, SiteId = siteId });
+            var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
+            var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
+            var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
+
             RemoteInputDto remoteInputDto = new RemoteInputDto{FK_WebsiteId = siteId};
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             PageViewModel model = new PageViewModel
@@ -117,13 +125,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
 				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
 				storeSet = new StoreSetFrontDto
                 {
-                    GA4 = (GA4 != null && GA4.Success && GA4.detailItem != null) ? String.Join(",", GA4.detailItem.value!) : "",
-                    GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.Success && GoogleTranslate.detailItem != null) ? String.Join(",", GoogleTranslate.detailItem.value!) : "",
-                    GTM = (GTM != null && GTM.Success && GTM.detailItem != null) ? String.Join(",", GTM.detailItem.value!) : ""
+                    GA4 = (GA4 != null && GA4.value != null) ? String.Join(",", GA4.value!) : "",
+                    GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.value != null) ? String.Join(",", GoogleTranslate.value!) : "",
+                    GTM = (GTM != null && GTM.value != null) ? String.Join(",", GTM.value!) : "",
+                    storeBuyState = (storeBuyState != null && storeBuyState.value != null) ? String.Join(",", storeBuyState.value!) : "",
+                    storeMemo = (GA4 != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
+                    linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
                 }
             };
             string view;
-            if (key == "article" && int.TryParse(option, out id))
+            if ( new List<string> { "article" }.Contains(key.ToLower())  && int.TryParse(option, out id))
             {
                 option = key;
             }
@@ -175,6 +186,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                     case "product":
+                        ViewData["linkMore"] = model.storeSet.linkMore;
                         if (id != 0)
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
@@ -265,8 +277,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         if (key.ToLower() == "search")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-							model.PageData.PageView = "Search";
-							remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            model.PageData.PageView = "Search";
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
                             {
@@ -281,7 +293,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
                         }
-                        else if (key.ToLower() == "demosearch") {
+                        else if (key.ToLower() == "shoppingcar") {
+                            ViewData["storeMemo"] = model.storeSet.storeMemo;
+                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            view = "ShoppingCar";
+                        }
+                        else if (key.ToLower() == "demosearch")
+                        {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
@@ -296,7 +315,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
                         }
-                        else if (key == "ShoppingCar" || key == "ProductDemo" || key == "Favorites" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "Test" || key == "ColumnarSearch")
+                        else if (key == "ProductDemo" || key == "Favorites" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "ColumnarSearch")
                         {
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
@@ -354,7 +373,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 view = "index";
             }
-            await webMenuApplication.CheckDisplayAll(siteId);
+            ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
             await RemoteAppService.insertRemote(remoteInputDto);
 
             ViewData["SideName"] = model.PageData!.SiteName;
@@ -378,18 +397,20 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var nonce = HttpContext.Items["CSPNonce"] as string;
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;
+            ViewBag.storeBuyState = model.storeSet.storeBuyState;
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:
-                    ViewData["LoginEnable"] = true;
+                    ViewBag.LoginEnable = true;
+                    ViewBag.ShoppingEnable = false;
                     break;
                 case WebsiteLevelEnum.購物:
-                    ViewData["LoginEnable"] = true;
-                    ViewData["ShoppingEnable"] = true;
+					ViewBag.LoginEnable = true;
+                    ViewBag.ShoppingEnable = true;
                     break;
                 default:
-                    ViewData["LoginEnable"] = false;
-                    ViewData["ShoppingEnable"] = false;
+                    ViewBag.LoginEnable = false;
+                    ViewBag.ShoppingEnable = false;
                     break;
             }
             switch (Response.StatusCode) {

@@ -291,7 +291,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                         {
                             "Tel：07-3611212 分機 317  /   Fax：07-3612751",
                             "地址：811636高雄市楠梓區加昌路600號",
-                            "經濟部產業園區管理局 版權所有 © 2023 BIP ALL Rights Reserved"
+                            "經濟部產業園區管理局 版權所有 © 2024 BIP ALL Rights Reserved"
                         }
                     };
                     break;

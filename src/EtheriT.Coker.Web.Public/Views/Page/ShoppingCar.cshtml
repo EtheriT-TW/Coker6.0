@@ -79,7 +79,7 @@
 	</div>
 </div>
 
-<div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end">
+<div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end d-none">
 	<a class="bg-white text-center m-1 py-2" href="/@ViewData["OrgName"]/Favorites">
 		<div>收藏商品<span class="fw-bold">20</span>件</div>
 	</a>
@@ -88,15 +88,15 @@
 	</a>
 </div>
 
-<div id="BuyStepSwiper" class="container pt-5 pb-4 position-relative">
-	<div id="memberLogin" class="container my-5">
+<div id="BuyStepSwiper" class="container pt-5 pb-4 mt-4 position-relative">
+	<div id="memberLogin" class="container my-5 d-none">
 		<div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
 			<div>購買前登入會員可更方便查詢訂單！</div>
 			<button class="btn_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
 		</div>
 	</div>
 
-	<div class="swiper shadow-lg">
+	<div class="swiper shadow-lg mt-5">
 		<div class="swiper-wrapper">
 			<div id="Step1" class="card text-center swiper-slide">
 				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
@@ -160,7 +160,7 @@
 								</div>
 
 								<div class="btn_side_icon position-absolute d-flex flex-column top-0 end-0 p-2">
-									<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
+									<span class="d-inline-block d-none" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
 										<button class="btn_move_to_favorites bg-transparent border-0">
 											<i class="fa-regular fa-heart"></i>
 											<span class="d-none">移到收藏</span>

@@ -35,7 +35,9 @@ namespace EtheriT.Coker.Core.Models
         public string? NewsletterHtml { get; set; }
         [MaxLength]
         public string? NewsletterCss { get; set; }
-        [MaxLength]
+		[MaxLength]
+        public string? PageText {  get; set; }
+		[MaxLength]
         public string? DataJson { get; set; }
         public virtual DateTime? NodeDate { get; set; }
         public virtual DateTime? StartTime { get; set; }

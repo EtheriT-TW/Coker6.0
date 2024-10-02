@@ -55,15 +55,22 @@
                 co.WebMesnus.GetPageTypeList().done(function (result) {
                     if (result.success) {
                         const $s = $("#pageType");
-                        $(result.type).each(function () {
+                        const PageTypes = result.type
+                        $(PageTypes).each(function () {
                             $s.append(`<option value="${this.value}">${this.key}</option>`);
                         });
                         $s.on("change", function () {
                             const $self = $(this);
-                            if ($self.val() == 2) {
-                                $("#RouterNameBlock").addClass("d-none").val("Home");
+                            const $RouterNameBlock = $("#RouterNameBlock");
+                            const $RouterNameInput = $RouterNameBlock.find("input");
+                            $RouterNameBlock.addClass("d-none")
+                            let o = { key: $self.find(":selected").text(), value: parseInt($self.val()) };
+                            o = PageTypes[co.Array.Search(PageTypes, o)];
+                            if (o.value == 1) {
+                                if (co.Array.Search(PageTypes, { enName: $RouterNameInput.val() }) > 0) $RouterNameInput.val("");
+                                $RouterNameBlock.removeClass("d-none");
                             } else {
-                                $("#RouterNameBlock").removeClass("d-none").val("");
+                                $RouterNameInput.val(o.enName);
                             }
                         })
                     }

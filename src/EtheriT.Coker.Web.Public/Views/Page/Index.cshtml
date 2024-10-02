@@ -4,22 +4,6 @@
 @using EtheriT.Coker.Web.Public.Models;
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
-@{
-    switch (Model.Level)
-    {
-        case WebsiteLevelEnum.會員:
-            ViewData["LoginEnable"] = true;
-            break;
-        case WebsiteLevelEnum.購物:
-            ViewData["LoginEnable"] = true;
-            ViewData["ShoppingEnable"] = true;
-            break;
-        default:
-            ViewData["LoginEnable"] = false;
-            ViewData["ShoppingEnable"] = false;
-            break;
-    }
-}
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 @{
     switch (Model.locale) { 
@@ -30,7 +14,7 @@
 }
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
-    const local = @Html.Raw(L.getAllJsonString()) ;
+    const local = @Html.Raw(L.getAllJsonString());
 </script>
 @Html.AntiForgeryToken()
 

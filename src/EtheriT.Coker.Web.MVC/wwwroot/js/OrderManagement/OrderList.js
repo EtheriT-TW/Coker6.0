@@ -169,7 +169,7 @@ function DetailsDataSet(result) {
         item_quantity = item.find(".pro_quantity"),
         item_subtotal = item.find(".pro_subtotal");
 
-    item_image.attr("src", "../images/product/pro_0" + result.pId + ".png");
+    item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.text(result.s1Title + " " + result.s2Title);
     item_instructions.text(result.description);

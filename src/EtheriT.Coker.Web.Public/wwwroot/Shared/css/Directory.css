@@ -29,23 +29,23 @@
     }
 
         .catalog .status.status1 {
-            background: rgba(255,0,0,0.8);
+            background: rgba(166,166,166,1);
         }
 
         .catalog .status.status2 {
-            background: rgba(166,166,166,0.8);
+            background: rgba(64,64,64,1);
         }
 
         .catalog .status.status3 {
-            background: rgba(0,153,68,0.8);
+            background: rgba(134,178,198,1);
         }
 
         .catalog .status.status4 {
-            background: rgba(247,237,18,0.8);
+            background: rgba(215,154,95,1);
         }
 
         .catalog .status.status5 {
-            background: rgba(41,167,225,0.8);
+            background: rgba(186,88,85,1);
         }
 
 .menu_directory .active {

@@ -75,7 +75,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             headerViewModel.HomeLink = $"/{website_data[0].OrgName}/home";
                             headerViewModel.HomeTarget = false;
                         }
-                        else if (data_f.PageType == (int)PageTypeEnum.購物車) headerViewModel.HasShoppingCar = true;
                         else
                         {
                             if (data_f.Children != null)

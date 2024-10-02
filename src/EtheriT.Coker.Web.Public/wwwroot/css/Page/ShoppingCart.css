@@ -343,6 +343,7 @@ body > .popover.bs-popover-auto.fade {
 #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button {
     z-index: 1;
     bottom: 5rem;
+    margin:auto;
 }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {

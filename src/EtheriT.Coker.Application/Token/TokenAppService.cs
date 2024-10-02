@@ -57,14 +57,15 @@ namespace EtheriT.Coker.Application.Token
 
             return output;
         }
-        public async Task<TokenResponseDto> CheckToken(string id)
+        public TokenResponseDto CheckToken(Guid? id)
         {
             TokenResponseDto output = new TokenResponseDto();
             try
             {
-                Guid guid;
-                if (Guid.TryParse(id, out guid)) throw new Exception("Token type error");
-                var tokens = db.Tokens.Where(e => e.id == guid).First();
+                if (id == null) throw new Exception("Token type error");
+                db.Tokens.RemoveRange(db.Tokens.Where(e => e.EndTime < DateTime.Now));
+                db.SaveChanges();
+                var tokens = db.Tokens.Where(e => e.id == id).Where(e => e.EndTime > DateTime.Now).First();
                 if (tokens == null)
                 {
                     output.Success = false;
@@ -72,18 +73,7 @@ namespace EtheriT.Coker.Application.Token
                 }
                 else
                 {
-                    DateTime dateTime = DateTime.Now;
-                    if (tokens.UserID == null & DateTime.Compare(dateTime, (DateTime)tokens.EndTime) > 0)
-                    {
-                        output.Success = false;
-                        output.Error = "Token has expired";
-                        db.Tokens.Remove(tokens);
-                        db.SaveChanges();
-                    }
-                    else
-                    {
-                        output.Success = true;
-                    }
+                    output.Success = true;
                 }
             }
             catch (Exception e)

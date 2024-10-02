@@ -26,6 +26,7 @@ using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using DevExtreme.AspNet.Data.ResponseModel;
 using System.Net;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.Processor;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -39,6 +40,7 @@ namespace EtheriT.Coker.Application.Article
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly string ServiceName;
+        private readonly IHtmlProcessor htmlProcessor;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -46,8 +48,9 @@ namespace EtheriT.Coker.Application.Article
             IMapper mapper,
             IConfiguration configuration,
             ITagAppService tagAppService,
-            IFileUploadAppService fileUploadAppService
-        )
+            IFileUploadAppService fileUploadAppService,
+			IHtmlProcessor htmlProcessor
+		)
         {
             this.db = db;
             this.loginUserData = loginUserData;
@@ -56,7 +59,8 @@ namespace EtheriT.Coker.Application.Article
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.stringHandler = stringHandler;
-            ServiceName = "Article";
+			this.htmlProcessor = htmlProcessor;
+			ServiceName = "Article";
         }
         public async Task<ResponseMessageDto> AddUp(ArticleDto dto)
         {
@@ -523,12 +527,16 @@ namespace EtheriT.Coker.Application.Article
                 if (article != null)
                 {
                     string Orgname = await loginUserData.GetWebsiteOrgName();
-                    importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
+					importDto.Html = stringHandler.HtmlDecode(importDto.Html);
+					importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
+
+					importDto.Html = (importDto.Html ?? "").Replace($"/upload/{Orgname}/", "/upload/");
                     importDto.Css = (importDto.Css ?? "").Replace($"/upload/{Orgname}/", "/upload/");
 
-                    article.Html = importDto.Html;
                     article.Css = importDto.Css;
-                    article.LastModificationTime = DateTime.Now;
+					article.PageText = htmlProcessor.text(importDto.Html);
+					article.Html = stringHandler.HtmlEncode(importDto.Html);
+					article.LastModificationTime = DateTime.Now;
                     article.LastModifierUserId = userId;
 
                     await loginUserData.SaveChanges(article);

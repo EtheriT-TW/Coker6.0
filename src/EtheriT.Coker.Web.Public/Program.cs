@@ -48,6 +48,8 @@ using SimpleCaptcha;
 using System.Net;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using EtheriT.Coker.Application.Advertise;
+using EtheriT.Coker.Application.Processor;
+using EtheriT.Coker.Application.Shared.Processor;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -145,6 +147,7 @@ builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
 builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddTransient<ISitemap, Sitemap>();
+builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())
@@ -176,6 +179,7 @@ if (!app.Environment.IsProduction())
 }
 
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
+app.UseHttpsRedirection();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -250,10 +254,8 @@ if (childOrgNames != null)
     }
 }
 
-app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
-
 app.UseStaticFiles(new StaticFileOptions()
 {
     ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
@@ -307,23 +309,34 @@ if (app.Environment.IsProduction())
 {
     app.Use(async (context, next) =>
     {
-        using (var scope = app.Services.CreateScope()) {
-            long siteId = builder.Configuration.GetValue<long>("WebConfig:SiteId");
-            var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
-            var website = dbContext.Websites.Where(e => e.Id == siteId && !e.IsDeleted).FirstOrDefault();
-            if(website!=null && !string.IsNullOrEmpty(website.DefaultUrl))
+        if (context.Request.IsHttps)
+        {
+            try
             {
-                var currentHost = context.Request.Host.Host;
-                var mainDomain = website.DefaultUrl.Replace("http://","").Replace("https://", ""); // 主網域
-
-                if (!currentHost.Equals(mainDomain, StringComparison.OrdinalIgnoreCase))
+                using (var scope = app.Services.CreateScope())
                 {
-                    var newUrl = $"https://{mainDomain}{context.Request.Path}{context.Request.QueryString}";
-                    context.Response.Redirect(newUrl, true); // true 表示 301轉址 
-                    return;
-                }
+                    long siteId = builder.Configuration.GetValue<long>("WebConfig:SiteId");
+                    var dbContext = scope.ServiceProvider.GetRequiredService<CokerDbContext>();
+                    var website = dbContext.Websites.Where(e => e.Id == siteId && !e.IsDeleted).FirstOrDefault();
+                    if (website != null && !string.IsNullOrEmpty(website.DefaultUrl))
+                    {
+                        var currentHost = context.Request.Host.Host;
+                        var mainDomain = website.DefaultUrl.Replace("http://", "").Replace("https://", ""); // 主網域
 
-                await next();
+                        if (!currentHost.Equals(mainDomain, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var newUrl = $"https://{mainDomain}{context.Request.Path}{context.Request.QueryString}";
+                            context.Response.Redirect(newUrl, true); // true 表示 301轉址 
+                            return;
+                        }
+
+                        await next();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
     });

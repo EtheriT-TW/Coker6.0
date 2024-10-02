@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
 	{
 		public string Key { get; set; }
 		public long Value { get; set; }
+		public string? EnName { get; set; }
 	}
 }

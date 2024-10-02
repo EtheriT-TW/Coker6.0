@@ -11,5 +11,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.StoreSet
         public string GA4 { get; set; } = string.Empty;
         public string GoogleTranslate { get; set; } = string.Empty;
         public string GTM { get; set; } = string.Empty;
+        public string storeMemo {  get; set; } = string.Empty;
+        public string storeBuyState { get; set; } = string.Empty;
+        public string linkMore { get; set; } = string.Empty;
     }
 }

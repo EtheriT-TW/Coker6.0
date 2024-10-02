@@ -13,6 +13,6 @@ namespace EtheriT.Coker.Application.Token
         public Task<string> CreateToken(string account,Guid secret);
         public Task<bool> DelToken();
         public Task<TokenResponseDto> CreateToken();
-        public Task<TokenResponseDto> CheckToken(string id);
+        public TokenResponseDto CheckToken(Guid? id);
     }
 }

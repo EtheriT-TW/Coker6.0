@@ -259,52 +259,56 @@
             </div>
 
             <hr class="m-1" />
-
-            <div class="priceframe row flex-wrap">
-                <div class="col d-flex ps-3 align-items-center">
-                    <div class="ori_price price me-2 d-none"></div>
-                    <div class="discount d-flex align-items-center fs-4 fw-bold price text-danger"></div>
-                </div>
-                @*<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>*@
-            </div>
-
-            <hr class="m-1" />
-
-            <template id="Template_Spec_Radio">
-                <div class="radio d-flex align-items-center my-2">
-                    @*<div class="spec_title title"></div>*@
-                    <div class="spec_control control d-flex flex-wrap">
+            @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
+            {
+                <div class="priceframe row flex-wrap">
+                    <div class="col d-flex ps-3 align-items-center">
+                        <div class="ori_price price me-2 d-none"></div>
+                        <div class="discount d-flex align-items-center fs-4 fw-bold price text-danger"></div>
                     </div>
+                    @*<div class="model col pe-3 align-self-center text-end">型號：C659NA</div>*@
                 </div>
-            </template>
 
+                <hr class="m-1" />
+                <template id="Template_Spec_Radio">
+                    <div class="radio d-flex align-items-center my-2">
+                        @*<div class="spec_title title"></div>*@
+                        <div class="spec_control control d-flex flex-wrap">
+                        </div>
+                    </div>
+                </template>
+            }
+            
             <div class="options px-3">
-                <div class="counter d-flex align-items-center my-2 d-none">
-                    <label class="title" for="quantityInput1">數量</label>
-                    <div class="counter_input d-flex">
-                        <button class="btn_count_minus bg-white my-1">
-                            <i class="fa-solid fa-minus"></i>
-                            <span class="d-none">減少</span>
-                        </button>
+                <div class="counter d-flex align-items-center my-2">
+                    @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+                    {
+                        <label class="title" for="quantityInput1">數量</label>
+                        <div class="counter_input d-flex">
+                            <button class="btn_count_minus bg-white my-1">
+                                <i class="fa-solid fa-minus"></i>
+                                <span class="d-none">減少</span>
+                            </button>
 
-                        <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
+                            <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
 
-                        <button class="btn_count_plus bg-white my-1">
-                            <i class="fa-solid fa-plus"></i>
-                            <span class="d-none">增加</span>
-                        </button>
-                    </div>
+                            <button class="btn_count_plus bg-white my-1">
+                                <i class="fa-solid fa-plus"></i>
+                                <span class="d-none">增加</span>
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
-
-            <div class="btn_addToCar d-none align-items-center justify-content-center text-white" type="button">
-                <div class="icon_plus">我要購買</div>
-            </div>
-            <div class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button">
-                <a href="/lcb/distribution">
-                    <div class="text-white">了解更多</div>
-                </a>
-            </div>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button">
+                    <div class="icon_plus">我要購買</div>
+                </div>
+            }
+            <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button">
+                <div class="text-white">了解更多</div>
+            </a>
         </div>
     </div>
 

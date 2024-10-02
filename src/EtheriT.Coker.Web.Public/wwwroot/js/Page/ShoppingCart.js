@@ -280,7 +280,7 @@ function CartAdd(result) {
     item_link.on("click", function () {
         ClickLog(result.pId);
     });
-    item_image.attr("src", "../upload/product/pro_0" + result.pId + ".png");
+    item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
     item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
@@ -745,7 +745,7 @@ function PurchaseAdd(result, item_list_ul) {
     item_link.on("click", function () {
         ClickLog(result.pId);
     });
-    item_image.attr("src", "../upload/product/pro_0" + result.pId + ".png");
+    item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
     item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')

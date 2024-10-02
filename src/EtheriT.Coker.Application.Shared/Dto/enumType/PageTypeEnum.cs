@@ -10,8 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     {
         一般頁面 = 1,
         首頁 = 2,
-        商品頁 =3,
-        購物車=4,
-        會員=5
+        購物車=3,
+        會員=4
     }
 }

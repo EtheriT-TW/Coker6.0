@@ -401,6 +401,32 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         }
                     });
                     break;
+                case WebsiteLevelEnum.會員:
+                    seting.AddRange(new List<JobMenu> {
+                        new JobMenu
+                        {
+                            PageName="ProductManagement",
+                            Enable=false
+                        }, new JobMenu
+                        {
+                            PageName="ProductManagement",
+                            Enable=false
+                        }, new JobMenu{
+                             PageName="MemberData",
+                             Enable=false
+                        },new JobMenu{
+                            PageName="ManagerList",
+                            Enable=false
+                        },new JobMenu{
+                            PageName="CustSearch",
+                            Enable=false,
+                        },
+                        new JobMenu{
+                            PageName="TypographyTheme",
+                            Enable=false
+                        }
+                    });
+                    break;
             }
             SetJobs(site.Jobs, seting);
         }

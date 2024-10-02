@@ -56,6 +56,8 @@ using EtheriT.Coker.Application.Contact;
 using System.Net;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ThirdParty;
+using EtheriT.Coker.Application.Processor;
+using EtheriT.Coker.Application.Shared.Processor;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -175,6 +177,7 @@ builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
+builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

@@ -176,7 +176,7 @@
                 <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
             </a>
             <div id="google_translate_element"></div>
-            @if (Model.HasShoppingCar == true)
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div id="Cart_Dropdown_Parent" class="d-flex px-1">
                     <button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -210,7 +210,7 @@
 
                         <div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
 
-                        <a href="/@ViewData["OrgName"]/ShoppingCar" title="連結至購物車" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white">購買</a>
+                        <a href="/@ViewData["OrgName"]/ShoppingCar" title="連結至購物車" class="btn_car_buy d-flex justify-content-center border-0 rounded-1 w-100 py-1 mt-2 text-white">結帳</a>
                     </div>
                 </div>
             }

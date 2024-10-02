@@ -51,9 +51,9 @@
     <style id="frameCss" nonce="@ViewBag.Nonce"></style>
     <script nonce="@ViewBag.Nonce">
         window.CI360 = { notInitOnLoad: true }
-        document.addEventListener('DOMContentLoaded', (event) => {
+        window.onload = function () {
             ready();
-        });
+        }
         const originalAppendChild = Element.prototype.appendChild;
         const originalInsertBefore = Node.prototype.insertBefore;
         const nonce = document.querySelector('meta[name="csp-nonce"]').getAttribute('content');
@@ -165,7 +165,7 @@
     <footer class="footer_pack_up @VisibleFooter">
         @await Component.InvokeAsync(nameof(Footer))
     </footer>
-    @if (ViewData["LoginEnable"] != null && bool.Parse(ViewData["LoginEnable"].ToString()) == true)
+    @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable)
     {
         <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered justify-content-center">

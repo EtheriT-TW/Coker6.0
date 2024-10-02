@@ -22,13 +22,13 @@
 			}
 		}
 	}
-	else
+	@if (false)
 	{
 		<div id="History" class="text-end">
 			<div id="CollapseHistory" class="d-none">
 				<div class="title text-center text-white">瀏覽紀錄</div>
 				<ul class="history_list m-0"></ul>
-				@if (ViewData["ShoppingEnable"] != null && bool.Parse(ViewData["ShoppingEnable"].ToString()) == true)
+				@if (ViewBag.ShoppingEnable != null && ViewBag.ShoppingEnable && ViewBag.storeBuyState.IndexOf("noPay") < 0)
 				{
 					<a class="collect d-flex justify-content-center align-items-center text-white mb-1" href="/@ViewData["OrgName"]/Favorites">
 						<i class="fa-solid fa-regular fa-heart px-1"></i>

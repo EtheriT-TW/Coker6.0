@@ -8,7 +8,9 @@ footer {
     cursor: default;
     padding-bottom: 10px;
 }
-
+    footer .text-left {
+        text-align:left;
+    }
 /* Footer Collapse */
 #Collapse_Button {
     font-size: 0px;

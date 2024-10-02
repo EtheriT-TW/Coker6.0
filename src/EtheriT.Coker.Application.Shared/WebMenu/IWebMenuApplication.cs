@@ -25,5 +25,6 @@ namespace EtheriT.Coker.Application
         public Task<PageTypeDto> GetPageTypeList();
         public Task CheckDisplayAll(long WebsiteID);
         public Task insertMenus(List<SelectDto> menus);
+        public Task<bool> checkHasShoppingCar(long WebsiteID);
     }
 }

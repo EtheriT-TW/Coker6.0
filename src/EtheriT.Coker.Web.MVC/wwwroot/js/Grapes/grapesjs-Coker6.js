@@ -344,7 +344,7 @@
                             });
                             const newLi = function (index, data) {
                                 var o = co.Object.merge({
-                                    src: "/images/UploadImg.png",
+                                    src: "/images/set_image.svg",
                                     alt: "",
                                     href: $selected.find("a").attr("href") === "#SwiperModal" ? "#SwiperModal" : "",
                                     title: "",

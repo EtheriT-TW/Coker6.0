@@ -4,6 +4,12 @@
     background: url(/upload/20170818112557.jpg) no-repeat top;
 }
 
+.temp-div {
+    visibility: hidden;
+    position: absolute; 
+    top : -99999px;
+}
+
 .bg-color {
     position: relative;
     z-index: 1;
@@ -33,7 +39,7 @@
 }
 
 .home, .page{
-    padding-top: 132px;
+    padding-top: 128px;
 }
 
 #swiper-light {
@@ -89,7 +95,7 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     color: black;
-    font-size: 18px;
+    font-size: 16px;
     text-decoration: none;
 }
 
@@ -103,7 +109,8 @@
         position: absolute !important;
         top: calc(50% - 0.9rem);
         padding-left: 5rem;
-        padding-right: 2rem;
+        padding-right: 1rem;
+        margin-top:1px;
     }
 
 #iswrap {
@@ -233,6 +240,7 @@
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
     background-color: #3b73ca;
+    height:3rem
 }
 
     #Offcanvas_Mega_Menu > * {
@@ -394,6 +402,11 @@
 }
 
 @media only screen and (max-width: 992px) {
+    .headernews .content {
+        padding-left: 3.5rem !important;
+        padding-right: 0px !important;
+    }
+
     .home, .page {
         padding-top: 83px;
     }
@@ -713,6 +726,9 @@
 }
 
 @media only screen and (max-width: 768px) {
+    .headernews .content {
+        padding-left:2.5rem !important;
+    }
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: start;
     }
@@ -728,6 +744,10 @@
 }
 
 @media only screen and (max-width: 576px) {
+    .headernews .content {
+        padding-left: 3.5rem !important;
+        padding-right: 1rem !important;
+    }
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
         flex-direction: column;

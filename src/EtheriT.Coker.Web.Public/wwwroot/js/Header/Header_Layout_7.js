@@ -8,30 +8,30 @@ function HeaderInit() {
     $(".marqueeSwiper").each(function () {
         const $marquee = $(this).find(".swiper-wrapper");
         $marquee.find(".swiper-slide").each(function () {
-            let maxLen = 60;
+            const slideWidth = $(this).width();
             let $slide = $(this);
-            let txt = $slide.text().replace("(current)", "");
-            //console.log(txt);
-            if ($(window).width() < 480) {
-                maxLen = 10;
-            } else if ($(window).width() < 576) { 
-                maxLen = 15;
-            } else if ($(window).width() < 768) {
-                maxLen = 9;
-            } else if ($(window).width() < 835) {
-                maxLen = 30;
-            } else if ($(window).width() < 992) {
-                maxLen = 38;
-            } else if ($(window).width() < 1100) {
-                maxLen = 40;
+            let $newSlides = [];
+            let nextText = [];
+            let text = $slide.text().replace("(current)", "");
+            let $tempDiv = $('<div class="temp-div"></div>').appendTo('body');
+            $tempDiv.css('width', slideWidth + 'px');
+            let previousHeight = $tempDiv.height();
+            for (let i = 0; i < text.length; i++) {
+                $tempDiv.append(text[i]);
+                let currentHeight = $tempDiv.height();
+                if (currentHeight > previousHeight) {
+                    nextText.push(i);
+                    previousHeight = currentHeight;
+                }
             }
-            const count = Math.floor(txt.length / maxLen) - (txt.length % maxLen > 0 ? 0 : 1);
-            if (count > 0) $slide.find(".text").text(txt.substring(0, maxLen));
-            for (let i = count; i > 0; i--) {
+            for (let i = 0; i < nextText.length; i++) {
+                let startIdx = nextText[i];
+                let endIdx = i === nextText.length - 1 ? text.length : nextText[i + 1];
                 let $newSlide = $slide.clone();
-                $newSlide.find(".text").text(txt.substring((i * maxLen), ((i + 1) * maxLen)));
-                $slide.after($newSlide);
+                $newSlide.find(".text").text(text.substring(startIdx, endIdx)); 
+                $slide.before($newSlide);
             }
+            $slide.remove();
         });
     });
     var marqueeSwiper = new Swiper(".marqueeSwiper", {

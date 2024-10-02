@@ -259,7 +259,7 @@
 	<img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
 	<img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
 	<div class="content position-absolute row align-items-center w-100">
-		<div class="text overflow-hidden text-white p-0 ps-3 col">
+		<div class="text overflow-hidden text-white p-0 col">
 			<div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
 				<div class="swiper-wrapper">
 					@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
@@ -269,7 +269,7 @@
 						var link = marquee.link;
 						if (string.IsNullOrEmpty(link))
 						{
-							<div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title="Disabled tooltip">@marquee.title <span class="sr-only">(current)</span></div></div>
+							<div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title=@marquee.title>@marquee.title <span class="sr-only">(current)</span></div></div>
 						}
 						else
 						{

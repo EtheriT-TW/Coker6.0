@@ -327,9 +327,12 @@ namespace EtheriT.Coker.Application.Advertise
                         switch (type)
                         {
                             case (int)AdvertiseTypeEnum.右側浮動廣告:
+                                for (var i = 0; i < output.Count; i++)
+                                {
+                                    output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.右側浮動廣告);
+                                }
                                 break;
                             case (int)AdvertiseTypeEnum.進入廣告:
-
                                 for (var i = 0; i < output.Count; i++)
                                 {
                                     output[0].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.進入廣告);

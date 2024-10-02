@@ -8,6 +8,38 @@ function HeaderInit() {
     $(".marqueeSwiper").each(function () {
         const $marquee = $(this).find(".swiper-wrapper");
         $marquee.find(".swiper-slide").each(function () {
+            const slideWidth = $(this).width();
+            let $slide = $(this);
+            let $newSlides = [];
+            let nextText = [];
+            let text = $slide.text().replace("(current)", "");
+            let $tempDiv = $('<div class="temp-div"></div>').appendTo('body');
+            $tempDiv.css('width', slideWidth + 'px');
+            let previousHeight = $tempDiv.height(); 
+            for (let i = 0; i < text.length; i++) {
+                $tempDiv.append(text[i]);
+                let currentHeight = $tempDiv.height();
+
+                if (currentHeight > previousHeight) {
+                    nextText.push(i);  
+                    previousHeight = currentHeight;
+                }
+            }
+            nextText.push(text.length);
+            for (let i = 0; i < nextText.length; i++) {
+                let startIdx = i===0 ? 0 : nextText[i-1];
+                let endIdx = i === 0 ? nextText[i + 1] : nextText[i];
+                console.log(nextText[i]);
+                let $newSlide = $slide.clone();
+                $newSlide.find(".text").text(text.substring(startIdx, endIdx)); 
+                $newSlides.push($newSlide); 
+            }
+            $slide.empty();
+            $newSlides.forEach(newSlide => {
+                $slide.after(newSlide);
+            });
+            $tempDiv.remove();
+            /*
             let maxLen = 60;
             let $slide = $(this);
             let txt = $slide.text().replace("(current)", "");
@@ -31,7 +63,7 @@ function HeaderInit() {
                 let $newSlide = $slide.clone();
                 $newSlide.find(".text").text(txt.substring((i * maxLen), ((i + 1) * maxLen)));
                 $slide.after($newSlide);
-            }
+            }*/
         });
     });
     var marqueeSwiper = new Swiper(".marqueeSwiper", {

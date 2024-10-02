@@ -1,5 +1,13 @@
 ﻿.bg-img {
+    position:relative;
+    z-index:2;
     background: url(/upload/20170818112557.jpg) no-repeat top;
+}
+
+.bg-color {
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(14deg, #fefefe 40%, #ffffff 53%, #c6c6c6 94%, #d9d0d0 94%, #f1dcdc 95%, #f4eeee 97%, #e7dddd 99%, #e9e9e9 100%);
 }
 
 .fa-times-square {

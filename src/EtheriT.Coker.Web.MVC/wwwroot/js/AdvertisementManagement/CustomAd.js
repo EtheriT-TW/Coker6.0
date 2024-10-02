@@ -58,7 +58,6 @@ function PageReady() {
     $DirectoryTags = $(DirectoryForms).find(".InputTag").TagListModalInit();
     $AdvertiseTags = $(AdvertiseForms).find(".InputTag").TagListModalInit();
 
-
     (() => {
         Array.from(AdvertiseForms).forEach(form => {
             form.addEventListener('submit', event => {
@@ -322,7 +321,7 @@ function AddUpAdvertise(success_text, error_text) {
             directoryDatailList.component.refresh();
             location.hash = `Advertise_${DirectoryId}`;
         }
-        if (typeof ($ad_type.data("file").File) != "undefined") {
+        if (typeof ($ad_type.data("file").File) != "undefined" || $ad_type.val() == 3) {
             switch (parseInt($ad_type.val())) {
                 case 1:
                     var formData = new FormData();

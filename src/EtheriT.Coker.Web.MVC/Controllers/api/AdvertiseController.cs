@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using DevExtreme.AspNet.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -21,6 +22,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> AddUp(AdvertiseDto dto)
         {
             return await advertiseAppService.AddUp(dto);
+        }
+        [HttpGet]
+        public async Task<JsonResult> GetList(DataSourceLoadOptions loadOptions)
+        {
+            return await advertiseAppService.GetList(loadOptions);
         }
         [HttpGet]
         public async Task<AdvertiseGetDataDto> GetDataOne(long Id)

@@ -9,6 +9,7 @@ using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.Public.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -32,6 +33,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRemoteAppService RemoteAppService;
+        private readonly ITokenAppService tokenAppService;
         public HomeController(
             ILogger<HomeController> logger,
             IHtmlContentAppService htmlContentAppService,
@@ -41,8 +43,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IWebMenuApplication webMenuApplication,
             IStoreSetAppService storeSetAppService,
             IHttpContextAccessor httpContextAccessor,
-            IRemoteAppService RemoteAppService
-            )
+            IRemoteAppService RemoteAppService,
+            ITokenAppService tokenAppService
+        )
         {
             this._logger = logger;
             this.htmlContentAppService = htmlContentAppService;
@@ -53,6 +56,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.storeSetAppService = storeSetAppService;
             this.httpContextAccessor = httpContextAccessor;
             this.RemoteAppService = RemoteAppService;
+            this.tokenAppService = tokenAppService;
         }
 
         public async Task<IActionResult> IndexAsync(string key)
@@ -63,6 +67,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var site_name = $"Layout_{defaultData.Id}_Site";
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
+			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
+
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
             //var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
@@ -96,6 +102,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
                 }
             };
+            ViewBag.isLogin = false;
+            Guid guid = new Guid();
+            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(model.token) && Guid.TryParse(model.token, out guid))
+            {
+                var tokenItem = tokenAppService.CheckToken(guid);
+                if (tokenItem.Success) ViewBag.isLogin = tokenItem.IsLogin;
+            }
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;
             var saveRemote = await RemoteAppService.insertRemote(new Application.Shared.Dto.Remote.RemoteInputDto
@@ -150,11 +163,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:
-					ViewBag.LoginEnable = true;
                     ViewBag.ShoppingEnable = false;
                     break;
                 case WebsiteLevelEnum.購物:
-					ViewBag.LoginEnable = true;
                     ViewBag.ShoppingEnable = true;
                     break;
                 default:

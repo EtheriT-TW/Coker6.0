@@ -214,7 +214,15 @@
                     </div>
                 </div>
             }
-
+            @if (ViewBag.LoginEnable)
+            {
+                <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="登入會員">
+                    <span class="material-symbols-outlined">
+                        person
+                    </span>
+                    <span class="name"></span>
+                </a>
+            }
             <!-- Login Button -->
             <div class="d-none">
                 <button class="bg-transparent border-0 d-flex align-items-center" type="button">

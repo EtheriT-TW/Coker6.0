@@ -769,5 +769,10 @@ namespace EtheriT.Coker.Application
             var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == (int)PageTypeEnum.購物車);
             return item.Any();
         }
-    }
+        public async Task<bool> checkHasMember(long siteId) {
+			var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == (int)PageTypeEnum.會員);
+			return item.Any();
+		}
+
+	}
 }

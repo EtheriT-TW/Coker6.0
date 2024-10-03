@@ -173,9 +173,8 @@ function ready() {
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
-
+    CheckToken();
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");
-    else CheckToken();
 
     const enterAdModalEl = $('#EnterAdModal')
     var enteradid = enterAdModalEl.data("enteradid")
@@ -292,12 +291,14 @@ function cookie_reject() {
 
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
+        console.log("set token");
         $.cookie("Token", result.token, { expires: 30, path: "/" })
     })
 }
 
 function CheckToken() {
     Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
+        console.log("check token");
         if (!result.success) {
             $.cookie("Token", null, { path: '/' });
             CreateToken();

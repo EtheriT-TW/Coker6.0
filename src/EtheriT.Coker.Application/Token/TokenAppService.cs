@@ -1,11 +1,15 @@
 ﻿using EtheriT.Coker.Application.Authorizaion.Dto;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Primitives;
+using Microsoft.Extensions.Configuration;
 using System.Security.Principal;
 
 namespace EtheriT.Coker.Application.Token
@@ -17,18 +21,21 @@ namespace EtheriT.Coker.Application.Token
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly LoginUserData loginUserData;
         private readonly IDistributedCache cache;
+        private readonly IConfiguration configuration;
         public TokenAppService(
             JwtHelpers jwt,
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             LoginUserData loginUserData,
-            IDistributedCache cache)
+            IDistributedCache cache,
+            IConfiguration configuration)
         {
             this.jwt = jwt;
             this.db = db;
             this.httpContextAccessor = httpContextAccessor;
             this.loginUserData = loginUserData;
             this.cache = cache;
+            this.configuration = configuration;
         }
         public async Task<TokenResponseDto> CreateToken()
         {
@@ -43,6 +50,7 @@ namespace EtheriT.Coker.Application.Token
                     UserID = null,
                     StartTime = dateTime,
                     EndTime = EndDateTime,
+                    websiteId = configuration.GetValue<long>("WebConfig:SiteId")
                 };
                 db.Tokens.Add(t);
                 db.SaveChanges();
@@ -63,7 +71,7 @@ namespace EtheriT.Coker.Application.Token
             try
             {
                 if (id == null) throw new Exception("Token type error");
-                db.Tokens.RemoveRange(db.Tokens.Where(e => e.EndTime < DateTime.Now));
+                db.Tokens.RemoveRange(db.Tokens.Where(e => e.EndTime < DateTime.Now || e.websiteId == 0));
                 db.SaveChanges();
                 var tokens = db.Tokens.Where(e => e.id == id).Where(e => e.EndTime > DateTime.Now).First();
                 if (tokens == null)
@@ -73,7 +81,14 @@ namespace EtheriT.Coker.Application.Token
                 }
                 else
                 {
+                    tokens.id = Guid.NewGuid();
+                    tokens.EndTime = DateTime.Now.AddDays(30);
+                    output.Token = tokens.id.ToString();
+                    output.IsLogin = tokens.UserID != null;
                     output.Success = true;
+                    if (output.IsLogin)
+                        output.name = db.Users.Where(e => e.Status == (int)UserStatus.開通 && !e.IsDeleted).FirstOrDefault()?.Name;
+                    db.SaveChanges();
                 }
             }
             catch (Exception e)

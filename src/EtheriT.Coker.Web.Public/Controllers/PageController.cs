@@ -26,6 +26,7 @@ using EtheriT.Coker.Application.Shared.i18n;
 using System.Web;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -45,6 +46,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 		private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRemoteAppService RemoteAppService;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
+        private readonly ITokenAppService tokenAppService;
         private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
@@ -60,6 +62,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 			IHttpContextAccessor httpContextAccessor,
 			IRemoteAppService RemoteAppService,
             ITechnicalCertificateAppService technicalCertificateAppService,
+            ITokenAppService tokenAppService,
             StringHandler stringHandler
         )
         {
@@ -77,8 +80,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.httpContextAccessor = httpContextAccessor;
             this.RemoteAppService = RemoteAppService;
             this.technicalCertificateAppService = technicalCertificateAppService;
-
-
+            this.tokenAppService = tokenAppService;
         }
         private bool UseLegacyPathHandling(string website, string key, string option) { 
             bool check = true;
@@ -133,6 +135,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
                 }
             };
+
             string view;
             if ( new List<string> { "article" }.Contains(key.ToLower())  && int.TryParse(option, out id))
             {
@@ -200,7 +203,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 model.ParentData = ProdPageData;
                                 model.PageData.PageView = "Product";
                                 model.PageData.LayoutType = defaultData.Layout_Type;
-                                model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+                                model.PageData.holdPage = HoldPageNameEnum.Article;
                                 if (key == "product")
                                 {
                                     model.PageData.VisibleHeader = true;
@@ -374,8 +377,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 view = "index";
             }
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
+			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
+            ViewBag.isLogin = false;
+            Guid guid = new Guid();
+            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(model.token) && Guid.TryParse(model.token,out guid)) {
+                var tokenItem = tokenAppService.CheckToken(guid);
+                if (tokenItem.Success) ViewBag.isLogin = tokenItem.IsLogin;
+            }
             await RemoteAppService.insertRemote(remoteInputDto);
-
             ViewData["SideName"] = model.PageData!.SiteName;
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
@@ -401,11 +410,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             switch (model.Level)
             {
                 case WebsiteLevelEnum.會員:
-                    ViewBag.LoginEnable = true;
                     ViewBag.ShoppingEnable = false;
                     break;
                 case WebsiteLevelEnum.購物:
-					ViewBag.LoginEnable = true;
                     ViewBag.ShoppingEnable = true;
                     break;
                 default:

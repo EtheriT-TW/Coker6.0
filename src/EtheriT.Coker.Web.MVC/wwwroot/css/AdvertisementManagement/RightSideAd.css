@@ -57,22 +57,23 @@ input[type="number"] {
     background-color: var(--color-gray-bg-dark);
 }
 
-#RightSideAdContent > form > .name > input {
-    padding-left: 7.25rem;
-    padding-right: 7.5rem;
+#RightSideAdContent .img_input {
+    padding-right: 2.5rem;
 }
 
-#RightSideAdContent > form > .sort > input {
+#RightSideAdContent .image_upload .file_name {
+    display: none;
+}
+
+#RightSideAdContent .name > input, #RightSideAdContent .title > input, #RightSideAdContent .ad_link > input {
+    padding-left: 7rem;
+}
+
+#RightSideAdContent .sort > input {
     padding-left: 5.25rem;
     padding-right: 7.5rem;
 }
 
-#RightSideAdContent > form > .link > input {
-    padding-left: 3.25rem;
-    padding-right: 7.5rem;
-}
-
-#RightSideAdContent > form > .date > input {
-    padding-left: 9rem;
-    padding-right: 7.5rem;
+#RightSideAdContent .date > input {
+    padding-left: 9.5rem;
 }

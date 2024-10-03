@@ -1,6 +1,6 @@
 ﻿using EtheriT.Coker.Application;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
-using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.Application.Shared.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -8,19 +8,18 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
 {
     public class SideFloating : ViewComponent
     {
-
-        private readonly IHtmlContentAppService htmlContentAppService;
         private readonly IConfiguration Configuration;
         private readonly IWebsiteApplication websiteApplication;
+        private readonly IAdvertiseAppService advertiseAppService;
         public SideFloating(
-            IHtmlContentAppService htmlContentAppService,
             IConfiguration Configuration,
-            IWebsiteApplication websiteApplication
+            IWebsiteApplication websiteApplication,
+            IAdvertiseAppService advertiseAppService
             )
         {
-            this.htmlContentAppService = htmlContentAppService;
             this.Configuration = Configuration;
             this.websiteApplication = websiteApplication;
+            this.advertiseAppService = advertiseAppService;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
@@ -32,8 +31,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
             }
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
-            var rightSideAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 12, 4)).Value));
-            if (defaultData.Id != siteId) foreach (var rightSideAd in rightSideAds) if (rightSideAd.Img[0] != null) rightSideAd.Img[0] = rightSideAd.Img[0].Replace("upload", $"upload/{defaultData.OrgName}");
+            var rightSideAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 2, 4)).Value));
+            if (defaultData.Id != siteId) foreach (var rightSideAd in rightSideAds) if (rightSideAd.FileLink[0].Link != null) rightSideAd.FileLink[0].Link = rightSideAd.FileLink[0].Link.Replace("upload", $"upload/{defaultData.OrgName}");
             SideFloatingViewModel model = new SideFloatingViewModel
             {
                 rightSideAd = rightSideAds

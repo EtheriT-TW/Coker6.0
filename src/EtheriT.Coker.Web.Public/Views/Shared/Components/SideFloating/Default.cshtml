@@ -1,4 +1,5 @@
-﻿@using EtheriT.Coker.Application.Shared.Dto.HtmlContent
+﻿@using EtheriT.Coker.Application.Shared.Dto.Advertise;
+@using EtheriT.Coker.Application.Shared.Dto.HtmlContent
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
 @model SideFloatingViewModel
 
@@ -8,17 +9,17 @@
 <div id="Floating_Center" class="position-fixed d-flex flex-column align-items-center d-none d-lg-block">
 	@if (Model.rightSideAd.Count > 0)
 	{
-		@foreach (var rightSideAd in Model.rightSideAd ?? new List<HtmlContentDisplayDto>())
+		@foreach (var rightSideAd in Model.rightSideAd ?? new List<AdvertiseDisplayDto>())
 		{
 			@if (rightSideAd.Link != "")
 			{
 				var target = rightSideAd.Target == true ? "_blank" : "_self";
 				var title = rightSideAd.Target == true ? $"連結至：{rightSideAd.Title}(另開視窗)" : $"連結至：{rightSideAd.Title}";
-				<div><a href="@rightSideAd.Link" target="@target" title="@title"><img class="my-1 shadow" src="@rightSideAd.Img[0]" alt="@rightSideAd.Title"></a></div>
+				<div data-aid="@rightSideAd.Id"><a href="@rightSideAd.Link" target="@target" title="@title"><img class="my-1 shadow" src="@rightSideAd.FileLink[0].Link" alt="@rightSideAd.Title"></a></div>
 			}
 			else
 			{
-				<div><img class="my-1 shadow" src="@rightSideAd.Img[0]" alt="@rightSideAd.Title"></div>
+				<div data-aid="@rightSideAd.Id"><img class="my-1 shadow" src="@rightSideAd.FileLink[0].Link" alt="@rightSideAd.Title"></div>
 			}
 		}
 	}

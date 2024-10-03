@@ -24,9 +24,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await advertiseAppService.AddUp(dto);
         }
         [HttpGet]
-        public async Task<JsonResult> GetList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetEnterAdList(DataSourceLoadOptions loadOptions)
         {
-            return await advertiseAppService.GetList(loadOptions);
+            return await advertiseAppService.GetList(loadOptions, 1);
+        }
+        [HttpGet]
+        public async Task<JsonResult> GetRightSideAdList(DataSourceLoadOptions loadOptions)
+        {
+            return await advertiseAppService.GetList(loadOptions, 2);
         }
         [HttpGet]
         public async Task<AdvertiseGetDataDto> GetDataOne(long Id)

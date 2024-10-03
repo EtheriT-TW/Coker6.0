@@ -112,14 +112,14 @@ namespace EtheriT.Coker.Application.Advertise
             }
             return output;
         }
-        public async Task<JsonResult> GetList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetList(DataSourceLoadOptions loadOptions, int Type)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
             string error = string.Empty;
             try
             {
                 var dataQuery = from a in db.Advertise.Where(e => !e.IsDeleted)
-                                where a.Type == (int)AdvertiseTypeEnum.進入廣告
+                                where a.Type == Type
                                 where a.IsDeleted == false
                                 select new AdvertiseDto
                                 {
@@ -131,6 +131,25 @@ namespace EtheriT.Coker.Application.Advertise
                                     Visible = a.Visible,
                                 };
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+                if (output != null)
+                {
+                    foreach (var data in output.data)
+                    {
+                        var htmlId = data.GetType().GetProperty("Id").GetValue(data, null);
+                        var getImgFileInput = new FileGetImgInputDto
+                        {
+                            Sid = (long)htmlId,
+                            Type = (int)FileBindTypeEnum.右側浮動廣告,
+                            Size = 1
+                        };
+                        var image = await fileUploadAppService.getImgFiles(getImgFileInput);
+                        if (image.Count > 0)
+                        {
+                            data.GetType().GetProperty("ImgLink").SetValue(data, image[0].Link);
+                        }
+                    }
+                }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
@@ -308,9 +327,12 @@ namespace EtheriT.Coker.Application.Advertise
                         switch (type)
                         {
                             case (int)AdvertiseTypeEnum.右側浮動廣告:
+                                for (var i = 0; i < output.Count; i++)
+                                {
+                                    output[i].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.右側浮動廣告);
+                                }
                                 break;
                             case (int)AdvertiseTypeEnum.進入廣告:
-
                                 for (var i = 0; i < output.Count; i++)
                                 {
                                     output[0].FileLink = await fileUploadAppService.getAdvertiseFiles(output[i].Id, (int)FileBindTypeEnum.進入廣告);

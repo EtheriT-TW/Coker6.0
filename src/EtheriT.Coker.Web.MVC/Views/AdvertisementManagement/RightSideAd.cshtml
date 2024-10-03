@@ -1,5 +1,5 @@
 ﻿@using DevExtreme.AspNet.Mvc
-@using EtheriT.Coker.Application.Shared.Dto.EnterAd
+@using EtheriT.Coker.Application.Shared.Dto.Advertise;
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal;
 @{
     ViewData["Title"] = "RightSideAd";
@@ -21,9 +21,9 @@
                     <span class="material-symbols-outlined">add</span>
                 </button>
                 @(
-                        Html.DevExtreme().DataGrid<HtmlContentGetAllListDto>()
+                        Html.DevExtreme().DataGrid<AdvertiseDto>()
                         .DataSource(d => d.RemoteController().Key("Id")
-                        .LoadUrl("/api/HtmlContent/GetRightSideAdAllList").LoadMethod("Get")
+                        .LoadUrl("/api/Advertise/GetRightSideAdList").LoadMethod("Get")
                         )
                         .RemoteOperations(true)
                         .ColumnHidingEnabled(true)
@@ -41,22 +41,22 @@
                         .Columns(c =>
                         {
                             c.AddFor(e => e.Title).Caption("名稱").Width(200);
-                            c.AddFor(e => e.Img).Caption("圖示")
-                        .AllowFiltering(false)
-                        .AllowSorting(false)
-                        .CellTemplate(
-                        @<text>
-                            <div class="list_img">
-                                <img class="" src="<%- value %>" alt="" />
-                            </div>
-                        </text>
-                    );
+                            c.AddFor(e => e.ImgLink).Caption("圖示")
+                                                                            .AllowFiltering(false)
+                                                                            .AllowSorting(false)
+                                                                            .CellTemplate(
+                                                                            @<text>
+                                                                                <div class="list_img">
+                                                                                    <img class="" src="<%- value %>" alt="" />
+                                                                                </div>
+                                                                            </text>
+                                                                        );
                             c.AddFor(e => e.Link).Caption("連結").Width(200);
-                            c.AddFor(e => e.Ser_no).Caption("排序").Width(50);
-                            c.AddFor(e => e.Disp_opt).Caption("是否顯示").Width(90);
+                            c.AddFor(e => e.SerNO).Caption("排序").Width(50);
+                            c.AddFor(e => e.Visible).Caption("是否顯示").Width(90);
                             c.AddFor(e => e.Target).Caption("另開視窗").Width(90);
-                            c.AddFor(e => e.StartDate).Caption("起始日期").Width(125);
-                            c.AddFor(e => e.EndDate).Caption("結束日期").Width(125);
+                            c.AddFor(e => e.StartTime).Caption("起始日期").Width(125);
+                            c.AddFor(e => e.EndTime).Caption("結束日期").Width(125);
                             c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
                             c.Add()
                             .Type(GridCommandColumnType.Buttons)
@@ -102,24 +102,38 @@
             </div>
 
             <form id="AdForm" class="card-body needs-validation">
+                <input name="id" type="hidden" />
                 <div class="d-flex align-self-center justify-content-between mb-3">
                     <div class="d-flex flex-column align-items-center mb-1">
                         <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="true" data-needcompress="false">
                             @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
                         </div>
                     </div>
-                    <button id="Btn_Display" class="bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示">
+                    <input type="checkbox" id="AdFormVisible" class="selectedItem" name="visible" value="true" />
+                    <label for="AdFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上" class="d-flex align-items-center">
                         <span class="material-symbols-outlined fs-2">visibility</span>
-                    </button>
+                        <span class="material-symbols-outlined fs-2">visibility_off</span>
+                    </label>
                 </div>
 
                 <div class="name input-group mb-3">
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">image</span>圖片名稱
                     </div>
-                    <input id="InputName" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required>
+                    <input id="InputName" class="form-control rounded" type="text" aria-label="Input Name of Freight" autocomplete="off" required name="title">
                     <div class="icon_hint position-absolute ps-2 top-50 end-0 d-flex translate-middle-y z-index-up" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="建議輸入正確圖片說明，可以增加搜尋度">
                         <span class="material-icons me-1">help</span>
+                    </div>
+                </div>
+
+                <div class="ad_link input-group mb-3">
+                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
+                        <span class="material-symbols-outlined me-1 required_sign">link</span>連結網址
+                    </div>
+                    <input type="text" class="form-control rounded" placeholder="https://" aria-label="Recipient's username" aria-describedby="button-addon2" name="link" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up mr-4">
+                        <input id="TargetCheck" class="form-check-input" type="checkbox" value="true" name="target">
+                        <label class="form-check-label fs-6 pe-2" for="TargetCheck">開新視窗</label>
                     </div>
                 </div>
 
@@ -127,21 +141,10 @@
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
                     </div>
-                    <input id="InputSort" class="form-control rounded" type="number" aria-label="Input Sort of RightSideAd" disabled="disabled" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                        <input id="SortCheck" class="form-check-input" type="checkbox" value="">
-                        <label class="form-check-label fs-6 pe-2" for="SortCheck">自訂排序</label>
-                    </div>
-                </div>
-
-                <div class="link input-group mb-3">
-                    <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
-                        <span class="material-symbols-outlined me-1 required_sign">link</span>
-                    </div>
-                    <input id="InputLink" class="form-control rounded" type="text" aria-label="Input Link of RightSideAd" value="https://" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                        <input id="TargetCheck" class="form-check-input" type="checkbox" value="">
-                        <label class="form-check-label fs-6 pe-2" for="TargetCheck">開新視窗</label>
+                    <input id="AdvertiseSerNO" class="form-control rounded" name="serNO" type="number" aria-label="Input Sort of Advertise" disabled="disabled" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up mr-4">
+                        <input id="AdvertiseSortCheck" class="form-check-input" name="sortCheckbox" data-form-type="disabled" data-direct="reverse" data-value="500" data-target="AdvertiseSerNO" type="checkbox" value="false">
+                        <label class="form-check-label fs-6 pe-2" for="AdvertiseSortCheck">自訂排序</label>
                     </div>
                 </div>
 
@@ -149,9 +152,9 @@
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>調整顯示日期
                     </div>
-                    <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of RightSideAd" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
-                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up">
-                        <input id="PermanentCheck" class="form-check-input" type="checkbox" value="">
+                    <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up mr-4">
+                        <input id="PermanentCheck" name="permanent" data-form-type="disabled" data-target="InputDate" class="form-check-input" type="checkbox" checked value="true">
                         <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>
                     </div>
                 </div>

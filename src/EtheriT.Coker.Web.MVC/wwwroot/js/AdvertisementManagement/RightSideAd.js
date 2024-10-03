@@ -1,13 +1,13 @@
-﻿var $btn_display, $title, $input_sort, $check_sort, $link, $target, $date, $picker, $permanent
+﻿var $check_sort, $target, $date, $picker, $permanent, $Visible
 var startDate, endDate, keyId, disp_opt = true
 var enterAd_list
+let AdForm
 
 function PageReady() {
     ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
 
     $picker = $("#InputDate");
-
     co.Picker.Init($picker);
 
     $picker.on('apply.daterangepicker', function (ev, picker) {
@@ -30,7 +30,7 @@ function PageReady() {
                         co.sweet.error("資料有誤", "圖示不可為空", null, false);
                     } else {
                         Coker.sweet.confirm("即將發布", "發布後將直接顯示於安排的位置", "發布", "取消", function () {
-                            AddUp(disp_opt, "已成功發布", "發布發生未知錯誤");
+                            AddUp("已成功發布", "發布發生未知錯誤");
                         });
                     }
                 }
@@ -39,8 +39,6 @@ function PageReady() {
             }, false)
         })
     })()
-
-
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回廣告列表", "資料將不被保存", "確定", "取消", function () {
             history.back();
@@ -51,23 +49,9 @@ function PageReady() {
         window.location.hash = 0;
         HashDataEdit();
     });
-    $btn_display.on("click", function () {
-        if (disp_opt) {
-            $btn_display.children("span").text("visibility_off");
-            disp_opt = !disp_opt;
-        } else {
-            $btn_display.children("span").text("visibility");
-            disp_opt = !disp_opt;
-        }
-    })
-    $check_sort.on("click", function () {
-        if ($check_sort.is(":checked")) {
-            $input_sort.removeAttr("disabled");
-        } else {
-            $input_sort.val('');
-            $input_sort.attr("disabled", "disabled");
-        }
-    })
+    $Visible.on("click", function () {
+        $Visible.val($Visible.prop("checked"));
+    });
     $permanent.on("click", function () {
         if ($permanent.is(":checked")) {
             $date.val('');
@@ -87,11 +71,10 @@ function PageReady() {
 }
 
 function ElementInit() {
-    $btn_display = $("#Btn_Display");
-    $title = $("#InputName");
-    $input_sort = $("#InputSort");
-    $check_sort = $("#SortCheck");
-    $link = $("#InputLink");
+    AdForm = $('#AdForm');
+    $Visible = $("#AdFormVisible");
+    $check_sort = $("#AdvertiseSortCheck");
+    $input_sort = $("#AdvertiseSerNO");
     $target = $("#TargetCheck");
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
@@ -119,7 +102,7 @@ function HashDataEdit() {
                 FormDataClear();
                 MoveToContent();
             } else {
-                co.HtmlContent.Get(parseInt(hash)).done(function (result) {
+                co.Advertise.GetDataOne(parseInt(hash)).done(function (result) {
                     if (result != null) {
                         MoveToContent();
                         FormDataSet(result);
@@ -142,53 +125,32 @@ function editButtonClicked(e) {
 
 function FormDataSet(result) {
     FormDataClear();
+    console.log(result)
     co.File.getImgFile({ Sid: result.id, Type: 5, Size: 1, }).done(function (file) {
         if (file.length > 0) ImageUploadModalDataInsert($("#ImageUpload"), file[0].id, file[0].link, file[0].name)
     })
     keyId = result.id;
-    startDate = result.startDate;
-    endDate = result.endDate;
-    $btn_display.children("span").text(result.disp_opt ? "visibility" : "visibility_off");
-    disp_opt = result.disp_opt;
-    $title.val(result.title);
-    if (result.ser_no != 500) {
-        $check_sort.prop("checked", true);
-        $input_sort.removeAttr("disabled", "disabled");
-        $input_sort.val(result.ser_no)
-    }
-    $link.val(result.link);
-    $target.prop("checked", result.target);
-    if (result.permanent) {
-        $date.val('');
-        $date.attr("disabled", "disabled");
-        $permanent.prop("checked", true);
-    } else {
-        startDate != null && $picker.data('daterangepicker').setStartDate(startDate);
-        endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
-    }
+    result.startEndDate = 0;
+    result.sortCheckbox = 1;
+    co.Form.insertData(result, "#AdForm");
+    $Visible.val(result.visible);
+    $Visible.prop("checked", result.visible);
 }
 
 function FormDataClear() {
     ImageUploadModalClear($("#ImageUpload"));
-    keyId = 0;
-    $btn_display.children("span").text("visibility");
-    disp_opt = true;
-    $title.val("");
-    $input_sort.val("")
-    $input_sort.attr("disabled", "disabled");
+    co.Form.clear("AdForm");
+    $("#AdForm > input[name='id'").val("");
+    $Visible.prop("checked", true);
+    $Visible.val(true);
     $check_sort.prop("checked", false);
-    $link.val("https://");
-    $target.prop("checked", true);
-    $permanent.prop("checked", true);
-    $date.val('');
-    $date.attr("disabled", "disabled");
-    startDate = null;
-    endDate = null;
+    $input_sort.prop("disabled", true);
+    $input_sort.val("")
 }
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.HtmlContent.Delete(e.row.key).done(function (result) {
+        co.Advertise.Delete(e.row.key).done(function (result) {
             if (result.success) {
                 e.component.refresh();
             } else {
@@ -200,7 +162,9 @@ function deleteButtonClicked(e) {
     });
 }
 
-function AddUp(display, success_text, error_text) {
+function AddUp(success_text, error_text) {
+    const data = co.Form.getJson($(AdForm).attr("id"));
+    data.type = 2;
     var delectList = $("#ImageUpload").find(".img_input_frame").data("delectList")
     if (typeof (delectList) != "undefined" && delectList != null) {
         co.File.DeleteFileById({
@@ -210,21 +174,8 @@ function AddUp(display, success_text, error_text) {
         });
     }
 
-    co.HtmlContent.AddUp({
-        Id: keyId,
-        TId: $.cookie('secret'),
-        Content: "",
-        Type: 12,
-        Title: $title.val(),
-        ObjectType: 1,
-        Disp_opt: display,
-        Ser_no: $check_sort.is(":checked") ? $input_sort.val() : 500,
-        Link: $link.val(),
-        Target: $target.is(":checked"),
-        StartDate: startDate,
-        EndDate: endDate,
-        permanent: $permanent.is(":checked")
-    }).done(function (result) {
+
+    co.Advertise.AddUp(data).done(function (result) {
         if (result.success) {
             var file = $("#ImageUpload .img_input_frame > .img_input").data("file").File;
             if (file != null) {
@@ -238,6 +189,7 @@ function AddUp(display, success_text, error_text) {
                         Coker.sweet.success(success_text, null, true);
                         setTimeout(function () {
                             BackToList();
+                            FormDataClear();
                             enterAd_list.component.refresh();
                         }, 1000);
                     }
@@ -246,6 +198,7 @@ function AddUp(display, success_text, error_text) {
                 Coker.sweet.success(success_text, null, true);
                 setTimeout(function () {
                     BackToList();
+                    FormDataClear();
                     enterAd_list.component.refresh();
                 }, 1000);
             }

@@ -31,7 +31,7 @@
 {
     <div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" data-enteradid="@Model.enterAd[0].Id">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
+            <div class="modal-content" data-aid="@Model.enterAd[0].Id">
                 <div class="modal-body">
                     <button type="button" class="bg-white btn-close end-0 me-3 p-2 position-absolute rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                     <div class="d-flex justify-content-center">
@@ -42,9 +42,9 @@
                             var title = Model.enterAd[0].Target == true ? $"連結至：{Model.enterAd[0].Title}(另開視窗)" : $"連結至：{Model.enterAd[0].Title}";
                             <a href="@Model.enterAd[0].Link" target="@target" title="@title">
                                 <ul>
-                                    @foreach (var img in Model.enterAd[0].Img)
+                                    @foreach (var File in Model.enterAd[0].FileLink)
                                     {
-                                        <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                        <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@Model.enterAd[0].Title" /></li>
                                     }
                                 </ul>
                             </a>
@@ -52,12 +52,11 @@
                         else
                         {
                             <ul>
-                                @foreach (var img in Model.enterAd[0].Img)
+                                @foreach (var File in Model.enterAd[0].FileLink)
                                 {
-                                    <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                    <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@Model.enterAd[0].Title" /></li>
                                 }
                             </ul>
-
                         }
                     </div>
                 </div>

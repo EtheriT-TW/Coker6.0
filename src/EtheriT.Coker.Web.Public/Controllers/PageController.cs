@@ -25,6 +25,9 @@ using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.i18n;
 using System.Web;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using EtheriT.Coker.Application.Advertise;
+using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Token;
 
@@ -47,6 +50,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IRemoteAppService RemoteAppService;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
         private readonly ITokenAppService tokenAppService;
+        private readonly IAdvertiseAppService advertiseAppService;
         private readonly StringHandler stringHandler;
         public PageController(
             ILogger<PageController> logger,
@@ -62,6 +66,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
 			IHttpContextAccessor httpContextAccessor,
 			IRemoteAppService RemoteAppService,
             ITechnicalCertificateAppService technicalCertificateAppService,
+            IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
             StringHandler stringHandler
         )
@@ -81,6 +86,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.RemoteAppService = RemoteAppService;
             this.technicalCertificateAppService = technicalCertificateAppService;
             this.tokenAppService = tokenAppService;
+            this.advertiseAppService = advertiseAppService;
         }
         private bool UseLegacyPathHandling(string website, string key, string option) { 
             bool check = true;
@@ -100,6 +106,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
+            var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
+            var GA4 = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
+            var GoogleTranslate = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "google.translate", SiteId = siteId });
+            var GTM = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "GTM", SiteId = siteId });
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "SEO");
@@ -112,7 +122,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
 
             RemoteInputDto remoteInputDto = new RemoteInputDto{FK_WebsiteId = siteId};
-            if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
+            if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
             PageViewModel model = new PageViewModel
             {
                 id = id,

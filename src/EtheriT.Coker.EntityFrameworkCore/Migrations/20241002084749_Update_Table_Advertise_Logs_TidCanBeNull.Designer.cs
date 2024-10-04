@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241002084749_Update_Table_Advertise_Logs_TidCanBeNull")]
+    partial class Update_Table_Advertise_Logs_TidCanBeNull
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,9 +221,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<DateTime?>("NodeDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("PageText")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Popular")
                         .HasColumnType("int");
@@ -4005,9 +4004,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long?>("OverImgId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("PageText")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PageType")
                         .HasColumnType("int");

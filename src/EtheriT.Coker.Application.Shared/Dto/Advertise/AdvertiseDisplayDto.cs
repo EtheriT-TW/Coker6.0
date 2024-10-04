@@ -19,7 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public int Exposure { get; set; }
         public int Clicks { get; set; }
         public int SerNO { get; set; }
-        public FileGetAdvertiseDisplayDto FileLink { get; set; }
+        public List<FileGetAdvertiseDisplayDto> FileLink { get; set; }
         public List<TagGetAllDataDto> TagDatas { get; set; }
     }
 }

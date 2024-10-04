@@ -27,6 +27,24 @@ function SideFloatingInit() {
     $(".history_prod").on("click", function () {
         ClickLog($(this).data("pid"))
     });
+
+    var adid = $("#Floating_Center > div").data("aid");
+    if (adid != "undefined") {
+        Advertise.ActivityExposure({
+            FK_Aid: adid,
+            FK_Tid: $.cookie("Token"),
+        }).done(function (result) {
+            console.log(result)
+        })
+        $("#Floating_Center > div").on("click", function () {
+            Advertise.ActivityClick({
+                FK_Aid: adid,
+                FK_Tid: $.cookie("Token"),
+            }).done(function (result) {
+                console.log(result)
+            })
+        });
+    }
 }
 
 function ProdHistorySet() {

@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Search;
@@ -18,7 +19,7 @@ namespace EtheriT.Coker.Web.Public.Models
         public string locale { get; set; } = "zh-tw";
         public string root {  get; set; }
         public WebsiteLevelEnum Level { get; set; }
-		public List<HtmlContentDisplayDto>? enterAd { get; set; }
+		public List<AdvertiseDisplayDto>? enterAd { get; set; }
 		public GetFrontContenOutputDto? ParentData { get; set; }
         public GetFrontContenOutputDto? PageData { get; set; }
         public FrontSearchPalameterDro? SearchPalameter { get; set; }

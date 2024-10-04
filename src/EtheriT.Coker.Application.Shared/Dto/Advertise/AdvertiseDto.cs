@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Advertise
         public int? Type { get; set; }
         public string? Describe { get; set; }
         public string? Link { get; set; }
+        public string? ImgLink { get; set; }
         public bool Target { get; set; } = false;
         public bool Visible { get; set; }
         public int SerNO { get; set; } = 500;

@@ -8,9 +8,10 @@ namespace EtheriT.Coker.Application.Shared.Advertise
     public interface IAdvertiseAppService
     {
         public Task<ResponseMessageDto> AddUp(AdvertiseDto dto);
-        public Task<JsonResult> GetList(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetList(DataSourceLoadOptions loadOptions, int Type);
         public Task<AdvertiseGetDataDto> GetDataOne(long Id);
         public Task<ResponseMessageDto> Delete(long Id);
         public  Task<ResponseMessageDto> ActivityLog(AdvertiseLogDto dto);
+        public  Task<JsonResult> GetDisplay(long webid, int type, int number);
     }
 }

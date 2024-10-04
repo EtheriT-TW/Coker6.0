@@ -1,5 +1,8 @@
 ﻿using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Remote;
+using EtheriT.Coker.Application.Shared.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using EtheriT.Coker.Application.Shared.Dto.Product;
@@ -33,6 +36,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRemoteAppService RemoteAppService;
+        private readonly IAdvertiseAppService advertiseAppService;
         private readonly ITokenAppService tokenAppService;
         public HomeController(
             ILogger<HomeController> logger,
@@ -44,6 +48,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IStoreSetAppService storeSetAppService,
             IHttpContextAccessor httpContextAccessor,
             IRemoteAppService RemoteAppService,
+            IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService
         )
         {
@@ -57,6 +62,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.httpContextAccessor = httpContextAccessor;
             this.RemoteAppService = RemoteAppService;
             this.tokenAppService = tokenAppService;
+            this.advertiseAppService = advertiseAppService;
         }
 
         public async Task<IActionResult> IndexAsync(string key)
@@ -65,12 +71,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, key);
             var site_name = $"Layout_{defaultData.Id}_Site";
+            var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
+            await webMenuApplication.CheckDisplayAll(siteId);
+            if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
+            var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
             var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
 			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
 
-            if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.Img.Count; i++) if (enterAd.Img[i] != null) enterAd.Img[i] = enterAd.Img[i].Replace("upload", $"upload/{defaultData.OrgName}");
-            //var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
+            
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "SEO");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");

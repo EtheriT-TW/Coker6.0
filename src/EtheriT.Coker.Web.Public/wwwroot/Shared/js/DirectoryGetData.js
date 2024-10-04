@@ -481,12 +481,13 @@ function DirectoryAdDataInsert($item, result) {
         var $frame = $(this);
         if (result.length > index) {
             var thisresult = result[index];
-            var filetype = thisresult.fileLink.fileType;
+            var result_File = thisresult.fileLink[0];
+            var filetype = result_File.fileType;
             var html;
             switch (parseInt(filetype)) {
                 case 1:
                     var $img_frame = $frame.find(".img_frame");
-                    $img_frame.find("img").attr("src", thisresult.fileLink.link);
+                    $img_frame.find("img").attr("src", result_File.link);
                     $img_frame.find("img").attr("alt", thisresult.title);
                     $img_frame.find("a").attr("href", thisresult.link);
                     $img_frame.find("a").attr("title", "連結至" + thisresult.title + (thisresult.target ? "(開新視窗)" : ""));
@@ -500,14 +501,14 @@ function DirectoryAdDataInsert($item, result) {
                     break;
                 case 2:
                     var $video_frame = $frame.find(".video_frame");
-                    $video_frame.find("video").attr("src", thisresult.fileLink.link);
-                    $video_frame.find("video").attr("type", thisresult.fileLink.video_Type);
+                    $video_frame.find("video").attr("src", result_File.link);
+                    $video_frame.find("video").attr("type", result_File.video_Type);
                     $video_frame.removeClass("d-none");
                     $video_frame.parent().children().not(".video_frame").remove();
                     break;
                 case 3:
                     var $YT_frame = $frame.find(".YT_frame");
-                    $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + thisresult.fileLink.name + "/maxresdefault.jpg");
+                    $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + result_File.name + "/maxresdefault.jpg");
                     $YT_frame.find("img").attr("alt", thisresult.title);
                     $YT_frame.removeClass("d-none");
                     $YT_frame.parent().find("div").not(".YT_frame").remove();
@@ -529,7 +530,7 @@ function DirectoryAdDataInsert($item, result) {
                         });
                     }
                     $YT_frame.on("click", function () {
-                        var temp_ytlink = "https://www.youtube.com/embed/" + thisresult.fileLink.name;
+                        var temp_ytlink = "https://www.youtube.com/embed/" + result_File.name;
                         $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
                      })
                     $YT_frame.parent().children().not(".YT_frame").remove();

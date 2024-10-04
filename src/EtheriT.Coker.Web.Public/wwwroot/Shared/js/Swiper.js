@@ -135,9 +135,11 @@ function SwiperInit(obj) {
                         $class.push("");
                     }
                 });
-                for (let i = 0; i < $images.length; i++) { //生成Thumbs
-                    const newSlide = `<div class="swiper-slide ${$class[i]}"><img src="${$images[i]}" alt="${$alts[i]}" /></div>`;
-                    swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
+                if ($images.length > 1) {
+                    for (let i = 0; i < $images.length; i++) { //生成Thumbs
+                        const newSlide = `<div class="swiper-slide ${$class[i]}"><img src="${$images[i]}" alt="${$alts[i]}" /></div>`;
+                        swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
+                    }
                 }
             }
             swiperThumbs.slideTo(index, 0);
@@ -411,11 +413,17 @@ function SwiperInit(obj) {
             pictureSwiper.removeAllSlides();
             pictureSwiperThumbs.removeAllSlides();
             //Siwper會多複製兩張圖所以$images.length - 2，前面一張後面一張所以從第一張圖1開始
-            for (let i = 1; i < $images.length - 1; i++) {
-                const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
-                
+            if ($images.length == 1) {
+                const newSlide = `<div class="swiper-slide"><img src="${$images[0]}" alt=" " /></div>`;
+
                 pictureSwiper.appendSlide(newSlide);
-                pictureSwiperThumbs.appendSlide(newSlide);
+            } else {
+                for (let i = 1; i < $images.length - 1; i++) {
+                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
+
+                    pictureSwiper.appendSlide(newSlide);
+                    pictureSwiperThumbs.appendSlide(newSlide);
+                }
             }
             pictureSwiper.slideTo(index, 0);
             pictureSwiperThumbs.slideTo(index, 0);

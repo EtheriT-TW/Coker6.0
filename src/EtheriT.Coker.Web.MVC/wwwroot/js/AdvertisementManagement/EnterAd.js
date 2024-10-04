@@ -37,8 +37,6 @@ function PageReady() {
             }, false)
         })
     })()
-
-
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回廣告列表", "資料將不被保存", "確定", "取消", function () {
             BackToList();
@@ -73,7 +71,8 @@ function PageReady() {
 function ElementInit() {
     AdForm = $('#AdForm');
     $Visible = $("#AdFormVisible");
-    $check_sort = $("#SortCheck");
+    $check_sort = $("#AdvertiseSortCheck");
+    $input_sort = $("#AdvertiseSerNO");
     $target = $("#TargetCheck");
     $date = $("#InputDate");
     $permanent = $("#PermanentCheck");
@@ -104,6 +103,8 @@ function HashDataEdit() {
                     if (result != null) {
                         MoveToContent();
                         FormDataSet(result);
+                    } else {
+                        window.location.hash = ""
                     }
                 })
             }
@@ -120,6 +121,7 @@ function editButtonClicked(e) {
 }
 
 function FormDataSet(result) {
+    FormDataClear();
     console.log(result)
     co.File.getImgFile({ Sid: result.id, Type: 7, Size: 1, }).done(function (files) {
         if (files.length > 0) {
@@ -139,9 +141,12 @@ function FormDataSet(result) {
 function FormDataClear() {
     ImageUploadModalClear($("#ImageUpload"));
     co.Form.clear("AdForm");
-    $("#AdvertiseForm > input[name='id'").val("");
+    $("#AdForm > input[name='id'").val("");
     $Visible.prop("checked", true);
     $Visible.val(true);
+    $check_sort.prop("checked", false);
+    $input_sort.prop("disabled", true);
+    $input_sort.val("")
 }
 
 function deleteButtonClicked(e) {

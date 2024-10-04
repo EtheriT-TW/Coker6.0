@@ -6,7 +6,8 @@
 @model PageViewModel
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 @{
-    switch (Model.locale) { 
+    switch (Model.locale)
+    {
         case "en":
             <link rel="stylesheet" href="~/Shared/shared.en.min.css" asp-append-version="true" />
             break;
@@ -49,21 +50,21 @@
             <div id="breadcrumb" class="top_title_3 p-3 d-none d-md-block">
                 @if (Model.MenuBread.Count() > 0 && Model.ParentData.VisibleHeader)
                 {
-                <nav class="bread container">
-                    <ol class="list-unstyled d-flex">
-                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
-                        {
-                            @if (@menu.Link == "")
+                    <nav class="bread container">
+                        <ol class="list-unstyled d-flex">
+                            @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
                             {
-                                <li class="px-1">@menu.Title</li>
+                                @if (@menu.Link == "")
+                                {
+                                    <li class="px-1">@menu.Title</li>
+                                }
+                                else
+                                {
+                                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                                }
                             }
-                            else
-                            {
-                                <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
-                            }
-                        }
-                    </ol>
-                </nav>
+                        </ol>
+                    </nav>
                 }
                 @if (Model.PageData.VisibleTitle)
                 {
@@ -79,7 +80,7 @@
         }
         break;
     case 4:
-        @if (Model.PageData.CurrentUrl != "/home")
+        @if (Model.PageData.CurrentUrl != "/Home")
         {
             <link rel="stylesheet" href="~/css/Site/Page/Index_LayoutType4.min.css" asp-append-version="true" />
         }
@@ -88,21 +89,21 @@
             <div id="breadcrumb" class="top_title p-3 bg-white container d-none d-md-block">
                 @if (Model.ParentData.VisibleHeader)
                 {
-                <nav class="bread container">
-                    <ol class="list-unstyled d-flex">
-                        @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
-                        {
-                            @if (@menu.Link == "")
+                    <nav class="bread container">
+                        <ol class="list-unstyled d-flex">
+                            @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
                             {
-                                <li class="px-1">@menu.Title</li>
+                                @if (@menu.Link == "")
+                                {
+                                    <li class="px-1">@menu.Title</li>
+                                }
+                                else
+                                {
+                                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                                }
                             }
-                            else
-                            {
-                                <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
-                            }
-                        }
-                    </ol>
-                </nav>
+                        </ol>
+                    </nav>
                 }
                 @if (Model.ParentData.VisibleTitle)
                 {
@@ -113,14 +114,13 @@
         break;
 }
 
-@if (Model.PageData.CurrentUrl == "/home")
+@if (Model.PageData.CurrentUrl == "/Home")
 {
-    <!-- EnterAdModal -->
     @if (Model.enterAd.Count > 0)
     {
         <div id="EnterAdModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true" data-enteradid="@Model.enterAd[0].Id">
             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
+                <div class="modal-content" data-aid="@Model.enterAd[0].Id">
                     <div class="modal-body">
                         <button type="button" class="bg-white btn-close end-0 me-3 p-2 position-absolute rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                         <div class="d-flex justify-content-center">
@@ -131,9 +131,9 @@
                                 var title = Model.enterAd[0].Target == true ? $"連結至：{Model.enterAd[0].Title}(另開視窗)" : $"連結至：{Model.enterAd[0].Title}";
                                 <a href="@Model.enterAd[0].Link" target="@target" title="@title">
                                     <ul>
-                                        @foreach (var img in Model.enterAd[0].Img)
+                                        @foreach (var File in Model.enterAd[0].FileLink)
                                         {
-                                            <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                            <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@Model.enterAd[0].Title" /></li>
                                         }
                                     </ul>
                                 </a>
@@ -141,9 +141,9 @@
                             else
                             {
                                 <ul>
-                                    @foreach (var img in Model.enterAd[0].Img)
+                                    @foreach (var File in Model.enterAd[0].FileLink)
                                     {
-                                        <li><img class="img-fluid d-block mx-auto" src="@img" alt="@Model.enterAd[0].Title" /></li>
+                                        <li><img class="img-fluid d-block mx-auto" src="@File.Link" alt="@Model.enterAd[0].Title" /></li>
                                     }
                                 </ul>
                             }
@@ -157,20 +157,26 @@
 
 <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
 @{
-    if (Model.PageData.LastModificationTime != null) {
+    if (Model.PageData.LastModificationTime != null)
+    {
         <div class="container editTime font_small text-end">最後編輯時間：@Model.PageData.LastModificationTime.Value.ToString("yyyy/MM/dd HH:mm:ss")</div>
     }
-    if (Model.PageData.Popular != null && Model.PageData.Popular>0)
+    if (Model.PageData.Popular != null && Model.PageData.Popular > 0)
     {
         <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
     }
 }
 <div id="PostCSS" class="d-none">
     @HttpUtility.HtmlEncode(Model.PageData.Css)
-    @if (Model.ParentData!=null) @HttpUtility.HtmlEncode(Model.ParentData.Css)
-</div>
+    @if (Model.ParentData != null)
+        @HttpUtility.HtmlEncode(Model.ParentData.Css)
 
-@if (Model.ParentData != null)
+
+
+
+    </div>
+
+    @if (Model.ParentData != null)
 {
     <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
 }

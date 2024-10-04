@@ -428,7 +428,8 @@ function MoveToItemAdvertise() {
                             result.startEndDate = 0;
                             result.sortCheckbox = 1;
                             result.ImageUpload = 1;
-                            co.File.getAdFile(result.id).done(function (Fresult) {
+                            co.File.getAdFile(result.id, 10).done(function (Fresult) {
+                                Fresult = Fresult[0];
                                 $ad_type.val(Fresult.fileType);
                                 $ad_type.trigger("change");
                                 co.Form.insertData(result, "#AdvertiseForm");

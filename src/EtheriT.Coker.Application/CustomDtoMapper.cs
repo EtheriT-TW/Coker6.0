@@ -29,6 +29,7 @@ using EtheriT.Coker.Application.Shared.Dto.Contact;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
+using EtheriT.Coker.Application.Shared.Dto.Token;
 
 namespace EtheriT.Coker.Application
 {
@@ -38,6 +39,12 @@ namespace EtheriT.Coker.Application
         // 第一個參數是來源，第二個參數是目標
         public CustomDtoMapper()
         {
+            //Token
+            CreateMap<TokenResponseDto, Core.Models.Token>()
+                .ForMember(e => e.StartTime, option => option.MapFrom(c => DateTime.Now))
+                .ForMember(e => e.EndTime, option => option.MapFrom(c => DateTime.Now.AddDays(30)))
+                .ReverseMap()
+                .ForMember(e => e.IsLogin, option => option.MapFrom(t => t.UserID!=null&& DateTime.Now > t.EndTime));
             //Users
             CreateMap<UserSimplifyDto, User>()
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))

@@ -315,11 +315,11 @@ function CreateToken() {
 
 function CheckToken() {
     Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
-        console.log("check token");
+        console.log(result);
         if (!result.success) {
             $.cookie("Token", null, { path: '/' });
             CreateToken();
-        }
+        } else $.cookie("Token", result.token, { expires: 30, path: "/" })
     })
 }
 

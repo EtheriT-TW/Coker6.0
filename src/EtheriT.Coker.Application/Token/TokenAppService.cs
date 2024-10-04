@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Configuration;
 using System.Security.Principal;
+using AutoMapper;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -22,13 +23,15 @@ namespace EtheriT.Coker.Application.Token
         private readonly LoginUserData loginUserData;
         private readonly IDistributedCache cache;
         private readonly IConfiguration configuration;
+        private readonly IMapper mapper;
         public TokenAppService(
             JwtHelpers jwt,
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
             LoginUserData loginUserData,
             IDistributedCache cache,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMapper mapper)
         {
             this.jwt = jwt;
             this.db = db;
@@ -36,6 +39,7 @@ namespace EtheriT.Coker.Application.Token
             this.loginUserData = loginUserData;
             this.cache = cache;
             this.configuration = configuration;
+            this.mapper = mapper;
         }
         public async Task<TokenResponseDto> CreateToken()
         {
@@ -65,7 +69,7 @@ namespace EtheriT.Coker.Application.Token
 
             return output;
         }
-        public TokenResponseDto CheckToken(Guid? id)
+        public async Task<TokenResponseDto> CheckToken(Guid? id)
         {
             TokenResponseDto output = new TokenResponseDto();
             try
@@ -81,10 +85,13 @@ namespace EtheriT.Coker.Application.Token
                 }
                 else
                 {
-                    tokens.id = Guid.NewGuid();
-                    tokens.EndTime = DateTime.Now.AddDays(30);
-                    output.Token = tokens.id.ToString();
+                    var token = await CreateToken();
+                    var newToken = db.Tokens.Where(e => e.id == Guid.Parse(token.Token??"")).First();
+                    newToken.UserID = tokens.UserID;
+                    newToken.UUID = tokens.UUID;
+                    mapper.Map(output, token);
                     output.IsLogin = tokens.UserID != null;
+                    output.Token = token.Token;
                     output.Success = true;
                     if (output.IsLogin)
                         output.name = db.Users.Where(e => e.Status == (int)UserStatus.開通 && !e.IsDeleted).FirstOrDefault()?.Name;

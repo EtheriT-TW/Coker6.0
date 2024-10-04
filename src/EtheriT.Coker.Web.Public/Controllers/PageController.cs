@@ -107,12 +107,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
-            var GA4 = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ga4", SiteId = siteId });
-            var GoogleTranslate = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "google.translate", SiteId = siteId });
-            var GTM = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "GTM", SiteId = siteId });
-            var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
-            var GA4 = SEO.storeSetDetails?.Find(e => e.key == "SEO");
+            var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
             var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
 
@@ -390,9 +386,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
 			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
             ViewBag.isLogin = false;
             Guid guid = new Guid();
-            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(model.token) && Guid.TryParse(model.token,out guid)) {
-                var tokenItem = tokenAppService.CheckToken(guid);
-                if (tokenItem.Success) ViewBag.isLogin = tokenItem.IsLogin;
+            var t = httpContextAccessor.HttpContext.Request.Cookies["Token"];
+            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(t) && Guid.TryParse(t, out guid))
+            {
+                var tokenItem = await tokenAppService.CheckToken(guid);
+                if (tokenItem.Success)
+                {
+                    ViewBag.isLogin = tokenItem.IsLogin;
+                    httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
+                    {
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 只需設定過期時間即可
+                    }); ;
+                }
             }
             await RemoteAppService.insertRemote(remoteInputDto);
             ViewData["SideName"] = model.PageData!.SiteName;

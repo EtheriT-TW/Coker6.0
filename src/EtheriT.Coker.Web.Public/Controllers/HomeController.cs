@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.Public.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
@@ -75,15 +76,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
             await webMenuApplication.CheckDisplayAll(siteId);
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
             var guessLike = JsonConvert.DeserializeObject<List<ProdGetDisplayDto>>(JsonConvert.SerializeObject((await productAppService.GetRandomDIsplay(defaultData.Id, 3)).Value));
-            var enterAds = JsonConvert.DeserializeObject<List<HtmlContentDisplayDto>>(JsonConvert.SerializeObject((await htmlContentAppService.GetDisplay(defaultData.Id, 8, 1)).Value));
-            ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
-			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
-
-            
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
-            var GA4 = SEO.storeSetDetails?.Find(e => e.key == "SEO");
+            var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
             var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
+            ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
+			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
 
             var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 2, SiteId = siteId });
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
@@ -113,10 +111,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
             };
             ViewBag.isLogin = false;
             Guid guid = new Guid();
-            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(model.token) && Guid.TryParse(model.token, out guid))
+            var t = httpContextAccessor.HttpContext.Request.Cookies["Token"];
+            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(t) && Guid.TryParse(t, out guid))
             {
-                var tokenItem = tokenAppService.CheckToken(guid);
-                if (tokenItem.Success) ViewBag.isLogin = tokenItem.IsLogin;
+                var tokenItem = await tokenAppService.CheckToken(guid);
+                if (tokenItem.Success) { 
+                    ViewBag.isLogin = tokenItem.IsLogin;
+                    httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
+                    {
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 只需設定過期時間即可
+                    }); ;
+                }
             }
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;

@@ -4,6 +4,7 @@ namespace EtheriT.Coker.Core.Models
     public class Token
     {
         public Guid id { get; set; }
+        public Guid UUID { get; set; }
         public long? UserID { get; set; }
         public DateTime StartTime { get; set; } = DateTime.Now;
         public DateTime? EndTime { get; set; }

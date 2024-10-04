@@ -76,13 +76,13 @@
                 }
             });
         },
-        getAdFile: function (Aid) {
+        getAdFile: function (Aid, type) {
             return $.ajax({
                 url: "/api/FileUpload/getAdvertiseFiles/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: { Aid: Aid },
+                data: { Aid: Aid, type: type }
             });
         },
         fileSortChange: function (data) {

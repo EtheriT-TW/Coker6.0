@@ -5,8 +5,8 @@ function ready() {
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
     const $PostCSS = $("#PostCSS");
-    loginModal = new bootstrap.Modal($("#LoginModal"))
-    registerModal = new bootstrap.Modal($("#RegisterModal"))
+    loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;
+    registerModal = $("#RegisterModal").length > 0 ? new bootstrap.Modal($("#RegisterModal")) : null;
     jqueryExtend();
     $("link").each(function () {
         var $self = $(this);

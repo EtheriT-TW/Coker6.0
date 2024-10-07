@@ -403,11 +403,14 @@ function RegisterAction() {
     data.FK_WebsiteId = SiteId
     data.FK_RoleId = 2;
     co.User.AddUser(data).done((result) => {
-        console.log(result)
-    });
-    console.log(data);
-    Coker.sweet.success("註冊成功，已發送確認信至您的信箱！", null, true);
-    registerModal.hide();
+        if (result.success) {
+            Coker.sweet.success("註冊成功，已發送確認信至您的信箱！", null, true);
+            registerModal.hide();
+        } else {
+            Coker.sweet.error(result.error, null, true);
+            NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
+        }
+    })
 }
 
 function NewCaptcha($self, $input, name = "") {

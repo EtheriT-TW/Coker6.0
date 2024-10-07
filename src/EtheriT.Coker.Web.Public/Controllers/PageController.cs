@@ -387,19 +387,33 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.isLogin = false;
             Guid guid = new Guid();
             var t = httpContextAccessor.HttpContext.Request.Cookies["Token"];
-            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(t) && Guid.TryParse(t, out guid))
-            {
-                var tokenItem = await tokenAppService.CheckToken(guid);
-                if (tokenItem.Success)
-                {
-                    ViewBag.isLogin = tokenItem.IsLogin;
-                    httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 只需設定過期時間即可
-                    }); ;
-                }
-            }
-            await RemoteAppService.insertRemote(remoteInputDto);
+			if (ViewBag.LoginEnable)
+			{
+				if (!string.IsNullOrEmpty(t) && Guid.TryParse(t, out guid))
+				{
+					var tokenItem = await tokenAppService.CheckToken(guid);
+					if (tokenItem.Success)
+					{
+						ViewBag.isLogin = tokenItem.IsLogin;
+						httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
+						{
+							Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
+						});
+					}
+				}
+				else
+				{
+					var token = await tokenAppService.CreateToken();
+					if (token.Success)
+					{
+						httpContextAccessor.HttpContext.Response.Cookies.Append("Token", token.Token, new CookieOptions
+						{
+							Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
+						});
+					}
+				}
+			}
+			await RemoteAppService.insertRemote(remoteInputDto);
             ViewData["SideName"] = model.PageData!.SiteName;
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;

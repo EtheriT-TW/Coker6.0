@@ -313,15 +313,15 @@
 						<div class="default_data">
 							<div class="row">
 								<div class="orderer_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start">姓○</div>
+								<div class="col text-start"></div>
 							</div>
 							<div class="row">
 								<div class="orderer_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start">098***321</div>
+								<div class="col text-start"></div>
 							</div>
 							<div class="row">
 								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-								<div class="col text-start"><span class="orderer_areacode">07</span>-<span class="orderer_cellphone">12***67</span> 分機 <span class="orderer_extension">******</span></div>
+								<div class="col text-start"><span class="orderer_areacode"></span>-<span class="orderer_cellphone"></span> 分機 <span class="orderer_extension"></span></div>
 							</div>
 						</div>
 
@@ -329,12 +329,12 @@
 							<input type="hidden" name="authentiity_token" value="@Model.token" />
 							<div class="row mx-0">
 								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
-									<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
+									<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="" minlength="2" required>
 									<label class="required" for="OrdererInputName">姓　　名</label>
 								</div>
 								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
 									<div class="form-check pe-3">
-										<input id="OrdererRadioSir" class="form-check-input" type="radio" name="OrdererRadioGender" value="1" required checked>
+										<input id="OrdererRadioSir" class="form-check-input" type="radio" name="OrdererRadioGender" value="1" required>
 										<label class="form-check-label" for="OrdererRadioSir">男</label>
 									</div>
 									<div class="form-check pe-3">
@@ -348,24 +348,24 @@
 								</div>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
+								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="" required>
 								<label class="required" for="OrdererInputMail">E-mail</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputCellPhone" class="orderer_phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
+								<input id="OrdererInputCellPhone" class="orderer_phone form-control" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
 								<label class="required" for="OrdererInputCellPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
+									<input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
 									<label class="px-4" for="OrdererInputTelPhoneArea">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="OrdererInputTelPhone" class="orderer_cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
+									<input id="OrdererInputTelPhone" class="orderer_cellphone form-control" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{7}" maxlength="7">
 									<label for="OrdererInputTelPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
+									<input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
 									<label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
 								</div>
 							</div>
@@ -373,7 +373,7 @@
 								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
 								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="復興四路" required>
+									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="請輸入地址" value="" required>
 									<label class="px-4 required" for="OrdererInputAddress">地址</label>
 								</div>
 							</div>
@@ -402,19 +402,19 @@
 						<div class="default_data">
 							<div class="row">
 								<div class="recipient_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start">姓○</div>
+								<div class="col text-start"></div>
 							</div>
 							<div class="row">
 								<div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start">098***321</div>
+								<div class="col text-start"></div>
 							</div>
 							<div class="row">
 								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-								<div class="col text-start"><span class="recipient_areacode">07</span>-<span class="recipient_cellphone">12***67</span> 分機 <span class="recipient_extension">******</span></div>
+								<div class="col text-start"><span class="recipient_areacode"></span>-<span class="recipient_cellphone"></span> 分機 <span class="recipient_extension"></span></div>
 							</div>
 							<div class="row">
 								<div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="col text-start">高雄市前鎮區***</div>
+								<div class="col text-start"></div>
 							</div>
 						</div>
 
@@ -422,7 +422,7 @@
 							<input type="hidden" name="authentiity_token" value="@Model.token" />
 							<div class="row mx-0">
 								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
-									<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="name" value="" minlength="2" required>
+									<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="請輸入姓名" value="" minlength="2" required>
 									<label class="required" for="RecipientInputName">姓　　名</label>
 								</div>
 								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
@@ -441,24 +441,24 @@
 								</div>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="name@example.com" value="" required>
+								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="請輸入E-mail" value="" required>
 								<label class="required" for="RecipientInputMail">E-mail</label>
 							</div>
 							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputCellPhone" class="recipient_phone form-control" type="tel" placeholder="0987654321" value="" pattern="[0][9]\d{8}" maxlength="10" required>
+								<input id="RecipientInputCellPhone" class="recipient_phone form-control" type="tel" placeholder="請輸入手機號罵" value="" pattern="[0][9]\d{8}" maxlength="10" required>
 								<label class="required" for="RecipientInputCellPhone">手機號碼</label>
 							</div>
 							<div class="row">
 								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="RecipientInputTelPhoneArea" class="recipient_areacode form-control" type="tel" placeholder="07" value="" pattern="[0]\d{1,3}" maxlength="4">
+									<input id="RecipientInputTelPhoneArea" class="recipient_areacode form-control" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
 									<label class="px-4" for="RecipientInputTelPhoneArea">區碼</label>
 								</div>
 								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="RecipientInputTelPhone" class="recipient_cellphone form-control" type="tel" placeholder="1234567" value="" pattern="\d{7}" maxlength="7">
+									<input id="RecipientInputTelPhone" class="recipient_cellphone form-control" type="tel" placeholder="請輸入連絡電話" value="" pattern="\d{7}" maxlength="7">
 									<label for="RecipientInputTelPhone">聯絡電話</label>
 								</div>
 								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="RecipientInputTelPhoneExt" class="recipient_extension form-control" type="tel" placeholder="123456" value="" pattern="\d*">
+									<input id="RecipientInputTelPhoneExt" class="recipient_extension form-control" type="tel" placeholder="請輸入分機" value="" pattern="\d*">
 									<label class="px-4" for="RecipientInputTelPhoneExt">分機</label>
 								</div>
 							</div>
@@ -466,7 +466,7 @@
 								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
 								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
 								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="RecipientInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+									<input id="RecipientInputAddress" class="orderer_address form-control" type="text" placeholder="請輸入地址" value="" required>
 									<label class="px-4 required" for="RecipientInputAddress">地址</label>
 								</div>
 							</div>
@@ -499,11 +499,11 @@
 						<div class="default_data">
 							<div class="row">
 								<div class="bill_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start">姓○</div>
+								<div class="col text-start"></div>
 							</div>
 							<div class="row">
 								<div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start">098***321</div>
+								<div class="col text-start"></div>
 							</div>
 							<div class="row">
 								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>

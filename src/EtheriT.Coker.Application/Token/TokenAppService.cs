@@ -52,12 +52,13 @@ namespace EtheriT.Coker.Application.Token
                 {
                     ip = loginUserData.GetClientIP()??"",
                     UserID = null,
+                    UUID = generateUUID(),
                     StartTime = dateTime,
                     EndTime = EndDateTime,
                     websiteId = configuration.GetValue<long>("WebConfig:SiteId")
                 };
                 db.Tokens.Add(t);
-                db.SaveChanges();
+                await db.SaveChangesAsync();
                 output.Success = true;
                 output.Token = t.id.ToString();
             }
@@ -93,8 +94,10 @@ namespace EtheriT.Coker.Application.Token
                     output.IsLogin = tokens.UserID != null;
                     output.Token = token.Token;
                     output.Success = true;
-                    if (output.IsLogin)
+                    if (output.IsLogin) {
+                        var user = db.Users.Where(e => e.Status == (int)UserStatus.開通 && !e.IsDeleted && e.Id == tokens.UserID);
                         output.name = db.Users.Where(e => e.Status == (int)UserStatus.開通 && !e.IsDeleted).FirstOrDefault()?.Name;
+                    }    
                     db.SaveChanges();
                 }
             }
@@ -135,6 +138,16 @@ namespace EtheriT.Coker.Application.Token
         private static string GetKey(string token)
         {
             return $"tokens:{token}:deactivated";
+        }
+        private Guid generateUUID() { 
+            Guid id = Guid.NewGuid();
+            var c = db.Tokens.Where(e => e.UUID == id);
+            if (c.Any()) return generateUUID();
+            else {
+                var u = db.Users.Where(e => !e.IsDeleted && e.UUID == id);
+                if (u.Any()) return generateUUID();
+                return id;
+            }
         }
     }
 }

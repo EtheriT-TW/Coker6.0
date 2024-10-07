@@ -112,16 +112,29 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.isLogin = false;
             Guid guid = new Guid();
             var t = httpContextAccessor.HttpContext.Request.Cookies["Token"];
-            if (ViewBag.LoginEnable && !string.IsNullOrEmpty(t) && Guid.TryParse(t, out guid))
+            if (ViewBag.LoginEnable)
             {
-                var tokenItem = await tokenAppService.CheckToken(guid);
-                if (tokenItem.Success) { 
-                    ViewBag.isLogin = tokenItem.IsLogin;
-                    httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
+                if (!string.IsNullOrEmpty(t) && Guid.TryParse(t, out guid))
+                {
+                    var tokenItem = await tokenAppService.CheckToken(guid);
+                    if (tokenItem.Success)
                     {
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 只需設定過期時間即可
-                    }); ;
+                        ViewBag.isLogin = tokenItem.IsLogin;
+                        httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
+                        {
+                            Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 只需設定過期時間即可
+                        });
+                    }
                 }
+                else {
+                    var token = await tokenAppService.CreateToken();
+                    if (token.Success) {
+						httpContextAccessor.HttpContext.Response.Cookies.Append("Token", token.Token, new CookieOptions
+						{
+							Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 只需設定過期時間即可
+						});
+					}
+				}
             }
             model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = "home", siteId = defaultData.Id });
             model.PageData.LayoutType = defaultData.Layout_Type;

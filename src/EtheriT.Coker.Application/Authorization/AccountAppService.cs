@@ -29,6 +29,7 @@ using EtheriT.Coker.Application.Shared.Dto;
 using System.Xml.Linq;
 using AutoMapper;
 using EtheriT.Coker.Web.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -46,7 +47,7 @@ namespace EtheriT.Coker.Application.Authorization
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
             LoginUserData loginUserData,
-            IHttpContextAccessor httpContextAccessor, 
+            IHttpContextAccessor httpContextAccessor,
             IMapper mapper
         )
         {
@@ -61,7 +62,7 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
         {
             LoginOutputDto output = new LoginOutputDto() { Success = false };
-            long? userId=null, websiteId=null;
+            long? userId = null, websiteId = null;
             try
             {
                 if (string.IsNullOrEmpty(dto.UserName)) throw new Exception("使用者名稱不可為空");
@@ -81,7 +82,8 @@ namespace EtheriT.Coker.Application.Authorization
                         {
                             long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"], out bindID);
                         }
-                        if (!await loginUserData.CheckedWebSiteId(user.Id, bindID)) {
+                        if (!await loginUserData.CheckedWebSiteId(user.Id, bindID))
+                        {
                             var defaultWeb = await db.MappingUserAndWebsites.Where(e => !e.IsDeleted).Where(m => m.UserId == user.Id).FirstOrDefaultAsync();
                             if (defaultWeb != null)
                             {
@@ -92,11 +94,11 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                         Core.Models.Token t = new Core.Models.Token
                         {
-                            ip = loginUserData.GetClientIP()??"",
+                            ip = loginUserData.GetClientIP() ?? "",
                             UserID = user.Id,
                             StartTime = dateTime,
                             EndTime = EndDateTime,
-                            websiteId = websiteId??0
+                            websiteId = websiteId ?? 0
                         };
                         db.Tokens.Add(t);
                         db.SaveChanges();
@@ -115,11 +117,12 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Error = e.Message;
             }
             dto.Password = "******";
-			await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         [Authorize]
-        public async Task<UserDto> GetCurrentUser() {
+        public async Task<UserDto> GetCurrentUser()
+        {
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             UserDto output = new UserDto();
@@ -142,27 +145,31 @@ namespace EtheriT.Coker.Application.Authorization
                     output.Webs = await o.ToListAsync();
                 }
             }
-            catch {
+            catch
+            {
                 output.Account = "";
             }
             return output;
         }
-        public async Task<LoginOutputDto> Chech() {
+        public async Task<LoginOutputDto> Chech()
+        {
             LoginOutputDto response = new LoginOutputDto
             {
-                Success=false
+                Success = false
             };
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             string? secret = httpContextAccessor.HttpContext?.Request.Headers["secret"].ToString();
-            try {
+            try
+            {
                 if (!string.IsNullOrEmpty(name))
                 {
                     if (string.IsNullOrEmpty(secret))
                     {
                         response.Success = true;
                     }
-                    else {
+                    else
+                    {
                         var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
                         if (t != null)
                         {
@@ -173,7 +180,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 db.SaveChanges();
                             }
                             response.Success = true;
-                            response.Token = await tokenAppService.CreateToken(users.Account,t.id);
+                            response.Token = await tokenAppService.CreateToken(users.Account, t.id);
                             response.Secret = t.id;
                             response.EndDateTime = t.EndTime.Value;
                         }
@@ -181,7 +188,9 @@ namespace EtheriT.Coker.Application.Authorization
                     }
                 }
                 else throw new Exception("登入已過期");
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 response.Success = false;
                 response.Error = e.Message;
             }
@@ -190,11 +199,13 @@ namespace EtheriT.Coker.Application.Authorization
             db.SaveChanges();
             return response;
         }
-        public async Task<ResponseMessageDto> Logout() {
+        public async Task<ResponseMessageDto> Logout()
+        {
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
             string? secret = httpContextAccessor.HttpContext?.Request.Headers["secret"].ToString();
-            if (!string.IsNullOrEmpty(secret)) {
+            if (!string.IsNullOrEmpty(secret))
+            {
                 var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
                 if (t != null)
                 {
@@ -207,36 +218,39 @@ namespace EtheriT.Coker.Application.Authorization
                 Success = await tokenAppService.DelToken()
             };
         }
-        public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto) {
-			LoginOutputDto output = new LoginOutputDto() { Success = false };
+        public async Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto)
+        {
+            LoginOutputDto output = new LoginOutputDto() { Success = false };
             long userId = await loginUserData.GetUserId();
-			var users = await db.Users
+            var users = await db.Users
                 .Where(e => e.Id == userId)
                 .Where(e => !e.IsDeleted)
-                .Where(e => e.Status!=0)
+                .Where(e => e.Status != 0)
                 .FirstOrDefaultAsync();
             if (users == null) output.Message = "使用者已被登出";
-			else if (!passwordHasher.VerifyHashedPassword(users.Password, dto.Password)) output.Message = "原始密碼錯誤";
-			else
-			{
+            else if (!passwordHasher.VerifyHashedPassword(users.Password, dto.Password)) output.Message = "原始密碼錯誤";
+            else
+            {
                 try
                 {
                     string passwordError = checkPassword(dto.NewPassword);
                     if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
 
                     string HashedPassword = passwordHasher.HashPassword(dto.NewPassword);
-					users.Password = HashedPassword;
-					await loginUserData.SaveChanges(users);
-					output.Success = true;
-				}catch(Exception ex)
+                    users.Password = HashedPassword;
+                    await loginUserData.SaveChanges(users);
+                    output.Success = true;
+                }
+                catch (Exception ex)
                 {
                     output.Message = ex.Message;
                 }
-			}
-            await loginUserData.SetLogs("Account", "UpdatePassword",JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(output));
-			return output;
-		}
-        public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto) {
+            }
+            await loginUserData.SetLogs("Account", "UpdatePassword", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            return output;
+        }
+        public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto)
+        {
             ResponseUserEditDto output = new ResponseUserEditDto();
             try
             {
@@ -250,38 +264,68 @@ namespace EtheriT.Coker.Application.Authorization
                     if (webMap.Any())
                     {
                         mapper.Map(theUser, output.data);
-                    }else throw new Exception("該使用者並未授權管理該網站");
+                    }
+                    else throw new Exception("該使用者並未授權管理該網站");
                 }
                 else throw new Exception("使用者不存在");
                 output.Success = true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 output.Error = ex.Message;
             }
             await loginUserData.SetLogs(controllerName, "GetEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
-        public async Task<ResponseMessageDto> AddUser(AddUser dto) {
+        public async Task<ResponseMessageDto> AddUser(AddUser dto)
+        {
             ResponseMessageDto response = new ResponseMessageDto();
-            try {
+            try
+            {
+                long WebsiteID = dto.FK_WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.FK_WebsiteId;
                 var theUser = await db.Users
                     .Where(e => e.Account == dto.Account || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
                     .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                 string passwordError = checkPassword(dto.Password);
-                if (theUser != null) throw new Exception("該使用者的帳號或信箱已存在");
-                else if (dto.Password != dto.PasswordConfirm) throw new Exception("該使用者的帳號或信箱已存在");
+                if (theUser != null)
+                {
+                    var UserMapWeb = await db.MappingUserAndWebsites
+                        .Where(e => e.UserId == theUser.Id)
+                        .Where(e => e.WebsiteId == WebsiteID)
+                        .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                    var UserMapRole = await db.MappingUserAndRoles
+                        .Where(e => e.UserId == theUser.Id)
+                        .Where(e => e.RoleId == dto.FK_RoleId)
+                        .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+                    if (UserMapWeb != null && UserMapRole != null) throw new Exception("該使用者的帳號或信箱已存在");
+                }
+                else if (dto.Password != dto.PasswordConfirm) throw new Exception("輸入的密碼不相符");
                 else if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
                 else
                 {
                     User user = mapper.Map<User>(dto);
+                    user.Status = (int)UserStatusEnum.未開通;
                     user.Password = passwordHasher.HashPassword(dto.Password);
                     db.Users.Add(user);
                     await loginUserData.SaveChanges(user);
+                    MappingUserAndWebsite mapuserweb = new MappingUserAndWebsite()
+                    {
+                        UserId = user.Id,
+                        WebsiteId = WebsiteID,
+                    };
+                    db.MappingUserAndWebsites.Add(mapuserweb);
+                    MappingUserAndRole mapuserrole = new MappingUserAndRole()
+                    {
+                        UserId = user.Id,
+                        RoleId = dto.FK_RoleId,
+                    };
+                    db.MappingUserAndRoles.Add(mapuserrole);
+                    await loginUserData.SaveChanges(mapuserweb);
+                    await loginUserData.SaveChanges(mapuserrole);
                     response.Success = true;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Error = ex.Message;
             }
@@ -319,7 +363,7 @@ namespace EtheriT.Coker.Application.Authorization
                 if (regex4.IsMatch(password)) matchCount++;
                 if (matchCount < 3) throw new Exception("密碼須滿足有英文大寫、小寫、符號、數字中的三個");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 error = ex.Message;
             }

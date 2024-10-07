@@ -46,7 +46,7 @@
                 </li>
                 @foreach (var menu in MenuItems)
                 {
-                    string headType =  "metaMenu";
+                    string headType = "metaMenu";
                     List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
                     string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
                     <li class="title nav-item @headType">
@@ -57,12 +57,16 @@
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
-                                }else{
+                                }
+                                else
+                                {
                                     if (string.IsNullOrEmpty(menu.hoverImageUrl))
                                     {
                                         <img src="@menu.imageUrl" alt="@menu.Title" />
                                         <span class="justify-content-center">@menu.Title</span>
-                                    }else{
+                                    }
+                                    else
+                                    {
                                         <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
                                         <span>@menu.Title</span>
                                     }
@@ -216,19 +220,22 @@
             }
             @if (ViewBag.LoginEnable)
             {
-                <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="登入會員">
-                    <span class="material-symbols-outlined">
-                        person
-                    </span>
-                    <span class="name"></span>
-                </a>
+                @if (ViewBag.isLogin)
+                {
+                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="登入會員">
+                        <span class="material-symbols-outlined">
+                            person
+                        </span>
+                        <span class="name">已登入</span>
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class="btn bg-transparent text-black border-0 d-flex" data-bs-toggle="modal" data-bs-target="#LoginModal">
+                        <span class="material-symbols-outlined">person</span>
+                    </button>
+                }
             }
-            <!-- Login Button -->
-            <div class="d-none">
-                <button class="bg-transparent border-0 d-flex align-items-center" type="button">
-                    <span class="material-symbols-outlined">person</span>
-                </button>
-            </div>
         </div>
     </div>
 </nav>

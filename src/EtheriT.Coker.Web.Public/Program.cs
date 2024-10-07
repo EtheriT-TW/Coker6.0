@@ -117,6 +117,8 @@ builder.Services.AddMvc(options =>
     options.OutputFormatters.Add(new XmlSerializerOutputFormatter());
 });
 
+builder.Services.AddTransient<IAccountAppService, AccountAppService>();
+builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();

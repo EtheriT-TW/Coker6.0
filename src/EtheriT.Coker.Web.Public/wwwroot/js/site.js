@@ -1,10 +1,12 @@
-﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true;
+﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, registerModal;
 
 function ready() {
 
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
     const $PostCSS = $("#PostCSS");
+    loginModal = new bootstrap.Modal($("#LoginModal"))
+    registerModal = new bootstrap.Modal($("#RegisterModal"))
     jqueryExtend();
     $("link").each(function () {
         var $self = $(this);
@@ -236,6 +238,10 @@ function ready() {
         if (SiteFormCheck(LoginForms, $InputLoginVCode)) {
             CaptchaVerify($LoginImgCaptcha, $InputLoginVCode, LoginAction)
         } else {
+            $InputLoginVCode.addClass('is-invalid');
+            $InputLoginVCode.siblings("div").addClass("me-4 pe-2");
+            NewCaptcha($LoginImgCaptcha, $InputLoginVCode)
+            $InputLoginVCode.val("");
             Coker.sweet.error("錯誤", "請確實填寫登入資料", null, true);
         }
     })
@@ -246,8 +252,14 @@ function ready() {
         $NewPass.keyup(PassCheck);
         $CheckPass.keyup(PassCheck);
         if (passcheck && formcheck) {
-            CaptchaVerify($RegisterImgCaptcha, $InputRegisterVCode, RegisterAction)
+            if (!$RegisterAccept.prop("checked")) {
+                NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
+                Coker.sweet.error("錯誤", "請詳閱並同意會員條款", null, true);
+            } else {
+                CaptchaVerify($RegisterImgCaptcha, $InputRegisterVCode, RegisterAction)
+            }
         } else {
+            NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
             Coker.sweet.error("錯誤", "請確實填寫註冊資料", null, true);
         }
     })
@@ -382,18 +394,24 @@ function CaptchaVerify($self, $input, SuccessAction) {
 }
 
 function LoginAction() {
-    var loginModal = new bootstrap.Modal($("#LoginModal"))
+    Coker.sweet.success("歡迎回來！", null, true);
     loginModal.hide();
 }
 
 function RegisterAction() {
-    var registerModal = new bootstrap.Modal($("#RegisterModal"))
+    var data = co.Form.getJson($("#RegisterForm").attr("id"));
+    data.FK_WebsiteId = SiteId
+    data.FK_RoleId = 2;
+    co.User.AddUser(data).done((result) => {
+        console.log(result)
+    });
+    console.log(data);
+    Coker.sweet.success("註冊成功，已發送確認信至您的信箱！", null, true);
     registerModal.hide();
 }
 
 function NewCaptcha($self, $input, name = "") {
     if (!!!$self.data("id")) {
-
         $self.data("id", Math.floor(Math.random() * 10000));
         const $form = $self.parents("form")
         let captchaId = $form.find("[name='captchaId']");
@@ -428,7 +446,7 @@ function PassCheck() {
     var hasNum = /\d+/, hasLetter = /[a-zA-Z]+/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
     $NewPass.addClass("is-invalid");
     $CheckPass.addClass("is-invalid");
-    if ($NewPass.val().length >= 6) {
+    if ($NewPass.val().length >= 8) {
         if (hasNum.test($NewPass.val()) && hasLetter.test($NewPass.val()) && !(hasSpesym.test($NewPass.val()))) {
             $NewPass.removeClass("is-invalid");
             $NewPass.addClass("is-valid");
@@ -446,7 +464,7 @@ function PassCheck() {
             $CheckPassFeedBack.text("密碼格式有誤");
         }
     } else {
-        $NewPassFeedBack.text("請輸入6個以上的字元");
+        $NewPassFeedBack.text("請輸入8個以上的字元");
         $CheckPassFeedBack.text("密碼格式有誤");
     }
     return false;
@@ -468,6 +486,33 @@ function ClickLog(Pid) {
 var Coker = {
     timeout: {
         time: 1500
+    },
+    User: {
+        AddUser: function (data) {
+            return $.ajax({
+                url: "/api/User/AddUser",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+    },
+    Form: {
+        getJson: function (id, isArrayType) {
+            console.log(id)
+            let form = document.getElementById(id);
+            console.log(form)
+            let formFields = new FormData(form);
+            let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+            let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
+                const val = formFields.getAll(key)
+                console.log(val)
+                console.log(key)
+                return [key, (isArray || val.length > 1) ? val : val.pop()]
+            }));
+            return formDataObject;
+        },
     },
     sweet: {
         success: function (text, action, autoclose) {

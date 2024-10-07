@@ -44,8 +44,8 @@
     <meta property="og:locale" content="zh-tw" />
     <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
     <style nonce="@ViewBag.Nonce">
-        :root{
-            --orgName:@ViewData["OrgName"];
+        :root {
+            --orgName: @ViewData["OrgName"];
         }
     </style>
     <style id="frameCss" nonce="@ViewBag.Nonce"></style>
@@ -181,13 +181,13 @@
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">mail</span>
                                 </div>
-                                <input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="信箱" required>
+                                <input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="信箱" required name="Email">
                             </div>
                             <div class="login_pass input-group mb-3">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Login Password" placeholder="密碼" required>
+                                <input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Login Password" placeholder="密碼" required name="Password">
                             </div>
                             <div class="login_vcode input-group">
                                 <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
@@ -226,28 +226,26 @@
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">mail</span>
                                 </div>
-                                <input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="信箱" required>
+                                <input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="信箱" required name="Email">
                             </div>
-                            <div class="register_name input-group">
+                            <div class="register_name input-group mb-3">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">account_circle</span>
                                 </div>
-                                <input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="姓名/名稱" required>
+                                <input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="姓名/名稱" required name="Name">
                             </div>
-                        </form>
-                        <div class="px-3">
                             <div class="register_new_pass input-group">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Register New Password" placeholder="密碼" required>
+                                <input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Register New Password" placeholder="密碼" required name="Password">
                             </div>
                             <div id="NewPassFeedBack" class="lh-1 text-danger pt-1">　</div>
                             <div class="register_check_pass input-group">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
                                 </div>
-                                <input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Register Check Password" placeholder="確認密碼" required>
+                                <input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Register Check Password" placeholder="確認密碼" required name="PasswordConfirm">
                             </div>
                             <div id="CheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
                             <div class="register_vcode input-group">
@@ -256,6 +254,9 @@
                                     <img id="RegisterImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                                 </div>
                             </div>
+                        </form>
+                        <div class="px-3">
+
                             <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
                             <div class="form-check">
                                 <input id="CheckAccept" class="form-check-input" type="checkbox" value="">

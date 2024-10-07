@@ -137,7 +137,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.value != null) ? String.Join(",", GoogleTranslate.value!) : "",
                     GTM = (GTM != null && GTM.value != null) ? String.Join(",", GTM.value!) : "",
                     storeBuyState = (storeBuyState != null && storeBuyState.value != null) ? String.Join(",", storeBuyState.value!) : "",
-                    storeMemo = (GA4 != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
+                    storeMemo = (GA4 != null && storeMemo != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
                     linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
                 }
             };

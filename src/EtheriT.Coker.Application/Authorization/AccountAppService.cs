@@ -284,7 +284,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 long WebsiteID = dto.FK_WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.FK_WebsiteId;
                 var theUser = await db.Users
-                    .Where(e => e.Account == dto.Account || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
+                    .Where(e => (!string.IsNullOrEmpty(e.Account) && e.Account == dto.Account) || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
                     .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                 string passwordError = checkPassword(dto.Password);
                 if (theUser != null)
@@ -324,14 +324,14 @@ namespace EtheriT.Coker.Application.Authorization
                     await loginUserData.SaveChanges(mapuserrole);
                     response.Success = true;
                 }
+                dto.Password = "*********";
+                dto.PasswordConfirm = "*********";
+                await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             catch (Exception ex)
             {
                 response.Error = ex.Message;
             }
-            dto.Password = "*********";
-            dto.PasswordConfirm = "*********";
-            await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         private string checkPassword(string password)

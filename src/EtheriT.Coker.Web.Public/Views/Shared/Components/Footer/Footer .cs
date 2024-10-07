@@ -275,9 +275,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             break;
                     }
                     break;
-                default:
-                    footerViewModel = new FooterViewModel();
-                    break;
                 case 6:
                     footerViewModel = new FooterViewModel
                     {
@@ -304,7 +301,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								}
 					};
 					break;
-
+				default:
+					footerViewModel = new FooterViewModel();
+					break;
 			}
             return View(defaultData.View, footerViewModel);
         }

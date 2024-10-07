@@ -50,7 +50,7 @@
     </div>
     <div class="d-flex justify-content-center align-items-center my-2 search-input-block container">
         <div class="input-container w-100 d-flex justify-content-center align-items-center">
-            <input type="text" value="@HttpUtility.HtmlEncode(Model.SearchPalameter.SearchText)" placeholder="@placeholder" class="search-input p-2" />
+            <input type="text" value="@HttpUtility.HtmlEncode(Model.SearchPalameter.SearchText)" placeholder="@placeholder" title=@placeholder class="search-input p-2" />
             <a class="searchbtn" title="搜尋" href="#">
                 <i class="fas fa-search"></i>.
             </a>
@@ -223,12 +223,12 @@
                 <nav draggable="true" aria-label="Page">
                     <ul draggable="true" class="page_btn d-flex justify-content-center my-5 pagination">
                         <li draggable="true" class="page-item btn_prev">
-                            <button draggable="true" class="page-link text-black">
+                            <button draggable="true" class="page-link text-black" value="上一頁按鈕">
                                 <i class="fa-solid fa-angle-left"></i>
                             </button>
                         </li>
                         <li draggable="true" class="page-item btn_next">
-                            <button draggable="true" class="page-link text-black">
+                            <button draggable="true" class="page-link text-black" value="下一頁按鈕">
                                 <i class="fa-solid fa-angle-right"></i>
                             </button>
                         </li>

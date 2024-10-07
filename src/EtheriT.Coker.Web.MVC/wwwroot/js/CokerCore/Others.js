@@ -65,11 +65,14 @@
     },
     Picker: {
         Init: function ($picker, setting) {
+            const today = moment();
             const target = co.Object.merge({
                 timePicker: true,
                 timePicker24Hour: true,
                 autoUpdateInput: true,
                 showDropdowns: true,
+                startDate:today.Date,
+                endDate:today.Date,
                 locale: {
                     format: 'YYYY/MM/DD HH:mm',
                     separator: " ~ ",

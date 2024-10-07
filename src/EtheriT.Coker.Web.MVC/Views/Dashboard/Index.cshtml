@@ -58,26 +58,28 @@
                     </div>
                 </div>
                 <div class="card-body">
+                        <form method="post" action="/DashboardController/Index">
+                            <div class="d-flex align-content-center">
+                                <i class="material-icons text-sm my-auto me-1">schedule</i>
+                                <p class="mb-0">&nbsp;統計區間</p>
+                            </div>
+                            <div class="date input-group mb-3">
+                                <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">
+                            </div>
+                        </form>
+
+                        <p class="text-sm d-none">Last Campaign Performance</p>
+                        <hr class="dark horizontal">
                     <div class="d-flex">
                         <div id="width-auto" class="align-content-center">
                             <h6 class="mb-0 ">全站導覽人數</h6>
                         </div>
-                        <div class="text-end pt-1 inline-flex">
-                            <p class="mb-0 ">總人數：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumMemCount</span></p>
-                            <p class="mb-0 ">總人次：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumCount</span></p>
-                        </div>
-                    </div>
-                    <p class="text-sm d-none">Last Campaign Performance</p>
-                    <hr class="dark horizontal">
-                    <form method="post" action="/DashboardController/Index">
-                        <div class="d-flex align-content-center">
-                            <i class="material-icons text-sm my-auto me-1">schedule</i>
-                            <p class="mb-0">&nbsp;統計區間</p>
+                            <div class="text-end pt-1 inline-flex">
+                                <p class="mb-0 ">總人數：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumMemCount</span></p>
+                                <p class="mb-0 ">總人次：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumCount</span></p>
                             </div>
-                        <div class="date input-group mb-3">
-                            <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">                            
-                        </div>
-                    </form>
+                    </div>
+                        
                 </div>
             </div>
         </div>

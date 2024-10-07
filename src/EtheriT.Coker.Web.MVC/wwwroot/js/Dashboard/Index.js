@@ -2,7 +2,7 @@
     const $bars = $("#chart-bars")
     var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
-    co.Picker.Init($("#InputDate"), { timePicker: false });
+    co.Picker.Init($("#InputDate"), { timePicker: false, startDate: moment().subtract(6, 'days').toDate(), endDate: moment().toDate() });
     function updateChart(dates, counts, memCounts) {
         const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
         if (chart) {
@@ -15,7 +15,7 @@
         }
     }
     $("#InputDate").on("change", function () {
-        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍      
+        const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍
         const datesArray = selectedDates.split('~');
         const startDate = new Date(datesArray[0]);
         const endDate = new Date(datesArray[1]);
@@ -24,6 +24,7 @@
             var remoteItems = result.websitesRemotesCount;
             var remoteMemCounts = result.websitesRemotesMemCount;
             var dateItems = result.websitesRemotesDate;
+            console.log(remoteMemCounts, dateItems);
 
             updateChart(dateItems, remoteItems, remoteMemCounts);
         });

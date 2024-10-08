@@ -240,7 +240,6 @@
 /* Mega Menu Offcanvas */
 #Offcanvas_Mega_Menu {
     background-color: #3b73ca;
-    height:3rem
 }
 
     #Offcanvas_Mega_Menu > * {
@@ -392,6 +391,10 @@
 
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: center;
+    }
+
+    #Offcanvas_Mega_Menu {
+        height: 3rem;
     }
 }
 

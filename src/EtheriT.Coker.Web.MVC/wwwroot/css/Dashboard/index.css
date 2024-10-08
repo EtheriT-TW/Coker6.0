@@ -43,6 +43,10 @@
     border-radius: var(--bs-card-border-radius);
 }
 
+.date-range {
+    min-width:300px;
+}
+
 .card[data-animation="true"] .card-header {
   -webkit-transform: translate3d(0, 0, 0);
   -moz-transform: translate3d(0, 0, 0);

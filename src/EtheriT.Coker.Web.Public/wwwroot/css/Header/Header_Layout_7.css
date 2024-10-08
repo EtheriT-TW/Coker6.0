@@ -419,7 +419,7 @@
     }
 
     .offcanvas-title {
-        margin-top: 16px;
+        margin-top: -5px;
         margin-left: 80px;
     }
 
@@ -730,7 +730,7 @@
 
 @media only screen and (max-width: 768px) {
     .headernews .content {
-        padding-left:2.5rem !important;
+        padding-left:3rem !important;
     }
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: start;
@@ -748,8 +748,7 @@
 
 @media only screen and (max-width: 576px) {
     .headernews .content {
-        padding-left: 3.5rem !important;
-        padding-right: 1rem !important;
+        padding-left: 3rem !important;
     }
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
@@ -776,6 +775,10 @@
 
     #header-title-phone {
         display:unset !important;
+    }
+
+    #swiper-light {
+        margin-left: 1.2rem !important;
     }
 }
 
@@ -806,5 +809,9 @@
 
     #menuIcon {
         padding-top: 1rem !important;
+    }
+
+    .headernews .content {
+        padding-left: 2.5rem !important;
     }
 }

@@ -3,7 +3,7 @@
 @using Newtonsoft.Json
 @model DashboardModel
 @{
-    ViewData["Title"] = "Dashboard";
+	ViewData["Title"] = "Dashboard";
 }
 <script src="~/lib/chart.js/chart.min.js"></script>
 <script src="~/js/Dashboard/Index.min.js" asp-append-version="true"></script>
@@ -11,77 +11,85 @@
 <link rel="stylesheet" href="~/css/Dashboard/index.min.css" asp-append-version="true" />
 
 <div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">storage</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">使用空間</p>
-                        <h4 class="mb-0">@Model.CalcuateDirectorySize</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0">最後更新日期<span class="text-success text-sm font-weight-bolder">@Model.LastChangDate</span></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 mb-xl-0 mb-4">
-            <div class="card">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-icons opacity-10">insert_chart</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0 text-capitalize">使用流量</p>
-                        <h4 class="mb-0">5.18/10G</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0">
-                <div class="card-footer p-3">
-                    <p class="mb-0">統計週期<span class="text-success text-sm font-weight-bolder">2022/10/1~2022/10/5</span></p>
-                </div>
-            </div>
-        </div>
-       
-    <div class="row mt-4">
-        <div class="col-md-6 mt-4 mb-4 pe-0">
-            <div class="card z-index-2 ">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
-                    <div class="bg-gradient-info shadow-primary border-radius-lg py-3 pe-1">
-                        <div class="chart">
-                                <canvas id="chart-bars" class="chart-canvas" height="170" data-Remotes="@JsonConvert.SerializeObject(Model.Remote)"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                        <form method="post" action="/DashboardController/Index">
-                            <div class="d-flex align-content-center">
-                                <i class="material-icons text-sm my-auto me-1">schedule</i>
-                                <p class="mb-0">&nbsp;統計區間</p>
-                            </div>
-                            <div class="date input-group mb-3">
-                                <input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">
-                            </div>
-                        </form>
+	<div class="row">
+		<div class="col-sm-6 mb-xl-0 mb-4">
+			<div class="card">
+				<div class="card-header p-3 pt-2">
+					<div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+						<i class="material-icons opacity-10">storage</i>
+					</div>
+					<div class="text-end pt-1">
+						<p class="text-sm mb-0 text-capitalize">使用空間</p>
+						<h4 class="mb-0">@Model.CalcuateDirectorySize</h4>
+					</div>
+				</div>
+				<hr class="dark horizontal my-0">
+				<div class="card-footer p-3">
+					<p class="mb-0">最後更新日期<span class="text-success text-sm font-weight-bolder">@Model.LastChangDate</span></p>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-6 mb-xl-0 mb-4">
+			<div class="card">
+				<div class="card-header p-3 pt-2">
+					<div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+						<i class="material-icons opacity-10">insert_chart</i>
+					</div>
+					<div class="text-end pt-1">
+						<p class="text-sm mb-0 text-capitalize">使用流量</p>
+						<h4 class="mb-0">5.18/10G</h4>
+					</div>
+				</div>
+				<hr class="dark horizontal my-0">
+				<div class="card-footer p-3">
+					<p class="mb-0">統計週期<span class="text-success text-sm font-weight-bolder">2022/10/1~2022/10/5</span></p>
+				</div>
+			</div>
+		</div>
 
-                        <p class="text-sm d-none">Last Campaign Performance</p>
-                        <hr class="dark horizontal">
-                    <div class="d-flex">
-                        <div id="width-auto" class="align-content-center">
-                            <h6 class="mb-0 ">全站導覽人數</h6>
-                        </div>
-                            <div class="text-end pt-1 inline-flex">
-                                <p class="mb-0 ">總人數：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumMemCount</span></p>
-                                <p class="mb-0 ">總人次：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumCount</span></p>
-                            </div>
-                    </div>
-                        
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+		<div class="row mt-4">
+			<div class="col-md-6 mt-4 mb-4 pe-0">
+				<div class="card z-index-2 ">
+					<div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+						<div class="bg-gradient-info shadow-primary border-radius-lg py-3 pe-1">
+							<div class="chart">
+								<canvas id="chart-bars" class="chart-canvas" height="170" data-Remotes="@JsonConvert.SerializeObject(Model.Remote)"></canvas>
+							</div>
+						</div>
+					</div>
+					<div class="card-body">
+						<div id="width-auto" class="align-content-center mb-3">
+							<h6 class="mb-0 ">全站導覽人數</h6>
+						</div>
+						<div class="d-flex">
+							<form method="post" action="/DashboardController/Index" class="flex-grow-1 mr-5 date-range">
+								<div class="d-flex align-content-center">
+									<i class="material-icons text-sm my-auto me-1">schedule</i>
+									<p class="mb-0">&nbsp;統計區間</p>
+								</div>
+								<div class="date input-group mb-3 w-75">
+									<input id="InputDate" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required="">
+								</div>
+							</form>
+							<div class="text-end pt-1 d-flex ">
+								<p class="mb-0 mr-3">人數：<span class="text-success font-weight-bolder fs-1 dateRange-sum-mem-count">@Model.Remote.SumMemCount</span></p>
+								<p class="mb-0 ">人次：<span class="text-success font-weight-bolder fs-1 dateRange-sum-count">@Model.Remote.SumCount</span></p>
+							</div>
+						</div>
+						<!--<p class="text-sm d-none">Last Campaign Performance</p>
+						<hr class="dark horizontal">
+						<div class="d-flex">
+							<div class="flex-grow-1 align-self-center">
+								<span>開站至今</span>
+							</div>
+							<div class="text-end pt-1 d-flex ">
+								<p class="mb-0 mr-3">總人數：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumMemCount</span></p>
+								<p class="mb-0 ">總人次：<span class="text-success font-weight-bolder fs-1">@Model.Remote.SumCount</span></p>
+							</div>
+						</div>
+						<-->
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>

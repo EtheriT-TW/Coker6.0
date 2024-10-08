@@ -13,6 +13,11 @@
         } else {
             console.error('Chart instance not found');
         }
+        const totalVisits = counts.reduce((sum, value) => sum + value, 0);
+        const totalMembers = memCounts.reduce((sum, value) => sum + value, 0);
+        console.log(totalMembers, totalVisits);
+        document.querySelector(".dateRange-sum-mem-count").textContent = totalMembers;
+        document.querySelector(".dateRange-sum-count").textContent = totalVisits;
     }
     $("#InputDate").on("change", function () {
         const selectedDates = $('#InputDate').val(); // 獲取選擇的日期範圍

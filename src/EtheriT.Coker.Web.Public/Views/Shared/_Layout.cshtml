@@ -202,12 +202,28 @@
                             </div>
                         </form>
                         <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">登　入</button>
-                        <div class="border-bottom pb-1 text-black-50 text-center">其他登入方式</div>
+                        <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 " data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">其他登入方式</button>
                     </div>
                     <div class="modal-footer d-flex justify-content-center border-0">
                         <div class="text-black-50">不是會員？</div>
                         <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">立即註冊</button>
                         <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">忘記密碼</button>
+                        <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ResetModal" data-bs-toggle="modal" data-bs-dismiss="modal">密碼重置Layout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="OtherLoginModal" class="modal fade" aria-hidden="true" aria-labelledby="OtherLoginModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered justify-content-center">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center fs-4 fw-bold">其他登入方式</div>
+                        <button class="btn_line w-100 rounded border-0 text-white py-2 fs-5 my-3">LINE</button>
+                        <button class="btn_google w-100 rounded border-0 text-white py-2 fs-5 my-3">Google</button>
+                        <button class="btn_facebook w-100 rounded border-0 text-white py-2 fs-5 my-3">Facebook</button>
                     </div>
                 </div>
             </div>
@@ -256,7 +272,6 @@
                             </div>
                         </form>
                         <div class="px-3">
-
                             <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
                             <div class="form-check">
                                 <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
@@ -264,6 +279,76 @@
                             </div>
                         </div>
                         <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">註　冊</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="ResetModal" class="modal fade" aria-hidden="true" aria-labelledby="ResetModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered justify-content-center">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center fs-4 fw-bold">密碼重置</div>
+                        <form id="ResetForm" class="card-body needs-validation" method="post">
+                            <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                            <div class="reset_new_pass input-group">
+                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                    <span class="material-symbols-outlined text-black-50">lock</span>
+                                </div>
+                                <input id="InputResetNewPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Reset New Password" placeholder="密碼" required name="Password">
+                            </div>
+                            <div id="NewPassFeedBack" class="lh-1 text-danger pt-1">　</div>
+                            <div class="reset_check_pass input-group">
+                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                    <span class="material-symbols-outlined text-black-50">lock</span>
+                                </div>
+                                <input id="InputResetCheckPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Reset Check Password" placeholder="確認密碼" required name="PasswordConfirm">
+                            </div>
+                            <div id="CheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
+                            <div class="reset_vcode input-group">
+                                <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                                <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                    <img id="ResetImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
+                                </div>
+                            </div>
+                        </form>
+                        <div class="px-3">
+                            <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+                        </div>
+                        <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">重　置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="ForgetModal" class="modal fade" aria-hidden="true" aria-labelledby="ForgetModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered justify-content-center">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center fs-4 fw-bold">忘記密碼</div>
+                        <form id="ForgetForm" class="card-body needs-validation" method="post">
+                            <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                            <div class="forget_mail input-group mb-3">
+                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                    <span class="material-symbols-outlined text-black-50">mail</span>
+                                </div>
+                                <input id="InputForgetMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Forget Mail" placeholder="信箱" required name="Email">
+                            </div>
+                            <div class="forget_vcode input-group">
+                                <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                                <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                    <img id="ForgetImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
+                                </div>
+                            </div>
+                        </form>
+                        <div class="px-3">
+                            <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+                        </div>
+                        <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">發　送</button>
                     </div>
                 </div>
             </div>

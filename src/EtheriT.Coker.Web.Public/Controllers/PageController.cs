@@ -390,36 +390,25 @@ namespace EtheriT.Coker.Web.Public.Controllers
             Guid secret = Guid.NewGuid();
             var AccessToken = httpContextAccessor.HttpContext.Request.Cookies["Token"];
             var RefreshToken = httpContextAccessor.HttpContext.Request.Cookies["RefreshToken"];
+            
             try
             {
-                if (string.IsNullOrEmpty(AccessToken) && string.IsNullOrEmpty(RefreshToken)) throw new Exception();
-                else if (string.IsNullOrEmpty(AccessToken) && Guid.TryParse(AccessToken, out secret))
-                {
-                    await runRefreshToken(secret);
-                }
-                else {
-                    var tokenItem = await tokenAppService.CheckToken();
-                    if (!tokenItem.Success)
+                var tokenItem = await tokenAppService.CreateToken();
+                if (tokenItem != null) {
+                    httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token!, new CookieOptions
                     {
-                        if (Guid.TryParse(AccessToken, out secret))
-                        {
-                            await runRefreshToken(secret);
-                        }
-                        else throw new Exception();
-                    }
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
+                    });
+                    httpContextAccessor.HttpContext.Response.Cookies.Append("RefreshToken", tokenItem.RefreshToken.ToString()!, new CookieOptions
+                    {
+                        Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
+                    });
+                    ViewBag.isLogin = tokenItem.IsLogin;
                 }
             }
             catch {
-                var tokenItem = await tokenAppService.CreateToken(Guid.NewGuid().ToString(), secret);
-                httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem, new CookieOptions
-                {
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
-                });
-                httpContextAccessor.HttpContext.Response.Cookies.Append("RefreshToken", secret.ToString(), new CookieOptions
-                {
-                    Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
-                });
                 ViewBag.isLogin = false;
+                ViewBag.LoginEnable = false;
             }
 
 			await RemoteAppService.insertRemote(remoteInputDto);

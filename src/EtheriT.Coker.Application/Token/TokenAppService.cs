@@ -15,6 +15,8 @@ using AutoMapper;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1.Ocsp;
+using EtheriT.Coker.Web.Core.Models;
+using System.Security.Claims;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -49,40 +51,39 @@ namespace EtheriT.Coker.Application.Token
             TokenResponseDto output = new TokenResponseDto();
             try
             {
-                string? token = null;
-                string? RefreshToken = null;
-                httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out token);
-                if (string.IsNullOrEmpty(token))
+                string? tokenStr = null;
+                string? RefreshTokenStr = null;
+                DateTime date = DateTime.Now;
+                TokenKeyItem tokenItem = new TokenKeyItem();
+                httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
+                if (string.IsNullOrEmpty(tokenStr))
                 {
                     output = await CheckToken();
                     if (output.Success) return output;
                 }
-                DateTime dateTime = DateTime.Now;
-                DateTime EndDateTime = dateTime.AddDays(30);
-                Core.Models.Token t = new Core.Models.Token
+                httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out RefreshTokenStr);
+                if (!string.IsNullOrEmpty(RefreshTokenStr) && Guid.TryParse(RefreshTokenStr, out Guid rt))
                 {
-                    ip = loginUserData.GetClientIP()??"",
-                    UserID = null,
-                    UUID = generateUUID(),
-                    StartTime = dateTime,
-                    EndTime = EndDateTime,
-                    websiteId = configuration.GetValue<long>("WebConfig:SiteId")
-                };
-
-                httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out token);
-                if (!string.IsNullOrEmpty(RefreshToken)) {
-                    if (Guid.TryParse(RefreshToken, out Guid rt)) {
-                        var oldTokenn = db.Tokens.Where(e => e.id == rt).FirstOrDefault();
-                        if (oldTokenn != null) { 
-                            t.UUID = oldTokenn.UUID;
-                            t.UserID = oldTokenn.UserID;
+                    var RefreshTokens = db.Tokens.Where(e => e.id == rt);
+                    if (RefreshTokens.Any())
+                    {
+                        var RefreshToken = await RefreshTokens.Where(e => e.StartTime < date && date < e.EndTime).FirstOrDefaultAsync();
+                        if (RefreshToken != null)
+                        {
+                            var user = await db.Users.Where(e => e.UUID == RefreshToken.UUID && !e.IsDeleted).FirstOrDefaultAsync();
+                            tokenItem = await NewToken(user?.Account, RefreshToken.UUID, user?.Id);
                         }
-                    }
+                        else {
+                            var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
+                            tokenItem = await NewToken(null, oidRefreshToken?.UUID);
+                        }
+                    }else tokenItem = await NewToken();
                 }
-                db.Tokens.Add(t);
-                await db.SaveChangesAsync();
+                else tokenItem = await NewToken();
+                output.IsLogin = tokenItem.IsLogin;
+                output.Token = tokenItem.AccessToken;
+                output.RefreshToken = tokenItem.RefreshToken;
                 output.Success = true;
-                output.Token = t.id.ToString();
             }
             catch (Exception e)
             {
@@ -91,6 +92,28 @@ namespace EtheriT.Coker.Application.Token
             }
 
             return output;
+        }
+        private async Task<TokenKeyItem> NewToken(string? Accont = null,Guid? UUID = null,long? UserId = null) {
+            if (string.IsNullOrEmpty(Accont)) Accont = Guid.NewGuid().ToString();
+            if (UUID == null) UUID = generateUUID();
+            DateTime date = DateTime.Now;
+            DateTime EndDateTime = date.AddDays(30);
+            var item = new TokenKeyItem { UUID = UUID.Value};
+            Core.Models.Token? Token = new Core.Models.Token
+            {
+                ip = loginUserData.GetClientIP() ?? "",
+                UserID = UserId,
+                UUID = UUID.Value,
+                StartTime = date,
+                EndTime = EndDateTime,
+                websiteId = configuration.GetValue<long>("WebConfig:SiteId")
+            };
+            db.Tokens.Add(Token);
+            await db.SaveChangesAsync();
+            item.RefreshToken = Token.id;
+            item.IsLogin = UserId != null;
+            item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
+            return item;
         }
         public async Task<TokenResponseDto> CheckToken()
         {
@@ -112,6 +135,14 @@ namespace EtheriT.Coker.Application.Token
                     handler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
                     var jwtToken = validatedToken as JwtSecurityToken;
                     output.Success = true;
+                    output.Token = token;
+                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sid)?.Value, out var Sid)) {
+                        output.RefreshToken = Sid;
+                    }
+                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, out var Sub))
+                    {
+                        output.IsLogin = false;
+                    }else output.IsLogin = true;
                     output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
                 }
                 else throw new Exception();

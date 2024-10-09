@@ -50,7 +50,7 @@ var Advertise = {
 }
 
 function initElemntAndLoadDir($dir, page) {
-    console.log("InitLoad")
+    //console.log("InitLoad")
     const $self = $dir || $(".catalog_frame").first();
     var temp_siblings = $self.find(".templatecontent").siblings();
     if (temp_siblings.length > 0) {
@@ -200,7 +200,6 @@ function hashChangeDirectory(e) {
     }
 }
 function DirectoryDataGet($item, option) {
-    console.log("DataGet")
     const dirLength = $(".catalog_frame").length;
     let page = parseInt(option.Page);
     if ($item.data("type") == "search") {
@@ -309,7 +308,6 @@ function DirectoryDataGet($item, option) {
     })
 }
 function DirectoryDataInsert($item, result) {
-    console.log("Insert")
     if (result == null) return;
     const temp = $item.find(".templatecontent").html();
     const temp_tag = $item.find(".templatecontent-tag").html();
@@ -475,7 +473,6 @@ function DirectoryDataInsert($item, result) {
     ShareBlockInit();
 }
 function DirectoryAdDataInsert($item, result) {
-    console.log(result)
     var isFront = typeof ($item.attr("draggable")) == "undefined";
     $item.find(".File_Frame").each(function (index) {
         var $frame = $(this);
@@ -559,7 +556,7 @@ function DirectoryAdDataInsert($item, result) {
                     FK_Aid: thisresult.id,
                     FK_Tid: $.cookie("Token"),
                 }).done(function (result) {
-                    console.log(result)
+                    //console.log(result)
                 })
             }
             $frame.find(".video_frame").find("video").on("play", function () {
@@ -570,7 +567,7 @@ function DirectoryAdDataInsert($item, result) {
                         FK_Aid: thisresult.id,
                         FK_Tid: $.cookie("Token"),
                     }).done(function (result) {
-                        console.log(result)
+                        //console.log(result)
                     })
                 }
             })
@@ -586,7 +583,7 @@ function DirectoryAdDataInsert($item, result) {
                         FK_Aid: thisresult.id,
                         FK_Tid: $.cookie("Token"),
                     }).done(function (result) {
-                        console.log(result)
+                        //console.log(result)
                     })
                 }
             });

@@ -32,6 +32,7 @@ namespace EtheriT.Coker.Web.MVC.Resources
         {
             //var user = await db.Users.Where(e => e.Account == Account).FirstOrDefaultAsync();
             var issuer = Configuration.GetValue<string>("JwtSettings:Issuer");
+            var audience = Configuration.GetValue<string>("JwtSettings:Audience") ?? issuer;
             var signKey = Configuration.GetValue<string>("JwtSettings:SignKey");
 
             // Configuring "Claims" to your JWT Token
@@ -74,9 +75,9 @@ namespace EtheriT.Coker.Web.MVC.Resources
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Issuer = issuer,
-                //Audience = issuer, // Sometimes you don't have to define Audience.
-                //NotBefore = DateTime.Now, // Default is DateTime.Now
-                //IssuedAt = DateTime.Now, // Default is DateTime.Now
+                Audience = audience, // Sometimes you don't have to define Audience.
+                NotBefore = DateTime.Now, // Default is DateTime.Now
+                IssuedAt = DateTime.Now, // Default is DateTime.Now
                 Subject = userClaimsIdentity,
                 Expires = DateTime.Now.AddMinutes(expireMinutes),
                 SigningCredentials = signingCredentials

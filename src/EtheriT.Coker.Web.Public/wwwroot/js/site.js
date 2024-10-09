@@ -161,11 +161,13 @@ function ready() {
                 type: "POST",
             });
         },
-        CheckToken: function (id) {
+        CheckToken: function () {
             return $.ajax({
                 url: "/api/Token/CheckToken/",
-                type: "GET",
-                data: { id: id }
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("verify").Token
+                },
+                type: "GET"
             });
         }
     };
@@ -175,7 +177,11 @@ function ready() {
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
-    CheckToken();
+    Coker.Token.GetToken().done(result => {
+        if (result.success) {
+            localStorage.setItem("token", result.token);
+        }
+    });
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");
 
     const enterAdModalEl = $('#EnterAdModal')

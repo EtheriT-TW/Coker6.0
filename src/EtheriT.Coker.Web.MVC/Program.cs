@@ -129,7 +129,7 @@ builder.Services
             // otherwise always check for cookie auth
             return "Cookies";
         };
-    }); ;
+    });
 /*
 builder.Services.AddAntiforgery(options =>
 {

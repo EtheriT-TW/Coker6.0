@@ -50,10 +50,56 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Shared.Processor;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<IConfiguration>();
+
+// 配置 JWT Bearer 認證
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = "JWT_OR_COOKIE";
+        options.DefaultChallengeScheme = "JWT_OR_COOKIE";
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.LoginPath = "/";
+        options.ExpireTimeSpan = TimeSpan.FromDays(1);
+    }).AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true, // 是否驗證發行者
+            ValidateAudience = true, // 是否驗證接收者
+            ValidateLifetime = true, // 是否驗證 Token 的有效期
+            ValidateIssuerSigningKey = true, // 是否驗證簽名密鑰
+
+            ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"), // JWT 發行者
+            ValidAudience = builder.Configuration.GetValue<string>("JwtSettings:Audience"), // JWT 接收者
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey"))), // 密鑰
+            ClockSkew = TimeSpan.Zero // Token 時間允許的偏移量
+        };
+    }).AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
+    {
+        // runs on each request
+        options.ForwardDefaultSelector = context =>
+        {
+            // filter by auth type
+            string authorization = context.Request.Headers[HeaderNames.Authorization];
+            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                return "Bearer";
+
+            // otherwise always check for cookie auth
+            return "Cookies";
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHsts(options =>
@@ -77,7 +123,7 @@ builder.Services.AddAntiforgery(options =>
     // Set Cookie properties using CookieBuilder properties†.
     options.FormFieldName = "AntiforgeryFieldname";
     options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.HttpOnly = true;
     //iis setting
@@ -211,7 +257,7 @@ app.UseCookiePolicy(
     {
         Secure = CookieSecurePolicy.Always,
         HttpOnly = HttpOnlyPolicy.Always,
-        MinimumSameSitePolicy = SameSiteMode.Strict
+        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
     }
 );
 
@@ -305,7 +351,7 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{key?}/{id?}",
-    defaults: new { controller = "Home", action = "Index" });
+    defaults: new { controller = "Page", action = "Index" });
 
 if (app.Environment.IsProduction())
 {

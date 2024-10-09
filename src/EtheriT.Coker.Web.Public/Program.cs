@@ -55,6 +55,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Net.Http.Headers;
+using EtheriT.Coker.Application.Newsletter;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -165,6 +166,8 @@ builder.Services.AddMvc(options =>
 
 builder.Services.AddTransient<IAccountAppService, AccountAppService>();
 builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
+builder.Services.AddTransient<MailAppService, MailAppService>();
+builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();

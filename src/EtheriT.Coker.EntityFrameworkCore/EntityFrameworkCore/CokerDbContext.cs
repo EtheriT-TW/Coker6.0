@@ -16,8 +16,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
     public class CokerDbContext : DbContext
     {
         public DbSet<User> Users { get; set; }
+        public DbSet<FrontUser> FrontUsers { get; set; }
         public DbSet<Website> Websites { get; set; }
         public DbSet<MappingUserAndWebsite> MappingUserAndWebsites { get; set; }
+        public DbSet<MappingFrontUserAndWebsite> MappingFrontUserAndWebsite { get; set; }
+        public DbSet<MappingOldNewUUID> MappingOldNewUUID { get; set; }
         public DbSet<Token> Tokens { get; set; }
         public DbSet<Prod> Prods { get; set; }
         public DbSet<Marquee> Marquees { get; set; }
@@ -87,6 +90,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
+            });
+            modelBuilder.Entity<MappingFrontUserAndWebsite>(o =>
+            {
+                o.HasOne(u => u.User).WithMany(u => u.Websites).HasForeignKey(f => f.FK_UserId);
+                o.HasOne(w => w.Website).WithMany(w => w.FrontUsers).HasForeignKey(f => f.FK_WebsiteId);
             });
             modelBuilder.Entity<Marquee>(o =>
             {
@@ -192,7 +200,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<MappingUserAndRole>(o =>
             {
-                o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
             });
             modelBuilder.Entity<Tag>(o =>

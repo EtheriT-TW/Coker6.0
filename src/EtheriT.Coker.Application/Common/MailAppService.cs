@@ -3,15 +3,8 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.AspNetCore.Http;
 using MimeKit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Common
 {

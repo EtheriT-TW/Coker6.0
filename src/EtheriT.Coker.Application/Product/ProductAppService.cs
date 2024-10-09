@@ -834,7 +834,6 @@ namespace EtheriT.Coker.Application.Product
         public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-
             try
             {
                 var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
@@ -849,6 +848,7 @@ namespace EtheriT.Coker.Application.Product
                 db.Prod_Logs.Add(pl);
                 db.SaveChanges();
                 output.Success = true;
+
             }
             catch (Exception e)
             {

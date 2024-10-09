@@ -1,5 +1,4 @@
-﻿
-using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Core.Entity;
 using EtheriT.Coker.Web.Core.Models;
 
 namespace EtheriT.Coker.Core.Models

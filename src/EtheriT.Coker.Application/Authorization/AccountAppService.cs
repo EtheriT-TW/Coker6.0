@@ -30,6 +30,10 @@ using System.Xml.Linq;
 using AutoMapper;
 using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using System.Data;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Newsletter;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -42,13 +46,17 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IMapper mapper;
         private readonly string controllerName;
+        private readonly MailAppService mailAppService;
+        private readonly INewsletterAppService newsletterAppService;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
             ITokenAppService tokenAppService,
             LoginUserData loginUserData,
             IHttpContextAccessor httpContextAccessor,
-            IMapper mapper
+            IMapper mapper,
+            MailAppService mailAppService,
+            INewsletterAppService newsletterAppService
         )
         {
             this.db = db;
@@ -57,6 +65,8 @@ namespace EtheriT.Coker.Application.Authorization
             this.loginUserData = loginUserData;
             this.httpContextAccessor = httpContextAccessor;
             this.mapper = mapper;
+            this.mailAppService = mailAppService;
+            this.newsletterAppService = newsletterAppService;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)

@@ -5,9 +5,9 @@ namespace EtheriT.Coker.Core.Models
 {
 	public class MappingUserAndRole : FullAuditedEntity
     {
+        public bool IsFront { get; set; }
         public long UserId { get; set; }
         public long RoleId { get; set; }
-        public User? User { get; set; }
         public Role? Role { get; set; }
     }
 }

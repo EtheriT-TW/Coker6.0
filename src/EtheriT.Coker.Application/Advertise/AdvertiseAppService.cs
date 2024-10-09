@@ -11,12 +11,8 @@ using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
-using EtheriT.Coker.Application.Shared.Dto.Article;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
-using EtheriT.Coker.Application.Shared.Dto.Directory;
-using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace EtheriT.Coker.Application.Advertise
 {
@@ -282,14 +278,14 @@ namespace EtheriT.Coker.Application.Advertise
                             break;
                     }
 
-                    Core.Models.Advertise_Log adl = new Core.Models.Advertise_Log
+                    Core.Models.Advertise_Log ad_log = new Core.Models.Advertise_Log
                     {
                         FK_Adid = dto.FK_Aid,
                         FK_Tid = db_t == null ? null : dto.FK_Tid,
                         FK_Uid = db_t == null ? null : db_t.UserID,
                         Action = dto.Action,
                     };
-                    db.Advertise_Logs.Add(adl);
+                    db.Advertise_Logs.Add(ad_log);
                     db.SaveChanges();
                 }
 

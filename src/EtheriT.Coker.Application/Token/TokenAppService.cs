@@ -196,8 +196,8 @@ namespace EtheriT.Coker.Application.Token
                     output.Success = true;
                     if (output.IsLogin)
                     {
-                        var user = db.Users.Where(e => e.Status == (int)UserStatus.開通 && !e.IsDeleted && e.Id == tokens.UserID);
-                        output.name = db.Users.Where(e => e.Status == (int)UserStatus.開通 && !e.IsDeleted).FirstOrDefault()?.Name;
+                        var user = db.Users.Where(e => e.Status == (int)UserStatusEnum.開通 && !e.IsDeleted && e.Id == tokens.UserID);
+                        output.name = db.Users.Where(e => e.Status == (int)UserStatusEnum.開通 && !e.IsDeleted).FirstOrDefault()?.Name;
                     }
                     db.SaveChanges();
                 }

@@ -34,6 +34,7 @@ using System.Data;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Newsletter;
+using EtheriT.Coker.Application.Shared.Dto.Token;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -292,46 +293,135 @@ namespace EtheriT.Coker.Application.Authorization
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                long WebsiteID = dto.FK_WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.FK_WebsiteId;
                 var theUser = await db.Users
-                    .Where(e => (!string.IsNullOrEmpty(e.Account) && e.Account == dto.Account) || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
+                    .Where(e => e.Account == dto.Account || (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
                     .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                 string passwordError = checkPassword(dto.Password);
+                if (theUser != null) throw new Exception("該使用者的帳號或信箱已存在");
+                else if (dto.Password != dto.PasswordConfirm) throw new Exception("該使用者的帳號或信箱已存在");
+                else if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+                else
+                {
+                    User user = mapper.Map<User>(dto);
+                    user.Password = passwordHasher.HashPassword(dto.Password);
+                    db.Users.Add(user);
+                    await loginUserData.SaveChanges(user);
+                    response.Success = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            dto.Password = "*********";
+            dto.PasswordConfirm = "*********";
+            await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+                long WebsiteID = dto.WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.WebsiteId;
+
+                var theUser = await db.FrontUsers
+                    .Where(e => (!string.IsNullOrEmpty(e.Email) && e.Email == dto.Email))
+                    .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
+
+                string passwordError = checkPassword(dto.Password);
+
                 if (theUser != null)
                 {
-                    var UserMapWeb = await db.MappingUserAndWebsites
-                        .Where(e => e.UserId == theUser.Id)
-                        .Where(e => e.WebsiteId == WebsiteID)
+                    var UserMapWeb = await db.MappingFrontUserAndWebsite
+                        .Where(e => e.FK_UserId == theUser.Id)
+                        .Where(e => e.FK_WebsiteId == WebsiteID)
                         .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
-                    var UserMapRole = await db.MappingUserAndRoles
-                        .Where(e => e.UserId == theUser.Id)
-                        .Where(e => e.RoleId == dto.FK_RoleId)
-                        .Where(e => !e.IsDeleted).FirstOrDefaultAsync();
-                    if (UserMapWeb != null && UserMapRole != null) throw new Exception("該使用者的帳號或信箱已存在");
+                    if (UserMapWeb != null)
+                    {
+                        switch (UserMapWeb.Status)
+                        {
+                            case (int)UserStatusEnum.未開通:
+                                response.Message = "重新寄送通知信";
+                                throw new Exception("郵箱已存在但尚未開通，請至郵箱確認或重新寄送通知信。");
+                            default:
+                                response.Message = "郵箱已存在";
+                                throw new Exception("郵箱已存在，請更換一個郵箱或直接登入。");
+                        }
+                    }
+                    else
+                    {
+                        response.Message = "已存在且開通";
+                        throw new Exception("郵箱已存在於其他網站，是否於此站開通?");
+                    }
                 }
                 else if (dto.Password != dto.PasswordConfirm) throw new Exception("輸入的密碼不相符");
                 else if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
                 else
                 {
-                    User user = mapper.Map<User>(dto);
-                    user.Status = (int)UserStatusEnum.未開通;
+                    FrontUser user = mapper.Map<FrontUser>(dto);
                     user.Password = passwordHasher.HashPassword(dto.Password);
-                    db.Users.Add(user);
+                    db.FrontUsers.Add(user);
                     await loginUserData.SaveChanges(user);
-                    MappingUserAndWebsite mapuserweb = new MappingUserAndWebsite()
+
+                    MappingFrontUserAndWebsite mapuserandweb = new MappingFrontUserAndWebsite()
                     {
-                        UserId = user.Id,
-                        WebsiteId = WebsiteID,
+                        FK_WebsiteId = dto.WebsiteId,
+                        UUID = UUID,
+                        FK_UserId = user.Id,
+                        Status = (int)UserStatusEnum.未開通,
+                        OpenID = Guid.NewGuid(),
+                        OpenIDSendDate = DateTime.Now
                     };
-                    db.MappingUserAndWebsites.Add(mapuserweb);
+                    db.MappingFrontUserAndWebsite.Add(mapuserandweb);
+                    await loginUserData.SaveChanges(mapuserandweb);
+
                     MappingUserAndRole mapuserrole = new MappingUserAndRole()
                     {
-                        UserId = user.Id,
-                        RoleId = dto.FK_RoleId,
+                        IsFront = true,
+                        UUID = UUID,
+                        UserId = mapuserandweb.Id,
+                        RoleId = dto.RoleId,
                     };
                     db.MappingUserAndRoles.Add(mapuserrole);
-                    await loginUserData.SaveChanges(mapuserweb);
                     await loginUserData.SaveChanges(mapuserrole);
+
+                    var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！歡迎加入{dto.WebsiteName}會員</h2>" +
+                        $"<hr/>" +
+                        $"<div>以下是您的帳號資料，請熟記以下重要訊息</div>" +
+                        $"<br/>" +
+                        $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
+                        $"<br/>" +
+                        $"<div text-bold>開通帳號網址</div>" +
+                        $"<a href='{dto.WebsiteLink}/api/User/AccountOpening/?Id={mapuserandweb.OpenID}' title='前往開通帳號'>{dto.WebsiteLink}/api/User/AccountOpening/?Id={mapuserandweb.OpenID}</a>" +
+                        $"<div class='text-gray'>為了啟動您的帳號，請點選連結或是複製連結在瀏覽器貼上</div>" +
+                        $"<div class='text-gray'>這個連結僅能使用一次，並於 {mapuserandweb.OpenIDSendDate.AddDays(1)} 到期，請在期限內開通。</div>" +
+                        $"<div class='text-gray'>感謝您的加入！~</div>" +
+                        $"<br/>" +
+                        $"<div class='text-bold text-red'>提醒您：此封『會員通知』微系統發出，請勿直接回覆。</div>" +
+                        $"<hr/>" +
+                        $"<hr/>" +
+                        $"<div>提醒您，客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                        $"<div>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                        $"<hr/>" +
+                        $"<hr/>" +
+                        $"<br/></div>";
+                    var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
+
+                    await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
+                            new MailUserDataDto()
+                            {
+                                Name = dto.Name,
+                                Email = dto.Email,
+                            }
+                        },
+                        Subject = $"加入會員通知【{dto.WebsiteName}】",
+                        Body = mailhtml,
+                        Css = mailcss,
+                    }, dto.WebsiteId);
                     response.Success = true;
                 }
                 dto.Password = "*********";

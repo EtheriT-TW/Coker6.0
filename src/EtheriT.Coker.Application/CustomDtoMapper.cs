@@ -53,7 +53,8 @@ namespace EtheriT.Coker.Application
             CreateMap<MemberUpdateDto, User>().ReverseMap();
             CreateMap<ManagerAllListDto, User>().ReverseMap();
             CreateMap<EditUserDto, User>().ReverseMap();
-            CreateMap<AddUser, User>().ReverseMap();
+            CreateMap<FrontAddUserDto, FrontUser>().ReverseMap();
+            CreateMap<FrontAddUserDto, MappingFrontUserAndWebsite>().ReverseMap();
 
             //Website
             CreateMap<Website, WebsiteEditDto>()
@@ -260,6 +261,11 @@ namespace EtheriT.Coker.Application
             //Contact
             CreateMap<ContactListDto, Core.Models.Contact>().ReverseMap();
             CreateMap<AsrFormDataDto, Core.Models.Contact>().ReverseMap();
+
+            //MappingFrontUserAndWebsite
+            CreateMap<FrontAddUserDto, Core.Models.MappingFrontUserAndWebsite>()
+                .ForMember(e => e.FK_WebsiteId, option => option.MapFrom(c => c.WebsiteId))
+                .ReverseMap();
         }
     }
 }

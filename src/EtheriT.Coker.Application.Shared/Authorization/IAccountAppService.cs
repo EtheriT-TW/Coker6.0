@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Application.Authorization
 		public Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto);
         public Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto);
         public Task<ResponseMessageDto> AddUser(AddUser dto);
+        public Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto);
     }
 }

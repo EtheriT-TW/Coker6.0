@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Core.Models
     {
         public bool IsFront { get; set; }
         public long UserId { get; set; }
+        public Guid UUID { get; set; }
         public long RoleId { get; set; }
         public Role? Role { get; set; }
     }

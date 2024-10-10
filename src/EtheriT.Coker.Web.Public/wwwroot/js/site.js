@@ -317,6 +317,7 @@ function ready() {
     window.onscroll = function () {
         scrollFunction();
     };
+
 }
 
 function SiteElementInit() {
@@ -449,18 +450,37 @@ function LoginAction() {
 
 function RegisterAction() {
     var data = co.Form.getJson($("#RegisterForm").attr("id"));
-    data.FK_WebsiteId = SiteId
-    data.FK_RoleId = 2;
+    data.WebsiteId = SiteId;
+    data.WebsiteLink = $(location).attr('origin');
+    data.WebsiteName = $("meta[property='og:site_name'").attr("content");
+    data.RoleId = 2;
     co.User.AddUser(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("註冊成功，已發送確認信至您的信箱！", null, true);
+            Coker.sweet.success("註冊成功，系統將立即送『加入會員通知』信函至您所登錄之E-Mail中，您必須完成帳號開通程序後，才能登入網站與使用會員功能，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候開通帳號通知信。", null, false);
             registerModal.hide();
         } else {
-            Coker.sweet.error(result.error, null, true);
+            switch (result.message) {
+                case "重新寄送通知信":
+                case "於此站開通":
+                    Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", SendMail(data));
+                    break;
+                case "已存在且開通":
+                    Coker.sweet.info(result.error, null);
+                    break;
+                default:
+                    Coker.sweet.error(result.error, null, true);
+                    break;
+            }
             NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
         }
     })
 }
+
+function SendMail(data) {
+    console.log("Hello")
+    console.log(data)
+}
+
 function ForgetAction() {
     var data = co.Form.getJson($("#ForgetForm").attr("id"));
     data.FK_WebsiteId = SiteId
@@ -625,7 +645,22 @@ var Coker = {
                     typeof (action) === "function" && action();
                 }
             })
-        }
+        },
+        info: function (title, action) {
+            Swal.fire({
+                icon: 'info',
+                title: title,
+                showConfirmButton: true,
+                showCancelButton: false,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: '確定',
+                timer: false,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (action) === "function" && action();
+                }
+            })
+        },
     },
     stringManager: {
         ReplaceAndSinge: function (str) {

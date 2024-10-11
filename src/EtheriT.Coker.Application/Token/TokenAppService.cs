@@ -248,6 +248,15 @@ namespace EtheriT.Coker.Application.Token
             );
             return true;
         }
+        public async Task<Guid> GetUUID()
+        {
+            string? RefreshTokenStr = null;
+            DateTime date = DateTime.Now;
+            httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out RefreshTokenStr);
+            Guid.TryParse(RefreshTokenStr, out Guid rt);
+            var RefreshToken = await db.Tokens.Where(e => e.id == rt).Where(e => e.StartTime < date && date < e.EndTime).FirstOrDefaultAsync();
+            return RefreshToken.UUID;
+        }
         private static string GetKey(string token)
         {
             return $"tokens:{token}:deactivated";

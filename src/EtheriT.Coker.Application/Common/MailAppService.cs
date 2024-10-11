@@ -3,15 +3,8 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.AspNetCore.Http;
 using MimeKit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace EtheriT.Coker.Application.Common
 {
@@ -35,6 +28,17 @@ namespace EtheriT.Coker.Application.Common
         }
         public async Task sendMail(SenderDto dto) {
             var webSiteName = string.IsNullOrEmpty(dto.Sender.Name)? await loginUserData.GetWebsiteName(): dto.Sender.Name;
+
+            await sendMail(dto, webSiteName);
+        }
+        public async Task sendMail(SenderDto dto, long siteId)
+        {
+            var webSiteName = await loginUserData.GetWebsiteOrgName(siteId);
+
+            await sendMail(dto, webSiteName);
+        }
+        public async Task sendMail(SenderDto dto, string? webSiteName)
+        {
             string webUrl = await loginUserData.GetWebsiteUrl();
             string OrgName = await loginUserData.GetWebsiteOrgName();
             // 建立郵件
@@ -65,7 +69,7 @@ namespace EtheriT.Coker.Application.Common
             var bodyBuilder = new BodyBuilder();
 
             // 設定文字內容
-            if(!string.IsNullOrEmpty(dto.TextBody))
+            if (!string.IsNullOrEmpty(dto.TextBody))
                 bodyBuilder.TextBody = dto.TextBody;
             // 設定 HTML 內容
             if (!string.IsNullOrEmpty(dto.Body))
@@ -107,7 +111,7 @@ namespace EtheriT.Coker.Application.Common
                 client.Connect(dto.SMTP.Url, dto.SMTP.Port, SecureSocketOptions.None);
 
                 // 如果需要的話，驗證一下
-                if(dto.SMTP.UserName!=null)
+                if (dto.SMTP.UserName != null)
                     client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
 
                 // 寄出郵件

@@ -4,7 +4,7 @@ namespace EtheriT.Coker.Core.Models
 {
     public class MappingOldNewUUID : FullAuditedEntity
     {
-        public Guid OldUUID { get; set; }
-        public Guid NewUUID { get; set; }
+        public Guid UserUUID { get; set; }
+        public Guid TempUUID { get; set; }
     }
 }

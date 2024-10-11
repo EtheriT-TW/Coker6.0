@@ -24,5 +24,21 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             var result = await accountAppService.AddFrontUser(dto);
             return result;
         }
+        [HttpPost]
+        [AllowAnonymous]
+        [Authorize]
+        public async Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto)
+        {
+            var result = await accountAppService.ReSendOpening(dto);
+            return result;
+        }
+        [HttpGet]
+        [AllowAnonymous]
+        [Authorize]
+        public async Task<ResponseMessageDto> AccountOpening(Guid OpenId)
+        {
+            var result = await accountAppService.AccountOpening(OpenId);
+            return result;
+        }
     }
 }

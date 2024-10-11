@@ -9,6 +9,8 @@ namespace EtheriT.Coker.Application.Authorization
     public interface IAccountAppService
     {
         public Task<LoginOutputDto> Login(LoginInputDto dto);
+        public Task<ResponseMessageDto> AccountOpening(Guid OpenId);
+        public Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto);
         public Task<UserDto> GetCurrentUser();
         public Task<LoginOutputDto> Chech();
         public Task<ResponseMessageDto> Logout();

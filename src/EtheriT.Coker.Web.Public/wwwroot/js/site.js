@@ -318,6 +318,43 @@ function ready() {
         scrollFunction();
     };
 
+    var insertdata_string = $(location).attr('search').substring(1, $(location).attr('search').length).split('&');
+    var insertdata = {};
+    $.each(insertdata_string, function (index, value) {
+        insertdata[value.split('=')[0]] = value.split('=')[1];
+    });
+    if (typeof (insertdata["useraction"]) != "undefined" && typeof (insertdata["openid"]) != "undefined") {
+        Coker.sweet.loading();
+        co.User.AccountOpening(insertdata["openid"]).done(result => {
+            if (result.success) {
+                Coker.sweet.success("帳號成功開通，按下確定後即為您跳轉頁面！", function () {
+                    window.location.href = $(location).attr('origin');
+                }, false);
+            } else {
+                if (result.message == "ReSendOrNot") {
+                    var data = {};
+                    data.OpenId = insertdata["openid"];
+                    data.WebsiteId = SiteId;
+                    data.WebsiteLink = $(location).attr('origin');
+                    data.WebsiteName = $("meta[property='og:site_name'").attr("content");
+                    co.sweet.confirm(result.error, "", "重新寄送", "取消", function () {
+                        Coker.sweet.loading();
+                        co.User.AccountReSendOpening(data).done(result => {
+                            if (result.success) {
+                                Coker.sweet.success("系統將立即重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                            } else {
+                                console.log(result.error);
+                                console.log(result.message);
+                            }
+                        });
+                    });
+                } else {
+                    co.sweet.error(result.error, "", null, false);
+                }
+            }
+        });
+    }
+
 }
 
 function SiteElementInit() {
@@ -449,6 +486,7 @@ function LoginAction() {
 }
 
 function RegisterAction() {
+    Coker.sweet.loading();
     var data = co.Form.getJson($("#RegisterForm").attr("id"));
     data.WebsiteId = SiteId;
     data.WebsiteLink = $(location).attr('origin');
@@ -461,10 +499,32 @@ function RegisterAction() {
         } else {
             switch (result.message) {
                 case "重新寄送通知信":
-                case "於此站開通":
-                    Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", SendMail(data));
+                    Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", function () {
+                        Coker.sweet.loading();
+                        co.User.AccountReSendOpening(data).done(result => {
+                            if (result.success) {
+                                Coker.sweet.success("系統將重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                            } else {
+                                console.log(result.error);
+                                console.log(result.message);
+                            }
+                        });
+                    });
                     break;
-                case "已存在且開通":
+                case "已存在其他站":
+                    Coker.sweet.confirm(result.error, "", "是", "否", function () {
+                        Coker.sweet.loading();
+                        co.User.AccountReSendOpening(data).done(result => {
+                            if (result.success) {
+                                Coker.sweet.success("系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                            } else {
+                                console.log(result.error);
+                                console.log(result.message);
+                            }
+                        });
+                    });
+                    break;
+                case "郵箱已存在":
                     Coker.sweet.info(result.error, null);
                     break;
                 default:
@@ -474,11 +534,6 @@ function RegisterAction() {
             NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
         }
     })
-}
-
-function SendMail(data) {
-    console.log("Hello")
-    console.log(data)
 }
 
 function ForgetAction() {
@@ -579,6 +634,23 @@ var Coker = {
                 dataType: "json"
             });
         },
+        AccountOpening: function (OpenId) {
+            return $.ajax({
+                url: "/api/User/AccountOpening/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { OpenId: OpenId },
+            });
+        },
+        AccountReSendOpening: function (data) {
+            return $.ajax({
+                url: "/api/User/ReSendOpening",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
     },
     Form: {
         getJson: function (id, isArrayType) {
@@ -593,6 +665,19 @@ var Coker = {
         },
     },
     sweet: {
+        loading: function () {
+            Swal.fire({
+                title: "資料處理中",
+                html: "已收到您填寫的資料，請稍後。",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                willClose: () => {
+                }
+            }).then((result) => {
+            });
+        },
         success: function (text, action, autoclose) {
             var closetime = false;
             if (autoclose) { closetime = Coker.timeout.time }
@@ -604,7 +689,8 @@ var Coker = {
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
                 confirmButtonText: '確定',
-                timer: closetime
+                timer: closetime,
+                allowOutsideClick: false,
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
@@ -623,7 +709,8 @@ var Coker = {
                 showCancelButton: false,
                 confirmButtonColor: '#3085d6',
                 confirmButtonText: '確定',
-                timer: closetime
+                timer: closetime,
+                allowOutsideClick: false,
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
@@ -639,7 +726,8 @@ var Coker = {
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
                 confirmButtonText: confirmtexet,
-                cancelButtonText: cancanceltext
+                cancelButtonText: cancanceltext,
+                allowOutsideClick: false,
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
@@ -655,6 +743,7 @@ var Coker = {
                 confirmButtonColor: '#3085d6',
                 confirmButtonText: '確定',
                 timer: false,
+                allowOutsideClick: false,
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();

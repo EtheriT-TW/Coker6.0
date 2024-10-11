@@ -17,6 +17,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
     {
         public DbSet<User> Users { get; set; }
         public DbSet<FrontUser> FrontUsers { get; set; }
+        public DbSet<Account_Log> Account_Logs  { get; set; }
         public DbSet<Website> Websites { get; set; }
         public DbSet<MappingUserAndWebsite> MappingUserAndWebsites { get; set; }
         public DbSet<MappingFrontUserAndWebsite> MappingFrontUserAndWebsite { get; set; }

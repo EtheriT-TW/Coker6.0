@@ -73,7 +73,9 @@ namespace EtheriT.Coker.Application.Token
                         {
                             var mapfrontuserandweb = await db.MappingFrontUserAndWebsite.Where(e => e.UUID == RefreshToken.UUID && !e.IsDeleted).FirstOrDefaultAsync();
                             var user = await db.FrontUsers.Where(e => e.Id == mapfrontuserandweb.FK_UserId && !e.IsDeleted).FirstOrDefaultAsync();
-                            tokenItem = await NewToken(user?.Account, RefreshToken.UUID, user?.Id);
+                            var useraccount = "";
+                            if(user != null) { useraccount = user.Account == null ? user.Email : user.Account; }
+                            tokenItem = await NewToken(useraccount, RefreshToken.UUID, user?.Id);
                             output.name = user.Name;
                         }
                         else

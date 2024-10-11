@@ -167,19 +167,15 @@ namespace EtheriT.Coker.Application.Authorization
                                 {
                                     DateTime dateTime = DateTime.Now;
                                     DateTime EndDateTime = dateTime.AddMinutes(30);
-                                    Core.Models.Token t = new Core.Models.Token
+
+                                    var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.websiteId == dto.WebsiteId).FirstOrDefaultAsync();
+                                    if (token != null)
                                     {
-                                        UUID = mapuserandweb.UUID,
-                                        ip = loginUserData.GetClientIP() ?? "",
-                                        UserID = user.Id,
-                                        StartTime = dateTime,
-                                        EndTime = EndDateTime,
-                                        websiteId = dto.WebsiteId
-                                    };
-                                    db.Tokens.Add(t);
+                                        token.UUID = mapuserandweb.UUID;
+                                        token.UserID = user.Id;
+                                    }
                                     db.SaveChanges();
-                                    output.Token = await tokenAppService.CreateToken(dto.Email, t.id);
-                                    output.Secret = t.id;
+                                    output.Secret = token.id;
                                     output.EndDateTime = EndDateTime;
 
                                     dto.Password = "******";
@@ -592,6 +588,7 @@ namespace EtheriT.Coker.Application.Authorization
                             UserData.OpenDate = DateTime.Now;
 
                             await loginUserData.SaveChanges(UserData);
+
                             response.Success = true;
                         }
                     }

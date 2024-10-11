@@ -482,7 +482,7 @@ function LoginAction() {
         if (result.success) {
             console.log(result)
             Coker.sweet.success("歡迎回來！", null, true);
-            loginModal.hide();
+            window.location.href = $(location).attr('origin');
         } else {
             switch (result.error) {
                 case "未開通":

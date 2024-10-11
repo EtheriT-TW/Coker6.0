@@ -131,6 +131,153 @@ namespace EtheriT.Coker.Application.Authorization
             await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
+        public async Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto)
+        {
+            LoginOutputDto output = new LoginOutputDto() { Success = false };
+            try
+            {
+                if (string.IsNullOrEmpty(dto.Email)) throw new Exception("郵箱不可為空");
+                else if (string.IsNullOrEmpty(dto.Password)) throw new Exception("密碼不可為空");
+
+                Guid Temp_UUID = await tokenAppService.GetUUID();
+                var user = await db.FrontUsers.Where(e => e.Email == dto.Email && !e.IsDeleted).FirstOrDefaultAsync();
+                if (user != null)
+                {
+                    var mapuserandweb = await db.MappingFrontUserAndWebsite.Where(e => e.FK_UserId == user.Id && e.FK_WebsiteId == dto.WebsiteId && !e.IsDeleted).FirstOrDefaultAsync();
+                    Account_Log account_Log = new Account_Log();
+
+                    if (mapuserandweb != null)
+                    {
+                        if (mapuserandweb.Status == (int)UserStatusEnum.停權 && user.LockTime!=null && ((DateTime)user.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
+                        {
+                            throw new Exception($"帳號鎖定中，請於{((DateTime)user.LockTime).AddMinutes(15)}後再次嘗試。");
+                        }
+                        else
+                        {
+                            string password = user.Password;
+                            if (passwordHasher.VerifyHashedPassword(password, dto.Password))
+                            {
+                                if(mapuserandweb.Status == (int)UserStatusEnum.未開通)
+                                {
+                                    output.Success = false;
+                                    output.Message = "未開通";
+                                    throw new Exception("尚未開通會員，請至郵箱確認或重新寄送通知信。");
+                                }
+                                else
+                                {
+                                    DateTime dateTime = DateTime.Now;
+                                    DateTime EndDateTime = dateTime.AddMinutes(30);
+                                    Core.Models.Token t = new Core.Models.Token
+                                    {
+                                        UUID = mapuserandweb.UUID,
+                                        ip = loginUserData.GetClientIP() ?? "",
+                                        UserID = user.Id,
+                                        StartTime = dateTime,
+                                        EndTime = EndDateTime,
+                                        websiteId = dto.WebsiteId
+                                    };
+                                    db.Tokens.Add(t);
+                                    db.SaveChanges();
+                                    output.Token = await tokenAppService.CreateToken(dto.Email, t.id);
+                                    output.Secret = t.id;
+                                    output.EndDateTime = EndDateTime;
+
+                                    dto.Password = "******";
+                                    await loginUserData.SetLogs("Account", "Login", user.Id, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+
+                                    user.ErrorTimes = 0;
+                                    await loginUserData.SaveChanges(user);
+                                    if (mapuserandweb.Status == (int)UserStatusEnum.停權)
+                                    {
+                                        mapuserandweb.Status = (int)UserStatusEnum.開通;
+                                        await loginUserData.SaveChanges(mapuserandweb);
+                                    }
+
+                                    account_Log = new Account_Log()
+                                    {
+                                        UUID = mapuserandweb.UUID,
+                                        WebsiteId = dto.WebsiteId,
+                                        Status = (int)AccountStatusEnum.登入,
+                                        LastLoginTime = DateTime.Now,
+                                        CreatorUserId = user.Id,
+                                        CreationTime = DateTime.Now,
+                                    };
+                                    db.Account_Logs.Add(account_Log);
+                                    db.SaveChanges();
+
+                                    if (mapuserandweb.UUID != Temp_UUID)
+                                    {
+                                        MappingOldNewUUID mapoldnew = new MappingOldNewUUID
+                                        {
+                                            TempUUID = Temp_UUID,
+                                            UserUUID = mapuserandweb.UUID
+                                        };
+                                        db.MappingOldNewUUID.Add(mapoldnew);
+                                        await loginUserData.SaveChanges(mapoldnew);
+                                    }
+
+                                    output.Success = true;
+                                }
+                            }
+                            else
+                            {
+                                user.ErrorTimes += 1;
+                                account_Log = new Account_Log()
+                                {
+                                    UUID = mapuserandweb.UUID,
+                                    WebsiteId = dto.WebsiteId,
+                                    ErrorTimes = user.ErrorTimes
+                                };
+                                if (user.ErrorTimes >= 3)
+                                {
+                                    user.LockTime = DateTime.Now;
+                                    account_Log.LockTime = user.LockTime;
+
+                                    mapuserandweb.Status = (int)UserStatusEnum.停權;
+                                    account_Log.Status = (int)AccountStatusEnum.停權;
+
+                                    await loginUserData.SaveChanges(user);
+                                    await loginUserData.SaveChanges(mapuserandweb);
+
+                                    account_Log.CreatorUserId = user.Id;
+                                    account_Log.CreationTime = DateTime.Now;
+
+                                    db.Account_Logs.Add(account_Log);
+                                    db.SaveChanges();
+
+                                    output.Success = false;
+                                    throw new Exception("密碼錯誤次數三次以上，請於15分鐘後再次嘗試。");
+                                }
+                                else
+                                {
+                                    account_Log.Status = (int)AccountStatusEnum.登入;
+
+                                    account_Log.CreatorUserId = user.Id;
+                                    account_Log.CreationTime = DateTime.Now;
+                                    db.Account_Logs.Add(account_Log);
+                                    db.SaveChanges();
+                                    
+                                    output.Success = false;
+                                    throw new Exception("帳號或密碼有誤，請重新輸入");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        output.Message = "已存在其他站";
+                        throw new Exception("帳戶尚未於此站開通，是否帶入相關資料(姓名、密碼等)於此站開通?");
+                    }
+                }
+                else throw new Exception("帳號或密碼有誤，請重新輸入");
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+            return output;
+        }
         [Authorize]
         public async Task<UserDto> GetCurrentUser()
         {
@@ -395,6 +542,17 @@ namespace EtheriT.Coker.Application.Authorization
                     db.MappingUserAndRoles.Add(mapuserrole);
                     await loginUserData.SaveChanges(mapuserrole);
 
+                    Account_Log account_Log = new Account_Log()
+                    {
+                        UUID = UUID,
+                        WebsiteId = dto.WebsiteId,
+                        Status = (int)AccountStatusEnum.註冊,
+                        CreatorUserId = user.Id,
+                        CreationTime = DateTime.Now,
+                };
+                    db.Account_Logs.Add(account_Log);
+                    db.SaveChanges();
+
                     var senddto = mapper.Map<SendOpeningDto>(dto);
                     senddto.OpenId = mapuserandweb.OpenID;
                     senddto.OpenIdSendDate = mapuserandweb.OpenIDSendDate;
@@ -478,6 +636,17 @@ namespace EtheriT.Coker.Application.Authorization
                         };
                         db.MappingFrontUserAndWebsite.Add(mapuserandweb);
                         await loginUserData.SaveChanges(mapuserandweb);
+
+                        Account_Log account_Log = new Account_Log()
+                        {
+                            UUID = UUID,
+                            WebsiteId = dto.WebsiteId,
+                            Status = (int)AccountStatusEnum.註冊,
+                            CreatorUserId = theUser.Id,
+                            CreationTime = DateTime.Now,
+                        };
+                        db.Account_Logs.Add(account_Log);
+                        db.SaveChanges();
 
                         dto.OpenId = mapuserandweb.OpenID;
                         dto.OpenIdSendDate = mapuserandweb.OpenIDSendDate;

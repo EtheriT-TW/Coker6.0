@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Authorization;
+﻿using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +31,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto)
         {
             var result = await accountAppService.ReSendOpening(dto);
+            return result;
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        [Authorize]
+        public async Task<LoginOutputDto> Login(FrontLoginInputDto dto)
+        {
+            var result = await accountAppService.FrontLogin(dto);
             return result;
         }
         [HttpGet]

@@ -474,8 +474,54 @@ function CaptchaVerify($self, $input, SuccessAction) {
 }
 
 function LoginAction() {
-    Coker.sweet.success("歡迎回來！", null, true);
+    Coker.sweet.loading();
     loginModal.hide();
+    var data = co.Form.getJson($("#LoginForm").attr("id"));
+    data.WebsiteId = SiteId
+    co.User.Login(data).done((result) => {
+        if (result.success) {
+            console.log(result)
+            Coker.sweet.success("歡迎回來！", null, true);
+            loginModal.hide();
+        } else {
+            switch (result.error) {
+                case "未開通":
+                    Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", function () {
+                        Coker.sweet.loading();
+                        data.WebsiteLink = $(location).attr('origin');
+                        data.WebsiteName = $("meta[property='og:site_name'").attr("content");
+                        data.RoleId = 2;
+                        co.User.AccountReSendOpening(data).done(result => {
+                            if (result.success) {
+                                Coker.sweet.success("系統將重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                            } else {
+                                console.log(result.error);
+                                console.log(result.message);
+                            }
+                        });
+                    });
+                    break;
+                case "已存在其他站":
+                    Coker.sweet.confirm(result.error, "", "是", "否", function () {
+                        Coker.sweet.loading();
+                        co.User.AccountReSendOpening(data).done(result => {
+                            if (result.success) {
+                                Coker.sweet.success("系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                            } else {
+                                console.log(result.error);
+                                console.log(result.message);
+                            }
+                        });
+                    });
+                    break;
+                default:
+                    Coker.sweet.error(result.error, null, false);
+                    break;
+            }
+            console.log(result)
+            NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
+        }
+    })
 }
 
 function RegisterAction() {
@@ -638,6 +684,15 @@ var Coker = {
         AccountReSendOpening: function (data) {
             return $.ajax({
                 url: "/api/User/ReSendOpening",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        Login: function (data) {
+            return $.ajax({
+                url: "/api/User/Login",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify(data),

@@ -3,12 +3,14 @@ using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class ShoppingCartController : Controller
     {
 
@@ -36,10 +38,10 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<List<ShoppingCartGetAllDto>> GetAll(String Tid)
+        public async Task<List<ShoppingCartGetAllDto>> GetAll()
         {
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            return await shoppingCartAppService.GetAll(Tid, siteId);
+            return await shoppingCartAppService.GetAll(siteId);
         }
 
         [HttpGet]

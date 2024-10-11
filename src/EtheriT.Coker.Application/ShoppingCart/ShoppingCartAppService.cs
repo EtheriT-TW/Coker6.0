@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -14,32 +15,36 @@ namespace EtheriT.Coker.Application.ShoppingCart
     public class ShoppingCartAppService : IShoppingCartAppService
     {
         private readonly CokerDbContext db;
+        private readonly ITokenAppService tokenAppService;
         public ShoppingCartAppService(
-            CokerDbContext db
+            CokerDbContext db, 
+            ITokenAppService tokenAppService
         )
         {
             this.db = db;
+            this.tokenAppService = tokenAppService;
         }
         public async Task<ResponseMessageDto> AddUp(ShoppingCartAddUpDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            output.Success = true;
             try
             {
+                var UUID = await tokenAppService.GetUUID();
+                var token = await tokenAppService.CheckToken();
                 var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id).FirstOrDefault();
-                var db_shoppingcart = db.ShoppingCarts.Where(e => e.FK_Tid == dto.FK_Tid && e.FK_PSid == db_ps.Id && !e.IsDeleted).FirstOrDefault();
-                var db_token = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
+                var db_shoppingcart = db.ShoppingCarts.Where(e => e.FK_Tid == UUID && e.FK_PSid == db_ps.Id && !e.IsDeleted).FirstOrDefault();
+                var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
                 var db_prod = db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefault();
                 if (db_ps != null)
                 {
-                    if (db_token != null && db_prod != null)
+                    if (db_token != null && db_prod != null && token.RefreshToken != null)
                     {
                         var price = (db_prod != null) ? (int)(db_ps.Price * dto.Quantity) : 0;
                         if (db_shoppingcart == null)
                         {
                             Core.Models.ShoppingCart sc = new Core.Models.ShoppingCart
                             {
-                                FK_Tid = dto.FK_Tid,
+                                FK_Tid = UUID,
                                 FK_Uid = db_token.UserID,
                                 FK_PSid = db_ps.Id,
                                 FK_S1id = dto.FK_S1id,
@@ -58,7 +63,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             {
                                 FK_Pid = db_prod.Id,
                                 FK_Uid = db_token.UserID,
-                                FK_Tid = dto.FK_Tid,
+                                FK_Tid = UUID,
                                 Action = 3,
                                 Db_Name = "ShoppingCart"
                             };
@@ -98,8 +103,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
             output.Success = true;
             try
             {
+                var UUID = await tokenAppService.GetUUID();
+                var token = await tokenAppService.CheckToken();
                 var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id).FirstOrDefault();
-                var db_token = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
+                var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
 
                 if (db_shoppingcart != null && db_token != null)
                 {
@@ -121,17 +128,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return output;
         }
-        public async Task<List<ShoppingCartGetAllDto>> GetAll(String Tid, long siteId)
+        public async Task<List<ShoppingCartGetAllDto>> GetAll(long siteId)
         {
             try
             {
                 var db_shoppingcart = db.ShoppingCarts;
                 var db_prod_stock = db.Prod_Stocks;
                 var db_prod = db.Prods;
+                var UUID = await tokenAppService.GetUUID();
                 if (db_shoppingcart != null)
                 {
                     var output = await (from sc in db_shoppingcart
-                                        where sc.FK_Tid == Guid.Parse(Tid) && !sc.IsDeleted
+                                        where sc.FK_Tid == UUID && !sc.IsDeleted
                                         from ps in db_prod_stock
                                         where !ps.IsDeleted && ps.Id == sc.FK_PSid
                                         from pp in db.Prod_Prices

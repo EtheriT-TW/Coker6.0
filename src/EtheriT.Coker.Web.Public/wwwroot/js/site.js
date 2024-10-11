@@ -168,7 +168,7 @@ function ready() {
             return $.ajax({
                 url: "/api/Token/CheckToken/",
                 headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("verify").Token
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
                 type: "GET"
             });
@@ -180,11 +180,7 @@ function ready() {
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
-    Coker.Token.GetToken().done(result => {
-        if (result.success) {
-            localStorage.setItem("token", result.token);
-        }
-    });
+    CreateToken();
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");
 
     const enterAdModalEl = $('#EnterAdModal')
@@ -359,7 +355,6 @@ function scrollFunction() {
 function cookie_accept() {
     $.cookie('cookie', 'accept', { expires: 7, path: '/' });
     $("#Cookie").toggleClass("show");
-    CreateToken();
 }
 
 function cookie_reject() {
@@ -369,18 +364,16 @@ function cookie_reject() {
 
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
-        console.log("set token");
-        $.cookie("Token", result.token, { expires: 30, path: "/" })
+        localStorage.setItem("token", result.token);
+        CheckToken();
     })
 }
 
 function CheckToken() {
-    Coker.Token.CheckToken($.cookie("Token")).done(function (result) {
-        console.log(result);
-        if (!result.success) {
-            $.cookie("Token", null, { path: '/' });
-            CreateToken();
-        } else $.cookie("Token", result.token, { expires: 30, path: "/" })
+    Coker.Token.CheckToken().done(function (result) {
+        if (result.success) {
+            console.log("userData:", result);
+        }
     })
 }
 

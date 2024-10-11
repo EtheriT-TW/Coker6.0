@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Core.Models
         public long? FK_Uid { get; set; }
         public int Action { get; set; }
         public Advertise? Advertise { get; set; }
-        public Token? Token { get; set; }
         public User? User { get; set; }
+        public ICollection<Token> Tokens { get; set; }
     }
 }

@@ -13,6 +13,6 @@ namespace EtheriT.Coker.Core.Models
         public string? Db_Name { get; set; }
         public Prod? Prod { get; set; }
         public User? User { get; set; }
-        public Token? Token { get; set; }
+        public ICollection<Token> Tokens { get; set; }
     }
 }

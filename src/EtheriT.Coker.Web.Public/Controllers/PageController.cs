@@ -456,17 +456,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     return View(view, model);
             }
         }
-        public async Task runRefreshToken(Guid secret) {
-            var tokenItem = await tokenAppService.RefreshToken(secret);
-            if (tokenItem.Success && !string.IsNullOrEmpty(tokenItem.Token))
-            {
-                httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token, new CookieOptions
-                {
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
-                });
-            }
-            else throw new Exception();
-        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

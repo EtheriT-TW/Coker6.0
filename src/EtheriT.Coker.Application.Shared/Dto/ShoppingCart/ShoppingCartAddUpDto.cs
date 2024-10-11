@@ -9,7 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
     public class ShoppingCartAddUpDto
     {
         public long? Id { get; set; }
-        public Guid FK_Tid { get; set; }
         public long? FK_Pid { get; set; }
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }

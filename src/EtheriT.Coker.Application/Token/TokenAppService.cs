@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1.Ocsp;
 using EtheriT.Coker.Web.Core.Models;
 using System.Security.Claims;
+using System.Text;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -56,7 +57,7 @@ namespace EtheriT.Coker.Application.Token
                 DateTime date = DateTime.Now;
                 TokenKeyItem tokenItem = new TokenKeyItem();
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
-                if (string.IsNullOrEmpty(tokenStr))
+                if (!string.IsNullOrEmpty(tokenStr))
                 {
                     output = await CheckToken();
                     if (output.Success) return output;
@@ -128,7 +129,7 @@ namespace EtheriT.Coker.Application.Token
                     var tokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(configuration.GetValue<string>("JwtSettings:SignKey"))),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("JwtSettings:SignKey"))),
                         ValidateIssuer = false,
                         ValidateAudience = false
                     };
@@ -136,7 +137,7 @@ namespace EtheriT.Coker.Application.Token
                     var jwtToken = validatedToken as JwtSecurityToken;
                     output.Success = true;
                     output.Token = token;
-                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sid)?.Value, out var Sid)) {
+                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value, out var Sid)) {
                         output.RefreshToken = Sid;
                     }
                     if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, out var Sub))
@@ -150,10 +151,22 @@ namespace EtheriT.Coker.Application.Token
             catch (Exception e)
             {
                 output.Success = false;
-                output.Error = "Token is invalid";
+                output.Error = e.Message;
             }
 
             return output;
+        }
+        public async Task<Guid> GetUUID() {
+            Guid tokenId = new Guid();
+            Guid UUID = new Guid();
+            var token = await CheckToken();
+            if (token!=null && token.Success) {
+                if (token.RefreshToken != null) {
+                    var t = await db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefaultAsync();
+                    if(t!=null) UUID = t.UUID;
+                }
+            }
+            return UUID;
         }
         public async Task<TokenResponseDto> RefreshToken(Guid? id) {
             TokenResponseDto output = new TokenResponseDto();

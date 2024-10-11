@@ -10,8 +10,8 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? EndTime { get; set; }
         public string ip { get; set; }
         public long websiteId { get; set; }
-        public List<Prod_Log> Prod_Logs { get; set; }
-        public List<Advertise_Log> Advertise_Logs { get; set; }
-        public List<ShoppingCart> ShoppingCarts { get; set; }
+        public ICollection<Prod_Log> Prod_Logs { get; set; }
+        public ICollection<Advertise_Log> Advertise_Logs { get; set; }
+        public ICollection<ShoppingCart> ShoppingCarts { get; set; }
     }
 }

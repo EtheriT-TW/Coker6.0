@@ -20,6 +20,9 @@ function PageReady() {
                 url: "/api/Order/AddHeader",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: JSON.stringify(data),
                 dataType: "json"
             });
@@ -29,6 +32,9 @@ function PageReady() {
                 url: "/api/Order/AddDetails",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: JSON.stringify(data),
                 dataType: "json"
             });
@@ -38,6 +44,9 @@ function PageReady() {
                 url: "/api/Order/GetHeaderOne/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: { id: id },
             });
         },
@@ -46,6 +55,9 @@ function PageReady() {
                 url: "/api/Order/GetOrderDetails/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: { id: id },
             });
         },
@@ -56,7 +68,6 @@ function PageReady() {
             });
         },
     };
-
     ElementInit();
     CartInit();
 
@@ -240,7 +251,7 @@ function ElementInit() {
 }
 
 function CartInit() {
-    Product.GetAll.Cart($.cookie("Token")).done(function (result) {
+    Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
             $("#Step1 > .card-body").removeClass("d-none");
             for (var i = 0; i < result.length; i++) {

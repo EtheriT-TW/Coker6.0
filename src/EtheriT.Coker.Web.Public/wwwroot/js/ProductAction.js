@@ -5,6 +5,9 @@
                 url: "/api/ShoppingCart/AddUp",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: JSON.stringify(data),
                 dataType: "json"
             });
@@ -16,6 +19,9 @@
                 url: "/api/ShoppingCart/QuantityUpdate",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: JSON.stringify(data),
                 dataType: "json"
             });
@@ -25,6 +31,9 @@
         Cart: function (Tid) {
             return $.ajax({
                 url: "/api/ShoppingCart/GetAll/",
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 type: "GET",
                 data: { Tid: Tid }
             });
@@ -34,6 +43,9 @@
         Cart: function (id) {
             return $.ajax({
                 url: "/api/ShoppingCart/GetDropOne/",
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 type: "GET",
                 data: { id: id }
             });
@@ -71,6 +83,9 @@
         Cart: function (id) {
             return $.ajax({
                 url: "/api/ShoppingCart/DeleteDrop/",
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 type: "GET",
                 data: { id: id }
             });

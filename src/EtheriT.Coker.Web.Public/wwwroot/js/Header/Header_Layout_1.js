@@ -7,7 +7,7 @@
         $("body").css("padding-top", mega_menu_height);
     });
 
-    if ($.cookie("Token") != null) {
+    if ($("#Cart_Dropdown_Parent").length>0) {
         CartDropInit();
     }
     MenuLiSize();
@@ -98,7 +98,8 @@ function MenuLiSize() {
 }
 
 function CartDropInit() {
-    Product.GetAll.Cart($.cookie("Token")).done(function (result) {
+    console.log("load shopping cards");
+    Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
             for (var i = 0; i < result.length; i++) {
                 CartDropAdd(result[i])

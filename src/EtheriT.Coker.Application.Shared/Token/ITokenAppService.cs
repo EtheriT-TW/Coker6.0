@@ -10,10 +10,10 @@ namespace EtheriT.Coker.Application.Token
 {
     public interface ITokenAppService
     {
-        public Task<string> CreateToken(string account,Guid secret);
+        public Task<string> CreateToken(string account,Guid secret, int expireMinutes = 30);
         public Task<bool> DelToken();
         public Task<TokenResponseDto> CreateToken();
-        public Task<TokenResponseDto> CheckToken();
+        public TokenResponseDto CheckToken();
         public Task<TokenResponseDto> RefreshToken(Guid? id);
         public Task<Guid> GetUUID();
     }

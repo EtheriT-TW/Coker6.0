@@ -623,7 +623,7 @@ function PassCheck() {
     $NewPass.addClass("is-invalid");
     $CheckPass.addClass("is-invalid");
     if ($NewPass.val().length >= 8) {
-        if (hasNum.test($NewPass.val()) && hasLetter.test($NewPass.val()) && !(hasSpesym.test($NewPass.val()))) {
+        if (hasNum.test($NewPass.val()) && hasLetter.test($NewPass.val()) && hasSpesym.test($NewPass.val())) {
             $NewPass.removeClass("is-invalid");
             $NewPass.addClass("is-valid");
             $NewPassFeedBack.text("　");

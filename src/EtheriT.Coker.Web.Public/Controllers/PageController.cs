@@ -368,6 +368,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"href=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"href=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
+                        model.PageData.Html = Regex.Replace(model.PageData.Html, $"data-pdf-url=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"data-pdf-url=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
                     if (siteId != defaultData.Id && model.ParentData != null)
@@ -375,6 +376,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData.Html = stringHandler.HtmlEncode(model.ParentData.Html);
                         model.ParentData.Html = model.ParentData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
                         model.ParentData.Html = model.ParentData.Html.Replace("href=&quot;/upload/", $"href=&quot;/upload/{defaultData.OrgName}/");
+                        model.ParentData.Html = model.ParentData.Html.Replace("data-pdf-url=&quot;/upload/", $"data-pdf-url=&quot;/upload/{defaultData.OrgName}/");
                         model.ParentData.Css = (model.ParentData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
                 }

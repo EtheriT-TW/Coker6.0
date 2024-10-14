@@ -30,6 +30,7 @@ var grapesInit = function (options) {
         noticeOnUnload: 0,
         container: '#gjs',
         height: '100vh',
+        protectedCss: "",
         i18n: {
             locale: 'tw',
             localeFallback: 'tw',
@@ -105,7 +106,7 @@ var grapesInit = function (options) {
                     '/lib/tui-code/css/tui-image-editor.min.css', // v3.15.2
                 ]
             },
-            'grapesjs-blocks-table': { containerId: '#gjs', componentCell:".test" },
+            'grapesjs-blocks-table': { containerId: '#gjs', componentCell: ".test" },
             'grapesjs-Coker6': options,
             'grapesjs-preset-newsletter': {
                 modalLabelExport: 'Copy the code and use it wherever you want',
@@ -131,7 +132,7 @@ var grapesInit = function (options) {
                     allowedContent: true, // Disable auto-formatting, class removing, etc.
                     enterMode: 2, // CKEDITOR.ENTER_BR,
                     extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font',
-                    removePlugins:'exportpdf',
+                    removePlugins: 'exportpdf',
                     fontSize_sizes: '0.8rem;1rem;1.2rem;1.5rem;2rem;2.5rem;3rem;',
                     colorButton_enableMore: true,
                     toolbar: [
@@ -266,7 +267,7 @@ var grapesInit = function (options) {
                         });
                     }
                     const init = function () {
-                        if (typeof (iframe.jqueryExtend) != "undefined" && typeof (iframe.local) != "undefined" ) iframe.jqueryExtend();
+                        if (typeof (iframe.jqueryExtend) != "undefined" && typeof (iframe.local) != "undefined") iframe.jqueryExtend();
                         else timer = setTimeout(init, 100);
                     }
                     timer = setTimeout(init, 100);
@@ -297,7 +298,7 @@ var grapesInit = function (options) {
                             case "four_swiper":
                             case "five_swiper":
                             case "six_swiper":
-                                setConfig(0, s); 
+                                setConfig(0, s);
                                 checkClass[0].parameter.autoplay = false;
                                 break;
                             case "masonry":

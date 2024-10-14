@@ -158,6 +158,44 @@
             }
         },
     });
+    editor.DomComponents.addType('電子書', {
+        isComponent: el => el.classList?.contains('FlipBookItem'),
+        model: {
+            defaults: {
+                traits: [
+                    // Strings are automatically converted to text types
+                    { name: 'title', type: 'text', label: '檔案名稱', placeholder: '點選下方按鈕選擇檔案' },
+                    { name: 'data-pdf-url', type: 'text', label: '連結', placeholder: '請輸入電子書路徑' },
+                    {
+                        name: 'file', type: 'button',
+                        text: "選擇檔案",
+                        command: editor => {
+                            AssetManager.open({
+                                types: ['pdf'],  // 允許 PDF 類型
+                                accept: 'application/pdf', // 只允許上傳 PDF 檔案
+                            });
+                            AssetManager.onSelect((resule) => {
+                                const selectedComponent = editor.getSelected();
+                                const attributes = selectedComponent.getAttributes();
+                                selectedComponent.set("attributes", {
+                                    ...attributes, // 保留現有屬性
+                                    "data-pdf-url": resule.id,
+                                    "title": resule.attributes.name
+                                });
+                                AssetManager.close();
+                            });
+                        },
+                    }
+                ]
+            }
+        }, view: {
+            // 這裡是關於元件的視圖
+            onRender() {
+                const el = this.el; // 這裡獲取渲染後的 DOM 元素
+                $(el).removeAttr("data-bs-toggle"); // 移除屬性
+            }
+        }
+    });
     /*檔案下載*/
     editor.DomComponents.addType('檔案下載', {
         isComponent: el => el.classList?.contains('link_with_icon'),
@@ -1020,7 +1058,6 @@
     function removeBlock() {
         const l = actionBlockId.split("_");
         const id = l[l.length - 1];
-        console.log(id);
         co.HtmlContent.Delete(id).done(function (result) {
             if (result.success) {
                 BlockManager.remove(actionBlockId);
@@ -1146,7 +1183,11 @@
             className: 'someClass',
             label: '<i title="發布" class="fa fa-cloud-arrow-up""></i>',
             command: function (editor) {
-                settings.import(editor.getHtml(), editor.getCss()).done(function () {
+                let t = editor.getHtml();
+                const $html = $("<div>").append(t);
+                $html.find(`[data-bs-target]`).attr("data-bs-toggle", "modal");
+                t = `<body>${$html.html()}</body>`;
+                settings.import(t, editor.getCss()).done(function () {
                     co.sweet.success("已儲存並發布");
                 });
             },

@@ -67,13 +67,12 @@ function FlipBookModalInit(pare) {
         } else timer = setTimeout(init, 100);
     }
     timer = setTimeout(init, 100);
-    $this.on('show.bs.modal', event => {
+    $this.on('shown.bs.modal', event => {
         // Button that triggered the modal
         var button = event.relatedTarget;
         var target_pdf = button.getAttribute('data-pdf-url');
         PDFViewerApplication.setInitialView();
         PDFViewerApplication.open({ url: target_pdf, originalUrl: target_pdf });
-
     });
 }
 

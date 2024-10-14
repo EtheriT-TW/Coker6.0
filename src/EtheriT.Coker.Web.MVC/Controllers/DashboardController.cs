@@ -43,10 +43,36 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var remoteItem = new List<long>();
             var remoteMemCount = new List<long>();
             var dateItem = new List<string>();
-            var today = DateTime.Today;
+			long totalRemoteCount = 0;
+			long totalMemCount = 0;
+			List<DateTime> dateRange = new List<DateTime>();
+			var today = DateTime.Today;
             if (result.Success) {
+                Console.WriteLine(result.Object+"////////////");
                 var items = ((GetRemoteCountOutputDto)result.Object).remoteListOtputDtos;
-                for (int i = 0; i < 7; i++)
+				DateTime? earliestDate = items.Min(e => e.date.Date);
+				if (earliestDate.HasValue)
+				{
+					// 从最早日期开始到今天
+					for (DateTime d = earliestDate.Value.Date; d <= DateTime.Today; d = d.AddDays(1))
+					{
+						dateRange.Add(d);
+						RemoteListOtputDto? item = items.Find(e => e.date.Date == d.Date);
+						if (item == null)
+						{
+							// 没有数据则累加0
+							totalRemoteCount += 0;
+							totalMemCount += 0;
+						}
+						else
+						{
+							totalRemoteCount += item.count;
+							totalMemCount += item.MemCount;
+						}
+					}
+				}
+
+				for (int i = 0; i < 7; i++)
                 {
                     DateTime d = DateTime.Now.Date.AddDays(-i);
                     RemoteListOtputDto? item = items.Find(e => e.date.Day == d.Day);
@@ -65,8 +91,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 dateItem.Reverse();
                 remoteMemCount.Reverse();
                 remoteItem.Reverse();
-            }
-			
+			}
 
 
             DashboardModel model = new DashboardModel
@@ -109,7 +134,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     WebsitesRemotesMemCount = remoteMemCount,
                     SumCount = remoteItem.Sum(),
                     SumMemCount = remoteMemCount.Sum(),
-                    LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd")
+                    LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd"),
+                    TotleCount = totalRemoteCount,
+                    TotleMemCount = totalMemCount,
+                    FirstTime = dateRange[0]
                 }
             };
             return View(model);

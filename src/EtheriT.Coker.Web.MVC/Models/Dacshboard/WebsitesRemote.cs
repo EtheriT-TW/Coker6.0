@@ -8,5 +8,11 @@
         public long SumMemCount { get; set; }//當月總瀏覽人數
         public List<string> WebsitesRemotesDate { get; set; } //這個禮拜
         public string LastUpdateDate { get; set; }//統計區間時間段
+
+        public long TotleCount { get; set; }
+
+        public long TotleMemCount { get;set; }
+
+        public DateTime FirstTime { get; set; }
     }
 }

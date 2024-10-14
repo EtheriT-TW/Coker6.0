@@ -98,7 +98,6 @@ function MenuLiSize() {
 }
 
 function CartDropInit() {
-    console.log("load shopping cards");
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
             for (var i = 0; i < result.length; i++) {

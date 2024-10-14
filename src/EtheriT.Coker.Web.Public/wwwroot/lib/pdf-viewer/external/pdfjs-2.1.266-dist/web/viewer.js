@@ -3564,7 +3564,6 @@
         function scrollIntoView(element, spot) {
             var skipOverflowHiddenElements = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
             var parent = element.offsetParent;
-
             if (!parent) {
                 console.error('offsetParent is not set -- cannot scroll');
                 return;

@@ -1,5 +1,6 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Freight
 @using EtheriT.Coker.Web.Public.Models
+@using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 @{
 	ViewData["SideName"] = Model.PageData.SiteName;
@@ -11,6 +12,10 @@
 	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
 	ViewData["XSRF-TOKEN"] = Model.token;
 }
+<script nonce="@ViewBag.Nonce">
+	const PageKey = "@Model.option";
+	const local = @Html.Raw(L.getAllJsonString());
+</script>
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()

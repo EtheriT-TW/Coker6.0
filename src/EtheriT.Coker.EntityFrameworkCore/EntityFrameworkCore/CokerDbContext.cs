@@ -15,7 +15,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
     public class CokerDbContext : DbContext
     {
-        public DbSet<User> Users { get; set; }
+		public DbSet<User> Users { get; set; }
         public DbSet<FrontUser> FrontUsers { get; set; }
         public DbSet<Account_Log> Account_Logs  { get; set; }
         public DbSet<Website> Websites { get; set; }
@@ -81,26 +81,43 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         {
 
         }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Website>(o =>
+            base.OnModelCreating(modelBuilder);
+			modelBuilder.Entity<User>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<FrontUser>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Website>(o =>
             {
                 o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<MappingUserAndWebsite>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<MappingFrontUserAndWebsite>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Websites).HasForeignKey(f => f.FK_UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.FrontUsers).HasForeignKey(f => f.FK_WebsiteId);
-            });
-            modelBuilder.Entity<Marquee>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<MappingOldNewUUID>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Marquee>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Marquees).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Token>(o =>
             {
                 o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
@@ -165,68 +182,102 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(m => m.VisibleTitle).HasDefaultValue(true);
                 o.Property(m => m.ShowToMenu).HasDefaultValue(true);
                 o.Property(m => m.RemovedFromShelves).HasDefaultValue(false);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Order_Details>(o =>
             {
                 o.HasOne(u => u.Order_Header).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_OId);
                 o.HasOne(u => u.ShoppingCart).WithMany(u => u.Order_Details).HasForeignKey(f => f.FK_SCId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<LogisticsSetting>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.LogisticsSettings).HasForeignKey(f => f.FK_WebsiteId);
-            });
-            modelBuilder.Entity<LogisticsType_PaymentType>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<PaymentType>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<LogisticsType_PaymentType>(o =>
             {
                 o.HasOne(u => u.Logisticstype).WithMany(u => u.LogisticsType_Payments).HasForeignKey(f => f.FK_Lid);
                 o.HasOne(u => u.PaymentType).WithMany(u => u.LogisticsType_Payments).HasForeignKey(f => f.FK_Pid);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<ThirdPartyKeypair>(o =>
             {
                 o.HasOne(u => u.ThirdParty).WithMany(u => u.ThirdPartyKeypair).HasForeignKey(f => f.FK_TPid);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<ThirdPartyKeypairValue>(o =>
             {
                 o.HasOne(u => u.ThirdPartyKeypair).WithMany(u => u.thirdPartyKeypairValues).HasForeignKey(f => f.FK_ThirdPartyKeypairId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<PaymentTypesValue>(o =>
             {
                 o.HasOne(u => u.paymentType).WithMany(u => u.paymentTypesValues).HasForeignKey(f => f.FK_PaymentTypesId);
-            });
-            modelBuilder.Entity<Prod>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<ThirdParty>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<ObjectType>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<MappingWebsiteRelationship>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Prod>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Prods).HasForeignKey(f => f.FK_WebsiteId);
                 o.Property(p => p.Visible).HasDefaultValue(true);
                 o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
                 o.Property(p => p.Status).HasDefaultValue(0);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
 
             modelBuilder.Entity<Prod_TechCert>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.TechnicalCertificates).HasForeignKey(f => f.FK_PId);
                 o.HasOne(u => u.TechnicalCertificate).WithMany(u => u.prods).HasForeignKey(f => f.FK_TCId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Prod_Log>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Pid);
                 o.HasOne(u => u.User).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Uid);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Prod_Spec>(o =>
             {
                 o.HasOne(u => u.Prod_Spec_Type).WithMany(u => u.Prod_Specs).HasForeignKey(f => f.FK_Tid);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Prod_Spec_Type>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Prod_Spec_Types).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Prod_Stock>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Stocks).HasForeignKey(f => f.FK_Pid);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<ShoppingCart>(o =>
             {
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.ShoppingCarts).HasForeignKey(f => f.FK_PSid);
-            });
-            modelBuilder.Entity<SearchLog>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Order_Header>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<SearchLog>(o =>
             {
                 o.HasOne(s => s.Website).WithMany(w => w.SearchLogs).HasForeignKey(f => f.FK_WebsiteId);
             });
@@ -234,105 +285,137 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(c => c.Website).WithMany(u => u.Html_Contents).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(c => c.ObjectClassify).WithMany(o => o.html_Contents).HasForeignKey(c => c.Type);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<TechnicalCertificate>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.TechnicalCertificates).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Prod_Price>(o =>
             {
                 o.HasOne(u => u.Prod_Stock).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_PSId);
                 o.HasOne(u => u.Role).WithMany(u => u.Prod_Prices).HasForeignKey(f => f.FK_RId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Role>(o =>
             {
                 o.Property(w => w.Type).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<MappingUserAndRole>(o =>
             {
                 o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Tag>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Tag_Associate>(o =>
             {
                 o.HasOne(u => u.Tag).WithMany(u => u.Tag_Associates).HasForeignKey(f => f.FK_TId);
-            });
-            modelBuilder.Entity<Tag_TagGroup>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Tag_Group>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Tag_TagGroup>(o =>
             {
                 o.HasOne(u => u.Tag).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TId);
                 o.HasOne(u => u.Tag_Group).WithMany(u => u.Tag_TagGroups).HasForeignKey(f => f.FK_TGId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<FileUpload>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Files).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<FileBind>(o =>
             {
                 o.HasOne(b => b.fileUpload).WithMany(f => f.fileBinds).HasForeignKey(f => f.FK_FileUploadId);
                 o.HasKey(b => b.Guid);
-            });
-            modelBuilder.Entity<Advertise>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<FileBindMore>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Advertise>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Advertise).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Advertise_Log>(o =>
             {
                 o.HasOne(u => u.Advertise).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Adid);
                 o.HasOne(u => u.User).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Uid);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Article>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Directory>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Directory).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<StoreSetDetail>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.StoreSetDetails).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(f => f.StoreSet).WithMany(u => u.storeSetDetails).HasForeignKey(f => f.FK_StoreSetId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<StoreSetGroup>(o =>
             {
                 o.HasMany(f => f.StoreSets).WithOne(u => u.storeSetGroup).HasForeignKey(f => f.FK_StoreSetGroupId);
-            });
-            modelBuilder.Entity<storeSetItem>(o =>
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<StoreSet>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<storeSetItem>(o =>
             {
                 o.HasOne(f => f.storeSet).WithMany(u => u.storeSetItem).HasForeignKey(f => f.FK_StoreSetId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<CustSearch>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<AuditLog>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
-            });
+			});
             modelBuilder.Entity<MappingCompanyAndWebsites>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(w => w.Company).HasForeignKey(e => e.FK_WebsiteId);
                 o.HasOne(f => f.Company).WithMany(w => w.Websites).HasForeignKey(e => e.FK_CompanyId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Recipient>(o =>
             {
                 o.HasOne(f => f.Website).WithMany(u => u.Recipients).HasForeignKey(f => f.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Permissions>(o =>
             {
                 o.HasOne(f => f.User).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_UserId);
                 o.HasOne(f => f.Role).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_RoleId);
                 o.HasOne(f => f.Website).WithMany(w => w.Permissions).HasForeignKey(e => e.FK_WebsiteId);
-            });
+			});
             modelBuilder.Entity<PermissionDetail>(o =>
             {
                 o.HasOne(f => f.User).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_UserId);
                 o.HasOne(f => f.Role).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_RoleId);
                 o.HasOne(f => f.Website).WithMany(w => w.PermissionDetails).HasForeignKey(e => e.FK_WebsiteId);
-            });
+			});
             modelBuilder.Entity<Remote>(o =>
             {
                 o.HasOne(f => f.User).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_UserId);
@@ -340,23 +423,28 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
                 o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
-            });
+			});
             modelBuilder.Entity<NotFoundImage>(o =>
             {
                 o.Property(t => t.CreateDate).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.Website).WithMany(w => w.NotFoundImages).HasForeignKey(e => e.FK_WebsiteId);
-            });
+			});
             modelBuilder.Entity<Core.Models.JsonObject>(o =>
             {
                 o.Property(t => t.CreationTime).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.FK_Website).WithMany(w => w.jsonObjects).HasForeignKey(e => e.FK_WebsiteId);
-            });
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
             modelBuilder.Entity<Contact>(o =>
             {
                 o.HasOne(f => f.WebMenu).WithMany(w => w.Contacts).HasForeignKey(e => e.FK_WebMenuId);
-            });
-            base.OnModelCreating(modelBuilder);
-            new SeedHelper(modelBuilder).SeedHost();
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			modelBuilder.Entity<Company>(o =>
+			{
+				o.HasQueryFilter(e => !e.IsDeleted);
+			});
+			new SeedHelper(modelBuilder).SeedHost();
         }
     }
 }

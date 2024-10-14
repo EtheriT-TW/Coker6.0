@@ -30,7 +30,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var UUID = await tokenAppService.GetUUID();
-                var token = await tokenAppService.CheckToken();
+                var token = tokenAppService.CheckToken();
                 var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id).FirstOrDefault();
                 var db_shoppingcart = db.ShoppingCarts.Where(e => e.FK_Tid == UUID && e.FK_PSid == db_ps.Id && !e.IsDeleted).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
@@ -104,7 +104,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var UUID = await tokenAppService.GetUUID();
-                var token = await tokenAppService.CheckToken();
+                var token = tokenAppService.CheckToken();
                 var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
 

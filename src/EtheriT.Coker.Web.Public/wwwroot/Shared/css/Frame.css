@@ -309,6 +309,46 @@ table:not(.table) {
     display: none;
 }
 
+
+/*FlipBook*/
+.FlipBook {
+        background: #404040d0 !important;
+    }
+
+        .FlipBook .canvasWrapper {
+            transform: scale(0.99);
+        }
+
+        .FlipBook .pageButton {
+            width: 3rem;
+            height: 3rem;
+            font-size: 0;
+        }
+
+            .FlipBook .pageButton.pageDown {
+                right: 1.5rem;
+            }
+
+            .FlipBook .pageButton.pageUp {
+                left: 1.5rem;
+            }
+
+    .FlipBookModal .modal-dialog {
+        background-color: #fff4;
+    }
+
+    .FlipBookModal .modal-content {
+        background-color: #fff4;
+    }
+
+    .FlipBookModal .modal-header {
+        background-color: #fff4;
+    }
+
+    .FlipBookModal .modal-body {
+        background-color: #fff4;
+    }
+
 @media only screen and (max-width: 1400px) {
     .bottom_3-2 {
         top: calc(100% / 3* 1.8);

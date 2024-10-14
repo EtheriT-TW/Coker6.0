@@ -59,7 +59,7 @@ namespace EtheriT.Coker.Application.Token
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
                 if (!string.IsNullOrEmpty(tokenStr))
                 {
-                    output = await CheckToken();
+                    output = CheckToken();
                     if (output.Success) return output;
                 }
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out RefreshTokenStr);
@@ -72,11 +72,17 @@ namespace EtheriT.Coker.Application.Token
                         if (RefreshToken != null)
                         {
                             var mapfrontuserandweb = await db.MappingFrontUserAndWebsite.Where(e => e.UUID == RefreshToken.UUID && !e.IsDeleted).FirstOrDefaultAsync();
-                            var user = await db.FrontUsers.Where(e => e.Id == mapfrontuserandweb.FK_UserId && !e.IsDeleted).FirstOrDefaultAsync();
-                            var useraccount = "";
-                            if(user != null) { useraccount = user.Account == null ? user.Email : user.Account; }
-                            tokenItem = await NewToken(useraccount, RefreshToken.UUID, user?.Id);
-                            output.name = user.Name;
+                            if (mapfrontuserandweb != null) {
+								var user = await db.FrontUsers.Where(e => e.Id == mapfrontuserandweb.FK_UserId && !e.IsDeleted).FirstOrDefaultAsync();
+								var useraccount = "";
+                                if (user != null)
+                                {
+                                    useraccount = user.Account == null ? user.Email : user.Account;
+                                    tokenItem = await NewToken(useraccount, RefreshToken.UUID, user?.Id);
+                                    output.name = user?.Name;
+                                }
+                                else tokenItem = await NewToken(null, RefreshToken.UUID);
+							}
                         }
                         else
                         {
@@ -122,7 +128,7 @@ namespace EtheriT.Coker.Application.Token
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
             return item;
         }
-        public async Task<TokenResponseDto> CheckToken()
+        public TokenResponseDto CheckToken()
         {
             TokenResponseDto output = new TokenResponseDto();
             try
@@ -165,7 +171,7 @@ namespace EtheriT.Coker.Application.Token
         {
             Guid tokenId = new Guid();
             Guid UUID = new Guid();
-            var token = await CheckToken();
+            var token = CheckToken();
             if (token != null && token.Success)
             {
                 if (token.RefreshToken != null)
@@ -231,17 +237,19 @@ namespace EtheriT.Coker.Application.Token
             }
             return output;
         }
-        public async Task<string> CreateToken(string account, Guid secret)
+        public async Task<string> CreateToken(string account, Guid secret, int expireMinutes = 30)
         {
             var user = db.Users.Where(e => e.Account == account).FirstOrDefault();
-            if (user == null)
+            List<KeyValuePair<string, string>> custClaims = new List<KeyValuePair<string, string>>();
+			if (user != null)
             {
-            }
+                custClaims.Add(new KeyValuePair<string, string>("username", user.Name));
+			}
             List<string> roles = new List<string> {
                 "Admin",
                 "Users"
             };
-            return await jwt.GenerateToken(account, roles, secret);
+            return await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
         }
         public async Task<bool> DelToken()
         {

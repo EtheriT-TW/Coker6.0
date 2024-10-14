@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -38,7 +39,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
-            var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
+			var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
 
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();
@@ -56,7 +57,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         marqueeModels = new List<MarqueeDisplayDto> { },
 
                     };
-                    if (marquee.Count > 0)
+					if (marquee.Count > 0)
                     {
                         marquee.ForEach(data =>
                         {

@@ -1,6 +1,7 @@
 ﻿using DevExtreme.AspNet.Data.ResponseModel;
 using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -49,7 +50,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			var today = DateTime.Today;
             if (result.Success) {
                 var items = ((GetRemoteCountOutputDto)result.Object).remoteListOtputDtos;
-                Console.WriteLine(items.FindAll+"//////////");
+                /*Console.WriteLine(remoteAppService.GetPageList("")+"//////////");
                 DateTime? earliestDate = items.Min(e => e.date.Date);
                 if (earliestDate.HasValue)
 				{
@@ -70,7 +71,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 							totalMemCount += item.MemCount;
 						}
 					}
-				}
+				}*/
 
 				for (int i = 0; i < 7; i++)
                 {
@@ -135,9 +136,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     SumCount = remoteItem.Sum(),
                     SumMemCount = remoteMemCount.Sum(),
                     LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd"),
-                    TotleCount = totalRemoteCount,
+                    /*TotleCount = totalRemoteCount,
                     TotleMemCount = totalMemCount,
-                    FirstTime = dateRange[0]
+                    FirstTime = dateRange[0]*/
                 }
             };
             return View(model);

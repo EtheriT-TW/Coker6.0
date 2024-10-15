@@ -45,7 +45,11 @@ function SwiperInit(obj) {
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
                     clickable: true,
-                }, 
+                }, on: {
+                    slideChange: function () {
+                        console.log($self.find('iframe')); // 每次幻燈片改變時停止所有影片
+                    }
+                },
 
                 effect: effect,
                 speed: speed

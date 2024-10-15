@@ -490,6 +490,7 @@ namespace EtheriT.Coker.Application.Directory
                 .Where(e => e.FK_WebsiteId == WebsiteID)
                 .Where(e =>
                     e.Title.Contains(dto.SearchText ?? "") ||
+                    e.Introduction.Contains(dto.SearchText ?? "") ||
                     e.Description.Contains(dto.SearchText ?? "") ||
                     (e.Html ?? "").Contains(dto.SearchText ?? "") ||
                     (e.ItemNo != null && e.ItemNo.Contains(dto.SearchText ?? "")) ||

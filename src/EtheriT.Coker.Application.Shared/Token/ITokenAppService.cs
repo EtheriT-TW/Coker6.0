@@ -16,5 +16,6 @@ namespace EtheriT.Coker.Application.Token
         public TokenResponseDto CheckToken();
         public Task<TokenResponseDto> RefreshToken(Guid? id);
         public Task<Guid> GetUUID();
+        public Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null);
     }
 }

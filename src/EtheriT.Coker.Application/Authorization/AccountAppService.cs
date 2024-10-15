@@ -136,9 +136,9 @@ namespace EtheriT.Coker.Application.Authorization
             LoginOutputDto output = new LoginOutputDto() { Success = false };
             try
             {
-                if (string.IsNullOrEmpty(dto.Email)) throw new Exception("郵箱不可為空");
+                if (string.IsNullOrEmpty(dto.Email)) throw new Exception("電子信箱不可為空");
                 else if (string.IsNullOrEmpty(dto.Password)) throw new Exception("密碼不可為空");
-
+                var tokenItem = await tokenAppService.CreateToken();
                 Guid Temp_UUID = await tokenAppService.GetUUID();
                 var user = await db.FrontUsers.Where(e => e.Email == dto.Email && !e.IsDeleted).FirstOrDefaultAsync();
                 if (user != null)
@@ -168,7 +168,7 @@ namespace EtheriT.Coker.Application.Authorization
                                     DateTime dateTime = DateTime.Now;
                                     DateTime EndDateTime = dateTime.AddMinutes(30);
 
-                                    var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.websiteId == dto.WebsiteId).FirstOrDefaultAsync();
+                                    var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.id == tokenItem.RefreshToken && e.websiteId == dto.WebsiteId).FirstOrDefaultAsync();
                                     if (token != null)
                                     {
                                         token.UUID = mapuserandweb.UUID;

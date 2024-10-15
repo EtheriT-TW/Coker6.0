@@ -388,25 +388,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
 			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
             ViewBag.isLogin = false;
-            Guid guid = Guid.NewGuid();
-            Guid secret = Guid.NewGuid();
-            var AccessToken = httpContextAccessor.HttpContext.Request.Cookies["Token"];
-            var RefreshToken = httpContextAccessor.HttpContext.Request.Cookies["RefreshToken"];
             
             try
             {
                 var tokenItem = await tokenAppService.CreateToken();
                 if (tokenItem != null) {
-                    httpContextAccessor.HttpContext.Response.Cookies.Append("Token", tokenItem.Token!, new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
-                    });
-                    httpContextAccessor.HttpContext.Response.Cookies.Append("RefreshToken", tokenItem.RefreshToken.ToString()!, new CookieOptions
-                    {
-                        Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
-                    });
-                    ViewBag.isLogin = tokenItem.IsLogin;
-                }
+                    ViewBag.isLogin = tokenItem.IsLogin;                }
+                else throw new Exception();
             }
             catch {
                 ViewBag.isLogin = false;

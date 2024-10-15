@@ -102,6 +102,7 @@ function PageReady() {
     });
 
     buy_step_swiper.on('slideChange', function () {
+        console.log("changeSlide", buy_step_swiper.activeIndex);
         switch (buy_step_swiper.activeIndex) {
             case 2:
                 if (ShippingForms.find("input").length == 0) {
@@ -118,6 +119,16 @@ function PageReady() {
                         setTimeout(function () {
                             buy_step_swiper.slideTo(1);
                         }, 1500);
+                    } else {
+                        OrdererFilled = FormCheck(OrdererForms);
+                        RecipientFilled = FormCheck(RecipientForms);
+                        InvoiceFilled = FormCheck(InvoiceForms);
+                        if (!OrdererFilled) {
+                            $("#OrdererForm>form").removeClass('was-validated')
+                            OrdererEdit();
+                            $("#radio_recipient_order").trigger("change");
+                            $("#radio_bill_orderer").trigger("change");
+                        }
                     }
                 }
                 break;
@@ -163,7 +174,7 @@ function PageReady() {
     ShippingForms = $('#RadioShipping');
     PaymentForms = $('#RadioPayment');
 
-    $(".btn_step2_next").on("click", Step2Monitor);
+    $(".btn_swiper_next_step3").on("click", Step2Monitor);
 
     /* Step3 Form 檢測 */
     OrdererForms = $('#OrdererForm > form');
@@ -185,10 +196,15 @@ function PageReady() {
     $(".btn_delete_recipient").on("click", DeleteRecipient);
 
     /* Radio Button */
-    $('input[type=radio][name=RadioShipping]').change(RadioShipping);
-    $('input[type=radio][name=RadioPayment]').change(RadioPayment);
-    $('input[type=radio][name=RecipientRadio]').change(RecipientRadio);
-    $('input[type=radio][name=InvoiceRadio]').change(InvoiceRadio);
+    $('input[type=radio][name=RadioShipping]').on("change",RadioShipping);
+    $('input[type=radio][name=RadioPayment]').on("change", RadioPayment);
+    $('input[type=radio][name=RecipientRadio]').on("change", RecipientRadio);
+    $('input[type=radio][name=InvoiceRadio]').on("change", InvoiceRadio);
+
+    $(".btn_gray_dark").on("click", function () {
+        history.back();
+        return false;
+    });
 
 }
 
@@ -357,7 +373,7 @@ function TotalCount() {
     subtotal = 0;
     $('.purchase_list').children("li").each(function () {
         subtotal += $(this).children(".content").children(".pro_subtotal").data("subtotal");
-        if (disfreight > 0 && subtotal > low_con) {
+        if (subtotal > low_con) {
             freight = disfreight;
         } else {
             freight = ori_freight;
@@ -457,12 +473,20 @@ function OrdererEdit() {
 
 function RecipientRadio() {
     var $self = $(this)
+    console.log($self.val());
     if ($self.val() == "edit") {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").removeClass("d-none");
         RecipientOpen = true;
+        RecipientFilled = false;
         RecipientFormClear();
-    } else {
+    } else if ($self.val() == "order"){
+        $("#RecipientForm > .default_data").addClass("d-none");
+        $("#RecipientForm > form").addClass("d-none");
+        RecipientOpen = false;
+        RecipientFilled = false;
+    }
+    else {
         $("#RecipientForm > .default_data").removeClass("d-none");
         $("#RecipientForm > form").addClass("d-none");
         RecipientOpen = false;
@@ -509,16 +533,20 @@ function RecipientFormSet(name, sex, email, cellphone, telphone_area, telphone, 
 }
 
 function InvoiceRadio() {
-    if (this.value == 3) {
-        $("#InvoiceForm > .default_data").addClass("d-none");
-        $("#InvoiceForm > form").removeClass("d-none");
-        InvoiceOpen = true;
-        InvoiceFormClear();
-    } else {
-        $("#InvoiceForm > .default_data").removeClass("d-none");
-        $("#InvoiceForm > form").addClass("d-none");
-        InvoiceOpen = false;
-        InvoiceFilled = true;
+    switch (this.value) {
+        case 3:
+            $("#InvoiceForm > .default_data").addClass("d-none");
+            $("#InvoiceForm > form").removeClass("d-none");
+            InvoiceOpen = true;
+            InvoiceFilled = false;
+            InvoiceFormClear();
+            break;
+        default:
+            $("#InvoiceForm > .default_data").addClass("d-none");
+            $("#InvoiceForm > form").addClass("d-none");
+            InvoiceOpen = false;
+            InvoiceFilled = false;
+            break;
     }
     buy_step_swiper.update();
 }

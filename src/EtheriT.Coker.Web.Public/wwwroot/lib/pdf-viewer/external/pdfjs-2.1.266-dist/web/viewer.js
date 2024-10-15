@@ -5157,7 +5157,7 @@
                 kind: OptionKind.VIEWER
             },
             defaultUrl: {
-                value: 'compressed.tracemonkey-pldi-09.pdf',
+                value: '/lib/pdf-viewer/external/pdfjs-2.1.266-dist/web/compressed.tracemonkey-pldi-09.pdf',
                 kind: OptionKind.VIEWER
             },
             defaultZoomValue: {

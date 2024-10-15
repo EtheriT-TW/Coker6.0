@@ -62,6 +62,7 @@ namespace EtheriT.Coker.Application.Token
                     output = CheckToken();
                     if (output.Success) return output;
                 }
+                httpContextAccessor.HttpContext?.Response.Cookies.Delete("Token");
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out RefreshTokenStr);
                 if (!string.IsNullOrEmpty(RefreshTokenStr) && Guid.TryParse(RefreshTokenStr, out Guid rt))
                 {
@@ -69,6 +70,7 @@ namespace EtheriT.Coker.Application.Token
                     if (RefreshTokens.Any())
                     {
                         var RefreshToken = await RefreshTokens.Where(e => e.StartTime < date && date < e.EndTime).FirstOrDefaultAsync();
+                        var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
                             var mapfrontuserandweb = await db.MappingFrontUserAndWebsite.Where(e => e.UUID == RefreshToken.UUID && !e.IsDeleted).FirstOrDefaultAsync();
@@ -82,13 +84,9 @@ namespace EtheriT.Coker.Application.Token
                                     output.name = user?.Name;
                                 }
                                 else tokenItem = await NewToken(null, RefreshToken.UUID);
-							}
+							}else tokenItem = await NewToken(null, RefreshToken?.UUID);
                         }
-                        else
-                        {
-                            var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
-                            tokenItem = await NewToken(null, oidRefreshToken?.UUID);
-                        }
+                        else tokenItem = await NewToken(null, oidRefreshToken?.UUID);
                     }else tokenItem = await NewToken();
                 }
                 else tokenItem = await NewToken();
@@ -105,7 +103,7 @@ namespace EtheriT.Coker.Application.Token
 
             return output;
         }
-        private async Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null)
+        public async Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null)
         {
             if (string.IsNullOrEmpty(Accont)) Accont = Guid.NewGuid().ToString();
             if (UUID == null) UUID = generateUUID();
@@ -126,6 +124,15 @@ namespace EtheriT.Coker.Application.Token
             item.RefreshToken = Token.id;
             item.IsLogin = UserId != null;
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
+
+            httpContextAccessor.HttpContext?.Response.Cookies.Append("Token", item.AccessToken!, new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
+            });
+            httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", item.RefreshToken.ToString()!, new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
+            });
             return item;
         }
         public TokenResponseDto CheckToken()

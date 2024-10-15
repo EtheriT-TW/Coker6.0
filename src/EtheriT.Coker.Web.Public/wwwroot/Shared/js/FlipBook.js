@@ -1,4 +1,5 @@
 ﻿function FlipBookInit() {
+    console.log("in Flip Book Init");
     var $this = $(".FlipBook");
     const pdfVersion = [{
         version: "pdfjs-4.5.136-dist", ext: "mjs"

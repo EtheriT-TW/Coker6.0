@@ -60,7 +60,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 {
                     for (int i = 0; i < 7; i++)
                     {
-                        DateTime d = startInTaipeiTime.AddDays(intervalDays * i);
+                        DateTime d = startInTaipeiTime.AddDays(intervalDays * i).Date;
                         RemoteListOtputDto? item = items.Find(e => e.date == d);
                         if (item == null)
                         {

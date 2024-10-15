@@ -28,7 +28,6 @@
             var remoteItems = result.websitesRemotesCount;
             var remoteMemCounts = result.websitesRemotesMemCount;
             var dateItems = result.websitesRemotesDate;
-            console.log(remoteMemCounts, dateItems);
 
             updateChart(dateItems, remoteItems, remoteMemCounts);
         });

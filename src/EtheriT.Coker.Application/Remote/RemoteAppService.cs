@@ -160,6 +160,7 @@ namespace EtheriT.Coker.Application.Remote
 
             if (data != null)
 			{
+				var firstRecordDate = data.Select(d => d.Date).FirstOrDefault();
 				var dataQuery = from d in data
 								group d by new
 								{
@@ -188,7 +189,7 @@ namespace EtheriT.Coker.Application.Remote
 		}
 
         public async Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto)
-        {
+        { 
             ResponseMessageDto response = new ResponseMessageDto();
             long siteId = await loginUserData.GetWebsiteId();
             var data =
@@ -217,17 +218,18 @@ namespace EtheriT.Coker.Application.Remote
                                 {
                                     date = d.Key.Date,//時間
                                     count = d.Where(e => e.Date == d.Key.Date).Sum(e => e.count),//人次
-                                    
+
                                     MemCount = d.Count(),  //人數
                                 };
-                response.Object = new GetRemoteCountOutputDto { 
+                response.Object = new GetRemoteCountOutputDto
+                {
                     remoteListOtputDtos = await dataQuery.ToListAsync()
                 };
                 response.Success = true;
                 //取日期跟時間
                 return response;
             }
-            else throw new Exception("查無資料");
-        }
+			else throw new Exception("查無資料");
+		}
     };
 }

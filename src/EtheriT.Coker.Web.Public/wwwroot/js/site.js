@@ -97,9 +97,9 @@ function ready() {
             }
             $c.find(".qa .collapse").each((j, c) => {
                 $(c).attr("data-bs-parent", `#${$c.attr("id")}`);
-                if (j != 0 || $c.find(".qa .collapse").length == 1) {
+                //if (j != 0 || $c.find(".qa .collapse").length == 1) { //不隱藏第一個QA元素
                     $(c).collapse("hide");
-                }
+                //}
             });
         });
     }

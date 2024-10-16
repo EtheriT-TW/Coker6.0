@@ -35,6 +35,8 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Token;
+using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -49,6 +51,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly string controllerName;
         private readonly MailAppService mailAppService;
         private readonly INewsletterAppService newsletterAppService;
+        private readonly IConfiguration configuration;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
@@ -57,7 +60,8 @@ namespace EtheriT.Coker.Application.Authorization
             IHttpContextAccessor httpContextAccessor,
             IMapper mapper,
             MailAppService mailAppService,
-            INewsletterAppService newsletterAppService
+            INewsletterAppService newsletterAppService,
+            IConfiguration configuration
         )
         {
             this.db = db;
@@ -68,6 +72,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.mapper = mapper;
             this.mailAppService = mailAppService;
             this.newsletterAppService = newsletterAppService;
+            this.configuration = configuration;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -173,6 +178,11 @@ namespace EtheriT.Coker.Application.Authorization
                                     {
                                         token.UUID = mapuserandweb.UUID;
                                         token.UserID = user.Id;
+
+                                        if (user != null && !string.IsNullOrEmpty(user.Email))
+                                        {
+                                            output.Token = await tokenAppService.CreateToken(user.Email, token.id, 15);
+                                        }
                                     }
                                     db.SaveChanges();
                                     output.Secret = token.id;
@@ -271,6 +281,37 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 output.Success = false;
                 output.Error = e.Message;
+            }
+            return output;
+        }
+        public async Task<LoginOutputDto> FrontLogout() {
+            LoginOutputDto output = new LoginOutputDto();
+            var tokenItem = await tokenAppService.CreateToken();
+            try
+            {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                httpContextAccessor.HttpContext?.Response.Cookies.Delete("Token");
+                httpContextAccessor.HttpContext?.Response.Cookies.Delete("RefreshToken");
+                var token = await db.Tokens.Where(e => e.id == tokenItem.RefreshToken).FirstOrDefaultAsync();
+                if (token != null && token.UserID != null)
+                {
+                    Account_Log account_Log = new Account_Log()
+                    {
+                        UUID = token.UUID,
+                        WebsiteId = websiteId,
+                        Status = (int)AccountStatusEnum.登出,
+                        CreatorUserId = token.UserID.Value,
+                        CreationTime = DateTime.Now,
+                    };
+                    db.Account_Logs.Add(account_Log);
+                    db.SaveChanges();
+                    token.UserID = null;
+                    db.SaveChanges();
+                    output.Success = true;
+                }
+            }
+            catch(Exception e) {
+                tokenItem.Error = e.Message;
             }
             return output;
         }

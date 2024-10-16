@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Authorization
     {
         public Task<LoginOutputDto> Login(LoginInputDto dto);
         public Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto);
+        public Task<LoginOutputDto> FrontLogout();
         public Task<ResponseMessageDto> AccountOpening(Guid OpenId);
         public Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto);
         public Task<UserDto> GetCurrentUser();

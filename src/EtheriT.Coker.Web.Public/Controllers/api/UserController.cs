@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class UserController : Controller
     {
         private readonly IAccountAppService accountAppService;
@@ -19,7 +20,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
         [HttpPost]
         [AllowAnonymous]
-        [Authorize]
         public async Task<ResponseMessageDto> AddUser(FrontAddUserDto dto)
         {
             var result = await accountAppService.AddFrontUser(dto);
@@ -27,7 +27,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
         [HttpPost]
         [AllowAnonymous]
-        [Authorize]
         public async Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto)
         {
             var result = await accountAppService.ReSendOpening(dto);
@@ -35,15 +34,19 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
         [HttpPost]
         [AllowAnonymous]
-        [Authorize]
         public async Task<LoginOutputDto> Login(FrontLoginInputDto dto)
         {
             var result = await accountAppService.FrontLogin(dto);
             return result;
         }
         [HttpGet]
+        public async Task<LoginOutputDto> Logout()
+        {
+            var result = await accountAppService.FrontLogout();
+            return result;
+        }
+        [HttpGet]
         [AllowAnonymous]
-        [Authorize]
         public async Task<ResponseMessageDto> AccountOpening(Guid OpenId)
         {
             var result = await accountAppService.AccountOpening(OpenId);

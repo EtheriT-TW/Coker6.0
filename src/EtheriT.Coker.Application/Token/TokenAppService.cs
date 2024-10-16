@@ -124,15 +124,6 @@ namespace EtheriT.Coker.Application.Token
             item.RefreshToken = Token.id;
             item.IsLogin = UserId != null;
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
-
-            httpContextAccessor.HttpContext?.Response.Cookies.Append("Token", item.AccessToken!, new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
-            });
-            httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", item.RefreshToken.ToString()!, new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
-            });
             return item;
         }
         public TokenResponseDto CheckToken()
@@ -246,17 +237,38 @@ namespace EtheriT.Coker.Application.Token
         }
         public async Task<string> CreateToken(string account, Guid secret, int expireMinutes = 30)
         {
-            var user = db.Users.Where(e => e.Account == account).FirstOrDefault();
             List<KeyValuePair<string, string>> custClaims = new List<KeyValuePair<string, string>>();
-			if (user != null)
+            if (account.IndexOf("@") < 0) {
+
+                var user = db.Users.Where(e => e.Account == account).FirstOrDefault();
+                if (user != null)
+                {
+                    custClaims.Add(new KeyValuePair<string, string>("username", user.Name));
+                }
+            }
+            else
             {
-                custClaims.Add(new KeyValuePair<string, string>("username", user.Name));
-			}
+                var user = db.FrontUsers.Where(e => e.Email == account).FirstOrDefault();
+                if (user != null)
+                {
+                    custClaims.Add(new KeyValuePair<string, string>("username", user.Name));
+                }
+            }
+
             List<string> roles = new List<string> {
                 "Admin",
                 "Users"
             };
-            return await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
+            string token = await jwt.GenerateToken(account, roles, secret, expireMinutes, custClaims);
+            httpContextAccessor.HttpContext?.Response.Cookies.Append("Token", token, new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddMinutes(15) // 設定過期時間
+            });
+            httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", secret.ToString(), new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
+            });
+            return token;
         }
         public async Task<bool> DelToken()
         {

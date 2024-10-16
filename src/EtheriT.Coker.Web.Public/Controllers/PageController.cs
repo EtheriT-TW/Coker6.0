@@ -307,11 +307,18 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             int.TryParse(model.layout.Replace("layout", ""), out c);
                             if (c != 0) model.PageData.LayoutType = c;
                         }
-                        else if (key.ToLower() == "shoppingcar") {
+                        else if (key.ToLower() == "shoppingcar")
+                        {
                             ViewData["storeMemo"] = model.storeSet.storeMemo;
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "ShoppingCar";
+                        }
+                        else if (key.ToLower() == "member")
+                        {
+                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                            view = "Member";
                         }
                         else if (key.ToLower() == "demosearch")
                         {

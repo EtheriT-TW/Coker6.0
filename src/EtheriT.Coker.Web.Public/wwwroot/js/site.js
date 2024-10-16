@@ -408,6 +408,9 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
+            if (result.isLogin && result.name != "") {
+                $("#HiUser > .name").text(`${result.name} 您好!`);
+            }
             console.log("userData:", result);
         }
     })
@@ -696,6 +699,16 @@ var Coker = {
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        }, Logout: function () {
+            return $.ajax({
+                url: "/api/User/Logout",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                dataType: "json"
+            });
         },
     },
     Form: {
@@ -796,6 +809,20 @@ var Coker = {
                 }
             })
         },
+        warning: function (title, text, action) {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                confirmButtonText: "確定"
+            }).then((result) => {
+                if (typeof (action) == "function") action();
+            });
+            if (typeof (action) == "function")
+                setTimeout(action,3000);
+        }
     },
     stringManager: {
         ReplaceAndSinge: function (str) {

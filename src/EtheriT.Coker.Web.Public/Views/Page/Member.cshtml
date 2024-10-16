@@ -1,0 +1,48 @@
+﻿@using System.Web;
+@using EtheriT.Coker.Application.Shared.Dto.WebMenu
+@using EtheriT.Coker.Application.Shared.Dto.enumType;
+@using EtheriT.Coker.Web.Public.Models;
+@using EtheriT.Coker.Application.Shared.i18n;
+@model PageViewModel
+<link rel="stylesheet" href="~/css//Member/Index.min.css" asp-append-version="true" />
+<script src="/js/Member/index.min.js" asp-append-version="true"></script>
+<script nonce="@ViewBag.Nonce">
+    const PageKey = "@Model.option";
+    const local = @Html.Raw(L.getAllJsonString());
+</script>
+@Html.AntiForgeryToken()
+<div class="top_title_1 p-3">
+    <nav class="bread d-none d-md-block container">
+        <ol class="list-unstyled d-flex my-0">
+            @foreach (var menu in Model.MenuBread ?? new List<GetMenuBreadDto>())
+            {
+                @if (@menu.Link == "")
+                {
+                    <li class="px-1">@menu.Title</li>
+                }
+                else
+                {
+                    <li class="px-1"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                }
+            }
+        </ol>
+    </nav>
+</div>
+<Content id="main">
+    <div class="container d-flex flex-row">
+        <ul class="nav flex-column" id="ToolList" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">個人資料</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">歷史訂單</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="TabContent">
+            <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                <button class="logout">登出</button>
+            </div>
+            <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">...</div>
+        </div>
+    </div>
+</Content>

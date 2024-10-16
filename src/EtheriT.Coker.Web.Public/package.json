@@ -28,7 +28,7 @@
     "pdf.js": "^0.1.0",
     "postcss-url": "^9.0.0",
     "sweetalert2": "^11.4.32",
-    "swiper": "^8.4.7",
+    "swiper": "^11.1.14",
     "yarn": "^1.22.19"
   },
   "devDependencies": {

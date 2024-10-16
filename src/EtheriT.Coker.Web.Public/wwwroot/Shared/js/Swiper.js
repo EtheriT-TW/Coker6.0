@@ -12,19 +12,48 @@ function SwiperInit(obj) {
         },
     };
     $.fn.extend({
-        swiperBindEven: function (swiper) {
+        swiperBindEven: function (swiper, canNext) {
+            const checkSlides = function () {
+                const totalSlides = swiper.slides.length;
+                const slidesPerView = swiper.params.slidesPerView;
+                // 檢查導航元素
+                const nextEl = swiper.navigation.nextEl ? swiper.navigation.nextEl[0] : null;
+                const prevEl = swiper.navigation.prevEl ? swiper.navigation.prevEl[0] : null;
+                const paginationEl = swiper.pagination.el;
+
+                if (totalSlides <= slidesPerView) {
+                    // 停止自動輪播
+                    swiper.autoplay.stop();
+
+                    // 隱藏左右箭頭
+                    if (nextEl) swiper.navigation.nextEl.style.display = 'none';
+                    if (prevEl) swiper.navigation.prevEl.style.display = 'none';
+                    if (paginationEl) paginationEl.style.display = 'none';
+                } else {
+                    // 確保箭頭可見
+                    if (nextEl) swiper.navigation.nextEl.style.display = '';
+                    if (prevEl) swiper.navigation.prevEl.style.display = '';
+                    if (paginationEl) paginationEl.style.display = '';
+                }
+            }
             const stop = function () {
                 swiper.autoplay.stop()
             }
             const start = function () {
                 swiper.autoplay.start()
             }
-            $(this).find(".swiper").prepend($(this).find(".swiper_button_prev"));
             $(this).off("mouseover").on("mouseover", stop);
             $(this).find("a").on("focus", stop);
             $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
-            $(this).find("button").prop("disabled",false);
+            $(this).find("button").prop("disabled", false);
+
+            setTimeout(function () {
+                swiper.slideTo(0);
+            }, 100);
+            if (swiper.slides.length > 1) swiper.slideTo(1);
+            $(window).off('resize.swiper').on('resize.swiper', checkSlides);
+            $(window).trigger("resize.swiper");
         }
     });
 
@@ -62,14 +91,9 @@ function SwiperInit(obj) {
                         prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                     }
                 } : {});
-            if (!canNext) {
-                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
-            }
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
-            if (autoplay && swiper.slides.length - 2 > 1) {
-                $self.swiperBindEven(swiper);
-            }
+            $self.swiperBindEven(swiper);
         }
     });
     //單欄輪播+兩欄縮圖

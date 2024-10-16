@@ -32,6 +32,7 @@ var bookFlip = {
 		eventBus.on('documentinit', () => {
 			console.log("documentinit");
 			this.stop();
+			PDFViewerApplication.pdfViewer.currentPageScaleValue = 'page-fit'; // 設定縮放為頁面大小
 			this._ready = false;
 		});
 
@@ -63,11 +64,9 @@ var bookFlip = {
 				PDFViewerApplication.pdfViewer.currentScaleValue = "page-fit";
 			}
 		});
-		console.log(PDFViewerApplication.eventBus);
 		eventBus.on(this.scrollMode == 4 ? 'pagerendered' : 'baseviewerinit', () => {
 			console.log("baseviewerinit");
 			PDFViewerApplicationOptions.set('scrollModeOnLoad', this.scrollMode);
-			console.log(PDFViewerApplication.pdfViewer._getVisiblePages);
 			this._intoView = PDFViewerApplication.pdfViewer.scrollPageIntoView;
 			this._visPages = PDFViewerApplication.pdfViewer._getVisiblePages;
 		});

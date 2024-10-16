@@ -1,12 +1,13 @@
 ﻿function FlipBookInit() {
-    console.log("in Flip Book Init");
     var $this = $(".FlipBook");
     const pdfVersion = [{
         version: "pdfjs-4.5.136-dist", ext: "mjs"
     }, {
         version: "pdfjs-2.1.266-dist", ext: "js"
     }];
-    const usePdf = pdfVersion[1];
+    let index = 1;
+    if (!isNaN($(".FlipBookItem").data("type"))) index = parseInt($(".FlipBookItem").data("type"));
+    const usePdf = pdfVersion[index];
     $this.addClass("d-none");
 
     if (typeof ($this.data("pdf")) == "undefined" || !$this.data("pdf")) {
@@ -45,7 +46,7 @@
             }
         }
     }
-    xhttp.open("GET", `/lib/pdf-viewer/external/${usePdf.version}/web/viewer.html?file=${encodeURIComponent(target_pdf)}`, true);
+    xhttp.open("GET", `/lib/pdf-viewer/external/${usePdf.version}/web/viewer.html?file=`, true);
     xhttp.send();
 }
 
@@ -63,6 +64,14 @@ function FlipBookModalInit(pare) {
                 PDFViewerApplication.closeModal = function () {
                     modal.hide();
                 };
+                PDFViewerApplication.initializedPromise.then(function () {
+                    // 確保 PDF.js 初始化完成後，覆寫 setTitleUsingUrl 方法
+                    PDFViewerApplication.setTitleUsingUrl = function () {
+                        // Do nothing to prevent title change
+                    };
+
+                    console.log('PDF.js has been initialized, title change has been disabled.');
+                });
                 bookFlip.init(pare);
             }
         } else timer = setTimeout(init, 100);

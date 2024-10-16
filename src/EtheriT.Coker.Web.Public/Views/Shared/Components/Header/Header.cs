@@ -266,7 +266,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     {
                         if (data.PageType == (int)PageTypeEnum.首頁)
                         {
-                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data.RouterName}";
+                            headerViewModel.HomeLink = $"/{website_data[0].OrgName}/{data.RouterName.ToLower()}";
                             headerViewModel.HomeTarget = data.Target;
                         }
                         else if (data.LanBar)

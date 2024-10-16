@@ -174,8 +174,6 @@ function ready() {
             });
         }
     };
-
-    $.cookie('Member_Name', "會員一", { path: '/' });
     typeof (PageReady) === "function" && PageReady();
     typeof (HeaderInit) === "function" && HeaderInit();
     typeof (FooterInit) === "function" && FooterInit();

@@ -44,6 +44,8 @@
         }
         break;
     case 2:
+        if (@ViewData["bodyClass"]?.ToString() == "home") break;
+        else goto case 3;
     case 3:
         @if (Model.MenuBread.Count() > 0 || Model.PageData.VisibleTitle)
         {

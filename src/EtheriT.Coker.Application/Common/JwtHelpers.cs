@@ -81,7 +81,7 @@ namespace EtheriT.Coker.Web.MVC.Resources
             {
                 Issuer = issuer,
                 Audience = audience, // Sometimes you don't have to define Audience.
-                NotBefore = DateTime.Now, // Default is DateTime.Now
+                NotBefore = DateTime.Now, // 何時開始生效
                 IssuedAt = DateTime.Now, // Default is DateTime.Now
                 Subject = userClaimsIdentity,
                 Expires = DateTime.Now.AddMinutes(expireMinutes),

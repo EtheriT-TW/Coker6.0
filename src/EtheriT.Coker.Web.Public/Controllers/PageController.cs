@@ -104,6 +104,11 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
 		public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
+            if (string.IsNullOrEmpty(key)) key = "home";
+            else if (string.IsNullOrEmpty(website) && !string.IsNullOrEmpty(key)) {
+                website = key;
+                key = "home";
+            }
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
@@ -142,7 +147,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
                 }
             };
-            if (string.IsNullOrEmpty(key)) key = "home";
             string view;
             if ( new List<string> { "article" }.Contains(key.ToLower())  && int.TryParse(option, out id))
             {
@@ -419,7 +423,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["Locale"] = model.locale;
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Id"] = model.PageData.Id;
-            ViewData["bodyClass"] = model.option?.ToLower() == "home"? model.option:"page";
+            ViewData["bodyClass"] = model.option?.ToLower() == "home"? model.option.ToLower() : "page";
             var nonce = HttpContext.Items["CSPNonce"] as string;
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;

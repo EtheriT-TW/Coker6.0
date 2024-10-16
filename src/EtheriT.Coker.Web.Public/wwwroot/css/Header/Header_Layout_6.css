@@ -5,6 +5,9 @@
 header .menu {
     background: linear-gradient(90deg, #0BB0DD 0%, #0069A3 70%, #006AA1 100%);
 }
+.menu .navbar-nav > .nav-item > .nav-link {
+    font-size:1.05rem;
+}
 
 #headermenu li a {
     color: white;
@@ -12,12 +15,12 @@ header .menu {
 
 .titleimage {
     padding-top: 2.5rem;
-    width: 15rem;
+    width: 18rem;
     max-width: 60vw;
 }
 
 .headernews {
-    width: 40rem;
+    width: 46rem;
     max-width: 90vw;
 }
 
@@ -29,7 +32,10 @@ header .menu {
 
         .headernews .content .title {
             color: #09D1F2;
-            line-height:1.2rem;
+            line-height: 1.2rem;
+            width: 2.4rem;
+            margin-left: 1rem;
+            font-size: 1.2rem;
         }
 
         .headernews .content .text {
@@ -53,6 +59,7 @@ header .menu {
             text-overflow: ellipsis;
             color: #fff;
             text-decoration: none;
+            font-size:1.1rem;
         }
 
         .headernews .content .title, .marqueeSwiper .swiper-slide div.text {

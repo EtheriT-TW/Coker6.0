@@ -63,7 +63,7 @@ function SwiperInit(obj) {
             var Id = "#" + $self.attr("id") + " > .swiper";
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             if ($(Id).find(".swiper-slide").length == 1 && $template.length > 0) return false;
-            const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1: $(Id).find(".swiper-slide").length > 2;
+            const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1 : $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed")
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
@@ -74,7 +74,24 @@ function SwiperInit(obj) {
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper_pagination",
                     clickable: true,
-                }, 
+                }, on: {
+                    //以下有Bug
+                    slideChangeTransitionEnd: function () {
+                        const totalSlides = this.slides.length;
+                        const previousSlideIndex = this.previousIndex;
+                        //const previousSlideIndex = (this.realIndex - 1 + totalSlides) % totalSlides;
+                        const $previousSlide = $(this.slides[previousSlideIndex]);
+                        $self.find(".swiper-slide").each(function () {
+                            if (parseInt($(this).attr("data-swiper-slide-index")) != this.realIndex &&
+                                $(this).find("iframe").length > 0
+                            ) {
+                                const html = $(this).html()
+                                $(this).empty();
+                                $(this).append(html);
+                            }
+                        });
+                    }
+                },
 
                 effect: effect,
                 speed: speed
@@ -105,15 +122,15 @@ function SwiperInit(obj) {
             var Id = "#" + $self.attr("id") + " .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
-            var speed = $self.data("effect-speed");      
-            
+            var speed = $self.data("effect-speed");
+
             var swiperThumbs = new Swiper(".six_thumbs", {
                 loop: false, //改為false阻止thumbs跳過太多張圖
                 spaceBetween: 10,
                 slidesPerView: 6,
                 freeMode: true,
                 watchSlidesProgress: true,
-            }); 
+            });
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -145,7 +162,7 @@ function SwiperInit(obj) {
             if (!canNext) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
             }
-            
+
             if (!$self.find(".swiper").hasClass(".selfThumbs")) { //如果沒有swiper class的元素
                 const $images = [];
                 const $alts = [];
@@ -172,7 +189,7 @@ function SwiperInit(obj) {
             $self.data("isInit", true)
             if (autoplay && swiper.slides.length - 2 > 1) {
                 $self.swiperBindEven(swiper);
-            }           
+            }
         }
     });
     $(".two_swiper").prop("draggable", true).each(function () {
@@ -429,8 +446,8 @@ function SwiperInit(obj) {
         $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
             const $self = $(this).parents(".picture-category");
             //因為主輪播是loop=true前後會被個複製一張圖，所以索引會多2
-            const index = $(".picture-category a").index(this) > $(".picture-category a").length-2 ? $(".picture-category a").length - $(".picture-category a").index(this)-1 : $(".picture-category a").index(this)-1;
-            const $images = [];           
+            const index = $(".picture-category a").index(this) > $(".picture-category a").length - 2 ? $(".picture-category a").length - $(".picture-category a").index(this) - 1 : $(".picture-category a").index(this) - 1;
+            const $images = [];
             $self.find(".templatecontent img").each(function () {
                 $images.push($(this).attr("src"));
             });

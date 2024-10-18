@@ -47,33 +47,34 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 			long totalMemCount = 0;
 			var today = DateTime.Today;
 
+            List<DateTime> firstDate = new List<DateTime>(); 
 			var obj = await remoteAppService.GetPageList(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
 			var loadResult = (DevExtreme.AspNet.Data.ResponseModel.LoadResult)obj.Value;
 			var getTotle = loadResult.data.Cast<RemoteListOtputDto>().ToList();
-			DateTime? earliestDate = getTotle.OrderBy(e => e.date).FirstOrDefault().date;
-			DateTime firstTime = (DateTime)earliestDate;
-
-			if (result.Success) {
-                var items = ((GetRemoteCountOutputDto)result.Object).remoteListOtputDtos;
-				if (earliestDate != null)
+            if (getTotle != null && getTotle.Count != 0)
+            {
+                DateTime? earliestDate = getTotle.OrderBy(e => e.date).FirstOrDefault().date;
+                if (earliestDate != null)
 				{
+					firstDate.Add((DateTime)earliestDate);
 					// 从最早日期开始到今天
 					for (DateTime d = earliestDate.Value.Date; d <= DateTime.Today; d = d.AddDays(1))
-					{
-						RemoteListOtputDto? item = getTotle.Find(e => e.date.Date == d.Date);
-						if (item == null)
-						{
-							// 没有数据则累加0
-							totalRemoteCount += 0;
-							totalMemCount += 0;
-						}
-						else
-						{
+                    {
+                        RemoteListOtputDto? item = getTotle.Find(e => e.date.Date == d.Date);
+                        if (item != null)
+                        {
 							totalRemoteCount += item.count;
 							totalMemCount += item.MemCount;
 						}
-					}
-				}
+                    }
+                }
+            } else
+            {
+                firstDate.Add(DateTime.Now);
+            }
+
+			if (result.Success) {
+                var items = ((GetRemoteCountOutputDto)result.Object).remoteListOtputDtos;
 
 				for (int i = 0; i < 7; i++)
                 {
@@ -140,7 +141,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd"),
                     TotleCount = totalRemoteCount,
                     TotleMemCount = totalMemCount,
-                    FirstTime = firstTime
+                    FirstTime = firstDate[0]
                 }
             };
             return View(model);

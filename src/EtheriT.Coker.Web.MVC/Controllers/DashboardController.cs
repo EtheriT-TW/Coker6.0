@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Data.ResponseModel;
+using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
@@ -19,7 +20,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class DashboardController : Controller
     {
-
         private readonly LoginUserData loginUserData;//獲取後台登入後選擇編輯哪個站點
 		private readonly IRemoteAppService remoteAppService;
         private readonly IConfiguration configuration;
@@ -45,19 +45,22 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var dateItem = new List<string>();
 			long totalRemoteCount = 0;
 			long totalMemCount = 0;
-			List<DateTime> dateRange = new List<DateTime>();
 			var today = DateTime.Today;
-            if (result.Success) {
-                Console.WriteLine(result.Object+"////////////");
+
+			var obj = await remoteAppService.GetPageList(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
+			var loadResult = (DevExtreme.AspNet.Data.ResponseModel.LoadResult)obj.Value;
+			var getTotle = loadResult.data.Cast<RemoteListOtputDto>().ToList();
+			DateTime? earliestDate = getTotle.OrderBy(e => e.date).FirstOrDefault().date;
+			DateTime firstTime = (DateTime)earliestDate;
+
+			if (result.Success) {
                 var items = ((GetRemoteCountOutputDto)result.Object).remoteListOtputDtos;
-				DateTime? earliestDate = items.Min(e => e.date.Date);
-				if (earliestDate.HasValue)
+				if (earliestDate != null)
 				{
 					// 从最早日期开始到今天
 					for (DateTime d = earliestDate.Value.Date; d <= DateTime.Today; d = d.AddDays(1))
 					{
-						dateRange.Add(d);
-						RemoteListOtputDto? item = items.Find(e => e.date.Date == d.Date);
+						RemoteListOtputDto? item = getTotle.Find(e => e.date.Date == d.Date);
 						if (item == null)
 						{
 							// 没有数据则累加0
@@ -137,66 +140,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     LastUpdateDate = today.ToString("MM-01") + " 至 " + today.ToString("MM-dd"),
                     TotleCount = totalRemoteCount,
                     TotleMemCount = totalMemCount,
-                    FirstTime = dateRange[0]
+                    FirstTime = firstTime
                 }
             };
             return View(model);
         }
-        /*-----------------------------未完成-----------------------------------
-        [HttpPost]
-        public async Task<IActionResult> ProcessDateRange(string datetimes)
-        {
-            var obj = await remoteAppService.GetPageList(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions());
-            var loadResult = obj.Value as DevExtreme.AspNet.Data.ResponseModel.LoadResult;
-            var items = loadResult.data.Cast<RemoteListOtputDto>().ToList();
-            var remoteItem = new List<long>();
-            var remoteMemCount = new List<long>();
-            var dateItem = new List<string>();
-            
-            var dateRange = datetimes;
-            //設置區間
-            if (!string.IsNullOrEmpty(dateRange))
-            {
-                var dates = dateRange.Split(" ~ ");
-                startDate = DateTime.ParseExact(dates[0], "yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture);
-                endDate = DateTime.ParseExact(dates[1], "yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture);
-            }
-            else
-            {
-                // 如果沒有提供日期範圍，默認查詢最近 7 天
-                startDate = DateTime.Today.AddDays(-7);
-                endDate = DateTime.Today;
-            }
-
-
-            /*RemoteListOtputDto? item = items.Find(e => e.date.Day >= startDate.Day && e.date.Day <= endDate.Day);
-            if (item == null)
-            {
-                remoteItem.Add(0);
-                remoteMemCount.Add(0);
-            }
-            else
-            {
-                remoteItem.Add(item.count);
-                remoteMemCount.Add(item.MemCount);
-            }
-            dateItem.Add(item.date.ToString("MM/dd"));*/
-            // 構建返回的數據模型
-            //var item = items.Find(x => x.date.Date >= startDate && x.date.Date <= endDate);
-            /*for (int i = 0;i < endDate.Date.Day-startDate.Day;i++)
-            {
-                var item = items.Find(x => x.date.Date == startDate.AddDays(i));
-                dateItem.Add(item.date.ToString());
-            }
-            var result = new
-            {
-                WebsitesRemotesDate = items.Select(x => x.date.Date >= startDate.Date && x.date.Date <= endDate.Date).ToList(),
-                //WebsitesRemotesCount = items.Select(x => x.Count).ToList(),
-                WebsitesRemotesMemCount = items.Select(x => x.MemCount).ToList()
-            };
-            Console.WriteLine("//////////////////////////////////"+datetimes+"aaa");
-            return Json(result);
-        }*/
 
         // 獲取資料夾的最後修改時間
         public static string LastChangDate(string DirRoute)

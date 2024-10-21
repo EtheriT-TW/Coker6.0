@@ -13,10 +13,12 @@ namespace EtheriT.Coker.Application.Authorization
         public Task<LoginOutputDto> FrontLogout();
         public Task<ResponseMessageDto> AccountOpening(Guid OpenId);
         public Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto);
+        public Task<ResponseMessageDto> SendForget(SendForgetDto dto);
+        public Task<ResponseMessageDto> ForgetIdCheck(Guid ForgetId);
         public Task<UserDto> GetCurrentUser();
         public Task<LoginOutputDto> Chech();
         public Task<ResponseMessageDto> Logout();
-		public Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto);
+        public Task<ResponseMessageDto> UpdatePassword(UpdatePasswordDto dto);
         public Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto);
         public Task<ResponseMessageDto> AddUser(AddUser dto);
         public Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto);

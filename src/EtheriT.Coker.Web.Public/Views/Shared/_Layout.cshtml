@@ -208,7 +208,6 @@
                         <div class="text-black-50">不是會員？</div>
                         <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">立即註冊</button>
                         <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">忘記密碼</button>
-                        <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ResetModal" data-bs-toggle="modal" data-bs-dismiss="modal">密碼重置Layout</button>
                     </div>
                 </div>
             </div>
@@ -291,6 +290,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="text-center fs-4 fw-bold">密碼重置</div>
+                        <div class="px-3 pt-2">密碼需填入8至32個字元 ，並包含英文字母大寫、小寫、數字或符號。</div>
                         <form id="ResetForm" class="card-body needs-validation" method="post">
                             <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                             <div class="reset_new_pass input-group">

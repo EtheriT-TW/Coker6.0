@@ -1,4 +1,4 @@
-﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetodal;
+﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal;
 
 function ready() {
 
@@ -9,7 +9,7 @@ function ready() {
     otherLoginModal = $("#OtherLoginModal").length > 0 ? new bootstrap.Modal($("#OtherLoginModal")) : null;
     registerModal = $("#RegisterModal").length > 0 ? new bootstrap.Modal($("#RegisterModal")) : null;
     forgetModal = $("#ForgetModal").length > 0 ? new bootstrap.Modal($("#ForgetModal")) : null;
-    resetodal = $("#ResetModal").length > 0 ? new bootstrap.Modal($("#ResetModal")) : null;
+    resetModal = $("#ResetModal").length > 0 ? new bootstrap.Modal($("#ResetModal")) : null;
     jqueryExtend();
     $("link").each(function () {
         var $self = $(this);
@@ -98,7 +98,7 @@ function ready() {
             $c.find(".qa .collapse").each((j, c) => {
                 $(c).attr("data-bs-parent", `#${$c.attr("id")}`);
                 //if (j != 0 || $c.find(".qa .collapse").length == 1) { //不隱藏第一個QA元素
-                    $(c).collapse("hide");
+                $(c).collapse("hide");
                 //}
             });
         });
@@ -216,6 +216,8 @@ function ready() {
         event.preventDefault();
         NewCaptcha($LoginImgCaptcha, $InputLoginVCode);
         NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
+        NewCaptcha($ForgetImgCaptcha, $InputForgetVCode);
+        NewCaptcha($ResetImgCaptcha, $InputResetVCode);
     });
 
     var LoginModal = document.getElementById('LoginModal')
@@ -299,6 +301,10 @@ function ready() {
         }
     })
 
+    $(".btn_forget").on("click", function () {
+        CaptchaVerify($ForgetImgCaptcha, $InputForgetVCode, ForgetAction)
+    })
+
     $(".btn_cookie_accept").on("click", cookie_accept);
     $(".btn_cookie_reject").on("click", cookie_reject);
 
@@ -317,38 +323,56 @@ function ready() {
     $.each(insertdata_string, function (index, value) {
         insertdata[value.split('=')[0]] = value.split('=')[1];
     });
-    if (typeof (insertdata["useraction"]) != "undefined" && typeof (insertdata["openid"]) != "undefined") {
-        Coker.sweet.loading();
-        co.User.AccountOpening(insertdata["openid"]).done(result => {
-            if (result.success) {
-                Coker.sweet.success("帳號成功開通，按下確定後即為您跳轉頁面！", function () {
-                    window.location.href = $(location).attr('origin');
-                }, false);
-            } else {
-                if (result.message == "ReSendOrNot") {
-                    var data = {};
-                    data.OpenId = insertdata["openid"];
-                    data.WebsiteId = SiteId;
-                    data.WebsiteLink = $(location).attr('origin');
-                    data.WebsiteName = $("meta[property='og:site_name'").attr("content");
-                    co.sweet.confirm(result.error, "", "重新寄送", "取消", function () {
-                        Coker.sweet.loading();
-                        co.User.AccountReSendOpening(data).done(result => {
-                            if (result.success) {
-                                Coker.sweet.success("系統將立即重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+    if (typeof (insertdata["useraction"]) != "undefined") {
+        switch (insertdata["useraction"]) {
+            case "accountoping":
+                if (typeof (insertdata["openid"]) != "undefined") {
+                    Coker.sweet.loading();
+                    co.User.AccountOpening(insertdata["openid"]).done(result => {
+                        if (result.success) {
+                            Coker.sweet.success("帳號成功開通，按下確定後即為您跳轉頁面！", function () {
+                                window.location.href = $(location).attr('origin');
+                            }, false);
+                        } else {
+                            if (result.message == "ReSendOrNot") {
+                                var data = {};
+                                data.OpenId = insertdata["openid"];
+                                data.WebsiteId = SiteId;
+                                data.WebsiteLink = $(location).attr('origin');
+                                data.WebsiteName = $("meta[property='og:site_name'").attr("content");
+                                co.sweet.confirm(result.error, "", "重新寄送", "取消", function () {
+                                    Coker.sweet.loading();
+                                    co.User.AccountReSendOpening(data).done(result => {
+                                        if (result.success) {
+                                            Coker.sweet.success("系統將立即重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
+                                        } else {
+                                            console.log(result.error);
+                                            console.log(result.message);
+                                        }
+                                    });
+                                });
                             } else {
-                                console.log(result.error);
-                                console.log(result.message);
+                                co.sweet.error(result.error, "", null, false);
                             }
-                        });
+                        }
                     });
-                } else {
-                    co.sweet.error(result.error, "", null, false);
                 }
-            }
-        });
+                break;
+            case "passwordforget":
+                if (typeof (insertdata["forgetid"]) != "undefined") {
+                    Coker.sweet.loading();
+                    co.User.ForgetIdCheck(insertdata["forgetid"]).done(result => {
+                        if (result.success) {
+                            Swal.close();
+                            resetModal.show();
+                        } else {
+                            co.sweet.error(result.error, "", null, false);
+                        }
+                    });
+                }
+                break;
+        }
     }
-
 }
 
 function SiteElementInit() {
@@ -534,7 +558,7 @@ function RegisterAction() {
     data.RoleId = 2;
     co.User.AddUser(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("註冊成功，系統將立即送『加入會員通知』信函至您所登錄之E-Mail中，您必須完成帳號開通程序後，才能登入網站與使用會員功能，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候開通帳號通知信。", null, false);
+            Coker.sweet.success("註冊成功，系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中，您必須完成帳號開通程序後，才能登入網站與使用會員功能，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候開通帳號通知信。", null, false);
             registerModal.hide();
         } else {
             switch (result.message) {
@@ -578,9 +602,20 @@ function RegisterAction() {
 }
 
 function ForgetAction() {
+    Coker.sweet.loading();
     var data = co.Form.getJson($("#ForgetForm").attr("id"));
-    data.FK_WebsiteId = SiteId
-    data.FK_RoleId = 2;
+    data.WebsiteId = SiteId;
+    data.WebsiteLink = $(location).attr('origin');
+    data.WebsiteName = $("meta[property='og:site_name'").attr("content");
+    co.User.PasswordForget(data).done((result) => {
+        if (result.success) {
+            Coker.sweet.success("系統將立即發送『密碼重設通知』信函至您所登錄之E-Mail中，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候密碼重設通知信。", null, false);
+            registerModal.hide();
+        } else {
+            Coker.sweet.error(result.error, null, true);
+            NewCaptcha($ForgetImgCaptcha, $InputForgetVCode);
+        }
+    })
 }
 function ResetAction() {
     var data = co.Form.getJson($("#ResetForm").attr("id"));
@@ -690,6 +725,23 @@ var Coker = {
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify(data),
                 dataType: "json"
+            });
+        },
+        PasswordForget: function (data) {
+            return $.ajax({
+                url: "/api/User/PasswordForget",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        ForgetIdCheck: function (ForgetId) {
+            return $.ajax({
+                url: "/api/User/ForgetIdCheck/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { ForgetId: ForgetId },
             });
         },
         Login: function (data) {
@@ -822,7 +874,7 @@ var Coker = {
                 if (typeof (action) == "function") action();
             });
             if (typeof (action) == "function")
-                setTimeout(action,3000);
+                setTimeout(action, 3000);
         }
     },
     stringManager: {

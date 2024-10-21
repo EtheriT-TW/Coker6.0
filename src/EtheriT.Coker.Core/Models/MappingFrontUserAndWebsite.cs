@@ -12,6 +12,8 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? OpenDate { get; set; }
         public Guid OpenID { get; set; }
         public DateTime OpenIDSendDate { get; set; }
+        public Guid? ForgetID { get; set; }
+        public DateTime? ForgeIDSendDate { get; set; }
         public FrontUser? User { get; set; }
         public Website? Website { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }

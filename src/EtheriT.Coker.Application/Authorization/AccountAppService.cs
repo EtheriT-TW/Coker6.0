@@ -714,11 +714,11 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)dto.OpenIdSendDate).AddDays(1)} 到期，請在期限內開通。</div>" +
                                                         $"<div class='text-gray'>感謝您的加入！~</div>" +
                                                         $"<br/>" +
-                                                        $"<div class='text-bold text-red'>提醒您：此封『會員通知』微系統發出，請勿直接回覆。</div>" +
+                                                        $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
                                                         $"<hr/>" +
                                                         $"<hr/>" +
-                                                        $"<div>提醒您，客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                        $"<div>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                        $"<div class='text-bold text-red'>提醒您，客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                                         $"<hr/>" +
                                                         $"<hr/>" +
                                                         $"<br/></div>";
@@ -738,6 +738,94 @@ namespace EtheriT.Coker.Application.Authorization
                     Css = mailcss,
                 }, dto.WebsiteId);
                 response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
+        {
+
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var frontuser = db.FrontUsers.Where(e => e.Email == dto.Email).FirstOrDefault();
+                if (frontuser != null)
+                {
+                    var mapuserweb = db.MappingFrontUserAndWebsite.Where(e => e.FK_UserId == frontuser.Id && e.FK_WebsiteId == dto.WebsiteId).FirstOrDefault();
+                    if (mapuserweb != null)
+                    {
+                        mapuserweb.ForgetID = Guid.NewGuid();
+                        mapuserweb.ForgeIDSendDate = DateTime.Now;
+                        mapuserweb.LastModificationTime = DateTime.Now;
+                        await loginUserData.SaveChanges(mapuserweb);
+
+                        var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>" +
+                                                        $"<hr/>" +
+                                                        $"<div>請熟記以下重要訊息</div>" +
+                                                        $"<br/>" +
+                                                        $"<div class='d-flex text-bold'><div>您的帳號：</div><u>{dto.Email}</u></div>" +
+                                                        $"<br/>" +
+                                                        $"<div text-bold>密碼重設網址</div>" +
+                                                        $"<a href='{dto.WebsiteLink}/?useraction=passwordforget&forgetid={mapuserweb.ForgetID}' title='前往開通帳號'>{dto.WebsiteLink}/?useraction=passwordforget&forgetid={mapuserweb.ForgetID}</a>" +
+                                                        $"<div class='text-gray'>請由該網址進入重新設定您的密碼</div>" +
+                                                        $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)mapuserweb.ForgeIDSendDate).AddDays(1)} 到期，請在期限內重設，謝謝。</div>" +
+                                                        $"<br/>" +
+                                                        $"<div class='text-bold text-red'>提醒您：此封『密碼重設通知』為系統發出，請勿直接回覆。</div>" +
+                                                        $"<hr/>" +
+                                                        $"<hr/>" +
+                                                        $"<div class='text-bold text-red'>提醒您，客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                        $"<hr/>" +
+                                                        $"<hr/>" +
+                                                        $"<br/></div>";
+                        var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
+
+                        await mailAppService.sendMail(new SenderDto
+                        {
+                            Recipients = new List<MailUserDataDto>(){
+                                    new MailUserDataDto()
+                                    {
+                                        Name = frontuser.Name,
+                                        Email = frontuser.Email,
+                                    }
+                                },
+                            Subject = $"【{dto.WebsiteName}】 密碼重設通知",
+                            Body = mailhtml,
+                            Css = mailcss,
+                        }, dto.WebsiteId);
+                        response.Success = true;
+
+                    }
+                    else throw new Exception("會員不存在");
+                }
+                else throw new Exception("Email不存在");
+
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> ForgetIdCheck(Guid ForgetId)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                var mapuserweb = await db.MappingFrontUserAndWebsite.Where(e => e.ForgetID == ForgetId).FirstOrDefaultAsync();
+                if (mapuserweb != null)
+                {
+                    if (((DateTime)mapuserweb.ForgeIDSendDate).AddDays(1).CompareTo(DateTime.Now) >0)
+                    {
+                        response.Success = true;
+                    }
+                    else throw new Exception("連結失效");
+                }
+                else throw new Exception("連結不存在");
             }
             catch (Exception ex)
             {

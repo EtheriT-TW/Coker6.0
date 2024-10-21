@@ -46,6 +46,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             var result = await accountAppService.SendForget(dto);
             return result;
         }
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ResponseMessageDto> PasswordChage(PasswordChageDto dto)
+        {
+            var result = await accountAppService.PasswordChage(dto);
+            return result;
+        }
         [HttpGet]
         [AllowAnonymous]
         public async Task<ResponseMessageDto> ForgetIdCheck(Guid ForgetId)

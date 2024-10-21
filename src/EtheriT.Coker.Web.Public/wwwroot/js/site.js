@@ -284,10 +284,8 @@ function ready() {
     })
 
     $(".btn_register").on("click", function () {
-        var passcheck = PassCheck()
+        var passcheck = PassCheck($("#InputRegisterNewPass"), $("#InputRegisterCheckPass"), $("#RegisterNewPassFeedBack"), $("#RegisterCheckPassFeedBack"))
         var formcheck = SiteFormCheck(RegisterForms, $InputRegisterVCode)
-        $NewPass.keyup(PassCheck);
-        $CheckPass.keyup(PassCheck);
         if (passcheck && formcheck) {
             if (!$RegisterAccept.prop("checked")) {
                 NewCaptcha($RegisterImgCaptcha, $InputRegisterVCode);
@@ -303,6 +301,18 @@ function ready() {
 
     $(".btn_forget").on("click", function () {
         CaptchaVerify($ForgetImgCaptcha, $InputForgetVCode, ForgetAction)
+    })
+    $(".btn_reset").on("click", function () {
+        var passcheck = PassCheck($("#InputResetNewPass"), $("#InputResetCheckPass"), $("#ResetNewPassFeedBack"), $("#ResetCheckPassFeedBack"))
+        var formcheck = SiteFormCheck(ResetForms, $InputResetVCode)
+        if (passcheck && formcheck) {
+            CaptchaVerify($ResetImgCaptcha, $InputResetVCode, function () {
+                ResetAction($(".btn_reset").data("forgetId"));
+            })
+        } else {
+            NewCaptcha($ResetImgCaptcha, $InputResetVCode);
+            Coker.sweet.error("錯誤", "密碼格式有誤", null, true);
+        }
     })
 
     $(".btn_cookie_accept").on("click", cookie_accept);
@@ -365,6 +375,7 @@ function ready() {
                         if (result.success) {
                             Swal.close();
                             resetModal.show();
+                            $(".btn_reset").data("forgetId", insertdata["forgetid"])
                         } else {
                             co.sweet.error(result.error, "", null, false);
                         }
@@ -397,11 +408,6 @@ function SiteElementInit() {
     $InputResetVCode = $("#InputResetVCode");
     $ResetImgCaptcha = $('#ResetImgCaptcha');
     ResetForms = $('#ResetForm');
-
-    $NewPass = $("#InputRegisterNewPass");
-    $NewPassFeedBack = $("#NewPassFeedBack");
-    $CheckPass = $("#InputRegisterCheckPass");
-    $CheckPassFeedBack = $("#CheckPassFeedBack");
 }
 
 function scrollFunction() {
@@ -617,10 +623,22 @@ function ForgetAction() {
         }
     })
 }
-function ResetAction() {
+
+function ResetAction(forgetid) {
     var data = co.Form.getJson($("#ResetForm").attr("id"));
-    data.FK_WebsiteId = SiteId
-    data.FK_RoleId = 2;
+    data.ForgetId = forgetid;
+    data.WebsiteId = SiteId;
+    co.User.PasswordChange(data).done((result) => {
+        if (result.success) {
+            Coker.sweet.success("密碼重置成功。", function () {
+                window.location.href = $(location).attr('origin');
+            }, false);
+            registerModal.hide();
+        } else {
+            Coker.sweet.error(result.error, null, true);
+            NewCaptcha($ResetImgCaptcha, $InputResetVCode);
+        }
+    })
 }
 
 function NewCaptcha($self, $input, name = "") {
@@ -647,15 +665,31 @@ function FormClear(form, $input) {
     $LoginRemember.prop('checked', false);
     $RegisterMail.val("");
     $RegisterName.val("");
-    $NewPass.val("");
-    $NewPassFeedBack.val("");
-    $CheckPass.val("");
-    $CheckPassFeedBack.val("");
+
+    $("#InputRegisterNewPass").val("");
+    $("#RegisterNewPassFeedBack").val("");
+    $("#InputRegisterCheckPass").val("");
+    $("#RegisterCheckPassFeedBack").val("");
+
+    $("#InputResetNewPass").val("");
+    $("#ResetNewPassFeedBack").val("");
+    $("#InputResetCheckPass").val("");
+    $("#ResetCheckPassFeedBack").val("");
+
     $RegisterAccept.prop('checked', false);
     $input.val("");
 }
 
-function PassCheck() {
+function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
+
+    $NewPass.keyup(function () {
+        PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack);
+    });
+
+    $CheckPass.keyup(function () {
+        PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack);
+    });
+
     var hasNum = /\d+/, hasLetter = /[a-zA-Z]+/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
     $NewPass.addClass("is-invalid");
     $CheckPass.addClass("is-invalid");
@@ -742,6 +776,15 @@ var Coker = {
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 data: { ForgetId: ForgetId },
+            });
+        },
+        PasswordChange: function (data) {
+            return $.ajax({
+                url: "/api/User/PasswordChage",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         },
         Login: function (data) {

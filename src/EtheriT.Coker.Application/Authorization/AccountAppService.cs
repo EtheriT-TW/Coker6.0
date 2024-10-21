@@ -819,7 +819,7 @@ namespace EtheriT.Coker.Application.Authorization
                 var mapuserweb = await db.MappingFrontUserAndWebsite.Where(e => e.ForgetID == ForgetId).FirstOrDefaultAsync();
                 if (mapuserweb != null)
                 {
-                    if (((DateTime)mapuserweb.ForgeIDSendDate).AddDays(1).CompareTo(DateTime.Now) >0)
+                    if (((DateTime)mapuserweb.ForgeIDSendDate).AddDays(1).CompareTo(DateTime.Now) > 0)
                     {
                         response.Success = true;
                     }
@@ -831,6 +831,58 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 response.Error = ex.Message;
             }
+            return response;
+        }
+        public async Task<ResponseMessageDto> PasswordChage(PasswordChageDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+
+                var mapuserweb = await db.MappingFrontUserAndWebsite.Where(e => e.ForgetID == dto.ForgetID && e.FK_WebsiteId == dto.WebsiteId).FirstOrDefaultAsync();
+                if (mapuserweb != null)
+                {
+                    var user = await db.FrontUsers.Where(e => e.Id == mapuserweb.FK_UserId).FirstOrDefaultAsync();
+                    if (user != null)
+                    {
+                        var passwordSame = passwordHasher.VerifyHashedPassword(user.Password, dto.Password);
+                        if (!passwordSame)
+                        {
+                            user.Password = passwordHasher.HashPassword(dto.Password);
+                            user.LastModifierUserId = user.Id;
+                            user.LastModificationTime = DateTime.Now;
+                            await loginUserData.SaveChanges(user);
+
+                            Account_Log account_Log = new Account_Log()
+                            {
+                                UUID = UUID,
+                                WebsiteId = dto.WebsiteId,
+                                Status = (int)AccountStatusEnum.密碼重置,
+                                CreatorUserId = user.Id,
+                                CreationTime = DateTime.Now,
+                            };
+                            db.Account_Logs.Add(account_Log);
+                            db.SaveChanges();
+
+                            mapuserweb.ForgetID = null;
+                            mapuserweb.ForgeIDSendDate = null;
+                            await loginUserData.SaveChanges(mapuserweb);
+
+                            response.Success = true;
+                        }
+                        else throw new Exception("新的密碼不可與舊的相同");
+                    }
+                    else throw new Exception("會員不存在");
+                }
+                else throw new Exception("連結失效");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+
             return response;
         }
         private string checkPassword(string password)

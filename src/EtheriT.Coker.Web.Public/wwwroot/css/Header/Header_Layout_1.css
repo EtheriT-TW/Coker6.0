@@ -1,4 +1,12 @@
-﻿
+﻿.home, .page{
+    padding-top: 0 !important;
+}
+
+#breadcrumb {
+    padding-top:0 !important;
+    padding-bottom:0 !important;
+}
+
 /* Button Car Dropdown */
 #btn_car_dropdown > i.open {
     color: var(--red-popup);
@@ -367,7 +375,7 @@
 
     .mega_menu_canvas {
         margin: 0;
-        width: calc(100% - 2rem);
+        width: 100%;
     }
 
         .mega_menu_canvas .nav-link {

@@ -82,12 +82,20 @@ function SwiperInit(obj) {
                         //const previousSlideIndex = (this.realIndex - 1 + totalSlides) % totalSlides;
                         const $previousSlide = $(this.slides[previousSlideIndex]);
                         $self.find(".swiper-slide").each(function () {
-                            if (parseInt($(this).attr("data-swiper-slide-index")) != this.realIndex &&
-                                $(this).find("iframe").length > 0
-                            ) {
-                                const html = $(this).html()
-                                $(this).empty();
-                                $(this).append(html);
+                            if (parseInt($(this).attr("data-swiper-slide-index")) != this.realIndex) {
+                                var html;
+                                var reset = function (element, tager) {
+                                    $(element).empty();
+                                    $(element).append(tager);
+                                };
+                                if ($(this).find("iframe").length > 0) {
+                                    html = $(this).html();
+                                } else if ($(this).find("video").length > 0) {
+                                    html = $(this).find('video').parent();
+                                } 
+                                if (html !== undefined && html !== null) {
+                                    reset($(this), html);
+                                }
                             }
                         });
                     }

@@ -1,4 +1,11 @@
 ﻿function HeaderInit() {
+    $(document).ready(function () {
+        // 頁面加載完畢後滾動到目標元素
+        $('html, body').animate({
+            scrollTop: $('.one_swiper').offset().top  // 滾動到目標元素的頂部
+        }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
+    });
+
     var mega_menu_height = $("#Mega_Menu").css("height");
     $("body").css("padding-top", mega_menu_height);
 

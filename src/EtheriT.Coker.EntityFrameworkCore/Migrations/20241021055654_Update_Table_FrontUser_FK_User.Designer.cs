@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241021055654_Update_Table_FrontUser_FK_User")]
+    partial class Update_Table_FrontUser_FK_User
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1215,56 +1217,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("MappingCompanyAndWebsites");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingFrontUserAndRole", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("FrontUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("RoleId")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("UUID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FrontUserId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("MappingFrontUserAndRoles");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingFrontUserAndWebsite", b =>
                 {
                     b.Property<long>("Id")
@@ -1384,7 +1336,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<long?>("FrontUserId")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFront")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastModificationTime")
@@ -1404,6 +1362,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FrontUserId");
+
                     b.HasIndex("RoleId");
 
                     b.HasIndex("UserId");
@@ -1417,6 +1377,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             IsDeleted = false,
+                            IsFront = false,
                             RoleId = 1L,
                             UUID = new Guid("00000000-0000-0000-0000-000000000000"),
                             UserId = 1L
@@ -4851,21 +4812,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingFrontUserAndRole", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.FrontUser", null)
-                        .WithMany("Roles")
-                        .HasForeignKey("FrontUserId");
-
-                    b.HasOne("EtheriT.Coker.Core.Models.Role", "Role")
-                        .WithMany("FrontUsers")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingFrontUserAndWebsite", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.FrontUser", "User")
@@ -4887,6 +4833,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndRole", b =>
                 {
+                    b.HasOne("EtheriT.Coker.Core.Models.FrontUser", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("FrontUserId");
+
                     b.HasOne("EtheriT.Coker.Core.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
@@ -5485,8 +5435,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>
                 {
-                    b.Navigation("FrontUsers");
-
                     b.Navigation("PermissionDetails");
 
                     b.Navigation("Permissions");

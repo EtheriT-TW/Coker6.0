@@ -23,7 +23,8 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? Birthday { get; set; }
         public int ErrorTimes { get; set; }
         public DateTime? LockTime { get; set; }
-        public List<MappingUserAndRole> Roles { get; set; }
+        public long? FK_User { get; set; }
+        public List<MappingFrontUserAndRole> Roles { get; set; }
         public List<MappingFrontUserAndWebsite> Websites { get; set; }
     }
 }

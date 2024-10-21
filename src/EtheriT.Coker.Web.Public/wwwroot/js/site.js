@@ -545,6 +545,7 @@ function RegisterAction() {
                             if (result.success) {
                                 Coker.sweet.success("系統將重新發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
                             } else {
+                                Coker.sweet.error("發生未知錯誤", "", null, false);
                                 console.log(result.error);
                                 console.log(result.message);
                             }

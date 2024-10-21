@@ -404,7 +404,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             {
                 var tokenItem = await tokenAppService.CreateToken();
                 if (tokenItem != null) {
-                    ViewBag.isLogin = tokenItem.IsLogin;                }
+                    ViewBag.isLogin = tokenItem.IsLogin;
+                }
                 else throw new Exception();
             }
             catch {

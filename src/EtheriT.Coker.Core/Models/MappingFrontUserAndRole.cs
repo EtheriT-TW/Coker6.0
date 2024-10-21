@@ -3,7 +3,7 @@ using EtheriT.Coker.Web.Core.Models;
 
 namespace EtheriT.Coker.Core.Models
 {
-	public class MappingUserAndRole : FullAuditedEntity
+	public class MappingFrontUserAndRole : FullAuditedEntity
     {
         public long UserId { get; set; }
         public Guid UUID { get; set; }

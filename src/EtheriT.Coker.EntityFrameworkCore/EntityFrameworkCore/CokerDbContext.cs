@@ -48,6 +48,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod_Price> Prod_Prices { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<MappingUserAndRole> MappingUserAndRoles { get; set; }
+        public DbSet<MappingFrontUserAndRole> MappingFrontUserAndRoles { get; set; }
         public DbSet<Prod_TechCert> Prod_TechCerts { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Tag_Associate> Tag_Associates { get; set; }
@@ -88,7 +89,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 			{
 				o.HasQueryFilter(e => !e.IsDeleted);
 			});
-			modelBuilder.Entity<FrontUser>(o =>
+            modelBuilder.Entity<FrontUser>(o =>
 			{
 				o.HasQueryFilter(e => !e.IsDeleted);
 			});
@@ -101,15 +102,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(u => u.User).WithMany(u => u.Webs).HasForeignKey(f => f.UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.Users).HasForeignKey(f => f.WebsiteId);
-				o.HasQueryFilter(e => !e.IsDeleted);
-			});
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
             modelBuilder.Entity<MappingFrontUserAndWebsite>(o =>
             {
                 o.HasOne(u => u.User).WithMany(u => u.Websites).HasForeignKey(f => f.FK_UserId);
                 o.HasOne(w => w.Website).WithMany(w => w.FrontUsers).HasForeignKey(f => f.FK_WebsiteId);
 				o.HasQueryFilter(e => !e.IsDeleted);
 			});
-			modelBuilder.Entity<MappingOldNewUUID>(o =>
+            modelBuilder.Entity<MappingOldNewUUID>(o =>
 			{
 				o.HasQueryFilter(e => !e.IsDeleted);
 			});
@@ -306,8 +307,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<MappingUserAndRole>(o =>
             {
                 o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
-				o.HasQueryFilter(e => !e.IsDeleted);
-			});
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<MappingFrontUserAndRole>(o =>
+            {
+                o.HasOne(w => w.Role).WithMany(w => w.FrontUsers).HasForeignKey(f => f.RoleId);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
             modelBuilder.Entity<Tag>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);

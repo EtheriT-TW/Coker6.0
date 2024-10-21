@@ -178,7 +178,6 @@ namespace EtheriT.Coker.Application.Authorization
                                     {
                                         token.UUID = mapuserandweb.UUID;
                                         token.UserID = user.Id;
-
                                         if (user != null && !string.IsNullOrEmpty(user.Email))
                                         {
                                             output.Token = await tokenAppService.CreateToken(user.Email, token.id, 15);
@@ -552,16 +551,21 @@ namespace EtheriT.Coker.Application.Authorization
                 else if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
                 else
                 {
-                    FrontUser user = mapper.Map<FrontUser>(dto);
-                    user.Password = passwordHasher.HashPassword(dto.Password);
-                    db.FrontUsers.Add(user);
-                    await loginUserData.SaveChanges(user);
+                    FrontUser frontUser = mapper.Map<FrontUser>(dto);
+                    frontUser.Password = passwordHasher.HashPassword(dto.Password);
+                    var user = await db.Users.Where(e => e.Email == frontUser.Email).FirstOrDefaultAsync();
+                    if (user != null)
+                    {
+                        frontUser.FK_User = user.Id;
+                    }
+                    db.FrontUsers.Add(frontUser);
+                    await loginUserData.SaveChanges(frontUser);
 
                     MappingFrontUserAndWebsite mapuserandweb = new MappingFrontUserAndWebsite()
                     {
                         FK_WebsiteId = dto.WebsiteId,
                         UUID = UUID,
-                        FK_UserId = user.Id,
+                        FK_UserId = frontUser.Id,
                         Status = (int)UserStatusEnum.未開通,
                         OpenID = Guid.NewGuid(),
                         OpenIDSendDate = DateTime.Now
@@ -569,14 +573,13 @@ namespace EtheriT.Coker.Application.Authorization
                     db.MappingFrontUserAndWebsite.Add(mapuserandweb);
                     await loginUserData.SaveChanges(mapuserandweb);
 
-                    MappingUserAndRole mapuserrole = new MappingUserAndRole()
+                    MappingFrontUserAndRole mapuserrole = new MappingFrontUserAndRole()
                     {
-                        IsFront = true,
                         UUID = UUID,
                         UserId = mapuserandweb.Id,
                         RoleId = dto.RoleId,
                     };
-                    db.MappingUserAndRoles.Add(mapuserrole);
+                    db.MappingFrontUserAndRoles.Add(mapuserrole);
                     await loginUserData.SaveChanges(mapuserrole);
 
                     Account_Log account_Log = new Account_Log()
@@ -584,7 +587,7 @@ namespace EtheriT.Coker.Application.Authorization
                         UUID = UUID,
                         WebsiteId = dto.WebsiteId,
                         Status = (int)AccountStatusEnum.註冊,
-                        CreatorUserId = user.Id,
+                        CreatorUserId = frontUser.Id,
                         CreationTime = DateTime.Now,
                 };
                     db.Account_Logs.Add(account_Log);

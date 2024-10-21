@@ -65,11 +65,11 @@
                         var link = marquee.link;
                         if (string.IsNullOrEmpty(link))
                         {
-                            <div class="swiper-slide"><div class="overflow-hidden text">@marquee.title <span class="sr-only">(current)</span></div></div>
+                            <div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title="@marquee.title">@marquee.title <span class="sr-only">(current)</span></div></div>
                         }
                         else
                         {
-                            <div class="swiper-slide"><a class="overflow-hidden text" href="@link" title="@title" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                            <div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
                         }
                     }
                 </div>

@@ -554,10 +554,14 @@ namespace EtheriT.Coker.Application.Authorization
                     FrontUser frontUser = mapper.Map<FrontUser>(dto);
                     frontUser.Password = passwordHasher.HashPassword(dto.Password);
                     var user = await db.Users.Where(e => e.Email == frontUser.Email).FirstOrDefaultAsync();
-                    if (user != null)
+                    if (user == null)
                     {
-                        frontUser.FK_User = user.Id;
+                        user = mapper.Map<User>(dto);
+                        user.Password = frontUser.Password;
+                        db.Users.Add(user);
+                        await loginUserData.SaveChanges(user);
                     }
+                    frontUser.FK_User = user.Id;
                     db.FrontUsers.Add(frontUser);
                     await loginUserData.SaveChanges(frontUser);
 

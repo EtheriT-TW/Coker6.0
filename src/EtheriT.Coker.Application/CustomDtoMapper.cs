@@ -54,6 +54,7 @@ namespace EtheriT.Coker.Application
             CreateMap<ManagerAllListDto, User>().ReverseMap();
             CreateMap<EditUserDto, User>().ReverseMap();
             CreateMap<FrontAddUserDto, FrontUser>().ReverseMap();
+            CreateMap<FrontAddUserDto, User>().ReverseMap();
             CreateMap<FrontAddUserDto, MappingFrontUserAndWebsite>().ReverseMap();
             CreateMap<FrontAddUserDto, SendOpeningDto>().ReverseMap();
 

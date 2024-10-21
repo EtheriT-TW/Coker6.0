@@ -153,7 +153,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                     if (mapuserandweb != null)
                     {
-                        if (mapuserandweb.Status == (int)UserStatusEnum.停權 && user.LockTime!=null && ((DateTime)user.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
+                        if (mapuserandweb.Status == (int)UserStatusEnum.停權 && user.LockTime != null && ((DateTime)user.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
                         {
                             throw new Exception($"帳號鎖定中，請於{((DateTime)user.LockTime).AddMinutes(15)}後再次嘗試。");
                         }
@@ -162,7 +162,7 @@ namespace EtheriT.Coker.Application.Authorization
                             string password = user.Password;
                             if (passwordHasher.VerifyHashedPassword(password, dto.Password))
                             {
-                                if(mapuserandweb.Status == (int)UserStatusEnum.未開通)
+                                if (mapuserandweb.Status == (int)UserStatusEnum.未開通)
                                 {
                                     output.Success = false;
                                     output.Message = "未開通";
@@ -170,25 +170,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 }
                                 else
                                 {
-                                    DateTime dateTime = DateTime.Now;
-                                    DateTime EndDateTime = dateTime.AddMinutes(30);
-
-                                    var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.id == tokenItem.RefreshToken && e.websiteId == dto.WebsiteId).FirstOrDefaultAsync();
-                                    if (token != null)
-                                    {
-                                        token.UUID = mapuserandweb.UUID;
-                                        token.UserID = user.Id;
-                                        if (user != null && !string.IsNullOrEmpty(user.Email))
-                                        {
-                                            output.Token = await tokenAppService.CreateToken(user.Email, token.id, 15);
-                                        }
-                                    }
-                                    db.SaveChanges();
-                                    output.Secret = token.id;
-                                    output.EndDateTime = EndDateTime;
-
-                                    dto.Password = "******";
-                                    await loginUserData.SetLogs("Account", "Login", user.Id, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+                                    output = await NoPasswordLogin(mapuserandweb, user, dto.WebsiteId, dto);
 
                                     user.ErrorTimes = 0;
                                     await loginUserData.SaveChanges(user);
@@ -197,31 +179,6 @@ namespace EtheriT.Coker.Application.Authorization
                                         mapuserandweb.Status = (int)UserStatusEnum.開通;
                                         await loginUserData.SaveChanges(mapuserandweb);
                                     }
-
-                                    account_Log = new Account_Log()
-                                    {
-                                        UUID = mapuserandweb.UUID,
-                                        WebsiteId = dto.WebsiteId,
-                                        Status = (int)AccountStatusEnum.登入,
-                                        LastLoginTime = DateTime.Now,
-                                        CreatorUserId = user.Id,
-                                        CreationTime = DateTime.Now,
-                                    };
-                                    db.Account_Logs.Add(account_Log);
-                                    db.SaveChanges();
-
-                                    if (mapuserandweb.UUID != Temp_UUID)
-                                    {
-                                        MappingOldNewUUID mapoldnew = new MappingOldNewUUID
-                                        {
-                                            TempUUID = Temp_UUID,
-                                            UserUUID = mapuserandweb.UUID
-                                        };
-                                        db.MappingOldNewUUID.Add(mapoldnew);
-                                        await loginUserData.SaveChanges(mapoldnew);
-                                    }
-
-                                    output.Success = true;
                                 }
                             }
                             else
@@ -261,7 +218,7 @@ namespace EtheriT.Coker.Application.Authorization
                                     account_Log.CreationTime = DateTime.Now;
                                     db.Account_Logs.Add(account_Log);
                                     db.SaveChanges();
-                                    
+
                                     output.Success = false;
                                     throw new Exception("帳號或密碼有誤，請重新輸入");
                                 }
@@ -283,7 +240,8 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return output;
         }
-        public async Task<LoginOutputDto> FrontLogout() {
+        public async Task<LoginOutputDto> FrontLogout()
+        {
             LoginOutputDto output = new LoginOutputDto();
             var tokenItem = await tokenAppService.CreateToken();
             try
@@ -309,7 +267,8 @@ namespace EtheriT.Coker.Application.Authorization
                     output.Success = true;
                 }
             }
-            catch(Exception e) {
+            catch (Exception e)
+            {
                 tokenItem.Error = e.Message;
             }
             return output;
@@ -593,7 +552,7 @@ namespace EtheriT.Coker.Application.Authorization
                         Status = (int)AccountStatusEnum.註冊,
                         CreatorUserId = frontUser.Id,
                         CreationTime = DateTime.Now,
-                };
+                    };
                     db.Account_Logs.Add(account_Log);
                     db.SaveChanges();
 
@@ -623,24 +582,31 @@ namespace EtheriT.Coker.Application.Authorization
                 var UserData = await db.MappingFrontUserAndWebsite.Where(e => e.OpenID == OpenId).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                 if (UserData != null)
                 {
-                    if (UserData.Status == 0)
+                    var frontUser = await db.FrontUsers.Where(e => e.Id == UserData.FK_UserId).FirstOrDefaultAsync();
+                    if (frontUser != null)
                     {
-                        if (UserData.OpenIDSendDate.AddDays(1).CompareTo(DateTime.Now) < 0)
+                        if (UserData.Status == 0)
                         {
-                            response.Message = "ReSendOrNot";
-                            throw new Exception("開通連結已失效，是否重新寄送？");
-                        }
-                        else
-                        {
-                            UserData.Status = 1;
-                            UserData.OpenDate = DateTime.Now;
+                            if (UserData.OpenIDSendDate.AddDays(1).CompareTo(DateTime.Now) < 0)
+                            {
+                                response.Message = "ReSendOrNot";
+                                throw new Exception("開通連結已失效，是否重新寄送？");
+                            }
+                            else
+                            {
+                                UserData.Status = 1;
+                                UserData.OpenDate = DateTime.Now;
 
-                            await loginUserData.SaveChanges(UserData);
+                                await loginUserData.SaveChanges(UserData);
 
-                            response.Success = true;
+                                await NoPasswordLogin(UserData, frontUser, UserData.FK_WebsiteId, null);
+
+                                response.Success = true;
+                            }
                         }
+                        else throw new Exception("帳號已開通。");
                     }
-                    else throw new Exception("帳號已開通。");
+                    else throw new Exception("會員不存在");
                 }
                 else throw new Exception("連結不存在。");
             }
@@ -813,6 +779,67 @@ namespace EtheriT.Coker.Application.Authorization
                 error = ex.Message;
             }
             return error;
+        }
+        private async Task<LoginOutputDto> NoPasswordLogin(MappingFrontUserAndWebsite mapuserandweb, FrontUser? user, long WebsiteId, FrontLoginInputDto? dto)
+        {
+            LoginOutputDto output = new LoginOutputDto() { Success = false };
+            try
+            {
+                var tokenItem = await tokenAppService.CreateToken();
+                Guid Temp_UUID = await tokenAppService.GetUUID();
+                Account_Log account_Log = new Account_Log();
+
+                DateTime dateTime = DateTime.Now;
+                DateTime EndDateTime = dateTime.AddMinutes(30);
+
+                var token = await db.Tokens.Where(e => e.UUID == Temp_UUID && e.id == tokenItem.RefreshToken && e.websiteId == WebsiteId).FirstOrDefaultAsync();
+                if (token != null)
+                {
+                    token.UUID = mapuserandweb.UUID;
+                    token.UserID = user.Id;
+                    if (user != null && !string.IsNullOrEmpty(user.Email))
+                    {
+                        output.Token = await tokenAppService.CreateToken(user.Email, token.id, 15);
+                    }
+                }
+                db.SaveChanges();
+                output.Secret = token.id;
+                output.EndDateTime = EndDateTime;
+
+                if (dto != null) dto.Password = "******";
+                await loginUserData.SetLogs("Account", "Login", user.Id, WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+
+                account_Log = new Account_Log()
+                {
+                    UUID = mapuserandweb.UUID,
+                    WebsiteId = WebsiteId,
+                    Status = (int)AccountStatusEnum.登入,
+                    LastLoginTime = DateTime.Now,
+                    CreatorUserId = user.Id,
+                    CreationTime = DateTime.Now,
+                };
+                db.Account_Logs.Add(account_Log);
+                db.SaveChanges();
+
+                if (mapuserandweb.UUID != Temp_UUID)
+                {
+                    MappingOldNewUUID mapoldnew = new MappingOldNewUUID
+                    {
+                        TempUUID = Temp_UUID,
+                        UserUUID = mapuserandweb.UUID
+                    };
+                    db.MappingOldNewUUID.Add(mapoldnew);
+                    await loginUserData.SaveChanges(mapoldnew);
+                }
+
+                output.Success = true;
+            }
+            catch (Exception ex)
+            {
+                output.Error = ex.Message;
+            }
+
+            return output;
         }
     }
 }

@@ -64,14 +64,16 @@ function FlipBookModalInit(pare) {
                 PDFViewerApplication.closeModal = function () {
                     modal.hide();
                 };
-                PDFViewerApplication.initializedPromise.then(function () {
-                    // 確保 PDF.js 初始化完成後，覆寫 setTitleUsingUrl 方法
-                    PDFViewerApplication.setTitleUsingUrl = function () {
-                        // Do nothing to prevent title change
-                    };
+                if (typeof (PDFViewerApplication.initializedPromise) != "undefined") {
+                    PDFViewerApplication.initializedPromise.then(function () {
+                        // 確保 PDF.js 初始化完成後，覆寫 setTitleUsingUrl 方法
+                        PDFViewerApplication.setTitleUsingUrl = function () {
+                            // Do nothing to prevent title change
+                        };
 
-                    console.log('PDF.js has been initialized, title change has been disabled.');
-                });
+                        console.log('PDF.js has been initialized, title change has been disabled.');
+                    });
+                }
                 bookFlip.init(pare);
             }
         } else timer = setTimeout(init, 100);

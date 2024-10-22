@@ -43,5 +43,6 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string PathError { get; } = "Path error";
         public static string SiteSearch { get; } = "Site search";
         public static string UnnamedFile { get; } = "Unnamed file";
+        public static string ProdEmpty { get; } = "This product is sold out";
     }
 }

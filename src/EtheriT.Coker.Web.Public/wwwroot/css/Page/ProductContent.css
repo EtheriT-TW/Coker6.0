@@ -231,6 +231,20 @@ input:disabled + .btn_radio {
     height: 2rem;
 }
 
+.counter_input > .quantity {
+    display: flex;
+}
+.counter_input > .emptyProd {
+    display: none;
+}
+.counter_input.isEmpty > .quantity {
+    display: none;
+}
+
+.counter_input.isEmpty > .emptyProd {
+    display: flex;
+}
+
 #Product > .content > .btn_addToCar {
     background-color: var(--red-main);
     line-height: 3;

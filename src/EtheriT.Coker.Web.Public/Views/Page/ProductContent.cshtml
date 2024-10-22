@@ -278,28 +278,30 @@
                     </div>
                 </template>
             }
-            
-            <div class="options px-3">
-                <div class="counter d-flex align-items-center my-2">
-                    @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
-                    {
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <div class="options px-3">
+                    <div class="counter d-flex align-items-center my-2">
                         <label class="title" for="quantityInput1">數量</label>
-                        <div class="counter_input d-flex">
-                            <button class="btn_count_minus bg-white my-1">
-                                <i class="fa-solid fa-minus"></i>
-                                <span class="d-none">減少</span>
-                            </button>
+                        <div class="counter_input d-flex isEmpty">
+                            <div class="quantity">
+                                <button class="btn_count_minus bg-white my-1">
+                                    <i class="fa-solid fa-minus"></i>
+                                    <span class="d-none">減少</span>
+                                </button>
 
-                            <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
+                                <input id="quantityInput1" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
 
-                            <button class="btn_count_plus bg-white my-1">
-                                <i class="fa-solid fa-plus"></i>
-                                <span class="d-none">增加</span>
-                            </button>
+                                <button class="btn_count_plus bg-white my-1">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span class="d-none">增加</span>
+                                </button>
+                            </div>
+                            <div class="emptyProd">@L.get("ProdEmpty")</div>
                         </div>
-                    }
+                    </div>
                 </div>
-            </div>
+            }
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button">

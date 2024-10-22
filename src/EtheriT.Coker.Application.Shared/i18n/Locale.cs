@@ -43,6 +43,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string PathError { get; } = "路徑錯誤";
         public static string SiteSearch { get; } = "站內搜尋";
         public static string UnnamedFile { get; } = "未命名檔案";
+        public static string ProdEmpty { get; } = "商品已售完";
 
     }
 }

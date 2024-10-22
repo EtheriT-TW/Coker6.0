@@ -454,17 +454,30 @@ namespace EtheriT.Coker.Application.Directory
                         .ThenByDescending(e => e.Id)
                         .Skip(skip).Take(shownum);
 
-                    var list = dataMargin.Select(e => new DirectoryReleInfoDto
-                    {
-                        Id = e.Id,
-                        Title = e.Title,
-                        Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
-                        OrgName = e.OrgName,
-                        type = e.type,
-                        SerNo = e.SerNo,
-                        Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
-                        MainImage = imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
-                    }).ToList();
+                    var list = await Task.WhenAll(dataMargin.Select(async e => {
+                        List<FileGetImgDto> imagedata = new List<FileGetImgDto>();
+                        if (e.type == DirectoryTypeEnum.文章)
+                        {
+                            imagedata = await fileUploadAppService.getImgFiles(new FileGetImgInputDto
+                            {
+                                Sid = e.Id,
+                                Type = (int)FileBindTypeEnum.文章管理,
+                                Size = 3
+                            });
+                        }
+                        return new DirectoryReleInfoDto
+                        {
+                            Id = e.Id,
+                            Title = e.Title,
+                            Link = e.type == DirectoryTypeEnum.文章 ? e.Link + e.Id : "/" + e.Link,
+                            OrgName = e.OrgName,
+                            type = e.type,
+                            SerNo = e.SerNo,
+                            Description = string.IsNullOrEmpty(e.Description) ? getSearchDescription(e.MainImage, dto.SearchText) : getSearchDescription(e.Description, dto.SearchText),
+                            MainImage = imagedata.Count > 0 ? imagedata[0].Link :
+                                imgRegex.Match(e.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
+                        };
+                    }));
 
                     output.TotalCount = mCount + aCount;
                     output.ReleInfos.AddRange(list);

@@ -1,7 +1,7 @@
 ﻿var $input_quantity
 var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
-var preview_swiper, product_swiper, $pro_itemNo;
+var preview_swiper, product_swiper, $pro_itemNo, $counter_input;
 const showRange = false;
 
 function PageReady() {
@@ -37,13 +37,21 @@ function PageReady() {
     });
 
     $(document).on('click', '.btn_count_plus', function () {
-        $input_quantity.val(parseInt($input_quantity.val()) + 1);
+        $input_quantity.val(parseInt($input_quantity.val()) + parseInt($input_quantity.attr("step")));
+        $input_quantity.trigger("change");
     });
     $(document).on('click', '.btn_count_minus', function () {
-        $input_quantity.val(parseInt($input_quantity.val()) - 1);
+        $input_quantity.val(parseInt($input_quantity.val()) - parseInt($input_quantity.attr("step")));
         if ($input_quantity.val() == 0) {
-            $input_quantity.val(1);
+            $input_quantity.val(parseInt($input_quantity.attr("step")));
         }
+        $input_quantity.trigger("change");
+    });
+    $input_quantity.on("change", function () {
+        let v = $(this).val() - $(this).val() % $(this).attr("step");
+        if (v > parseInt($(this).attr("max"))) v = parseInt($(this).attr("max"));
+        if (v < parseInt($(this).attr("min"))) v = parseInt($(this).attr("min"));
+        $(this).val(v);
     });
 
     var $radio_btn = $('#Product > .content > .options > .radio > .control')
@@ -70,7 +78,7 @@ function PageReady() {
 
 function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
-
+    $counter_input = $(".counter_input");
     $prod_content = $("#Product > .content");
     $pro_name = $prod_content.find('.pro_title');
     $pro_itemNo = $prod_content.find('.pro_itemNo');
@@ -147,10 +155,15 @@ function PageDefaultSet(result) {
         item2.data("stype", 2)
 
         var maxprice = 0, minprice = 0;
+        
         result.stocks.forEach(data => {
-            obj["s1id"] = data.fK_S1id;
-            obj["s2id"] = data.fK_S2id;
-            obj["price"] = data.prices.find(e => e.fK_RId == roleid).price;
+            obj = {
+                s1id : data.fK_S1id,
+                s2id : data.fK_S2id,
+                stock : data.stock,
+                minQty : data.min_Qty,
+                price : data.prices.find(e => e.fK_RId == roleid).price
+            };
             price_list.push(obj);
             maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
             minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
@@ -205,6 +218,17 @@ function PageDefaultSet(result) {
 
         var price = result.stocks[0].prices.find(e => e.fK_RId == roleid).price;
         $pro_discount.text(price.toLocaleString('en-US'));
+    }
+    if (result.stocks.length > 0) {
+        $input_quantity.attr({
+            min: 0,
+            max: result.stocks[0].stock - (result.stocks[0].stock % result.stocks[0].min_Qty),
+            step: result.stocks[0].min_Qty
+        });
+        if (result.stocks[0].stock > 0) {
+            $counter_input.removeClass("isEmpty");
+            $input_quantity.trigger("change");
+        }
     }
 
     var $product_swiper = $(".ProductSwiper > .swiper-wrapper"), $preview_swiper = $(".PreviewSwiper > .swiper-wrapper");
@@ -330,14 +354,6 @@ function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
     $self_s = $self_p.siblings(".radio");
-    $self_p.find("input").each(function () {
-        $radio = $(this)
-        $radio.removeAttr("disabled");
-    })
-    $self_s.find("input").each(function () {
-        $radio = $(this)
-        $radio.removeAttr("disabled");
-    })
 
     switch ($self_p.data("stype")) {
         case 1:
@@ -365,20 +381,12 @@ function SpecRadio() {
             break;
         case 2:
             s2 = $self.val()
-            var temp_list = []
+            var temp_list = [];
             price_list.forEach(function (item) {
                 if (item.s2id == s2) {
                     temp_list.push(item.s1id)
                 }
             })
-            /*
-            $self_s.find("input").attr("disabled", "disabled");
-            $self_s.find("input").each(function () {
-                $radio = $(this)
-                if (temp_list.indexOf(parseInt($radio.val())) > -1) {
-                    $radio.removeAttr("disabled");
-                }
-            })*/
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s1 = null;
             }
@@ -389,6 +397,14 @@ function SpecRadio() {
         price_list.forEach(function (item) {
             if (item.s1id == s1 && (item.s2id==0 || item.s2id == s2)) {
                 $pro_discount.text(item.price.toLocaleString('en-US'));
+                $input_quantity.attr({
+                    min: 0,
+                    max: item.stock - (item.stock % item.minQty),
+                    step: item.minQty
+                });
+                if (item.stock == 0) $counter_input.addClass("isEmpty");
+                else $counter_input.removeClass("isEmpty");
+                $input_quantity.trigger("change");
             }
         })
     }
@@ -398,7 +414,7 @@ function AddToCart() {
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
-        if (s1 != null && s2 != null) {
+        if (s1 != null && s2 != null && $input_quantity.val() != 0) {
             Product.AddUp.Cart({
                 FK_Tid: $.cookie("Token"),
                 FK_Pid: parseInt(Pid),
@@ -429,7 +445,7 @@ function AddToCart() {
                 Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
             });
         } else {
-            Coker.sweet.error("錯誤", "請確實選擇規格", null, false);
+            Coker.sweet.error("錯誤", "請確實選擇規格及購買數量", null, false);
         }
     }
 }

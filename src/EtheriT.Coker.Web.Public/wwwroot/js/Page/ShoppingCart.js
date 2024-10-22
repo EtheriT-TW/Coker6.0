@@ -450,7 +450,10 @@ function RadioPayment() {
 
 function Step3Monitor() {
     if (OrdererOpen) { OrdererFilled = FormCheck(OrdererForms) };
-    if (RecipientOpen) { RecipientFilled = FormCheck(RecipientForms) };
+    if (RecipientOpen) {
+        if ($(`[name="RecipientRadio"]:checked`).val() == "order") RecipientSameOrderer();
+        RecipientFilled = FormCheck(RecipientForms);
+    }
     if (InvoiceOpen) { InvoiceFilled = FormCheck(InvoiceForms) };
 
     if (!(OrdererFilled && RecipientFilled && InvoiceFilled)) {
@@ -473,7 +476,6 @@ function OrdererEdit() {
 
 function RecipientRadio() {
     var $self = $(this)
-    console.log($self.val());
     if ($self.val() == "edit") {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").removeClass("d-none");
@@ -485,6 +487,7 @@ function RecipientRadio() {
         $("#RecipientForm > form").addClass("d-none");
         RecipientOpen = false;
         RecipientFilled = false;
+        RecipientSameOrderer();
     }
     else {
         $("#RecipientForm > .default_data").removeClass("d-none");
@@ -510,6 +513,20 @@ function RecipientFormClear() {
     $recipient_address_town.val("");
     $recipient_address.val("");
     $remark.val("");
+}
+function RecipientSameOrderer() {
+    RecipientFormSet(
+        $orderer_name.val(),
+        $orderer_sex.val(),
+        $orderer_cellphone.val(),
+        $orderer_telphone_area.val(),
+        $orderer_telphone.val(),
+        $orderer_telphone_ext.val(),
+        $orderer_address_city.val(),
+        $orderer_address_town.val(),
+        $orderer_address.val(),
+        $remark.val()
+    );
 }
 
 function RecipientFormSet(name, sex, email, cellphone, telphone_area, telphone, telphone_ext, address_city, address_town, address, remark) {

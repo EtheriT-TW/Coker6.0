@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using MailKit.Net.Smtp;
@@ -26,19 +27,20 @@ namespace EtheriT.Coker.Application.Common
             this.mapper = mapper;
             this.stringHandler = stringHandler;
         }
-        public async Task sendMail(SenderDto dto) {
+        public async Task<ResponseMessageDto> sendMail(SenderDto dto) {
             var webSiteName = string.IsNullOrEmpty(dto.Sender.Name)? await loginUserData.GetWebsiteName(): dto.Sender.Name;
 
-            await sendMail(dto, webSiteName);
+            return await sendMail(dto, webSiteName);
         }
-        public async Task sendMail(SenderDto dto, long siteId)
+        public async Task<ResponseMessageDto> sendMail(SenderDto dto, long siteId)
         {
             var webSiteName = await loginUserData.GetWebsiteOrgName(siteId);
 
-            await sendMail(dto, webSiteName);
+            return await sendMail(dto, webSiteName);
         }
-        public async Task sendMail(SenderDto dto, string? webSiteName)
+        public async Task<ResponseMessageDto> sendMail(SenderDto dto, string? webSiteName)
         {
+            ResponseMessageDto response = new ResponseMessageDto();
             string webUrl = await loginUserData.GetWebsiteUrl();
             string OrgName = await loginUserData.GetWebsiteOrgName();
             // 建立郵件
@@ -105,21 +107,84 @@ namespace EtheriT.Coker.Application.Common
             // 設定郵件內容
             message.Body = bodyBuilder.ToMessageBody();
 
-            using (var client = new SmtpClient())
+            try
             {
-                // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
-                client.Connect(dto.SMTP.Url, dto.SMTP.Port, SecureSocketOptions.None);
+                using (var client = new SmtpClient())
+                {
+                    // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
+                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, SecureSocketOptions.None);
 
-                // 如果需要的話，驗證一下
-                if (dto.SMTP.UserName != null)
-                    client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
+                    // 如果需要的話，驗證一下
+                    if (dto.SMTP.UserName != null)
+                        client.Authenticate(dto.SMTP.UserName, dto.SMTP.Password);
 
-                // 寄出郵件
-                client.Send(message);
+                    // 寄出郵件
+                    client.Send(message);
 
-                // 中斷連線
-                client.Disconnect(true);
+                    // 中斷連線
+                    client.Disconnect(true);
+                }
+                response.Success = true;
             }
+            catch (SmtpCommandException ex)
+            {
+                switch (ex.ErrorCode)
+                {
+                    case SmtpErrorCode.RecipientNotAccepted:
+                        /***
+                         * 可能錯誤原因
+                         * 收件人地址格式錯誤。
+                         * 收件人地址的網域無法解析。
+                         * 收件人地址被伺服器封鎖。
+                         * **/
+                        if (ex.ErrorCode == SmtpErrorCode.RecipientNotAccepted &&
+                            ex.Message.Contains("Domain not found", StringComparison.OrdinalIgnoreCase)
+                        )
+                        {
+                            response.Message = "網域錯誤：無法找到指定的網域";
+                        }
+                        else
+                        {
+                            response.Message = "收件人錯誤，可能是因為信箱網域或格式有問題";
+                        }
+                        break;
+                    case SmtpErrorCode.SenderNotAccepted:
+                        /***
+                         * 寄件人地址格式錯誤。
+                         * 寄件人地址未經授權或被列入黑名單。
+                         * ****/
+                        response.Message = "寄件人錯誤，可能是因為信箱網域或格式有問題";
+                        break;
+                    case SmtpErrorCode.MessageNotAccepted:
+                        /***
+                         * 郵件被判定為垃圾郵件。
+                         * 郵件內容格式不正確或包含禁止的附件。
+                         * **/
+                        response.Message = "信件內容格式錯誤";
+                        break;
+                    case SmtpErrorCode.UnexpectedStatusCode:
+                        /***
+                         * 伺服器發送了無效或未識別的回應。
+                         * 伺服器狀態異常
+                         * **/
+                        response.Message = "信件內容格式錯誤";
+                        break;
+                }
+            }
+            catch (AuthenticationException ex)
+            {
+                /***
+                 * 用戶名或密碼錯誤。
+                 * 帳戶被停用或受限。
+                 * 需要兩步驗證但未啟用。
+                 * **/
+                response.Message = "認證失敗，請檢查用戶名和密碼。";
+            }
+            catch (Exception ex) {
+                // 其他錯誤原因
+                response.Message = "信件發送失敗";
+            }
+            return response;
         }
     }
 }

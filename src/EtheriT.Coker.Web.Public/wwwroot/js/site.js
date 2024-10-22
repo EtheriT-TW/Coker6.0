@@ -302,6 +302,12 @@ function ready() {
     $(".btn_forget").on("click", function () {
         CaptchaVerify($ForgetImgCaptcha, $InputForgetVCode, ForgetAction)
     })
+
+    $(".btn_backlogin").on("click", function () {
+        loginModal.show();
+        forgetModal.hide();
+    })
+
     $(".btn_reset").on("click", function () {
         var passcheck = PassCheck($("#InputResetNewPass"), $("#InputResetCheckPass"), $("#ResetNewPassFeedBack"), $("#ResetCheckPassFeedBack"))
         var formcheck = SiteFormCheck(ResetForms, $InputResetVCode)

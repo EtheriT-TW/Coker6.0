@@ -195,7 +195,9 @@
                                     <img id="LoginImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                                 </div>
                             </div>
-                            <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+                            <div class="d-flex justify-content-end">
+                                <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
+                            </div>
                             <div class="form-check">
                                 <input id="CheckRemember" class="form-check-input" type="checkbox" value="">
                                 <label class="form-check-label" for="CheckRemember">記住我的帳號</label>
@@ -235,7 +237,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="text-center fs-4 fw-bold">加入會員</div>
-                        <form id="RegisterForm" class="card-body needs-validation" method="post">
+                        <form id="RegisterForm" class="card-body needs-validation pb-0" method="post">
                             <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
                             <div class="register_mail input-group mb-3">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
@@ -271,7 +273,9 @@
                             </div>
                         </form>
                         <div class="px-3">
-                            <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+                            <div class="d-flex  justify-content-end pt-0 pb-3">
+                                <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
+                            </div>
                             <div class="form-check">
                                 <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
                                 <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><a class="text-black text-decoration-underline" href="/@ViewData["OrgName"]/Terms" title="連結至：會員條款(另開新視窗)" target="_blank">會員條款</a></span></label>
@@ -314,8 +318,8 @@
                                 </div>
                             </div>
                         </form>
-                        <div class="px-3">
-                            <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+                        <div class="px-3 d-flex justify-content-end">
+                            <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
                         </div>
                         <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">重　置</button>
                     </div>
@@ -345,8 +349,9 @@
                                 </div>
                             </div>
                         </form>
-                        <div class="px-3">
-                            <button class="btn_refresh border-0 bg-transparent text-end w-100 text-black-50">刷新驗證碼</button>
+                        <div class="d-flex justify-content-end px-3">
+                            <button class="btn_backlogin border-0 bg-transparent text-end text-black-50 me-1">返回登入</button>
+                            <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
                         </div>
                         <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">發　送</button>
                     </div>

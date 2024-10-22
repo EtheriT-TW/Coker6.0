@@ -1,11 +1,11 @@
 ﻿function HeaderInit() {
     if ($('body.home').length) {
-        $(document).ready(function () {
+        setTimeout(function () {
             // 頁面加載完畢後滾動到目標元素
-            $('body').animate({
+            $('html,body').animate({
                 scrollTop: $('.one_swiper').offset().top  // 滾動到目標元素的頂部
             }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
-        });
+        }, 500);
     }
 
     var mega_menu_height = $("#Mega_Menu").css("height");
@@ -14,16 +14,13 @@
     $(window).resize(function () {
         var mega_menu_height = $("nav").css("height");
         $("body").css("padding-top", mega_menu_height);
+        MenuLiSize();
     });
 
     if ($("#Cart_Dropdown_Parent").length>0) {
         CartDropInit();
     }
     MenuLiSize();
-
-    $(window).resize(function () {
-        MenuLiSize();
-    });
 
     const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
     if (Cart_Dropdown != null) {

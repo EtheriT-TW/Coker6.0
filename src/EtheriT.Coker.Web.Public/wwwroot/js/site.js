@@ -73,6 +73,7 @@ function ready() {
     $(".backstageType").remove();
     //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
     if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
+    if ($(".marqueeSwiper").length > 0) MarqueeSwiper();
     if ($(".masonry").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
     if ($(".hover_mask").length > 0) HoverEffectInit();
@@ -285,6 +286,15 @@ function ready() {
 
     $(".btn_register").on("click", function () {
         var passcheck = PassCheck($("#InputRegisterNewPass"), $("#InputRegisterCheckPass"), $("#RegisterNewPassFeedBack"), $("#RegisterCheckPassFeedBack"))
+
+        $("#InputRegisterNewPass").keyup(function () {
+            PassCheck($("#InputRegisterNewPass"), $("#InputRegisterCheckPass"), $("#RegisterNewPassFeedBack"), $("#RegisterCheckPassFeedBack"));
+        });
+
+        $("#InputRegisterCheckPass").keyup(function () {
+            PassCheck($("#InputRegisterNewPass"), $("#InputRegisterCheckPass"), $("#RegisterNewPassFeedBack"), $("#RegisterCheckPassFeedBack"));
+        });
+
         var formcheck = SiteFormCheck(RegisterForms, $InputRegisterVCode)
         if (passcheck && formcheck) {
             if (!$RegisterAccept.prop("checked")) {
@@ -302,16 +312,34 @@ function ready() {
     $(".btn_forget").on("click", function () {
         CaptchaVerify($ForgetImgCaptcha, $InputForgetVCode, ForgetAction)
     })
+
+    $(".btn_backlogin").on("click", function () {
+        loginModal.show();
+        forgetModal.hide();
+    })
+
     $(".btn_reset").on("click", function () {
         var passcheck = PassCheck($("#InputResetNewPass"), $("#InputResetCheckPass"), $("#ResetNewPassFeedBack"), $("#ResetCheckPassFeedBack"))
+
+        $("#InputResetNewPass").keyup(function () {
+            PassCheck($("#InputResetNewPass"), $("#InputResetCheckPass"), $("#ResetNewPassFeedBack"), $("#ResetCheckPassFeedBack"));
+        });
+
+        $("#InputResetCheckPass").keyup(function () {
+            PassCheck($("#InputResetNewPass"), $("#InputResetCheckPass"), $("#ResetNewPassFeedBack"), $("#ResetCheckPassFeedBack"));
+        });
+
         var formcheck = SiteFormCheck(ResetForms, $InputResetVCode)
         if (passcheck && formcheck) {
             CaptchaVerify($ResetImgCaptcha, $InputResetVCode, function () {
                 ResetAction($(".btn_reset").data("forgetId"));
             })
-        } else {
+        } else if (!passcheck) {
             NewCaptcha($ResetImgCaptcha, $InputResetVCode);
             Coker.sweet.error("錯誤", "密碼格式有誤", null, true);
+        } else if (!formcheck) {
+            NewCaptcha($ResetImgCaptcha, $InputResetVCode);
+            Coker.sweet.error("錯誤", "驗證碼輸入錯誤", null, true);
         }
     })
 
@@ -682,32 +710,39 @@ function FormClear(form, $input) {
 
 function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
 
-    $NewPass.keyup(function () {
-        PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack);
-    });
+    var hasNum = /[0-9]/, hasUpper = /[A-Z]/, hasLower = /[a-z]/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
 
-    $CheckPass.keyup(function () {
-        PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack);
-    });
-
-    var hasNum = /\d+/, hasLetter = /[a-zA-Z]+/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
     $NewPass.addClass("is-invalid");
     $CheckPass.addClass("is-invalid");
-    if ($NewPass.val().length >= 8) {
-        if (hasNum.test($NewPass.val()) && hasLetter.test($NewPass.val()) && hasSpesym.test($NewPass.val())) {
-            $NewPass.removeClass("is-invalid");
-            $NewPass.addClass("is-valid");
-            $NewPassFeedBack.text("　");
-            if ($CheckPass.val() == $NewPass.val()) {
-                $CheckPass.removeClass("is-invalid");
-                $CheckPass.addClass("is-valid");
-                $CheckPassFeedBack.text("　");
-                return true;
+
+    var password = $NewPass.val();
+    var check = 0;
+
+    if (password.length >= 8) {
+        if (password.length <= 32) {
+            if (hasNum.test(password)) check += 1;
+            if (hasUpper.test(password)) check += 1;
+            if (hasLower.test(password)) check += 1;
+            if (hasSpesym.test(password)) check += 1;
+
+            if (check >= 3) {
+                $NewPass.removeClass("is-invalid");
+                $NewPass.addClass("is-valid");
+                $NewPassFeedBack.text("　");
+                if ($CheckPass.val() == password) {
+                    $CheckPass.removeClass("is-invalid");
+                    $CheckPass.addClass("is-valid");
+                    $CheckPassFeedBack.text("　");
+                    return true;
+                } else {
+                    $CheckPassFeedBack.text("密碼不相符");
+                }
             } else {
-                $CheckPassFeedBack.text("密碼不相符");
+                $NewPassFeedBack.text("密碼格式有誤");
+                $CheckPassFeedBack.text("密碼格式有誤");
             }
         } else {
-            $NewPassFeedBack.text("密碼格式有誤");
+            $NewPassFeedBack.text("請輸入32個以下的字元");
             $CheckPassFeedBack.text("密碼格式有誤");
         }
     } else {

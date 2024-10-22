@@ -847,32 +847,27 @@ namespace EtheriT.Coker.Application.Authorization
                     var user = await db.FrontUsers.Where(e => e.Id == mapuserweb.FK_UserId).FirstOrDefaultAsync();
                     if (user != null)
                     {
-                        var passwordSame = passwordHasher.VerifyHashedPassword(user.Password, dto.Password);
-                        if (!passwordSame)
+                        user.Password = passwordHasher.HashPassword(dto.Password);
+                        user.LastModifierUserId = user.Id;
+                        user.LastModificationTime = DateTime.Now;
+                        await loginUserData.SaveChanges(user);
+
+                        Account_Log account_Log = new Account_Log()
                         {
-                            user.Password = passwordHasher.HashPassword(dto.Password);
-                            user.LastModifierUserId = user.Id;
-                            user.LastModificationTime = DateTime.Now;
-                            await loginUserData.SaveChanges(user);
+                            UUID = UUID,
+                            WebsiteId = dto.WebsiteId,
+                            Status = (int)AccountStatusEnum.密碼重置,
+                            CreatorUserId = user.Id,
+                            CreationTime = DateTime.Now,
+                        };
+                        db.Account_Logs.Add(account_Log);
+                        db.SaveChanges();
 
-                            Account_Log account_Log = new Account_Log()
-                            {
-                                UUID = UUID,
-                                WebsiteId = dto.WebsiteId,
-                                Status = (int)AccountStatusEnum.密碼重置,
-                                CreatorUserId = user.Id,
-                                CreationTime = DateTime.Now,
-                            };
-                            db.Account_Logs.Add(account_Log);
-                            db.SaveChanges();
+                        mapuserweb.ForgetID = null;
+                        mapuserweb.ForgeIDSendDate = null;
+                        await loginUserData.SaveChanges(mapuserweb);
 
-                            mapuserweb.ForgetID = null;
-                            mapuserweb.ForgeIDSendDate = null;
-                            await loginUserData.SaveChanges(mapuserweb);
-
-                            response.Success = true;
-                        }
-                        else throw new Exception("新的密碼不可與舊的相同");
+                        response.Success = true;
                     }
                     else throw new Exception("會員不存在");
                 }

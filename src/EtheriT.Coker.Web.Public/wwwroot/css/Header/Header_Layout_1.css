@@ -1,10 +1,10 @@
-﻿.home, .page{
+﻿.home, .page {
     padding-top: 0 !important;
 }
 
 #breadcrumb {
-    padding-top:0 !important;
-    padding-bottom:0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 
 /* Button Car Dropdown */
@@ -31,48 +31,49 @@
     max-width: 80vw;
     max-height: 90vh;
 }
+
     #Car_Dropdown > ul {
-        list-style:none;
+        list-style: none;
     }
 
-    #Car_Dropdown > ul > li > figure > a > .pro_image {
-        max-width: 80px;
-    }
-
-    #Car_Dropdown > ul > li > figure > a > figcaption > .pro_name {
-        color: var(--black-text);
-        height: 3rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    #Car_Dropdown > ul > li > figure > a > figcaption > .pro_spec {
-        color: var(--black-text);
-        height: 3rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    #Car_Dropdown > ul > li > figure > a > figcaption > .number {
-        color: var(--red-number);
-    }
-
-        #Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_quantity::before {
-            content: '\00d7';
+        #Car_Dropdown > ul > li > figure > a > .pro_image {
+            max-width: 80px;
         }
 
-    #Car_Dropdown > ul > li > figure > .btn_cart_delete {
-        top: 50%;
-        right: -1.5rem;
-        transform: translate(0, -50%);
-        color: var(--gray-icon);
-    }
-
-        #Car_Dropdown > ul > li > figure > .btn_cart_delete:hover {
-            color: var(--red-main);
+        #Car_Dropdown > ul > li > figure > a > figcaption > .pro_name {
+            color: var(--black-text);
+            height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .pro_spec {
+            color: var(--black-text);
+            height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption > .number {
+            color: var(--red-number);
+        }
+
+            #Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_quantity::before {
+                content: '\00d7';
+            }
+
+        #Car_Dropdown > ul > li > figure > .btn_cart_delete {
+            top: 50%;
+            right: -1.5rem;
+            transform: translate(0, -50%);
+            color: var(--gray-icon);
+        }
+
+            #Car_Dropdown > ul > li > figure > .btn_cart_delete:hover {
+                color: var(--red-main);
+            }
 
     #Car_Dropdown > .btn_car_buy {
         background-color: var(--black-text);
@@ -112,7 +113,7 @@
     #Mega_Menu > .btn_menu > .bar {
         position: relative;
         display: block;
-        width: 1.75rem;
+        width: 1.25rem;
         height: 0.2rem;
         margin: 0.35rem auto;
         background-color: black;
@@ -221,33 +222,36 @@
     left: 50%;
 }
 
-.metaMenu .collapse_menus > .container > ul {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 100%;
-    margin: auto;
-    width: calc((192px + 32px)* 5);
-    min-height: 77px;
-    align-items: center;
+.metaMenu .collapse_menus > .container {
 }
 
-    .metaMenu .collapse_menus > .container > ul > li {
-        margin-left: 0.5rem;
-        margin-right: 1.5rem;
-        width: 191px;
-    }
-
-    .metaMenu .collapse_menus > .container > ul ul {
+    .metaMenu .collapse_menus > .container > ul {
+        display: flex;
         flex-wrap: wrap;
-        flex-direction: column;
-        height: 180px;
+        max-width: 100%;
+        margin: auto;
+        width: calc((192px + 32px)* 5);
+        min-height: 77px;
+        align-items: center;
     }
 
-        .metaMenu .collapse_menus > .container > ul ul > li {
-            width: 175px;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
+        .metaMenu .collapse_menus > .container > ul > li {
+            margin-left: 0.5rem;
+            margin-right: 1.5rem;
+            width: 191px;
         }
+
+        .metaMenu .collapse_menus > .container > ul ul {
+            flex-wrap: wrap;
+            flex-direction: column;
+            height: 180px;
+        }
+
+            .metaMenu .collapse_menus > .container > ul ul > li {
+                width: 175px;
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
 
 .listMenu {
     position: relative;
@@ -298,6 +302,14 @@
 }
 
 @media only screen and (max-width: 992px) {
+    #Offcanvas_Mega_Menu > ul > .title > .content > .container {
+        max-width: unset !important;
+    }
+
+    .metaMenu .collapse_menus > .container > ul > li {
+        width: 100% !important;
+    }
+
     #Offcanvas_Mega_Menu > ul > .title {
         width: 100%;
     }
@@ -369,10 +381,6 @@
                     color: #222 !important;
                 }
 
-    .metaMenu .collapse_menus > .container > ul {
-        align-items: flex-start;
-    }
-
     .mega_menu_canvas {
         margin: 0;
         width: 100%;
@@ -402,7 +410,8 @@
         }
 
     #Offcanvas_Mega_Menu {
-        background: #ffffffe6;
+        /*background: #ffffffe6;*/
+        background: white;
         flex-direction: column;
     }
 
@@ -431,6 +440,7 @@
     .metaMenu .collapse_menus > .container > ul {
         width: 100%;
         flex-direction: column;
+        align-items: flex-start;
     }
 
         .metaMenu .collapse_menus > .container > ul ul {
@@ -487,5 +497,13 @@
     #Offcanvas_Mega_Menu > ul > .title > .content > ul {
         justify-content: space-between;
         flex-direction: column;
+    }
+
+        #Offcanvas_Mega_Menu > ul > .title > .content > ul > li, a {
+            padding-right: 0 !important;
+        }
+
+    .subtitle > .subtitle_title > .material-symbols-outlined {
+        padding-bottom: 0.5rem;
     }
 }

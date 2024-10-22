@@ -35,7 +35,7 @@
         <!-- Menu Canvas -->
         <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
             <!-- Menu Canvas Search Block -->
-            <div class="offcanvas-header pt-2 ps-5">
+            <div class="offcanvas-header pt-3 ps-5">
                 <h5 class="offcanvas-title mx-auto fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
             </div>
 
@@ -49,7 +49,7 @@
                     string headType = "metaMenu";
                     List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
                     string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
-                    <li class="title nav-item @headType">
+                    <li class="title nav-item p-2 @headType">
                         @if (subItems.Count() > 0)
                         {
                             <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-black menu-item collapsed"

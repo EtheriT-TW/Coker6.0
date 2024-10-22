@@ -73,6 +73,7 @@ function ready() {
     $(".backstageType").remove();
     //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
     if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
+    if ($(".marqueeSwiper").length > 0) MarqueeSwiper();
     if ($(".masonry").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
     if ($(".hover_mask").length > 0) HoverEffectInit();

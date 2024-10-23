@@ -17,7 +17,6 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? LastLoginTime { get; set; }
         public virtual long CreatorUserId { get; set; }
         public virtual DateTime CreationTime { get; set; } = DateTime.Now;
-        public MappingFrontUserAndWebsite? mappingFrontUserAndWebsite { get; set; }
         public Website? Website { get; set; }
     }
 }

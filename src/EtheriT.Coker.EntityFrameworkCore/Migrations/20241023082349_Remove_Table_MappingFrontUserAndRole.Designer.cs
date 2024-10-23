@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241023082349_Remove_Table_MappingFrontUserAndRole")]
+    partial class Remove_Table_MappingFrontUserAndRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,7 +60,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("WebsiteId");
 
-                    b.ToTable("Account_Logs", (string)null);
+                    b.ToTable("Account_Logs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Advertise", b =>
@@ -141,7 +143,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Advertise", (string)null);
+                    b.ToTable("Advertise");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Advertise_Log", b =>
@@ -191,7 +193,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Uid");
 
-                    b.ToTable("Advertise_Logs", (string)null);
+                    b.ToTable("Advertise_Logs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
@@ -298,7 +300,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Article", (string)null);
+                    b.ToTable("Article");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.AuditLog", b =>
@@ -365,7 +367,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>
@@ -423,7 +425,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Companies", (string)null);
+                    b.ToTable("Companies");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Contact", b =>
@@ -488,7 +490,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebMenuId");
 
-                    b.ToTable("Contacts", (string)null);
+                    b.ToTable("Contacts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.CustSearch", b =>
@@ -551,7 +553,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("CustSearch", (string)null);
+                    b.ToTable("CustSearch");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Directory", b =>
@@ -610,7 +612,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Directory", (string)null);
+                    b.ToTable("Directory");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FileBind", b =>
@@ -670,7 +672,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_FileUploadId");
 
-                    b.ToTable("FileBinds", (string)null);
+                    b.ToTable("FileBinds");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FileBindMore", b =>
@@ -713,7 +715,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FileBindMores", (string)null);
+                    b.ToTable("FileBindMores");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FileUpload", b =>
@@ -775,7 +777,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("FileUploads", (string)null);
+                    b.ToTable("FileUploads");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.FrontUser", b =>
@@ -877,7 +879,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FrontUsers", (string)null);
+                    b.ToTable("FrontUsers");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Html_Content", b =>
@@ -967,7 +969,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("Type");
 
-                    b.ToTable("Html_Contents", (string)null);
+                    b.ToTable("Html_Contents");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.JsonObject", b =>
@@ -1018,7 +1020,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("JsonObjects", (string)null);
+                    b.ToTable("JsonObjects");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
@@ -1086,7 +1088,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("LogisticsSettings", (string)null);
+                    b.ToTable("LogisticsSettings");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Logisticstype", b =>
@@ -1129,7 +1131,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Logisticstypes", (string)null);
+                    b.ToTable("Logisticstypes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsType_PaymentType", b =>
@@ -1179,7 +1181,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Pid");
 
-                    b.ToTable("LogisticsType_Payments", (string)null);
+                    b.ToTable("LogisticsType_Payments");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingCompanyAndWebsites", b =>
@@ -1223,7 +1225,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("MappingCompanyAndWebsites", (string)null);
+                    b.ToTable("MappingCompanyAndWebsites");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingFrontUserAndWebsite", b =>
@@ -1267,7 +1269,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("MappingFrontUserAndWebsite", (string)null);
+                    b.ToTable("MappingFrontUserAndWebsite");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingOldNewUUID", b =>
@@ -1307,7 +1309,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MappingOldNewUUID", (string)null);
+                    b.ToTable("MappingOldNewUUID");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndRole", b =>
@@ -1354,7 +1356,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MappingUserAndRoles", (string)null);
+                    b.ToTable("MappingUserAndRoles");
 
                     b.HasData(
                         new
@@ -1410,7 +1412,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("WebsiteId");
 
-                    b.ToTable("MappingUserAndWebsites", (string)null);
+                    b.ToTable("MappingUserAndWebsites");
 
                     b.HasData(
                         new
@@ -1470,7 +1472,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MappingWebsiteRelationship", (string)null);
+                    b.ToTable("MappingWebsiteRelationship");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Marquee", b =>
@@ -1541,7 +1543,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Marquees", (string)null);
+                    b.ToTable("Marquees");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.NotFoundImage", b =>
@@ -1574,7 +1576,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("NotFoundImage", (string)null);
+                    b.ToTable("NotFoundImage");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ObjectType", b =>
@@ -1616,7 +1618,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ObjectTypes", (string)null);
+                    b.ToTable("ObjectTypes");
 
                     b.HasData(
                         new
@@ -1752,7 +1754,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_SCId");
 
-                    b.ToTable("Order_Details", (string)null);
+                    b.ToTable("Order_Details");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Order_Header", b =>
@@ -1876,7 +1878,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Order_Headers", (string)null);
+                    b.ToTable("Order_Headers");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PaymentType", b =>
@@ -1932,7 +1934,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ThirdPartyId");
 
-                    b.ToTable("PaymentTypes", (string)null);
+                    b.ToTable("PaymentTypes");
 
                     b.HasData(
                         new
@@ -2151,7 +2153,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("websiteId");
 
-                    b.ToTable("PaymentTypesValues", (string)null);
+                    b.ToTable("PaymentTypesValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PermissionDetail", b =>
@@ -2199,7 +2201,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("PermissionDetail", (string)null);
+                    b.ToTable("PermissionDetail");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Permissions", b =>
@@ -2241,7 +2243,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Permissions", (string)null);
+                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
@@ -2341,7 +2343,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Prods", (string)null);
+                    b.ToTable("Prods");
 
                     b.HasData(
                         new
@@ -2460,7 +2462,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Uid");
 
-                    b.ToTable("Prod_Logs", (string)null);
+                    b.ToTable("Prod_Logs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Price", b =>
@@ -2510,7 +2512,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_RId");
 
-                    b.ToTable("Prod_Prices", (string)null);
+                    b.ToTable("Prod_Prices");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod_Spec", b =>
@@ -2553,7 +2555,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Tid");
 
-                    b.ToTable("Prod_Specs", (string)null);
+                    b.ToTable("Prod_Specs");
 
                     b.HasData(
                         new
@@ -2679,7 +2681,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Prod_Spec_Types", (string)null);
+                    b.ToTable("Prod_Spec_Types");
 
                     b.HasData(
                         new
@@ -2771,7 +2773,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Pid");
 
-                    b.ToTable("Prod_Stocks", (string)null);
+                    b.ToTable("Prod_Stocks");
 
                     b.HasData(
                         new
@@ -2940,7 +2942,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_TCId");
 
-                    b.ToTable("Prod_TechCerts", (string)null);
+                    b.ToTable("Prod_TechCerts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Recipient", b =>
@@ -2989,7 +2991,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Recipients", (string)null);
+                    b.ToTable("Recipients");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Remote", b =>
@@ -3041,7 +3043,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebmenuId");
 
-                    b.ToTable("Remotes", (string)null);
+                    b.ToTable("Remotes");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>
@@ -3090,7 +3092,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
 
                     b.HasData(
                         new
@@ -3136,7 +3138,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("SearchLogs", (string)null);
+                    b.ToTable("SearchLogs");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
@@ -3208,7 +3210,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_PSid");
 
-                    b.ToTable("ShoppingCarts", (string)null);
+                    b.ToTable("ShoppingCarts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSet", b =>
@@ -3273,7 +3275,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_StoreSetGroupId");
 
-                    b.ToTable("StoreSet", (string)null);
+                    b.ToTable("StoreSet");
 
                     b.HasData(
                         new
@@ -3415,7 +3417,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("StoreSetDetail", (string)null);
+                    b.ToTable("StoreSetDetail");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.StoreSetGroup", b =>
@@ -3462,7 +3464,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("StoreSetGroup", (string)null);
+                    b.ToTable("StoreSetGroup");
 
                     b.HasData(
                         new
@@ -3533,7 +3535,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_StoreSetId");
 
-                    b.ToTable("StoreSetItems", (string)null);
+                    b.ToTable("StoreSetItems");
 
                     b.HasData(
                         new
@@ -3659,7 +3661,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag_Associate", b =>
@@ -3704,7 +3706,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_TId");
 
-                    b.ToTable("Tag_Associates", (string)null);
+                    b.ToTable("Tag_Associates");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag_Group", b =>
@@ -3748,7 +3750,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tag_Groups", (string)null);
+                    b.ToTable("Tag_Groups");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag_TagGroup", b =>
@@ -3792,7 +3794,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_TId");
 
-                    b.ToTable("Tag_TagGroups", (string)null);
+                    b.ToTable("Tag_TagGroups");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.TechnicalCertificate", b =>
@@ -3866,7 +3868,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("TechnicalCertificates", (string)null);
+                    b.ToTable("TechnicalCertificates");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdParty", b =>
@@ -3927,7 +3929,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ThirdParties", (string)null);
+                    b.ToTable("ThirdParties");
 
                     b.HasData(
                         new
@@ -4004,7 +4006,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_TPid");
 
-                    b.ToTable("ThirdPartyKeypairs", (string)null);
+                    b.ToTable("ThirdPartyKeypairs");
 
                     b.HasData(
                         new
@@ -4138,7 +4140,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("WebsiteId");
 
-                    b.ToTable("ThirdPartyKeypairValues", (string)null);
+                    b.ToTable("ThirdPartyKeypairValues");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
@@ -4169,7 +4171,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("id");
 
-                    b.ToTable("Tokens", (string)null);
+                    b.ToTable("Tokens");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -4305,7 +4307,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.ToTable("WebMenus", (string)null);
+                    b.ToTable("WebMenus");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Website", b =>
@@ -4393,7 +4395,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Websites", (string)null);
+                    b.ToTable("Websites");
 
                     b.HasData(
                         new
@@ -4510,7 +4512,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
@@ -4553,7 +4555,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Tid");
 
-                    b.ToTable("TokenMapAdvertise_Log", (string)null);
+                    b.ToTable("TokenMapAdvertise_Log");
                 });
 
             modelBuilder.Entity("TokenMapProd_Log", b =>
@@ -4568,7 +4570,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Tid");
 
-                    b.ToTable("TokenMapProd_Log", (string)null);
+                    b.ToTable("TokenMapProd_Log");
                 });
 
             modelBuilder.Entity("TokenMapShoppingCarts", b =>
@@ -4583,7 +4585,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_Tid");
 
-                    b.ToTable("TokenMapShoppingCarts", (string)null);
+                    b.ToTable("TokenMapShoppingCarts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Account_Log", b =>

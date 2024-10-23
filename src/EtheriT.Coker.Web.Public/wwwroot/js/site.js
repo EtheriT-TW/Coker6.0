@@ -543,8 +543,8 @@ function LoginAction() {
             Coker.sweet.success("歡迎回來！", null, true);
             window.location.href = $(location).attr('origin');
         } else {
-            switch (result.error) {
-                case "未開通":
+            switch (result.message) {
+                case "重新寄送通知信":
                     Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", function () {
                         Coker.sweet.loading();
                         data.WebsiteLink = $(location).attr('origin');
@@ -582,6 +582,8 @@ function RegisterAction() {
             Coker.sweet.success("註冊成功，系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中，您必須完成帳號開通程序後，才能登入網站與使用會員功能，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候開通帳號通知信。", null, false);
             registerModal.hide();
         } else {
+            console.log(result)
+            console.log(result.message)
             switch (result.message) {
                 case "重新寄送通知信":
                     Coker.sweet.confirm(result.error, "", result.message, "關閉視窗", function () {
@@ -596,6 +598,7 @@ function RegisterAction() {
                             }
                         });
                     });
+                    break;
                 case "郵箱已存在":
                     Coker.sweet.info(result.error, null);
                     break;

@@ -73,18 +73,14 @@ namespace EtheriT.Coker.Application.Token
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
-                            var mapfrontuserandweb = await db.MappingFrontUserAndWebsite.Where(e => e.UUID == RefreshToken.UUID && !e.IsDeleted).FirstOrDefaultAsync();
-                            if (mapfrontuserandweb != null) {
-								var user = await db.FrontUsers.Where(e => e.Id == mapfrontuserandweb.FK_UserId && !e.IsDeleted).FirstOrDefaultAsync();
-								var useraccount = "";
-                                if (user != null)
-                                {
-                                    useraccount = user.Account == null ? user.Email : user.Account;
-                                    tokenItem = await NewToken(useraccount, RefreshToken.UUID, user?.Id);
-                                    output.name = user?.Name;
-                                }
-                                else tokenItem = await NewToken(null, RefreshToken.UUID);
-							}else tokenItem = await NewToken(null, RefreshToken?.UUID);
+                            var frontUser = await db.FrontUsers.Where(e => e.UUID == RefreshToken.UUID).FirstOrDefaultAsync();  
+                            if (frontUser != null)
+                            {
+                                var useraccount = frontUser.Account == null ? frontUser.Email : frontUser.Account;
+                                tokenItem = await NewToken(useraccount, RefreshToken.UUID, frontUser?.Id);
+                                output.name = frontUser?.Name;
+                            }
+                            else tokenItem = await NewToken(null, RefreshToken?.UUID);
                         }
                         else tokenItem = await NewToken(null, oidRefreshToken?.UUID);
                     }else tokenItem = await NewToken();

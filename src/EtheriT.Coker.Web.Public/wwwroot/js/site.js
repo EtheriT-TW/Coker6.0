@@ -560,19 +560,6 @@ function LoginAction() {
                         });
                     });
                     break;
-                case "已存在其他站":
-                    Coker.sweet.confirm(result.error, "", "是", "否", function () {
-                        Coker.sweet.loading();
-                        co.User.AccountReSendOpening(data).done(result => {
-                            if (result.success) {
-                                Coker.sweet.success("系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
-                            } else {
-                                console.log(result.error);
-                                console.log(result.message);
-                            }
-                        });
-                    });
-                    break;
                 default:
                     Coker.sweet.error(result.error, null, false);
                     break;
@@ -609,20 +596,6 @@ function RegisterAction() {
                             }
                         });
                     });
-                    break;
-                case "已存在其他站":
-                    Coker.sweet.confirm(result.error, "", "是", "否", function () {
-                        Coker.sweet.loading();
-                        co.User.AccountReSendOpening(data).done(result => {
-                            if (result.success) {
-                                Coker.sweet.success("系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中。請靜候開通帳號通知信。", null, false);
-                            } else {
-                                console.log(result.error);
-                                console.log(result.message);
-                            }
-                        });
-                    });
-                    break;
                 case "郵箱已存在":
                     Coker.sweet.info(result.error, null);
                     break;

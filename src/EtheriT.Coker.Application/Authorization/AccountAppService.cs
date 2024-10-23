@@ -323,6 +323,16 @@ namespace EtheriT.Coker.Application.Authorization
                 var t = await db.Tokens.Where(e => e.id == Guid.Parse(secret ?? "")).FirstOrDefaultAsync();
                 if (t != null)
                 {
+                    Account_Log account_Log = new Account_Log()
+                    {
+                        UUID = t.UUID,
+                        WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
+                        Status = (int)AccountStatusEnum.登出,
+                        CreatorUserId = (long)t.UserID,
+                        LastLoginTime = DateTime.Now,
+                        CreationTime = DateTime.Now,
+                    };
+                    db.Account_Logs.Add(account_Log);
                     db.Tokens.Remove(t);
                     db.SaveChanges();
                 }
@@ -583,6 +593,35 @@ namespace EtheriT.Coker.Application.Authorization
                 response.Error = ex.Message;
             }
             return response;
+        }
+        public async Task<ResponseUserEditDto> GetFrontUserData(Guid refreshToken)
+        {
+            ResponseUserEditDto UserData = new ResponseUserEditDto();
+            try
+            {
+                var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
+                var token = await db.Tokens.Where(e => e.id == refreshToken).FirstOrDefaultAsync();
+                if (token != null)
+                {
+                    var userdata = await (from user in db.FrontUsers
+                                          join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                          where user.UUID == token.UUID && mapuserweb.FK_WebsiteId == websiteid
+                                          select user).FirstOrDefaultAsync();
+                    if(userdata!= null )
+                    {
+                        EditUserDto data = mapper.Map<EditUserDto>(userdata);
+                        UserData.data = data;
+                        UserData.Success = true;
+                    }
+                    else throw new Exception("會員不存在");
+                }
+                else throw new Exception("Token不存在");
+            }
+            catch (Exception ex)
+            {
+                UserData.Error = ex.Message;
+            }
+            return UserData;
         }
         public async Task<ResponseMessageDto> AccountOpening(Guid OpenId)
         {

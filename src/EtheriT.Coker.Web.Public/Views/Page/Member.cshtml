@@ -5,7 +5,7 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 <link rel="stylesheet" href="~/css//Member/Index.min.css" asp-append-version="true" />
-<script src="/js/Member/index.min.js" asp-append-version="true"></script>
+<script src="/js/Page/Member.min.js" asp-append-version="true"></script>
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
     const local = @Html.Raw(L.getAllJsonString());
@@ -32,17 +32,70 @@
     <div class="container d-flex flex-row">
         <ul class="nav flex-column" id="ToolList" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">個人資料</button>
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-tab-pane" type="button" role="tab" aria-controls="info-tab-pane" aria-selected="true">個人資料</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">歷史訂單</button>
             </li>
         </ul>
-        <div class="tab-content" id="TabContent">
-            <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
-                <button class="logout">登出</button>
+        <div id="TabContent" class="tab-content">
+            <div id="info-tab-pane" class="tab-pane fade show active p-5" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
+                <form id="UserDataForm" class="">
+                    <div class="row">
+                        <div class="form-floating mb-3 col-12  col-sm-6">
+                            <input id="Name" name="name" class="customer_info form-control" type="text" placeholder="" required>
+                            <label class="required required_all" for="Name">姓　名</label>
+                            <div class="invalid-feedback">姓名不可為空!</div>
+                        </div>
+                        <fieldset class="row mb-3 col-12 col-sm-6 ">
+                            <legend class="col-form-label col-sm-2 pt-0 align-content-center">性別</legend>
+                            <div class="col-sm-10 align-content-center">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputSex" value="0">
+                                    <label class="form-check-label" for="inputSex">中性</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputSex1" value="1">
+                                    <label class="form-check-label" for="inputSex1">男</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputSex2" value="2">
+                                    <label class="form-check-label" for="inputSex2">女</label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input id="Birthday" name="birthday" class="customer_info form-control" type="date">
+                        <label class="" for="Birthday">生　日</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input id="Email" name="email" class="customer_info form-control" type="email" placeholder="" required disabled>
+                        <label class="required required_all" for="Email">電子郵件</label>
+                        <div class="invalid-feedback">電子郵件不可為空!</div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input id="TelPhone" name="telPhone" class="customer_info form-control" type="tel" placeholder="">
+                        <label class="" for="TelPhone">室內電話</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input id="CellPhone" name="cellPhone" class="customer_info form-control" type="tel" placeholder="">
+                        <label class="" for="CellPhone">手機號碼</label>
+                    </div>
+                    <div id="TWzipcode" class="row" data-form-type="zipcode" name="Address">
+                        <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                        <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                        <div class="form-floating mb-3 col-12 col-sm-6">
+                            <input id="Address" class="address form-control required_all" type="text" placeholder="請輸入您的地址">
+                            <label class="px-4" for="Address">地址</label>
+                            <div class="invalid-feedback">地址格式錯誤!</div>
+                        </div>
+                    </div>
+                </form>
+                <button class="btn btn-primary rounded d-none">資料修改</button>
+                <button class="btn btn-primary btn_logout rounded">登出</button>
             </div>
-            <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">...</div>
+            <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">...</div>
         </div>
     </div>
 </Content>

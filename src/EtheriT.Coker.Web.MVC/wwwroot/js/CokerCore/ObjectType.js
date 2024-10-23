@@ -6,11 +6,7 @@
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, createOrEdit: function (data) {
             return $.ajax({
@@ -19,11 +15,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, delete: function (id) {
             return $.ajax({
@@ -32,11 +24,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, updateSerNo: function (list) {
             return $.ajax({
@@ -45,11 +33,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ list: list }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, getConten: function (id) {
             return $.ajax({
@@ -58,11 +42,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, GetNewsletterConten: function () {
             return $.ajax({
@@ -70,11 +50,7 @@
                 type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, GetNewsletterAllConten: function () {
             return $.ajax({
@@ -82,11 +58,7 @@
                 type: "Post",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, SaveConten: function (data) {
             return $.ajax({
@@ -95,11 +67,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }
     }

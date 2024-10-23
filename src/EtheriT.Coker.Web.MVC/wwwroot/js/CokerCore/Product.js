@@ -8,11 +8,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             },
             Stock: function (data) {
@@ -22,11 +18,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             },
             ProdTechCert: function (data) {
@@ -36,11 +28,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             },
             ProdPrice: function (data) {
@@ -50,11 +38,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             },
             Import: function (formData) {
@@ -67,11 +51,7 @@
                     crossDomain: true,
                     dataType: 'json',
                     mimeType: "multipart/form-data",
-                    processData: false,
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    processData: false
                 });
             }
         },
@@ -82,11 +62,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { id: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { id: id }
                 });
             },
             ProdStock: function (id) {
@@ -95,11 +71,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { PId: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { PId: id }
                 });
             },
             ProdTechCert: function (id) {
@@ -108,11 +80,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { PId: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { PId: id }
                 });
             },
             ProdPrice: function (id) {
@@ -121,11 +89,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { PSId: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { PSId: id }
                 });
             },
         },
@@ -136,11 +100,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { Id: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { Id: id }
                 });
             },
             Stock: function (id) {
@@ -149,11 +109,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { Id: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { Id: id }
                 });
             },
             Price: function (id) {
@@ -162,11 +118,7 @@
                     type: "GET",
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
-                    data: { Id: id },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    data: { Id: id }
                 });
             }
         },
@@ -178,11 +130,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             },
             SaveConten: function (data) {
@@ -192,11 +140,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             },
             ImportConten: function (data) {
@@ -206,11 +150,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             }
         },
@@ -222,11 +162,7 @@
                     contentType: 'application/json; charset=utf-8',
                     headers: _c.Data.Header,
                     data: JSON.stringify(data),
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader("requestverificationtoken",
-                            $('input:hidden[name="AntiforgeryFieldname"]').val());
-                    }
+                    dataType: "json"
                 });
             }
         }

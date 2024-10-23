@@ -1,0 +1,15 @@
+﻿@Html.AntiForgeryToken()
+<script>
+     function onBeforeSend(method, ajaxOptions) {
+        var token = $(`input[name="AntiforgeryField"]`).val();
+        console.log(token);
+        if (token) {
+            ajaxOptions.headers = { "x-xsrf-token-coker": token };
+        }
+
+        if (method === "delete") {
+            var originData = ajaxOptions.data;
+            ajaxOptions.data = { 'dataKey': originData.key };
+        }
+    }
+</script>

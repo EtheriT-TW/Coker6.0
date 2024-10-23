@@ -10,11 +10,7 @@
                 crossDomain: true,
                 dataType: 'json',
                 mimeType: "multipart/form-data",
-                processData: false,
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                processData: false
             });
         },
         Upload360: function (formData) {
@@ -27,11 +23,7 @@
                 crossDomain: true,
                 dataType: 'json',
                 mimeType: "multipart/form-data",
-                processData: false,
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                processData: false
             });
         },
         UploadYTLink: function (data) {
@@ -41,11 +33,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         getFileList: function (obj) {
@@ -55,11 +43,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ type: obj.type, id: obj.id }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         getImgFile: function (data) {
@@ -69,11 +53,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         getAdFile: function (Aid, type) {
@@ -92,11 +72,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         Delete: function (guid) {
@@ -106,11 +82,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ key: guid }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         DeleteFileById: function (data) {
@@ -120,11 +92,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         UploadImageInit: function (elementId, label_text) {

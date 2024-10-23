@@ -7,11 +7,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: {id:id},
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }
     }

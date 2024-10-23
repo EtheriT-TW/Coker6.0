@@ -6,11 +6,7 @@
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         getAllList: function () {
@@ -19,11 +15,7 @@
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         createOrEdit: function (data) {
@@ -33,11 +25,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         getConten: function (id) {
@@ -47,11 +35,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         saveConten: function (data) {
@@ -61,11 +45,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         importConten: function (data) {
@@ -75,11 +55,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         delete: function (id) {
@@ -89,11 +65,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ id: id }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         updateLevelAndSerNo: function (list) {
@@ -103,11 +75,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify({ list: list }),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         GetPageTypeList: function () {
@@ -116,11 +84,7 @@
                 type: "Get",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
     }

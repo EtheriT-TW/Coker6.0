@@ -5,11 +5,7 @@
                 url: "/api/PowerManagement/AllMenus/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                headers: _c.Data.Header
             });
         },
         GetPermission: function () {
@@ -17,11 +13,7 @@
                 url: "/api/PowerManagement/GetPermission/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                headers: _c.Data.Header
             });
         },
         GetPagePermission: function (data) {
@@ -30,11 +22,7 @@
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                data: JSON.stringify(data)
             });
         },
         SavePagePermission: function (data) {
@@ -43,11 +31,7 @@
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                data: JSON.stringify(data)
             });
         },
         getAllUsers: function () {
@@ -55,11 +39,7 @@
                 url: "/api/PowerManagement/AllUsers/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                headers: _c.Data.Header
             });
         },
         GetUser: (id) => {
@@ -68,11 +48,7 @@
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify({ id: id }),
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                data: JSON.stringify({ id: id })
             });
         },
         AddUser: function (data) {
@@ -81,11 +57,7 @@
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                data: JSON.stringify(data)
             });
         },
         RemoveMappingUserAndWebsite: (id) => {
@@ -104,11 +76,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         AddRole: (data) => {
@@ -118,11 +86,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, AddUserToRole: (data) => {
             return $.ajax({
@@ -131,11 +95,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, RemoveUserToRole: (data) => {
             return $.ajax({
@@ -144,11 +104,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         EditRole: (data) => {
@@ -158,11 +114,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }, DeleteRole: (id) => {
             return $.ajax({
@@ -180,11 +132,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         },
         SavePermissions: (data) => {
@@ -194,11 +142,7 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: JSON.stringify(data),
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }
     }

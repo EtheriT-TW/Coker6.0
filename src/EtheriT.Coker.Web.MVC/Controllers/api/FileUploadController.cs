@@ -25,6 +25,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.fileUploadAppService = fileUploadAppService;
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;
@@ -55,6 +56,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             }
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, [FromForm] int type, [FromForm] long? sid)
         {
             FileBindTypeEnum s = (FileBindTypeEnum)type;

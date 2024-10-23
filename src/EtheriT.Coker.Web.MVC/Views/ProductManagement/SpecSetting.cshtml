@@ -7,7 +7,9 @@
 
 <link rel="stylesheet" href="~/css/ProductManagement/SpecSetting.min.css" asp-append-version="true" />
 <script src="~/js/ProductManagement/SpecSetting.min.js" asp-append-version="true"></script>
-
+@{
+	await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+}
 <div class="">
 	<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
 		<div class="title fw-bold fs-3">規格設定</div>
@@ -24,6 +26,7 @@
 							.LoadUrl("/api/Specification/GetAllTypeList").LoadMethod("Get")
 							.InsertUrl("/api/Specification/TypeAddUp").InsertMethod("Post")
 							.UpdateUrl("/api/Specification/TypeAddUp").UpdateMethod("Post")
+							.OnBeforeSend("onBeforeSend")
 							)
 							.ID("TypeList")
 							.RemoteOperations(true)
@@ -100,6 +103,7 @@
 							.LoadUrl("/api/Specification/GetAllSpecList").LoadMethod("Get")
 							.InsertUrl("/api/Specification/SpecAddUp_List").InsertMethod("Post")
 							.UpdateUrl("/api/Specification/SpecAddUp_List").UpdateMethod("Post")
+							.OnBeforeSend("onBeforeSend")
 							)
 							.ID("SpecList")
 							.RemoteOperations(true)

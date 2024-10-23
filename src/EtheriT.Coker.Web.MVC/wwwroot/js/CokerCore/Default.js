@@ -10,7 +10,8 @@
         DefauleUrl: "/Welcome/index",
         Header: {
             Authorization: 'Bearer ' + $.cookie("token"),
-            Secret: $.cookie("secret")
+            Secret: $.cookie("secret"),
+            "x-xsrf-token-coker": $('input[name="AntiforgeryField"]').val()
         },
         Time: {
             DataRetentionTime: 30 * MinutesSecond,
@@ -82,11 +83,7 @@
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                dataType: "json",
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader("requestverificationtoken",
-                        $('input:hidden[name="AntiforgeryFieldname"]').val());
-                }
+                dataType: "json"
             });
         }
     },

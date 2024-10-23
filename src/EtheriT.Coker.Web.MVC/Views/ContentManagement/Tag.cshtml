@@ -12,7 +12,9 @@
     <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
         <div class="title fw-bold fs-3">標籤設定</div>
     </div>
-
+    @{
+        await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+    }
     <div id="" class="py-2">
         <div id="TagSettingList" class="card border-0">
             <div class="card-body row">
@@ -24,72 +26,73 @@
                             .LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
                             .InsertUrl("/api/Tag/TagAddUp").InsertMethod("Post")
                             .UpdateUrl("/api/Tag/TagAddUp").UpdateMethod("Post")
-                            )
-                            .ID("TagList")
-                            .RemoteOperations(true)
-                            .ShowBorders(true)
-                            .FilterRow(filterRow => filterRow
-                            .Visible(true)
-                            .ApplyFilter(GridApplyFilterMode.Auto)
-                            )
-                            .HeaderFilter(headerFilter => headerFilter.Visible(true))
-                            .SearchPanel(searchPanel => searchPanel
-                            .Visible(true)
-                            .Width(280)
-                            .Placeholder("請輸入要搜尋的資料")
-                            )
-                            .ShowRowLines(true)
-                            .Paging(paging => paging.PageSize(30))
-                            .Pager(pager =>
+                            .OnBeforeSend("onBeforeSend")
+                        )
+                        .ID("TagList")
+                        .RemoteOperations(true)
+                        .ShowBorders(true)
+                        .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                        )
+                        .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                        .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Width(280)
+                        .Placeholder("請輸入要搜尋的資料")
+                        )
+                        .ShowRowLines(true)
+                        .Paging(paging => paging.PageSize(30))
+                        .Pager(pager =>
+                        {
+                            pager.Visible(true);
+                            pager.ShowPageSizeSelector(true);
+                            pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                            pager.ShowInfo(true);
+                        })
+                        .Editing(editing =>
+                        {
+                            editing.Mode(GridEditMode.Row);
+                            editing.AllowAdding(true);
+                            editing.AllowDeleting(true);
+                            editing.AllowUpdating(true);
+                            editing.NewRowPosition(GridNewRowPosition.ViewportTop);
+                            editing.UseIcons(true);
+                        })
+                        .Columns(c =>
+                        {
+                            c.AddFor(e => e.Title).Caption("標籤名稱");
+                            c.Add()
+                            .Type(GridCommandColumnType.Buttons)
+                            .Buttons(b =>
                             {
-                                pager.Visible(true);
-                                pager.ShowPageSizeSelector(true);
-                                pager.AllowedPageSizes(new[] { 10, 20, 30 });
-                                pager.ShowInfo(true);
-                            })
-                            .Editing(editing =>
+                                b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
+                                b.Add().Name("save");
+                                b.Add().Name("cancel");
+                                b.Add().Name("delete").OnClick("tagDeleteButtonClicked");
+                            });
+                        })
+                        .Toolbar(toolbar =>
+                        {
+                            toolbar.Items(i =>
                             {
-                                editing.Mode(GridEditMode.Row);
-                                editing.AllowAdding(true);
-                                editing.AllowDeleting(true);
-                                editing.AllowUpdating(true);
-                                editing.NewRowPosition(GridNewRowPosition.ViewportTop);
-                                editing.UseIcons(true);
-                            })
-                            .Columns(c =>
-                            {
-                                c.AddFor(e => e.Title).Caption("標籤名稱");
-                                c.Add()
-                                .Type(GridCommandColumnType.Buttons)
-                                .Buttons(b =>
-                                {
-                                    b.Add().Icon("edit").OnClick("editButtonClicked").Visible(new JS("editButtonVisible"));
-                                    b.Add().Name("save");
-                                    b.Add().Name("cancel");
-                                    b.Add().Name("delete").OnClick("tagDeleteButtonClicked");
-                                });
-                            })
-                            .Toolbar(toolbar =>
-                            {
-                                toolbar.Items(i =>
-                                {
-                                    i.Add()
-                                .Name(DataGridToolbarItem.AddRowButton)
-                                .ShowText(ToolbarItemShowTextMode.Always)
-                                .Location(ToolbarItemLocation.Before);
-                                });
+                                i.Add()
+                            .Name(DataGridToolbarItem.AddRowButton)
+                            .ShowText(ToolbarItemShowTextMode.Always)
+                            .Location(ToolbarItemLocation.Before);
+                            });
 
-                                toolbar.Items(i =>
-                                {
-                                    i.Add()
-                                .Name(DataGridToolbarItem.SearchPanel)
-                                .ShowText(ToolbarItemShowTextMode.Always)
-                                .Location(ToolbarItemLocation.After);
-                                });
-                            })
-                            .OnContentReady("contentReady")
-                            .OnRowInserting("dataSaving")
-                            .OnRowUpdating("dataSaving"))
+                            toolbar.Items(i =>
+                            {
+                                i.Add()
+                            .Name(DataGridToolbarItem.SearchPanel)
+                            .ShowText(ToolbarItemShowTextMode.Always)
+                            .Location(ToolbarItemLocation.After);
+                            });
+                        })
+                        .OnContentReady("contentReady")
+                        .OnRowInserting("dataSaving")
+                        .OnRowUpdating("dataSaving"))
                     </div>
                 </div>
                 <div class="group_list position-relative col-12 col-lg-8">
@@ -100,6 +103,7 @@
                             .LoadUrl("/api/Tag/GetAllGroupList").LoadMethod("Get")
                             .InsertUrl("/api/Tag/TagGroupAddUp").InsertMethod("Post")
                             .UpdateUrl("/api/Tag/TagGroupAddUp").UpdateMethod("Post")
+                            .OnBeforeSend("onBeforeSend")
                             )
                             .ID("GroupList")
                             .RemoteOperations(true)

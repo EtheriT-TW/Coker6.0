@@ -399,7 +399,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
 			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
             ViewBag.isLogin = false;
-            
             try
             {
                 var tokenItem = await tokenAppService.CreateToken();

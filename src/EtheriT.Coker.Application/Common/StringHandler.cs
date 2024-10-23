@@ -3,6 +3,8 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -45,9 +47,8 @@ namespace EtheriT.Coker.Application.Common
 					str = RandonWordCode(length).ToUpper();
 					break;
                 case RandomStringType.數字加英文小寫:
-					Random random = new Random();
-                    for (int i=0; i<length ; i++) { 
-                        int c = random.Next(0, 1);
+                    for (int i=0; i<length ; i++) {
+                        int c = RandomNum(max: 1);
                         switch (c) { 
                             case 0:
                                 str += RandonNumCode(1);
@@ -59,10 +60,9 @@ namespace EtheriT.Coker.Application.Common
 					}
 					break;
 				case RandomStringType.數字加英文大小寫:
-					Random random2 = new Random();
 					for (int i = 0; i < length; i++)
 					{
-						int c = random2.Next(0, 2);
+						int c = RandomNum(0, 2);
 						switch (c)
 						{
 							case 0:
@@ -78,10 +78,9 @@ namespace EtheriT.Coker.Application.Common
 					}
 					break;
 				case RandomStringType.數字加英文大小寫及符號:
-					Random random3 = new Random();
 					for (int i = 0; i < length; i++)
 					{
-						int c = random3.Next(0, 3);
+						int c = RandomNum(0, 3);
 						switch (c)
 						{
 							case 0:
@@ -102,26 +101,60 @@ namespace EtheriT.Coker.Application.Common
 			}
             return str;
         }
-        private string RandonNumCode(int length) { 
-            return (new Random()).Next((int) Math.Pow(10, length)-1).ToString();
+        private string RandonNumCode(int length) {
+            if (length <= 0)
+                throw new ArgumentException("Length must be a positive integer.");
+
+            // 使用 RandomNumberGenerator 生成隨機數字
+            byte[] randomNumber = new byte[length];
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+            }
+
+            // 將隨機數字轉換為字串
+            string randomNumStr = string.Empty;
+            foreach (byte b in randomNumber)
+            {
+                // 轉換為 0-9 的數字
+                randomNumStr += (b % 10).ToString();
+            }
+
+            // 確保結果的長度符合要求
+            return randomNumStr.Substring(0, length);
         }
-		private string RandonWordCode(int length)
+        public int RandomNum(int min = 0, int max = int.MaxValue)
+        {
+            if (min >= max)
+                throw new ArgumentException("Max must be greater than Min.");
+
+            // 使用 RandomNumberGenerator 生成隨機整數
+            byte[] randomNumber = new byte[4]; // 4 bytes for an integer
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+            }
+
+            // 轉換為無符號整數
+            uint randomValue = BitConverter.ToUInt32(randomNumber, 0);
+            // 返回介於 min 和 max 之間的整數
+            return (int)(randomValue % (max - min)) + min;
+        }
+        private string RandonWordCode(int length)
 		{
-			Random random = new Random();
 			string str = string.Empty;
             for (int i = 0;i<length ;i++) {
-				str += (char)('A' + (char)(random.Next() % 26));
+				str += (char)('A' + (char)(int.Parse(RandonNumCode(2)) % 26));
 			}
 			return str;
 		}
 		private string RandonPunctuationCode(int length)
 		{
 			string PunctuationList = @"~!@#$%^&*()_+{}|:""<>?-=,./;'[]";
-			Random random = new Random();
 			string str = string.Empty;
 			for (int i = 0; i < length; i++)
 			{
-				str += PunctuationList[random.Next(0, PunctuationList.Length)];
+				str += PunctuationList[RandomNum(0, PunctuationList.Length)];
 			}
 			return str;
 		}

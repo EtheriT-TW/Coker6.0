@@ -130,15 +130,15 @@ builder.Services
             return "Cookies";
         };
     });
-/*
+
 builder.Services.AddAntiforgery(options =>
 {
-    // Set Cookie properties using CookieBuilder properties†.
-    options.FormFieldName = "AntiforgeryFieldname";
-    options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
-    options.SuppressXFrameOptionsHeader = false;
+    // input name的名稱
+    options.FormFieldName = "AntiforgeryField";
+    // 指定header 的名稱
+    options.HeaderName = "x-xsrf-token-coker";
 });
-*/
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();

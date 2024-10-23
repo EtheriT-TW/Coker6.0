@@ -3,7 +3,9 @@
 
 <link rel="stylesheet" href="~/css/Components/TagListModal.min.css" asp-append-version="true" />
 <script src="~/js/Components/TagListModal.min.js" asp-append-version="true"></script>
-
+@{
+    await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+}
 <div id="TagModal" class="modal fade" tabindex="-1" aria-labelledby="Tag Modal Label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -17,6 +19,7 @@
                         .DataSource(d => d.RemoteController().Key("Id")
                         .LoadUrl("/api/Tag/GetAllList").LoadMethod("Get")
                         .InsertUrl("/api/Tag/TagAddUp").InsertMethod("Post")
+                        .OnBeforeSend("onBeforeSend")
                         )
                         .ID("TagList")
                         .Selection(s =>

@@ -5,12 +5,16 @@
 }
 <script src="~/js/Newsletter/Recipient.min.js" asp-append-version="true"></script>
 <div class="">
+    @{
+        await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
+    }
     <div id="Recipient" class="card py-2 border-0">
         @(Html.DevExtreme().DataGrid<RecipientsListDto>()
             .DataSource(d => d.RemoteController().Key("Id")
             .LoadUrl("/api/Newsletter/GetRecipients").LoadMethod("Get")
             .InsertUrl("/api/Newsletter/SaveRecipients").InsertMethod("Post")
             .UpdateUrl("/api/Newsletter/SaveRecipients").UpdateMethod("Post")
+            .OnBeforeSend("onBeforeSend")
             )
             .ID("RecipientList")
             .RemoteOperations(true)

@@ -37,6 +37,7 @@ using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -594,6 +595,36 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return response;
         }
+        public async Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+                long WebsiteID = dto.WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.WebsiteId;
+
+                var frontUser = await (from user in db.FrontUsers
+                                       join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                       where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                       select user).FirstOrDefaultAsync();
+                if (frontUser != null)
+                {
+                    if (dto.Email != null) { }
+                    else dto.Email = frontUser.Email;
+
+                    mapper.Map(dto, frontUser);
+                    await loginUserData.SaveChanges(frontUser);
+
+                    response.Success = true;
+                }
+                else throw new Exception("用戶不存在。");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
         public async Task<ResponseUserEditDto> GetFrontUserData(Guid refreshToken)
         {
             ResponseUserEditDto UserData = new ResponseUserEditDto();
@@ -607,9 +638,10 @@ namespace EtheriT.Coker.Application.Authorization
                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                           where user.UUID == token.UUID && mapuserweb.FK_WebsiteId == websiteid
                                           select user).FirstOrDefaultAsync();
-                    if(userdata!= null )
+                    if (userdata != null)
                     {
                         EditUserDto data = mapper.Map<EditUserDto>(userdata);
+                        data.Birthday = userdata.Birthday == null ? "" : ((DateTime)userdata.Birthday).ToString("yyyy-MM-dd");
                         UserData.data = data;
                         UserData.Success = true;
                     }

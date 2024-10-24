@@ -8,6 +8,18 @@
                 data: { refreshToken: refreshToken },
             });
         },
+        UserEdit: function (data) {
+            return $.ajax({
+                url: "/api/User/FrontUserEdit",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         Logout: function () {
             return $.ajax({
                 url: "/api/User/Logout",
@@ -38,13 +50,18 @@
 }
 function Member(data) {
     Coker.User.GetUser(data.refreshToken).done(function (result) {
-        console.log(result.data)
         if (result.success) {
             co.Form.insertData(result.data, "#UserDataForm");
+
+            co.Zipcode.setData({
+                el: $("#TWzipcode"),
+                addr: result.data.address
+            });
         } else {
 
         }
     });
+
     $(".btn_logout").on("click", function () {
         co.User.Logout().done(function (result) {
             if (result.success) {
@@ -53,6 +70,14 @@ function Member(data) {
                     location.href = "/";
                 }, 1000);
             }
+        });
+    });
+
+    $(".btn_modifi").on("click", function () {
+        var data = co.Form.getJson($("#UserDataForm").attr("id"));
+        data.address = `${data.county} ${data.district} ${data.address}`;
+        data.WebsiteId = SiteId;
+        co.User.UserEdit(data).done(function (result) {
         });
     });
 }

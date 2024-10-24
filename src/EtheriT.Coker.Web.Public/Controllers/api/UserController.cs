@@ -41,6 +41,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
         [HttpPost]
         [AllowAnonymous]
+        public async Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto)
+        {
+            var result = await accountAppService.FrontUserEdit(dto);
+            return result;
+        }
+        [HttpPost]
+        [AllowAnonymous]
         public async Task<ResponseMessageDto> PasswordForget(SendForgetDto dto)
         {
             var result = await accountAppService.SendForget(dto);

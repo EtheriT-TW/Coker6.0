@@ -44,22 +44,22 @@
                     <div class="row">
                         <div class="form-floating mb-3 col-12  col-sm-6">
                             <input id="Name" name="name" class="customer_info form-control" type="text" placeholder="" required>
-                            <label class="required required_all" for="Name">姓　名</label>
+                            <label class="required required_all" for="name">姓　名</label>
                             <div class="invalid-feedback">姓名不可為空!</div>
                         </div>
                         <fieldset class="row mb-3 col-12 col-sm-6 ">
                             <legend class="col-form-label col-sm-2 pt-0 align-content-center">性別</legend>
                             <div class="col-sm-10 align-content-center">
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputSex" value="0">
+                                    <input class="form-check-input" type="radio" name="sex" id="inputSex" value="0">
                                     <label class="form-check-label" for="inputSex">中性</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputSex1" value="1">
+                                    <input class="form-check-input" type="radio" name="sex" id="inputSex1" value="1">
                                     <label class="form-check-label" for="inputSex1">男</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inputSex2" value="2">
+                                    <input class="form-check-input" type="radio" name="sex" id="inputSex2" value="2">
                                     <label class="form-check-label" for="inputSex2">女</label>
                                 </div>
                             </div>
@@ -70,7 +70,7 @@
                         <label class="" for="Birthday">生　日</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <input id="Email" name="email" class="customer_info form-control" type="email" placeholder="" required disabled>
+                        <input id="Email" name="email" class="customer_info form-control" type="Email" placeholder="" required disabled>
                         <label class="required required_all" for="Email">電子郵件</label>
                         <div class="invalid-feedback">電子郵件不可為空!</div>
                     </div>
@@ -82,18 +82,18 @@
                         <input id="CellPhone" name="cellPhone" class="customer_info form-control" type="tel" placeholder="">
                         <label class="" for="CellPhone">手機號碼</label>
                     </div>
-                    <div id="TWzipcode" class="row" data-form-type="zipcode" name="Address">
+                    <div id="TWzipcode" class="row" data-form-type="zipcode">
                         <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
                         <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
                         <div class="form-floating mb-3 col-12 col-sm-6">
-                            <input id="Address" class="address form-control required_all" type="text" placeholder="請輸入您的地址">
+                            <input id="Address" name="address" class="address form-control required_all" type="text" placeholder="請輸入您的地址">
                             <label class="px-4" for="Address">地址</label>
                             <div class="invalid-feedback">地址格式錯誤!</div>
                         </div>
                     </div>
                 </form>
-                <button class="btn btn-primary rounded d-none">資料修改</button>
-                <button class="btn btn-primary btn_logout rounded">登出</button>
+                <button class="btn_modifi btn btn-primary rounded">資料修改</button>
+                <button class="btn_logout btn btn-primary rounded">登出</button>
             </div>
             <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">...</div>
         </div>

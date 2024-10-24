@@ -2,6 +2,16 @@
     max-height: 3rem;
 }
 
+body:not(.home) #main > .container {
+    padding: unset !important;
+    padding-top:10px;
+}
+
+.container, .container-fluid, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+    padding-left:10px !important;
+    padding-right:10px !important;
+}
+
 header .menu {
     background: linear-gradient(90deg, #0BB0DD 0%, #0069A3 70%, #006AA1 100%);
 }

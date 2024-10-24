@@ -178,6 +178,7 @@ namespace EtheriT.Coker.Application.Authorization
                                 output = await NoPasswordLogin(frontuser, dto.WebsiteId, dto);
 
                                 frontuser.ErrorTimes = 0;
+                                frontuser.LockTime = null;
                                 if (frontuser.Status == (int)UserStatusEnum.停權) frontuser.Status = (int)UserStatusEnum.開通;
 
                                 await loginUserData.SaveChanges(frontuser);
@@ -870,34 +871,92 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 Guid UUID = await tokenAppService.GetUUID();
 
-                var frontUser = await (from user in db.FrontUsers
-                                       join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-                                       where user.ForgetID == dto.ForgetID && mapuserweb.FK_WebsiteId == dto.WebsiteId
-                                       select user).FirstOrDefaultAsync();
+                FrontUser? frontUser = new FrontUser();
 
-                if (frontUser != null)
+                if (UUID != null)
                 {
-                    frontUser.Password = passwordHasher.HashPassword(dto.Password);
-                    frontUser.LastModifierUserId = frontUser.Id;
-                    frontUser.LastModificationTime = DateTime.Now;
-                    frontUser.ForgetID = null;
-                    frontUser.ForgeIDSendDate = null;
-                    await loginUserData.SaveChanges(frontUser);
-
-                    Account_Log account_Log = new Account_Log()
+                    if (dto.ForgetID != null)
                     {
-                        UUID = UUID,
-                        WebsiteId = dto.WebsiteId,
-                        Status = (int)AccountStatusEnum.密碼重置,
-                        CreatorUserId = frontUser.Id,
-                        CreationTime = DateTime.Now,
-                    };
-                    db.Account_Logs.Add(account_Log);
-                    db.SaveChanges();
+                        frontUser = await (from user in db.FrontUsers
+                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                           where user.ForgetID == dto.ForgetID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                           select user).FirstOrDefaultAsync();
+                    }
+                    else if (dto.OldPassword != null)
+                    {
+                        frontUser = await (from user in db.FrontUsers
+                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                           where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                           select user).FirstOrDefaultAsync();
+                        if (frontUser != null)
+                        {
+                            if (frontUser.Status == (int)UserStatusEnum.停權 && frontUser.LockTime != null && ((DateTime)frontUser.LockTime).AddMinutes(15).CompareTo(DateTime.Now) > 0)
+                            {
+                                throw new Exception($"帳號鎖定中，請於{((DateTime)frontUser.LockTime).AddMinutes(15)}後再次嘗試。");
+                            }
+                            if (!passwordHasher.VerifyHashedPassword(frontUser.Password, dto.OldPassword))
+                            {
+                                frontUser.ErrorTimes += 1;
+                                Account_Log account_Log = new Account_Log()
+                                {
+                                    UUID = frontUser.UUID,
+                                    WebsiteId = dto.WebsiteId,
+                                    ErrorTimes = frontUser.ErrorTimes
+                                };
+                                if (frontUser.ErrorTimes >= 3)
+                                {
+                                    frontUser.LockTime = DateTime.Now;
+                                    account_Log.LockTime = frontUser.LockTime;
 
-                    response.Success = true;
+                                    frontUser.Status = (int)UserStatusEnum.停權;
+                                    account_Log.Status = (int)AccountStatusEnum.停權;
+
+                                    await loginUserData.SaveChanges(frontUser);
+
+                                    account_Log.CreatorUserId = frontUser.Id;
+                                    account_Log.CreationTime = DateTime.Now;
+
+                                    db.Account_Logs.Add(account_Log);
+                                    db.SaveChanges();
+
+                                    response.Message = "密碼錯誤";
+                                    throw new Exception("密碼錯誤次數三次以上，請於15分鐘後再次嘗試。");
+                                }
+                                await loginUserData.SaveChanges(frontUser);
+                                response.Message = "密碼錯誤";
+                                throw new Exception("舊有密碼輸入錯誤，請重新輸入。");
+                            }
+                        }
+                    }
+
+                    if (frontUser != null)
+                    {
+                        frontUser.Password = passwordHasher.HashPassword(dto.Password);
+                        frontUser.LastModifierUserId = frontUser.Id;
+                        frontUser.LastModificationTime = DateTime.Now;
+                        frontUser.ForgetID = null;
+                        frontUser.ForgeIDSendDate = null;
+                        frontUser.ErrorTimes = 0;
+                        frontUser.LockTime = null;
+                        frontUser.Status = (int)UserStatusEnum.開通;
+                        await loginUserData.SaveChanges(frontUser);
+
+                        Account_Log account_Log = new Account_Log()
+                        {
+                            UUID = UUID,
+                            WebsiteId = dto.WebsiteId,
+                            Status = (int)AccountStatusEnum.密碼重置,
+                            CreatorUserId = frontUser.Id,
+                            CreationTime = DateTime.Now,
+                        };
+                        db.Account_Logs.Add(account_Log);
+                        db.SaveChanges();
+
+                        response.Success = true;
+                    }
+                    else throw new Exception("會員不存在");
                 }
-                else throw new Exception("會員不存在");
+                else throw new Exception("Token錯誤");
             }
             catch (Exception ex)
             {

@@ -297,6 +297,13 @@
                         <div class="px-3 pt-2">密碼需填入8至32個字元 ，並包含英文字母[大寫]、[小寫]、[數字]或[符號]至少三種。</div>
                         <form id="ResetForm" class="card-body needs-validation" method="post">
                             <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                            <div class="reset_old_pass input-group d-none">
+                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                    <span class="material-symbols-outlined text-black-50">lock</span>
+                                </div>
+                                <input id="InputResetOldPass" class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Old Password" placeholder="舊密碼" required name="OldPassword" disabled>
+                            </div>
+                            <div id="ResetOldPassFeedBack" class="lh-1 text-danger pt-1 d-none">　</div>
                             <div class="reset_new_pass input-group">
                                 <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                     <span class="material-symbols-outlined text-black-50">lock</span>
@@ -322,6 +329,7 @@
                             <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
                         </div>
                         <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">重　置</button>
+                        <button class="btn_resetforget bg-transparent border-0 text-decoration-underline text-black-50 w-100 d-none">忘記密碼?</button>
                     </div>
                 </div>
             </div>

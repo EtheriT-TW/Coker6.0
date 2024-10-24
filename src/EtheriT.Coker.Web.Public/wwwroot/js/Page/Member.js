@@ -1,37 +1,4 @@
 ﻿function PageReady() {
-    Coker.User = {
-        GetUser: function (refreshToken) {
-            return $.ajax({
-                url: "/api/User/GetUserData/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                data: { refreshToken: refreshToken },
-            });
-        },
-        UserEdit: function (data) {
-            return $.ajax({
-                url: "/api/User/FrontUserEdit",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        Logout: function () {
-            return $.ajax({
-                url: "/api/User/Logout",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: {
-                    Authorization: 'Bearer ' + localStorage.getItem("token")
-                },
-                dataType: "json"
-            });
-        },
-    };
 
     let addr = $("#TWzipcode .address").val()
     co.Zipcode.init("#TWzipcode");
@@ -49,10 +16,14 @@
     });
 }
 function Member(data) {
+    $("#ResetForm .reset_old_pass").removeClass("d-none");
+    $("#ResetForm .reset_old_pass input").removeAttr("disabled");
+    $("#ResetOldPassFeedBack").removeClass("d-none");
+    $("#ResetModal .btn_resetforget").removeClass("d-none");
     Coker.User.GetUser(data.refreshToken).done(function (result) {
         if (result.success) {
             co.Form.insertData(result.data, "#UserDataForm");
-
+            $("#ResetForm").data("Email", result.data.email);
             co.Zipcode.setData({
                 el: $("#TWzipcode"),
                 addr: result.data.address
@@ -78,6 +49,11 @@ function Member(data) {
         data.address = `${data.county} ${data.district} ${data.address}`;
         data.WebsiteId = SiteId;
         co.User.UserEdit(data).done(function (result) {
+            co.sweet.success("資料修改完成！", null, true);
         });
     });
+
+    $(".btn_resetPassword").on("click", function () {
+        resetModal.show();
+    })
 }

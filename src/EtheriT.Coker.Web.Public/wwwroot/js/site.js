@@ -343,6 +343,25 @@ function ready() {
         }
     })
 
+    $("#ResetModal .btn_resetforget").on("click", function () {
+        Coker.sweet.confirm(`寄送『密碼重設通知』至您的信箱："${$("#ResetForm").data("Email")}"?`, "", "是", "否", function () {
+            Coker.sweet.loading();
+            var data = {};
+            data.Email = $("#ResetForm").data("Email");
+            data.WebsiteId = SiteId;
+            data.WebsiteLink = $(location).attr('origin');
+            data.WebsiteName = $("meta[property='og:site_name'").attr("content");
+            co.User.PasswordForget(data).done((result) => {
+                if (result.success) {
+                    Coker.sweet.success("系統將立即發送『密碼重設通知』信函至您所登錄之E-Mail中，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候密碼重設通知信。", null, false);
+                    registerModal.hide();
+                } else {
+                    Coker.sweet.error(result.error, null, true);
+                }
+            })
+        })
+    })
+
     $(".btn_cookie_accept").on("click", cookie_accept);
     $(".btn_cookie_reject").on("click", cookie_reject);
 
@@ -640,8 +659,18 @@ function ResetAction(forgetid) {
             }, false);
             registerModal.hide();
         } else {
-            Coker.sweet.error(result.error, null, true);
-            NewCaptcha($ResetImgCaptcha, $InputResetVCode);
+            switch (result.message) {
+                case "密碼錯誤":
+                    Coker.sweet.confirm(result.error, "", "忘記密碼?", "確定", function () {
+                        $("#ResetModal .btn_resetforget").click();
+                    })
+                    NewCaptcha($ResetImgCaptcha, $InputResetVCode);
+                    break;
+                default:
+                    Coker.sweet.error(result.error, null, true);
+                    NewCaptcha($ResetImgCaptcha, $InputResetVCode);
+                    break;
+            }
         }
     })
 }
@@ -805,6 +834,37 @@ var Coker = {
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        GetUser: function (refreshToken) {
+            return $.ajax({
+                url: "/api/User/GetUserData/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { refreshToken: refreshToken },
+            });
+        },
+        UserEdit: function (data) {
+            return $.ajax({
+                url: "/api/User/FrontUserEdit",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        Logout: function () {
+            return $.ajax({
+                url: "/api/User/Logout",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 dataType: "json"
             });
         },
@@ -1135,7 +1195,7 @@ var Coker = {
         getData: function ($e) {
             return $e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()
         }
-    }, 
+    },
     isMobileDevice: function () {
         let mobileDevices = ['Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 'Windows Phone']
         for (var i = 0; i < mobileDevices.length; i++) {

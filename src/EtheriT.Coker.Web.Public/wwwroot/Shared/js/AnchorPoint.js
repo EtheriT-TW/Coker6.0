@@ -48,13 +48,8 @@
                 if ($self.find('a[href^="#"]').length > 0) {
                     $select.append($("<option>").val("").text("請選擇將前往的標籤"))
                 } else {
-                    var text = "請選擇將前往的頁面";
-                    switch ($('body').attr('id')) {
-                        case "layout1":
-                            text = "探索Derek智慧科技";
-                            break;
-                    }
-                    $select.append($('<option>').val("").text(text))
+                    const text = $self.data("option-text") || "請選擇前往的頁面";
+                    $select.append($("<option>").val("").text(text));
                 }
                 $list.each((j, a) => {
                     $select.append(

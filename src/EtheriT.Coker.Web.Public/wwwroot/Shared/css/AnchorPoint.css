@@ -9,9 +9,11 @@
 }
     .selectList > select {
         position: relative;
+        font-size:18px;
         width: 95%;
         padding: 0.5rem;
         text-align: center;
+        text-align-last: center !important;
         margin: auto;
         background-color: #FFF;
         color: #000;

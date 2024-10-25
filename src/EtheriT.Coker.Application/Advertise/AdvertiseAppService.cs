@@ -13,6 +13,7 @@ using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
+using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Application.Advertise
 {
@@ -23,13 +24,15 @@ namespace EtheriT.Coker.Application.Advertise
         private readonly IMapper mapper;
         private readonly ITagAppService tagAppService;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly ITokenAppService tokenAppService;
         private readonly string ApplicationName;
         public AdvertiseAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
             ITagAppService tagAppService,
-            IFileUploadAppService fileUploadAppService
+            IFileUploadAppService fileUploadAppService,
+            ITokenAppService tokenAppService
         )
         {
             this.db = db;
@@ -37,6 +40,7 @@ namespace EtheriT.Coker.Application.Advertise
             this.mapper = mapper;
             this.tagAppService = tagAppService;
             this.fileUploadAppService = fileUploadAppService;
+            this.tokenAppService = tokenAppService;
             this.ApplicationName = "Advertise";
         }
         public async Task<ResponseMessageDto> AddUp(AdvertiseDto dto)
@@ -262,7 +266,8 @@ namespace EtheriT.Coker.Application.Advertise
 
             try
             {
-                var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
+                Guid UUID = await tokenAppService.GetUUID();
+
                 var db_ad = db.Advertise.Where(e => e.Id == dto.FK_Aid).FirstOrDefault();
                 if (db_ad != null)
                 {
@@ -278,13 +283,19 @@ namespace EtheriT.Coker.Application.Advertise
                             break;
                     }
 
+                    var userid = await (from user in db.FrontUsers
+                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                        where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                        select user.FK_User).FirstOrDefaultAsync();
+
                     Core.Models.Advertise_Log ad_log = new Core.Models.Advertise_Log
                     {
                         FK_Adid = dto.FK_Aid,
-                        FK_Tid = db_t == null ? null : dto.FK_Tid,
-                        FK_Uid = db_t == null ? null : db_t.UserID,
+                        FK_UserId = userid,
+                        UUID = UUID,
                         Action = dto.Action,
                     };
+
                     db.Advertise_Logs.Add(ad_log);
                     db.SaveChanges();
                 }

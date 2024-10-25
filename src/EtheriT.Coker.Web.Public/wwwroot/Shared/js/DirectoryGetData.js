@@ -551,10 +551,11 @@ function DirectoryAdDataInsert($item, result) {
                 tags += `<a href="${taglink}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`;
             }
             $frame.find(".tag").append(tags);
+
             if (isFront) {
                 Advertise.ActivityExposure({
                     FK_Aid: thisresult.id,
-                    FK_Tid: $.cookie("Token"),
+                    WebsiteId: SiteId,
                 }).done(function (result) {
                     //console.log(result)
                 })
@@ -565,23 +566,49 @@ function DirectoryAdDataInsert($item, result) {
                     $(this).addClass("playing")
                     Advertise.ActivityClick({
                         FK_Aid: thisresult.id,
-                        FK_Tid: $.cookie("Token"),
+                        WebsiteId: SiteId,
                     }).done(function (result) {
                         //console.log(result)
                     })
                 }
             })
+
+            $frame.find(".video_frame").find("video").on("play", function () {
+                var $this = $(this);
+                if (!$this.hasClass("playing")) {
+                    $(this).addClass("playing")
+                    Advertise.ActivityClick({
+                        FK_Aid: thisresult.id,
+                        WebsiteId: SiteId,
+                    }).done(function (result) {
+                        //console.log(result)
+                    })
+                }
+            })
+
             $frame.find(".video_frame").find("video").on("ended", function () {
                 var $this = $(this);
                 if ($this.hasClass("playing")) {
                     $(this).removeClass("playing")
                 }
             })
+
             $frame.on("click", function () {
                 if ($frame.find(".video_frame").length == 0) {
                     Advertise.ActivityClick({
                         FK_Aid: thisresult.id,
-                        FK_Tid: $.cookie("Token"),
+                        WebsiteId: SiteId,
+                    }).done(function (result) {
+                        //console.log(result)
+                    })
+                }
+            });
+
+            $frame.on("click", function () {
+                if ($frame.find(".video_frame").length == 0) {
+                    Advertise.ActivityClick({
+                        FK_Aid: thisresult.id,
+                        WebsiteId: SiteId,
                     }).done(function (result) {
                         //console.log(result)
                     })

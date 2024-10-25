@@ -32,14 +32,14 @@ function SideFloatingInit() {
     if (adid != "undefined") {
         Advertise.ActivityExposure({
             FK_Aid: adid,
-            FK_Tid: $.cookie("Token"),
+            WebsiteId: SiteId,
         }).done(function (result) {
             //console.log(result)
         })
         $("#Floating_Center > div").on("click", function () {
             Advertise.ActivityClick({
                 FK_Aid: adid,
-                FK_Tid: $.cookie("Token"),
+                WebsiteId: SiteId,
             }).done(function (result) {
                 //console.log(result)
             })

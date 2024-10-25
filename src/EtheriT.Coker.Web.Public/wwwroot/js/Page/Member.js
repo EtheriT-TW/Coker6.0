@@ -21,6 +21,7 @@ function Member(data) {
     $("#ResetOldPassFeedBack").removeClass("d-none");
     $("#ResetModal .btn_resetforget").removeClass("d-none");
     Coker.User.GetUser(data.refreshToken).done(function (result) {
+        //console.log(result.data)
         if (result.success) {
             co.Form.insertData(result.data, "#UserDataForm");
             $("#ResetForm").data("Email", result.data.email);
@@ -48,6 +49,7 @@ function Member(data) {
         var data = co.Form.getJson($("#UserDataForm").attr("id"));
         data.address = `${data.county} ${data.district} ${data.address}`;
         data.WebsiteId = SiteId;
+        //console.log(data);
         co.User.UserEdit(data).done(function (result) {
             co.sweet.success("資料修改完成！", null, true);
         });

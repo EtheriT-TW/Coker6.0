@@ -196,16 +196,16 @@ function ready() {
         if (adid != "undefined") {
             Advertise.ActivityExposure({
                 FK_Aid: adid,
-                FK_Tid: $.cookie("Token"),
+                WebsiteId: SiteId,
             }).done(function (result) {
-                console.log(result)
+                //console.log(result)
             })
             $("#EnterAdModal img").on("click", function () {
                 Advertise.ActivityClick({
                     FK_Aid: adid,
-                    FK_Tid: $.cookie("Token"),
+                    WebsiteId: SiteId,
                 }).done(function (result) {
-                    console.log(result)
+                    //console.log(result)
                 })
             });
         }

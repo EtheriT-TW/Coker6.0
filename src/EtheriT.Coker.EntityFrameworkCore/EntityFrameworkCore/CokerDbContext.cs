@@ -121,23 +121,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Token>(o =>
             {
                 o.Property(t => t.id).HasDefaultValueSql("newid()").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
-                o.HasMany(t => t.Advertise_Logs).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
-                    "TokenMapAdvertise_Log", // 這是中間表的名稱
-                    j => j
-                        .HasOne<Advertise_Log>()
-                        .WithMany()
-                        .HasForeignKey("FK_Tid") // 使用 FK_Tid 作為關聯
-                        .OnDelete(DeleteBehavior.Restrict), // 刪除紀錄不影響Token保留
-                    j => j
-                        .HasOne<Token>()
-                        .WithMany()
-                        .HasForeignKey("UUID") // 使用 UUID 作為關聯
-                        .OnDelete(DeleteBehavior.Restrict), // 刪除Token不影響Log紀錄
-                    j =>
-                    {
-                        j.HasKey("UUID", "FK_Tid"); // 設定主鍵
-                    }
-                );
+                //o.HasMany(t => t.Advertise_Logs).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
+                //    "TokenMapAdvertise_Log", // 這是中間表的名稱
+                //    j => j
+                //        .HasOne<Advertise_Log>()
+                //        .WithMany()
+                //        .HasForeignKey("FK_Tid") // 使用 FK_Tid 作為關聯
+                //        .OnDelete(DeleteBehavior.Restrict), // 刪除紀錄不影響Token保留
+                //    j => j
+                //        .HasOne<Token>()
+                //        .WithMany()
+                //        .HasForeignKey("UUID") // 使用 UUID 作為關聯
+                //        .OnDelete(DeleteBehavior.Restrict), // 刪除Token不影響Log紀錄
+                //    j =>
+                //    {
+                //        j.HasKey("UUID", "FK_Tid"); // 設定主鍵
+                //    }
+                //);
                 o.HasMany(t => t.Prod_Logs).WithMany(l => l.Tokens).UsingEntity<Dictionary<string, object>>(
                    "TokenMapProd_Log", // 這是中間表的名稱
                    j => j
@@ -351,7 +351,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Advertise_Log>(o =>
             {
                 o.HasOne(u => u.Advertise).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Adid);
-                o.HasOne(u => u.User).WithMany(u => u.Advertise_Logs).HasForeignKey(f => f.FK_Uid);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Article>(o =>

@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241025070908_Update_Table_AdvertiseLog_UUID")]
+    partial class Update_Table_AdvertiseLog_UUID
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,12 +184,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<Guid?>("Tokenid")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("UUID")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FK_Adid");
+
+                    b.HasIndex("Tokenid");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Advertise_Logs");
                 });
@@ -4599,6 +4611,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EtheriT.Coker.Core.Models.Token", null)
+                        .WithMany("Advertise_Logs")
+                        .HasForeignKey("Tokenid");
+
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null)
+                        .WithMany("Advertise_Logs")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("Advertise");
                 });
 
@@ -5396,6 +5416,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("thirdPartyKeypairValues");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
+                {
+                    b.Navigation("Advertise_Logs");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
                 {
                     b.Navigation("Contacts");
@@ -5462,6 +5487,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Web.Core.Models.User", b =>
                 {
+                    b.Navigation("Advertise_Logs");
+
                     b.Navigation("PermissionDetails");
 
                     b.Navigation("Permissions");

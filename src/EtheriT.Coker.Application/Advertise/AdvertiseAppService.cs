@@ -283,10 +283,7 @@ namespace EtheriT.Coker.Application.Advertise
                             break;
                     }
 
-                    var userid = await (from user in db.FrontUsers
-                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-                                        where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
-                                        select user.FK_User).FirstOrDefaultAsync();
+                    var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e=>e.FK_User).FirstOrDefaultAsync();
 
                     Core.Models.Advertise_Log ad_log = new Core.Models.Advertise_Log
                     {

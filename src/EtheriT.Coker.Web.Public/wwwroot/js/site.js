@@ -194,17 +194,11 @@ function ready() {
         })
         var adid = $("#EnterAdModal .modal-content").data("aid");
         if (adid != "undefined") {
-            Advertise.ActivityExposure({
-                FK_Aid: adid,
-                WebsiteId: SiteId,
-            }).done(function (result) {
+            Advertise.ActivityExposure(adid).done(function (result) {
                 //console.log(result)
             })
             $("#EnterAdModal img").on("click", function () {
-                Advertise.ActivityClick({
-                    FK_Aid: adid,
-                    WebsiteId: SiteId,
-                }).done(function (result) {
+                Advertise.ActivityClick(adid).done(function (result) {
                     //console.log(result)
                 })
             });

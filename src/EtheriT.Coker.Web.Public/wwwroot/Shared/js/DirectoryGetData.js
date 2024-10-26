@@ -29,22 +29,20 @@
 }
 
 var Advertise = {
-    ActivityClick: function (data) {
+    ActivityClick: function (FK_Aid) {
         return $.ajax({
-            url: "/api/Advertise/ActivityClick",
-            type: "POST",
+            url: "/api/Advertise/ActivityClick/",
+            type: "GET",
             contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            dataType: "json"
+            data: { FK_Aid: FK_Aid },
         });
     },
-    ActivityExposure: function (data) {
+    ActivityExposure: function (FK_Aid) {
         return $.ajax({
-            url: "/api/Advertise/ActivityExposure",
-            type: "POST",
+            url: "/api/Advertise/ActivityExposure/",
+            type: "GET",
             contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            dataType: "json"
+            data: { FK_Aid: FK_Aid },
         });
     },
 }
@@ -522,14 +520,15 @@ function DirectoryAdDataInsert($item, result) {
                                                 </div>`
                         $("body").prepend(html);
                         $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
-                        $("#YTPreviewModal .modal-header .btn-close").on("click", function () {
+
+                        document.getElementById('YTPreviewModal').addEventListener('hidden.bs.modal', function (event) {
                             $("#YTPreviewModal").find(".modal-body").empty();
-                        });
+                        })
                     }
                     $YT_frame.on("click", function () {
                         var temp_ytlink = "https://www.youtube.com/embed/" + result_File.name;
                         $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
-                     })
+                    })
                     $YT_frame.parent().children().not(".YT_frame").remove();
                     break;
             }
@@ -553,10 +552,7 @@ function DirectoryAdDataInsert($item, result) {
             $frame.find(".tag").append(tags);
 
             if (isFront) {
-                Advertise.ActivityExposure({
-                    FK_Aid: thisresult.id,
-                    WebsiteId: SiteId,
-                }).done(function (result) {
+                Advertise.ActivityExposure(thisresult.id).done(function (result) {
                     //console.log(result)
                 })
             }
@@ -564,23 +560,7 @@ function DirectoryAdDataInsert($item, result) {
                 var $this = $(this);
                 if (!$this.hasClass("playing")) {
                     $(this).addClass("playing")
-                    Advertise.ActivityClick({
-                        FK_Aid: thisresult.id,
-                        WebsiteId: SiteId,
-                    }).done(function (result) {
-                        //console.log(result)
-                    })
-                }
-            })
-
-            $frame.find(".video_frame").find("video").on("play", function () {
-                var $this = $(this);
-                if (!$this.hasClass("playing")) {
-                    $(this).addClass("playing")
-                    Advertise.ActivityClick({
-                        FK_Aid: thisresult.id,
-                        WebsiteId: SiteId,
-                    }).done(function (result) {
+                    Advertise.ActivityClick(thisresult.id).done(function (result) {
                         //console.log(result)
                     })
                 }
@@ -595,21 +575,7 @@ function DirectoryAdDataInsert($item, result) {
 
             $frame.on("click", function () {
                 if ($frame.find(".video_frame").length == 0) {
-                    Advertise.ActivityClick({
-                        FK_Aid: thisresult.id,
-                        WebsiteId: SiteId,
-                    }).done(function (result) {
-                        //console.log(result)
-                    })
-                }
-            });
-
-            $frame.on("click", function () {
-                if ($frame.find(".video_frame").length == 0) {
-                    Advertise.ActivityClick({
-                        FK_Aid: thisresult.id,
-                        WebsiteId: SiteId,
-                    }).done(function (result) {
+                    Advertise.ActivityClick(thisresult.id).done(function (result) {
                         //console.log(result)
                     })
                 }

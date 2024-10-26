@@ -1016,7 +1016,7 @@ namespace EtheriT.Coker.Application.Authorization
                 if (token != null)
                 {
                     token.UUID = frontuser.UUID;
-                    token.UserID = frontuser.Id;
+                    token.UserID = frontuser.FK_User;
                     if (frontuser != null && !string.IsNullOrEmpty(frontuser.Email))
                     {
                         output.Token = await tokenAppService.CreateToken(frontuser.Email, token.id, 15);

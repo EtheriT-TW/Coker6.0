@@ -16,16 +16,24 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             this.advertiseAppService = advertiseAppService;
         }
-        [HttpPost]
-        public async Task<ResponseMessageDto> ActivityClick(AdvertiseLogDto dto)
+        [HttpGet]
+        public async Task<ResponseMessageDto> ActivityClick(long FK_Aid)
         {
-            dto.Action = (int)LogActionEnum.點擊;
+            AdvertiseLogDto dto = new AdvertiseLogDto()
+            {
+                FK_Aid = FK_Aid,
+                Action = (int)LogActionEnum.點擊,
+            };
             return await advertiseAppService.ActivityLog(dto);
         }
-        [HttpPost]
-        public async Task<ResponseMessageDto> ActivityExposure(AdvertiseLogDto dto)
+        [HttpGet]
+        public async Task<ResponseMessageDto> ActivityExposure(long FK_Aid)
         {
-            dto.Action = (int)LogActionEnum.顯示;
+            AdvertiseLogDto dto = new AdvertiseLogDto()
+            {
+                FK_Aid = FK_Aid,
+                Action = (int)LogActionEnum.顯示,
+            };
             return await advertiseAppService.ActivityLog(dto);
         }
     }

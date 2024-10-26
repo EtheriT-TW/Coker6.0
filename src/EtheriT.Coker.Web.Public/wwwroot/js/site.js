@@ -752,19 +752,6 @@ function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
     return false;
 }
 
-function ClickLog(Pid) {
-    if ($.cookie("Token") != null) {
-        Product.Log.Click({
-            FK_Pid: Pid,
-            FK_Tid: $.cookie("Token"),
-            Action: 2,
-        }).done(function () {
-            ProdHistorySet();
-        });
-
-    }
-}
-
 var Coker = {
     timeout: {
         time: 1500

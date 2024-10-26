@@ -11,6 +11,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -18,13 +19,16 @@ namespace EtheriT.Coker.Application.Order
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly ITokenAppService tokenAppService;
         public OrderAppService(
             CokerDbContext db,
-            LoginUserData loginUserData
+            LoginUserData loginUserData,
+            ITokenAppService tokenAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.tokenAppService = tokenAppService;
         }
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto, long siteId)
         {
@@ -77,6 +81,8 @@ namespace EtheriT.Coker.Application.Order
         }
         public async Task<ResponseMessageDto> AddDetails(OrderDetailsAddDto dto)
         {
+            Guid UUID = await tokenAppService.GetUUID();
+            var token = tokenAppService.CheckToken();
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
@@ -102,18 +108,21 @@ namespace EtheriT.Coker.Application.Order
                                 db_sc.IsDeleted = true;
                                 db_sc.DeletionTime = DateTime.Now;
 
-                                var db_t = db.Tokens.Where(e => e.id == dto.FK_TId).FirstOrDefault();
-                                if (db_t != null)
+                                if (token != null)
                                 {
-                                    Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                                    var db_t = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
+                                    if (db_t != null)
                                     {
-                                        FK_Pid = db_ps.FK_Pid,
-                                        FK_Uid = db_t.UserID,
-                                        FK_Tid = db_t.id,
-                                        Action = 3,
-                                        Db_Name = "Order_Details"
-                                    };
-                                    db.Prod_Logs.Add(pl);
+                                        Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                                        {
+                                            FK_Pid = db_ps.FK_Pid,
+                                            FK_UserId = db_t.UserID,
+                                            UUID = UUID,
+                                            Action = (int)LogActionEnum.加入訂單,
+                                            Db_Name = "Order_Details"
+                                        };
+                                        db.Prod_Logs.Add(pl);
+                                    }
                                 }
 
                                 db.SaveChanges();

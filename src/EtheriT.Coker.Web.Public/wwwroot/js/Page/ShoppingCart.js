@@ -304,9 +304,6 @@ function CartAdd(result) {
 
     item.data("scid", result.scId);
     item_link.attr("href", `${OrgName}/Toilet/` + result.pId);
-    item_link.on("click", function () {
-        ClickLog(result.pId);
-    });
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -709,7 +706,6 @@ function OrderDetailsAdd(ohid, oh_result) {
     Coker.Order.AddDetails({
         FK_OHId: ohid,
         FK_SCId_Arr: scarr,
-        FK_TId: $.cookie("Token"),
     }).done(function (result) {
         if (result.success) {
             OrderSuccess(oh_result);
@@ -798,9 +794,6 @@ function PurchaseAdd(result, item_list_ul) {
         item_subtotal = item.find(".pro_subtotal");
 
     item_link.attr("href", "${OrgName}/Toilet/" + result.pId);
-    item_link.on("click", function () {
-        ClickLog(result.pId);
-    });
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')

@@ -16,6 +16,10 @@ function PageReady() {
             Pid = para[para.length - 1].replace(/\//g, "");
         }
     }
+    Product.Log.Click(Pid).done(function () {
+        //ProdHistorySet();
+    });
+
     Product.GetOne.ProdMainDisplay(Pid).done(function (result) {
         if (result != null) {
             PageDefaultSet(result);
@@ -155,14 +159,14 @@ function PageDefaultSet(result) {
         item2.data("stype", 2)
 
         var maxprice = 0, minprice = 0;
-        
+
         result.stocks.forEach(data => {
             obj = {
-                s1id : data.fK_S1id,
-                s2id : data.fK_S2id,
-                stock : data.stock,
-                minQty : data.min_Qty,
-                price : data.prices.find(e => e.fK_RId == roleid).price
+                s1id: data.fK_S1id,
+                s2id: data.fK_S2id,
+                stock: data.stock,
+                minQty: data.min_Qty,
+                price: data.prices.find(e => e.fK_RId == roleid).price
             };
             price_list.push(obj);
             maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
@@ -395,7 +399,7 @@ function SpecRadio() {
 
     if (s1 != null) {
         price_list.forEach(function (item) {
-            if (item.s1id == s1 && (item.s2id==0 || item.s2id == s2)) {
+            if (item.s1id == s1 && (item.s2id == 0 || item.s2id == s2)) {
                 $pro_discount.text(item.price.toLocaleString('en-US'));
                 $input_quantity.attr({
                     min: 0,

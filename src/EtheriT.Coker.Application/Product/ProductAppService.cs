@@ -28,6 +28,9 @@ using System.Data;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using System.IO;
 using System.Linq;
+using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.EntityFrameworkCore.Migrations;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -42,6 +45,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ISpecificationAppService specificationAppService;
+        private readonly ITokenAppService tokenAppService;
         private readonly ImportAppService importAppService;
         public ProductAppService(
             CokerDbContext db,
@@ -53,6 +57,7 @@ namespace EtheriT.Coker.Application.Product
             IFileUploadAppService fileUploadAppService,
             ISpecificationAppService specificationAppService,
             IWebMenuApplication webMenuApplication,
+            ITokenAppService tokenAppService,
             ImportAppService importAppService
         )
         {
@@ -65,6 +70,7 @@ namespace EtheriT.Coker.Application.Product
             this.fileUploadAppService = fileUploadAppService;
             this.specificationAppService = specificationAppService;
             this.webMenuApplication = webMenuApplication;
+            this.tokenAppService = tokenAppService;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -427,7 +433,7 @@ namespace EtheriT.Coker.Application.Product
                                         Min_Qty = ps.Min_Qty,
                                         Stock = ps.Stock,
                                         Alert_Qty = ps.Alert_Qty,
-                                        SubItemNo = ps.SubItemNo??"",
+                                        SubItemNo = ps.SubItemNo ?? "",
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 
@@ -543,7 +549,8 @@ namespace EtheriT.Coker.Application.Product
                     {
                         output.Img_Original = Imgs_original;
                     }
-                    else output.Img_Original.Add(new FileGetProdDisplayDto {  
+                    else output.Img_Original.Add(new FileGetProdDisplayDto
+                    {
                         Link = new List<string> { "/images/noImg.jpg" },
                         Name = "/images/noImg.jpg",
                         FileType = 1,
@@ -551,7 +558,7 @@ namespace EtheriT.Coker.Application.Product
                     });
 
                     var Imgs_medium = await fileUploadAppService.getProdMultimedia(output.Id, 2);
-                    if (Imgs_medium != null && Imgs_medium.Count !=0)
+                    if (Imgs_medium != null && Imgs_medium.Count != 0)
                     {
                         output.Img_Medium = Imgs_medium;
                     }
@@ -831,31 +838,43 @@ namespace EtheriT.Coker.Application.Product
             return output;
         }
         /* Product Log */
-        public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
+        public async Task<ResponseMessageDto> ClickLog(long FK_Pid)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
             try
             {
-                var db_t = db.Tokens.Where(e => e.id == dto.FK_Tid).FirstOrDefault();
+                var token = tokenAppService.CheckToken();
+                Guid UUID = await tokenAppService.GetUUID();
 
-                Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                var prod = db.Prods.Where(e => e.Id == FK_Pid).FirstOrDefault();
+                if (prod != null)
                 {
-                    FK_Pid = dto.FK_Pid,
-                    FK_Uid = db_t.UserID,
-                    FK_Tid = dto.FK_Tid,
-                    Action = dto.Action,
-                };
-                db.Prod_Logs.Add(pl);
-                db.SaveChanges();
-                output.Success = true;
+                    prod.Clicks = prod.Clicks == null ? 1 : prod.Clicks + 1;
+                    await loginUserData.SaveChanges(prod);
 
+                    var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e => e.FK_User).FirstOrDefaultAsync();
+
+                    Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
+                    {
+                        FK_Pid = FK_Pid,
+                        Action = (int)LogActionEnum.點擊,
+                        UUID = UUID,
+                        FK_UserId = userid,
+                        Db_Name = "Prods"
+                    };
+
+                    db.Prod_Logs.Add(prod_log);
+                    db.SaveChanges();
+                }
+
+                output.Success = true;
             }
             catch (Exception e)
             {
                 output.Success = false;
                 output.Error = e.Message;
             }
-
             return output;
         }
         /* Other Get */
@@ -985,23 +1004,52 @@ namespace EtheriT.Coker.Application.Product
 
             return new JsonResult(new List<ProdGetDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<List<ProdDisImgDto>> GetHistoryDisplay(Guid TId)
+        public async Task<List<ProdGetDisplayDto>> GetHistoryDisplay()
         {
             try
             {
-                var output = await (from pl in db.Prod_Logs
-                                    where pl.FK_Tid == TId && pl.Action == 2
-                                    orderby pl.Id descending
-                                    select new ProdDisImgDto
-                                    {
-                                        Id = pl.FK_Pid,
-                                    }).Take(4).ToListAsync();
+                Guid UUID = await tokenAppService.GetUUID();
 
-                return output;
+                var PIds = await (from prod_log in db.Prod_Logs
+                                  where prod_log.UUID == UUID
+                                  select prod_log.FK_Pid).ToListAsync();
+
+                if (PIds.Count > 0)
+                {
+                    var output = await (from prods in db.Prods
+                                        where PIds.Contains(prods.Id)
+                                        select new ProdGetDisplayDto()
+                                        {
+                                            Id = prods.Id,
+                                            Title = prods.Title,
+                                            Introduction = prods.Introduction,
+                                            Description = prods.Description,
+                                            Link = "/Toilet/" + prods.Id,
+                                            Image = "/upload/product/pro_0" + prods.Id + ".png",
+                                            Price = "",
+                                        }).Take(10).ToListAsync();
+
+                    for (int i = 0; i < output.Count; i++)
+                    {
+                        var prices = await db.Prod_Stocks.Where(e => e.FK_Pid == output[i].Id).OrderBy(e => e.Price).ToListAsync();
+
+                        if (prices.Count > 1 && prices[prices.Count - 1].Price != 0)
+                        {
+                            output[i].Price = $"{prices[0].Price}~{prices[prices.Count - 1].Price}";
+                        }
+                        else
+                        {
+                            output[i].Price = prices[0].Price.ToString();
+                        }
+                    }
+
+                    return output;
+                }
+                else throw new Exception("查無商品資料");
             }
             catch (Exception e)
             {
-
+                return null;
             }
             return null;
         }
@@ -1018,7 +1066,7 @@ namespace EtheriT.Coker.Application.Product
                 List<string> allTitles = allData.Select(p => p.ProdName).ToList();
                 List<string> allItemNos = allData.Select(p => p.ItemNo).ToList();
                 var updateItems = db.Prods.Where(e => !e.IsDeleted)
-                    .Where(p => string.IsNullOrEmpty(p.ItemNo)? allTitles.Contains(p.Title) : allItemNos.Contains(p.ItemNo))
+                    .Where(p => string.IsNullOrEmpty(p.ItemNo) ? allTitles.Contains(p.Title) : allItemNos.Contains(p.ItemNo))
                     .Select(s => new { s.Id, s.ItemNo, s.Title }).ToList();
                 ProductImportDto dto = null;
                 for (int i = 0; i < allData.Count; i++)
@@ -1158,7 +1206,8 @@ namespace EtheriT.Coker.Application.Product
                 await db.SaveChangesAsync();
                 await createDirectory(menuMap);
             }
-            catch(Exception e) {
+            catch (Exception e)
+            {
                 Console.WriteLine(e.Message);
             }
         }
@@ -1441,7 +1490,7 @@ namespace EtheriT.Coker.Application.Product
             var prodTitles = prodGroup.Select(e => e.ProdName).ToList();
             var prodItemNos = prodGroup.Select(e => e.ItemNo).ToList();
             var crrenProds = db.Prods.Where(e => !e.IsDeleted)
-                    .Where(e =>string.IsNullOrEmpty(e.ItemNo)? prodTitles.Contains(e.Title): prodItemNos.Contains(e.ItemNo))
+                    .Where(e => string.IsNullOrEmpty(e.ItemNo) ? prodTitles.Contains(e.Title) : prodItemNos.Contains(e.ItemNo))
                     .Select(e => new { e.Id, e.Title, e.ItemNo }).ToList();
             var techs = db.TechnicalCertificates.Where(e => !e.IsDeleted).Select(e => new { e.Id, e.Title }).ToList();
 
@@ -1449,7 +1498,7 @@ namespace EtheriT.Coker.Application.Product
             for (int i = 0; i < prods.Count; i++)
             {
                 var prod = prods[i];
-                var n = crrenProds.Find(e => string.IsNullOrEmpty(e.ItemNo)? e.Title == prod.ProdName : e.ItemNo == prod.ItemNo);
+                var n = crrenProds.Find(e => string.IsNullOrEmpty(e.ItemNo) ? e.Title == prod.ProdName : e.ItemNo == prod.ItemNo);
                 if (n == null || prod.Techs == null) continue;
                 for (int j = 0; j < prod.Techs.Count; j++)
                 {
@@ -1687,7 +1736,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 try
                 {
-                    var item = prods.Find(p => string.IsNullOrEmpty(prod.ItemNo)? p.ProdName == prod.Title : p.ItemNo == prod.ItemNo);
+                    var item = prods.Find(p => string.IsNullOrEmpty(prod.ItemNo) ? p.ProdName == prod.Title : p.ItemNo == prod.ItemNo);
                     if (item != null && item.stocks != null)
                     {
                         prod.Prod_Stocks = await InsertOrUpdateStore(item);
@@ -1743,7 +1792,8 @@ namespace EtheriT.Coker.Application.Product
                             prod.Css = "";
                             prod.SaveCss = "";
                         }
-                        if (prod.ItemNo == "C206-12") {
+                        if (prod.ItemNo == "C206-12")
+                        {
                             Console.WriteLine(prod.ItemNo);
                         }
                         ProdStatusEnum statusType;

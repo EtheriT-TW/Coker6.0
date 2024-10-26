@@ -34,6 +34,12 @@ function Member(data) {
         }
     });
 
+    Product.GetAll.History().done(function (result) {
+        var data = JSON.stringify(result);
+        console.log(data)
+        $("#history-tab-pane").append(`<div>${data}</div>`)
+    });
+
     $(".btn_logout").on("click", function () {
         co.User.Logout().done(function (result) {
             if (result.success) {

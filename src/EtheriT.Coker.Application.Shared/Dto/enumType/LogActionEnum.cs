@@ -7,5 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         點擊 = 2,
         新增 = 3,
         刪除 = 4,
+        加入訂單 = 5,
+        加入購物車 = 6,
     }
 }

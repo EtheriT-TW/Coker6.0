@@ -26,11 +26,11 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<List<ProductStockDto>> GetDisplayStock(long id);
         public Task<ProdGetDisplayDto> GetDisplaySimple(long id);
         public Task<JsonResult> GetRandomDIsplay(long webid, int num);
-        public Task<List<ProdDisImgDto>> GetHistoryDisplay(Guid TId);
+        public Task<List<ProdGetDisplayDto>> GetHistoryDisplay();
         public Task<ResponseMessageDto> ProdDelete(long Id);
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);
-        public Task<ResponseMessageDto> ClickLog(ProductLogDto dto);
+        public Task<ResponseMessageDto> ClickLog(long FK_Pid);
         public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files);
         public Task<GetProdContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto);

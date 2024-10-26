@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Order;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
@@ -61,10 +62,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                             Core.Models.Prod_Log pl = new Core.Models.Prod_Log
                             {
-                                FK_Pid = db_prod.Id,
-                                FK_Uid = db_token.UserID,
-                                FK_Tid = UUID,
-                                Action = 3,
+                                FK_Pid = db_ps.FK_Pid,
+                                FK_UserId = db_token.UserID,
+                                UUID = UUID,
+                                Action = (int)LogActionEnum.加入購物車,
                                 Db_Name = "ShoppingCart"
                             };
                             db.Prod_Logs.Add(pl);

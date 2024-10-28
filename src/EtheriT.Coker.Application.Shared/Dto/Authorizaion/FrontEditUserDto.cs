@@ -10,11 +10,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Authorizaion
     {
         public string? Email { get; set; }
         public string Name { get; set; }
-        public int Sex { get; set; }
-        public string TelPhone { get; set; }
-        public string CellPhone { get; set; }
-        public string Address { get; set; }
-        public DateTime Birthday { get; set; }
-        public long WebsiteId { get; set; }
+        public int? Sex { get; set; }
+        public string? TelPhone { get; set; }
+        public string? CellPhone { get; set; }
+        public string? Address { get; set; }
+        public DateTime? Birthday { get; set; }
     }
 }

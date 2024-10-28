@@ -38,3 +38,8 @@
         background: var(--bs-nav-pills-link-active-bg);
         border-radius:5px;
     }
+
+
+#TWzipcode > .county label::before, #TWzipcode > .county label::after, #TWzipcode > .district label::before, #TWzipcode > .district label::after {
+    content: '';
+}

@@ -4,7 +4,7 @@
 @using EtheriT.Coker.Web.Public.Models;
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
-<link rel="stylesheet" href="~/css//Member/Index.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css//Page/Member.min.css" asp-append-version="true" />
 <script src="/js/Page/Member.min.js" asp-append-version="true"></script>
 <script nonce="@ViewBag.Nonce">
     const PageKey = "@Model.option";
@@ -72,7 +72,7 @@
                         </fieldset>
                     </div>
                     <div class="form-floating mb-3">
-                        <input id="Birthday" name="birthday" class="customer_info form-control" type="date">
+                        <input id="Birthday" name="birthday" class="customer_info form-control bg-white" type="date">
                         <label class="" for="Birthday">生　日</label>
                     </div>
                     <div class="form-floating mb-3">
@@ -92,7 +92,7 @@
                         <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
                         <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
                         <div class="form-floating mb-3 col-12 col-sm-6">
-                            <input id="Address" name="address" class="address form-control required_all" type="text" placeholder="請輸入您的地址">
+                            <input id="Address" name="address" class="address form-control" type="text" placeholder="請輸入您的地址">
                             <label class="px-4" for="Address">地址</label>
                             <div class="invalid-feedback">地址格式錯誤!</div>
                         </div>

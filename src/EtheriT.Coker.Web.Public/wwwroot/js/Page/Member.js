@@ -29,6 +29,20 @@ function Member(data) {
                 el: $("#TWzipcode"),
                 addr: result.data.address
             });
+
+            var now = new Date();
+            var month = (now.getMonth() + 1).toString();
+            if (month.length == 1) month = '0' + month;
+            var day = now.getDate().toString();
+            if (day.length == 1) day = '0' + day;
+            var date_now = `${now.getFullYear()}-${month}-${day}`
+
+            $("#Birthday").attr("max", date_now);
+
+            $("#Birthday").on("keydown", function (e) {
+                e.preventDefault();
+            });
+
         } else {
 
         }
@@ -52,13 +66,18 @@ function Member(data) {
     });
 
     $(".btn_modifi").on("click", function () {
-        var data = co.Form.getJson($("#UserDataForm").attr("id"));
-        data.address = `${data.county} ${data.district} ${data.address}`;
-        data.WebsiteId = SiteId;
-        //console.log(data);
-        co.User.UserEdit(data).done(function (result) {
-            co.sweet.success("資料修改完成！", null, true);
-        });
+        if ($("#Name").val() == "") {
+            co.sweet.error("輸入資料錯誤", "姓名不可為空", null, false);
+        } else if ($("#Email").val() == "") {
+            co.sweet.error("輸入資料錯誤", "電子郵件不可為空", null, false);
+        } else {
+            var data = co.Form.getJson($("#UserDataForm").attr("id"));
+            data.address = `${data.county} ${data.district} ${data.address}`;
+            //console.log(data);
+            co.User.UserEdit(data).done(function (result) {
+                co.sweet.success("資料修改完成！", null, true);
+            });
+        }
     });
 
     $(".btn_resetPassword").on("click", function () {

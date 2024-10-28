@@ -602,11 +602,11 @@ namespace EtheriT.Coker.Application.Authorization
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                long WebsiteID = dto.WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.WebsiteId;
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
 
                 var frontUser = await (from user in db.FrontUsers
                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-                                       where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                       where user.UUID == UUID && mapuserweb.FK_WebsiteId == WebsiteID
                                        select user).FirstOrDefaultAsync();
                 if (frontUser != null)
                 {

@@ -7,7 +7,7 @@
             let $newSlides = [];
             let nextText = [];
             let text = $slide.text().replace("(current)", "");
-            let $tempDiv = $('<div class="temp-div"></div>').appendTo('body');
+            let $tempDiv = $('<div class="temp-div d-none"></div>').appendTo('body');
             $tempDiv.css('width', slideWidth + 'px');
             let previousHeight = $tempDiv.height();
             for (let i = 0; i < text.length; i++) {

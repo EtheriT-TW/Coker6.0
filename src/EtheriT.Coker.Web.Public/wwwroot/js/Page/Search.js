@@ -35,13 +35,6 @@
         $("#ShoppingCarModal > .Modal").data("pid", 1);
         ModalDefaultSet();
     });
-
-    $(".pro_link").on("click", function () {
-        var $self = $(this);
-        if ($self.parents("figure").first().data("pid") != null) {
-            ClickLog($self.parents("figure").first().data("pid"));
-        }
-    });
 }
 
 function SortByPrice() {

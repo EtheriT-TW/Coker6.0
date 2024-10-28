@@ -37,6 +37,15 @@
                 type: "GET",
                 data: { Tid: Tid }
             });
+        },
+        History: function () {
+            return $.ajax({
+                url: "/api/Product/GetHistoryDisplay/",
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                type: "GET",
+            });
         }
     },
     GetOne: {
@@ -92,13 +101,12 @@
         }
     },
     Log: {
-        Click: function (data) {
+        Click: function (FK_Pid) {
             return $.ajax({
                 url: "/api/Product/ClickLog",
-                type: "POST",
+                type: "GET",
                 contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(data),
-                dataType: "json"
+                data: { FK_Pid: FK_Pid },
             });
         }
     }

@@ -97,13 +97,6 @@ function PageReady() {
 
     $(".btn_view_type").on("click", GuessLikeTypeChange);
 
-    $(".pro_link").on("click", function () {
-        var $self = $(this);
-        if ($self.parents("figure").first().data("pid") != null) {
-            ClickLog($self.parents("figure").first().data("pid"));
-        }
-    });
-
 }
 
 function SortByPrice() {

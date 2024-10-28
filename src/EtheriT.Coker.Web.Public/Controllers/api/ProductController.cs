@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Product;
@@ -43,14 +44,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplaySimple(id);
         }
         [HttpGet]
-        public async Task<List<ProdDisImgDto>> GetHistoryDisplay(Guid TId)
+        public async Task<List<ProdGetDisplayDto>> GetHistoryDisplay()
         {
-            return await productAppService.GetHistoryDisplay(TId);
+            return await productAppService.GetHistoryDisplay();
         }
-        [HttpPost]
-        public async Task<ResponseMessageDto> ClickLog(ProductLogDto dto)
+        [HttpGet]
+        public async Task<ResponseMessageDto> ClickLog(long FK_Pid)
         {
-            return await productAppService.ClickLog(dto);
+            return await productAppService.ClickLog(FK_Pid);
         }
     }
 }

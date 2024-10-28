@@ -193,17 +193,11 @@ function ready() {
         })
         var adid = $("#EnterAdModal .modal-content").data("aid");
         if (adid != "undefined") {
-            Advertise.ActivityExposure({
-                FK_Aid: adid,
-                WebsiteId: SiteId,
-            }).done(function (result) {
+            Advertise.ActivityExposure(adid).done(function (result) {
                 //console.log(result)
             })
             $("#EnterAdModal img").on("click", function () {
-                Advertise.ActivityClick({
-                    FK_Aid: adid,
-                    WebsiteId: SiteId,
-                }).done(function (result) {
+                Advertise.ActivityClick(adid).done(function (result) {
                     //console.log(result)
                 })
             });
@@ -755,19 +749,6 @@ function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
         $CheckPassFeedBack.text("密碼格式有誤");
     }
     return false;
-}
-
-function ClickLog(Pid) {
-    if ($.cookie("Token") != null) {
-        Product.Log.Click({
-            FK_Pid: Pid,
-            FK_Tid: $.cookie("Token"),
-            Action: 2,
-        }).done(function () {
-            ProdHistorySet();
-        });
-
-    }
 }
 
 var Coker = {

@@ -133,7 +133,7 @@ function PageReady() {
         var ytlink = $(".btn_preview").prev().val();
         var file = ytlink.substr(ytlink.indexOf("v=") + 2);
         $ad_type.data("file", file);
-        var videostring = "https://www.youtube.com/embed/" + file;
+        var videostring = "https://www.youtube-nocookie.com/embed/" + file;
         $(".ad_preview > .youtube > iframe").attr("src", videostring);
     });
 

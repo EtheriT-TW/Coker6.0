@@ -1024,7 +1024,7 @@ namespace EtheriT.Coker.Application.Product
                                             Title = prods.Title,
                                             Introduction = prods.Introduction,
                                             Description = prods.Description,
-                                            Link = "/Toilet/" + prods.Id,
+                                            Link = "/product/" + prods.Id,
                                             Image = "/upload/product/pro_0" + prods.Id + ".png",
                                             Price = "",
                                         }).Take(10).ToListAsync();

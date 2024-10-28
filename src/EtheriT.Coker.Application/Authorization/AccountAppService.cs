@@ -626,18 +626,20 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return response;
         }
-        public async Task<ResponseUserEditDto> GetFrontUserData(Guid refreshToken)
+        public async Task<ResponseUserEditDto> GetFrontUserData()
         {
             ResponseUserEditDto UserData = new ResponseUserEditDto();
             try
             {
                 var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
-                var token = await db.Tokens.Where(e => e.id == refreshToken).FirstOrDefaultAsync();
-                if (token != null)
+                Guid UUID = await tokenAppService.GetUUID();
+                var token = tokenAppService.CheckToken();
+
+                if (token!=null && token.IsLogin)
                 {
                     var userdata = await (from user in db.FrontUsers
                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-                                          where user.UUID == token.UUID && mapuserweb.FK_WebsiteId == websiteid
+                                          where user.UUID == UUID && mapuserweb.FK_WebsiteId == websiteid
                                           select user).FirstOrDefaultAsync();
                     if (userdata != null)
                     {

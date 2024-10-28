@@ -146,7 +146,7 @@ function ready() {
         if (r != null && r.length > 0) key = r[1];
         if (key != "") {
             if ($body.find("iframe").length == 0) {
-                const iframe = $(`<iframe allowfullscreen="allowfullscreen" rel="0" src="https://www.youtube.com/embed/${key}?autohide=1" class="h-100"></iframe>`);
+                const iframe = $(`<iframe allowfullscreen="allowfullscreen" rel="0" src="https://www.youtube-nocookie.com/embed/${key}?autohide=1" class="h-100"></iframe>`);
                 iframe.appendTo($body);
             }
             $body.find(".fa-duotone").addClass("d-none");
@@ -822,7 +822,6 @@ var Coker = {
                 url: "/api/User/GetUserData/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
-                data: { refreshToken: refreshToken },
             });
         },
         UserEdit: function (data) {

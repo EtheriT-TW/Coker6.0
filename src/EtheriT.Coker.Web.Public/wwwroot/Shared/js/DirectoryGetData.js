@@ -101,6 +101,7 @@ function DirectoryGetDataInit() {
         const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
         if (typeof ($self.data("prevdirid")) == "undefined" || dirid != $self.data("prevdirid")) initElemntAndLoadDir($(this));
     })
+
     $(".menu_directory").each(function () {
         var $self = $(this);
         const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
@@ -526,7 +527,7 @@ function DirectoryAdDataInsert($item, result) {
                         })
                     }
                     $YT_frame.on("click", function () {
-                        var temp_ytlink = "https://www.youtube.com/embed/" + result_File.name;
+                        var temp_ytlink = "https://www.youtube-nocookie.com/embed/" + result_File.name;
                         $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
                     })
                     $YT_frame.parent().children().not(".YT_frame").remove();

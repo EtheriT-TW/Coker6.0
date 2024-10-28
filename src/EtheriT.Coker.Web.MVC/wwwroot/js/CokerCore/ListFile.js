@@ -20,7 +20,7 @@
             var index = value.indexOf("watch?v=") + 8;
             $self.find(".youtube_preview").children("*").remove();
             if (value != "" && index > -1 && value.substring(index) != "") {
-                var url = "https://www.youtube.com/embed/" + value.substring(index);
+                var url = "https://www.youtube-nocookie.com/embed/" + value.substring(index);
                 var iframe_html = `<iframe class="yt_preview w-100 h-100" src="${url}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
                 $self.find(".youtube_preview").append(iframe_html);
                 $self_list.find(".title").text(value);

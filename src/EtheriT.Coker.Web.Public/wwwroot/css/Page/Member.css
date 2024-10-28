@@ -3,43 +3,104 @@
     --bs-nav-pills-link-active-color: #0d6efd;
     --bs-nav-pills-link-active-bg: #fff;
 }
+
     #main > .container {
         margin: 0.5rem auto;
         background-color: #eee;
-        border-radius:1rem;
-        padding:0.5rem;
+        border-radius: 1rem;
+        padding: 0.5rem;
     }
+
 #ToolList {
     display: flex;
-    width:10rem;
-    padding:1rem 0;
-    min-height:30rem;
+    width: 10rem;
+    padding: 1rem 0;
+    min-height: 30rem;
 }
+
     #ToolList .nav-link {
         width: 100%;
         border: none;
-        border-bottom:#FFF solid 1px;
+        border-bottom: #FFF solid 1px;
         color: var(--bs-nav-link-disabled-color);
     }
+
         #ToolList .nav-link.active {
             color: var(--bs-nav-pills-link-active-color);
             background-color: var(--bs-nav-pills-link-active-bg);
         }
 
 #TabContent {
-    display:block;
-    width:calc(100% - 10rem);
+    display: block;
+    width: calc(100% - 10rem);
 }
+
     #TabContent > .tab-pane {
         width: 100%;
         min-height: 100%;
         padding: 1rem;
         overflow: auto;
         background: var(--bs-nav-pills-link-active-bg);
-        border-radius:5px;
+        border-radius: 5px;
     }
-
 
 #TWzipcode > .county label::before, #TWzipcode > .county label::after, #TWzipcode > .district label::before, #TWzipcode > .district label::after {
     content: '';
 }
+
+#history-tab-pane img {
+    width: 180px;
+}
+
+#history-tab-pane .description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+#history-tab-pane .price::before {
+    content: '$';
+}
+
+/* Button Share */
+.shareBlock > a {
+    position: absolute;
+    left: -75% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scaleX(0) !important;
+    transition: all 1s;
+}
+
+.shareBlock > button {
+    padding: 0;
+    height: 24px;
+    width: 24px;
+}
+
+.shareBlock.show > a {
+    top: 0% !important;
+    left: -75% !important;
+    transition: all 1s;
+}
+
+    .shareBlock.show > a:nth-child(2) {
+        transform: translateX(-450%) scaleX(1) !important;
+    }
+
+    .shareBlock.show > a:nth-child(3) {
+        transform: translateX(-350%) scaleX(1) !important;
+    }
+
+    .shareBlock.show > a:nth-child(4) {
+        transform: translateX(-250%) scaleX(1) !important;
+    }
+
+    .shareBlock.show > a:nth-child(5) {
+        transform: translateX(-150%) scaleX(1) !important;
+    }
+
+    .shareBlock.show > a:nth-child(6) {
+        transform: translateX(-50%) scaleX(1) !important;
+    }

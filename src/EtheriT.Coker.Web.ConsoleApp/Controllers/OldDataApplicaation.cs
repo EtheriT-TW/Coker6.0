@@ -494,7 +494,7 @@ namespace EtheriT.Coker.Web.ConsoleApp.Controllers
                     break;
                 case 6:
                     Regex regex = new Regex("^.*(?:(?:youtu.be\\/|v\\/|vi\\/|u\\/w\\/|embed\\/)|(?:(?:watch)??v(?:i)?=|&v(?:i)?=))([^#&?]*).*");
-                    html = $@"<iframe title=""{cont.title}"" frameborder=""0"" src=""https://www.youtube.com/embed/{regex.Match(cont.col1 ?? "").Value}"" class=""w-100""></iframe>";
+                    html = $@"<iframe title=""{cont.title}"" frameborder=""0"" src=""https://www.youtube-nocookie.com/embed/{regex.Match(cont.col1 ?? "").Value}"" class=""w-100""></iframe>";
                     break;
                 default: break;
             }

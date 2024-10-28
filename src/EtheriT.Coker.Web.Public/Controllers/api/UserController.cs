@@ -62,9 +62,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ResponseMessageDto> GetUserData(Guid refreshToken)
+        public async Task<ResponseMessageDto> GetUserData()
         {
-            var result = await accountAppService.GetFrontUserData(refreshToken);
+            var result = await accountAppService.GetFrontUserData();
             return result;
         }
         [HttpGet]

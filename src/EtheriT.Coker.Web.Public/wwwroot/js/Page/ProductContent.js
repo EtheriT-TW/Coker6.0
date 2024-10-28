@@ -496,7 +496,7 @@ function addImage(pro_self) {
 
 function addYoutube(pro_self) {
     var pro_YoutubeLink = pro_self.data("youtube-link");
-    $("#Pro_Youtube").attr("src", "https://www.youtube.com/embed/" + pro_YoutubeLink);
+    $("#Pro_Youtube").attr("src", "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink);
 }
 
 function add360View(pro_self) {

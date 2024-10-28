@@ -49,6 +49,11 @@
         }
     </style>
     <style id="frameCss" nonce="@ViewBag.Nonce"></style>
+    @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+    @if (Configuration.GetValue<bool>("RemoteJs:Enabled", false))
+    {
+        <script data-consolejs-channel="c54af59e-d006-5fa6-30d5-e2b3f272a9fc" src="https://remotejs.com/agent/agent.js"></script>
+    }
     <script nonce="@ViewBag.Nonce">
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {

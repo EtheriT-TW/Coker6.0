@@ -1,7 +1,6 @@
 ﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal;
 
 function ready() {
-
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
     const $PostCSS = $("#PostCSS");
@@ -1137,12 +1136,8 @@ var Coker = {
             return characters.charAt(i - 1);
         },
         thousandSign: function (str) {
-            let comma = /\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g;
-            let num = str.toString();
-            if (!isNaN(num)) {
-                num = num.replace(comma, ',')
-            } else num = "0";
-            return num;
+            let num = parseFloat(str);
+            return isNaN(num) ? "0" : num.toLocaleString();
         }
     },
     Zipcode: {

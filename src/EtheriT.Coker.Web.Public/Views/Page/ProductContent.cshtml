@@ -278,9 +278,9 @@
                     </div>
                 </template>
             }
-            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
-            {
-                <div class="options px-3">
+            <div class="options px-3">
+                @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+                {
                     <div class="counter d-flex align-items-center my-2">
                         <label class="title" for="quantityInput1">數量</label>
                         <div class="counter_input d-flex isEmpty">
@@ -300,8 +300,8 @@
                             <div class="emptyProd">@L.get("ProdEmpty")</div>
                         </div>
                     </div>
-                </div>
-            }
+                }
+            </div>
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button">

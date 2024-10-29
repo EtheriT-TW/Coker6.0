@@ -102,7 +102,7 @@
                                                 @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
                                                 {
                                                     <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
-                                                        class="row collapse mx-0@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
+                                                        class="row collapse px-3 mx-1@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
                                                         @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
                                                         {
                                                             iconclass = thirdItem.Icon == "" ? "d-none" : "";

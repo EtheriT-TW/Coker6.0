@@ -3,6 +3,12 @@
     var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
     co.Picker.Init($("#InputDate"), { timePicker: false, startDate: moment().subtract(6, 'days').toDate(), endDate: moment().toDate() });
+    const totalCountElem = document.querySelector(".totle-sum-count");
+    const totalCount = parseInt(totalCountElem.textContent.replace(/,/g, ''), 10); // 去除原有的千分符并转换为数字
+    totalCountElem.textContent = co.String.thousandSign(totalCount); // 将数字进行千分位处理
+    const totalMemCountElem = document.querySelector(".totle-sum-mem-count");
+    const totalMemCount = parseInt(totalCountElem.textContent.replace(/,/g, ''), 10);
+    totalMemCountElem.textContent = co.String.thousandSign(totalMemCount);
     function updateChart(dates, counts, memCounts) {
         const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
         if (chart) {
@@ -13,8 +19,8 @@
         } else {
             console.error('Chart instance not found');
         }
-        const totalVisits = counts.reduce((sum, value) => sum + value, 0);
-        const totalMembers = memCounts.reduce((sum, value) => sum + value, 0);
+        const totalVisits = co.String.thousandSign(counts.reduce((sum, value) => sum + value, 0));
+        const totalMembers = co.String.thousandSign(memCounts.reduce((sum, value) => sum + value, 0));
         document.querySelector(".dateRange-sum-mem-count").textContent = totalMembers;
         document.querySelector(".dateRange-sum-count").textContent = totalVisits;
     }

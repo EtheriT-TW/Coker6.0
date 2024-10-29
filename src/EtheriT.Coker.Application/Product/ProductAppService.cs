@@ -1010,24 +1010,42 @@ namespace EtheriT.Coker.Application.Product
             {
                 Guid UUID = await tokenAppService.GetUUID();
 
-                var PIds = await (from prod_log in db.Prod_Logs
-                                  where prod_log.UUID == UUID
-                                  select prod_log.FK_Pid).ToListAsync();
+                var prod_Logs = await (from prod_log in db.Prod_Logs
+                                       where prod_log.UUID == UUID
+                                       orderby prod_log.CreationTime descending
+                                       select prod_log.FK_Pid).ToListAsync();
+                List<long> pids = new List<long>();
 
-                if (PIds.Count > 0)
+                if (prod_Logs.Count > 0)
                 {
-                    var output = await (from prods in db.Prods
-                                        where PIds.Contains(prods.Id)
-                                        select new ProdGetDisplayDto()
-                                        {
-                                            Id = prods.Id,
-                                            Title = prods.Title,
-                                            Introduction = prods.Introduction,
-                                            Description = prods.Description,
-                                            Link = "/product/" + prods.Id,
-                                            Image = "/upload/product/pro_0" + prods.Id + ".png",
-                                            Price = "",
-                                        }).Take(10).ToListAsync();
+                    foreach (var prod_log in prod_Logs)
+                    {
+                        if (!pids.Contains(prod_log))
+                        {
+                            pids.Add(prod_log);
+                        }
+                        if (pids.Count == 10)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (pids.Count > 0)
+                {
+                    var output = (from pid in pids
+                                  join prod in db.Prods on pid equals prod.Id
+                                  select new ProdGetDisplayDto()
+                                  {
+                                      Id = prod.Id,
+                                      Title = prod.Title,
+                                      Introduction = prod.Introduction,
+                                      Description = prod.Description,
+                                      Link = "/product/" + prod.Id,
+                                      Image = "/upload/product/pro_0" + prod.Id + ".png",
+                                      Price = "",
+                                      ItemNo = prod.ItemNo,
+                                  }).ToList();
 
                     for (int i = 0; i < output.Count; i++)
                     {

@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string Link { get; set; }
         public string Image { get; set; }
         public string Price { get; set; }
+        public string? ItemNo { get; set; }
         public double? Discount { get; set; }
     }
 }

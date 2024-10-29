@@ -68,7 +68,6 @@ header .menu {
             text-overflow: ellipsis;
             color: #fff;
             text-decoration: none;
-            font-size:1.1rem;
         }
 
         .headernews .content .title, .marqueeSwiper .swiper-slide div.text {

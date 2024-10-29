@@ -50,6 +50,7 @@
 
 #history-tab-pane img {
     width: 180px;
+    height: 180px;
 }
 
 #history-tab-pane .description {
@@ -57,6 +58,7 @@
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-box-orient: vertical;
+    height: 6.5rem;
     -webkit-line-clamp: 2;
 }
 

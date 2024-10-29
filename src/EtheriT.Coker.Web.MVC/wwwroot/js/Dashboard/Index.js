@@ -3,12 +3,14 @@
     var remote = $bars.data("remotes"); //後端寫好的全站瀏覽人次
     var ctx = document.getElementById("chart-bars").getContext("2d");
     co.Picker.Init($("#InputDate"), { timePicker: false, startDate: moment().subtract(6, 'days').toDate(), endDate: moment().toDate() });
-    const totalCountElem = document.querySelector(".totle-sum-count");
-    const totalCount = parseInt(totalCountElem.textContent.replace(/,/g, ''), 10); // 去除原有的千分符并转换为数字
-    totalCountElem.textContent = co.String.thousandSign(totalCount); // 将数字进行千分位处理
-    const totalMemCountElem = document.querySelector(".totle-sum-mem-count");
-    const totalMemCount = parseInt(totalCountElem.textContent.replace(/,/g, ''), 10);
-    totalMemCountElem.textContent = co.String.thousandSign(totalMemCount);
+    thousandSign(document.querySelector(".totle-sum-count"));
+    thousandSign(document.querySelector(".totle-sum-mem-count"));
+    thousandSign(document.querySelector(".dateRange-sum-count"));
+    thousandSign(document.querySelector(".dateRange-sum-mem-count"));
+    function thousandSign(totleCountElem) {
+        const totalMemCount = parseInt(totleCountElem.textContent.replace(/,/g, ''), 10);// 去除原有的千分符并转换为数字
+        totleCountElem.textContent = co.String.thousandSign(totalMemCount);// 将数字进行千分位处理
+    }
     function updateChart(dates, counts, memCounts) {
         const chart = Chart.getChart("chart-bars"); // 找到已有的圖表對象
         if (chart) {

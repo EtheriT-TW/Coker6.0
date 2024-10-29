@@ -88,28 +88,43 @@ function SetMemberData() {
 function SetHistoryData() {
     Product.GetAll.History().done(function (result) {
         //console.log(result)
-        $.each(result, function (index, data) {
-            var frame = $($("#Template_Prod_List").html()).clone();
-            frame.find("*").each(function () {
-                var $self = $(this);
-                if (typeof ($self.data("key")) != "undefined") {
-                    var key = $self.data("key");
-                    switch (key) {
-                        case "link":
-                            $self.attr("href", `${window.location.pathname}${data['link']}`);
-                            $self.attr("title", `連結至：${data['title']}`);
-                            break;
-                        case "image":
-                            $self.attr("src", data['image']);
-                            $self.attr("alt", `${data['title']}的主要照片`);
-                            break;
-                        default:
-                            $self.text(data[key]);
-                            break;
+        if (result.length > 0) {
+            $.each(result, function (index, data) {
+                var frame = $($("#Template_Prod_List").html()).clone();
+                frame.find("*").each(function () {
+                    var $self = $(this);
+                    if (typeof ($self.data("key")) != "undefined") {
+                        var key = $self.data("key");
+                        switch (key) {
+                            case "link":
+                                $self.attr("href", `${window.location.pathname}${data['link']}`);
+                                $self.attr("title", `連結至：${data['title']}`);
+                                break;
+                            case "image":
+                                $self.attr("src", data['image']);
+                                $self.attr("alt", `${data['title']}的主要照片`);
+                                break;
+                            default:
+                                $self.text(data[key]);
+                                break;
+                        }
                     }
-                }
+                });
+                frame.find(".shareBlock").hover(function () {
+                    $(this).addClass("show");
+                }, function () {
+                    $(this).removeClass("show");
+                })
+
+                $("#history-tab-pane").append(frame);
+            })
+
+            $('.shareBlock').cShare({
+                description: 'jQuery plugin - C Share buttons',
+                showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
             });
-            $("#history-tab-pane").append(frame);
-        })
+        } else {
+            $("#history-tab-pane .nodata").removeClass("d-none");
+        }
     });
 }

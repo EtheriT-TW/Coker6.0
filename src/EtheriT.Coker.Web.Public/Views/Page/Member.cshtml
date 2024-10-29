@@ -109,19 +109,20 @@
             <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">歷史訂單</div>
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">我的最愛</div>
             <div id="history-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
+                <div class="nodata h5 text-center fw-bold d-none">查無瀏覽紀錄</div>
                 <template id="Template_Prod_List">
-                    <div class="border rounded row position-relative mb-3">
+                    <div class="border border-5 rounded row position-relative mb-3">
                         <a data-key="link" href="" title="" target="_self">
                             <figure class="d-flex p-3 mb-0">
                                 <img data-key="image" src="" alt="" class="me-3" />
                                 <figcaption class="flex-grow-1 me-5">
                                     <div class="d-flex flex-column h-100">
                                         <div class="d-flex">
-                                            <div data-key="number" class="pe-3"></div>
+                                            <div data-key="itemNo" class="pe-3"></div>
                                             <div data-key="title" class="fw-bold"></div>
                                         </div>
                                         <br />
-                                        <div data-key="description"></div>
+                                        <div data-key="description" class="description"></div>
                                         <div data-key="price" class="price fw-bold text-end h-100 align-content-end"></div>
                                     </div>
                                 </figcaption>

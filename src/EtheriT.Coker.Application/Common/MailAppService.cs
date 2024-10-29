@@ -27,8 +27,9 @@ namespace EtheriT.Coker.Application.Common
             this.mapper = mapper;
             this.stringHandler = stringHandler;
         }
-        public async Task<ResponseMessageDto> sendMail(SenderDto dto) {
-            var webSiteName = string.IsNullOrEmpty(dto.Sender.Name)? await loginUserData.GetWebsiteName(): dto.Sender.Name;
+        public async Task<ResponseMessageDto> sendMail(SenderDto dto)
+        {
+            var webSiteName = string.IsNullOrEmpty(dto.Sender.Name) ? await loginUserData.GetWebsiteName() : dto.Sender.Name;
 
             return await sendMail(dto, webSiteName);
         }
@@ -170,6 +171,7 @@ namespace EtheriT.Coker.Application.Common
                         response.Message = "信件內容格式錯誤";
                         break;
                 }
+                response.Error = ex.Message;
             }
             catch (AuthenticationException ex)
             {
@@ -179,10 +181,13 @@ namespace EtheriT.Coker.Application.Common
                  * 需要兩步驗證但未啟用。
                  * **/
                 response.Message = "認證失敗，請檢查用戶名和密碼。";
+                response.Error = ex.Message;
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 // 其他錯誤原因
                 response.Message = "信件發送失敗";
+                response.Error = ex.Message;
             }
             return response;
         }

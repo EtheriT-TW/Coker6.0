@@ -17,7 +17,7 @@
         MenuLiSize();
     });
 
-    if ($("#Cart_Dropdown_Parent").length>0) {
+    if ($("#Cart_Dropdown_Parent").length > 0) {
         CartDropInit();
     }
     MenuLiSize();
@@ -85,7 +85,7 @@ function MenuLiSize() {
     if ($(window).width() > 992) {
         $(".offcanvas-body").removeClass("accordion")
         $(".offcanvas-body .collapse").addClass("show")
-        $(`.offcanvas-body  .nav-link[data-bs-toggle]`).attr("data-bs-toggle","");
+        $(`.offcanvas-body  .nav-link[data-bs-toggle]`).attr("data-bs-toggle", "");
     } else {
         $(".offcanvas-body").addClass("accordion")
         $(".offcanvas-body .collapse").removeClass("show")
@@ -124,7 +124,7 @@ function CartDropAdd(result) {
         item_btn_delete = item.find(".btn_cart_delete");
 
     item.data("scid", result.scId);
-    item_link.attr("href", `${OrgName}/Toilet/${result.pId}`);
+    item_link.attr("href", `/${OrgName}/home/product/${result.pId}`);
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_spec.append(result.s1Title == "" ? "" : `<span class="border px-1 me-1">${result.s1Title}</span>`)

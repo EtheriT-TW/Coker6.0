@@ -40,15 +40,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpGet]
         public async Task<List<ShoppingCartGetAllDto>> GetAll()
         {
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            return await shoppingCartAppService.GetAll(siteId);
+            return await shoppingCartAppService.GetAll();
         }
 
         [HttpGet]
         public async Task<ShoppingCartGetDrop> GetDropOne(long id)
         {
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            return await shoppingCartAppService.GetDropOne(id, siteId);
+            return await shoppingCartAppService.GetDropOne(id);
         }
 
         [HttpGet]

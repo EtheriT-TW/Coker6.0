@@ -97,7 +97,7 @@ function SetHistoryData() {
                         var key = $self.data("key");
                         switch (key) {
                             case "link":
-                                $self.attr("href", `${window.location.pathname}${data['link']}`);
+                                $self.attr("href", `/${OrgName}/Member${data['link']}`);
                                 $self.attr("title", `連結至：${data['title']}`);
                                 break;
                             case "image":

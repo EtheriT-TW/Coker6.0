@@ -1043,7 +1043,7 @@ namespace EtheriT.Coker.Application.Authorization
                 db.Account_Logs.Add(account_Log);
                 db.SaveChanges();
 
-                if (frontuser.UUID != Temp_UUID)
+                if (frontuser.UUID != Temp_UUID && Temp_UUID!=Guid.Empty)
                 {
                     MappingOldNewUUID mapoldnew = new MappingOldNewUUID
                     {

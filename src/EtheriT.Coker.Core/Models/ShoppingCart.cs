@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Core.Models
     public class ShoppingCart : FullAuditedEntity
     {
         public Guid FK_Tid { get; set; }
+        public Guid UUID { get; set; }
         public long? FK_Uid { get; set; }
         public long FK_PSid { get; set; }
         public long? FK_S1id { get; set; }

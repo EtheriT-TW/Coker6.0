@@ -322,16 +322,20 @@
 
                         <div class="default_data">
                             <div class="row">
-                                <div class="orderer_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div data-key="orderer" class="col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="orderer_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
+                                <div data-key="ordererEmail" class="col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-                                <div class="col text-start"><span class="orderer_areacode"></span>-<span class="orderer_cellphone"></span> 分機 <span class="orderer_extension"></span></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
+                                <div data-key="ordererCellphone" class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div data-key="ordererAddress" class="col text-start"></div>
                             </div>
                         </div>
 
@@ -409,22 +413,22 @@
                             </ul>
                         </div>
 
-                        <div class="default_data">
+                        <div class="default_data d-none">
                             <div class="row">
-                                <div class="recipient_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div data-key="recipient" class="col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
+                                <div data-key="recipientEmail" class="col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-                                <div class="col text-start"><span class="recipient_areacode"></span>-<span class="recipient_cellphone"></span> 分機 <span class="recipient_extension"></span></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
+                                <div data-key="recipientCellphone" class="col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div data-key="recipientAddress" class="col text-start"></div>
                             </div>
                         </div>
 
@@ -506,22 +510,14 @@
                             </ul>
                         </div>
 
-                        <div class="default_data">
+                        <div class="default_data d-none">
                             <div class="row">
-                                <div class="bill_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="name col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-                                <div class="col text-start"></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-                                <div class="col text-start"><span class="bill_areacode"></span>-<span class="bill_cellphone"></span> 分機 <span class="bill_extension"></span></div>
-                            </div>
-                            <div class="row">
-                                <div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div class="col text-start"></div>
+                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div class="address col text-start"></div>
                             </div>
                         </div>
 

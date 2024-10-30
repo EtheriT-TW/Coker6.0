@@ -13,6 +13,8 @@ var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $re
 var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_city, $invoice_address_town, $invoice_address;
 var $ship_method, $pay_method;
 
+var user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {};
+
 function PageReady() {
     Coker.Order = {
         AddHeader: function (data) {
@@ -65,7 +67,6 @@ function PageReady() {
         if (resule.isLogin) {
             Coker.User.GetUser().done(function (result) {
                 if (result.success) {
-                    var user_data = {};
                     user_data['orderer'] = result.data.name;
                     user_data['ordererSex'] = result.data.sex;
                     user_data['ordererEmail'] = result.data.email;
@@ -75,10 +76,14 @@ function PageReady() {
                     user_data['ext'] = (result.data.telPhone).split('-')[2];
                     user_data['address'] = result.data.address;
                     user_data['ordererAddress'] = (result.data.address).split(' ')[2];
-                    co.Form.insertData(user_data, "#OrderForm");
+
+                    order_data = user_data;
+                    DataInsert(order_data, $("#OrdererForm .default_data"));
+                    co.Form.insertData(order_data, "#OrderForm");
+
                     co.Zipcode.setData({
                         el: $("#Orderer_TWzipcode"),
-                        addr: user_data.address
+                        addr: order_data.address
                     });
                 }
             });
@@ -225,7 +230,6 @@ function PageReady() {
     });
 
 }
-
 /* 元素初始化 */
 function ElementInit() {
     /* TWzipcode 初始化 */
@@ -283,7 +287,6 @@ function ElementInit() {
     })
     $pay_method = $("input[name=RadioPayment]");
 }
-
 function CartInit() {
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
@@ -304,7 +307,6 @@ function CartInit() {
         }
     })
 }
-
 function CartAdd(result) {
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
@@ -366,7 +368,6 @@ function CartAdd(result) {
 
     item_list_ul.append(item);
 }
-
 function CartQuantityUpdate(self, price, scid, quantity) {
     Product.Update.Cart({
         Id: scid,
@@ -383,7 +384,6 @@ function CartQuantityUpdate(self, price, scid, quantity) {
         Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
     });
 }
-
 function TotalCount() {
     subtotal = 0;
     $('.purchase_list').children("li").each(function () {
@@ -405,7 +405,6 @@ function TotalCount() {
         $(this).text(total.toLocaleString('en-us'))
     })
 }
-
 function CartDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
@@ -419,7 +418,6 @@ function CartDelete(self, id, success, error) {
         Coker.sweet.error("錯誤", error, null, true);
     })
 }
-
 function Step2Monitor() {
     shipMethodsChosen = FormCheck(ShippingForms);
     payMethodsChosen = FormCheck(PaymentForms);
@@ -432,7 +430,6 @@ function Step2Monitor() {
 
     buy_step_swiper.update();
 }
-
 function RadioShipping() {
     ori_freight = $(this).data("freight");
     low_con = $(this).data("lowcon");
@@ -440,7 +437,6 @@ function RadioShipping() {
     freight = ori_freight
     TotalCount();
 }
-
 function RadioPayment() {
     var $pay_text = $(".payment_method");
     $pay_text.addClass("fs-2 fw-bold px-3");
@@ -462,7 +458,6 @@ function RadioPayment() {
     })
     buy_step_swiper.update();
 }
-
 function Step3Monitor() {
     if (OrdererOpen) {
         OrdererFilled = FormCheck(OrdererForms)
@@ -506,7 +501,6 @@ function Step3Monitor() {
 
     buy_step_swiper.update();
 }
-
 function OrdererEdit() {
     $("#OrdererForm > .default_data").toggleClass("d-none");
     $("#OrdererForm > form").toggleClass("d-none");
@@ -514,7 +508,6 @@ function OrdererEdit() {
     OrdererFilled = !OrdererOpen;
     buy_step_swiper.update();
 }
-
 function RecipientRadio() {
     var $self = $(this)
     if ($self.val() == "edit") {
@@ -531,14 +524,13 @@ function RecipientRadio() {
         RecipientSameOrderer();
     }
     else {
-        $("#RecipientForm > .default_data").removeClass("d-none");
+        $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").addClass("d-none");
         RecipientOpen = false;
         RecipientFilled = true;
     }
     buy_step_swiper.update();
 }
-
 function RecipientFormClear() {
     $recipient_name.val("");
     $recipient_sex.val("");
@@ -569,7 +561,6 @@ function RecipientSameOrderer() {
         $remark.val()
     );
 }
-
 function RecipientFormSet(name, sex, email, cellphone, telphone_area, telphone, telphone_ext, address_city, address_town, address, remark) {
     $recipient_name.val(name);
     $recipient_sex.each(function () {
@@ -589,26 +580,30 @@ function RecipientFormSet(name, sex, email, cellphone, telphone_area, telphone, 
     $recipient_address.val(address);
     $remark.val(remark);
 }
-
 function InvoiceRadio() {
     switch (this.value) {
-        case 3:
+        case "order":
+            $("#InvoiceForm > .default_data").addClass("d-none");
+            $("#InvoiceForm > form").addClass("d-none");
+            InvoiceOpen = false;
+            InvoiceFilled = true;
+            break;
+        case "recipient":
+            $("#InvoiceForm > .default_data").addClass("d-none");
+            $("#InvoiceForm > form").addClass("d-none");
+            InvoiceOpen = false;
+            InvoiceFilled = true;
+            break;
+        case "company":
             $("#InvoiceForm > .default_data").addClass("d-none");
             $("#InvoiceForm > form").removeClass("d-none");
             InvoiceOpen = true;
             InvoiceFilled = false;
             InvoiceFormClear();
             break;
-        default:
-            $("#InvoiceForm > .default_data").addClass("d-none");
-            $("#InvoiceForm > form").addClass("d-none");
-            InvoiceOpen = false;
-            InvoiceFilled = true;
-            break;
     }
     buy_step_swiper.update();
 }
-
 function InvoiceFormClear() {
     $invoice_title.val("");
     $invoice_uniformid.val("");
@@ -616,7 +611,6 @@ function InvoiceFormClear() {
     $invoice_address_town.val("");
     $invoice_address.val("");
 }
-
 function InvoiceFormSet(title, uniformid, address_city, address_town, address) {
     $invoice_title.val(title);
     $invoice_uniformid.val(uniformid);
@@ -626,7 +620,6 @@ function InvoiceFormSet(title, uniformid, address_city, address_town, address) {
     });
     $invoice_address.val(address);
 }
-
 /* 表單驗證 */
 function FormCheck(Forms) {
     var Check = false;
@@ -638,23 +631,25 @@ function FormCheck(Forms) {
     })
     return Check;
 }
-
 function DetailsClear() {
     $("#Step1 > .card-body").addClass("d-none");
     $("#Purchase_Null").removeClass("d-none");
     buy_step_swiper.disable();
 }
-
 function DeleteRecipient() {
     var $this_parent = $(this).parents("tr");
     $this_parent.remove();
 }
-
 function OrderHeaderAdd() {
-    var order_header_data = {}, order_data = {}, recipient_data = {}, invoice_data = {};
-    order_data = co.Form.getJson($("#OrderForm").attr("id"));
-    order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
-    order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
+    var order_header_data = {};
+
+    if (OrdererOpen) {
+        order_data = co.Form.getJson($("#OrderForm").attr("id"));
+        order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
+        order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
+    } else {
+        order_data = user_data;
+    }
 
     for (var key in order_data) {
         if (key.startsWith("orderer") > 0) order_header_data[key] = order_data[key]
@@ -716,10 +711,9 @@ function OrderHeaderAdd() {
         Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
     });
 }
-
 function OrderSuccess(order_header_id) {
     CartClear();
-    
+
     Coker.Order.GetHeader(order_header_id).done(function (oh_result) {
         $("#Step4 > .card-header > .order_number").text(("000000000" + oh_result.id).substr(oh_result.id.length));
 
@@ -786,7 +780,6 @@ function OrderSuccess(order_header_id) {
         invoice_item.find(".address").text(HiddenCode(4, oh_result.invoiceAddress));
     });
 }
-
 function PurchaseAdd(result, item_list_ul) {
     var item = $($("#Template_Purchase_Details").html()).clone();
     var item_link = item.find(".pro_link"),
@@ -810,7 +803,6 @@ function PurchaseAdd(result, item_list_ul) {
 
     item_list_ul.append(item);
 }
-
 function HiddenCode(type, data) {
     switch (type) {
         case 1:
@@ -835,7 +827,15 @@ function HiddenCode(type, data) {
             break;
     }
 }
-
+function DataInsert(data, $self) {
+    $self.find("*").each(function () {
+        var $this = $(this);
+        var key = $this.data("key");
+        if (typeof ($this.data("key")) != "undefined") {
+            $this.text(data[key]);
+        }
+    });
+}
 /* Input輸入自動切換 */
 function AutoSwapInput() {
     var target = event.target
@@ -854,7 +854,6 @@ function AutoSwapInput() {
         }
     }
 }
-
 /* 地址選單初始化 */
 function TWZipCodeInit() {
     $Orderer_TWzipcode.twzipcode({

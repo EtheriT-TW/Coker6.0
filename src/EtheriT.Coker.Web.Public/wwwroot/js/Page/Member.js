@@ -100,7 +100,6 @@ function SetMemberData() {
 function SetHistoryOrderData() {
     Coker.Member.GetOrderHistory().done(function (result) {
         if (result.success && result.orderData != null) {
-            console.log(result.orderData)
             $.each(result.orderData, function (index, data) {
                 var frame = $($("#Template_Order_List").html()).clone();
                 frame.find(".number").text(("000000000" + data.orderHeader.id).substr(data.orderHeader.id.length));

@@ -295,7 +295,7 @@ namespace EtheriT.Coker.Application.Order
                 if (uuids.Any())
                 {
                     uuids.Add(UUID);
-                    var order_headers = await db.Order_Headers.Where(e => uuids.Contains(e.FK_UUID)).Take(10).ToListAsync();
+                    var order_headers = await db.Order_Headers.Where(e => uuids.Contains(e.FK_UUID)).OrderByDescending(e => e.CreationTime).Take(10).ToListAsync();
                     foreach (var order_header in order_headers)
                     {
                         var temp_OrderDetails = new List<ShoppingCartGetDrop>();

@@ -79,7 +79,7 @@ function PageReady() {
 
                     order_data = user_data;
                     DataInsert(order_data, $("#OrdererForm .default_data"));
-                    co.Form.insertData(order_data, "#OrderForm");
+                    co.Form.insertData(order_data, "#Form_Orderer");
 
                     co.Zipcode.setData({
                         el: $("#Orderer_TWzipcode"),
@@ -644,7 +644,7 @@ function OrderHeaderAdd() {
     var order_header_data = {};
 
     if (OrdererOpen) {
-        order_data = co.Form.getJson($("#OrderForm").attr("id"));
+        order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
         order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
         order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
     } else {
@@ -661,7 +661,13 @@ function OrderHeaderAdd() {
                 if (key.startsWith("orderer") > 0) recipient_data[key.replace("orderer", "recipient")] = order_data[key]
             }
             break;
+        case "edit":
+            recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
+            recipient_data.recipientTelephone = `${recipient_data.zone}-${recipient_data.recipientTelephone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
+            recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
+            break;
     }
+
     for (var key in recipient_data) {
         if (key.startsWith("recipient") > 0) order_header_data[key] = recipient_data[key]
     }
@@ -674,6 +680,12 @@ function OrderHeaderAdd() {
         case "recipient":
             invoice_data['invoiceRecipient'] = 2;
             invoice_data['invoiceAddress'] = order_data['recipientAddress'];
+            break;
+        case "company":
+            invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
+            invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
+            invoice_data['invoiceRecipient'] = 3;
+            order_header_data.uniformId = invoice_data.uniformId;
             break;
     }
     for (var key in invoice_data) {

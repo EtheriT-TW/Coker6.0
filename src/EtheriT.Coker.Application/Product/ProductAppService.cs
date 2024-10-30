@@ -1009,6 +1009,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
@@ -1042,23 +1043,25 @@ namespace EtheriT.Coker.Application.Product
                                       Introduction = prod.Introduction,
                                       Description = prod.Description,
                                       Link = "/product/" + prod.Id,
-                                      Image = "/upload/product/pro_0" + prod.Id + ".png",
+                                      Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
+                                              .Where(e => e.fileUpload != null)
+                                              .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
+                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                select new DirectoryReleInfoDto
+                                                {
+                                                    Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                                }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
                                       Price = "",
                                       ItemNo = prod.ItemNo,
                                   }).ToList();
 
-                    for (int i = 0; i < output.Count; i++)
+                    for (var i = 0; i < output.Count; i++)
                     {
                         var prices = await db.Prod_Stocks.Where(e => e.FK_Pid == output[i].Id).OrderBy(e => e.Price).ToListAsync();
 
-                        if (prices.Count > 1 && prices[prices.Count - 1].Price != 0)
-                        {
-                            output[i].Price = $"{prices[0].Price}~{prices[prices.Count - 1].Price}";
-                        }
-                        else
-                        {
-                            output[i].Price = prices[0].Price.ToString();
-                        }
+                        if (prices.Count > 1 && prices[prices.Count - 1].Price != 0) output[i].Price = $"{prices[0].Price}~{prices[prices.Count - 1].Price}";
+                        else output[i].Price = prices[0].Price.ToString();
                     }
 
                     return output;

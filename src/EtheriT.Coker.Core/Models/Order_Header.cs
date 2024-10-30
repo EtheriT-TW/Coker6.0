@@ -4,6 +4,9 @@ namespace EtheriT.Coker.Core.Models
 {
     public class Order_Header : FullAuditedEntity
     {
+        public long? Fk_UserId { get; set; }
+        public Guid Fk_Tid { get; set; }
+        public Guid FK_UUID { get; set; }
         public long FK_WebsiteId { get; set; }
         public string Orderer { get; set; }
         public int OrdererSex { get; set; }

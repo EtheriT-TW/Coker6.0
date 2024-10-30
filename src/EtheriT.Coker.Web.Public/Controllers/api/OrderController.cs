@@ -11,27 +11,17 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class OrderController : Controller
     {
         private readonly IOrderAppService orderAppService;
-        private readonly IConfiguration Configuration;
         public OrderController(
-            IOrderAppService orderAppService,
-            IConfiguration Configuration
+            IOrderAppService orderAppService
             )
         {
             this.orderAppService = orderAppService;
-            this.Configuration = Configuration;
         }
 
         [HttpPost]
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            return await orderAppService.AddHeader(dto, siteId);
-        }
-
-        [HttpPost]
-        public async Task<ResponseMessageDto> AddDetails(OrderDetailsAddDto dto)
-        {
-            return await orderAppService.AddDetails(dto);
+            return await orderAppService.AddHeader(dto);
         }
 
         [HttpGet]
@@ -44,6 +34,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
             return await orderAppService.GetOrderDetails(id);
+        }
+
+        [HttpGet]
+        public async Task<OrderDataGetAllDto> GetHistoryOrder()
+        {
+            return await orderAppService.GetHistoryOrder();
         }
 
         [HttpPost]

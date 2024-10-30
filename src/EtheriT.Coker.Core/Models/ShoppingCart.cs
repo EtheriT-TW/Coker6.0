@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Core.Models
         public int? Bonus { get; set; }
         public int? PriceType { get; set; }
         public bool IsAdditional { get; set; }
+        public bool IsOrder { get; set; }
         public int Ser_No { get; set; }
         public ICollection<Token> Tokens { get; set; }
         public Prod_Stock Prod_Stock { get; set; }

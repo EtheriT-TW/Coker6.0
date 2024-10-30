@@ -106,7 +106,24 @@
                     <button class="btn_logout btn btn-secondary rounded">登　　出</button>
                 </div>
             </div>
-            <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">歷史訂單</div>
+            <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
+                <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
+                <template id="Template_Order_List">
+                    <div class="border border-5 rounded p-3 mb-3">
+                        <div class="row mb-1">
+                            <div class="col-4 text-center">訂單編號</div>
+                            <div class="col-4 text-center">訂單日期</div>
+                            <div class="col-4 text-center">訂購總額</div>
+                        </div>
+                        <div class="row my-1">
+                            <div class="number col-4 text-center"></div>
+                            <div class="date col-4 text-center"></div>
+                            <div class="amount col-4 text-center"></div>
+                        </div>
+                        <a href="#" title="點擊查看訂單詳細"><div class="w-100 bg_gray mt-2 text-center">點擊查看訂單詳細</div></a>
+                    </div>
+                </template>
+            </div>
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">我的最愛</div>
             <div id="history-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
                 <div class="nodata h5 text-center fw-bold d-none">查無瀏覽紀錄</div>

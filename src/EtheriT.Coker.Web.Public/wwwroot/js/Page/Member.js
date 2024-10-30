@@ -1,4 +1,16 @@
 ﻿function PageReady() {
+    Coker.Member = {
+        GetOrderHistory: function () {
+            return $.ajax({
+                url: "/api/Order/GetHistoryOrder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+            });
+        },
+    }
 
     let addr = $("#TWzipcode .address").val()
     co.Zipcode.init("#TWzipcode");
@@ -22,7 +34,8 @@ function Member(data) {
     $("#ResetModal .btn_resetforget").removeClass("d-none");
 
     SetMemberData();
-    SetHistoryData();
+    SetHistoryOrderData();
+    SetBrowsingHistoryData();
 
     $(".btn_logout").on("click", function () {
         co.User.Logout().done(function (result) {
@@ -84,8 +97,23 @@ function SetMemberData() {
         }
     });
 }
-
-function SetHistoryData() {
+function SetHistoryOrderData() {
+    Coker.Member.GetOrderHistory().done(function (result) {
+        if (result.success && result.orderData != null) {
+            console.log(result.orderData)
+            $.each(result.orderData, function (index, data) {
+                var frame = $($("#Template_Order_List").html()).clone();
+                frame.find(".number").text(("000000000" + data.orderHeader.id).substr(data.orderHeader.id.length));
+                frame.find(".date").text(((data.orderHeader.creationTime).substr(0, 10).replaceAll("-", "/")));
+                frame.find(".amount").text((data.orderHeader.total).toLocaleString());
+                $("#profile-tab-pane").append(frame);
+            })
+        } else {
+            $("#profile-tab-pane .nodata").removeClass("d-none");
+        }
+    });
+}
+function SetBrowsingHistoryData() {
     Product.GetAll.History().done(function (result) {
         //console.log(result)
         if (result.length > 0) {

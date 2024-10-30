@@ -46,7 +46,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpGet]
         public async Task<ShoppingCartGetDrop> GetDropOne(long id)
         {
-            return await shoppingCartAppService.GetDropOne(id);
+            return await shoppingCartAppService.GetDropOne(id, false);
         }
 
         [HttpGet]

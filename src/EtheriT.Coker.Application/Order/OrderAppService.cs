@@ -10,8 +10,13 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
-using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Token;
+using Microsoft.Extensions.Configuration;
+using AutoMapper;
+using EtheriT.Coker.Core.Models;
+using Microsoft.JSInterop.Implementation;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -20,135 +25,114 @@ namespace EtheriT.Coker.Application.Order
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
+        private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IConfiguration configuration;
+        private readonly IMapper mapper;
         public OrderAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            ITokenAppService tokenAppService
+            ITokenAppService tokenAppService,
+            IShoppingCartAppService shoppingCartAppService,
+            IConfiguration configuration,
+            IMapper mapper
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
+            this.shoppingCartAppService = shoppingCartAppService;
+            this.configuration = configuration;
+            this.mapper = mapper;
         }
-        public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto, long siteId)
+        public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
 
             try
             {
-                Core.Models.Order_Header oh = new Core.Models.Order_Header
+                Guid UUID = await tokenAppService.GetUUID();
+                var Token = tokenAppService.CheckToken();
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+
+                if (Token != null)
                 {
-                    FK_WebsiteId = siteId,
-                    Orderer = dto.Orderer,
-                    OrdererSex = dto.OrdererSex,
-                    OrdererEmail = dto.OrdererEmail,
-                    OrdererTelephone = dto.OrdererTelephone,
-                    OrdererCellPhone = dto.OrdererCellPhone,
-                    OrdererAddress = dto.OrdererAddress,
-                    Recipient = dto.Recipient,
-                    RecipientSex = dto.RecipientSex,
-                    RecipientEmail = dto.RecipientEmail,
-                    RecipientTelephone = dto.RecipientTelephone,
-                    RecipientCellPhone = dto.RecipientCellPhone,
-                    RecipientAddress = dto.RecipientAddress,
-                    Remark = dto.Remark,
-                    InvoiceRecipient = dto.InvoiceRecipient,
-                    InvoiceTitle = dto.InvoiceTitle,
-                    UniformId = dto.UniformId,
-                    InvoiceAddress = dto.InvoiceAddress,
-                    Shipping = dto.Shipping,
-                    Payment = dto.Payment,
-                    State = dto.State,
-                    Subtotal = dto.Subtotal,
-                    Discount = dto.Discount,
-                    Bonus = dto.Bonus,
-                    CouponId = dto.CouponId,
-                    Freight = dto.Freight,
-                    Service_Charge = dto.Service_Charge,
-                };
-                db.Order_Headers.Add(oh);
-                db.SaveChanges();
-                output.Success = true;
-                output.Message = oh.Id.ToString();
+                    Core.Models.Order_Header oh = mapper.Map<Order_Header>(dto);
+                    oh.FK_WebsiteId = WebsiteId;
+                    oh.FK_UUID = UUID;
+                    oh.Fk_Tid = (Guid)Token.RefreshToken;
+                    oh.Fk_UserId = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
+
+                    db.Order_Headers.Add(oh);
+                    db.SaveChanges();
+
+                    output = await AddDetails(oh.Id);
+                    output.Message = oh.Id.ToString();
+                }
+                else throw new Exception("查無Token");
             }
             catch (Exception e)
             {
-                output.Success = false;
                 output.Error = e.Message;
             }
 
             return output;
         }
-        public async Task<ResponseMessageDto> AddDetails(OrderDetailsAddDto dto)
+        private async Task<ResponseMessageDto> AddDetails(long order_header_id)
         {
             Guid UUID = await tokenAppService.GetUUID();
-            var token = tokenAppService.CheckToken();
+            var Token = tokenAppService.CheckToken();
+            var userid = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
+            var uuids = new List<Guid>();
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
             {
-                var db_oh = db.Order_Headers.Where(e => e.Id == dto.FK_OHId).FirstOrDefault();
-                if (db_oh != null)
+                if (Token.IsLogin)
                 {
-                    foreach (var scid in dto.FK_SCId_Arr)
+                    uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
+                    uuids.Add(UUID);
+                }
+
+                var shoppingCarts = await db.ShoppingCarts.Where(e => uuids.Count == 0 ? e.FK_Tid == Token.RefreshToken : uuids.Contains(e.UUID) && !e.IsOrder).ToListAsync();
+
+                foreach (var shoppingCart in shoppingCarts)
+                {
+                    var prod_stock = await db.Prod_Stocks.Where(e => e.Id == shoppingCart.FK_PSid).FirstOrDefaultAsync();
+
+                    if (prod_stock != null)
                     {
-                        var db_sc = db.ShoppingCarts.Where(e => e.Id == scid).FirstOrDefault();
-                        if (db_sc != null)
+                        Core.Models.Order_Details od = new Core.Models.Order_Details
                         {
-                            var db_ps = db.Prod_Stocks.Where(e => e.Id == db_sc.FK_PSid).FirstOrDefault();
-                            if (db_ps != null)
-                            {
-                                Core.Models.Order_Details od = new Core.Models.Order_Details
-                                {
-                                    FK_OId = db_oh.Id,
-                                    FK_SCId = db_sc.Id,
-                                };
-                                db.Order_Details.Add(od);
+                            FK_OId = order_header_id,
+                            FK_SCId = shoppingCart.Id,
+                        };
+                        db.Order_Details.Add(od);
 
-                                db_sc.IsDeleted = true;
-                                db_sc.DeletionTime = DateTime.Now;
+                        Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                        {
+                            FK_Pid = prod_stock.FK_Pid,
+                            FK_UserId = userid,
+                            UUID = UUID,
+                            Action = (int)LogActionEnum.加入訂單,
+                            Db_Name = "Order_Details"
+                        };
+                        db.Prod_Logs.Add(pl);
 
-                                if (token != null)
-                                {
-                                    var db_t = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
-                                    if (db_t != null)
-                                    {
-                                        Core.Models.Prod_Log pl = new Core.Models.Prod_Log
-                                        {
-                                            FK_Pid = db_ps.FK_Pid,
-                                            FK_UserId = db_t.UserID,
-                                            UUID = UUID,
-                                            Action = (int)LogActionEnum.加入訂單,
-                                            Db_Name = "Order_Details"
-                                        };
-                                        db.Prod_Logs.Add(pl);
-                                    }
-                                }
+                        shoppingCart.IsOrder = true;
+                        shoppingCart.LastModifierUserId = userid;
+                        shoppingCart.LastModificationTime = DateTime.Now;
 
-                                db.SaveChanges();
-                                output.Success = true;
-                            }
-                            else
-                            {
-                                output.Success = false;
-                                output.Error = "資料不存在";
-                            }
-                        }
+                        db.SaveChanges();
+                        output.Success = true;
                     }
+                    else throw new Exception("查無商品資料");
                 }
-                else
-                {
-                    output.Success = false;
-                    output.Error = "資料不存在";
-                }
-
             }
             catch (Exception e)
             {
                 output.Success = false;
                 output.Error = e.Message;
             }
-
             return output;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -297,6 +281,50 @@ namespace EtheriT.Coker.Application.Order
 
             return null;
         }
+        public async Task<OrderDataGetAllDto> GetHistoryOrder()
+        {
+            var response = new OrderDataGetAllDto();
+            var output = new List<OrderDataGetDto>();
+
+            Guid UUID = await tokenAppService.GetUUID();
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+
+            try
+            {
+                var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
+                if (uuids.Any())
+                {
+                    uuids.Add(UUID);
+                    var order_headers = await db.Order_Headers.Where(e => uuids.Contains(e.FK_UUID)).Take(10).ToListAsync();
+                    foreach (var order_header in order_headers)
+                    {
+                        var temp_OrderDetails = new List<ShoppingCartGetDrop>();
+                        var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
+                        foreach (var order_detail in order_details)
+                        {
+                            var shoppingCart = await db.ShoppingCarts.Where(e => e.Id == order_detail.FK_SCId && e.IsOrder).FirstOrDefaultAsync();
+                            if (shoppingCart != null)
+                            {
+                                temp_OrderDetails.Add(await shoppingCartAppService.GetDropOne(shoppingCart.Id, true));
+                            }
+                        }
+                        output.Add(new OrderDataGetDto()
+                        {
+                            OrderHeader = await GetHeaderOne(order_header.Id),
+                            OrderDetails = temp_OrderDetails
+                        });
+                    }
+                }
+                response.OrderData = output;
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
         public async Task<ResponseMessageDto> Delete(int id)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -304,15 +332,28 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 long usetId = await loginUserData.GetUserId();
-                var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
+                var order_header = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
 
-                if (result != null)
+                if (order_header != null)
                 {
-                    result.IsDeleted = true;
-                    result.DeletionTime = DateTime.Now;
-                    result.DeleterUserId = usetId;
+                    order_header.IsDeleted = true;
+                    order_header.DeletionTime = DateTime.Now;
+                    order_header.DeleterUserId = usetId;
+
+                    var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
+                    if (order_details != null)
+                    {
+                        foreach (var order_detail in order_details)
+                        {
+                            order_detail.IsDeleted = true;
+                            order_detail.DeletionTime = DateTime.Now;
+                            order_detail.DeleterUserId = usetId;
+                        }
+                    }
+
                     db.SaveChanges();
                     output.Success = true;
+
                 }
                 else throw new Exception("查無訂單資料");
             }

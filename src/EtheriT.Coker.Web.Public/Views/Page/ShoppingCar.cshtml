@@ -3,789 +3,794 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 @{
-	ViewData["SideName"] = Model.PageData.SiteName;
-	ViewData["PageName"] = Model.PageData.Title;
-	ViewData["OrgName"] = Model.orgName;
-	ViewData["Description"] = Model.PageData.Description;
-	ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
-	ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
-	ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
-	ViewData["XSRF-TOKEN"] = Model.token;
+    ViewData["SideName"] = Model.PageData.SiteName;
+    ViewData["PageName"] = Model.PageData.Title;
+    ViewData["OrgName"] = Model.orgName;
+    ViewData["Description"] = Model.PageData.Description;
+    ViewData["CurrentUrl"] = Model.PageData.CurrentUrl;
+    ViewData["VisibleHeader"] = Model.PageData.VisibleHeader;
+    ViewData["VisibleFooter"] = Model.PageData.VisibleFooter;
+    ViewData["XSRF-TOKEN"] = Model.token;
 }
 <script nonce="@ViewBag.Nonce">
-	const PageKey = "@Model.option";
-	const local = @Html.Raw(L.getAllJsonString());
+    const PageKey = "@Model.option";
+    const local = @Html.Raw(L.getAllJsonString());
 </script>
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header border-0">
-				<h5 id="staticBackdropLabel" class="modal-title fw-bold">選擇收件地址清單</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body text-center">
-				<table class="table">
-					<thead>
-						<tr>
-							<th scope="col" class="fw-normal">選擇</th>
-							<th scope="col" class="fw-normal">姓名</th>
-							<th scope="col" class="fw-normal">郵遞區號</th>
-							<th scope="col" class="fw-normal">地址</th>
-							<th scope="col" class="fw-normal">聯絡電話</th>
-							<th scope="col" class="fw-normal">行動電話</th>
-							<th scope="col" class="fw-normal">刪除</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<th scope="row" class="fw-normal">
-								<label class="d-none" for="radio_recipient1">選擇</label>
-								<input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
-							</th>
-							<td class="fw-normal">姓○</td>
-							<td class="fw-normal">806</td>
-							<td class="fw-normal">地址資料***</td>
-							<td class="fw-normal">07-1234***</td>
-							<td class="fw-normal">0912-******</td>
-							<td class="fw-normal">
-								<button type="button" class="btn_delete_recipient bg-transparent border-0">
-									<i class="fa-solid fa-xmark"></i>
-									<span class="d-none">送出</span>
-								</button>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row" class="fw-normal">
-								<label class="d-none" for="radio_recipient2">選擇</label>
-								<input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
-							</th>
-							<td class="fw-normal">姓○</td>
-							<td class="fw-normal">806</td>
-							<td class="fw-normal">地址資料***</td>
-							<td class="fw-normal">07-1234***</td>
-							<td class="fw-normal">0912-******</td>
-							<td class="fw-normal">
-								<button type="button" class="btn_delete_recipient bg-transparent border-0">
-									<i class="fa-solid fa-xmark"></i>
-									<span class="d-none">送出</span>
-								</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div class="modal-footer justify-content-center border-0">
-				<button type="button" class="text-white border-0 px-5 py-1" data-bs-dismiss="modal">確定</button>
-			</div>
-		</div>
-	</div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 id="staticBackdropLabel" class="modal-title fw-bold">選擇收件地址清單</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="fw-normal">選擇</th>
+                            <th scope="col" class="fw-normal">姓名</th>
+                            <th scope="col" class="fw-normal">郵遞區號</th>
+                            <th scope="col" class="fw-normal">地址</th>
+                            <th scope="col" class="fw-normal">聯絡電話</th>
+                            <th scope="col" class="fw-normal">行動電話</th>
+                            <th scope="col" class="fw-normal">刪除</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row" class="fw-normal">
+                                <label class="d-none" for="radio_recipient1">選擇</label>
+                                <input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
+                            </th>
+                            <td class="fw-normal">姓○</td>
+                            <td class="fw-normal">806</td>
+                            <td class="fw-normal">地址資料***</td>
+                            <td class="fw-normal">07-1234***</td>
+                            <td class="fw-normal">0912-******</td>
+                            <td class="fw-normal">
+                                <button type="button" class="btn_delete_recipient bg-transparent border-0">
+                                    <i class="fa-solid fa-xmark"></i>
+                                    <span class="d-none">送出</span>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row" class="fw-normal">
+                                <label class="d-none" for="radio_recipient2">選擇</label>
+                                <input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
+                            </th>
+                            <td class="fw-normal">姓○</td>
+                            <td class="fw-normal">806</td>
+                            <td class="fw-normal">地址資料***</td>
+                            <td class="fw-normal">07-1234***</td>
+                            <td class="fw-normal">0912-******</td>
+                            <td class="fw-normal">
+                                <button type="button" class="btn_delete_recipient bg-transparent border-0">
+                                    <i class="fa-solid fa-xmark"></i>
+                                    <span class="d-none">送出</span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="text-white border-0 px-5 py-1" data-bs-dismiss="modal">確定</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="history container my-4 d-flex flex-wrap justify-content-center justify-content-md-end d-none">
-	<a class="bg-white text-center m-1 py-2" href="/@ViewData["OrgName"]/Favorites">
-		<div>收藏商品<span class="fw-bold">20</span>件</div>
-	</a>
-	<a href="" class="bg-white text-center m-1 py-2">
-		<div>買過商品<span class="fw-bold">3</span>件</div>
-	</a>
+    <a class="bg-white text-center m-1 py-2" href="/@ViewData["OrgName"]/Favorites">
+        <div>收藏商品<span class="fw-bold">20</span>件</div>
+    </a>
+    <a href="" class="bg-white text-center m-1 py-2">
+        <div>買過商品<span class="fw-bold">3</span>件</div>
+    </a>
 </div>
-
 <div id="BuyStepSwiper" class="container pt-5 pb-4 mt-4 position-relative">
-	<div id="memberLogin" class="container my-5 d-none">
-		<div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
-			<div>購買前登入會員可更方便查詢訂單！</div>
-			<button class="btn_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
-		</div>
-	</div>
-
-	<div class="swiper shadow-lg mt-5">
-		<div class="swiper-wrapper">
-			<div id="Step1" class="card text-center swiper-slide">
-				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
-					<div class="fs-5 my-2">購物明細</div>
-				</div>
-
-				<div class="card-body pt-5 d-none">
-					<div class="list_title row d-none d-lg-flex">
-						<div class="col-6 text-start">商品資訊</div>
-						<div class="col-2">單價</div>
-						<div class="col-2">數量</div>
-						<div class="col-2">小計</div>
-					</div>
-
-					<ul class="purchase_list pb-4 px-5">
-						<template id="Template_Cart_Details">
-							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
-								<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-									<a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
-										<img class="pro_image img-fluid" alt="商品" src="">
-									</a>
-									<a class="pro_link col text-start overflow-hidden" href="">
-										<div class="content d-lg-block d-none">
-											<div class="pro_name single_line fw-bold"></div>
-											<div class="pro_detail d-flex flex-wrap">
-												<div class="pro_specification pe-3"></div>
-												<div class="pro_instructions single_line"></div>
-											</div>
-										</div>
-									</a>
-								</div>
-
-								<div class="content col-sm-6 col row gx-0 overflow-hidden">
-									<a class="pro_link" href="" title="連結至：商品">
-										<div class="d-lg-none d-block text-start">
-											<div class="pro_name single_line fw-bold"></div>
-											<div class="pro_detail d-flex flex-wrap">
-												<div class="pro_specification pe-3"></div>
-												<div class="pro_instructions single_line"></div>
-											</div>
-										</div>
-									</a>
-
-									<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center"></div>
-
-									<div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
-										<button class="btn_count_minus bg-white border-end-0">
-											<i class="fa-solid fa-minus"></i>
-											<span class="d-none">減少</span>
-										</button>
-										<label class="d-none" for="quantityInput1">數量</label>
-										<input id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
-
-										<button class="btn_count_plus bg-white border-start-0">
-											<i class="fa-solid fa-plus"></i>
-											<span class="d-none">增加</span>
-										</button>
-									</div>
-
-									<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
-								</div>
-
-								<div class="btn_side_icon position-absolute d-flex flex-column top-0 end-0 p-2">
-									<span class="d-inline-block d-none" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
-										<button class="btn_move_to_favorites bg-transparent border-0">
-											<i class="fa-regular fa-heart"></i>
-											<span class="d-none">移到收藏</span>
-										</button>
-									</span>
-									<span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
-										<button class="btn_remove_pro bg-transparent border-0">
-											<i class="fa-solid fa-xmark"></i>
-											<span class="d-none">移除商品</span>
-										</button>
-									</span>
-								</div>
-							</li>
-						</template>
-					</ul>
-
-					<div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
-						<div class="border-bottom py-2 d-flex justify-content-end text-end">
-							<div>商品金額</div>
-							<div class="subtotal price"></div>
-						</div>
-						<div class="py-2 d-flex justify-content-end text-end">
-							<div>小計</div>
-							<div class="subtotal price"></div>
-						</div>
-					</div>
-
-					<div class="swiper_button my-5 d-flex justify-content-center">
-						<a href="#" title="繼續購物：返回上一頁" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
-
-						<button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
-							下一步
-						</button>
-					</div>
-				</div>
-
-				<div id="Purchase_Null" class="align-items-center flex-column justify-content-center">
-					<div class="mt-5">您的購物車是空的</div>
-					<a class="btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="#">點此返回選購</a>
-				</div>
-			</div>
-
-			<div id="Step2" class="card text-center swiper-slide">
-				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
-					<div class="fs-5 my-2">運送方式</div>
-				</div>
-
-				<div class="card-body px-0">
-					<form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" method="post" novalidate>
-						<input type="hidden" name="authentiity_token" value="@Model.token" />
-						<div class="row gx-0">
-							@if (Model.freightModels.Count > 0)
-							{
-								var has_invalid = false;
-								@foreach (var freight in Model.freightModels ?? new List<FreightDisplayDto>())
-								{
-									var check = freight.Set_Default ? "checked" : "";
-									<div class="form-check text-start col-12 col-sm-3 my-2">
-										<input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" @check required>
-										<label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
-										@{
-											if (!has_invalid)
-											{
-												<div class="invalid-feedback">請選擇運送方式</div>
-												has_invalid = true;
-											}
-										}
-									</div>
-									<div class="text-start col-12 col-sm-9 my-2">@freight.Describe</div>
-								}
-							}
-							else
-							{
-								<div>店家尚未設定運費方式</div>
-							}
-						</div>
-
-					</form>
-
-					<div class="title px-3 py-2 d-flex align-items-center justify-content-between">
-						<div class="fs-5 my-2">付款方式</div>
-					</div>
-
-					<form id="RadioPayment" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" method="post" novalidate>
-						<input type="hidden" name="authentiity_token" value="@Model.token" />
-						<div class="form-check py-2">
-							<input id="radio_payment_atm" class="form-check-input" type="radio" name="RadioPayment" value="1" required>
-							<label class="form-check-label" for="radio_payment_atm">ATM</label>
-						</div>
-						<div class="form-check py-2">
-							<input id="radio_payment_card" class="form-check-input" type="radio" name="RadioPayment" value="2" required>
-							<label class="form-check-label" for="radio_payment_card">線上刷卡</label>
-						</div>
-						<div class="form-check py-2">
-							<input id="radio_payment_LINE" class="form-check-input" type="radio" name="RadioPayment" value="3" required>
-							<label class="form-check-label" for="radio_payment_LINE">LINE Pay</label>
-							<div class="invalid-feedback">請選擇付款方式</div>
-						</div>
-					</form>
-
-					<div class="priceline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
-						<div class="py-2 d-flex justify-content-end text-end">
-							<div>商品金額</div>
-							<div class="subtotal price"></div>
-						</div>
-						<div class="py-2 d-flex justify-content-end text-end">
-							<div>運費</div>
-							<div class="shipping_fee price">0</div>
-						</div>
-						<div class="py-2 border-top d-flex justify-content-end text-end">
-							<div>小計</div>
-							<div class="total_amount price"></div>
-						</div>
-					</div>
-
-					<div class="swiper_button my-5">
-						<button class="btn_swiper_prev_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
-							返回上一頁
-						</button>
-
-						<button class="btn_swiper_next_step3 border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
-							下一步
-						</button>
-					</div>
-				</div>
-			</div>
-
-			<div id="Step3" class="card text-center swiper-slide">
-				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
-					<div class="fs-5 my-2">購物明細</div>
-					<a class="px-4 py-2 text-decoration-underline" href="/@ViewData["OrgName"]/product/toilet">我要再選購</a>
-				</div>
-
-				<div class="card-body px-0">
-					<div class="record container d-flex align-items-center justify-content-center justify-content-sm-end">
-						<div>本次消費總金額：</div>
-						<div class="total_amount totalprice fw-bold fs-5 price"></div>
-						<button class="btn_back_to_check bg-transparent ms-4 px-2 px-sm-4 py-1 py-sm-2 text-decoration-underline">返回查看商品明細</button>
-					</div>
-
-					<div id="OrdererForm">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center">
-							<div class="fs-5">訂購人資料</div>
-							<button class="btn_edit_data bg-transparent border-0 fs-3 ms-1" title="編輯">
-								<i class="fa-regular fa-pen-to-square"></i>
-								<span class="d-none">編輯</span>
-							</button>
-						</div>
-
-						<div class="default_data">
-							<div class="row">
-								<div class="orderer_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="orderer_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-								<div class="col text-start"><span class="orderer_areacode"></span>-<span class="orderer_cellphone"></span> 分機 <span class="orderer_extension"></span></div>
-							</div>
-						</div>
-
-						<form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
-							<input type="hidden" name="authentiity_token" value="@Model.token" />
-							<div class="row mx-0">
-								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
-									<input id="OrdererInputName" class="orderer_name form-control" type="text" placeholder="name" value="" minlength="2" required>
-									<label class="required" for="OrdererInputName">姓　　名</label>
-								</div>
-								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
-									<div class="form-check pe-3">
-										<input id="OrdererRadioSir" class="form-check-input" type="radio" name="OrdererRadioGender" value="1" required>
-										<label class="form-check-label" for="OrdererRadioSir">男</label>
-									</div>
-									<div class="form-check pe-3">
-										<input id="OrdererRadioMiss" class="form-check-input" type="radio" name="OrdererRadioGender" value="2" required>
-										<label class="form-check-label" for="OrdererRadioMiss">女</label>
-									</div>
-									<div class="form-check">
-										<input id="OrdererRadioElse" class="form-check-input" type="radio" name="OrdererRadioGender" value="3" required>
-										<label class="form-check-label" for="OrdererRadioElse">其他</label>
-									</div>
-								</div>
-							</div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputMail" class="orderer_mail form-control" type="email" placeholder="name@example.com" value="" required>
-								<label class="required" for="OrdererInputMail">E-mail</label>
-							</div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="OrdererInputCellPhone" class="orderer_phone form-control" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
-								<label class="required" for="OrdererInputCellPhone">手機號碼</label>
-							</div>
-							<div class="row">
-								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
-									<label class="px-4" for="OrdererInputTelPhoneArea">區碼</label>
-								</div>
-								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="OrdererInputTelPhone" class="orderer_cellphone form-control" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{7}" maxlength="7">
-									<label for="OrdererInputTelPhone">聯絡電話</label>
-								</div>
-								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
-									<label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
-								</div>
-							</div>
-							<div id="Orderer_TWzipcode" class="row">
-								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
-								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
-								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="OrdererInputAddress" class="orderer_address form-control" type="text" placeholder="請輸入地址" value="" required>
-									<label class="px-4 required" for="OrdererInputAddress">地址</label>
-								</div>
-							</div>
-						</form>
-					</div>
-
-					<div id="RecipientForm">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center">
-							<div class="fs-5">收件人資料</div>
-							<ul class="d-flex flex-wrap text-start">
-								<li class="form-check mb-0 ms-3">
-									<input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
-									<label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
-								</li>
-								<li class="form-check mb-0 ms-3">
-									<input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
-									<label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
-								</li>
-								<li class="form-check mb-0 ms-3">
-									<input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
-									<label class="form-check-label" for="radio_recipient_edit">修改收件人資料</label>
-								</li>
-							</ul>
-						</div>
-
-						<div class="default_data">
-							<div class="row">
-								<div class="recipient_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-								<div class="col text-start"><span class="recipient_areacode"></span>-<span class="recipient_cellphone"></span> 分機 <span class="recipient_extension"></span></div>
-							</div>
-							<div class="row">
-								<div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="col text-start"></div>
-							</div>
-						</div>
-
-						<form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
-							<input type="hidden" name="authentiity_token" value="@Model.token" />
-							<div class="row mx-0">
-								<div class="form-floating mb-3 col-12 col-sm-6 px-0">
-									<input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="請輸入姓名" value="" minlength="2" required>
-									<label class="required" for="RecipientInputName">姓　　名</label>
-								</div>
-								<div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
-									<div class="form-check pe-3">
-										<input id="RecipientRadioSir" class="form-check-input" type="radio" name="RecipientRadioGender" value="1" required>
-										<label class="form-check-label" for="RecipientRadioSir">男</label>
-									</div>
-									<div class="form-check pe-3">
-										<input id="RecipientRadioMiss" class="form-check-input" type="radio" name="RecipientRadioGender" value="2" required>
-										<label class="form-check-label" for="RecipientRadioMiss">女</label>
-									</div>
-									<div class="form-check">
-										<input id="RecipientRadioElse" class="form-check-input" type="radio" name="RecipientRadioGender" value="3" required>
-										<label class="form-check-label" for="RecipientRadioElse">其他</label>
-									</div>
-								</div>
-							</div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="請輸入E-mail" value="" required>
-								<label class="required" for="RecipientInputMail">E-mail</label>
-							</div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="RecipientInputCellPhone" class="recipient_phone form-control" type="tel" placeholder="請輸入手機號罵" value="" pattern="[0][9]\d{8}" maxlength="10" required>
-								<label class="required" for="RecipientInputCellPhone">手機號碼</label>
-							</div>
-							<div class="row">
-								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="RecipientInputTelPhoneArea" class="recipient_areacode form-control" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
-									<label class="px-4" for="RecipientInputTelPhoneArea">區碼</label>
-								</div>
-								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="RecipientInputTelPhone" class="recipient_cellphone form-control" type="tel" placeholder="請輸入連絡電話" value="" pattern="\d{7}" maxlength="7">
-									<label for="RecipientInputTelPhone">聯絡電話</label>
-								</div>
-								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="RecipientInputTelPhoneExt" class="recipient_extension form-control" type="tel" placeholder="請輸入分機" value="" pattern="\d*">
-									<label class="px-4" for="RecipientInputTelPhoneExt">分機</label>
-								</div>
-							</div>
-							<div id="Recipient_TWzipcode" class="row">
-								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
-								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
-								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="RecipientInputAddress" class="orderer_address form-control" type="text" placeholder="請輸入地址" value="" required>
-									<label class="px-4 required" for="RecipientInputAddress">地址</label>
-								</div>
-							</div>
-							<div class="form-floating mb-3 col-12">
-								<textarea id="TextareaRemark" class="form-control" placeholder="備註"></textarea>
-								<label for="TextareaRemark">備　　註</label>
-							</div>
-						</form>
-					</div>
-
-					<div id="InvoiceForm">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center">
-							<div class="fs-5">發票寄送</div>
-							<ul class="d-sm-flex text-start">
-								<li class="form-check mb-0 ms-3">
-									<input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="1" checked>
-									<label class="form-check-label" for="radio_bill_orderer">訂購人</label>
-								</li>
-								<li class="form-check mb-0 ms-3">
-									<input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="2">
-									<label class="form-check-label" for="radio_bill_recipient">收件人</label>
-								</li>
-								<li class="form-check mb-0 ms-3">
-									<input id="radio_bill_company" class="form-check-input" type="radio" name="InvoiceRadio" value="3">
-									<label class="form-check-label" for="radio_bill_company">公司(三聯)</label>
-								</li>
-							</ul>
-						</div>
-
-						<div class="default_data">
-							<div class="row">
-								<div class="bill_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
-								<div class="col text-start"><span class="bill_areacode"></span>-<span class="bill_cellphone"></span> 分機 <span class="bill_extension"></span></div>
-							</div>
-							<div class="row">
-								<div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="col text-start"></div>
-							</div>
-						</div>
-
-						<form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
-							<input type="hidden" name="authentiity_token" value="@Model.token" />
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InvoiceInputTitle" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
-								<label class="required" for="InvoiceInputTitle">發票抬頭</label>
-							</div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InvoiceInputUniformId" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
-								<label class="required" for="InvoiceInputUniformId">統　　編</label>
-							</div>
-
-							<div id="Invoice_TWzipcode" class="row">
-								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
-								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
-								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="InvoiceInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
-									<label class="px-4 required" for="InvoiceInputAddress">地址</label>
-								</div>
-							</div>
-						</form>
-					</div>
-
-					<div id="PaymentMethod" class="title px-3 py-2 my-3 d-flex align-items-center justify-content-between">
-						<div class="align-items-center d-flex">
-							<div class="fs-5">付款方式</div>
-							<div class="payment_method ps-2">尚未選擇付款方式</div>
-						</div>
-						<button class="btn_goprev bg-transparent border-0">變更付款方式</button>
-					</div>
-
-					<div class="swiper_button mt-4 my-sm-5 row align-items-center justify-content-center">
-						<button class="btn_gray_underline btn_goprev col-auto order-1 order-sm-0 border-0 text-center text-decoration-underline bg-transparent p-2">
-							回上一頁
-						</button>
-
-						<div class="col-12 col-sm-auto order-0 order-sm-1">
-							<button class="btn_checkout border-0 px-4 py-2 mx-3 rounded-3 text-center text-white">
-								<div class="fs-2 fw-bold">確認結帳</div>
-								<div>進入付款程序</div>
-							</button>
-						</div>
-
-						<a class="btn_gray_underline col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="/@ViewData["OrgName"]/product/toilet">我要再選購</a>
-					</div>
-				</div>
-			</div>
-
-			<div id="Step4" class="card swiper-slide">
-				<div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
-					<div class="fs-5 my-2">購物明細</div>
-					<div class="order_number fs-5 fw-bold"></div>
-				</div>
-
-				<div class="card-body px-0">
-					<div class="pruchase_content">
-						<div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
-
-						<ul class="purchase_list px-5"></ul>
-
-						<ul id="CollapsePurchase" class="purchase_list pb-4 px-5 collapse"></ul>
-
-						<template id="Template_Purchase_Details">
-							<li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
-								<div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-									<a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
-										<img class="pro_image img-fluid" alt="商品" src="">
-									</a>
-									<a class="pro_link col text-start overflow-hidden" href="" title="連結至：商品">
-										<div class="content d-lg-block d-none">
-											<div class="pro_name single_line fw-bold"></div>
-											<div class="pro_detail d-flex flex-wrap">
-												<div class="pro_specification pe-3"></div>
-												<div class="pro_instructions single_line"></div>
-											</div>
-										</div>
-									</a>
-								</div>
-
-								<div class="content col-sm-6 col row gx-0 overflow-hidden">
-									<a class="pro_link" href="" title="連結至：商品">
-										<div class="d-lg-none d-block text-start">
-											<div class="pro_name single_line fw-bold"></div>
-											<div class="pro_detail d-flex flex-wrap">
-												<div class="pro_specification pe-3"></div>
-												<div class="pro_instructions single_line"></div>
-											</div>
-										</div>
-									</a>
-
-									<div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
-
-									<div class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
-
-									<div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
-								</div>
-							</li>
-						</template>
-
-						<div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
-							<div class="py-2 d-flex justify-content-end text-end">
-								<div>總金額</div>
-								<div class="subtotal col-4 price"></div>
-							</div>
-							<div class="py-2 d-flex justify-content-end text-end">
-								<div>運費</div>
-								<div class="shipping_fee col-4 price">0</div>
-							</div>
-							<div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
-								<div>本次消費總金額</div>
-								<div class="total_amount col-4 price fs-5 fw-bold">26,200</div>
-							</div>
-						</div>
-
-						<div class="d-flex justify-content-center">
-							<button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2 d-none" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePurchase" aria-expanded="false" aria-controls="CollapsePurchase">
-								查看購物清單
-							</button>
-						</div>
-
-					</div>
-
-					<div class="orderer_data">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">訂購人資料</div>
-
-						<div class="content">
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="name col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="cellphone col text-start"></div>
-							</div>
-							<div class="row d-none">
-								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
-								<div class="telphone col text-start"></div>
-							</div>
-						</div>
-					</div>
-
-					<div class="recipient_data">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">收件人資料</div>
-
-						<div class="content">
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-								<div class="name col text-start"></div>
-							</div>
-							<div class="row">
-								<div class=" col-auto col-sm-2 text-end ps-4">手機電話：</div>
-								<div class="cellphone col text-start"></div>
-							</div>
-							<div class="row d-none">
-								<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
-								<div class="telphone col text-start"></div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="address col text-start"></div>
-							</div>
-						</div>
-					</div>
-
-					<div class="invoice_data">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
-
-						<div class="content">
-							<div class="person d-none">
-								<div class="row">
-									<div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-									<div class="name col text-start"></div>
-								</div>
-								<div class="row">
-									<div class="col-auto col-sm-2 text-end ps-4">手機電話：</div>
-									<div class="cellphone col text-start"></div>
-								</div>
-								<div class="row">
-									<div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
-									<div class="telphone col text-start"></div>
-								</div>
-							</div>
-							<div class="company d-none">
-								<div class="row">
-									<div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
-									<div class="invoice col text-start"></div>
-								</div>
-								<div class="row">
-									<div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
-									<div class="unid col text-start"></div>
-								</div>
-							</div>
-							<div class="row">
-								<div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-								<div class="address col text-start"></div>
-							</div>
-						</div>
-					</div>
-
-					<div id="PaymentData">
-						<div class="title px-3 py-2 my-3 d-flex align-items-center">
-							<div class="fs-5">付款方式</div>
-							<div class="payment_method px-3">尚未選擇付款方式</div>
-						</div>
-
-						<div class="pay_byATM px-4 d-none">
-							<p>繳費完成後，請利用Email主動與客服聯絡。告知您姓名、轉帳帳戶末五碼，或是相關匯款資訊，以利核對您的款項。</p>
-
-							<div class="border-bottom border-top text-start py-3 my-3">
-								<div class="mb-2 row align-items-center d-flex">
-									<div class="col-auto col-sm-2 text-end py-0">轉帳銀行代碼：</div>
-									<div class="default col">玉山銀行(808)</div>
-								</div>
-
-								<div class="mb-2 row align-items-center d-flex">
-									<div class="col-auto col-sm-2 text-end py-0">轉帳帳號：</div>
-									<div class="col">大昌分行123-123-123</div>
-								</div>
-
-								<div class="mb-2 row align-items-center contact_phone">
-									<div class="col-auto col-sm-2 text-end">聯絡電話：</div>
-									<div class="col">07-1234***分機</div>
-								</div>
-
-								<div class="mb-2 row align-items-center">
-									<div class="col-auto col-sm-2 text-end">戶名：</div>
-									<div class="col">隆昌窯業股份有限公司</div>
-								</div>
-
-								<div class="mb-2 row align-items-center">
-									<div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
-									<div class="col">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
-								</div>
-
-								<div class="mb-2 row align-items-center">
-									<div class="col-auto col-sm-2 text-end">繳費期限：</div>
-									<div class="paid_date col">2022年<span>10月24日23點59分</span></div>
-								</div>
-							</div>
-						</div>
-
-						<p class="d-flex justify-content-center px-4">
-							如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />
-							．隨後我們也會將轉帳的資料mail-封到您指定的電子信箱:ve***********
-						</p>
-
-						<div class="btn_back_home d-flex justify-content-center my-4">
-							<a href="/@ViewData["OrgName"]/home">
-								<div class="fs-5 fw-bold px-3 py-1 rounded text-white">回首頁</div>
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div class="swiper_pagination container position-absolute position-relative">
-		<div class="centerline position-absolute container"><hr class="opacity-100" /></div>
-
-		<div class="swiper_pagination_buystep position-absolute"></div>
-
-		<div class="step_name position-absolute container d-flex text-center justify-content-between p-0">
-			<div class="">購物車</div>
-			<div class="">運送及付款方式</div>
-			<div class="">填寫資料</div>
-			<div class="">完成訂購</div>
-		</div>
-	</div>
+    @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable)
+    {
+        @if (!ViewBag.isLogin)
+        {
+            <div id="memberLogin" class="container my-5">
+                <div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
+                    <div>購買前登入會員可更方便查詢訂單！</div>
+                    <button class="btn_call_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
+                </div>
+            </div>
+        }
+    }
+
+    <div class="swiper shadow-lg mt-5">
+        <div class="swiper-wrapper">
+            <div id="Step1" class="card text-center swiper-slide">
+                <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
+                    <div class="fs-5 my-2">購物明細</div>
+                </div>
+
+                <div class="card-body pt-5 d-none">
+                    <div class="list_title row d-none d-lg-flex">
+                        <div class="col-6 text-start">商品資訊</div>
+                        <div class="col-2">單價</div>
+                        <div class="col-2">數量</div>
+                        <div class="col-2">小計</div>
+                    </div>
+
+                    <ul class="purchase_list pb-4 px-5">
+                        <template id="Template_Cart_Details">
+                            <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
+                                <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
+                                    <a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
+                                        <img class="pro_image img-fluid" alt="商品" src="">
+                                    </a>
+                                    <a class="pro_link col text-start overflow-hidden" href="">
+                                        <div class="content d-lg-block d-none">
+                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div class="pro_detail d-flex flex-wrap">
+                                                <div class="pro_specification pe-3"></div>
+                                                <div class="pro_instructions single_line"></div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="content col-sm-6 col row gx-0 overflow-hidden">
+                                    <a class="pro_link" href="" title="連結至：商品">
+                                        <div class="d-lg-none d-block text-start">
+                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div class="pro_detail d-flex flex-wrap">
+                                                <div class="pro_specification pe-3"></div>
+                                                <div class="pro_instructions single_line"></div>
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    <div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center"></div>
+
+                                    <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
+                                        <button class="btn_count_minus bg-white border-end-0">
+                                            <i class="fa-solid fa-minus"></i>
+                                            <span class="d-none">減少</span>
+                                        </button>
+                                        <label class="d-none" for="quantityInput1">數量</label>
+                                        <input id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
+
+                                        <button class="btn_count_plus bg-white border-start-0">
+                                            <i class="fa-solid fa-plus"></i>
+                                            <span class="d-none">增加</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
+                                </div>
+
+                                <div class="btn_side_icon position-absolute d-flex flex-column top-0 end-0 p-2">
+                                    <span class="d-inline-block d-none" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
+                                        <button class="btn_move_to_favorites bg-transparent border-0">
+                                            <i class="fa-regular fa-heart"></i>
+                                            <span class="d-none">移到收藏</span>
+                                        </button>
+                                    </span>
+                                    <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
+                                        <button class="btn_remove_pro bg-transparent border-0">
+                                            <i class="fa-solid fa-xmark"></i>
+                                            <span class="d-none">移除商品</span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+
+                    <div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
+                        <div class="border-bottom py-2 d-flex justify-content-end text-end">
+                            <div>商品金額</div>
+                            <div class="subtotal price"></div>
+                        </div>
+                        <div class="py-2 d-flex justify-content-end text-end">
+                            <div>小計</div>
+                            <div class="subtotal price"></div>
+                        </div>
+                    </div>
+
+                    <div class="swiper_button my-5 d-flex justify-content-center">
+                        <a href="#" title="繼續購物：返回上一頁" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
+
+                        <button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
+                            下一步
+                        </button>
+                    </div>
+                </div>
+
+                <div id="Purchase_Null" class="align-items-center flex-column justify-content-center">
+                    <div class="mt-5">您的購物車是空的</div>
+                    <a class="btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="#">點此返回選購</a>
+                </div>
+            </div>
+
+            <div id="Step2" class="card text-center swiper-slide">
+                <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
+                    <div class="fs-5 my-2">運送方式</div>
+                </div>
+
+                <div class="card-body px-0">
+                    <form id="RadioShipping" class="px-5 mb-3 shipping needs-validation" method="post" novalidate>
+                        <input type="hidden" name="authentiity_token" value="@Model.token" />
+                        <div class="row gx-0">
+                            @if (Model.freightModels.Count > 0)
+                            {
+                                var has_invalid = false;
+                                @foreach (var freight in Model.freightModels ?? new List<FreightDisplayDto>())
+                                {
+                                    var check = freight.Set_Default ? "checked" : "";
+                                    <div class="form-check text-start col-12 col-sm-3 my-2">
+                                        <input id="FreeShip_@freight.Id" class="form-check-input" type="radio" name="RadioShipping" value="@freight.Id" data-freight="@freight.Freight" data-lowcon="@freight.Low_Con" data-disfreight="@freight.Dis_Freight" @check required>
+                                        <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
+                                        @{
+                                            if (!has_invalid)
+                                            {
+                                                <div class="invalid-feedback">請選擇運送方式</div>
+                                                has_invalid = true;
+                                            }
+                                        }
+                                    </div>
+                                    <div class="text-start col-12 col-sm-9 my-2">@freight.Describe</div>
+                                }
+                            }
+                            else
+                            {
+                                <div>店家尚未設定運費方式</div>
+                            }
+                        </div>
+
+                    </form>
+
+                    <div class="title px-3 py-2 d-flex align-items-center justify-content-between">
+                        <div class="fs-5 my-2">付款方式</div>
+                    </div>
+
+                    <form id="RadioPayment" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" method="post" novalidate>
+                        <input type="hidden" name="authentiity_token" value="@Model.token" />
+                        <div class="form-check py-2">
+                            <input id="radio_payment_atm" class="form-check-input" type="radio" name="RadioPayment" value="1" required>
+                            <label class="form-check-label" for="radio_payment_atm">ATM</label>
+                        </div>
+                        <div class="form-check py-2">
+                            <input id="radio_payment_card" class="form-check-input" type="radio" name="RadioPayment" value="2" required>
+                            <label class="form-check-label" for="radio_payment_card">線上刷卡</label>
+                        </div>
+                        <div class="form-check py-2">
+                            <input id="radio_payment_LINE" class="form-check-input" type="radio" name="RadioPayment" value="3" required>
+                            <label class="form-check-label" for="radio_payment_LINE">LINE Pay</label>
+                            <div class="invalid-feedback">請選擇付款方式</div>
+                        </div>
+                    </form>
+
+                    <div class="priceline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+                        <div class="py-2 d-flex justify-content-end text-end">
+                            <div>商品金額</div>
+                            <div class="subtotal price"></div>
+                        </div>
+                        <div class="py-2 d-flex justify-content-end text-end">
+                            <div>運費</div>
+                            <div class="shipping_fee price">0</div>
+                        </div>
+                        <div class="py-2 border-top d-flex justify-content-end text-end">
+                            <div>小計</div>
+                            <div class="total_amount price"></div>
+                        </div>
+                    </div>
+
+                    <div class="swiper_button my-5">
+                        <button class="btn_swiper_prev_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
+                            返回上一頁
+                        </button>
+
+                        <button class="btn_swiper_next_step3 border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
+                            下一步
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="Step3" class="card text-center swiper-slide">
+                <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
+                    <div class="fs-5 my-2">購物明細</div>
+                    <a class="px-4 py-2 text-decoration-underline" href="/@ViewData["OrgName"]/product/toilet">我要再選購</a>
+                </div>
+
+                <div class="card-body px-0">
+                    <div class="record container d-flex align-items-center justify-content-center justify-content-sm-end">
+                        <div>本次消費總金額：</div>
+                        <div class="total_amount totalprice fw-bold fs-5 price"></div>
+                        <button class="btn_back_to_check bg-transparent ms-4 px-2 px-sm-4 py-1 py-sm-2 text-decoration-underline">返回查看商品明細</button>
+                    </div>
+
+                    <div id="OrdererForm">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
+                            <div class="fs-5">訂購人資料</div>
+                            <button class="btn_edit_data bg-transparent border-0 fs-3 ms-1" title="編輯">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                                <span class="d-none">編輯</span>
+                            </button>
+                        </div>
+
+                        <div class="default_data">
+                            <div class="row">
+                                <div class="orderer_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="orderer_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
+                                <div class="col text-start"><span class="orderer_areacode"></span>-<span class="orderer_cellphone"></span> 分機 <span class="orderer_extension"></span></div>
+                            </div>
+                        </div>
+
+                        <form id="OrderForm" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+                            <input type="hidden" name="authentiity_token" value="@Model.token" />
+                            <div class="row mx-0">
+                                <div class="form-floating mb-3 col-12 col-sm-6 px-0">
+                                    <input id="OrdererInputName" class="orderer_name form-control" name="orderer" type="text" placeholder="name" value="" minlength="2" required>
+                                    <label class="required" for="OrdererInputName">姓　　名</label>
+                                </div>
+                                <div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
+                                    <div class="form-check pe-3">
+                                        <input id="OrdererRadioSir" class="form-check-input" type="radio" name="ordererSex" value="1" required>
+                                        <label class="form-check-label" for="OrdererRadioSir">男</label>
+                                    </div>
+                                    <div class="form-check pe-3">
+                                        <input id="OrdererRadioMiss" class="form-check-input" type="radio" name="ordererSex" value="2" required>
+                                        <label class="form-check-label" for="OrdererRadioMiss">女</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input id="OrdererRadioElse" class="form-check-input" type="radio" name="ordererSex" value="3" required>
+                                        <label class="form-check-label" for="OrdererRadioElse">其他</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="OrdererInputMail" class="orderer_mail form-control" name="ordererEmail" type="email" placeholder="name@example.com" value="" required>
+                                <label class="required" for="OrdererInputMail">E-mail</label>
+                            </div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="OrdererInputCellPhone" class="orderer_phone form-control" name="ordererCellphone" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
+                                <label class="required" for="OrdererInputCellPhone">手機號碼</label>
+                            </div>
+                            <div class="row">
+                                <div class="form-floating mb-3 col-4 col-sm-2">
+                                    <input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" name="zone" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
+                                    <label class="px-4" for="OrdererInputTelPhoneArea">電話區碼</label>
+                                </div>
+                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+                                    <input id="OrdererInputTelPhone" class="orderer_cellphone form-control" name="ordererTelephone" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{7}" maxlength="7">
+                                    <label for="OrdererInputTelPhone">聯絡電話</label>
+                                </div>
+                                <div class="form-floating mb-3 col-6 col-sm-3">
+                                    <input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" name="ext" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
+                                    <label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
+                                </div>
+                            </div>
+                            <div id="Orderer_TWzipcode" class="row">
+                                <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                                <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                                <div class="form-floating mb-3 col-12 col-sm-6">
+                                    <input id="OrdererInputAddress" class="orderer_address form-control" name="ordererAddress" type="text" placeholder="請輸入地址" value="" required>
+                                    <label class="px-4 required" for="OrdererInputAddress">地址</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="RecipientForm">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
+                            <div class="fs-5">收件人資料</div>
+                            <ul class="d-flex flex-wrap text-start mb-0">
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
+                                    <label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
+                                </li>
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
+                                    <label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
+                                </li>
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
+                                    <label class="form-check-label" for="radio_recipient_edit">修改收件人資料</label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="default_data">
+                            <div class="row">
+                                <div class="recipient_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
+                                <div class="col text-start"><span class="recipient_areacode"></span>-<span class="recipient_cellphone"></span> 分機 <span class="recipient_extension"></span></div>
+                            </div>
+                            <div class="row">
+                                <div class="recipient_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                        </div>
+
+                        <form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+                            <input type="hidden" name="authentiity_token" value="@Model.token" />
+                            <div class="row mx-0">
+                                <div class="form-floating mb-3 col-12 col-sm-6 px-0">
+                                    <input id="RecipientInputName" class="recipient_name form-control" type="text" placeholder="請輸入姓名" value="" minlength="2" required>
+                                    <label class="required" for="RecipientInputName">姓　　名</label>
+                                </div>
+                                <div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
+                                    <div class="form-check pe-3">
+                                        <input id="RecipientRadioSir" class="form-check-input" type="radio" name="RecipientRadioGender" value="1" required>
+                                        <label class="form-check-label" for="RecipientRadioSir">男</label>
+                                    </div>
+                                    <div class="form-check pe-3">
+                                        <input id="RecipientRadioMiss" class="form-check-input" type="radio" name="RecipientRadioGender" value="2" required>
+                                        <label class="form-check-label" for="RecipientRadioMiss">女</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input id="RecipientRadioElse" class="form-check-input" type="radio" name="RecipientRadioGender" value="3" required>
+                                        <label class="form-check-label" for="RecipientRadioElse">其他</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="RecipientInputMail" class="recipient_mail form-control" type="email" placeholder="請輸入E-mail" value="" required>
+                                <label class="required" for="RecipientInputMail">E-mail</label>
+                            </div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="RecipientInputCellPhone" class="recipient_phone form-control" type="tel" placeholder="請輸入手機號罵" value="" pattern="[0][9]\d{8}" maxlength="10" required>
+                                <label class="required" for="RecipientInputCellPhone">手機號碼</label>
+                            </div>
+                            <div class="row">
+                                <div class="form-floating mb-3 col-4 col-sm-2">
+                                    <input id="RecipientInputTelPhoneArea" class="recipient_areacode form-control" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
+                                    <label class="px-4" for="RecipientInputTelPhoneArea">區碼</label>
+                                </div>
+                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+                                    <input id="RecipientInputTelPhone" class="recipient_cellphone form-control" type="tel" placeholder="請輸入連絡電話" value="" pattern="\d{7}" maxlength="7">
+                                    <label for="RecipientInputTelPhone">聯絡電話</label>
+                                </div>
+                                <div class="form-floating mb-3 col-6 col-sm-3">
+                                    <input id="RecipientInputTelPhoneExt" class="recipient_extension form-control" type="tel" placeholder="請輸入分機" value="" pattern="\d*">
+                                    <label class="px-4" for="RecipientInputTelPhoneExt">分機</label>
+                                </div>
+                            </div>
+                            <div id="Recipient_TWzipcode" class="row">
+                                <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                                <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                                <div class="form-floating mb-3 col-12 col-sm-6">
+                                    <input id="RecipientInputAddress" class="orderer_address form-control" type="text" placeholder="請輸入地址" value="" required>
+                                    <label class="px-4 required" for="RecipientInputAddress">地址</label>
+                                </div>
+                            </div>
+                            <div class="form-floating mb-3 col-12">
+                                <textarea id="TextareaRemark" class="form-control" placeholder="備註"></textarea>
+                                <label for="TextareaRemark">備　　註</label>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="InvoiceForm">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
+                            <div class="fs-5">發票寄送</div>
+                            <ul class="d-sm-flex text-start mb-0">
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="order" checked>
+                                    <label class="form-check-label" for="radio_bill_orderer">訂購人</label>
+                                </li>
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient">
+                                    <label class="form-check-label" for="radio_bill_recipient">收件人</label>
+                                </li>
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_bill_company" class="form-check-input" type="radio" name="InvoiceRadio" value="company">
+                                    <label class="form-check-label" for="radio_bill_company">公司(三聯)</label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="default_data">
+                            <div class="row">
+                                <div class="bill_name required_front col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">手機電話：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">&ensp;聯絡電話：</div>
+                                <div class="col text-start"><span class="bill_areacode"></span>-<span class="bill_cellphone"></span> 分機 <span class="bill_extension"></span></div>
+                            </div>
+                            <div class="row">
+                                <div class="bill_phone required_front col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div class="col text-start"></div>
+                            </div>
+                        </div>
+
+                        <form class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+                            <input type="hidden" name="authentiity_token" value="@Model.token" />
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="InvoiceInputTitle" class="bill_name form-control" type="text" placeholder="invoice" value="" required>
+                                <label class="required" for="InvoiceInputTitle">發票抬頭</label>
+                            </div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="InvoiceInputUniformId" class="bill_guinum form-control" type="tel" placeholder="GUINum" value="" pattern="\d{8}" maxlength="8" required>
+                                <label class="required" for="InvoiceInputUniformId">統　　編</label>
+                            </div>
+
+                            <div id="Invoice_TWzipcode" class="row">
+                                <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                                <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                                <div class="form-floating mb-3 col-12 col-sm-6">
+                                    <input id="InvoiceInputAddress" class="orderer_address form-control" type="text" placeholder="復興四路" value="" required>
+                                    <label class="px-4 required" for="InvoiceInputAddress">地址</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="PaymentMethod" class="title px-3 py-2 my-3 d-flex align-items-center justify-content-between">
+                        <div class="align-items-center d-flex">
+                            <div class="fs-5">付款方式</div>
+                            <div class="payment_method ps-2">尚未選擇付款方式</div>
+                        </div>
+                        <button class="btn_goprev bg-transparent border-0">變更付款方式</button>
+                    </div>
+
+                    <div class="swiper_button mt-4 my-sm-5 row align-items-center justify-content-center">
+                        <button class="btn_gray_underline btn_goprev col-auto order-1 order-sm-0 border-0 text-center text-decoration-underline bg-transparent p-2">
+                            回上一頁
+                        </button>
+
+                        <div class="col-12 col-sm-auto order-0 order-sm-1">
+                            <button class="btn_checkout border-0 px-4 py-2 mx-3 rounded-3 text-center text-white">
+                                <div class="fs-2 fw-bold">確認結帳</div>
+                                <div>進入付款程序</div>
+                            </button>
+                        </div>
+
+                        <a class="btn_gray_underline col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="/@ViewData["OrgName"]/product/toilet">我要再選購</a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="Step4" class="card swiper-slide">
+                <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
+                    <div class="fs-5 my-2">購物明細</div>
+                    <div class="order_number fs-5 fw-bold"></div>
+                </div>
+
+                <div class="card-body px-0">
+                    <div class="pruchase_content">
+                        <div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
+
+                        <ul class="purchase_list px-5"></ul>
+
+                        <ul id="CollapsePurchase" class="purchase_list pb-4 px-5 collapse"></ul>
+
+                        <template id="Template_Purchase_Details">
+                            <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+                                <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
+                                    <a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
+                                        <img class="pro_image img-fluid" alt="商品" src="">
+                                    </a>
+                                    <a class="pro_link col text-start overflow-hidden" href="" title="連結至：商品">
+                                        <div class="content d-lg-block d-none">
+                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div class="pro_detail d-flex flex-wrap">
+                                                <div class="pro_specification pe-3"></div>
+                                                <div class="pro_instructions single_line"></div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="content col-sm-6 col row gx-0 overflow-hidden">
+                                    <a class="pro_link" href="" title="連結至：商品">
+                                        <div class="d-lg-none d-block text-start">
+                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div class="pro_detail d-flex flex-wrap">
+                                                <div class="pro_specification pe-3"></div>
+                                                <div class="pro_instructions single_line"></div>
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    <div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
+
+                                    <div class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
+
+                                    <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
+                                </div>
+                            </li>
+                        </template>
+
+                        <div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+                            <div class="py-2 d-flex justify-content-end text-end">
+                                <div>總金額</div>
+                                <div class="subtotal col-4 price"></div>
+                            </div>
+                            <div class="py-2 d-flex justify-content-end text-end">
+                                <div>運費</div>
+                                <div class="shipping_fee col-4 price">0</div>
+                            </div>
+                            <div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
+                                <div>本次消費總金額</div>
+                                <div class="total_amount col-4 price fs-5 fw-bold">26,200</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center">
+                            <button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2 d-none" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePurchase" aria-expanded="false" aria-controls="CollapsePurchase">
+                                查看購物清單
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="orderer_data">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">訂購人資料</div>
+
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="name col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">手機電話：</div>
+                                <div class="cellphone col text-start"></div>
+                            </div>
+                            <div class="row d-none">
+                                <div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+                                <div class="telphone col text-start"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recipient_data">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">收件人資料</div>
+
+                        <div class="content">
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="name col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class=" col-auto col-sm-2 text-end ps-4">手機電話：</div>
+                                <div class="cellphone col text-start"></div>
+                            </div>
+                            <div class="row d-none">
+                                <div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+                                <div class="telphone col text-start"></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div class="address col text-start"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="invoice_data">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center fs-5">發票寄送</div>
+
+                        <div class="content">
+                            <div class="person d-none">
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                    <div class="name col text-start"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4">手機電話：</div>
+                                    <div class="cellphone col text-start"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4">聯絡電話：</div>
+                                    <div class="telphone col text-start"></div>
+                                </div>
+                            </div>
+                            <div class="company d-none">
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
+                                    <div class="invoice col text-start"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
+                                    <div class="unid col text-start"></div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div class="address col text-start"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="PaymentData">
+                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
+                            <div class="fs-5">付款方式</div>
+                            <div class="payment_method px-3">尚未選擇付款方式</div>
+                        </div>
+
+                        <div class="pay_byATM px-4 d-none">
+                            <p>繳費完成後，請利用Email主動與客服聯絡。告知您姓名、轉帳帳戶末五碼，或是相關匯款資訊，以利核對您的款項。</p>
+
+                            <div class="border-bottom border-top text-start py-3 my-3">
+                                <div class="mb-2 row align-items-center d-flex">
+                                    <div class="col-auto col-sm-2 text-end py-0">轉帳銀行代碼：</div>
+                                    <div class="default col">玉山銀行(808)</div>
+                                </div>
+
+                                <div class="mb-2 row align-items-center d-flex">
+                                    <div class="col-auto col-sm-2 text-end py-0">轉帳帳號：</div>
+                                    <div class="col">大昌分行123-123-123</div>
+                                </div>
+
+                                <div class="mb-2 row align-items-center contact_phone">
+                                    <div class="col-auto col-sm-2 text-end">聯絡電話：</div>
+                                    <div class="col">07-1234***分機</div>
+                                </div>
+
+                                <div class="mb-2 row align-items-center">
+                                    <div class="col-auto col-sm-2 text-end">戶名：</div>
+                                    <div class="col">隆昌窯業股份有限公司</div>
+                                </div>
+
+                                <div class="mb-2 row align-items-center">
+                                    <div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
+                                    <div class="col">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
+                                </div>
+
+                                <div class="mb-2 row align-items-center">
+                                    <div class="col-auto col-sm-2 text-end">繳費期限：</div>
+                                    <div class="paid_date col">2022年<span>10月24日23點59分</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="d-flex justify-content-center px-4">
+                            如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />
+                            ．隨後我們也會將轉帳的資料mail-封到您指定的電子信箱:ve***********
+                        </p>
+
+                        <div class="btn_back_home d-flex justify-content-center my-4">
+                            <a href="/@ViewData["OrgName"]/home">
+                                <div class="fs-5 fw-bold px-3 py-1 rounded text-white">回首頁</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="swiper_pagination container position-absolute position-relative">
+        <div class="centerline position-absolute container"><hr class="opacity-100" /></div>
+
+        <div class="swiper_pagination_buystep position-absolute"></div>
+
+        <div class="step_name position-absolute container d-flex text-center justify-content-between p-0">
+            <div class="">購物車</div>
+            <div class="">運送及付款方式</div>
+            <div class="">填寫資料</div>
+            <div class="">完成訂購</div>
+        </div>
+    </div>
 </div>

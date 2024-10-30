@@ -30,6 +30,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Token;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 
 namespace EtheriT.Coker.Application
 {
@@ -186,6 +187,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
 
+            CreateMap<Order_Header, OrderHeaderAddDto>()
+                .ReverseMap();
 
             //Tags
             CreateMap<TagSelectedDto, Core.Models.Tag>()

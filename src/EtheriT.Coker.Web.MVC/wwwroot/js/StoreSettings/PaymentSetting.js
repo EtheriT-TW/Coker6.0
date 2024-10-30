@@ -15,7 +15,6 @@
                 value: co.Object.objectToArray(co.Form.getJsonByFieldset(`thirdPartyForm_${Id}`, true))
             });
         });
-        console.log(savaData);
         co.Product.ThirdParty.save(savaData).done(function (result) {
             if (result.success) co.sweet.success("儲存成功");
             else co.sweet.error("儲存失敗", result.message);

@@ -52,7 +52,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 }
 
                 var db_ps = db.Prod_Stocks.Where(e => e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id).FirstOrDefault();
-                var db_shoppingcart = db.ShoppingCarts.Where(e => (e.FK_Tid == Token.RefreshToken || userid.Contains(e.UUID)) && e.FK_PSid == db_ps.Id).FirstOrDefault();
+                var db_shoppingcart = db.ShoppingCarts.Where(e => (e.FK_Tid == Token.RefreshToken || userid.Contains(e.UUID)) && e.FK_PSid == db_ps.Id && !e.IsOrder).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == Token.RefreshToken).FirstOrDefault();
                 var db_prod = db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefault();
 
@@ -127,7 +127,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             {
                 var UUID = await tokenAppService.GetUUID();
                 var token = tokenAppService.CheckToken();
-                var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
 
                 if (db_shoppingcart != null && db_token != null)
@@ -174,7 +174,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
                 var output = await (from sc in db.ShoppingCarts
-                                    where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID)
+                                    where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID) && !sc.IsOrder
                                     from ps in db.Prod_Stocks
                                     where ps.Id == sc.FK_PSid
                                     from pp in db.Prod_Prices
@@ -231,13 +231,13 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             return null;
         }
-        public async Task<ShoppingCartGetDrop> GetDropOne(long id)
+        public async Task<ShoppingCartGetDrop> GetDropOne(long id, bool isorder)
         {
             try
             {
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
-                var db_sc = db.ShoppingCarts.Where(e => e.Id == id).FirstOrDefault();
+                var db_sc = db.ShoppingCarts.Where(e => e.Id == id && e.IsOrder == isorder).FirstOrDefault();
                 var db_ps = db.Prod_Stocks.Where(e => e.Id == db_sc.FK_PSid).FirstOrDefault();
                 var db_prod = db.Prods.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == db_ps.FK_Pid).FirstOrDefault();
                 var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).FirstOrDefault();

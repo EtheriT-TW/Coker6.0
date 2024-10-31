@@ -77,7 +77,7 @@ function Member(data) {
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
         if (result.success) {
-            if (result.data != "" && result.data != null) {
+            if (result.data.telPhone != null) {
                 result.data['zone'] = (result.data.telPhone).split('-')[0];
                 result.data['telPhone'] = (result.data.telPhone).split('-')[1];
                 if ((result.data.telPhone).split('-').length == 2) result.data['ext'] = (result.data.telPhone).split('-')[2];

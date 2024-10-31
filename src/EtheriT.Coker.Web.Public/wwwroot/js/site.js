@@ -848,6 +848,24 @@ var Coker = {
             });
         },
     },
+    Favorites: {
+        Add: function (Pid) {
+            return $.ajax({
+                url: "/api/Favorites/Add/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { Pid: Pid },
+            });
+        },
+        Delete: function (Fid) {
+            return $.ajax({
+                url: "/api/Favorites/Delete/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { Fid: Fid },
+            });
+        },
+    },
     Form: {
         getJson: function (id, isArrayType) {
             let form = document.getElementById(id);

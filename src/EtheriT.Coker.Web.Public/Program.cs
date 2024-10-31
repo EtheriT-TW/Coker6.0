@@ -57,6 +57,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Net.Http.Headers;
 using EtheriT.Coker.Application.Newsletter;
 using Microsoft.Extensions.FileProviders;
+using EtheriT.Coker.Application.Shared.Favorites;
+using EtheriT.Coker.Application.Favorites;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -175,6 +177,7 @@ builder.Services.AddTransient<IOrderAppService, OrderAppService>();
 builder.Services.AddTransient<ITokenAppService, TokenAppService>();
 builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
+builder.Services.AddTransient<IFavoritesAppService, FavoritesAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();

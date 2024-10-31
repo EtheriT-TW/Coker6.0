@@ -231,6 +231,7 @@ function SetBrowsingHistoryData() {
         if (result.length > 0) {
             $.each(result, function (index, data) {
                 var frame = $($("#Template_Prod_List").html()).clone();
+                frame.data("Pid", data.id);
                 frame.find("*").each(function () {
                     var $self = $(this);
                     if (typeof ($self.data("key")) != "undefined") {
@@ -258,13 +259,30 @@ function SetBrowsingHistoryData() {
                 frame.find(".btn_favorite").on("click", function () {
                     $self = $(this).find("i");
                     if ($self.hasClass("fa-regular")) {
-                        $self.addClass("fa-solid")
-                        $self.removeClass("fa-regular")
-                        $self.attr("title", "移除收藏")
+                        Coker.Favorites.Add(frame.data("Pid")).done(function (result) {
+                            if (result.success) {
+                                frame.data("Fid", result.message);
+                                $self.addClass("fa-solid")
+                                $self.removeClass("fa-regular")
+                                $self.attr("title", "移除收藏")
+                            } else {
+                                console.log(result.message)
+                            }
+                        });
                     } else {
-                        $self.addClass("fa-regular")
-                        $self.removeClass("fa-solid")
-                        $self.attr("title", "加入收藏")
+                        if (typeof (frame.data("Fid")) != "undefined" && typeof (frame.data("Fid")) != "") {
+                            Coker.Favorites.Delete(frame.data("Fid")).done(function (result) {
+                                if (result.success) {
+                                    frame.data("Fid", "");
+                                    $self.addClass("fa-regular")
+                                    $self.removeClass("fa-solid")
+                                    $self.attr("title", "加入收藏")
+                                } else {
+                                    console.log(result.message)
+                                }
+                            });
+                            console.log("非收藏商品")
+                        }
                     }
                 })
 

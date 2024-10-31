@@ -35,5 +35,6 @@ namespace EtheriT.Coker.Core.Models
         public List<Prod_Log> Prod_Logs { get; set; }
         public List<Remote> Remotes { get; set; }
         public List<Prod_TechCert> TechnicalCertificates { get; set; }
+        public List<Favorites> Favorites { get; set; }
     }
 }

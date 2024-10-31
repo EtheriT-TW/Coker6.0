@@ -81,12 +81,22 @@
                         <div class="invalid-feedback">電子郵件不可為空!</div>
                     </div>
                     <div class="form-floating mb-3">
-                        <input id="TelPhone" name="telPhone" class="customer_info form-control" type="tel" placeholder="">
-                        <label class="" for="TelPhone">室內電話</label>
-                    </div>
-                    <div class="form-floating mb-3">
                         <input id="CellPhone" name="cellPhone" class="customer_info form-control" type="tel" placeholder="">
                         <label class="" for="CellPhone">手機號碼</label>
+                    </div>
+                    <div class="row">
+                        <div class="form-floating mb-3 col-4 col-sm-2">
+                            <input id="TelPhoneZone" class="form-control" name="zone" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
+                            <label class="px-4" for="TelPhoneZone">電話區碼</label>
+                        </div>
+                        <div class="form-floating mb-3 col pe-sm-0 ps-0">
+                            <input id="TelPhone" class="form-control" name="telPhone" type="tel" placeholder="請輸入聯絡電話" value="" pattern="\d{7}" maxlength="7">
+                            <label for="TelPhone">聯絡電話</label>
+                        </div>
+                        <div class="form-floating mb-3 col-6 col-sm-3">
+                            <input id="TelPhoneExt" class="form-control" name="ext" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
+                            <label class="px-4" for="TelPhoneExt">分機</label>
+                        </div>
                     </div>
                     <div id="TWzipcode" class="row" data-form-type="zipcode">
                         <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
@@ -111,16 +121,60 @@
                 <template id="Template_Order_List">
                     <div class="border border-5 rounded p-3 mb-3">
                         <div class="row mb-1">
-                            <div class="col-4 text-center">訂單編號</div>
-                            <div class="col-4 text-center">訂單日期</div>
-                            <div class="col-4 text-center">訂購總額</div>
+                            <div class="col-3 text-center">訂單編號</div>
+                            <div class="col-3 text-center">訂單日期</div>
+                            <div class="col-3 text-center">訂購總額</div>
+                            <div class="col-3 text-center">訂單狀態</div>
                         </div>
                         <div class="row my-1">
-                            <div class="number col-4 text-center"></div>
-                            <div class="date col-4 text-center"></div>
-                            <div class="amount col-4 text-center"></div>
+                            <div class="number col-3 text-center"></div>
+                            <div class="date col-3 text-center"></div>
+                            <div class="amount col-3 text-center"></div>
+                            <div class="state col-3 text-center"></div>
                         </div>
-                        <a href="#" title="點擊查看訂單詳細"><div class="w-100 bg_gray mt-2 text-center">點擊查看訂單詳細</div></a>
+                        <div class="collapse">
+                            <div class="card card-body">
+                                <ul class="list-group list-group-flush mb-3">
+                                    <li class="list-group-item">
+                                        <div class="row d-lg-flex">
+                                            <div class="col-2 text-center">商品圖片</div>
+                                            <div class="col-4 text-start">商品名稱</div>
+                                            <div class="col-2 text-end">單價</div>
+                                            <div class="col-2 text-end">數量</div>
+                                            <div class="col-2 text-end">小計</div>
+                                        </div>
+                                    </li>
+                                    <template id="Template_Order_Details_List">
+                                        <li class="list-group-item">
+                                            <a href="" title="" target="_self">
+                                                <div class="row d-lg-flex">
+                                                    <div class="col-2 text-center"><img src="" alt="" /></div>
+                                                    <div class="title col-4 text-start align-content-center"></div>
+                                                    <div class="price col-2 text-end align-content-center"></div>
+                                                    <div class="quantity col-2 text-end align-content-center"></div>
+                                                    <div class="subtotal price col-2 text-end align-content-center"></div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    </template>
+                                </ul>
+                                <div class="row d-lg-flex px-3">
+                                    <div class="col-10 text-end align-content-center">商品金額：</div>
+                                    <div class="header_subtotal price col-2 text-end align-content-center"></div>
+                                </div>
+                                <div class="row d-lg-flex px-3">
+                                    <div class="col-10 text-end align-content-center">運費：</div>
+                                    <div class="header_freight price col-2 text-end align-content-center"></div>
+                                </div>
+                                <div class="row d-lg-flex px-3">
+                                    <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
+                                    <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn_collapse btn bg_gray border-0 rounded text-black w-100" type="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">
+                            點擊查看訂單詳細
+                        </button>
                     </div>
                 </template>
             </div>

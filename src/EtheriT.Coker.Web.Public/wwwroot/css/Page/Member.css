@@ -48,6 +48,10 @@
     content: '';
 }
 
+#profile-tab-pane img {
+    width: 75px;
+}
+
 #history-tab-pane img {
     width: 180px;
     height: 180px;

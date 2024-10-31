@@ -56,7 +56,7 @@ function Member(data) {
         } else {
             var data = co.Form.getJson($("#UserDataForm").attr("id"));
             data.address = `${data.county} ${data.district} ${data.address}`;
-            //console.log(data);
+            data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
             co.User.UserEdit(data).done(function (result) {
                 co.sweet.success("資料修改完成！", null, true);
             });
@@ -70,14 +70,19 @@ function Member(data) {
 
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
-        //console.log(result.data)
         if (result.success) {
+            result.data['zone'] = (result.data.telPhone).split('-')[0];
+            result.data['telPhone'] = (result.data.telPhone).split('-')[1];
+            result.data['ext'] = (result.data.telPhone).split('-')[2];
+
             co.Form.insertData(result.data, "#UserDataForm");
-            $("#ResetForm").data("Email", result.data.email);
+
             co.Zipcode.setData({
                 el: $("#TWzipcode"),
                 addr: result.data.address
             });
+
+            $("#ResetForm").data("Email", result.data.email);
 
             var now = new Date();
             var month = (now.getMonth() + 1).toString();
@@ -101,11 +106,67 @@ function SetHistoryOrderData() {
     Coker.Member.GetOrderHistory().done(function (result) {
         if (result.success && result.orderData != null) {
             $.each(result.orderData, function (index, data) {
+                var order_header = data.orderHeader;
+                var order_details = data.orderDetails;
+                console.log(order_header)
                 var frame = $($("#Template_Order_List").html()).clone();
-                frame.find(".number").text(("000000000" + data.orderHeader.id).substr(data.orderHeader.id.length));
-                frame.find(".date").text(((data.orderHeader.creationTime).substr(0, 10).replaceAll("-", "/")));
-                frame.find(".amount").text((data.orderHeader.total).toLocaleString());
+                frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
+                frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
+                frame.find(".amount").text((order_header.total).toLocaleString());
+
+                switch (order_header.state) {
+                    case 1:
+                        frame.find(".state").text("待確認");
+                        break;
+                    case 2:
+                        frame.find(".state").text("已付款");
+                        break;
+                    case 3:
+                        frame.find(".state").text("已出貨");
+                        break;
+                    case 4:
+                        frame.find(".state").text("已取消");
+                        break;
+                    case 5:
+                        frame.find(".state").text("付款失敗");
+                        break;
+                    case 6:
+                        frame.find(".state").text("待付款");
+                        break;
+                    case 7:
+                        frame.find(".state").text("已完成");
+                        break;
+                }
+
                 $("#profile-tab-pane").append(frame);
+
+                frame.find(".collapse").addClass(`collapse_${order_header.id}`);
+                frame.find(".btn_collapse").attr("data-bs-target", `.collapse_${order_header.id}`);
+
+                frame.find(".btn_collapse").on("click", function () {
+                    if ($(this).hasClass("collapsed")) $(this).text("點擊查看訂單詳細");
+                    else $(this).text("點擊關閉訂單詳細");
+                })
+
+                $.each(order_details, function (index, detail) {
+                    var list_frame = $($("#Template_Order_Details_List").html()).clone();
+                    if (detail != null) {
+                        list_frame.find("a").attr("href", `/${OrgName}/Member/product/${detail.pId}`);
+                        list_frame.find("a").attr("title", `連結至：${detail.title}`);
+                        list_frame.find("img").attr("src", detail.imagePath);
+                        list_frame.find("img").attr("alt", `${detail.title}的主要圖片`);
+                        list_frame.find(".title").text(detail.title);
+                        list_frame.find(".price").text((detail.price).toLocaleString());
+                        list_frame.find(".quantity").text(detail.quantity);
+                        list_frame.find(".subtotal").text(((parseInt(detail.price)) * (parseInt(detail.quantity))).toLocaleString());
+                        frame.find(".list-group").append(list_frame);
+                    }
+                })
+
+                frame.find(".collapse .header_subtotal").text((order_header.subtotal).toLocaleString());
+                frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
+                frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
+
             })
         } else {
             $("#profile-tab-pane .nodata").removeClass("d-none");

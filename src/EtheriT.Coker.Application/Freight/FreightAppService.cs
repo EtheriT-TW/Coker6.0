@@ -46,8 +46,8 @@ namespace EtheriT.Coker.Application.Freight
                         LogisticsType = dto.LogisticsType,
                         FreigntType = dto.FreigntType,
                         Freight = dto.Freight,
-                        Low_Con = dto.Low_Con,
-                        Dis_Freight = dto.Dis_Freight,
+                        Low_Con = dto.Low_Con == null ? 0 : dto.Low_Con,
+                        Dis_Freight = dto.Dis_Freight == null ? 0 : dto.Dis_Freight,
                         Set_Default = dto.Set_Default,
                         CreatorUserId = usetId,
                     };

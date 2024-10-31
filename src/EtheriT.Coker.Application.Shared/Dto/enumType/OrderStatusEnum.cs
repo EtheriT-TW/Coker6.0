@@ -13,5 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         已出貨 = 3,
         已取消 = 4,
         付款失敗 = 5,
+        待付款 = 6,
+        已完成= 7,
     }
 }

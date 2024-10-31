@@ -56,7 +56,7 @@ function Member(data) {
         } else {
             var data = co.Form.getJson($("#UserDataForm").attr("id"));
             data.address = `${data.county} ${data.district} ${data.address}`;
-            //console.log(data);
+            data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
             co.User.UserEdit(data).done(function (result) {
                 co.sweet.success("資料修改完成！", null, true);
             });
@@ -70,14 +70,19 @@ function Member(data) {
 
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
-        //console.log(result.data)
         if (result.success) {
+            result.data['zone'] = (result.data.telPhone).split('-')[0];
+            result.data['telPhone'] = (result.data.telPhone).split('-')[1];
+            result.data['ext'] = (result.data.telPhone).split('-')[2];
+
             co.Form.insertData(result.data, "#UserDataForm");
-            $("#ResetForm").data("Email", result.data.email);
+
             co.Zipcode.setData({
                 el: $("#TWzipcode"),
                 addr: result.data.address
             });
+
+            $("#ResetForm").data("Email", result.data.email);
 
             var now = new Date();
             var month = (now.getMonth() + 1).toString();

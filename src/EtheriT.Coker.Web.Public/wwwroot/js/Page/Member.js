@@ -35,6 +35,7 @@ function Member(data) {
 
     SetMemberData();
     SetHistoryOrderData();
+    SetFavoriteData();
     SetBrowsingHistoryData();
 
     $(".btn_logout").on("click", function () {
@@ -108,7 +109,7 @@ function SetHistoryOrderData() {
             $.each(result.orderData, function (index, data) {
                 var order_header = data.orderHeader;
                 var order_details = data.orderDetails;
-                console.log(order_header)
+
                 var frame = $($("#Template_Order_List").html()).clone();
                 frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
                 frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
@@ -173,6 +174,50 @@ function SetHistoryOrderData() {
         }
     });
 }
+function SetFavoriteData() {
+    var result = {};
+    //Product.GetAll.History().done(function (result) {
+    //console.log(result)
+    if (result.length > 0) {
+        $.each(result, function (index, data) {
+            var frame = $($("#Template_Favorite_List").html()).clone();
+            frame.find("*").each(function () {
+                var $self = $(this);
+                if (typeof ($self.data("key")) != "undefined") {
+                    var key = $self.data("key");
+                    switch (key) {
+                        case "link":
+                            $self.attr("href", `/${OrgName}/Member${data['link']}`);
+                            $self.attr("title", `連結至：${data['title']}`);
+                            break;
+                        case "image":
+                            $self.attr("src", data['image']);
+                            $self.attr("alt", `${data['title']}的主要照片`);
+                            break;
+                        default:
+                            $self.text(data[key]);
+                            break;
+                    }
+                }
+            });
+            frame.find(".shareBlock").hover(function () {
+                $(this).addClass("show");
+            }, function () {
+                $(this).removeClass("show");
+            })
+
+            $("#history-tab-pane").append(frame);
+        })
+
+        $('.shareBlock').cShare({
+            description: 'jQuery plugin - C Share buttons',
+            showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
+        });
+    } else {
+        $("#favorite-tab-pane .nodata").removeClass("d-none");
+    }
+    //});
+}
 function SetBrowsingHistoryData() {
     Product.GetAll.History().done(function (result) {
         //console.log(result)
@@ -202,6 +247,18 @@ function SetBrowsingHistoryData() {
                     $(this).addClass("show");
                 }, function () {
                     $(this).removeClass("show");
+                })
+                frame.find(".btn_favorite").on("click", function () {
+                    $self = $(this).find("i");
+                    if ($self.hasClass("fa-regular")) {
+                        $self.addClass("fa-solid")
+                        $self.removeClass("fa-regular")
+                        $self.attr("title", "移除收藏")
+                    } else {
+                        $self.addClass("fa-regular")
+                        $self.removeClass("fa-solid")
+                        $self.attr("title", "加入收藏")
+                    }
                 })
 
                 $("#history-tab-pane").append(frame);

@@ -85,6 +85,18 @@
     width: 24px;
 }
 
+.favbtn {
+    top: 2.5rem;
+}
+
+    .favbtn > button {
+        padding: 0;
+    }
+
+        .favbtn > button > i {
+            font-size: 1.5rem;
+        }
+
 .shareBlock.show > a {
     top: 0% !important;
     left: -75% !important;

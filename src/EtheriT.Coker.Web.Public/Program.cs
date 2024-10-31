@@ -56,6 +56,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Net.Http.Headers;
 using EtheriT.Coker.Application.Newsletter;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -228,18 +229,6 @@ if (!app.Environment.IsProduction())
         // 在這裡可以做一些初始化的工作，例如註冊服務或設定狀態
     });
 }
-
-app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
-app.UseHttpsRedirection();
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    app.UseStatusCodePagesWithReExecute("/Error/{0}");
-    app.UseMiddleware<CustomBadRequestMiddleware>();
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
 var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
 
 app.Use((context, next) =>
@@ -264,18 +253,87 @@ app.UseCookiePolicy(
     }
 );
 
+// 定義共用的 OnPrepareResponse 委派
+static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
+{
+    ctx.Context.Response.Headers["Accept-Ranges"] = "bytes";
+    ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000"; // 例如設定快取一年
+    ctx.Context.Response.Headers["Expires"] = DateTime.UtcNow.AddYears(1).ToString("R");
+    ctx.Context.Response.Headers["Last-Modified"] = File.GetLastWriteTimeUtc(ctx.File.PhysicalPath).ToString("R");
+    var etag = Convert.ToBase64String(Encoding.UTF8.GetBytes(ctx.File.PhysicalPath)); // 基於文件路徑生成 ETag
+    ctx.Context.Response.Headers["ETag"] = etag;
+}
+
+app.UseDefaultFiles();
+//wwwroot資料夾下的文件
+app.UseStaticFiles(new StaticFileOptions() {
+    OnPrepareResponse = ConfigureStaticFileHeaders
+});
+//upload資料夾下的靜態文件
+//app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+app.UseStaticFiles(new StaticFileOptions()
+{
+    FileProvider = new PhysicalFileProvider(builder.Configuration.GetValue<string>("VirtualDirectory:upload")),
+    RequestPath = "/upload",
+    OnPrepareResponse = ConfigureStaticFileHeaders
+});
+//子站靜態文件
+List<string> childOrgNames = new List<string>();
+builder.Configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgNames);
+
+List<string> childFilePath = new List<string>();
+builder.Configuration.GetSection("WebConfig:childPath").Bind(childFilePath);
+
+if (childOrgNames != null)
+{
+    for (int i = 0; i < childOrgNames.Count; i++)
+    {
+        //app.UseVirtualDirectory($"upload/{childOrgNames[i]}",childFilePath[i]);
+        app.UseStaticFiles(new StaticFileOptions()
+        {
+            FileProvider = new PhysicalFileProvider(childFilePath[i]),
+            RequestPath = $"/upload/{childOrgNames[i]}",
+            OnPrepareResponse = ConfigureStaticFileHeaders
+        });
+    }
+}
+
+//其他靜態文件
+app.UseStaticFiles(new StaticFileOptions()
+{
+    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
+    {
+        {".properties","application/octet-stream"},
+        {".bcmap","image/svg+xml"},
+        {".ftl","application/l10n"}
+    }),
+    OnPrepareResponse = ConfigureStaticFileHeaders
+});
+app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
+app.UseHttpsRedirection();
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseStatusCodePagesWithReExecute("/Error/{0}");
+    app.UseMiddleware<CustomBadRequestMiddleware>();
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
 app.Use(async (context, next) =>
 {
+    Console.WriteLine("Request path: " + context.Request.Path);
     var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
     // 將 nonce 存入 HttpContext.Items
     context.Items["CSPNonce"] = nonce;
     // 添加 CSP(內容限制) header
-    context.Response.Headers["Content-Security-Policy"] = 
+    context.Response.Headers["Content-Security-Policy"] =
         $"default-src *;" +
         $"script-src 'self' 'nonce-{nonce}' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com 'unsafe-eval'; " +
-        $"style-src 'self' 'nonce-{nonce}' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; "+
-        $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; "+
-        $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; "+
+        $"style-src 'self' 'nonce-{nonce}' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; " +
+        $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
+        $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
         $"frame-ancestors 'self' *.ezsale.tw ";
     //cache 限制設定
     context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
@@ -287,43 +345,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-
-app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
-List<string> childOrgNames = new List<string>();
-builder.Configuration.GetSection("WebConfig:childSiteOrgName").Bind(childOrgNames);
-
-List<string> childFilePath = new List<string>();
-builder.Configuration.GetSection("WebConfig:childPath").Bind(childFilePath);
-
-if (childOrgNames != null)
-{
-    for (int i = 0; i < childOrgNames.Count; i++)
-    {
-        app.UseVirtualDirectory(
-            $"upload/{childOrgNames[i]}",
-            childFilePath[i]);
-    }
-}
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
-app.UseStaticFiles(new StaticFileOptions()
-{
-    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
-    {
-     {
-         ".properties",
-         "application/octet-stream"
-     },{
-         ".bcmap",
-         "image/svg+xml"
-     },{
-         ".ftl",
-         "application/l10n"
-     }
-    })
-});
-
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

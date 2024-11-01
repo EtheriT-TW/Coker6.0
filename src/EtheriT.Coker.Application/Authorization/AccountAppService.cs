@@ -967,6 +967,32 @@ namespace EtheriT.Coker.Application.Authorization
 
             return response;
         }
+        public async Task<ResponseMessageDto> EmailChage(EmailChangeDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                Guid UUID = await tokenAppService.GetUUID();
+                long WebsiteID = await loginUserData.GetWebsiteId();
+
+                var user = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
+                if(user != null)
+                {
+                    if (passwordHasher.VerifyHashedPassword(user.Password, dto.Password))
+                    {
+                        response.Success = true;
+                    }
+                    else throw new Exception("密碼輸入錯誤");
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+
+            return response;
+        }
         private string checkPassword(string password)
         {
             string error = string.Empty;

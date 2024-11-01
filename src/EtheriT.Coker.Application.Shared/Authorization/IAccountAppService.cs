@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Authorization
         public Task<ResponseMessageDto> SendForget(SendForgetDto dto);
         public Task<ResponseMessageDto> ForgetIdCheck(Guid ForgetId);
         public Task<ResponseMessageDto> PasswordChage(PasswordChageDto dto);
+        public Task<ResponseMessageDto> EmailChage(EmailChangeDto dto);
         public Task<UserDto> GetCurrentUser();
         public Task<LoginOutputDto> Chech();
         public Task<ResponseMessageDto> Logout();

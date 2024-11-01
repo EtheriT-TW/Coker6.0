@@ -44,6 +44,49 @@
         border-radius: 5px;
     }
 
+#ResetEmailModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #ResetEmailModal > .modal-dialog > .modal-content > .modal-body > div > div > div {
+        z-index: 5;
+    }
+
+    #ResetEmailModal > .modal-dialog > .modal-content > .modal-body > div > div > [class*=input_bg] {
+        background-color: var(--gray-bg-dark);
+    }
+
+    #ResetEmailModal > .modal-dialog > .modal-content > .modal-body > div > div > input:nth-child(2n) {
+        padding-left: 3.5rem;
+    }
+
+    #ResetEmailModal > .modal-dialog > .modal-content > .modal-body > button {
+        background-color: var(--black-text);
+        font-size: 0.8rem;
+    }
+
+    #ResetEmailModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+#ResetEmailForm > div > div {
+    z-index: 5;
+}
+
+#ResetEmailForm [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#ResetEmailForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#ResetEmailForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+
 #TWzipcode > .county label::before, #TWzipcode > .county label::after, #TWzipcode > .district label::before, #TWzipcode > .district label::after {
     content: '';
 }

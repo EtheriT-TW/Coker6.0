@@ -1,4 +1,8 @@
-﻿function PageReady() {
+﻿
+var resetEmailModal, ResetEmailModal, $InputResetEmailVCode, $ResetEmailImgCaptcha, ResetEmailForms
+var old_email
+
+function PageReady() {
     Coker.Member = {
         GetOrderHistory: function () {
             return $.ajax({
@@ -28,6 +32,11 @@
     });
 }
 function Member(data) {
+    resetEmailModal = $("#ResetEmailModal").length > 0 ? new bootstrap.Modal($("#ResetEmailModal")) : null;
+    $InputResetEmailVCode = $("#InputNewMailVCode");
+    $ResetEmailImgCaptcha = $('#NewMailImgCaptcha');
+    ResetEmailForms = $('#ResetEmailForm');
+
     $("#ResetForm .reset_old_pass").removeClass("d-none");
     $("#ResetForm .reset_old_pass input").removeAttr("disabled");
     $("#ResetOldPassFeedBack").removeClass("d-none");
@@ -74,7 +83,41 @@ function Member(data) {
     })
 
     $(".btn_resetEmail").on("click", function () {
-        console.log("電子郵件修改按鈕按下")
+        resetEmailModal.show()
+    });
+
+    $("#ResetEmailModal .btn_resetforget").on("click", function () {
+        $("#ResetModal .btn_resetforget").click();
+    })
+
+    $('#ResetEmailModal .btn_refresh').on('click', function (event) {
+        event.preventDefault();
+        NewCaptcha($ResetEmailImgCaptcha, $InputResetEmailVCode);
+    });
+
+    ResetEmailModal = document.getElementById('ResetEmailModal')
+    if (ResetEmailModal != null) {
+        ResetEmailModal.addEventListener('show.bs.modal', function (event) {
+            NewCaptcha($ResetEmailImgCaptcha, $InputResetEmailVCode);
+        })
+        ResetEmailModal.addEventListener('hidden.bs.modal', function (event) {
+            FormClear(ResetEmailForms, $InputResetEmailVCode)
+        })
+    }
+
+    $(".btn_resetmail").on("click", function () {
+        console.log("btn_resetmail")
+        if (SiteFormCheck(ResetEmailForms, $InputResetEmailVCode)) {
+            CaptchaVerify($ResetEmailImgCaptcha, $InputResetEmailVCode, function () {
+                ResetmailAction(data);
+            })
+        } else {
+            $InputResetEmailVCode.addClass('is-invalid');
+            $InputResetEmailVCode.siblings("div").addClass("me-4 pe-2");
+            NewCaptcha($ResetEmailImgCaptcha, $InputResetEmailVCode)
+            $InputResetEmailVCode.val("");
+            Coker.sweet.error("錯誤", "請確實填寫資料", null, true);
+        }
     });
 }
 function SetMemberData() {
@@ -87,6 +130,8 @@ function SetMemberData() {
             }
 
             co.Form.insertData(result.data, "#UserDataForm");
+
+            old_email = result.data.email;
 
             co.Zipcode.setData({
                 el: $("#TWzipcode"),
@@ -339,4 +384,15 @@ function SetBrowsingHistoryData() {
             $("#history-tab-pane .nodata").removeClass("d-none");
         }
     });
+}
+function ResetmailAction(data) {
+    var input_data = co.Form.getJson($("#ResetEmailForm").attr("id"));
+    if (input_data.email == old_email) {
+        Coker.sweet.info("新的電子郵件與舊的相同，不進行變更。", null)
+        resetEmailModal.hide()
+    } else {
+        Coker.User.EmailChange(input_data).done(function (result) {
+            console.log(result)
+        });
+    }
 }

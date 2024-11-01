@@ -72,8 +72,11 @@ function Member(data) {
     $(".btn_resetPassword").on("click", function () {
         resetModal.show();
     })
-}
 
+    $(".btn_resetEmail").on("click", function () {
+        console.log("電子郵件修改按鈕按下")
+    });
+}
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
         if (result.success) {

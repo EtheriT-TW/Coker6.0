@@ -51,7 +51,6 @@ namespace EtheriT.Coker.Application.Advertise
 
             try
             {
-                var datatata = loginUserData;
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long usetId = await loginUserData.GetUserId();
 

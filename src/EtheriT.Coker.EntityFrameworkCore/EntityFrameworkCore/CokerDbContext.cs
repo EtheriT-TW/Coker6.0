@@ -42,6 +42,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<ShoppingCart> ShoppingCarts { get; set; }
         public DbSet<SearchLog> SearchLogs { get; set; }
         public DbSet<Prod_Log> Prod_Logs { get; set; }
+        public DbSet<Favorites> Favorites { get; set; }
         public DbSet<Html_Content> Html_Contents { get; set; }
         public DbSet<TechnicalCertificate> TechnicalCertificates { get; set; }
         public DbSet<Role> Roles { get; set; }
@@ -250,6 +251,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod_Log>(o =>
             {
                 o.HasOne(u => u.Prod).WithMany(u => u.Prod_Logs).HasForeignKey(f => f.FK_Pid);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<Favorites>(o =>
+            {
+                o.HasOne(u => u.Product).WithMany(u => u.Favorites).HasForeignKey(f => f.FK_PId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Prod_Spec>(o =>

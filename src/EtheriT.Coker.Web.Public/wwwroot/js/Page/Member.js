@@ -50,12 +50,17 @@ function Member(data) {
     });
 
     $(".btn_modifi").on("click", function () {
-        if ($("#Name").val() == "") {
+        var data = co.Form.getJson($("#UserDataForm").attr("id"));
+        if (data.name == "") {
             co.sweet.error("輸入資料錯誤", "姓名不可為空", null, false);
         } else if ($("#Email").val() == "") {
             co.sweet.error("輸入資料錯誤", "電子郵件不可為空", null, false);
-        } else {
-            var data = co.Form.getJson($("#UserDataForm").attr("id"));
+        } else if (data.zone == "" ^ data.telPhone == "") {
+            co.sweet.error("輸入資料錯誤", "如要填入電話資訊，請確實填寫區碼與聯絡電話", null, false);
+        } else if (((data.county == "") ^ (data.address == ""))) {
+            co.sweet.error("輸入資料錯誤", "如要填入地址資訊，請確實填寫縣市、鄉鎮與地址", null, false);
+        }
+        else {
             data.address = `${data.county} ${data.district} ${data.address}`;
             data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
             co.User.UserEdit(data).done(function (result) {
@@ -72,9 +77,11 @@ function Member(data) {
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
         if (result.success) {
-            result.data['zone'] = (result.data.telPhone).split('-')[0];
-            result.data['telPhone'] = (result.data.telPhone).split('-')[1];
-            result.data['ext'] = (result.data.telPhone).split('-')[2];
+            if (result.data.telPhone != null) {
+                result.data['zone'] = (result.data.telPhone).split('-')[0];
+                result.data['telPhone'] = (result.data.telPhone).split('-')[1];
+                if ((result.data.telPhone).split('-').length == 2) result.data['ext'] = (result.data.telPhone).split('-')[2];
+            }
 
             co.Form.insertData(result.data, "#UserDataForm");
 
@@ -224,6 +231,7 @@ function SetBrowsingHistoryData() {
         if (result.length > 0) {
             $.each(result, function (index, data) {
                 var frame = $($("#Template_Prod_List").html()).clone();
+                frame.data("Pid", data.id);
                 frame.find("*").each(function () {
                     var $self = $(this);
                     if (typeof ($self.data("key")) != "undefined") {
@@ -251,13 +259,30 @@ function SetBrowsingHistoryData() {
                 frame.find(".btn_favorite").on("click", function () {
                     $self = $(this).find("i");
                     if ($self.hasClass("fa-regular")) {
-                        $self.addClass("fa-solid")
-                        $self.removeClass("fa-regular")
-                        $self.attr("title", "移除收藏")
+                        Coker.Favorites.Add(frame.data("Pid")).done(function (result) {
+                            if (result.success) {
+                                frame.data("Fid", result.message);
+                                $self.addClass("fa-solid")
+                                $self.removeClass("fa-regular")
+                                $self.attr("title", "移除收藏")
+                            } else {
+                                console.log(result.message)
+                            }
+                        });
                     } else {
-                        $self.addClass("fa-regular")
-                        $self.removeClass("fa-solid")
-                        $self.attr("title", "加入收藏")
+                        if (typeof (frame.data("Fid")) != "undefined" && typeof (frame.data("Fid")) != "") {
+                            Coker.Favorites.Delete(frame.data("Fid")).done(function (result) {
+                                if (result.success) {
+                                    frame.data("Fid", "");
+                                    $self.addClass("fa-regular")
+                                    $self.removeClass("fa-solid")
+                                    $self.attr("title", "加入收藏")
+                                } else {
+                                    console.log(result.message)
+                                }
+                            });
+                            console.log("非收藏商品")
+                        }
                     }
                 })
 

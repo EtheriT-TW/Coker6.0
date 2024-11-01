@@ -255,7 +255,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Favorites>(o =>
             {
-                o.HasOne(u => u.Product).WithMany(u => u.Favorites).HasForeignKey(f => f.FK_PId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Prod_Spec>(o =>

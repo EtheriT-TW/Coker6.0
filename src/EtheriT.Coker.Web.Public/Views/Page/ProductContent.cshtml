@@ -231,16 +231,20 @@
             <div class="pro_itemNo title fs-6"></div>
             <div class="pro_title title fs-5"></div>
 
-            <div class="describe d-flex align-items-center justify-content-between">
+            <div class="describe d-flex align-items-center justify-content-between position-relative">
                 <ul class="introduce my-2"></ul>
 
-                <div class="track text-center">
-                    <button class="btn_favorites bg-transparent border-0 p-0">
-                        <i class="fa-regular fa-heart"></i>
-                        <span class="d-none">關注</span>
-                    </button>
-                    <div>追蹤</div>
-                </div>
+                @if (ViewBag.LoginEnable)
+                {
+                    @if (ViewBag.isLogin)
+                    {
+                        <div class="track text-center position-absolute top-0 end-0 translate-middle">
+                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="加入收藏">
+                                <div class="icon_love text-danger"></div>
+                            </button>
+                        </div>
+                    }
+                }
             </div>
 
             <hr class="m-1" />

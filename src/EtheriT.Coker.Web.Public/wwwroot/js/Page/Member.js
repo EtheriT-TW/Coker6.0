@@ -72,8 +72,11 @@ function Member(data) {
     $(".btn_resetPassword").on("click", function () {
         resetModal.show();
     })
-}
 
+    $(".btn_resetEmail").on("click", function () {
+        console.log("電子郵件修改按鈕按下")
+    });
+}
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
         if (result.success) {
@@ -182,50 +185,69 @@ function SetHistoryOrderData() {
     });
 }
 function SetFavoriteData() {
-    var result = {};
-    //Product.GetAll.History().done(function (result) {
-    //console.log(result)
-    if (result.length > 0) {
-        $.each(result, function (index, data) {
-            var frame = $($("#Template_Favorite_List").html()).clone();
-            frame.find("*").each(function () {
-                var $self = $(this);
-                if (typeof ($self.data("key")) != "undefined") {
-                    var key = $self.data("key");
-                    switch (key) {
-                        case "link":
-                            $self.attr("href", `/${OrgName}/Member${data['link']}`);
-                            $self.attr("title", `連結至：${data['title']}`);
-                            break;
-                        case "image":
-                            $self.attr("src", data['image']);
-                            $self.attr("alt", `${data['title']}的主要照片`);
-                            break;
-                        default:
-                            $self.text(data[key]);
-                            break;
+
+    $("#favorite-tab-pane").children().not(".nodata").not("template").remove();
+    Coker.Favorites.GetDisplay().done(function (result) {
+        //console.log(result)
+        if (result.length > 0) {
+            $.each(result, function (index, data) {
+                var frame = $($("#Template_Favorite_List").html()).clone();
+                frame.data("Pid", data.pId);
+                frame.find(".btn_favorite").data("Fid", data.fId)
+                frame.find("*").each(function () {
+                    var $self = $(this);
+                    if (typeof ($self.data("key")) != "undefined") {
+                        var key = $self.data("key");
+                        switch (key) {
+                            case "link":
+                                $self.attr("href", `/${OrgName}/Member${data['link']}`);
+                                $self.attr("title", `連結至：${data['title']}`);
+                                break;
+                            case "image":
+                                $self.attr("src", data['image']);
+                                $self.attr("alt", `${data['title']}的主要照片`);
+                                break;
+                            case "price":
+                                var prices = data['price'];
+                                if (prices.length > 1) $self.text(`${prices[0].toLocaleString()}~$${[prices[prices.length - 1].toLocaleString()]}`)
+                                else $self.text(`${prices[0].toLocaleString()}`)
+                                break;
+                            default:
+                                $self.text(data[key]);
+                                break;
+                        }
                     }
-                }
-            });
-            frame.find(".shareBlock").hover(function () {
-                $(this).addClass("show");
-            }, function () {
-                $(this).removeClass("show");
+                });
+                frame.find(".shareBlock").hover(function () {
+                    $(this).addClass("show");
+                }, function () {
+                    $(this).removeClass("show");
+                })
+                frame.find(".btn_favorite").on("click", function () {
+                    Coker.Favorites.Delete($(this).data("Fid")).done(function (result) {
+                        if (result.success) {
+                            SetBrowsingHistoryData();
+                            Coker.sweet.success("已將商品從收藏中移除", null, true);
+                            frame.remove();
+                        }
+                    });
+                })
+
+                $("#favorite-tab-pane").append(frame);
+                if (!$("#favorite-tab-pane .nodata").hasClass("d-none")) $("#favorite-tab-pane .nodata").addClass("d-none");
             })
 
-            $("#history-tab-pane").append(frame);
-        })
-
-        $('.shareBlock').cShare({
-            description: 'jQuery plugin - C Share buttons',
-            showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
-        });
-    } else {
-        $("#favorite-tab-pane .nodata").removeClass("d-none");
-    }
-    //});
+            $('.shareBlock').cShare({
+                description: 'jQuery plugin - C Share buttons',
+                showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
+            });
+        } else {
+            $("#favorite-tab-pane .nodata").removeClass("d-none");
+        }
+    });
 }
 function SetBrowsingHistoryData() {
+    $("#history-tab-pane").children().not(".nodata").not("template").remove();
     Product.GetAll.History().done(function (result) {
         //console.log(result)
         if (result.length > 0) {
@@ -245,6 +267,11 @@ function SetBrowsingHistoryData() {
                                 $self.attr("src", data['image']);
                                 $self.attr("alt", `${data['title']}的主要照片`);
                                 break;
+                            case "price":
+                                var prices = data['price'];
+                                if (prices.length > 1) $self.text(`${prices[0].toLocaleString()}~$${[prices[prices.length - 1].toLocaleString()]}`)
+                                else $self.text(`${prices[0].toLocaleString()}`)
+                                break;
                             default:
                                 $self.text(data[key]);
                                 break;
@@ -256,27 +283,42 @@ function SetBrowsingHistoryData() {
                 }, function () {
                     $(this).removeClass("show");
                 })
-                frame.find(".btn_favorite").on("click", function () {
+
+                var $btn_favorites = frame.find(".btn_favorite");
+
+                Coker.Favorites.Check(frame.data("Pid")).done(function (check) {
+                    if (check.success) {
+                        $btn_favorites.data("Fid", check.message);
+                        $btn_favorites.find("i").addClass("fa-solid")
+                        $btn_favorites.find("i").removeClass("fa-regular")
+                        $btn_favorites.attr("title", "移除收藏")
+                    }
+                });
+                $btn_favorites.on("click", function () {
                     $self = $(this).find("i");
                     if ($self.hasClass("fa-regular")) {
                         Coker.Favorites.Add(frame.data("Pid")).done(function (result) {
                             if (result.success) {
-                                frame.data("Fid", result.message);
+                                $btn_favorites.data("Fid", result.message);
                                 $self.addClass("fa-solid")
                                 $self.removeClass("fa-regular")
-                                $self.attr("title", "移除收藏")
+                                $btn_favorites.attr("title", "移除收藏")
+                                SetFavoriteData();
+                                Coker.sweet.success("成功將商品加入收藏", null, true);
                             } else {
                                 console.log(result.message)
                             }
                         });
                     } else {
-                        if (typeof (frame.data("Fid")) != "undefined" && typeof (frame.data("Fid")) != "") {
-                            Coker.Favorites.Delete(frame.data("Fid")).done(function (result) {
+                        if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
+                            Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (result) {
                                 if (result.success) {
-                                    frame.data("Fid", "");
+                                    $btn_favorites.data("Fid", "");
                                     $self.addClass("fa-regular")
                                     $self.removeClass("fa-solid")
-                                    $self.attr("title", "加入收藏")
+                                    $btn_favorites.attr("title", "加入收藏")
+                                    SetFavoriteData();
+                                    Coker.sweet.success("已將商品從收藏中移除", null, true);
                                 } else {
                                     console.log(result.message)
                                 }

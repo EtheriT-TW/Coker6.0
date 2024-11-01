@@ -151,6 +151,7 @@ builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();
+builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IMemberAppService, MemberAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IProductAppService, ProductAppService>();

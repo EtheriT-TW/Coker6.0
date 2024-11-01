@@ -89,22 +89,16 @@ input[type="number"] {
     #Product > .content > .describe > .introduce, #ProductDescription {
         list-style: none;
     }
-    /*
+/*
         #Product > .content > .describe > .introduce > li::before {
             content: '\ff0e';
         }
     */
-    #Product > .content > .describe > .track > .btn_favorites > i {
-        color: var(--gray-text);
-        font-size: 3rem;
-        cursor: pointer;
-    }
-    #Product > .content > .describe > .track {
-        display: none;
-    }
+
 #Product > .image {
-    position:relative;
+    position: relative;
 }
+
     #Product > .image > .status {
         position: absolute;
         top: 3px;
@@ -115,26 +109,27 @@ input[type="number"] {
         color: #fff;
         font-weight: 600;
         border-radius: 1.5rem;
-        z-index:2;
+        z-index: 2;
     }
-#Product > .image > .pro_tag {
-    width: calc(100% - 30px);
-    height: 2rem;
-    margin: 0;
-    overflow: hidden;
-    list-style: none;
-}
 
-    #Product > .image > .pro_tag .round_tag {
-        padding: 0.25rem 0.8rem;
-        margin-right: 0.5rem;
-        float: left;
-        font-size: 0.8rem;
-        line-height: 1.5rem;
-        white-space: nowrap;
-        background-color: var(--gray-light);
-        color: var(--gray-text);
+    #Product > .image > .pro_tag {
+        width: calc(100% - 30px);
+        height: 2rem;
+        margin: 0;
+        overflow: hidden;
+        list-style: none;
     }
+
+        #Product > .image > .pro_tag .round_tag {
+            padding: 0.25rem 0.8rem;
+            margin-right: 0.5rem;
+            float: left;
+            font-size: 0.8rem;
+            line-height: 1.5rem;
+            white-space: nowrap;
+            background-color: var(--gray-light);
+            color: var(--gray-text);
+        }
 
 #Product > .content > .specification {
     color: var(--gray-text);
@@ -151,9 +146,9 @@ input[type="number"] {
         list-style: none;
     }
 
-    #Product > .content > .specification > ul > li {
-        line-height: 1.5rem;
-    }
+        #Product > .content > .specification > ul > li {
+            line-height: 1.5rem;
+        }
 
     #Product > .content > .specification > .btn_detailed {
         background-color: var(--gray-light);
@@ -168,13 +163,14 @@ input[type="number"] {
 #Product > .content > .pro_tc {
     color: var(--gray-text);
 }
+
     #Product > .content > .pro_tc > .image {
-        list-style:none;
+        list-style: none;
     }
 
-    #Product > .content > .pro_tc > .image > li > button > img {
-        height: 3.25rem;
-    }
+        #Product > .content > .pro_tc > .image > li > button > img {
+            height: 3.25rem;
+        }
 
 #Product > .content > .priceframe > div > .price {
     color: var(--gray-text);
@@ -234,9 +230,11 @@ input:disabled + .btn_radio {
 .counter_input > .quantity {
     display: flex;
 }
+
 .counter_input > .emptyProd {
     display: none;
 }
+
 .counter_input.isEmpty > .quantity {
     display: none;
 }
@@ -250,6 +248,15 @@ input:disabled + .btn_radio {
     line-height: 3;
 }
 
+#Product > .content .btn_favorites {
+    background-color: gray;
+    line-height: 3;
+}
+
+    #Product > .content .btn_favorites.turn {
+        background-color: var(--red-main);
+    }
+
 #Product > .content > .btn_learnMore {
     background-color: var(--red-main);
     line-height: 3;
@@ -259,6 +266,19 @@ input:disabled + .btn_radio {
     font-family: 'Font Awesome 6 Free';
     font-weight: 400;
     content: "\f0fe  ";
+}
+
+.btn_favorites .icon_love::before {
+    font-size: 3rem;
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 400;
+    content: "\f004  ";
+}
+
+.btn_favorites.turn .icon_love::before {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: "\f004  ";
 }
 
 /* CenterLine */
@@ -301,7 +321,7 @@ input:disabled + .btn_radio {
 /* TabContent */
 #TabContent {
     color: var(--gray-text);
-    margin-bottom:4rem;
+    margin-bottom: 4rem;
 }
 
     #TabContent > div > img {
@@ -315,11 +335,11 @@ input:disabled + .btn_radio {
 
 /* TechnicalDocuments */
 
-    #TechnicalDocuments > #FileDownload > .file > a > div::after {
-        font-family: 'Font Awesome 6 Free';
-        font-weight: 900;
-        content: "\3000\f019";
-    }
+#TechnicalDocuments > #FileDownload > .file > a > div::after {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: "\3000\f019";
+}
 
 #TechnicalDocuments [class*="badge_"] div:has(img) {
     height: 100px;
@@ -330,15 +350,16 @@ input:disabled + .btn_radio {
     width: 100%;
     height: 6rem;
 }
+
 #TechnicalDocuments > .techcert_list > .badge_1 {
-    
 }
 /* FileDownload */
 #FileDownload > .File_list {
     margin: 1rem 0;
 }
+
     #FileDownload > .File_list > div {
-        padding:1rem;
+        padding: 1rem;
     }
 
 @media only screen and (max-width: 1400px) {

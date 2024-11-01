@@ -362,7 +362,7 @@ function ready() {
         $("footer").toggleClass("footer_pack_up");
     });
 
-    $(".btn_favorites").on("click", AddFavorites);
+    //$(".btn_favorites").on("click", AddFavorites);
 
     window.onscroll = function () {
         scrollFunction();
@@ -449,7 +449,6 @@ function SiteElementInit() {
     $ResetImgCaptcha = $('#ResetImgCaptcha');
     ResetForms = $('#ResetForm');
 }
-
 function scrollFunction() {
     if (document.body.scrollTop > 350 || document.documentElement.scrollTop > 350) {
         $("#btn_gotop").css('display', 'block');
@@ -457,24 +456,20 @@ function scrollFunction() {
         $("#btn_gotop").css('display', 'none');
     }
 }
-
 function cookie_accept() {
     $.cookie('cookie', 'accept', { expires: 7, path: '/' });
     $("#Cookie").toggleClass("show");
 }
-
 function cookie_reject() {
     $.cookie('cookie', 'reject');
     $("#Cookie").toggleClass("show");
 }
-
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
         localStorage.setItem("token", result.token);
         CheckToken();
     })
 }
-
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
@@ -486,24 +481,23 @@ function CheckToken() {
     })
 }
 
-function AddFavorites() {
-    var $self = $(this).children('i');
-    var $self_parent = $self.parents("li").first();
+//function AddFavorites() {
+//    var $self = $(this).children('i');
+//    var $self_parent = $self.parents("li").first();
 
-    if ($self.hasClass("fa-solid")) {
-        Coker.sweet.confirm("確定將商品從收藏中移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
-            $self.removeClass('fa-solid');
-            if ($self.hasClass('fav_item')) {
-                $self_parent.remove();
-                Coker.sweet.success("成功移除商品", null, true);
-            }
-        });
-    } else {
-        $self.addClass('fa-solid');
-        Coker.sweet.success("成功加入收藏", null, true);
-    }
-}
-
+//    if ($self.hasClass("fa-solid")) {
+//        Coker.sweet.confirm("確定將商品從收藏中移除？", "該商品將會從收藏中移除，且不可復原。", "確認移除", "取消", function () {
+//            $self.removeClass('fa-solid');
+//            if ($self.hasClass('fav_item')) {
+//                $self_parent.remove();
+//                Coker.sweet.success("成功移除商品", null, true);
+//            }
+//        });
+//    } else {
+//        $self.addClass('fa-solid');
+//        Coker.sweet.success("成功加入收藏", null, true);
+//    }
+//}
 function SiteFormCheck(Forms, $input) {
     $input.addClass('is-invalid');
     var Check = false;
@@ -515,7 +509,6 @@ function SiteFormCheck(Forms, $input) {
     })
     return Check;
 }
-
 function CaptchaVerify($self, $input, SuccessAction) {
     var code = $input.val();
     if (code != "") {
@@ -543,7 +536,6 @@ function CaptchaVerify($self, $input, SuccessAction) {
         Coker.sweet.error("錯誤", "請確實填寫驗證碼", null, true);
     }
 }
-
 function LoginAction() {
     Coker.sweet.loading();
     loginModal.hide();
@@ -551,9 +543,8 @@ function LoginAction() {
     data.WebsiteId = SiteId
     co.User.Login(data).done((result) => {
         if (result.success) {
-            console.log(result)
             Coker.sweet.success("歡迎回來！", function () {
-                window.location.href = $(location).attr('origin');
+                location.reload()
             }, false);
         } else {
             switch (result.message) {
@@ -857,12 +848,27 @@ var Coker = {
                 data: { Pid: Pid },
             });
         },
+        GetDisplay: function () {
+            return $.ajax({
+                url: "/api/Favorites/GetDisplay/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+            });
+        },
         Delete: function (Fid) {
             return $.ajax({
                 url: "/api/Favorites/Delete/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 data: { Fid: Fid },
+            });
+        },
+        Check: function (Pid) {
+            return $.ajax({
+                url: "/api/Favorites/CheckIsFavorites/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { Pid: Pid },
             });
         },
     },

@@ -58,6 +58,8 @@ using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.ShoppingCart;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -148,6 +150,7 @@ builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddTransient<IOrderAppService, OrderAppService>();
+builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IMemberAppService, MemberAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IProductAppService, ProductAppService>();

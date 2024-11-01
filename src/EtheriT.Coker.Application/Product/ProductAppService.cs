@@ -1004,7 +1004,7 @@ namespace EtheriT.Coker.Application.Product
 
             return new JsonResult(new List<ProdGetDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<List<ProdGetDisplayDto>> GetHistoryDisplay()
+        public async Task<List<ProdGetHistoryDisplayDto>> GetHistoryDisplay()
         {
             try
             {
@@ -1013,6 +1013,7 @@ namespace EtheriT.Coker.Application.Product
 
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
+                                       where prod_log.Action == (int)ProdLogActionEnum.點擊
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();
                 List<long> pids = new List<long>();
@@ -1036,7 +1037,7 @@ namespace EtheriT.Coker.Application.Product
                 {
                     var output = (from pid in pids
                                   join prod in db.Prods on pid equals prod.Id
-                                  select new ProdGetDisplayDto()
+                                  select new ProdGetHistoryDisplayDto()
                                   {
                                       Id = prod.Id,
                                       Title = prod.Title,
@@ -1052,16 +1053,28 @@ namespace EtheriT.Coker.Application.Product
                                                 {
                                                     Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
                                                 }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                      Price = "",
+                                      Price = new List<double>(),
                                       ItemNo = prod.ItemNo,
                                   }).ToList();
 
                     for (var i = 0; i < output.Count; i++)
                     {
-                        var prices = await db.Prod_Stocks.Where(e => e.FK_Pid == output[i].Id).OrderBy(e => e.Price).ToListAsync();
-
-                        if (prices.Count > 1 && prices[prices.Count - 1].Price != 0) output[i].Price = $"{prices[0].Price}~{prices[prices.Count - 1].Price}";
-                        else output[i].Price = prices[0].Price.ToString();
+                        var prod_prices = await (from prod_stock in db.Prod_Stocks
+                                                 join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
+                                                 where prod_stock.FK_Pid == output[i].Id
+                                                 where prod_price.Price > 0
+                                                 orderby prod_price descending
+                                                 select prod_price).ToListAsync();
+                        if (prod_prices.Count > 1)
+                        {
+                            output[i].Price.Add((double)prod_prices[0].Price);
+                            output[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                        }
+                        else if (prod_prices.Count == 1)
+                        {
+                            output[i].Price.Add((double)prod_prices[0].Price);
+                        }
+                        else output[i].Price.Add(0);
                     }
 
                     return output;

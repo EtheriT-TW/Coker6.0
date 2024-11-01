@@ -312,6 +312,7 @@ function CartInit() {
     })
 }
 function CartAdd(result) {
+    console.log(result)
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
@@ -323,8 +324,7 @@ function CartAdd(result) {
         item_total = item.find(".pro_subtotal"),
         item_btn_count_plus = item.find(".btn_count_plus"),
         item_btn_count_minus = item.find(".btn_count_minus"),
-        item_btn_remove_pro = item.find(".btn_remove_pro"),
-        item_btn_move_to_favorites = item.find(".btn_move_to_favorites");
+        item_btn_remove_pro = item.find(".btn_remove_pro");
 
     item.data("scid", result.scId);
     item_link.attr("href", `${OrgName}/Toilet/` + result.pId);
@@ -341,12 +341,6 @@ function CartAdd(result) {
     item_btn_remove_pro.on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-            CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
-        });
-    });
-    item_btn_move_to_favorites.on("click", function () {
-        var $self = $(this).parents("li").first();
-        Coker.sweet.confirm("確定將商品加入收藏？", "該商品將會加入收藏並從購物車中移除", "加入收藏", "取消", function () {
             CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
         });
     });
@@ -369,6 +363,52 @@ function CartAdd(result) {
     });
 
     var item_list_ul = $("#Step1 > .card-body > .purchase_list");
+
+    if (item.find(".btn_move_to_favorites").length > 0) {
+        Coker.Token.CheckToken().done(function (token) {
+            if (token.isLogin) {
+                var $btn_favorites = item.find(".btn_move_to_favorites");
+                $btn_favorites.parent("span").removeClass("d-none");
+
+                Coker.Favorites.Check(result.pId).done(function (check) {
+                    if (check.success) {
+                        $btn_favorites.data("Fid", check.message);
+                        $btn_favorites.find("i").addClass("fa-solid")
+                        $btn_favorites.find("i").removeClass("fa-regular")
+                    }
+                });
+
+                $btn_favorites.on("click", function () {
+                    var $self = $(this).find("i");
+                    if ($self.hasClass("fa-regular")) {
+                        Coker.Favorites.Add(result.pId).done(function (favorites) {
+                            if (favorites.success) {
+                                $btn_favorites.data("Fid", favorites.message);
+                                $self.addClass("fa-solid")
+                                $self.removeClass("fa-regular")
+                                Coker.sweet.success("成功將商品加入收藏", null, true);
+                            } else {
+                                console.log(favorites.message)
+                            }
+                        });
+                    } else {
+                        if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
+                            Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (favorites) {
+                                if (favorites.success) {
+                                    $btn_favorites.data("Fid", "");
+                                    $self.addClass("fa-regular")
+                                    $self.removeClass("fa-solid")
+                                    Coker.sweet.success("已將商品從收藏中移除", null, true);
+                                } else {
+                                    console.log(favorites.message)
+                                }
+                            });
+                        }
+                    }
+                })
+            }
+        });
+    }
 
     item_list_ul.append(item);
 }

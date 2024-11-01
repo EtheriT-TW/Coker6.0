@@ -78,6 +78,36 @@ function PageReady() {
         })
     })
 
+    if ($(".btn_favorites").length > 0) {
+        Coker.Favorites.Check(Pid).done(function (check) {
+            if (check.success) {
+                $(".btn_favorites").data("Fid", check.message);
+                $(".btn_favorites").addClass("turn")
+                $(".btn_favorites").attr("title", "移除收藏")
+            }
+        });
+        $(".btn_favorites").on("click", function () {
+            var $self = $(this);
+            if ($self.hasClass("turn")) {
+                Coker.Favorites.Delete($(this).data("Fid")).done(function (result) {
+                    if (result.success) {
+                        $self.removeClass("turn")
+                        $self.attr("title", "加入收藏")
+                        Coker.sweet.success("已將商品從收藏中移除", null, true);
+                    }
+                });
+            } else {
+                Coker.Favorites.Add(Pid).done(function (favorites) {
+                    if (favorites.success) {
+                        $self.addClass("turn")
+                        $self.data("Fid", favorites.message);
+                        $self.attr("title", "移除收藏")
+                        Coker.sweet.success("成功將商品加入收藏", null, true);
+                    }
+                });
+            }
+        })
+    }
 }
 
 function ElementInit() {

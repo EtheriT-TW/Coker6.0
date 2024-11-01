@@ -44,7 +44,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplaySimple(id);
         }
         [HttpGet]
-        public async Task<List<ProdGetDisplayDto>> GetHistoryDisplay()
+        public async Task<List<ProdGetHistoryDisplayDto>> GetHistoryDisplay()
         {
             return await productAppService.GetHistoryDisplay();
         }

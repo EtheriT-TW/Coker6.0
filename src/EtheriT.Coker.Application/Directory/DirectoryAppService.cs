@@ -701,7 +701,6 @@ namespace EtheriT.Coker.Application.Directory
                 if (imgs.Any()) data.MainImage = imgs[0].Link;
                 else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
 
-
                 var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
                 var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
                 double min = p.Min(e => e.Price) ?? 0;

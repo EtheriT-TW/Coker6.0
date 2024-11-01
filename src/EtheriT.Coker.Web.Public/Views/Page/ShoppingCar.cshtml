@@ -169,13 +169,20 @@
                                     <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
                                 </div>
 
-                                <div class="btn_side_icon position-absolute d-flex flex-column top-0 end-0 p-2">
-                                    <span class="d-inline-block d-none" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移到收藏">
-                                        <button class="btn_move_to_favorites bg-transparent border-0">
-                                            <i class="fa-regular fa-heart"></i>
-                                            <span class="d-none">移到收藏</span>
-                                        </button>
-                                    </span>
+                                <div class="btn_side_icon position-absolute d-flex flex-column top-50 translate-middle-y end-0 p-2">
+
+                                    @if (ViewBag.LoginEnable)
+                                    {
+                                        @if (ViewBag.isLogin)
+                                        {
+                                            <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="加入/移除收藏">
+                                                <button class="btn_move_to_favorites bg-transparent border-0">
+                                                    <i class="fa-regular fa-heart text-danger"></i>
+                                                    <span class="d-none">加入/移除收藏</span>
+                                                </button>
+                                            </span>
+                                        }
+                                    }
                                     <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-placement="right" data-bs-trigger="hover focus" data-bs-content="移除商品">
                                         <button class="btn_remove_pro bg-transparent border-0">
                                             <i class="fa-solid fa-xmark"></i>

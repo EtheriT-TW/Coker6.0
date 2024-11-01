@@ -758,7 +758,7 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<br/></div>";
                 var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
 
-                await mailAppService.sendMail(new SenderDto
+                var sedResult = await mailAppService.sendMail(new SenderDto
                 {
                     Recipients = new List<MailUserDataDto>(){
                                     new MailUserDataDto()
@@ -771,7 +771,9 @@ namespace EtheriT.Coker.Application.Authorization
                     Body = mailhtml,
                     Css = mailcss,
                 }, dto.WebsiteId);
-                response.Success = true;
+                response.Success = sedResult.Success;
+                response.Message = sedResult.Message;
+                response.Error = sedResult.Error;
             }
             catch (Exception ex)
             {

@@ -58,6 +58,9 @@ using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Web.MVC.Middleware;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.ShoppingCart;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -177,6 +180,7 @@ builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
+builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
 
 //多語系
@@ -244,6 +248,9 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
 }
 
 var app = builder.Build();
+
+// 添加 AntiforgeryDebugMiddleware
+app.UseMiddleware<AntiforgeryDebugMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

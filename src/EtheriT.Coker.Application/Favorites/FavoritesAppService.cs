@@ -1,7 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Token;
 using Microsoft.Extensions.Configuration;
@@ -40,13 +39,14 @@ namespace EtheriT.Coker.Application.Favorites
                 var prod = await db.Prods.Where(e => e.Id == Pid).FirstOrDefaultAsync();
                 if (prod != null)
                 {
-                    var favorite = await db.Favorites.Where(e => e.FK_PId == Pid && e.UUID == UUID).FirstOrDefaultAsync();
+                    var favorite = await db.Favorites.Where(e => e.FK_AssocId == Pid && e.UUID == UUID && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
                     if (favorite == null)
                     {
                         Core.Models.Favorites favorites = new Core.Models.Favorites()
                         {
                             UUID = UUID,
-                            FK_PId = Pid,
+                            FK_AssocId = Pid,
+                            Type = (int)FavoritesTypeEnum.商品
                         };
                         db.Favorites.Add(favorites);
                         await loginUserData.SaveChanges(favorites);
@@ -87,7 +87,8 @@ namespace EtheriT.Coker.Application.Favorites
                 if (favorites != null)
                 {
                     output = (from favorite in favorites
-                              join prod in db.Prods on favorite.FK_PId equals prod.Id
+                              join prod in db.Prods on favorite.FK_AssocId equals prod.Id
+                              where favorite.UUID == UUID && favorite.Type == (int)FavoritesTypeEnum.商品
                               orderby favorite.Id descending
                               select new FavoritesGetDisplayDto()
                               {
@@ -156,16 +157,19 @@ namespace EtheriT.Coker.Application.Favorites
                     favorites.DeletionTime = DateTime.Now;
                     await loginUserData.SaveChanges(favorites);
 
-                    Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
+                    if(favorites.Type == (int)FavoritesTypeEnum.商品)
                     {
-                        FK_Pid = favorites.FK_PId,
-                        FK_UserId = userid,
-                        UUID = UUID,
-                        Action = (int)LogActionEnum.移除收藏,
-                        Db_Name = "Favorites"
-                    };
-                    db.Prod_Logs.Add(prod_log);
-                    await loginUserData.SaveChanges(prod_log);
+                        Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
+                        {
+                            FK_Pid = favorites.FK_AssocId,
+                            FK_UserId = userid,
+                            UUID = UUID,
+                            Action = (int)LogActionEnum.移除收藏,
+                            Db_Name = "Favorites"
+                        };
+                        db.Prod_Logs.Add(prod_log);
+                        await loginUserData.SaveChanges(prod_log);
+                    }
 
                     response.Success = true;
                 }
@@ -184,7 +188,7 @@ namespace EtheriT.Coker.Application.Favorites
 
             try
             {
-                var favorites = await db.Favorites.Where(e => e.UUID == UUID && e.FK_PId == Pid).FirstOrDefaultAsync();
+                var favorites = await db.Favorites.Where(e => e.UUID == UUID && e.FK_AssocId == Pid && e.Type == (int)FavoritesTypeEnum.商品).FirstOrDefaultAsync();
                 if (favorites != null)
                 {
                     response.Message = favorites.Id.ToString();

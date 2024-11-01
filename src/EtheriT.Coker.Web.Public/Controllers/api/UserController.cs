@@ -60,6 +60,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             var result = await accountAppService.PasswordChage(dto);
             return result;
         }
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ResponseMessageDto> EmailChage(EmailChangeDto dto)
+        {
+            var result = await accountAppService.EmailChage(dto);
+            return result;
+        }
         [HttpGet]
         [AllowAnonymous]
         public async Task<ResponseMessageDto> GetUserData()

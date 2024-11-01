@@ -573,7 +573,6 @@ function LoginAction() {
         }
     })
 }
-
 function RegisterAction() {
     Coker.sweet.loading();
     var data = co.Form.getJson($("#RegisterForm").attr("id"));
@@ -614,7 +613,6 @@ function RegisterAction() {
         }
     })
 }
-
 function ForgetAction() {
     Coker.sweet.loading();
     var data = co.Form.getJson($("#ForgetForm").attr("id"));
@@ -631,7 +629,6 @@ function ForgetAction() {
         }
     })
 }
-
 function ResetAction(forgetid) {
     var data = co.Form.getJson($("#ResetForm").attr("id"));
     data.ForgetId = forgetid;
@@ -658,7 +655,6 @@ function ResetAction(forgetid) {
         }
     })
 }
-
 function NewCaptcha($self, $input, name = "") {
     if (!!!$self.data("id")) {
         $self.data("id", Math.floor(Math.random() * 10000));
@@ -673,7 +669,6 @@ function NewCaptcha($self, $input, name = "") {
     $self.attr('src', `/api/Captcha/index?id=${name}${$self.data("id")}&v=${Math.floor(Math.random() * 10000)}`);
     $input.val("");
 }
-
 function FormClear(form, $input) {
     form.removeClass('was-validated')
     $input.siblings("div").removeClass("me-4 pe-2")
@@ -697,7 +692,6 @@ function FormClear(form, $input) {
     $RegisterAccept.prop('checked', false);
     $input.val("");
 }
-
 function PassCheck($NewPass, $CheckPass, $NewPassFeedBack, $CheckPassFeedBack) {
 
     var hasNum = /[0-9]/, hasUpper = /[A-Z]/, hasLower = /[a-z]/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
@@ -793,6 +787,15 @@ var Coker = {
         PasswordChange: function (data) {
             return $.ajax({
                 url: "/api/User/PasswordChage",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        EmailChange: function (data) {
+            return $.ajax({
+                url: "/api/User/EmailChage",
                 type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify(data),

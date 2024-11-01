@@ -29,6 +29,44 @@
     </nav>
 </div>
 <Content id="main">
+    <div id="ResetEmailModal" class="modal fade" aria-hidden="true" aria-labelledby="ResetEmailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered justify-content-center">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center fs-4 fw-bold">修改電子郵件</div>
+                    <form id="ResetEmailForm" class="card-body needs-validation" method="post">
+                        <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                        <div class="input-group mb-3">
+                            <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                <span class="material-symbols-outlined text-black-50">lock</span>
+                            </div>
+                            <input class="input_bg form-control rounded border-0 py-3" type="password" autocomplete="off" aria-label="Input Password" placeholder="密碼" required name="password">
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                <span class="material-symbols-outlined text-black-50">mail</span>
+                            </div>
+                            <input class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input New Mail" placeholder="新的電子信箱" required name="email">
+                        </div>
+                        <div class="newmail_vcode input-group">
+                            <input id="InputNewMailVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input New Email Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                            <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                <img id="NewMailImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
+                            </div>
+                        </div>
+                    </form>
+                    <div class="d-flex justify-content-end px-3">
+                        <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
+                    </div>
+                    <button class="btn_resetmail w-100 rounded border-0 text-white py-2 fs-5 my-3">確定</button>
+                    <button class="btn_resetforget bg-transparent border-0 text-decoration-underline text-black-50 w-100">忘記密碼?</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="container d-flex flex-row">
         <ul class="nav flex-column" id="ToolList" role="tablist">
             <li class="nav-item" role="presentation">
@@ -112,7 +150,7 @@
                     <div class="d-flex">
                         <button class="btn_modifi btn btn-secondary rounded me-3">資料修改</button>
                         <button class="btn_resetPassword btn btn-secondary rounded me-3">密碼修改</button>
-                        <button class="btn_resetEmail btn btn-secondary rounded d-none">電子郵件修改</button>
+                        <button class="btn_resetEmail btn btn-secondary rounded">電子郵件修改</button>
                     </div>
                     <button class="btn_logout btn btn-secondary rounded">登　　出</button>
                 </div>

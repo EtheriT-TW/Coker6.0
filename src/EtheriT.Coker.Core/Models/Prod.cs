@@ -21,8 +21,8 @@ namespace EtheriT.Coker.Core.Models
         public bool permanent { get; set; }
         public bool Visible { get; set; }
         public bool RemovedFromShelves { get; set; }
-        public int Status {  get; set; }
-       public int? Clicks { get; set; }
+        public int Status { get; set; }
+        public int? Clicks { get; set; }
         public string? SaveHtml { get; set; }
         [MaxLength]
         public string? SaveCss { get; set; }
@@ -35,6 +35,5 @@ namespace EtheriT.Coker.Core.Models
         public List<Prod_Log> Prod_Logs { get; set; }
         public List<Remote> Remotes { get; set; }
         public List<Prod_TechCert> TechnicalCertificates { get; set; }
-        public List<Favorites> Favorites { get; set; }
     }
 }

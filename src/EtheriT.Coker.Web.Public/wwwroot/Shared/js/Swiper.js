@@ -99,6 +99,7 @@ function SwiperInit(obj) {
                                     html = $(this).html();
                                 } else if ($(this).find("video").length > 0) {
                                     var video = $(this).find('video').get(0);
+                                    video.stop();
                                     video.currentTime = 0;
                                     video.play();
                                 } 

@@ -4,7 +4,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
 {
     public class MemberManagementController : Controller
     {
-        public IActionResult Index(int id)
+        public IActionResult MemberSet(int id)
         {
             if (id != 0)
             {
@@ -12,6 +12,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             }
             return View("MemberData");
         }
+
+        public IActionResult MemberList()
+        {
+            return View("MemberList");
+        }
+
+        public IActionResult UserType()
+        {
+            return View("UserType");
+        }
+
         public IActionResult SelfData() {
 			return View("SelfData");
 		}

@@ -409,13 +409,19 @@
                                     <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
                                     <label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
                                 </li>
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
-                                    <label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
-                                </li>
+                                @if (ViewBag.LoginEnable)
+                                {
+                                    @if (ViewBag.isLogin)
+                                    {
+                                        <li class="form-check mb-0 ms-3 d-none">
+                                            <input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
+                                            <label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
+                                        </li>
+                                    }
+                                }
                                 <li class="form-check mb-0 ms-3">
                                     <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
-                                    <label class="form-check-label" for="radio_recipient_edit">修改收件人資料</label>
+                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
                                 </li>
                             </ul>
                         </div>

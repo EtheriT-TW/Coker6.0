@@ -216,12 +216,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         CollapseId="#MemberManagement",
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
-                                PageName="MemberData",
-                                Title="會員管理",
-                                Controller="MemberManagement",
-                                Action="Index",
-                                Icon=""
-                            },new JobMenu{
                                 PageName="ManagerList",
                                 Title="使用者名單",
                                 Controller="MemberManagement",
@@ -271,6 +265,38 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="StoreSettings",
                                 Action="PaymentSettings",
                                 Icon="credit_card",
+                            }
+                        }
+                    },
+                    new JobMenu{
+                        PageName="MemberData",
+                        Title="會員管理",
+                        Controller="MemberManagement",
+                        Action="Index",
+                        Icon="",
+                        CollapseId="#MemberManagement",
+                        jobItemModels= new List<JobMenu> {
+                            new JobMenu
+                            {
+                                PageName="MemberSet",
+                                Title="會員設定",
+                                Controller="MemberManagement",
+                                Action="MemberSet",
+                                Icon="",
+                            },
+                            new JobMenu {
+                                PageName="MemberList",
+                                Title="會員清單",
+                                Controller="MemberManagement",
+                                Action="MemberList",
+                                Icon=""
+                            },
+                            new JobMenu {
+                                PageName="UserType",
+                                Title="使用者分群",
+                                Controller="MemberManagement",
+                                Action="UserType",
+                                Icon=""
                             }
                         }
                     },
@@ -363,6 +389,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 case WebsiteLevelEnum.形象:
                     seting.AddRange(new List<JobMenu> {
                         new JobMenu{
+                             PageName="MemberData",
+                             Enable=false
+                        },
+                        new JobMenu{
                             PageName="Dashboard",
                             Enable=false
                         },
@@ -381,9 +411,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName="ProductManagement",
                             Enable=false
-                        }, new JobMenu{
-                             PageName="MemberData",
-                             Enable=false
                         },new JobMenu{
                             PageName="ManagerList",
                             Enable=false
@@ -411,9 +438,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         {
                             PageName="ProductManagement",
                             Enable=false
-                        }, new JobMenu{
-                             PageName="MemberData",
-                             Enable=false
                         },new JobMenu{
                             PageName="ManagerList",
                             Enable=false

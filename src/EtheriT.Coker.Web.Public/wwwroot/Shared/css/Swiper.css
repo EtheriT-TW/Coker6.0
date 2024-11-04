@@ -5,6 +5,10 @@
     z-index: 2;
 }
 
+.one_swiper .swiper-wrapper .swiper-slide video {
+    pointer-events:none;
+}
+
 .swiper_pagination_line > .swiper-pagination-bullet {
     width: 4rem;
     height: 0.3rem;

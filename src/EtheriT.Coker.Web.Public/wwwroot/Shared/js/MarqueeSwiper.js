@@ -4,11 +4,13 @@
         $marquee.find(".swiper-slide").each(function () {
             const slideWidth = $(this).width();
             let $slide = $(this);
+            const fontSize = $slide.find(".text").css('font-size');
             let $newSlides = [];
             let nextText = [];
             let text = $slide.text().replace("(current)", "");
             let $tempDiv = $('<div class="temp-div"></div>').appendTo('body');
             $tempDiv.css('width', slideWidth + 'px');
+            $tempDiv.css('font-size', fontSize);
             let previousHeight = $tempDiv.height();
             for (let i = 0; i < text.length; i++) {
                 $tempDiv.append(text[i]);

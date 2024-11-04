@@ -635,7 +635,7 @@ namespace EtheriT.Coker.Application.Authorization
                 Guid UUID = await tokenAppService.GetUUID();
                 var token = tokenAppService.CheckToken();
 
-                if (token!=null && token.IsLogin)
+                if (token != null && token.IsLogin)
                 {
                     var userdata = await (from user in db.FrontUsers
                                           join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
@@ -748,10 +748,10 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)dto.OpenIdSendDate).AddDays(1)} 到期，請在期限內開通。</div>" +
                                                         $"<div class='text-gray'>感謝您的加入！~</div>" +
                                                         $"<br/>" +
+                                                        $"<hr/>" +
+                                                        $"<hr/>" +
                                                         $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                        $"<hr/>" +
-                                                        $"<hr/>" +
-                                                        $"<div class='text-bold text-red'>提醒您，客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
                                                         $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                                         $"<hr/>" +
                                                         $"<hr/>" +
@@ -810,10 +810,10 @@ namespace EtheriT.Coker.Application.Authorization
                                                     $"<div class='text-gray'>請由該網址進入重新設定您的密碼</div>" +
                                                     $"<div class='text-gray'>這個連結僅能使用一次，並於 {((DateTime)frontUser.ForgeIDSendDate).AddDays(1)} 到期，請在期限內重設，謝謝。</div>" +
                                                     $"<br/>" +
+                                                    $"<hr/>" +
+                                                    $"<hr/>" +
                                                     $"<div class='text-bold text-red'>提醒您：此封『密碼重設通知』為系統發出，請勿直接回覆。</div>" +
-                                                    $"<hr/>" +
-                                                    $"<hr/>" +
-                                                    $"<div class='text-bold text-red'>提醒您，客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                                    $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
                                                     $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                                     $"<hr/>" +
                                                     $"<hr/>" +
@@ -976,17 +976,111 @@ namespace EtheriT.Coker.Application.Authorization
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                long WebsiteID = await loginUserData.GetWebsiteId();
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
 
                 var user = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
-                if(user != null)
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                if (user != null && Website != null)
                 {
                     if (passwordHasher.VerifyHashedPassword(user.Password, dto.Password))
                     {
-                        response.Success = true;
+                        var account_Log = new Account_Log()
+                        {
+                            UUID = user.UUID,
+                            WebsiteId = WebsiteID,
+                            CreatorUserId = user.Id,
+                            CreationTime = DateTime.Now,
+                            Status = (int)AccountStatusEnum.Email重置,
+                        };
+
+                        var hidden_mail = dto.Email.Substring(0, 1) + "******" + dto.Email.Substring(dto.Email.IndexOf('@') - 1, 1) + dto.Email.Substring(dto.Email.IndexOf('@'));
+
+                        var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的{user.Name}，您好！</h2>" +
+                                                        $"<hr/>" +
+                                                        $"<div class='d-flex'>您於 {account_Log.CreationTime} 修改Email({hidden_mail})成功</div>" +
+                                                        $"<div class='d-flex'>未來{Website.Title}訂單通知等相關通知將會改寄到此Email</div>" +
+                                                        $"<br/>" +
+                                                        $"<div class='text-bold text-red'>如果您沒有要求修改Email，請立刻至<a href='{Website.DefaultUrl}/{Website.OrgName}/Member' title='會員中心'>會員中心</a>修改資料。</div>" +
+                                                        $"<hr/>" +
+                                                        $"<hr/>" +
+                                                        $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
+                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                        $"<hr/>" +
+                                                        $"<hr/>" +
+                                                        $"<br/></div>";
+                        var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
+
+                        var sedResult = await mailAppService.sendMail(new SenderDto
+                        {
+                            Recipients = new List<MailUserDataDto>(){
+                                    new MailUserDataDto()
+                                    {
+                                        Name = user.Name,
+                                        Email = user.Email,
+                                    }
+                                },
+                            Subject = $"【{Website.Title}】會員電子郵件修改通知",
+                            Body = mailhtml,
+                            Css = mailcss,
+                        }, WebsiteID);
+
+                        response.Success = sedResult.Success;
+                        response.Message = sedResult.Message;
+                        response.Error = sedResult.Error;
+
+                        if (response.Success)
+                        {
+                            user.Email = dto.Email;
+                            db.Account_Logs.Add(account_Log);
+                            await loginUserData.SaveChanges(user);
+                        }
+
                     }
-                    else throw new Exception("密碼輸入錯誤");
+                    else
+                    {
+                        user.ErrorTimes += 1;
+                        var account_Log = new Account_Log()
+                        {
+                            UUID = user.UUID,
+                            WebsiteId = WebsiteID,
+                            ErrorTimes = user.ErrorTimes
+                        };
+                        if (user.ErrorTimes >= 3)
+                        {
+                            user.LockTime = DateTime.Now;
+                            account_Log.LockTime = user.LockTime;
+
+                            user.Status = (int)UserStatusEnum.停權;
+                            account_Log.Status = (int)AccountStatusEnum.停權;
+
+                            await loginUserData.SaveChanges(user);
+
+                            account_Log.CreatorUserId = user.Id;
+                            account_Log.CreationTime = DateTime.Now;
+
+                            db.Account_Logs.Add(account_Log);
+                            db.SaveChanges();
+
+                            response.Error = "錯誤三次";
+                            response.Message = "密碼錯誤次數三次以上，請於15分鐘後再次嘗試。";
+                        }
+                        else
+                        {
+                            account_Log.Status = (int)AccountStatusEnum.登入失敗;
+
+                            account_Log.CreatorUserId = user.Id;
+                            account_Log.CreationTime = DateTime.Now;
+                            db.Account_Logs.Add(account_Log);
+                            db.SaveChanges();
+
+                            response.Error = "密碼錯誤";
+                            response.Message = "密碼輸入錯誤，請重新輸入";
+                        }
+                    }
                 }
+                else if (user == null) throw new Exception("使用者不存在");
+                else if (Website == null) throw new Exception("網站資訊有誤");
             }
             catch (Exception ex)
             {
@@ -1071,7 +1165,7 @@ namespace EtheriT.Coker.Application.Authorization
                 db.Account_Logs.Add(account_Log);
                 db.SaveChanges();
 
-                if (frontuser.UUID != Temp_UUID && Temp_UUID!=Guid.Empty)
+                if (frontuser.UUID != Temp_UUID && Temp_UUID != Guid.Empty)
                 {
                     MappingOldNewUUID mapoldnew = new MappingOldNewUUID
                     {

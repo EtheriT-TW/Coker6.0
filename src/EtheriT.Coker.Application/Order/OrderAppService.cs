@@ -202,6 +202,7 @@ namespace EtheriT.Coker.Application.Order
                         Payment = ((PaymentTypeEnum)result.Payment).ToString(),
                         Shipping = ship_text,
                         State = result.State,
+                        StateStr = ((OrderStatusEnum)result.State).ToString(),
                         Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
                         Subtotal = result.Subtotal,
                         Total = result.Subtotal + result.Freight,

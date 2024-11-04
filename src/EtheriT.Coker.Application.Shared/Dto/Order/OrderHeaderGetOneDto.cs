@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string Payment { get; set; }
         public string Shipping { get; set; }
         public int State { get; set; }
+        public string StateStr { get; set; }
         public string Remark { get; set; }
         public int Subtotal { get; set; }
         public int Total { get; set; }

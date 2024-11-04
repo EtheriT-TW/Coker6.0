@@ -160,7 +160,8 @@ function SetMemberData() {
 }
 function SetHistoryOrderData() {
     Coker.Member.GetOrderHistory().done(function (result) {
-        if (result.success && result.orderData != null) {
+        //console.log(result)
+        if (result.success && result.orderData != null && result.orderData.length > 0) {
             $.each(result.orderData, function (index, data) {
                 var order_header = data.orderHeader;
                 var order_details = data.orderDetails;
@@ -169,30 +170,7 @@ function SetHistoryOrderData() {
                 frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
                 frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
                 frame.find(".amount").text((order_header.total).toLocaleString());
-
-                switch (order_header.state) {
-                    case 1:
-                        frame.find(".state").text("待確認");
-                        break;
-                    case 2:
-                        frame.find(".state").text("已付款");
-                        break;
-                    case 3:
-                        frame.find(".state").text("已出貨");
-                        break;
-                    case 4:
-                        frame.find(".state").text("已取消");
-                        break;
-                    case 5:
-                        frame.find(".state").text("付款失敗");
-                        break;
-                    case 6:
-                        frame.find(".state").text("待付款");
-                        break;
-                    case 7:
-                        frame.find(".state").text("已完成");
-                        break;
-                }
+                frame.find(".state").text(order_header.stateStr);
 
                 $("#profile-tab-pane").append(frame);
 
@@ -234,7 +212,7 @@ function SetFavoriteData() {
     $("#favorite-tab-pane").children().not(".nodata").not("template").remove();
     Coker.Favorites.GetDisplay().done(function (result) {
         //console.log(result)
-        if (result.length > 0) {
+        if (result != null && result.length > 0) {
             $.each(result, function (index, data) {
                 var frame = $($("#Template_Favorite_List").html()).clone();
                 frame.data("Pid", data.pId);
@@ -295,7 +273,7 @@ function SetBrowsingHistoryData() {
     $("#history-tab-pane").children().not(".nodata").not("template").remove();
     Product.GetAll.History().done(function (result) {
         //console.log(result)
-        if (result.length > 0) {
+        if (result != null && result.length > 0) {
             $.each(result, function (index, data) {
                 var frame = $($("#Template_Prod_List").html()).clone();
                 frame.data("Pid", data.id);
@@ -391,8 +369,28 @@ function ResetmailAction(data) {
         Coker.sweet.info("新的電子郵件與舊的相同，不進行變更。", null)
         resetEmailModal.hide()
     } else {
+        Coker.sweet.loading();
         Coker.User.EmailChange(input_data).done(function (result) {
-            console.log(result)
+            if (result.success) {
+                Coker.sweet.success("電子郵件修改成功", function () {
+                    location.reload()
+                }, false);
+            } else {
+                NewCaptcha($ResetEmailImgCaptcha, $InputResetEmailVCode);
+                switch (result.error) {
+                    case "密碼錯誤":
+                        Coker.sweet.confirm("密碼輸入錯誤", result.message, "忘記密碼?", "確定", function () {
+                            $("#ResetModal .btn_resetforget").click();
+                        })
+                        break;
+                    case "錯誤三次":
+                        Coker.sweet.error(result.error, result.message, null, false);
+                        break;
+                    default:
+                        Coker.sweet.error(result.error, result.message, null, false);
+                        break;
+                }
+            }
         });
     }
 }

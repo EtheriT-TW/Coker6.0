@@ -60,12 +60,19 @@ function SwiperInit(obj) {
     $(".one_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            $self.find('video').each(function () {
+                var $video = $(this);
+                if ($video.attr('controls')) {
+                    $video.removeAttr('controls');
+                    $video.prop('muted', true);
+                }
+            });
             var Id = "#" + $self.attr("id") + " > .swiper";
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             if ($(Id).find(".swiper-slide").length == 1 && $template.length > 0) return false;
             const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1 : $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
-            var speed = $self.data("effect-speed")
+            var speed = $self.data("effect-speed");
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -91,7 +98,9 @@ function SwiperInit(obj) {
                                 if ($(this).find("iframe").length > 0) {
                                     html = $(this).html();
                                 } else if ($(this).find("video").length > 0) {
-                                    html = $(this).find('video').parent();
+                                    var video = $(this).find('video').get(0);
+                                    video.currentTime = 0;
+                                    video.play();
                                 } 
                                 if (html !== undefined && html !== null) {
                                     reset($(this), html);

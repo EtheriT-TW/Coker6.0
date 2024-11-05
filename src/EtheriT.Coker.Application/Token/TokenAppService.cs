@@ -176,7 +176,13 @@ namespace EtheriT.Coker.Application.Token
             }
             return UUID;
         }
-        public async Task<TokenResponseDto> RefreshToken(Guid? id)
+        public async Task<List<Guid>> GetAllUUID(Guid UUID) {
+			var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
+			uuids.Add(UUID);
+            return uuids;
+		}
+
+		public async Task<TokenResponseDto> RefreshToken(Guid? id)
         {
             TokenResponseDto output = new TokenResponseDto();
             try

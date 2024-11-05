@@ -273,7 +273,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         Title="會員管理",
                         Controller="MemberManagement",
                         Action="Index",
-                        Icon="",
+                        Icon="diversity_1",
                         CollapseId="#MemberManagement",
                         jobItemModels= new List<JobMenu> {
                             new JobMenu

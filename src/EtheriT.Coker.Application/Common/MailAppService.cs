@@ -27,6 +27,11 @@ namespace EtheriT.Coker.Application.Common
             this.mapper = mapper;
             this.stringHandler = stringHandler;
         }
+        public async Task<SenderDto> getDefaultDto() {
+            SenderDto dto = new SenderDto();
+
+            return dto;
+        }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto)
         {
             var webSiteName = string.IsNullOrEmpty(dto.Sender.Name) ? await loginUserData.GetWebsiteName() : dto.Sender.Name;
@@ -112,8 +117,9 @@ namespace EtheriT.Coker.Application.Common
             {
                 using (var client = new SmtpClient())
                 {
+                    //client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                     // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
-                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, SecureSocketOptions.None);
+                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL? SecureSocketOptions.SslOnConnect : SecureSocketOptions.None);
 
                     // 如果需要的話，驗證一下
                     if (dto.SMTP.UserName != null)

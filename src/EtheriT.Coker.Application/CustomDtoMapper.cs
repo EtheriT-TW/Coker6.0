@@ -50,7 +50,7 @@ namespace EtheriT.Coker.Application
             CreateMap<UserSimplifyDto, User>()
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
                 .ReverseMap();
-            CreateMap<MemberGetAllDataDto, User>().ReverseMap();
+            CreateMap<MemberGetAllDataDto, FrontUser>().ReverseMap();
             CreateMap<MemberUpdateDto, User>().ReverseMap();
             CreateMap<ManagerAllListDto, User>().ReverseMap();
             CreateMap<EditUserDto, User>().ReverseMap();

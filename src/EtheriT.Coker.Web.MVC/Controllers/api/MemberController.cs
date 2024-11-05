@@ -21,8 +21,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             this.memberAppService = memberAppService;
         }
-
-        [HttpGet]
+		[HttpGet]
+		public async Task<JsonResult> GetAllFrontList(DataSourceLoadOptions loadOptions)
+		{
+			return await memberAppService.GetAllFrontList(loadOptions);
+		}
+		[HttpGet]
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
             return await memberAppService.GetAllList(loadOptions);

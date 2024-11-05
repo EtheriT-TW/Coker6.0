@@ -7,7 +7,7 @@
                 data: formData,
                 headers: _c.Data.Header,
                 contentType: false,
-                crossDomain: true,
+                crossDomain: false,
                 dataType: 'json',
                 mimeType: "multipart/form-data",
                 processData: false
@@ -20,7 +20,7 @@
                 data: formData,
                 headers: _c.Data.Header,
                 contentType: false,
-                crossDomain: true,
+                crossDomain: false,
                 dataType: 'json',
                 mimeType: "multipart/form-data",
                 processData: false

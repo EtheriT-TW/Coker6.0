@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -20,15 +21,18 @@ namespace EtheriT.Coker.Application.Member
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly ITokenAppService tokenAppService;
 		private readonly IMapper mapper;
 		public MemberAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
+			ITokenAppService tokenAppService,
 			IMapper mapper
 		)
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.tokenAppService = tokenAppService;
             this.mapper = mapper;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
@@ -65,6 +69,54 @@ namespace EtheriT.Coker.Application.Member
 
             return new JsonResult(new List<MemberGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
+        public async Task<JsonResult> GetAllFrontList(DataSourceLoadOptions loadOptions) {
+			try
+			{
+                long websideId = await loginUserData.GetWebsiteId();
+				var result = from f in db.FrontUsers
+                            join s in db.MappingFrontUserAndWebsite on f.Id equals s.FK_UserId
+                            where s.FK_WebsiteId == websideId
+                            select f;
+
+				if (result != null)
+				{
+					var dataQuery = from e in result
+									select new MemberGetAllListDto
+									{
+										Id = e.Id,
+										Name = e.Name.Substring(0, 1) + "○" + e.Name.Substring(e.Name.Length - 1),
+										CellPhone = e.CellPhone.Substring(0, 3) + "****" + e.CellPhone.Substring(7),
+										TelPhone = e.TelPhone == "" ? "" : e.TelPhone.Substring(0, e.TelPhone.IndexOf("-") + 3) + "***" + e.TelPhone.Substring(e.TelPhone.IndexOf("-") + 6),
+										Address = (e.Address == null || e.Address == "") ? "" : e.Address.Substring(0, e.Address.LastIndexOf(" ")).Replace(" ", "") + "***",
+										Email = e.Email.Substring(0, 2) + "***" + e.Email.Substring(e.Email.IndexOf("@") - 1),
+										Total = (
+                                            from order in db.Order_Headers
+                                            where order.State == (int)OrderStatusEnum.已完成 &&
+                                                (
+                                                    (  
+                                                        from m in db.MappingOldNewUUID
+                                                        where m.UserUUID == e.UUID
+                                                        select m.TempUUID
+                                                    ).Contains(order.FK_UUID) || 
+                                                    order.FK_UUID == e.UUID
+                                                )
+											select order
+										).Sum(e => e.Payment),
+										Level = e.Level,
+										CreationTime = e.CreationTime,
+									};
+					var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+					return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+				}
+				else throw new Exception("查無會員資料");
+			}
+			catch (Exception e)
+			{
+
+			}
+
+			return new JsonResult(new List<MemberGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+		}
 		public async Task<JsonResult> GetAllManagerList(DataSourceLoadOptions loadOptions)
 		{
 			try
@@ -104,7 +156,12 @@ namespace EtheriT.Coker.Application.Member
         {
             try
             {
-                var result = db.Users.Where(e => e.Id == id && !e.IsDeleted).FirstOrDefault();
+				long websideId = await loginUserData.GetWebsiteId();
+				var result = await (from user in db.FrontUsers.Where(e => e.Id == id)
+                             join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId
+                             where map.FK_WebsiteId == websideId
+                             select user).FirstOrDefaultAsync();
+                            
 
                 if (result != null)
                 {

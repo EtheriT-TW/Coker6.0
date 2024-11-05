@@ -1,7 +1,7 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Member
 @{
-	ViewData["Title"] = "MemberData";
+	ViewData["Title"] = "MemberList";
 }
 
 <link rel="stylesheet" href="~/css/MemberManagement/MemberData.min.css" asp-append-version="true" />
@@ -25,7 +25,7 @@
 			@(
 						Html.DevExtreme().DataGrid<MemberGetAllListDto>()
 						.DataSource(d => d.RemoteController().Key("Id")
-						.LoadUrl("/api/Member/GetAllList").LoadMethod("Get")
+						.LoadUrl("/api/Member/GetAllFrontList").LoadMethod("Get")
 						)
 						.RemoteOperations(true)
 						.ColumnHidingEnabled(true)

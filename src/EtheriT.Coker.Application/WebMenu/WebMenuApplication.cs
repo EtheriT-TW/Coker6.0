@@ -261,7 +261,7 @@ namespace EtheriT.Coker.Application
                 if (!getDirectoryMenuData) dataQuery = dataQuery.Where(e => e.Visible);
                 if (ShowToMenu)
                 {
-                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType != (int)PageTypeEnum.購物車);
+                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType == (int)PageTypeEnum.一般頁面);
                 }
                 var menus = await dataQuery
                             .OrderBy(m => m.SerNO)

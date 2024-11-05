@@ -10,7 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Mail
     {
         public string Url { get; set; } =  "msa.hinet.net";
         public int Port { get; set; } = 25;
-        public bool useSSL { get; set; } = true;
+        public bool UseSSL { get; set; } = false;
         public string? UserName { get; set; }
         public string? Password { get; set; }
     }

@@ -154,7 +154,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         {
             try
             {
-                var UUID = await tokenAppService.GetUUID();
+                Guid UUID = await tokenAppService.GetUUID();
                 var Token = tokenAppService.CheckToken();
 
                 var userid = new List<Guid>();

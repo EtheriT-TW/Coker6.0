@@ -228,9 +228,8 @@ namespace EtheriT.Coker.Application.Order
         {
             try
             {
-                var webSiteId = await loginUserData.GetWebsiteId();
+                var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
                 var orgName = await loginUserData.GetWebsiteOrgName();
-                var db_oh = db.Order_Headers.Where(e => e.Id == id && e.FK_WebsiteId == webSiteId).FirstOrDefault();
                 if (db_oh != null)
                 {
                     var output = await (from od in db.Order_Details

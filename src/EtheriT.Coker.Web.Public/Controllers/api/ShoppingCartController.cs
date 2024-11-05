@@ -1,8 +1,8 @@
 ﻿using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
-using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,13 +15,16 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     {
 
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IThirdPartyAppService thirdPartyAppService;
         private readonly IConfiguration Configuration;
         public ShoppingCartController(
             IShoppingCartAppService shoppingCartAppService,
+            IThirdPartyAppService thirdPartyAppService,
             IConfiguration Configuration
             )
         {
             this.shoppingCartAppService = shoppingCartAppService;
+            this.thirdPartyAppService = thirdPartyAppService;
             this.Configuration = Configuration;
         }
 
@@ -54,6 +57,10 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await shoppingCartAppService.DeleteDrop(id);
         }
-
+        [HttpGet]
+        public async Task<List<ThirdPartyKeypairItemOutputDto>> GetPaymentInfo(long paytypeid)
+        {
+            return await thirdPartyAppService.GetPaymentResult(paytypeid);
+        }
     }
 }

@@ -10,5 +10,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
     {
         public string key { get; set; }
         public string value { get; set; }
+
+        public object Find(Func<object, bool> value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

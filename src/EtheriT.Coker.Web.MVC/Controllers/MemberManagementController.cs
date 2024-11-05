@@ -22,6 +22,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("UserType");
         }
+        public IActionResult MemberType()
+        {
+            return View("MemberType");
+        }
 
         public IActionResult SelfData() {
 			return View("SelfData");

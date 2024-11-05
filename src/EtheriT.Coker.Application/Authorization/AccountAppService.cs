@@ -978,85 +978,108 @@ namespace EtheriT.Coker.Application.Authorization
                 Guid UUID = await tokenAppService.GetUUID();
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
 
-                var user = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
+                var frontuser = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
-                if (user != null && Website != null)
+                if (frontuser != null && Website != null)
                 {
-                    if (passwordHasher.VerifyHashedPassword(user.Password, dto.Password))
+                    if (passwordHasher.VerifyHashedPassword(frontuser.Password, dto.Password))
                     {
-                        var account_Log = new Account_Log()
+                        var other_frontuser = await (from user in db.FrontUsers
+                                                     join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                                     where user.Email == dto.Email
+                                                     where mapuserweb.FK_WebsiteId == WebsiteID
+                                                     select user.Id).ToListAsync();
+
+                        if (other_frontuser != null && other_frontuser.Count > 0)
                         {
-                            UUID = user.UUID,
-                            WebsiteId = WebsiteID,
-                            CreatorUserId = user.Id,
-                            CreationTime = DateTime.Now,
-                            Status = (int)AccountStatusEnum.Email重置,
-                        };
-
-                        var hidden_mail = dto.Email.Substring(0, 1) + "******" + dto.Email.Substring(dto.Email.IndexOf('@') - 1, 1) + dto.Email.Substring(dto.Email.IndexOf('@'));
-
-                        var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的{user.Name}，您好！</h2>" +
-                                                        $"<hr/>" +
-                                                        $"<div class='d-flex'>您於 {account_Log.CreationTime} 修改Email({hidden_mail})成功</div>" +
-                                                        $"<div class='d-flex'>未來{Website.Title}訂單通知等相關通知將會改寄到此Email</div>" +
-                                                        $"<br/>" +
-                                                        $"<div class='text-bold text-red'>如果您沒有要求修改Email，請立刻至<a href='{Website.DefaultUrl}/{Website.OrgName}/Member' title='會員中心'>會員中心</a>修改資料。</div>" +
-                                                        $"<hr/>" +
-                                                        $"<hr/>" +
-                                                        $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
-                                                        $"<hr/>" +
-                                                        $"<hr/>" +
-                                                        $"<br/></div>";
-                        var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
-
-                        var sedResult = await mailAppService.sendMail(new SenderDto
+                            response.Error = "電子郵件已存在";
+                            response.Message = "該電子郵件已被使用。";
+                        }
+                        else
                         {
-                            Recipients = new List<MailUserDataDto>(){
+                            var account_Log = new Account_Log()
+                            {
+                                UUID = frontuser.UUID,
+                                WebsiteId = WebsiteID,
+                                CreatorUserId = frontuser.Id,
+                                CreationTime = DateTime.Now,
+                                Status = (int)AccountStatusEnum.Email重置,
+                            };
+
+                            var hidden_mail = dto.Email.Substring(0, 1) + "******" + dto.Email.Substring(dto.Email.IndexOf('@') - 1, 1) + dto.Email.Substring(dto.Email.IndexOf('@'));
+
+                            var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的{frontuser.Name}，您好！</h2>" +
+                                                            $"<hr/>" +
+                                                            $"<div class='d-flex'>您於 {account_Log.CreationTime} 修改Email({hidden_mail})成功</div>" +
+                                                            $"<div class='d-flex'>未來{Website.Title}訂單通知等相關通知將會改寄到此Email</div>" +
+                                                            $"<br/>" +
+                                                            $"<div class='text-bold text-red'>如果您沒有要求修改Email，請立刻至<a href='{Website.DefaultUrl}/{Website.OrgName}/Member' title='會員中心'>會員中心</a>修改資料。</div>" +
+                                                            $"<hr/>" +
+                                                            $"<hr/>" +
+                                                            $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
+                                                            $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                                            $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                            $"<hr/>" +
+                                                            $"<hr/>" +
+                                                            $"<br/></div>";
+                            var mailcss = ".text-size1{ font-size: 1rem; } .d-flex{ display: flex; } .text-bold { font-weight: bold; } .text-red { color: red;} .text-gray{ color: gray ; }";
+
+                            var sedResult = await mailAppService.sendMail(new SenderDto
+                            {
+                                Recipients = new List<MailUserDataDto>(){
                                     new MailUserDataDto()
                                     {
-                                        Name = user.Name,
-                                        Email = user.Email,
+                                        Name = frontuser.Name,
+                                        Email = frontuser.Email,
                                     }
                                 },
-                            Subject = $"【{Website.Title}】會員電子郵件修改通知",
-                            Body = mailhtml,
-                            Css = mailcss,
-                        }, WebsiteID);
+                                Subject = $"【{Website.Title}】會員電子郵件修改通知",
+                                Body = mailhtml,
+                                Css = mailcss,
+                            }, WebsiteID);
 
-                        response.Success = sedResult.Success;
-                        response.Message = sedResult.Message;
-                        response.Error = sedResult.Error;
+                            response.Success = sedResult.Success;
+                            response.Message = sedResult.Message;
+                            response.Error = sedResult.Error;
 
-                        if (response.Success)
-                        {
-                            user.Email = dto.Email;
-                            db.Account_Logs.Add(account_Log);
-                            await loginUserData.SaveChanges(user);
+                            if (response.Success)
+                            {
+                                frontuser.Email = dto.Email;
+                                var user = await db.Users.Where(e => e.Email == frontuser.Email).FirstOrDefaultAsync();
+                                if (user == null)
+                                {
+                                    user = mapper.Map<User>(frontuser);
+                                    user.Id = 0;
+                                    user.Password = frontuser.Password;
+                                    db.Users.Add(user);
+                                    await loginUserData.SaveChanges(user);
+                                }
+                                frontuser.FK_User = user.Id;
+                                db.Account_Logs.Add(account_Log);
+                                await loginUserData.SaveChanges(frontuser);
+                            }
                         }
-
                     }
                     else
                     {
-                        user.ErrorTimes += 1;
+                        frontuser.ErrorTimes += 1;
                         var account_Log = new Account_Log()
                         {
-                            UUID = user.UUID,
+                            UUID = frontuser.UUID,
                             WebsiteId = WebsiteID,
-                            ErrorTimes = user.ErrorTimes
+                            ErrorTimes = frontuser.ErrorTimes
                         };
-                        if (user.ErrorTimes >= 3)
+                        if (frontuser.ErrorTimes >= 3)
                         {
-                            user.LockTime = DateTime.Now;
-                            account_Log.LockTime = user.LockTime;
+                            frontuser.LockTime = DateTime.Now;
+                            account_Log.LockTime = frontuser.LockTime;
 
-                            user.Status = (int)UserStatusEnum.停權;
+                            frontuser.Status = (int)UserStatusEnum.停權;
                             account_Log.Status = (int)AccountStatusEnum.停權;
 
-                            await loginUserData.SaveChanges(user);
+                            await loginUserData.SaveChanges(frontuser);
 
-                            account_Log.CreatorUserId = user.Id;
+                            account_Log.CreatorUserId = frontuser.Id;
                             account_Log.CreationTime = DateTime.Now;
 
                             db.Account_Logs.Add(account_Log);
@@ -1069,7 +1092,7 @@ namespace EtheriT.Coker.Application.Authorization
                         {
                             account_Log.Status = (int)AccountStatusEnum.登入失敗;
 
-                            account_Log.CreatorUserId = user.Id;
+                            account_Log.CreatorUserId = frontuser.Id;
                             account_Log.CreationTime = DateTime.Now;
                             db.Account_Logs.Add(account_Log);
                             db.SaveChanges();
@@ -1079,7 +1102,7 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                     }
                 }
-                else if (user == null) throw new Exception("使用者不存在");
+                else if (frontuser == null) throw new Exception("使用者不存在");
                 else if (Website == null) throw new Exception("網站資訊有誤");
             }
             catch (Exception ex)

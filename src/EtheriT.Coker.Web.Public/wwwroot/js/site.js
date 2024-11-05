@@ -424,6 +424,23 @@ function ready() {
                 break;
         }
     }
+
+    $(".btn_passtoggle").on("click", function (event) {
+        event.preventDefault();
+        var $this = $(this);
+        switch ($this.text()) {
+            case "visibility":
+                $this.parent("div").siblings("input").attr("type", "password");
+                $this.attr("title", "顯示密碼");
+                $this.text("visibility_off");
+                break;
+            case "visibility_off":
+                $this.parent("div").siblings("input").attr("type", "text");
+                $this.attr("title", "隱藏密碼");
+                $this.text("visibility");
+                break;
+        }
+    });
 }
 
 function SiteElementInit() {

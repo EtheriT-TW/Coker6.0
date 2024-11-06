@@ -190,7 +190,7 @@ namespace EtheriT.Coker.Application.Member
 
             try
             {
-                var result = db.Users.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var result = db.FrontUsers.Where(e => e.Id == dto.Id).FirstOrDefault();
 
                 if (result != null)
                 {

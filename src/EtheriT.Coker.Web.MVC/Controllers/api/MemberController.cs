@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
@@ -15,11 +16,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class MemberController : Controller
     {
         private readonly IMemberAppService memberAppService;
-        public MemberController(
-            IMemberAppService memberAppService
-            )
+        private readonly IAccountAppService accountAppService;
+		public MemberController(
+            IMemberAppService memberAppService,
+			IAccountAppService accountAppService
+		)
         {
             this.memberAppService = memberAppService;
+			this.accountAppService = accountAppService;
         }
 		[HttpGet]
 		public async Task<JsonResult> GetAllFrontList(DataSourceLoadOptions loadOptions)
@@ -46,6 +50,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		public async Task<MemberGetAllDataDto> GetSelfData()
 		{
 			return await memberAppService.GetSelfData();
+		}
+		[HttpPost]
+		public async Task<ResponseMessageDto> ForgetPassword(long UserId)
+		{
+			return await accountAppService.SendForget(UserId);
 		}
 
 		[HttpPost]

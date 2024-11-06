@@ -17,7 +17,10 @@
 			</button>
 			<div class="title fw-bold fs-4">會員管理</div>
 		</div>
-		<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
+		<div class="tool">
+			<button class="btn_forgetPassword btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">發送忘記密碼驗證信</button>
+			<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">儲存</button>
+		</div>
 	</div>
 
 	<div id="MemberList" class="card border-0">
@@ -152,44 +155,8 @@
 					</div>
 				</div>
 
-				<!-- Login Data -->
-				<div class="card border-0 my-4">
-					<div id="LoginData" class="card-body">
-						<div class="d-flex align-items-center pb-2">
-							<div class="fs-5 fw-bold">登入資料</div>
-						</div>
-						<div class="row">
-							<form class="form-floating mb-3 col-12 col-lg-8 position-relative needs-validation" novalidate>
-								<input id="InputMailLogin" class="mail form-control pe-5" type="email" placeholder="name@example.com" autocomplete="off" value="name@example.com" required>
-								<label class="px-4" for="InputMailLogin">電子郵件</label>
-								<button class="btn_mail_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
-									<span class="material-symbols-outlined fs-5">lock_open</span>
-								</button>
-							</form>
-							<div class="col-4 d-none d-lg-flex"></div>
-							<div class="input_newpass form-floating mb-3 col-6 col-lg-4 position-relative">
-								<input id="InputPasswordNew" class="new_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
-								<div id="NewPassFeedBack" class="invalid-feedback position-absolute"></div>
-								<label class="px-4" for="InputPasswordNew">新密碼</label>
-								<button class="btn_newpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
-									<span class="material-symbols-outlined fs-5">visibility_off</span>
-								</button>
-							</div>
-							<div class="input_checkpass form-floating mb-3 col-6 col-lg-4 position-relative">
-								<input id="InputPasswordCheck" class="check_pass form-control pe-5" type="password" placeholder="******" autocomplete="new-password" value="">
-								<div id="CheckPassFeedBack" class="invalid-feedback position-absolute"></div>
-								<label class="px-4" for="InputPasswordCheck">密碼確認</label>
-								<button class="btn_checkpass_lock d-flex position-absolute top-50 translate-middle end-0 bg-transparent border-0 pe-2">
-									<span class="material-symbols-outlined fs-5">visibility_off</span>
-								</button>
-							</div>
-						</div>
-						<div class="mt-1">（輸入6個字元以上的英文字母及數字，至少一位英文字母及數字，不可使用特殊符號。）</div>
-					</div>
-				</div>
-
 				<!-- Community Login Binding -->
-				<div class="card border-0 ">
+				<div class="card border-0 d-none">
 					<div id="CommunityLoginBinding" class="card-body">
 						<div class="d-flex align-items-center pb-2">
 							<div class="fs-5 fw-bold">社群登入綁定</div>

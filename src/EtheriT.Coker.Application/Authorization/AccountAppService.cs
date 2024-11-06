@@ -781,7 +781,40 @@ namespace EtheriT.Coker.Application.Authorization
             }
             return response;
         }
-        public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
+        public async Task<ResponseMessageDto> SendForget(long userId)
+        {
+			ResponseMessageDto response = new ResponseMessageDto();
+			try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+
+				var frontUser = await (from user in db.FrontUsers
+									   join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+									   where user.Id == userId && mapuserweb.FK_WebsiteId == websiteId
+									   select user).FirstOrDefaultAsync();
+                if (frontUser != null)
+                {
+
+                    response = await SendForget(new SendForgetDto
+                    {
+                        WebsiteId = websiteId,
+                        WebsiteLink = await loginUserData.GetWebsiteUrl(),
+                        WebsiteName = await loginUserData.GetWebsiteName(),
+                        Email = frontUser.Email
+                    });
+                }
+                else throw new Exception();
+			}
+            catch
+            {
+                response.Error = "會員資料錯誤";
+
+			}
+            return response;
+
+		}
+
+		public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
         {
 
             ResponseMessageDto response = new ResponseMessageDto();

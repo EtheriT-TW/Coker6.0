@@ -31,6 +31,8 @@ function PageReady() {
 
     $(".btn_save").on("click", DataSave);
 
+    $(".btn_forgetPassword").on("click", ForgetPassword);
+
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回會員管理", "資料將不被保存", "確定", "取消", function () {
             history.back();
@@ -220,15 +222,19 @@ function Update(success_text, error_text) {
 
 function DataSave() {
     BasicInfoFilled = FormCheck(BasicInfoForm);
-    LoginMailFilled = FormCheck(LoginMailForm);
-    PassIsCheck = PassCheck();
-    if (BasicInfoFilled && LoginMailFilled && PassIsCheck) {
+    if (BasicInfoFilled) {
         Coker.sweet.confirm("即將儲存", "確認儲存會員資料?", "儲存", "取消", function () {
             Update("資料儲存成功", "資料儲存發生未知錯誤");
         });
     } else {
         Coker.sweet.error("資料填寫有誤", "請確認填寫資料是否正確", null, false);
     }
+}
+function ForgetPassword() {
+    co.Member.ForgetPassword(keyId).done(function (resulte) {
+        if (resulte.success) co.sweet.success("已成功寄出忘記密碼驗證信");
+        else co.sweet.error(resulte.error);
+    });
 }
 
 function FormCheck(Forms) {
@@ -243,13 +249,14 @@ function FormCheck(Forms) {
 }
 
 function PassCheck() {
+    let typesCount = 0;
+    const password = $newpass.val();
     $btn_newpass_lock.addClass("pe-4");
     $btn_checkpass_lock.addClass("pe-4");
-    var hasNum = /\d+/, hasLetter = /[a-zA-Z]+/, hasSpesym = /[^\a-\z\A-\Z0-9]/g;
     $newpass.addClass("is-invalid");
     $passcheck.addClass("is-invalid");
-    if ($newpass.val().length >= 6) {
-        if (hasNum.test($newpass.val()) && hasLetter.test($newpass.val()) && !(hasSpesym.test($newpass.val()))) {
+    if (password.length >= 8 && password.length <= 30) {
+        if (co.Member.isValidPassword(password)) {
             $newpass.removeClass("is-invalid");
             $newpass.addClass("is-valid");
             if ($passcheck.val() == $newpass.val()) {
@@ -273,7 +280,7 @@ function PassCheck() {
             $btn_checkpass_lock.removeClass("pe-4");
             return true;
         } else {
-            $NewPassFeedBack.text("請輸入6個以上的字元");
+            $NewPassFeedBack.text("密碼長度需在8-30個字元。");
             $CheckPassFeedBack.text("密碼格式有誤");
         }
     }

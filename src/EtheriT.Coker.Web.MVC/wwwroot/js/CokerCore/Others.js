@@ -55,8 +55,8 @@
                 timePicker24Hour: true,
                 autoUpdateInput: true,
                 showDropdowns: true,
-                startDate:today.Date,
-                endDate:today.Date,
+                startDate: today.Date,
+                endDate: today.Date,
                 locale: {
                     format: 'YYYY/MM/DD HH:mm',
                     separator: " ~ ",
@@ -67,40 +67,11 @@
                 }
             }, setting || {})
             const s = $picker.daterangepicker(target);
-            $picker.data("picker",s);
+            $picker.data("picker", s);
             $picker.on('cancel.daterangepicker', function (ev, picker) {
                 $(this).val("");
             });
         },
-    },
-    Member: {
-        Get: function (id) {
-            return $.ajax({
-                url: "/api/Member/GetAllData/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id }
-            });
-        },
-        Update: function (data) {
-            return $.ajax({
-                url: "/api/Member/Update",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: JSON.stringify(data),
-                dataType: "json"
-            });
-        },
-        GetSelf: function () {
-            return $.ajax({
-                url: "/api/Member/GetSelfData/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header
-            });
-        }
     },
     Tag: {
         AddDelect: function (data) {

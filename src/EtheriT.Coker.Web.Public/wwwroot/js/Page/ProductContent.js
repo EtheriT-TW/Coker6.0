@@ -63,7 +63,6 @@ function PageReady() {
         $radio_btn.children('label').toggleClass('pe-none');
     }
 
-    $(".btn_addToCar").on("click", AddToCart);
     $(".btn_tc").on("click", function () {
         $("#ProductDescription").removeClass("active show")
         $("#TechnicalDocuments").addClass("active show")
@@ -126,6 +125,14 @@ function ElementInit() {
 }
 
 function PageDefaultSet(result) {
+
+    if (result.stocks.length == 1 && result.stocks[0].stock == 0) {
+        $(".btn_addToCar").css("cursor", "default")
+        $(".btn_addToCar").addClass("bg-secondary text-opacity-50")
+    } else {
+        $(".btn_addToCar").on("click", AddToCart);
+    }
+
     $pro_name.text(result.title);
     $pro_itemNo.text(result.itemNo);
     $pro_introduce.append("<li>" + result.introduction.replaceAll("\n", "</li><li>") + "</li>")

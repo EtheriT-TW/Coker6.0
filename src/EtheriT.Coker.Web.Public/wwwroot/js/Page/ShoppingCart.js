@@ -531,6 +531,7 @@ function Step3Monitor() {
     } else {
         switch ($(`[name="InvoiceRadio"]:checked`).val()) {
             case "order":
+            case "recipient":
                 InvoiceFilled = true;
                 break;
         }
@@ -699,7 +700,7 @@ function OrderHeaderAdd() {
             break;
         case "recipient":
             invoice_data['invoiceRecipient'] = 2;
-            invoice_data['invoiceAddress'] = order_data['recipientAddress'];
+            invoice_data['invoiceAddress'] = recipient_data['recipientAddress'];
             break;
         case "company":
             invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
@@ -722,6 +723,12 @@ function OrderHeaderAdd() {
     order_header_data.freight = 0;
     order_header_data.Service_Charge = 0;
 
+    //console.log(order_data)
+    //console.log(recipient_data)
+    //console.log(invoice_data)
+    //console.log(order_header_data)
+
+    Coker.sweet.loading();
     Coker.Order.AddHeader(order_header_data).done(function (result) {
         if (result.success) {
             Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
@@ -752,6 +759,16 @@ function OrderSuccess(results) {
     $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substr(order_header_id.length));
 
     $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+
+    Swal.fire({
+        title: "小提醒",
+        icon: "info",
+        html: $(".storememo").text().replaceAll("\n", "<br/>"),
+        focusConfirm: false,
+        confirmButtonText: "確認",
+    });
+
+    $(".storememo").empty();
 
     DataInsert(order_data, $("#Step4 .orderer_data"));
     HiddenCode($("#Step4 .orderer_data"))

@@ -501,10 +501,12 @@ namespace EtheriT.Coker.Application.Order
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelephone = order_header.OrdererTelephone != "" ? order_header.OrdererTelephone.Length > 3 ? order_header.OrdererTelephone?.Substring(0, 3) + "******" : order_header.OrdererTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.OrdererTelephone = order_header.OrdererTelephone != "-" ? order_header.OrdererTelephone.Length > 3 ? order_header.OrdererTelephone?.Substring(0, 3) + "******" : order_header.OrdererTelephone?.Substring(0, 1) + "******" : "";
+                    var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
-                    order_header.RecipientTelephone = order_header.RecipientTelephone != "" ? order_header.RecipientTelephone.Length > 3 ? order_header.RecipientTelephone?.Substring(0, 3) + "******" : order_header.RecipientTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.RecipientTelephone = order_header.RecipientTelephone != "-" ? order_header.RecipientTelephone.Length > 3 ? order_header.RecipientTelephone?.Substring(0, 3) + "******" : order_header.RecipientTelephone?.Substring(0, 1) + "******" : "";
+                    var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "君";
 
                     var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>" +
                                              $"<br/>" +
@@ -518,7 +520,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"<h2><span class='text-red'>訂單編號：</span>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</h2>" +
                                              $"<table>" +
                                              $"<thead>" +
-                                             $"<tr><th scope='col' colspan='4' class='text-start'>訂購人：{order_header.Orderer.Substring(0, 1) + "*****"}{(SexEnum)order_header.OrdererSex}</th></tr>" +
+                                             $"<tr><th scope='col' colspan='4' class='text-start'>訂購人：{order_header.Orderer.Substring(0, 1) + "*****"} {OrdererSex}</th></tr>" +
                                              $"</thead>" +
                                              $"<tbody>" +
                                              $"<tr>" +
@@ -536,7 +538,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"<br/>" +
                                              $"<table>" +
                                              $"<thead>" +
-                                             $"<tr><th scope='col' colspan='4' class='text-start'>收件人：{order_header.Recipient.Substring(0, 1) + "*****"}{(SexEnum)order_header.RecipientSex}</th></tr>" +
+                                             $"<tr><th scope='col' colspan='4' class='text-start'>收件人：{order_header.Recipient.Substring(0, 1) + "*****"} {RecipientSex}</th></tr>" +
                                              $"</thead>" +
                                              $"<tbody>" +
                                              $"<tr>" +
@@ -629,7 +631,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                              $"<hr/>" +
                                              $"</div>";
-                    var mailcss = "*{ font-family: sans-serif; } .d-flex{  display: flex; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid rgb(140 140 140); letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid rgb(160 160 160); padding: 8px 10px; }";
+                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid rgb(140 140 140); letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid rgb(160 160 160); padding: 8px 10px; }";
 
                     var sedResult = await mailAppService.sendMail(new SenderDto
                     {

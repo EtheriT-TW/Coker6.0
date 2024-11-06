@@ -106,7 +106,7 @@
             </div>
         }
     }
-
+    
     <div class="swiper shadow-lg mt-5">
         <div class="swiper-wrapper">
             <div id="Step1" class="card text-center swiper-slide">
@@ -206,7 +206,7 @@
                         </div>
                     </div>
                     <div class="swiper_button my-5 d-flex justify-content-center">
-                        <a href="#" title="繼續購物：返回上一頁" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
+                        <a href="#" title="繼續購物：返回上一頁" class="btn_backshop btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
                         <button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
                             下一步
                         </button>
@@ -516,12 +516,12 @@
                             <div class="fs-5">發票另寄　</div>
                             <ul class="d-sm-flex text-start mb-0">
                                 <li class="form-check mb-0 ms-3">
-                                    <input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="order" checked>
-                                    <label class="form-check-label" for="radio_bill_orderer">訂購人</label>
+                                    <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient" checked>
+                                    <label class="form-check-label" for="radio_bill_recipient">收件人</label>
                                 </li>
                                 <li class="form-check mb-0 ms-3">
-                                    <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient" >
-                                    <label class="form-check-label" for="radio_bill_recipient">收件人</label>
+                                    <input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="order">
+                                    <label class="form-check-label" for="radio_bill_orderer">訂購人</label>
                                 </li>
                                 <li class="form-check mb-0 ms-3">
                                     <input id="radio_bill_company" class="form-check-input" type="radio" name="InvoiceRadio" value="company">
@@ -762,6 +762,7 @@
                     </div>
 
                     <div id="PaymentData">
+                        <div class="storememo d-none">@ViewData["storeMemo"]</div>
                         <div class="title px-3 py-2 my-3 d-flex align-items-center">
                             <div class="fs-5">付款方式</div>
                             <div class="payment_method px-3">尚未選擇付款方式</div>

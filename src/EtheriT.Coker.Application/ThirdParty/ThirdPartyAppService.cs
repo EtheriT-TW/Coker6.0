@@ -112,29 +112,31 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         payment.Used = false;
                     }
-                    foreach (var item in dto.PaymentType)
-                    {
-                        var type = payment_type.Find(e => e.Code == item);
-                        if (type != null)
-                        {
-                            if (payments.Find(e => e.FK_PaymentTypesId == type.Id) != null)
-                            {
-                                payments.Find(e => e.FK_PaymentTypesId == type.Id).Used = true;
-                            }
-                            else
-                            {
-                                AddPayments.Add(new PaymentTypesValue()
-                                {
-                                    Used = true,
-                                    FK_PaymentTypesId = type.Id,
-                                    FK_WebsiteId = websiteId,
-                                });
-                            }
-                        }
-                    }
-                    if (AddPayments.Count > 0) db.AddRange(AddPayments);
-                    await db.SaveChangesAsync();
-                }
+                    if (dto.PaymentType != null) {
+						foreach (var item in dto.PaymentType)
+						{
+							var type = payment_type.Find(e => e.Code == item);
+							if (type != null)
+							{
+								if (payments.Find(e => e.FK_PaymentTypesId == type.Id) != null)
+								{
+									payments.Find(e => e.FK_PaymentTypesId == type.Id).Used = true;
+								}
+								else
+								{
+									AddPayments.Add(new PaymentTypesValue()
+									{
+										Used = true,
+										FK_PaymentTypesId = type.Id,
+										FK_WebsiteId = websiteId,
+									});
+								}
+							}
+						}
+						if (AddPayments.Count > 0) db.AddRange(AddPayments);
+					}
+					await db.SaveChangesAsync();
+				}
 
                 var reg = (from values in db.ThirdPartyKeypairValues.Include(e => e.ThirdPartyKeypair).Where(e => e.FK_WebsiteId == websiteId)
                            join key in db.ThirdPartyKeypairs.Where(e => !e.IsDeleted) on values.FK_ThirdPartyKeypairId equals key.Id
@@ -159,21 +161,24 @@ namespace EtheriT.Coker.Application.ThirdParty
                     await db.SaveChangesAsync();
                     foreach (var kvps in dto.ThirdParties)
                     {
-                        foreach (var kvp in kvps.value)
+                        if (kvps.value != null)
                         {
-                            var item = reg.Find(e => e.ThirdPartyKeypair.FK_TPid == kvps.Id && e.ThirdPartyKeypair.Code == kvp.key);
-                            if (item == null || kvp.value != item.Value)
-                            {
-                                ThirdPartyKeypairValue value = new ThirdPartyKeypairValue
-                                {
-                                    FK_ThirdPartyKeypairId = item.ThirdPartyKeypair.Id,
-                                    FK_WebsiteId = websiteId,
-                                    Value = kvp.value
-                                };
-                                loginUserData.setOptionParameter(value, userId);
-                                AddData.Add(value);
-                            }
-                        }
+							foreach (var kvp in kvps.value)
+							{
+								var item = reg.Find(e => e.ThirdPartyKeypair.FK_TPid == kvps.Id && e.ThirdPartyKeypair.Code == kvp.key);
+								if (item == null || kvp.value != item.Value)
+								{
+									ThirdPartyKeypairValue value = new ThirdPartyKeypairValue
+									{
+										FK_ThirdPartyKeypairId = ThirdPartyKeypairs.Where(e => e.Code == kvp.key && e.FK_TPid == kvps.Id).Select(e => e.Id).FirstOrDefault(),
+										FK_WebsiteId = websiteId,
+										Value = kvp.value
+									};
+									loginUserData.setOptionParameter(value, userId);
+									AddData.Add(value);
+								}
+							}
+						}
                     }
                     if (AddData.Count > 0)
                     {

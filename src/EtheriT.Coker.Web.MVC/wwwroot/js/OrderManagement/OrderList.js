@@ -1,27 +1,7 @@
 ﻿var keyId
 var order_list
-
+let $btn_reSend;
 function PageReady() {
-    co.Order = {
-        GetHeader: function (id) {
-            return $.ajax({
-                url: "/api/Order/GetHeaderOne/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                headers: _c.Data.Header,
-                data: { id: id },
-            });
-        },
-        GetDetails: function (id) {
-            return $.ajax({
-                url: "/api/Order/GetOrderDetails/",
-                type: "GET",
-                contentType: 'application/json; charset=utf-8',
-                data: { id: id },
-            });
-        },
-    };
-
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
 
@@ -32,6 +12,12 @@ function PageReady() {
             history.back();
         });
     })
+    $btn_reSend.on("click", function () {
+        console.log(co.Order);
+        Coker.sweet.confirm("重新發送通知信", "是否確認重發訂單通知信?", "確定", "取消", function () {
+            co.Order.SendMail(keyId);
+        });
+    });
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -66,6 +52,9 @@ function ElementInit() {
     $orderer_cellphone = $(".orderer_cellphone")
     $orderer_telphone = $(".orderer_telphone")
     $orderer_address = $(".orderer_address")
+
+    /*bottom*/
+    $btn_reSend = $(".btn_reSend");
 }
 
 function FormDataClear() {
@@ -184,11 +173,13 @@ function DetailsDataSet(result) {
 function MoveToContent() {
     $("#OrderList").addClass("d-none");
     $("#OrderContent").removeClass("d-none");
+    $btn_reSend.removeClass("d-none");
 }
 
 function BackToList() {
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
+    $btn_reSend.addClass("d-none");
     window.location.hash = ""
 
     $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {

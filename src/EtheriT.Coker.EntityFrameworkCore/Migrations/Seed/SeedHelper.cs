@@ -717,8 +717,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 1,
                     Used = false,
-                    Title = "atm",
-                    SerNo = 1,
+                    Title = "ATM",
+					Code = "atm",
+					SerNo = 1,
                     FK_ThirdPartyId = 1,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),

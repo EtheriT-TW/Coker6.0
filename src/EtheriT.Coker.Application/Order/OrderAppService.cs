@@ -425,14 +425,15 @@ namespace EtheriT.Coker.Application.Order
 
             return enumDictionaryDto.ToList();
         }
-        private async Task<ResponseMessageDto> SendMail(long ohid)
+        public async Task<ResponseMessageDto> SendMail(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
 
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
-                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
+				var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var order_details = await GetOrderDetails(ohid);
 
@@ -631,7 +632,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                              $"<hr/>" +
                                              $"</div>";
-                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid rgb(140 140 140); letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid rgb(160 160 160); padding: 8px 10px; }";
+                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
 
                     var sedResult = await mailAppService.sendMail(new SenderDto
                     {

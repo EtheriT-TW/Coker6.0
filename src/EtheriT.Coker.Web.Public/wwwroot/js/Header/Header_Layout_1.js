@@ -47,6 +47,7 @@
         delay: 3000,
         order: 'asc'
     });
+
     /*
     $("#Offcanvas_Mega_Menu > ul > .title > .content > ul").each(function () {
         var $self = $(this);
@@ -185,6 +186,7 @@ function CartDropDelete(self, id, success, error) {
         if (parseInt($("#Car_Badge").text()) == 0) {
             CartClear();
         }
+
     }).fail(function () {
         Coker.sweet.error("錯誤", error, null, true);
     })

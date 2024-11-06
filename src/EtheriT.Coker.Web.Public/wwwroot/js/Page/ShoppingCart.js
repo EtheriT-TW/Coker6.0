@@ -13,7 +13,7 @@ var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $re
 var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_city, $invoice_address_town, $invoice_address;
 var $ship_method, $pay_method;
 
-var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {};
+var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {}, prod_data = {};
 
 function PageReady() {
     Coker.Order = {
@@ -72,6 +72,8 @@ function PageReady() {
             });
         }
     }
+
+    $("#btn_car_dropdown").attr("disabled", "disabled")
 
     Coker.Token.CheckToken().done(function (resule) {
         if (resule.isLogin) {
@@ -336,7 +338,7 @@ function CartAdd(result) {
         item_btn_remove_pro = item.find(".btn_remove_pro");
 
     item.data("scid", result.scId);
-    item_link.attr("href", `${OrgName}/Toilet/` + result.pId);
+    item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -499,9 +501,9 @@ function RadioPayment() {
             var val = $this.val();
             console.log(val)
             if (val == 1) {
-                $(".pay_byATM").removeClass("d-none");
+                $(".pay_info").removeClass("d-none");
             } else {
-                $(".pay_byATM").addClass("d-none");
+                $(".pay_info").addClass("d-none");
             }
             $pay_text.text($this.siblings("label").text());
         }
@@ -741,7 +743,10 @@ function OrderHeaderAdd() {
         Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
     });
 }
-function OrderSuccess(order_header_id) {
+function OrderSuccess(results) {
+    var result = results.split(",")
+    var order_header_id = result[0];
+
     CartClear();
 
     $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substr(order_header_id.length));
@@ -770,6 +775,10 @@ function OrderSuccess(order_header_id) {
             break;
     }
 
+    $("#PaymentData .pay_info .paid_date").append(`${result[1]}<span>${result[2]}23點59分</span>`);
+    var tempmail = order_header_data.ordererEmail;
+    $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:${tempmail.substr(0, 1)}******${tempmail.substr(tempmail.indexOf("@") - 1)}`);
+
     Coker.Order.GetDetails(order_header_id).done(function (result) {
         if (result.length > 0) {
             if (result.length > 1) {
@@ -795,7 +804,7 @@ function OrderSuccess(order_header_id) {
                                         <div class="col">${value.value}</div>
                                     </div>`;
             })
-            $(".pay_byATM > div").prepend(html);
+            $(".pay_info > div").prepend(html);
         }
     });
 }
@@ -810,7 +819,7 @@ function PurchaseAdd(result, item_list_ul) {
         item_quantity = item.find(".pro_quantity"),
         item_subtotal = item.find(".pro_subtotal");
 
-    item_link.attr("href", "${OrgName}/Toilet/" + result.pId);
+    item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')

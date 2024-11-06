@@ -17,6 +17,11 @@ using EtheriT.Coker.Core.Models;
 using Microsoft.JSInterop.Implementation;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using Org.BouncyCastle.Cms;
+using System.Globalization;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -26,6 +31,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         public OrderAppService(
@@ -33,6 +39,7 @@ namespace EtheriT.Coker.Application.Order
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
+            MailAppService mailAppService,
             IConfiguration configuration,
             IMapper mapper
         )
@@ -41,6 +48,7 @@ namespace EtheriT.Coker.Application.Order
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.mailAppService = mailAppService;
             this.configuration = configuration;
             this.mapper = mapper;
         }
@@ -66,7 +74,14 @@ namespace EtheriT.Coker.Application.Order
                     db.SaveChanges();
 
                     output = await AddDetails(oh.Id);
-                    output.Message = oh.Id.ToString();
+                    if (output.Success)
+                    {
+                        output = await SendMail(oh.Id);
+                        if (output.Success)
+                        {
+                            output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                        }
+                    }
                 }
                 else throw new Exception("查無Token");
             }
@@ -409,6 +424,237 @@ namespace EtheriT.Coker.Application.Order
                                     };
 
             return enumDictionaryDto.ToList();
+        }
+        private async Task<ResponseMessageDto> SendMail(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var order_details = await GetOrderDetails(ohid);
+
+                if (order_header != null && order_details != null)
+                {
+                    var InvoiceRecipient = (order_header.InvoiceRecipient == 1) ? "訂購人" : (order_header.InvoiceRecipient == 2) ? "收件人" : "公司(三聯)";
+                    var InvoiceTable = "";
+                    if (order_header.InvoiceRecipient == 3)
+                    {
+                        InvoiceTable = $"<tr>" +
+                                                        $"<td class='text-end'>發票抬頭</td>" +
+                                                        $"<td colspan='3' class='text-start'>{order_header.InvoiceTitle}</td>" +
+                                                        $"</tr>" +
+                                                        $"<tr>" +
+                                                        $"<td class='text-end'>統一編號</td>" +
+                                                        $"<td colspan='3' class='text-start'>{order_header.UniformId}</td>" +
+                                                        $"</tr>" +
+                                                        $"<tr>" +
+                                                        $"<td class='text-end'>寄送地址</td>" +
+                                                        $"<td colspan='3' class='text-start'>{order_header.InvoiceAddress}</td>" +
+                                                        $"</tr>";
+                    }
+                    var Shipping = await db.LogisticsSettings.Where(e => e.Id == order_header.Shipping).FirstOrDefaultAsync();
+                    var PaymentType = await db.PaymentTypes.Where(e => e.FK_ThirdPartyId == order_header.Payment).Select(e => e.Title).FirstOrDefaultAsync();
+                    var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
+                                            join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId
+                                            where tpk.FK_TPid == order_header.Payment
+                                            where tpkv.FK_WebsiteId == WebsiteID
+                                            select new ThirdPartyKeypairItemOutputDto()
+                                            {
+                                                Id = tpkv.Id,
+                                                Title = tpk.Title,
+                                                Code = tpk.Code,
+                                                Value = tpkv.Value
+                                            }).ToListAsync();
+                    var PaymentTable = "";
+                    var PaymentInfo = "";
+                    if (PaymentType == "ATM")
+                    {
+                        PaymentTable = $"<tbody>" +
+                                                        $"<tr>" +
+                                                        $"<td class='text-start text-red'>您選擇的付款方式為ATM轉帳方式，目前尚未付款完成，請您於繳費期限內完成，繳費完成後請主動與公司客服聯絡。若逾期未付清款項將自動取消本訂單，謝謝。</td>" +
+                                                        $"</tr>" +
+                                                        $"</tbody>";
+                        foreach (var data in ThirdParty)
+                        {
+                            PaymentInfo += $"<tr>" +
+                                                                $"<td scope='row' class='text-end'>{data.Title}</td>" +
+                                                                $"<td class='text-start'>{data.Value}</td>" +
+                                                                $"</tr>";
+                        }
+                    }
+
+                    var DetailsTable = "";
+                    foreach (var data in order_details)
+                    {
+                        var Specification = data.S1Title != "" ? data.S2Title != "" ? $"{data.S1Title}、{data.S2Title}" : data.S1Title : "";
+                        DetailsTable += $"<tr>" +
+                                                        $"<td class='text-start'>{data.Title}</td>" +
+                                                        $"<td>{Specification}</td>" +
+                                                        $"<td>{data.Price.ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                                        $"<td>{data.Quantity}</td>" +
+                                                        $"<td>${(data.Price * data.Quantity).ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                                        $"</tr>";
+                    }
+
+                    var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
+                    order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
+                    order_header.OrdererTelephone = order_header.OrdererTelephone != "" ? order_header.OrdererTelephone.Length > 3 ? order_header.OrdererTelephone?.Substring(0, 3) + "******" : order_header.OrdererTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
+                    order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
+                    order_header.RecipientTelephone = order_header.RecipientTelephone != "" ? order_header.RecipientTelephone.Length > 3 ? order_header.RecipientTelephone?.Substring(0, 3) + "******" : order_header.RecipientTelephone?.Substring(0, 1) + "******" : "";
+
+                    var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>" +
+                                             $"<br/>" +
+                                             $"<div>非常感謝您的訂購，以下為您的訂購清單，而非付款收據，為保障您的安全，部分訊息將以'*'標記。</div>" +
+                                             $"<ul>" +
+                                             $"<li>若您使用ATM轉帳付款，請於訂購日起兩日內轉帳，繳費完成後請主動與公司客服聯絡。</li>" +
+                                             $"<li>若您使用其他付款方式或貨到付款，您可以制定單查詢了解訂單詳情與處理進度。</li>" +
+                                             $"<li>如因交易條件有誤、商品缺貨、價格誤刊或有其他本公司無法接受訂單之情形，本公司保留商品出貨與否的權利。</li>" +
+                                             $"</ul>" +
+                                             $"<hr/>" +
+                                             $"<h2><span class='text-red'>訂單編號：</span>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</h2>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' colspan='4' class='text-start'>訂購人：{order_header.Orderer.Substring(0, 1) + "*****"}{(SexEnum)order_header.OrdererSex}</th></tr>" +
+                                             $"</thead>" +
+                                             $"<tbody>" +
+                                             $"<tr>" +
+                                             $"<td class='text-end'>電子信箱</td>" +
+                                             $"<td colspan='3' class='text-start'>{OrdererEmailSecret}</td>" +
+                                             $"</tr>" +
+                                             $"<tr>" +
+                                             $"<td class='text-end'>手機</td>" +
+                                             $"<td>{order_header.OrdererCellPhone}</td>" +
+                                             $"<td class='text-end'>電話</td>" +
+                                             $"<td>{order_header.OrdererTelephone}</td>" +
+                                             $"</tr>" +
+                                             $"</tbody>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' colspan='4' class='text-start'>收件人：{order_header.Recipient.Substring(0, 1) + "*****"}{(SexEnum)order_header.RecipientSex}</th></tr>" +
+                                             $"</thead>" +
+                                             $"<tbody>" +
+                                             $"<tr>" +
+                                             $"<td class='text-end'>寄送地址</td>" +
+                                             $"<td colspan='3' class='text-start'>{order_header.RecipientAddress}</td>" +
+                                             $"</tr>" +
+                                             $"<tr>" +
+                                             $"<td class='text-end'>手機</td>" +
+                                             $"<td>{order_header.RecipientCellPhone}</td>" +
+                                             $"<td class='text-end'>電話</td>" +
+                                             $"<td>{order_header.RecipientTelephone}</td>" +
+                                             $"</tr>" +
+                                             $"</tbody>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' colspan='4' class='text-start'>發票寄送：{InvoiceRecipient}</th></tr>" +
+                                             $"</thead>" +
+                                             $"<tbody>" + InvoiceTable + $"</tbody>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' colspan='4' class='text-start'>備註</th></tr>" +
+                                             $"</thead>" +
+                                             $"<tbody>" +
+                                             $"<tr>" +
+                                             $"<td class='text-start'>{order_header.Remark}</td>" +
+                                             $"</tr>" +
+                                             $"</tbody>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr>" +
+                                             $"<th scope='col' class='text-start'>購物明細</th>" +
+                                             $"<th scope='col'>規格</th>" +
+                                             $"<th scope='col'>單價</th>" +
+                                             $"<th scope='col'>數量</th>" +
+                                             $"<th scope='col'>小計</th>" +
+                                             $"</tr>" +
+                                             $"</thead>" +
+                                             $"<tbody>" +
+                                             DetailsTable +
+                                             $"</tbody>" +
+                                             $"<tfoot>" +
+                                             $"<tr>" +
+                                             $"<th colspan='6' class='text-end'>運費<span class='text-red ms-1 text-size1_25'>${order_header.Freight.ToString("N", CultureInfo.CurrentCulture)}</span></th>" +
+                                             $"</tr>" +
+                                             $"<tr>" +
+                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>${order_header.Subtotal.ToString("N", CultureInfo.CurrentCulture)}</span></th>" +
+                                             $"</tr>" +
+                                             $"</tfoot>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' class='text-start'>運送方式：<span class='text-red ms-1 text-size1_5'>{Shipping.Title}　{(PreserveTypeEnum)Shipping.PreserveType}-{(ShippingTypeEnum)Shipping.LogisticsType}</span></th></tr>" +
+                                             $"</thead>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' class='text-start'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType}</span></th></tr>" +
+                                             $"</thead>" +
+                                             PaymentTable +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<table>" +
+                                             $"<thead>" +
+                                             $"<tr><th scope='col' colspan='2' class='text-start'>繳費資訊</th></tr>" +
+                                             $"</thead>" +
+                                             $"<tbody>" +
+                                             PaymentInfo +
+                                             $"<tr>" +
+                                             $"<td scope='row' class='text-end'>應繳金額</td>" +
+                                             $"<td class='text-start'>${order_header.Subtotal.ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                             $"</tr>" +
+                                             $"<tr>" +
+                                             $"<td scope='row' class='text-end text-red'>繳費期限</td>" +
+                                             $"<td class='text-start text-red'>{order_header.CreationTime.AddDays(1).ToString("yyyy/MM/dd")}</td>" +
+                                             $"</tr>" +
+                                             $"</tbody>" +
+                                             $"</table>" +
+                                             $"<br/>" +
+                                             $"<hr/>" +
+                                             $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
+                                             $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
+                                             $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                             $"<hr/>" +
+                                             $"</div>";
+                    var mailcss = "*{ font-family: sans-serif; } .d-flex{  display: flex; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid rgb(140 140 140); letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid rgb(160 160 160); padding: 8px 10px; }";
+
+                    var sedResult = await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
+                                        new MailUserDataDto()
+                                        {
+                                            Name = order_header.Orderer,
+                                            Email = order_header.OrdererEmail,
+                                        }
+                                    },
+                        Subject = $"訂購通知【{Website.Title}】",
+                        Body = mailhtml,
+                        Css = mailcss,
+                    }, WebsiteID);
+
+                    response = sedResult;
+                }
+                else throw new Exception("查無訂購資料");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+
+            return response;
         }
     }
 }

@@ -306,15 +306,15 @@ input[type="number"] {
     background-color: var(--gray-bg-light);
 }
 
-#PaymentData > .pay_byATM > div > div > div > .paid_amount {
+#PaymentData > .pay_info > div > div > div > .paid_amount {
     color: var(--red-number);
 }
 
-    #PaymentData > .pay_byATM > div > div > div > .paid_amount::before {
+    #PaymentData > .pay_info > div > div > div > .paid_amount::before {
         content: 'NT$';
     }
 
-#PaymentData > .pay_byATM > div > div > .paid_date > span {
+#PaymentData > .pay_info > div > div > .paid_date > span {
     color: var(--red-number);
 }
 

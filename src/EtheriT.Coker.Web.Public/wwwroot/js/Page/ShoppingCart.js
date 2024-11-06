@@ -531,6 +531,7 @@ function Step3Monitor() {
     } else {
         switch ($(`[name="InvoiceRadio"]:checked`).val()) {
             case "order":
+            case "recipient":
                 InvoiceFilled = true;
                 break;
         }

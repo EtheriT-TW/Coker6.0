@@ -88,6 +88,16 @@ function SwiperInit(obj) {
                         const previousSlideIndex = this.previousIndex;
                         //const previousSlideIndex = (this.realIndex - 1 + totalSlides) % totalSlides;
                         const $previousSlide = $(this.slides[previousSlideIndex]);
+                        const videoAction = $(this.slides[this.activeIndex]).find('video');
+                        if (videoAction.length > 0) {
+                            this.autoplay.stop();
+                            const slide = this;
+                            setTimeout(function () {
+                                slide.autoplay.start();
+                            }, 50000);
+                        } else {
+                            this.autoplay.start();
+                        }
                         $self.find(".swiper-slide").each(function () {
                             if (parseInt($(this).attr("data-swiper-slide-index")) != this.realIndex) {
                                 var html;

@@ -297,6 +297,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="MemberManagement",
                                 Action="UserType",
                                 Icon=""
+                            },
+                            new JobMenu {
+                                PageName="MemberType",
+                                Title="會員角色管理",
+                                Controller="MemberManagement",
+                                Action="MemberType",
+                                Icon=""
                             }
                         }
                     },
@@ -425,6 +432,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         new JobMenu{
                             PageName="TypographyTheme",
                             Enable=false
+                        },
+                        new JobMenu{
+                            PageName="MemberSet",
+                            Enable=false
                         }
                     });
                     break;
@@ -447,6 +458,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },
                         new JobMenu{
                             PageName="TypographyTheme",
+                            Enable=false
+                        },
+                        new JobMenu{
+                            PageName="MemberSet",
                             Enable=false
                         }
                     });

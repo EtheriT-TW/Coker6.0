@@ -86,6 +86,9 @@
     font-size: 0.8rem;
 }
 
+#ResetEmailForm > div > input.pass {
+    padding-right: 3.5rem;
+}
 
 #TWzipcode > .county label::before, #TWzipcode > .county label::after, #TWzipcode > .district label::before, #TWzipcode > .district label::after {
     content: '';

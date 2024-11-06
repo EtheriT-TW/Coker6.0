@@ -58,7 +58,7 @@ html {
 .top_title_1 li {
     color: var(--gray-path);
     cursor: default;
-    font-size:0.9rem;
+    font-size: 0.9rem;
 }
 
     .top_title_1 li a {
@@ -70,9 +70,10 @@ html {
         padding-right: 0.25rem;
         color: var(--gray-path);
     }
+
 .editTime {
     color: var(--gray-path);
-    font-size:0.9rem;
+    font-size: 0.9rem;
 }
 /* Breadcrumb */
 #Breadcrumb {
@@ -121,6 +122,10 @@ html {
 
 #LoginForm > div > input:nth-child(2n) {
     padding-left: 3.5rem;
+}
+
+#LoginForm > div > input.pass {
+    padding-right: 3.5rem;
 }
 
 #LoginForm > .btn_refresh {

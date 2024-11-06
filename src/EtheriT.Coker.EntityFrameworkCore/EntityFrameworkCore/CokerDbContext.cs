@@ -214,11 +214,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<ThirdPartyKeypairValue>(o =>
             {
                 o.HasOne(u => u.ThirdPartyKeypair).WithMany(u => u.thirdPartyKeypairValues).HasForeignKey(f => f.FK_ThirdPartyKeypairId);
+                o.HasOne(u => u.Website).WithMany(u => u.thirdPartyKeypairValues).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<PaymentTypesValue>(o =>
             {
                 o.HasOne(u => u.paymentType).WithMany(u => u.paymentTypesValues).HasForeignKey(f => f.FK_PaymentTypesId);
+                o.HasOne(u => u.website).WithMany(u => u.paymentTypesValues).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<ThirdParty>(o =>

@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Freight
+@using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 @using EtheriT.Coker.Web.Public.Models
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
@@ -204,10 +205,8 @@
                             <div class="subtotal price"></div>
                         </div>
                     </div>
-
                     <div class="swiper_button my-5 d-flex justify-content-center">
                         <a href="#" title="繼續購物：返回上一頁" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
-
                         <button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
                             下一步
                         </button>
@@ -254,28 +253,36 @@
                                 <div>店家尚未設定運費方式</div>
                             }
                         </div>
-
                     </form>
 
                     <div class="title px-3 py-2 d-flex align-items-center justify-content-between">
                         <div class="fs-5 my-2">付款方式</div>
                     </div>
 
-                    <form id="RadioPayment" class="px-5 text-start py-4 border-bottom mb-4 needs-validation" method="post" novalidate>
+                    <form id="RadioPayment" class="px-5 text-start border-bottom mb-4 needs-validation" method="post" novalidate>
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
-                        <div class="form-check py-2">
-                            <input id="radio_payment_atm" class="form-check-input" type="radio" name="RadioPayment" value="1" required>
-                            <label class="form-check-label" for="radio_payment_atm">ATM</label>
-                        </div>
-                        <div class="form-check py-2">
-                            <input id="radio_payment_card" class="form-check-input" type="radio" name="RadioPayment" value="2" required>
-                            <label class="form-check-label" for="radio_payment_card">線上刷卡</label>
-                        </div>
-                        <div class="form-check py-2">
-                            <input id="radio_payment_LINE" class="form-check-input" type="radio" name="RadioPayment" value="3" required>
-                            <label class="form-check-label" for="radio_payment_LINE">LINE Pay</label>
-                            <div class="invalid-feedback">請選擇付款方式</div>
-                        </div>
+                        @if (Model.paymentModels.Count > 0)
+                        {
+                            var has_invalid = false;
+                            @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
+                            {
+                                <div class="form-check text-start col-12 col-sm-3 my-2 py-2">
+                                    <input id="radio_payment_@payment.Code" class="form-check-input" type="radio" name="RadioPayment" value="@payment.Id" required>
+                                    <label class="form-check-label" for="radio_payment_@payment.Code">@payment.Title</label>
+                                    @{
+                                        if (!has_invalid)
+                                        {
+                                            <div class="invalid-feedback">請選擇付款方式</div>
+                                            has_invalid = true;
+                                        }
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div>店家尚未設定付款方式</div>
+                        }
                     </form>
 
                     <div class="priceline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
@@ -295,7 +302,7 @@
 
                     <div class="swiper_button my-5">
                         <button class="btn_swiper_prev_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
-                            返回上一頁
+                            返回上一步
                         </button>
 
                         <button class="btn_swiper_next_step3 border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
@@ -308,7 +315,7 @@
             <div id="Step3" class="card text-center swiper-slide">
                 <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
                     <div class="fs-5 my-2">購物明細</div>
-                    <a class="px-4 py-2 text-decoration-underline" title="返回上一頁" href="#">我要再選購</a>
+                    <a class="btn_backshop px-4 py-2 text-decoration-underline" title="返回上一頁" href="#">我要再選購</a>
                 </div>
 
                 <div class="card-body px-0">
@@ -506,14 +513,14 @@
 
                     <div id="InvoiceForm">
                         <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                            <div class="fs-5">發票寄送</div>
+                            <div class="fs-5">發票另寄　</div>
                             <ul class="d-sm-flex text-start mb-0">
                                 <li class="form-check mb-0 ms-3">
                                     <input id="radio_bill_orderer" class="form-check-input" type="radio" name="InvoiceRadio" value="order" checked>
                                     <label class="form-check-label" for="radio_bill_orderer">訂購人</label>
                                 </li>
                                 <li class="form-check mb-0 ms-3">
-                                    <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient">
+                                    <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient" >
                                     <label class="form-check-label" for="radio_bill_recipient">收件人</label>
                                 </li>
                                 <li class="form-check mb-0 ms-3">
@@ -566,7 +573,7 @@
 
                     <div class="swiper_button mt-4 my-sm-5 row align-items-center justify-content-center">
                         <button class="btn_gray_underline btn_goprev col-auto order-1 order-sm-0 border-0 text-center text-decoration-underline bg-transparent p-2">
-                            回上一頁
+                            回上一步
                         </button>
 
                         <div class="col-12 col-sm-auto order-0 order-sm-1">
@@ -576,7 +583,7 @@
                             </button>
                         </div>
 
-                        <a class="btn_gray_underline btn_gray_dark col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="#">我要再選購</a>
+                        <a class="btn_backshop btn_gray_underline btn_gray_dark col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="#">我要再選購</a>
                     </div>
                 </div>
             </div>
@@ -760,47 +767,20 @@
                             <div class="payment_method px-3">尚未選擇付款方式</div>
                         </div>
 
-                        <div class="pay_byATM px-4 d-none">
+                        <div class="pay_info px-4 d-none">
                             <p>繳費完成後，請利用Email主動與客服聯絡。告知您姓名、轉帳帳戶末五碼，或是相關匯款資訊，以利核對您的款項。</p>
-
                             <div class="border-bottom border-top text-start py-3 my-3">
-                                <div class="mb-2 row align-items-center d-flex">
-                                    <div class="col-auto col-sm-2 text-end py-0">轉帳銀行代碼：</div>
-                                    <div class="default col">玉山銀行(808)</div>
-                                </div>
-
-                                <div class="mb-2 row align-items-center d-flex">
-                                    <div class="col-auto col-sm-2 text-end py-0">轉帳帳號：</div>
-                                    <div class="col">大昌分行123-123-123</div>
-                                </div>
-
-                                <div class="mb-2 row align-items-center contact_phone">
-                                    <div class="col-auto col-sm-2 text-end">聯絡電話：</div>
-                                    <div class="col">07-1234***分機</div>
-                                </div>
-
-                                <div class="mb-2 row align-items-center">
-                                    <div class="col-auto col-sm-2 text-end">戶名：</div>
-                                    <div class="col">隆昌窯業股份有限公司</div>
-                                </div>
-
                                 <div class="mb-2 row align-items-center">
                                     <div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
                                     <div class="col">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
                                 </div>
-
                                 <div class="mb-2 row align-items-center">
                                     <div class="col-auto col-sm-2 text-end">繳費期限：</div>
-                                    <div class="paid_date col">2024年<span>11月01日23點59分</span></div>
+                                    <div class="paid_date col"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <p class="d-flex justify-content-center px-4">
-                            如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />
-                            ．隨後我們也會將轉帳的資料mail-封到您指定的電子信箱:ve***********
-                        </p>
-
+                        <p class="pay_mail d-flex justify-content-center px-4"></p>
                         <div class="btn_back_home d-flex justify-content-center my-4">
                             <a href="/@ViewData["OrgName"]/home">
                                 <div class="fs-5 fw-bold px-3 py-1 rounded text-white">回首頁</div>

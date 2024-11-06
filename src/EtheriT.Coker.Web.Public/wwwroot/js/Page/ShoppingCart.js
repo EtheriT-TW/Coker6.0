@@ -1,7 +1,7 @@
 ﻿var buy_step_swiper;
 var gotop_switch = false, isCheckout = false;
 
-var subtotal, ori_freight, low_con, disfreight, freight, total, paymentArr
+var subtotal, ori_freight, low_con, disfreight, freight, total
 var shipping = null, payment = null;
 
 var ShippingForms, PaymentForms, OrdererForms, RecipientForms, InvoiceForms;
@@ -13,7 +13,7 @@ var $recipient_name, $recipient_sex, $recipient_email, $recipient_cellphone, $re
 var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_city, $invoice_address_town, $invoice_address;
 var $ship_method, $pay_method;
 
-var user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {};
+var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {}, prod_data = {};
 
 function PageReady() {
     Coker.Order = {
@@ -59,9 +59,21 @@ function PageReady() {
         },
     };
 
-    ElementInit();
-    CartInit();
+    Coker.Payment = {
+        GetPaymentInfo: function (paytypeid) {
+            return $.ajax({
+                url: "/api/ShoppingCart/GetPaymentInfo/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { paytypeid: paytypeid },
+            });
+        }
+    }
 
+    $("#btn_car_dropdown").attr("disabled", "disabled")
 
     Coker.Token.CheckToken().done(function (resule) {
         if (resule.isLogin) {
@@ -84,6 +96,7 @@ function PageReady() {
                     order_data = user_data;
                     order_data.ordererAddress = user_data['address'];
                     DataInsert(order_data, $("#OrdererForm .default_data"));
+                    RecipientSameOrderer();
 
                     co.Zipcode.setData({
                         el: $("#Orderer_TWzipcode"),
@@ -94,9 +107,8 @@ function PageReady() {
         }
     });
 
-    Coker.Order.GetPaymentTypeEnum().done(function (result) {
-        paymentArr = result;
-    });
+    ElementInit();
+    CartInit();
 
     $(".btn_call_login").on("click", function (event) {
         loginModal.show();
@@ -129,7 +141,7 @@ function PageReady() {
     });
 
     buy_step_swiper.on('slideChange', function () {
-        console.log("changeSlide", buy_step_swiper.activeIndex);
+        //console.log("changeSlide", buy_step_swiper.activeIndex);
         switch (buy_step_swiper.activeIndex) {
             case 2:
                 if (ShippingForms.find("input").length == 0) {
@@ -228,11 +240,10 @@ function PageReady() {
     $('input[type=radio][name=RecipientRadio]').on("change", RecipientRadio);
     $('input[type=radio][name=InvoiceRadio]').on("change", InvoiceRadio);
 
-    $(".btn_gray_dark").on("click", function () {
+    $(".btn_backshop").on("click", function () {
         history.back();
         return false;
     });
-
 }
 /* 元素初始化 */
 function ElementInit() {
@@ -312,7 +323,7 @@ function CartInit() {
     })
 }
 function CartAdd(result) {
-    console.log(result)
+    //console.log(result)
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
@@ -327,7 +338,7 @@ function CartAdd(result) {
         item_btn_remove_pro = item.find(".btn_remove_pro");
 
     item.data("scid", result.scId);
-    item_link.attr("href", `${OrgName}/Toilet/` + result.pId);
+    item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -485,19 +496,16 @@ function RadioPayment() {
     var $pay_text = $(".payment_method");
     $pay_text.addClass("fs-2 fw-bold px-3");
     $pay_method.each(function () {
-        if ($(this).is(":checked")) {
-            var val = $(this).val();
+        var $this = $(this);
+        if ($this.is(":checked")) {
+            var val = $this.val();
+            console.log(val)
             if (val == 1) {
-                $(".pay_byATM").removeClass("d-none");
+                $(".pay_info").removeClass("d-none");
             } else {
-                $(".pay_byATM").addClass("d-none");
+                $(".pay_info").addClass("d-none");
             }
-            $(paymentArr).each(function () {
-                var e = this;
-                if (e.value == val) {
-                    $pay_text.text(e.key);
-                }
-            });
+            $pay_text.text($this.siblings("label").text());
         }
     })
     buy_step_swiper.update();
@@ -512,6 +520,7 @@ function Step3Monitor() {
     } else {
         switch ($(`[name="RecipientRadio"]:checked`).val()) {
             case "order":
+
                 RecipientSameOrderer();
                 RecipientFilled = true;
                 break;
@@ -527,10 +536,6 @@ function Step3Monitor() {
         }
     }
 
-    console.log(`OrdererFilled = ${OrdererFilled}`)
-    console.log(`$recipient_email = ${$recipient_email.val()}`)
-    console.log(`RecipientFilled = ${RecipientFilled}`)
-    console.log(`InvoiceFilled = ${InvoiceFilled}`)
     if (!OrdererFilled) {
         Coker.sweet.error("請確實填寫訂購人資料！", null, true);
     } else if (!RecipientFilled) {
@@ -592,37 +597,9 @@ function RecipientFormClear() {
     $remark.val("");
 }
 function RecipientSameOrderer() {
-    RecipientFormSet(
-        $orderer_name.val(),
-        $orderer_sex.val(),
-        $orderer_email.val(),
-        $orderer_cellphone.val(),
-        $orderer_telphone_area.val() + $orderer_telphone.val(),
-        $orderer_telphone_ext.val(),
-        $orderer_address_city.val(),
-        $orderer_address_town.val(),
-        $orderer_address.val(),
-        $remark.val()
-    );
-}
-function RecipientFormSet(name, sex, email, cellphone, telphone_area, telphone, telphone_ext, address_city, address_town, address, remark) {
-    $recipient_name.val(name);
-    $recipient_sex.each(function () {
-        if ($(this).val() == sex) {
-            $(this).prop("checked", true);
-        }
-    })
-    $recipient_email.val(email);
-    $recipient_cellphone.val(cellphone);
-    $recipient_telphone_area.val(telphone_area);
-    $recipient_telphone.val(telphone);
-    $recipient_telphone_ext.val(telphone_ext);
-    $Recipient_TWzipcode.twzipcode('set', {
-        'county': address_city,
-        'district': address_town,
-    });
-    $recipient_address.val(address);
-    $remark.val(remark);
+    for (var key in order_data) {
+        if (key.startsWith("orderer") > 0) recipient_data[key.replace("orderer", "recipient")] = order_data[key]
+    }
 }
 function InvoiceRadio() {
     switch (this.value) {
@@ -685,7 +662,6 @@ function DeleteRecipient() {
     $this_parent.remove();
 }
 function OrderHeaderAdd() {
-    var order_header_data = {};
 
     if (OrdererOpen) {
         order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
@@ -703,9 +679,7 @@ function OrderHeaderAdd() {
 
     switch ($(`[name="RecipientRadio"]:checked`).val()) {
         case "order":
-            for (var key in order_data) {
-                if (key.startsWith("orderer") > 0) recipient_data[key.replace("orderer", "recipient")] = order_data[key]
-            }
+            RecipientSameOrderer();
             break;
         case "edit":
             recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
@@ -769,7 +743,10 @@ function OrderHeaderAdd() {
         Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
     });
 }
-function OrderSuccess(order_header_id) {
+function OrderSuccess(results) {
+    var result = results.split(",")
+    var order_header_id = result[0];
+
     CartClear();
 
     $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substr(order_header_id.length));
@@ -798,6 +775,10 @@ function OrderSuccess(order_header_id) {
             break;
     }
 
+    $("#PaymentData .pay_info .paid_date").append(`${result[1]}<span>${result[2]}23點59分</span>`);
+    var tempmail = order_header_data.ordererEmail;
+    $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:${tempmail.substr(0, 1)}******${tempmail.substr(tempmail.indexOf("@") - 1)}`);
+
     Coker.Order.GetDetails(order_header_id).done(function (result) {
         if (result.length > 0) {
             if (result.length > 1) {
@@ -812,6 +793,20 @@ function OrderSuccess(order_header_id) {
             }
         }
     })
+
+    Coker.Payment.GetPaymentInfo(order_header_data.payment).done(function (result) {
+        //console.log(result)
+        if (result != null && result.length > 0) {
+            var html = "";
+            $.each(result, function (index, value) {
+                html += `<div class="mb-2 row">
+                                        <div class="col-auto col-sm-2 py-0 text-end">${value.title}：</div>
+                                        <div class="col">${value.value}</div>
+                                    </div>`;
+            })
+            $(".pay_info > div").prepend(html);
+        }
+    });
 }
 function PurchaseAdd(result, item_list_ul) {
     var item = $($("#Template_Purchase_Details").html()).clone();
@@ -824,7 +819,7 @@ function PurchaseAdd(result, item_list_ul) {
         item_quantity = item.find(".pro_quantity"),
         item_subtotal = item.find(".pro_subtotal");
 
-    item_link.attr("href", "${OrgName}/Toilet/" + result.pId);
+    item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')

@@ -31,6 +31,8 @@ using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Token;
 using System.Linq;
+using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
@@ -39,6 +41,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
     {
         private readonly ILogger<PageController> _logger;
         private readonly IFreightAppService freightAppService;
+        private readonly IThirdPartyAppService thirdPartyAppService;
         private readonly IWebMenuApplication webMenuApplication;
         private readonly IConfiguration Configuration;
         private readonly IWebsiteApplication websiteApplication;
@@ -47,7 +50,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IProductAppService productAppService;
         private readonly ICustSearchAppService custSearchAppService;
         private readonly IStoreSetAppService storeSetAppService;
-		private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRemoteAppService RemoteAppService;
         private readonly ITechnicalCertificateAppService technicalCertificateAppService;
         private readonly ITokenAppService tokenAppService;
@@ -56,6 +59,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
+            IThirdPartyAppService thirdpartyAppService,
             IWebMenuApplication webMenuApplication,
             IConfiguration configuration,
             IWebsiteApplication websiteApplication,
@@ -64,8 +68,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IProductAppService productAppService,
             IStoreSetAppService storeSetAppService,
             ICustSearchAppService custSearchAppService,
-			IHttpContextAccessor httpContextAccessor,
-			IRemoteAppService RemoteAppService,
+            IHttpContextAccessor httpContextAccessor,
+            IRemoteAppService RemoteAppService,
             ITechnicalCertificateAppService technicalCertificateAppService,
             IAdvertiseAppService advertiseAppService,
             ITokenAppService tokenAppService,
@@ -74,6 +78,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         {
             this._logger = logger;
             this.freightAppService = freightAppService;
+            this.thirdPartyAppService = thirdpartyAppService;
             this.webMenuApplication = webMenuApplication;
             this.Configuration = configuration;
             this.websiteApplication = websiteApplication;
@@ -89,29 +94,32 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.tokenAppService = tokenAppService;
             this.advertiseAppService = advertiseAppService;
         }
-        private bool UseLegacyPathHandling(string website, string key, string option) { 
+        private bool UseLegacyPathHandling(string website, string key, string option)
+        {
             bool check = true;
             if (
-                ( !string.IsNullOrEmpty(website) && (website.IndexOf("..") >= 0|| website.IndexOf("//") >= 0)) ||
-				(!string.IsNullOrEmpty(key) && (key.IndexOf("..") >= 0 || key.IndexOf("//") >= 0)) ||
-				(!string.IsNullOrEmpty(option) && (option.IndexOf("..") >= 0 || option.IndexOf("//") >= 0))
-			)
+                (!string.IsNullOrEmpty(website) && (website.IndexOf("..") >= 0 || website.IndexOf("//") >= 0)) ||
+                (!string.IsNullOrEmpty(key) && (key.IndexOf("..") >= 0 || key.IndexOf("//") >= 0)) ||
+                (!string.IsNullOrEmpty(option) && (option.IndexOf("..") >= 0 || option.IndexOf("//") >= 0))
+            )
             {
                 check = false;
             }
-            return check; 
+            return check;
         }
 
-		public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
+        public async Task<IActionResult> IndexAsync(string website, string key, string option, int id, string search)
         {
             if (string.IsNullOrEmpty(key)) key = "home";
-            else if (string.IsNullOrEmpty(website) && !string.IsNullOrEmpty(key)) {
+            else if (string.IsNullOrEmpty(website) && !string.IsNullOrEmpty(key))
+            {
                 website = key;
                 key = "home";
             }
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
+            var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
             var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
@@ -123,7 +131,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
 
-            RemoteInputDto remoteInputDto = new RemoteInputDto{FK_WebsiteId = siteId};
+            RemoteInputDto remoteInputDto = new RemoteInputDto { FK_WebsiteId = siteId };
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
             PageViewModel model = new PageViewModel
             {
@@ -131,13 +139,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 orgName = defaultData.OrgName,
                 search = search ?? "".Trim(),
                 freightModels = freight,
+                paymentModels = payment,
                 enterAd = enterAds,
                 layout = $"layout{defaultData.Layout_Type}",
                 root = defaultData.Root,
                 Level = defaultData.Level,
                 locale = defaultData.locale,
-				token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
-				storeSet = new StoreSetFrontDto
+                token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
+                storeSet = new StoreSetFrontDto
                 {
                     GA4 = (GA4 != null && GA4.value != null) ? String.Join(",", GA4.value!) : "",
                     GoogleTranslate = (GoogleTranslate != null && GoogleTranslate.value != null) ? String.Join(",", GoogleTranslate.value!) : "",
@@ -148,26 +157,29 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
             };
             string view;
-            if ( new List<string> { "article" }.Contains(key.ToLower())  && int.TryParse(option, out id))
+            if (new List<string> { "article" }.Contains(key.ToLower()) && int.TryParse(option, out id))
             {
                 option = key;
             }
             model.option = key;
-            if (!UseLegacyPathHandling(website, key, option)) {
+            if (!UseLegacyPathHandling(website, key, option))
+            {
                 model.PageData = new GetFrontContenOutputDto { SiteName = L.get("PathError") };
-				Response.StatusCode = 404;
-				view = "../Error/NotFound";
-			}else if (!string.IsNullOrEmpty(key)){
+                Response.StatusCode = 404;
+                view = "../Error/NotFound";
+            }
+            else if (!string.IsNullOrEmpty(key))
+            {
                 if (string.IsNullOrEmpty(option)) option = "";
                 switch (option.ToLower())
                 {
                     case "article":
                         var PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                         remoteInputDto.FK_WebmenuId = PageData.Id;
-						model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
+                        model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await articleAppService.GetFrontConten(new ArticleGetFrontContenInputDto { siteId = defaultData.Id, articleId = id });
-						remoteInputDto.FK_ArticleId = model.PageData.Id;
-						model.ParentData = PageData;
+                        remoteInputDto.FK_ArticleId = model.PageData.Id;
+                        model.ParentData = PageData;
                         model.PageData.PageView = "Article";
                         model.PageData.LayoutType = defaultData.Layout_Type;
                         model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
@@ -205,7 +217,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         {
                             var ProdPageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = ProdPageData.Id;
-							model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
+                            model.MenuBread = await webMenuApplication.GetMenuBread(ProdPageData.Id);
                             model.PageData = await productAppService.GetFrontConten(new ProdGetFrontContenInputDto { siteId = defaultData.Id, prodId = id });
                             if (model.PageData.Id == 0) view = "../Error/NotFound";
                             else
@@ -284,8 +296,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         break;
                     case "privacy":
                         model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
-						remoteInputDto.FK_WebmenuId = model.PageData.Id;
-						view = "Index";
+                        remoteInputDto.FK_WebmenuId = model.PageData.Id;
+                        view = "Index";
                         break;
                     default:
                         if (key.ToLower() == "search")
@@ -367,8 +379,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         break;
                 }
-                if (key.ToLower() == "search") {
-                    model.PageData.VisibleHeader= true;
+                if (key.ToLower() == "search")
+                {
+                    model.PageData.VisibleHeader = true;
                     model.PageData.VisibleFooter = true;
                     model.PageData.VisibleTitle = true;
                 }
@@ -397,22 +410,24 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 view = "index";
             }
             ViewBag.HasShoppingCar = await webMenuApplication.checkHasShoppingCar(siteId);
-			ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
+            ViewBag.LoginEnable = await webMenuApplication.checkHasMember(siteId);
             ViewBag.isLogin = false;
             try
             {
                 var tokenItem = await tokenAppService.CreateToken();
-                if (tokenItem != null) {
+                if (tokenItem != null)
+                {
                     ViewBag.isLogin = tokenItem.IsLogin;
                 }
                 else throw new Exception();
             }
-            catch {
+            catch
+            {
                 ViewBag.isLogin = false;
                 ViewBag.LoginEnable = false;
             }
 
-			await RemoteAppService.insertRemote(remoteInputDto);
+            await RemoteAppService.insertRemote(remoteInputDto);
             ViewData["SideName"] = model.PageData!.SiteName;
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
@@ -430,7 +445,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["Locale"] = model.locale;
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Id"] = model.PageData.Id;
-            ViewData["bodyClass"] = model.option?.ToLower() == "home"? model.option.ToLower() : "page";
+            ViewData["bodyClass"] = model.option?.ToLower() == "home" ? model.option.ToLower() : "page";
             var nonce = HttpContext.Items["CSPNonce"] as string;
             ViewBag.Nonce = nonce;
             ViewData["nonce"] = nonce;
@@ -448,7 +463,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     ViewBag.ShoppingEnable = false;
                     break;
             }
-            switch (Response.StatusCode) {
+            switch (Response.StatusCode)
+            {
                 case 404:
                     ViewData["VisibleHeader"] = true;
                     ViewData["VisibleFooter"] = true;

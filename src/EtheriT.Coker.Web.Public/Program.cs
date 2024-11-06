@@ -59,6 +59,8 @@ using EtheriT.Coker.Application.Newsletter;
 using Microsoft.Extensions.FileProviders;
 using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Favorites;
+using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.ThirdParty;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -179,6 +181,7 @@ builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>()
 builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFavoritesAppService, FavoritesAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
+builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<StringHandler>();
@@ -269,7 +272,8 @@ static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
 
 app.UseDefaultFiles();
 //wwwroot資料夾下的文件
-app.UseStaticFiles(new StaticFileOptions() {
+app.UseStaticFiles(new StaticFileOptions()
+{
     OnPrepareResponse = ConfigureStaticFileHeaders
 });
 //upload資料夾下的靜態文件

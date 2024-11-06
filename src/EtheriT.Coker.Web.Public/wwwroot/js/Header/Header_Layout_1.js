@@ -1,10 +1,12 @@
 ﻿function HeaderInit() {
     if ($('body.home').length) {
         setTimeout(function () {
-            // 頁面加載完畢後滾動到目標元素
-            $('html,body').animate({
-                scrollTop: $('.one_swiper').offset().top  // 滾動到目標元素的頂部
-            }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
+            if ((window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
+                // 頁面加載完畢後滾動到目標元素
+                $('html,body').animate({
+                    scrollTop: $('.one_swiper').offset().top  // 滾動到目標元素的頂部
+                }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
+            }
         }, 500);
     }
 
@@ -45,6 +47,7 @@
         delay: 3000,
         order: 'asc'
     });
+
     /*
     $("#Offcanvas_Mega_Menu > ul > .title > .content > ul").each(function () {
         var $self = $(this);
@@ -183,6 +186,7 @@ function CartDropDelete(self, id, success, error) {
         if (parseInt($("#Car_Badge").text()) == 0) {
             CartClear();
         }
+
     }).fail(function () {
         Coker.sweet.error("錯誤", error, null, true);
     })

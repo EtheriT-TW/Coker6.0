@@ -265,6 +265,12 @@ function ready() {
             FormClear(ForgetForms, $InputForgetVCode)
         })
     }
+    $("#LoginForm input").on("keypress", function (event) {
+        if (event.which == 13) {
+            event.preventDefault();
+            $("#LoginModal .btn_login").click();
+        }
+    });
     $(".btn_login").on("click", function () {
         if (SiteFormCheck(LoginForms, $InputLoginVCode)) {
             CaptchaVerify($LoginImgCaptcha, $InputLoginVCode, LoginAction)
@@ -276,7 +282,12 @@ function ready() {
             Coker.sweet.error("錯誤", "請確實填寫登入資料", null, true);
         }
     })
-
+    $("#RegisterForm input").on("keypress", function (event) {
+        if (event.which == 13) {
+            event.preventDefault();
+            $("#RegisterModal .btn_register").click();
+        }
+    });
     $(".btn_register").on("click", function () {
         var passcheck = PassCheck($("#InputRegisterNewPass"), $("#InputRegisterCheckPass"), $("#RegisterNewPassFeedBack"), $("#RegisterCheckPassFeedBack"))
 
@@ -301,7 +312,12 @@ function ready() {
             Coker.sweet.error("錯誤", "請確實填寫註冊資料", null, true);
         }
     })
-
+    $("#ForgetForm input").on("keypress", function (event) {
+        if (event.which == 13) {
+            event.preventDefault();
+            $("#ForgetModal .btn_forget").click();
+        }
+    });
     $(".btn_forget").on("click", function () {
         CaptchaVerify($ForgetImgCaptcha, $InputForgetVCode, ForgetAction)
     })
@@ -310,7 +326,12 @@ function ready() {
         loginModal.show();
         forgetModal.hide();
     })
-
+    $("#ResetForm input").on("keypress", function (event) {
+        if (event.which == 13) {
+            event.preventDefault();
+            $("#ResetModal .btn_reset").click();
+        }
+    });
     $(".btn_reset").on("click", function () {
         var passcheck = PassCheck($("#InputResetNewPass"), $("#InputResetCheckPass"), $("#ResetNewPassFeedBack"), $("#ResetCheckPassFeedBack"))
 

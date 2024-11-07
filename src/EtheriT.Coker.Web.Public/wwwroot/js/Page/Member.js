@@ -120,7 +120,12 @@ function Member(data) {
             FormClear(ResetEmailForms, $InputResetEmailVCode)
         })
     }
-
+    $("#ResetEmailForm input").on("keypress", function (event) {
+        if (event.which == 13) {
+            event.preventDefault();
+            $("#ResetEmailModal .btn_resetmail").click();
+        }
+    });
     $(".btn_resetmail").on("click", function () {
         console.log("btn_resetmail")
         if (SiteFormCheck(ResetEmailForms, $InputResetEmailVCode)) {

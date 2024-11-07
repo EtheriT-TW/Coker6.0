@@ -70,8 +70,9 @@ function Member(data) {
             co.sweet.error("輸入資料錯誤", "如要填入地址資訊，請確實填寫縣市、鄉鎮與地址", null, false);
         }
         else {
+            if (data.birthday == "") data.birthday = null;
             data.address = `${data.county} ${data.district} ${data.address}`;
-            data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
+            if (data.telPhone != "") data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
             co.User.UserEdit(data).done(function (result) {
                 co.sweet.success("資料修改完成！", null, true);
             });

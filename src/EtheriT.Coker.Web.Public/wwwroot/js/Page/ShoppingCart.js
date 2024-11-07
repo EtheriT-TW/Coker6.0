@@ -75,21 +75,33 @@ function PageReady() {
 
     $("#btn_car_dropdown").attr("disabled", "disabled")
 
-    Coker.Token.CheckToken().done(function (resule) {
-        if (resule.isLogin) {
+    Coker.Token.CheckToken().done(function (checkresult) {
+        if (checkresult.isLogin) {
             Coker.User.GetUser().done(function (result) {
+                //console.log(result.data);
                 if (result.success) {
+                    var data_insert = true;
                     user_data['orderer'] = result.data.name;
                     user_data['ordererSex'] = result.data.sex;
                     user_data['ordererEmail'] = result.data.email;
-                    user_data['ordererCellphone'] = result.data.cellPhone;
-                    user_data['zone'] = (result.data.telPhone).split('-')[0];
-                    user_data['ordererTelephone'] = (result.data.telPhone).split('-')[1];
-                    user_data['ext'] = (result.data.telPhone).split('-')[2];
-                    user_data['county'] = (result.data.address).split(' ')[0];
-                    user_data['district'] = (result.data.address).split(' ')[1];
-                    user_data['ordererAddress'] = (result.data.address).split(' ')[2];
-                    user_data['address'] = result.data.address;
+
+                    if (result.data.cellPhone == null) data_insert = false;
+                    else user_data['ordererCellphone'] = result.data.cellPhone;
+
+                    if (result.data.telPhone != null) {
+                        user_data['zone'] = (result.data.telPhone).split('-')[0];
+                        user_data['ordererTelephone'] = (result.data.telPhone).split('-')[1];
+                        user_data['ext'] = (result.data.telPhone).split('-')[2];
+                    }
+
+                    if (result.data.address != null) {
+                        user_data['county'] = (result.data.address).split(' ')[0];
+                        user_data['district'] = (result.data.address).split(' ')[1];
+                        user_data['ordererAddress'] = (result.data.address).split(' ')[2];
+                        user_data['address'] = result.data.address;
+                    } else data_insert = false;
+
+                    if (!data_insert) $(".btn_edit_data").on("click");
 
                     co.Form.insertData(user_data, "#Form_Orderer");
 
@@ -520,7 +532,6 @@ function Step3Monitor() {
     } else {
         switch ($(`[name="RecipientRadio"]:checked`).val()) {
             case "order":
-
                 RecipientSameOrderer();
                 RecipientFilled = true;
                 break;
@@ -560,6 +571,7 @@ function OrdererEdit() {
 }
 function RecipientRadio() {
     var $self = $(this)
+    recipient_data = {};
     if ($self.val() == "edit") {
         $("#RecipientForm > .default_data").addClass("d-none");
         $("#RecipientForm > form").removeClass("d-none");
@@ -603,6 +615,7 @@ function RecipientSameOrderer() {
     }
 }
 function InvoiceRadio() {
+    invoice_data = {}
     switch (this.value) {
         case "order":
             $("#InvoiceForm > .default_data").addClass("d-none");
@@ -663,6 +676,7 @@ function DeleteRecipient() {
     $this_parent.remove();
 }
 function OrderHeaderAdd() {
+    var checksuccess = true;
 
     if (OrdererOpen) {
         order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
@@ -672,7 +686,14 @@ function OrderHeaderAdd() {
         order_data = user_data;
         order_data.ordererAddress = user_data['address'];
     }
-    order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
+    if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
+        Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+        checksuccess = false;
+    } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
+        order_data.ordererTelephone = null;
+    } else {
+        order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
+    }
 
     for (var key in order_data) {
         if (key.startsWith("orderer") > 0) order_header_data[key] = order_data[key]
@@ -684,13 +705,25 @@ function OrderHeaderAdd() {
             break;
         case "edit":
             recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
-            recipient_data.recipientTelephone = `${recipient_data.zone}-${recipient_data.recipientTelephone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
             recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
+            if (recipient_data.zone == "" ^ recipient_data.recipientTelephone == "") {
+                Coker.sweet.error("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+                checksuccess = false;
+            } else if (recipient_data.zone == "" && recipient_data.recipientTelephone == "") {
+                recipient_data.recipientTelephone = null;
+            } else {
+                recipient_data.recipientTelephone = `${recipient_data.zone}-${recipient_data.recipientTelephone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
+            }
             break;
     }
 
     for (var key in recipient_data) {
         if (key.startsWith("recipient") > 0) order_header_data[key] = recipient_data[key]
+    }
+    if (typeof (recipient_data['remark']) == "undefined" || recipient_data['remark'] == "") {
+        order_header_data['remark'] = "無";
+    } else {
+        order_header_data['remark'] = recipient_data['remark']
     }
 
     switch ($(`[name="InvoiceRadio"]:checked`).val()) {
@@ -728,27 +761,29 @@ function OrderHeaderAdd() {
     //console.log(invoice_data)
     //console.log(order_header_data)
 
-    Coker.sweet.loading();
-    Coker.Order.AddHeader(order_header_data).done(function (result) {
-        if (result.success) {
-            Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
-                OrderSuccess(result.message);
-                setTimeout(function () {
-                    isCheckout = true;
+    if (checksuccess) {
+        Coker.sweet.loading();
+        Coker.Order.AddHeader(order_header_data).done(function (result) {
+            if (result.success) {
+                Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
+                    OrderSuccess(result.message);
                     setTimeout(function () {
-                        buy_step_swiper.slideNext();
-                        buy_step_swiper.disable();
+                        isCheckout = true;
+                        setTimeout(function () {
+                            buy_step_swiper.slideNext();
+                            buy_step_swiper.disable();
+                        }, 300);
                     }, 300);
-                }, 300);
-            })
-        } else {
+                })
+            } else {
+                console.log(result);
+                Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+            }
+        }).fail(function (result) {
             console.log(result);
             Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
-        }
-    }).fail(function (result) {
-        console.log(result);
-        Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
-    });
+        });
+    }
 }
 function OrderSuccess(results) {
     var result = results.split(",")

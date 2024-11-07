@@ -112,31 +112,32 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         payment.Used = false;
                     }
-                    if (dto.PaymentType != null) {
-						foreach (var item in dto.PaymentType)
-						{
-							var type = payment_type.Find(e => e.Code == item);
-							if (type != null)
-							{
-								if (payments.Find(e => e.FK_PaymentTypesId == type.Id) != null)
-								{
-									payments.Find(e => e.FK_PaymentTypesId == type.Id).Used = true;
-								}
-								else
-								{
-									AddPayments.Add(new PaymentTypesValue()
-									{
-										Used = true,
-										FK_PaymentTypesId = type.Id,
-										FK_WebsiteId = websiteId,
-									});
-								}
-							}
-						}
-						if (AddPayments.Count > 0) db.AddRange(AddPayments);
-					}
-					await db.SaveChangesAsync();
-				}
+                    if (dto.PaymentType != null)
+                    {
+                        foreach (var item in dto.PaymentType)
+                        {
+                            var type = payment_type.Find(e => e.Code == item);
+                            if (type != null)
+                            {
+                                if (payments.Find(e => e.FK_PaymentTypesId == type.Id) != null)
+                                {
+                                    payments.Find(e => e.FK_PaymentTypesId == type.Id).Used = true;
+                                }
+                                else
+                                {
+                                    AddPayments.Add(new PaymentTypesValue()
+                                    {
+                                        Used = true,
+                                        FK_PaymentTypesId = type.Id,
+                                        FK_WebsiteId = websiteId,
+                                    });
+                                }
+                            }
+                        }
+                        if (AddPayments.Count > 0) db.AddRange(AddPayments);
+                    }
+                    await db.SaveChangesAsync();
+                }
 
                 var reg = (from values in db.ThirdPartyKeypairValues.Include(e => e.ThirdPartyKeypair).Where(e => e.FK_WebsiteId == websiteId)
                            join key in db.ThirdPartyKeypairs.Where(e => !e.IsDeleted) on values.FK_ThirdPartyKeypairId equals key.Id
@@ -163,22 +164,22 @@ namespace EtheriT.Coker.Application.ThirdParty
                     {
                         if (kvps.value != null)
                         {
-							foreach (var kvp in kvps.value)
-							{
-								var item = reg.Find(e => e.ThirdPartyKeypair.FK_TPid == kvps.Id && e.ThirdPartyKeypair.Code == kvp.key);
-								if (item == null || kvp.value != item.Value)
-								{
-									ThirdPartyKeypairValue value = new ThirdPartyKeypairValue
-									{
-										FK_ThirdPartyKeypairId = ThirdPartyKeypairs.Where(e => e.Code == kvp.key && e.FK_TPid == kvps.Id).Select(e => e.Id).FirstOrDefault(),
-										FK_WebsiteId = websiteId,
-										Value = kvp.value
-									};
-									loginUserData.setOptionParameter(value, userId);
-									AddData.Add(value);
-								}
-							}
-						}
+                            foreach (var kvp in kvps.value)
+                            {
+                                var item = reg.Find(e => e.ThirdPartyKeypair.FK_TPid == kvps.Id && e.ThirdPartyKeypair.Code == kvp.key);
+                                if (item == null || kvp.value != item.Value)
+                                {
+                                    ThirdPartyKeypairValue value = new ThirdPartyKeypairValue
+                                    {
+                                        FK_ThirdPartyKeypairId = ThirdPartyKeypairs.Where(e => e.Code == kvp.key && e.FK_TPid == kvps.Id).Select(e => e.Id).FirstOrDefault(),
+                                        FK_WebsiteId = websiteId,
+                                        Value = kvp.value
+                                    };
+                                    loginUserData.setOptionParameter(value, userId);
+                                    AddData.Add(value);
+                                }
+                            }
+                        }
                     }
                     if (AddData.Count > 0)
                     {
@@ -211,7 +212,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                  Used = true,
                              };
 
-                if(output.Count() > 0) return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+                if (output.Count() > 0) return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 else throw new Exception("查無運費資料");
             }
             catch (Exception e)
@@ -232,25 +233,27 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (TPid != null)
                 {
                     var thirdpartykeypairs = await db.ThirdPartyKeypairs.Where(e => e.FK_TPid == TPid).ToListAsync();
-                    if(thirdpartykeypairs != null && thirdpartykeypairs.Count > 0)
+                    if (thirdpartykeypairs != null && thirdpartykeypairs.Count > 0)
                     {
-                        foreach(var thirdpartykeypair in thirdpartykeypairs)
+                        foreach (var thirdpartykeypair in thirdpartykeypairs)
                         {
                             var value = await db.ThirdPartyKeypairValues.Where(e => e.FK_ThirdPartyKeypairId == thirdpartykeypair.Id && e.FK_WebsiteId == WebsiteId).FirstOrDefaultAsync();
-                            if(value!= null)
+                            if (value != null)
                             {
                                 output.Add(new ThirdPartyKeypairItemOutputDto()
                                 {
                                     Id = thirdpartykeypair.Id,
                                     Title = thirdpartykeypair.Title,
-                                    Value = value.Value, 
+                                    Value = value.Value,
                                     Code = thirdpartykeypair.Code,
                                 });
                             }
                         }
                     }
-                } else throw new Exception("付款資訊有誤");
-            }catch(Exception e)
+                }
+                else throw new Exception("付款資訊有誤");
+            }
+            catch (Exception e)
             {
             }
             return output;

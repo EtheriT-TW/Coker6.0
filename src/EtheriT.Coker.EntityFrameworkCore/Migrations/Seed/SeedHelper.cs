@@ -723,7 +723,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_ThirdPartyId = 1,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
-                },new PaymentType
+                }, new PaymentType
                 {
                     Id = 2,
                     Used = false,

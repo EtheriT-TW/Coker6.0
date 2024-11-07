@@ -502,11 +502,11 @@ namespace EtheriT.Coker.Application.Order
 
                     var OrdererEmailSecret = (order_header.OrdererEmail.Length > 5 ? order_header.OrdererEmail.Substring(0, 4) : order_header.OrdererEmail.Substring(0, 1)) + "**********";
                     order_header.OrdererCellPhone = (order_header.OrdererCellPhone.Length > 4 ? order_header.OrdererCellPhone.Substring(0, 4) : order_header.OrdererCellPhone.Substring(0, 1)) + "******";
-                    order_header.OrdererTelephone = order_header.OrdererTelephone != "-" ? order_header.OrdererTelephone.Length > 3 ? order_header.OrdererTelephone?.Substring(0, 3) + "******" : order_header.OrdererTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.OrdererTelephone = order_header.OrdererTelephone != null ? order_header.OrdererTelephone.Length > 3 ? order_header.OrdererTelephone?.Substring(0, 3) + "******" : order_header.OrdererTelephone?.Substring(0, 1) + "******" : "";
                     var OrdererSex = order_header.OrdererSex == 1 ? "先生" : order_header.OrdererSex == 2 ? "小姐" : "君";
                     order_header.RecipientAddress = order_header.RecipientAddress.Replace(" ", "").Substring(0, 6) + "**********";
                     order_header.RecipientCellPhone = (order_header.RecipientCellPhone.Length > 4 ? order_header.RecipientCellPhone.Substring(0, 4) : order_header.RecipientCellPhone.Substring(0, 1)) + "******";
-                    order_header.RecipientTelephone = order_header.RecipientTelephone != "-" ? order_header.RecipientTelephone.Length > 3 ? order_header.RecipientTelephone?.Substring(0, 3) + "******" : order_header.RecipientTelephone?.Substring(0, 1) + "******" : "";
+                    order_header.RecipientTelephone = order_header.RecipientTelephone != null ? order_header.RecipientTelephone.Length > 3 ? order_header.RecipientTelephone?.Substring(0, 3) + "******" : order_header.RecipientTelephone?.Substring(0, 1) + "******" : "";
                     var RecipientSex = order_header.RecipientSex == 1 ? "先生" : order_header.RecipientSex == 2 ? "小姐" : "君";
 
                     var mailhtml = $"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>" +

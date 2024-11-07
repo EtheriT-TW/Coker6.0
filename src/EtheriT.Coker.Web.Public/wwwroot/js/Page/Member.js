@@ -14,6 +14,14 @@ function PageReady() {
                 },
             });
         },
+        CanceOrder: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/CanceOrder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { ohid: ohid },
+            });
+        }
     }
 
     let addr = $("#TWzipcode .address").val()
@@ -32,6 +40,14 @@ function PageReady() {
     });
 }
 function Member(data) {
+
+    var now = new Date();
+    var month = (now.getMonth() + 1).toString();
+    if (month.length == 1) month = '0' + month;
+    var day = now.getDate().toString();
+    if (day.length == 1) day = '0' + day;
+    date_now = `${now.getFullYear()}-${month}-${day}`
+
     resetEmailModal = $("#ResetEmailModal").length > 0 ? new bootstrap.Modal($("#ResetEmailModal")) : null;
     $InputResetEmailVCode = $("#InputNewMailVCode");
     $ResetEmailImgCaptcha = $('#NewMailImgCaptcha');
@@ -161,13 +177,6 @@ function SetMemberData() {
 
             $("#ResetForm").data("Email", result.data.email);
 
-            var now = new Date();
-            var month = (now.getMonth() + 1).toString();
-            if (month.length == 1) month = '0' + month;
-            var day = now.getDate().toString();
-            if (day.length == 1) day = '0' + day;
-            var date_now = `${now.getFullYear()}-${month}-${day}`
-
             $("#Birthday").attr("max", date_now);
 
             $("#Birthday").on("keydown", function (e) {
@@ -186,12 +195,35 @@ function SetHistoryOrderData() {
             $.each(result.orderData, function (index, data) {
                 var order_header = data.orderHeader;
                 var order_details = data.orderDetails;
-
                 var frame = $($("#Template_Order_List").html()).clone();
                 frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
                 frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
                 frame.find(".amount").text((order_header.total).toLocaleString());
-                frame.find(".state").text(order_header.stateStr);
+                if ((order_header.creationTime.split(' ')[0] == date_now) && order_header.state == 1) {
+                    frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+                    frame.find(".state .btn_canceOrder").on("click", function () {
+                        var $this = $(this);
+                        Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
+                            Coker.sweet.loading();
+                            Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
+                                if (result.success) {
+                                    $this.parent(".state").addClass("text-danger fw-bold");
+                                    $this.parent(".state").text("已取消");
+                                    console.log($this.parent(".state"))
+                                    Coker.sweet.success("已取消訂單", null, false);
+                                } else {
+                                    console.log(result.message);
+                                }
+                            })
+                        })
+                    });
+                }
+                else {
+                    frame.find(".state").text(order_header.stateStr);
+                    if (order_header.state == 4 || order_header.state == 5) {
+                        frame.find(".state").addClass("text-danger fw-bold");
+                    }
+                }
 
                 $("#profile-tab-pane").append(frame);
 

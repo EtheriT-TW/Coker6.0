@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<List<EnumDictionaryDto>> GetPreserveTypeEnum();
         public Task<List<EnumDictionaryDto>> GetShippingTypeEnum();
         public Task<List<EnumDictionaryDto>> GetPaymentTypeEnum();
+        public Task<ResponseMessageDto> OrderStateChange(long ohid, int state);
         public Task<ResponseMessageDto> SendMail(long ohid);
 
 	}

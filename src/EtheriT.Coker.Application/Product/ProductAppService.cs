@@ -1014,6 +1014,8 @@ namespace EtheriT.Coker.Application.Product
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
                                        where prod_log.Action == (int)ProdLogActionEnum.點擊
+                                       // 重新排版後增加下方程式碼撈取3個月資料
+                                       //where (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)prod_log.CreationTime) < 0)
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();
                 List<long> pids = new List<long>();
@@ -1026,6 +1028,7 @@ namespace EtheriT.Coker.Application.Product
                         {
                             pids.Add(prod_log);
                         }
+                        // 重新排版後移除下方判斷撈取3個月資料
                         if (pids.Count == 10)
                         {
                             break;

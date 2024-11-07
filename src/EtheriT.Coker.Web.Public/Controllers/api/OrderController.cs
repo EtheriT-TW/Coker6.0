@@ -47,5 +47,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await orderAppService.GetPaymentTypeEnum();
         }
+
+        [HttpGet]
+        public async Task<ResponseMessageDto> CanceOrder(long ohid)
+        {
+            var state = (int)OrderStatusEnum.已取消;
+            return await orderAppService.OrderStateChange(ohid, state);
+        }
     }
 }

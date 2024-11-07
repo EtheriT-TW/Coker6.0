@@ -310,7 +310,12 @@ namespace EtheriT.Coker.Application.Order
                 if (uuids.Any())
                 {
                     uuids.Add(UUID);
-                    var order_headers = await db.Order_Headers.Where(e => uuids.Contains(e.FK_UUID)).OrderByDescending(e => e.CreationTime).Take(10).ToListAsync();
+                    var order_headers = await db.Order_Headers
+                        .Where(e => uuids.Contains(e.FK_UUID))
+                        // 重新排版後增加下方程式碼撈取3個月資料
+                        //.Where(e => (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)e.CreationTime) < 0))
+                        // 重新排版後移除Take(10)撈取3個月資料
+                        .OrderByDescending(e => e.CreationTime).Take(10).ToListAsync();
                     foreach (var order_header in order_headers)
                     {
                         var temp_OrderDetails = new List<ShoppingCartGetDrop>();
@@ -425,6 +430,53 @@ namespace EtheriT.Coker.Application.Order
 
             return enumDictionaryDto.ToList();
         }
+        public async Task<ResponseMessageDto> OrderStateChange(long ohid, int state)
+        {
+            var response = new ResponseMessageDto();
+
+            try
+            {
+                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                if (order_header != null)
+                {
+                    if (order_header.State != (int)OrderStatusEnum.已取消)
+                    {
+                        order_header.State = state;
+                        if (state == (int)OrderStatusEnum.已取消)
+                        {
+                            var shoppingCarts = await (from sc in db.ShoppingCarts
+                                                    join od in db.Order_Details on sc.Id equals od.FK_SCId
+                                                    where od.FK_OId == ohid && sc.IsOrder
+                                                    select sc).ToListAsync();
+                            if (shoppingCarts != null)
+                            {
+                                var prod_stocks = new List<Prod_Stock>();  
+                                foreach (var sc in shoppingCarts)
+                                {
+                                    var prod_stock = await db.Prod_Stocks.Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
+                                    if(prod_stock != null)
+                                    {
+                                        prod_stock.Stock += sc.Quantity;
+                                        prod_stocks.Add(prod_stock);
+                                    }
+                                }
+                                db.SaveChanges();
+                            }
+                        }
+                        db.SaveChanges();
+                        response.Success = true;
+                    }
+                    else throw new Exception("訂單已取消，不可更改狀態");
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
         public async Task<ResponseMessageDto> SendMail(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -433,7 +485,7 @@ namespace EtheriT.Coker.Application.Order
 
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
-				var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var order_details = await GetOrderDetails(ohid);
 

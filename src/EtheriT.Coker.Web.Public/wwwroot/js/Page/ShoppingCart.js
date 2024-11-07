@@ -563,6 +563,10 @@ function Step3Monitor() {
     buy_step_swiper.update();
 }
 function OrdererEdit() {
+    if (OrdererOpen) {
+        order_data = {};
+        order_data = user_data;
+    }
     $("#OrdererForm > .default_data").toggleClass("d-none");
     $("#OrdererForm > form").toggleClass("d-none");
     OrdererOpen = !OrdererOpen;
@@ -681,18 +685,19 @@ function OrderHeaderAdd() {
     if (OrdererOpen) {
         order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
         order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
+
+        if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
+            Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+            checksuccess = false;
+        } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
+            order_data.ordererTelephone = null;
+        } else {
+            order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
+        }
     }
     else {
         order_data = user_data;
         order_data.ordererAddress = user_data['address'];
-    }
-    if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
-        Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
-        checksuccess = false;
-    } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
-        order_data.ordererTelephone = null;
-    } else {
-        order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
     }
 
     for (var key in order_data) {
@@ -706,6 +711,7 @@ function OrderHeaderAdd() {
         case "edit":
             recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
             recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
+
             if (recipient_data.zone == "" ^ recipient_data.recipientTelephone == "") {
                 Coker.sweet.error("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
                 checksuccess = false;

@@ -70,12 +70,27 @@ function Member(data) {
             co.sweet.error("輸入資料錯誤", "如要填入地址資訊，請確實填寫縣市、鄉鎮與地址", null, false);
         }
         else {
+            var datacheck = true;
             if (data.birthday == "") data.birthday = null;
             data.address = `${data.county} ${data.district} ${data.address}`;
-            if (data.telPhone != "") data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
-            co.User.UserEdit(data).done(function (result) {
-                co.sweet.success("資料修改完成！", null, true);
-            });
+            if (data.cellPhone != "" && (!$.isNumeric(data.cellPhone) || data.cellPhone.length != 10)) {
+                co.sweet.error("輸入資料錯誤", "手機格式不正確，請重新輸入", null, false);
+                datacheck = false;
+            }
+            if (data.telPhone != "") {
+                if ($.isNumeric(data.zone) && $.isNumeric(data.telPhone) && ((data.ext != "" && $.isNumeric(data.ext)) || data.ext == "")) {
+                    data.telPhone = `${data.zone}-${data.telPhone}-${data.ext}`;
+                } else {
+                    co.sweet.error("輸入資料錯誤", "電話格式不正確，請重新輸入", null, false);
+                    datacheck = false;
+                }
+            }
+            //console.log(data)
+            if (datacheck) {
+                co.User.UserEdit(data).done(function (result) {
+                    co.sweet.success("資料修改完成！", null, true);
+                });
+            }
         }
     });
 
@@ -124,7 +139,7 @@ function Member(data) {
 function SetMemberData() {
     Coker.User.GetUser().done(function (result) {
         if (result.success) {
-            if (result.data.telPhone != null) {
+            if (result.data.telPhone != null && result.data.telPhone != "") {
                 result.data['zone'] = (result.data.telPhone).split('-')[0];
                 result.data['telPhone'] = (result.data.telPhone).split('-')[1];
                 if ((result.data.telPhone).split('-').length == 2) result.data['ext'] = (result.data.telPhone).split('-')[2];

@@ -1,6 +1,7 @@
 ﻿
 var resetEmailModal, ResetEmailModal, $InputResetEmailVCode, $ResetEmailImgCaptcha, ResetEmailForms
 var old_email
+var TabNow = "info", date_now = "";
 
 function PageReady() {
     Coker.Member = {
@@ -209,7 +210,6 @@ function SetHistoryOrderData() {
                                 if (result.success) {
                                     $this.parent(".state").addClass("text-danger fw-bold");
                                     $this.parent(".state").text("已取消");
-                                    console.log($this.parent(".state"))
                                     Coker.sweet.success("已取消訂單", null, false);
                                 } else {
                                     console.log(result.message);

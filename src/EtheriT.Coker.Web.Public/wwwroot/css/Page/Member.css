@@ -30,6 +30,11 @@
             background-color: var(--bs-nav-pills-link-active-bg);
         }
 
+    #ToolList > li .material-symbols-outlined {
+        font-size: 20px !important;
+        vertical-align:text-bottom;
+    }
+
 #TabContent {
     display: block;
     width: calc(100% - 10rem);
@@ -41,7 +46,7 @@
         padding: 1rem;
         overflow: auto;
         background: var(--bs-nav-pills-link-active-bg);
-        border-radius: 5px;
+        border-radius: 0.8rem;
     }
 
 #ResetEmailModal > .modal-dialog > .modal-content {
@@ -168,3 +173,57 @@
     .shareBlock.show > a:nth-child(6) {
         transform: translateX(-50%) scaleX(1) !important;
     }
+
+@media (max-width:768px) {
+    #main > .container {
+        flex-direction: column !important;
+    }
+
+        #main > .container > #ToolList {
+            width: 100%;
+            min-heigth: unset;
+            flex-direction: unset !important;
+        }
+
+            #main > .container > #ToolList > li {
+                width: 25%;
+            }
+
+        #main > .container > #TabContent {
+            width: unset;
+        }
+
+            #main > .container > #TabContent > #info-tab-pane {
+                padding: 1rem !important;
+            }
+
+                #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+                     width: 30%;
+                }
+
+                #main > .container > #TabContent > #info-tab-pane > div {
+                    justify-content: center;
+                    flex-wrap: wrap;
+                    flex-direction: row !important;
+                    box-sizing: border-box;
+                }
+
+                    #main > .container > #TabContent > #info-tab-pane > div > div > button {
+                        width: 40%;
+                        margin-right: .5rem;
+                    }
+}
+
+@media(max-width:576px) {
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+        width: 35% !important;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:nth-child(2) {
+        margin-left: 0;
+    }
+
+    #main > .container > #TabContent > #history-tab-pane > div:not(first-chlid) {
+
+    }
+}

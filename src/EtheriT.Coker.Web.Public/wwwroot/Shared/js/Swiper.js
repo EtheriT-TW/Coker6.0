@@ -13,6 +13,7 @@ function SwiperInit(obj) {
     };
     $.fn.extend({
         swiperBindEven: function (swiper, canNext) {
+
             const checkSlides = function () {
                 const totalSlides = swiper.slides.length;
                 const slidesPerView = swiper.params.slidesPerView;
@@ -24,7 +25,6 @@ function SwiperInit(obj) {
                 if (totalSlides <= slidesPerView) {
                     // 停止自動輪播
                     swiper.autoplay.stop();
-
                     // 隱藏左右箭頭
                     if (nextEl) swiper.navigation.nextEl.style.display = 'none';
                     if (prevEl) swiper.navigation.prevEl.style.display = 'none';
@@ -37,11 +37,24 @@ function SwiperInit(obj) {
                 }
             }
             const stop = function () {
+                var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
+                var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
+                var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+                if ($(activeSlide).find("video").length > 0) {
+                    return;
+                }
                 swiper.autoplay.stop()
             }
             const start = function () {
+                var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
+                var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
+                var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+                if ($(activeSlide).find("video").length > 0) {
+                    return;
+                }
                 swiper.autoplay.start()
             }
+            thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
             $(this).find("a").on("focus", stop);
             $(this).off("mouseout").on("mouseout", start);
@@ -73,6 +86,7 @@ function SwiperInit(obj) {
             const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1 : $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");
+            
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -84,19 +98,25 @@ function SwiperInit(obj) {
                 }, on: {
                     //以下有Bug
                     slideChangeTransitionEnd: function () {
+                        const slide = this;
                         const totalSlides = this.slides.length;
                         const previousSlideIndex = this.previousIndex;
                         //const previousSlideIndex = (this.realIndex - 1 + totalSlides) % totalSlides;
                         const $previousSlide = $(this.slides[previousSlideIndex]);
                         const videoAction = $(this.slides[this.activeIndex]).find('video');
-                        if (videoAction.length > 0) {
-                            this.autoplay.stop();
-                            const slide = this;
-                            setTimeout(function () {
+                        const videoElement = videoAction.get(0);
+                        var videoManager = () => {
+                            slide.autoplay.stop();
+                            videoElement.onended = function () {
+                                thisSwiper.on("mouseover");
+                                thisSwiper.on("mouseout");
                                 slide.autoplay.start();
-                            }, 50000);
-                        } else {
-                            this.autoplay.start();
+                            };
+                        };
+                        if (videoAction.length > 0) {
+                            thisSwiper.off("mouseover");
+                            thisSwiper.off("mouseout");
+                            videoManager();
                         }
                         $self.find(".swiper-slide").each(function () {
                             if (parseInt($(this).attr("data-swiper-slide-index")) != this.realIndex) {

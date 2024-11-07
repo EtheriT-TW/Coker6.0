@@ -29,6 +29,41 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
         }
+        public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                var tempsc = await db.ShoppingCarts.Where(e => e.UUID == TempUUID && !e.IsOrder).ToListAsync();
+                var usersc = await db.ShoppingCarts.Where(e => e.UUID == UserUUID && !e.IsOrder).ToListAsync();
+                if (tempsc.Any())
+                {
+                    for (var i = 0; i < tempsc.Count; i++)
+                    {
+                        tempsc[i].UUID = UserUUID;
+                    }
+                    if (usersc.Any())
+                    {
+                        for (var i = 0; i < tempsc.Count; i++)
+                        {
+                            if (usersc.Find(e => e.FK_PSid == tempsc[i].FK_PSid) != null)
+                            {
+                                usersc[usersc.FindIndex(e => e.FK_PSid == tempsc[i].FK_PSid)].Quantity += tempsc[i].Quantity;
+                                tempsc[i].IsDeleted = true;
+                                tempsc[i].DeletionTime = DateTime.Now;
+                            }
+                        }
+                    }
+                    db.SaveChanges();
+                }
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
         public async Task<ResponseMessageDto> AddUp(ShoppingCartAddUpDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -61,55 +96,61 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     if (db_token != null && db_prod != null && Token.RefreshToken != null)
                     {
                         var price = (db_prod != null) ? (int)(db_ps.Price * dto.Quantity) : 0;
-                        if (db_shoppingcart == null)
+                        if (db_ps.Stock >= dto.Quantity)
                         {
-                            Core.Models.ShoppingCart sc = new Core.Models.ShoppingCart
+                            if (db_shoppingcart == null)
                             {
-                                FK_Tid = (Guid)Token.RefreshToken,
-                                UUID = UUID,
-                                FK_Uid = db_token.UserID,
-                                FK_PSid = db_ps.Id,
-                                FK_S1id = dto.FK_S1id,
-                                FK_S2id = dto.FK_S2id,
-                                Quantity = dto.Quantity,
-                                Price = price,
-                                Discont = dto.Discont,
-                                Bonus = dto.Bonus,
-                                PriceType = dto.PriceType,
-                                IsAdditional = dto.IsAdditional,
-                                Ser_No = dto.Ser_No == null ? 500 : (int)dto.Ser_No
-                            };
-                            db.ShoppingCarts.Add(sc);
+                                Core.Models.ShoppingCart sc = new Core.Models.ShoppingCart
+                                {
+                                    FK_Tid = (Guid)Token.RefreshToken,
+                                    UUID = UUID,
+                                    FK_Uid = db_token.UserID,
+                                    FK_PSid = db_ps.Id,
+                                    FK_S1id = dto.FK_S1id,
+                                    FK_S2id = dto.FK_S2id,
+                                    Quantity = dto.Quantity,
+                                    Price = price,
+                                    Discont = dto.Discont,
+                                    Bonus = dto.Bonus,
+                                    PriceType = dto.PriceType,
+                                    IsAdditional = dto.IsAdditional,
+                                    Ser_No = dto.Ser_No == null ? 500 : (int)dto.Ser_No
+                                };
+                                db.ShoppingCarts.Add(sc);
 
-                            Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                                Core.Models.Prod_Log pl = new Core.Models.Prod_Log
+                                {
+                                    FK_Pid = db_prod.Id,
+                                    FK_UserId = db_token.UserID,
+                                    UUID = UUID,
+                                    Action = (int)LogActionEnum.加入購物車,
+                                    Db_Name = "ShoppingCart"
+                                };
+                                db.Prod_Logs.Add(pl);
+
+                                db_ps.Stock -= dto.Quantity;
+
+                                db.SaveChanges();
+                                output.Message = "N" + sc.Id.ToString();
+
+                            }
+                            else
                             {
-                                FK_Pid = db_prod.Id,
-                                FK_UserId = db_token.UserID,
-                                UUID = UUID,
-                                Action = (int)LogActionEnum.加入購物車,
-                                Db_Name = "ShoppingCart"
-                            };
-                            db.Prod_Logs.Add(pl);
+                                db_shoppingcart.Quantity += dto.Quantity;
+                                db_shoppingcart.LastModificationTime = DateTime.Now;
+                                db_shoppingcart.LastModifierUserId = db_shoppingcart.CreatorUserId;
+                                db_ps.Stock -= dto.Quantity;
 
-                            db.SaveChanges();
-                            output.Message = "N" + sc.Id.ToString();
+                                db.SaveChanges();
+                                output.Message = "U" + db_shoppingcart.Id.ToString();
+                            }
                         }
-                        else
-                        {
-                            db_shoppingcart.Quantity += dto.Quantity;
-                            db_shoppingcart.LastModificationTime = DateTime.Now;
-                            db_shoppingcart.LastModifierUserId = db_shoppingcart.CreatorUserId;
-                            output.Message = "U" + db_shoppingcart.Id.ToString();
-                            db.SaveChanges();
-                        }
+                        else throw new Exception("商品庫存不足");
+
                         output.Success = true;
                     }
                 }
-                else
-                {
-                    output.Success = false;
-                    output.Error = "資料有誤";
-                }
+                else throw new Exception("查無商品資料");
             }
             catch (Exception e)
             {
@@ -132,12 +173,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 if (db_shoppingcart != null && db_token != null)
                 {
-                    db_shoppingcart.Quantity = dto.Quantity;
-                    db_shoppingcart.LastModificationTime = DateTime.Now;
-                    db_shoppingcart.LastModifierUserId = db_shoppingcart.CreatorUserId;
-                    output.Message = db_shoppingcart.Id.ToString();
-                    db.SaveChanges();
-                    output.Success = true;
+                    var db_ps = await db.Prod_Stocks.Where(e => e.Id == db_shoppingcart.FK_PSid).FirstOrDefaultAsync();
+                    if (db_ps != null)
+                    {
+                        db_ps.Stock += db_shoppingcart.Quantity - dto.Quantity;
+                        db_shoppingcart.Quantity = dto.Quantity;
+                        db_shoppingcart.LastModificationTime = DateTime.Now;
+                        db_shoppingcart.LastModifierUserId = db_shoppingcart.CreatorUserId;
+                        output.Message = db_shoppingcart.Id.ToString();
+                        db.SaveChanges();
+                        output.Success = true;
+                    }
+                    else throw new Exception("查無商品資訊");
                 }
                 output.Success = false;
                 output.Error = "資料有誤";
@@ -205,14 +252,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 if (output != null)
                 {
-                    var temp_output = output;
-                    output = new List<ShoppingCartGetAllDto>();
-                    for (var i = 0; i < temp_output.Count; i++)
-                    {
-                        if (output.Count == 0 || output.FindIndex(e => e.PId == temp_output[i].PId) < 0) output.Add(temp_output[i]);
-                        else output[output.FindIndex(e => e.PId == temp_output[i].PId)].Quantity += temp_output[i].Quantity;
-                    }
-
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
@@ -264,10 +303,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                     };
 
-                    var db_sp = db.Prod_Specs.ToList();
+                    var db_sp = await db.Prod_Specs.ToListAsync();
 
-                    output.S1Title = int.Parse(output.S1Title) == 0 ? "" : db_sp[int.Parse(output.S1Title) - 1].Title;
-                    output.S2Title = int.Parse(output.S2Title) == 0 ? "" : db_sp[int.Parse(output.S2Title) - 1].Title;
+                    output.S1Title = int.Parse(output.S1Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(output.S1Title))?.Title;
+                    output.S2Title = int.Parse(output.S2Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(output.S2Title))?.Title;
 
                     return output;
                 }
@@ -286,15 +325,22 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
             try
             {
-                var result = db.ShoppingCarts.Where(e => e.Id == id).FirstOrDefault();
+                var result = await db.ShoppingCarts.Where(e => e.Id == id).FirstOrDefaultAsync();
 
                 if (result != null)
                 {
-                    result.IsDeleted = true;
-                    result.DeletionTime = DateTime.Now;
-                    result.DeleterUserId = result.CreatorUserId;
-                    db.SaveChanges();
-                    output.Success = true;
+                    var db_ps = await db.Prod_Stocks.Where(e => e.Id == result.FK_PSid).FirstOrDefaultAsync();
+                    if (db_ps != null)
+                    {
+                        result.IsDeleted = true;
+                        result.DeletionTime = DateTime.Now;
+                        result.DeleterUserId = result.CreatorUserId;
+
+                        db_ps.Stock += result.Quantity;
+                        db.SaveChanges();
+                        output.Success = true;
+                    }
+                    else throw new Exception("查無商品資料");
                 }
                 else throw new Exception("查無購物車資料");
             }

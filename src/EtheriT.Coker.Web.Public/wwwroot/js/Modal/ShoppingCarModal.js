@@ -30,7 +30,9 @@ function ShoppingCarModalInit() {
         $radio_btn.children('label').toggleClass('pe-none');
     }
 
-    $(".btn_addToCar").on("click", AddToCart);
+    $(".btn_addToCar").on("click", function () {
+        if (!$(".btn_addToCar").hasClass("close")) AddToCart();
+    });
 }
 
 function ModalElementInit() {

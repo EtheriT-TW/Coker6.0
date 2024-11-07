@@ -248,6 +248,12 @@ input:disabled + .btn_radio {
     line-height: 3;
 }
 
+    #Product > .content > .btn_addToCar.close {
+        background-color: gray;
+        cursor: default;
+        line-height: 3;
+    }
+
 #Product > .content .btn_favorites {
     background-color: gray;
     line-height: 3;

@@ -35,6 +35,10 @@ function PageReady() {
         $("#Pro_Youtube").attr("src", "");
     })
 
+    $(".btn_addToCar").on("click", function () {
+        if (!$(".btn_addToCar").hasClass("close")) AddToCart();
+    });
+
     $('#shareBlock').cShare({
         description: 'jQuery plugin - C Share buttons',
         showButtons: ['fb', 'line', 'plurk', 'twitter', 'email']
@@ -126,12 +130,7 @@ function ElementInit() {
 
 function PageDefaultSet(result) {
 
-    if (result.stocks.length == 1 && result.stocks[0].stock == 0) {
-        $(".btn_addToCar").css("cursor", "default")
-        $(".btn_addToCar").addClass("bg-secondary text-opacity-50")
-    } else {
-        $(".btn_addToCar").on("click", AddToCart);
-    }
+    if (result.stocks.length == 1 && result.stocks[0].stock == 0) $(".btn_addToCar").addClass("close")
 
     $pro_name.text(result.title);
     $pro_itemNo.text(result.itemNo);
@@ -233,7 +232,6 @@ function PageDefaultSet(result) {
                     s2 = 0;
                 }
             }
-
         });
 
         $options.prepend(item2);
@@ -395,6 +393,7 @@ function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
     $self_s = $self_p.siblings(".radio");
+    $input_quantity.val(1);
 
     switch ($self_p.data("stype")) {
         case 1:
@@ -406,18 +405,27 @@ function SpecRadio() {
                 }
             })
             $self_s.find("input").attr("disabled", "disabled");
+            var radioclosenum = $self_s.find("input").length;
             $self_s.find("input").each(function () {
                 $radio = $(this)
-                if (temp_list.indexOf(parseInt($radio.val())) > -1) {
+                if (temp_list.indexOf(parseInt($radio.val())) > -1 && price_list.find(e => e.s1id == s1 && e.s2id == $radio.val()).stock > 0) {
                     $radio.removeAttr("disabled");
+                    radioclosenum -= 1;
                 }
             })
+            if (radioclosenum == $self_s.find("input").length) {
+                if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
+                if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
+            }
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s2 = null;
             }
-            $self_s.find(`input`).prop("checked", false)
-            if ($self_s.find(`input:not([disabled])`).length > 0 && $self_s.find(`input:not([disabled]):checked`).length == 0) {
-                $self_s.find(`input:not([disabled])`).first().prop("checked", true).trigger("change");
+            var checknow = $self_s.find(`input:checked`);
+            if (!(checknow.length > 0 && typeof (checknow.attr("disabled")) == "undefined")) {
+                $self_s.find(`input`).prop("checked", false)
+                if ($self_s.find(`input:not([disabled])`).length > 0 && $self_s.find(`input:not([disabled]):checked`).length == 0) {
+                    $self_s.find(`input:not([disabled])`).first().prop("checked", true).trigger("change");
+                }
             }
             break;
         case 2:
@@ -430,6 +438,19 @@ function SpecRadio() {
             })
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s1 = null;
+            }
+            var radioclosenum = 0;
+            $self_s.find("input").each(function () {
+                $radio = $(this)
+                var this_price_list = price_list.find(e => e.s1id == $radio.val() && e.s2id == s2);
+                if (typeof (this_price_list) != "undefined" && this_price_list.stock == 0) {
+                    $radio.attr("disabled", "disabled");
+                    radioclosenum += 1;
+                } else $radio.removeAttr("disabled");
+            })
+            if (radioclosenum == $self_s.find("input").length) {
+                if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
+                if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
             }
             break;
     }
@@ -449,6 +470,17 @@ function SpecRadio() {
             }
         })
     }
+
+    var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
+    //console.log(this_price_list)
+    if (this_price_list.stock == 0) {
+        if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
+    }
+    else {
+        if ($(".btn_addToCar").hasClass("close")) $(".btn_addToCar").removeClass("close")
+        $input_quantity.attr("max", this_price_list.stock)
+    }
+
 }
 
 function AddToCart() {
@@ -479,6 +511,24 @@ function AddToCart() {
                             CartDropUpdate(result);
                         }
                     });
+                    if (price_list.length > 0) {
+                        var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
+                        this_price_list.stock -= $input_quantity.val();
+                        $input_quantity.attr("max", this_price_list.stock)
+                        if (this_price_list.stock == 0) {
+                            if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
+                            if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
+                        }
+                    } else {
+                        var stock = $input_quantity.attr("max") - $input_quantity.val();
+                        if (stock == 0) {
+                            if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
+                            if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
+                        } else {
+                            $input_quantity.attr("max", stock)
+                        }
+                    }
+                    $input_quantity.val(1);
                 } else {
                     Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
                 }

@@ -38,6 +38,7 @@ using EtheriT.Coker.Application.Shared.Dto.Token;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
+using EtheriT.Coker.Application.Shared.ShoppingCart;
 
 namespace EtheriT.Coker.Application.Authorization
 {
@@ -53,6 +54,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly MailAppService mailAppService;
         private readonly INewsletterAppService newsletterAppService;
         private readonly IConfiguration configuration;
+        private readonly IShoppingCartAppService shoppingCartAppService;
         public AccountAppService(
             CokerDbContext db,
             IPasswordHasher passwordHasher,
@@ -62,7 +64,8 @@ namespace EtheriT.Coker.Application.Authorization
             IMapper mapper,
             MailAppService mailAppService,
             INewsletterAppService newsletterAppService,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IShoppingCartAppService shoppingCartAppService
         )
         {
             this.db = db;
@@ -74,6 +77,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.mailAppService = mailAppService;
             this.newsletterAppService = newsletterAppService;
             this.configuration = configuration;
+            this.shoppingCartAppService = shoppingCartAppService;
             controllerName = "Account";
         }
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -1230,6 +1234,7 @@ namespace EtheriT.Coker.Application.Authorization
                     };
                     db.MappingOldNewUUID.Add(mapoldnew);
                     await loginUserData.SaveChanges(mapoldnew);
+                    await shoppingCartAppService.UpdateUUID(frontuser.UUID, Temp_UUID);
                 }
 
                 output.Success = true;

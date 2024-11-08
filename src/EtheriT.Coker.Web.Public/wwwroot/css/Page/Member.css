@@ -255,7 +255,17 @@
         transform: translateX(-50%) scaleX(1) !important;
     }
 
+@media (max-width:1200px) {
+    #TabContent .content.type_grid .type_change_frame {
+        width:33.33% !important;
+    }
+}
+
 @media (max-width:992px) {
+    #TabContent .content.type_grid .type_change_frame {
+        width: 50% !important;
+    }
+
     #history-tab-pane .description {
         display:none;
     }
@@ -275,6 +285,18 @@
 }
 
 @media (max-width:768px) {
+
+
+    #favorite-tab-pane {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+
+    #history-tab-pane {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+
     #ToolList > li > button .material-symbols-outlined {
         font-size: 24px !important;
         display: flex;
@@ -316,8 +338,18 @@
 }
 
 @media(max-width:576px) {
+    #history-tab-pane .content {
+        padding-right: 12px !important;
+        padding-left: 12px !important;
+    }
+
+        #favorite-tab-pane .content {
+            padding-right: 12px !important;
+            padding-left: 12px !important;
+        }
+
     #ToolList > li > button {
-        padding:8px;
+        padding: 8px;
     }
 
     #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:nth-child(2) {
@@ -359,5 +391,11 @@
 
     #favorite-tab-pane figure {
         flex-direction: column;
+    }
+}
+
+@media (max-width:440px) {
+    #TabContent .content.type_grid .type_change_frame {
+        width:100% !important;
     }
 }

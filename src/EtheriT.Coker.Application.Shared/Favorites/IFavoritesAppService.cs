@@ -7,7 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Favorites
     public interface IFavoritesAppService
     {
         public Task<ResponseMessageDto> Add(long Pid);
-        public Task<List<FavoritesGetDisplayDto>> GetDisplay();
+        public Task<FavoritesGetDisplayAllDto> GetDisplay(int page);
         public Task<ResponseMessageDto> Delete(long Fid);
         public Task<ResponseMessageDto> CheckIsFavorites(long Pid);
     }

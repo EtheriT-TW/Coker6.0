@@ -22,9 +22,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await favoritesAppService.Add(Pid);
         }
         [HttpGet]
-        public async Task<List<FavoritesGetDisplayDto>> GetDisplay()
+        public async Task<FavoritesGetDisplayAllDto> GetDisplay(int page)
         {
-            return await favoritesAppService.GetDisplay();
+            return await favoritesAppService.GetDisplay(page);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(long Fid)

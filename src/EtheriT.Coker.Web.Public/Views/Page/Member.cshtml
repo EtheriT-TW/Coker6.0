@@ -237,72 +237,117 @@
                 </template>
             </div>
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
-                <div class="nodata h5 text-center fw-bold d-none">查無收藏紀錄</div>
-                <template id="Template_Favorite_List">
-                    <div class="border border-5 rounded row position-relative mb-3">
-                        <a data-key="link" href="" title="" target="_self">
-                            <figure class="d-flex p-3 mb-0">
-                                <img data-key="image" src="" alt="" class="me-3" />
-                                <figcaption class="flex-grow-1 me-5">
-                                    <div class="d-flex flex-column h-100">
-                                        <div class="d-flex">
-                                            <div data-key="itemNo" class="pe-3"></div>
-                                            <div data-key="title" class="fw-bold"></div>
-                                        </div>
-                                        <br />
-                                        <div data-key="description" class="description"></div>
-                                        <div data-key="price" class="price fw-bold text-end h-100 align-content-end"></div>
+                <div class="nodata h5 text-center fw-bold  d-none">查無收藏紀錄</div>
+
+                <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
+                    <button class="align-items-center bg-transparent border-0 d-flex mx-1 focus" data-type="grid">
+                        <span class="material-symbols-outlined fs-5 me-1">grid_on</span>圖片
+                    </button>
+                    <button class="align-items-center bg-transparent border-0 d-flex mx-1" data-type="list">
+                        <span class="material-symbols-outlined fs-5 me-1">view_list</span>圖文
+                    </button>
+                </div>
+
+                <template id="FavoriteTemplate">
+                    <div class="type_change_frame row position-relative mb-3">
+                        <a data-key="link" class="border border-5 rounded">
+                            <figure>
+                                <img data-key="image" src="" alt="" />
+                                <figcaption class="w-100">
+                                    <div>
+                                        <div data-key="itemNo" class="fw-bold"></div>
+                                        <div data-key="title" class="fw-bold"></div>
                                     </div>
+                                    <div data-key="description"></div>
+                                    <div data-key="price" class="fw-bold"></div>
                                 </figcaption>
                             </figure>
                         </a>
-                        <div class="shareBlock position-absolute end-0 w-auto p-1 m-3 rounded-circle bg-secondary">
-                            <button class="btn_share bg-transparent border-0" value="分享">
-                                <i class="fa-solid fa-share text-white"></i>
-                                <span class="d-none">分享</span>
-                            </button>
-                        </div>
-                        <div class="favbtn position-absolute end-0 w-auto p-1 m-3 rounded-circle">
-                            <button class="btn_favorite bg-transparent border-0" title="移除收藏">
-                                <i class="font-rad fa-solid fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-            <div id="history-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
-                <div class="nodata h5 text-center fw-bold d-none">查無瀏覽紀錄</div>
-                <template id="Template_Prod_List">
-                    <div class="border border-5 rounded row position-relative mb-3">
-                        <a data-key="link" href="" title="" target="_self">
-                            <figure class="d-flex p-3 mb-0">
-                                <img data-key="image" src="" alt="" class="me-3" />
-                                <figcaption class="flex-grow-1 me-5">
-                                    <div class="d-flex flex-column h-100">
-                                        <div class="d-flex">
-                                            <div data-key="itemNo" class="pe-3"></div>
-                                            <div data-key="title" class="fw-bold"></div>
-                                        </div>
-                                        <br />
-                                        <div data-key="description" class="description"></div>
-                                        <div data-key="price" class="price fw-bold text-end h-100 align-content-end"></div>
-                                    </div>
-                                </figcaption>
-                            </figure>
-                        </a>
-                        <div class="shareBlock position-absolute end-0 w-auto p-1 m-3 rounded-circle bg-secondary">
+                        <div class="shareBlock end-0 mt-1 me-3 p-1 position-absolute rounded-circle w-auto">
                             <button class="btn_share bg-transparent border-0" title="分享商品">
                                 <i class="fa-solid fa-share text-white"></i>
                                 <span class="d-none">分享</span>
                             </button>
                         </div>
-                        <div class="favbtn position-absolute end-0 w-auto p-1 m-3 rounded-circle">
+                        <div class="favbtn position-absolute end-0 w-auto p-1 mt-2 me-3 rounded-circle">
                             <button class="btn_favorite bg-transparent border-0" title="加入收藏">
                                 <i class="font-rad fa-regular fa-heart"></i>
                             </button>
                         </div>
                     </div>
                 </template>
+                <div class="content row px-5 type_grid">
+                </div>
+
+                <ul class="page_btn d-flex justify-content-center my-4 pagination d-none" data-init="false">
+                    <li class="page-item btn_prev">
+                        <button class="page-link text-black" title="切換至上一頁">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item btn_next">
+                        <button class="page-link text-black" title="切換至下一頁">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div id="history-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
+                <div class="nodata h5 text-center fw-bold d-none">查無瀏覽紀錄</div>
+
+                <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
+                    <button class="align-items-center bg-transparent border-0 d-flex mx-1 focus" data-type="grid">
+                        <span class="material-symbols-outlined fs-5 me-1">grid_on</span>圖片
+                    </button>
+                    <button class="align-items-center bg-transparent border-0 d-flex mx-1" data-type="list">
+                        <span class="material-symbols-outlined fs-5 me-1">view_list</span>圖文
+                    </button>
+                </div>
+
+                <template id="BrowsingTemplate">
+                    <div class="type_change_frame row position-relative mb-3">
+                        <a data-key="link" class="border border-5 rounded">
+                            <figure>
+                                <img data-key="image" src="" alt="" />
+                                <figcaption class="w-100">
+                                    <div>
+                                        <div data-key="itemNo" class="fw-bold"></div>
+                                        <div data-key="title" class="fw-bold"></div>
+                                    </div>
+                                    <div data-key="description"></div>
+                                    <div data-key="price" class="fw-bold"></div>
+                                </figcaption>
+                            </figure>
+                        </a>
+                        <div class="shareBlock end-0 mt-1 me-3 p-1 position-absolute rounded-circle w-auto">
+                            <button class="btn_share bg-transparent border-0" title="分享商品">
+                                <i class="fa-solid fa-share text-white"></i>
+                                <span class="d-none">分享</span>
+                            </button>
+                        </div>
+                        <div class="favbtn position-absolute end-0 w-auto p-1 mt-2 me-3 rounded-circle">
+                            <button class="btn_favorite bg-transparent border-0" title="加入收藏">
+                                <i class="font-rad fa-regular fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <div class="content row px-5 type_grid">
+                </div>
+
+                <ul class="page_btn d-flex justify-content-center my-4 pagination d-none" data-init="false">
+                    <li class="page-item btn_prev">
+                        <button class="page-link text-black" title="切換至上一頁">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item btn_next">
+                        <button class="page-link text-black" title="切換至下一頁">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </li>
+                </ul>
+
             </div>
         </div>
     </div>

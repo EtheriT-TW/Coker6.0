@@ -31,7 +31,7 @@
 
     #ToolList > li .material-symbols-outlined {
         font-size: 20px !important;
-        vertical-align:text-bottom;
+        vertical-align: text-bottom;
     }
 
 #TabContent {
@@ -102,12 +102,12 @@
     width: 75px;
 }
 
-#history-tab-pane img, #favorite-tab-pane img {
+#history-tab-pane img {
     width: 180px;
     height: 180px;
 }
 
-#history-tab-pane .description, #favorite-tab-pane .description {
+#history-tab-pane .description {
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -116,27 +116,109 @@
     -webkit-line-clamp: 2;
 }
 
-#history-tab-pane .price::before, #favorite-tab-pane .price::before {
+#history-tab-pane .price::before {
     content: '$';
 }
 
-.favbtn {
-    top: 2.5rem;
+.btn_page button {
+    padding: .375rem .75rem;
+    margin-left: -1px;
+    color: black;
+    border: 1px solid #dee2e6;
+    background-color: white;
 }
 
-    .favbtn > button {
-        padding: 0;
+    .btn_page button.focus {
+        background-color: #e9ecef;
     }
 
-        .favbtn > button > i {
-            font-size: 1.5rem;
-        }
+.btn_switchViewType button {
+    color: gray;
+}
+
+    .btn_switchViewType button.focus {
+        color: black;
+        font-weight: 700;
+    }
+
+#TabContent .content img {
+    width: 180px;
+    height: 180px;
+    margin-top: 0.5rem;
+}
+
+#TabContent .content figure figcaption {
+    display: flex;
+    flex-direction: column;
+}
+
+#TabContent .content .type_change_frame div[data-key='price'] {
+    flex-grow: 1;
+    align-content: flex-end;
+}
+
+#TabContent .content.type_grid figure figcaption {
+    padding-top: 0;
+}
+
+#TabContent .content.type_grid .type_change_frame {
+    margin: 0rem;
+    flex: 0 0 auto;
+    width: 25%;
+}
+
+    #TabContent .content.type_grid .type_change_frame div[data-key='itemNo'] {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #TabContent .content.type_grid .type_change_frame div[data-key='title'] {
+        margin-top: 0.25rem;
+        height: 3rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    #TabContent .content.type_grid .type_change_frame div[data-key='description'] {
+        display: none;
+    }
+
+    #TabContent .content.type_grid .type_change_frame div[data-key='price'] {
+        margin-top: 1rem;
+        text-align: start;
+    }
+
+#TabContent .content.type_list figure {
+    display: flex;
+}
+
+    #TabContent .content.type_list figure figcaption {
+        padding-top: 1rem;
+    }
+
+#TabContent .content.type_list .type_change_frame div[data-key='description'] {
+    display: flex;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+#TabContent .content.type_list .type_change_frame div[data-key='price'] {
+    margin-top: 0;
+    text-align: end;
+}
 
 /* Button Share */
 .shareBlock > a {
     position: absolute;
-    left: -75% !important;
-    top: 50% !important;
+    left: 0% !important;
+    top: 0% !important;
     transform: translate(-50%, -50%) scaleX(0) !important;
     transition: all 1s;
 }
@@ -148,8 +230,8 @@
 }
 
 .shareBlock.show > a {
-    top: 0% !important;
-    left: -75% !important;
+    top: -2rem !important;
+    left: 0% !important;
     transition: all 1s;
 }
 
@@ -187,6 +269,11 @@
     }
 }
 
+/* Button Favorites*/
+.favbtn {
+    top: 2rem;
+}
+
 @media (max-width:768px) {
     #ToolList > li > button .material-symbols-outlined {
         font-size: 24px !important;
@@ -218,7 +305,7 @@
             }
 
                 #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
-                     width: 30%;
+                    width: 30%;
                 }
 
                 #main > .container > #TabContent > #info-tab-pane > div {

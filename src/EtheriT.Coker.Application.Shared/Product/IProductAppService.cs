@@ -26,7 +26,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<List<ProductStockDto>> GetDisplayStock(long id);
         public Task<ProdGetDisplayDto> GetDisplaySimple(long id);
         public Task<JsonResult> GetRandomDIsplay(long webid, int num);
-        public Task<List<ProdGetHistoryDisplayDto>> GetHistoryDisplay();
+        public Task<ProdGetHistoryDisplayAllDto> GetHistoryDisplay(int page);
         public Task<ResponseMessageDto> ProdDelete(long Id);
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);

@@ -1,0 +1,39 @@
+﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal;
+@model EtheriT.Coker.Application.Shared.Dto.Webs.WebsiteEditOutputDto;
+@{
+    ViewData["Title"] = "SettingCSS";
+}
+@Html.AntiForgeryToken()
+<link rel="stylesheet" href="~/css/SystemManagement/WebData.min.css" asp-append-version="true" />
+
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
+<script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
+
+
+<script src="~/js/SystemManagement/WebData.min.js" asp-append-version="true"></script>
+
+<div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
+    <div class="title fw-bold fs-3">自訂CSS</div>
+    <a class="btn btn-primary text-decoration-none align-self-center d-none" href="#" role="button">返回網站資料</a>
+</div>
+
+<div id="WebDataMain">
+    <div class="d-flex">
+        <!-- Website Info -->
+        <div class="calign-items-stretch d-flex pb-2 ps-2  w-100">
+            <div class="card border-0 w-100">
+                <div id="WebsiteInfo" class="card-body">
+                    <form id="WebsiteData" class="needs-validation" novalidate>
+                        <div class="form-floating mb-3">
+                            <textarea id="InputWebsiteDescription" name="Description" class="website_description form-control col vh-100" type="text" placeholder="自訂CSS">輸入CSS語法...</textarea>
+                            <label class="required" for="InputWebsiteDescription">版型CSS編輯器</label>
+                        </div>
+                    </form>
+                    <div class="form_btn justify-content-end mb-2">
+                        <button class="btn_save btn-primary border-0 px-3 py-1 mx-2">儲存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

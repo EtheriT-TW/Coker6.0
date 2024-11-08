@@ -151,6 +151,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="ContentManagement",
                                 Action="ContactUs",
                                 Icon="",
+                            },
+                            new JobMenu{
+                                PageName="SettingCSS",
+                                Title="自訂CSS",
+                                Controller="ContentManagement",
+                                Action="SettingCSS",
+                                Icon="",
                             }
                         }
                     },

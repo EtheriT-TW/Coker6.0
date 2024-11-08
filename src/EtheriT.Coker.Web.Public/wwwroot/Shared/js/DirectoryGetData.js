@@ -93,7 +93,6 @@ function initElemntAndLoadDir($dir, page) {
     }
 
 }
-
 function DirectoryGetDataInit() {
     const dirLength = $(".catalog_frame").length;
     $(".catalog_frame").each(function () {

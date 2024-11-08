@@ -162,15 +162,23 @@ function Member(data) {
         var $content = $this.parents(".tab-pane").find(".content");
         switch ($this.data("type")) {
             case "grid":
+                localStorage.setItem(`switchViewType-Member${$content.data("storagename")}`, "grid");
                 if (!$content.hasClass("type_grid")) $content.addClass("type_grid");
                 if ($content.hasClass("type_list")) $content.removeClass("type_list");
                 break;
             case "list":
+                localStorage.setItem(`switchViewType-Member${$content.data("storagename")}`, "list");
                 if (!$content.hasClass("type_list")) $content.addClass("type_list");
                 if ($content.hasClass("type_grid")) $content.removeClass("type_grid");
                 break;
         }
     })
+    if (typeof (localStorage["switchViewType-MemberFavorite"]) != "undefined") {
+        if (localStorage["switchViewType-MemberFavorite"] == "list") $("#favorite-tab-pane .btn_switchViewType button[data-type='list'").click();
+    }
+    if (typeof (localStorage["switchViewType-MemberBrowsing"]) != "undefined") {
+        if (localStorage["switchViewType-MemberBrowsing"] == "list") $("#history-tab-pane .btn_switchViewType button[data-type='list'").click();
+    }
     $("#ToolList > li button").on("click", function () {
         switch ($(this).attr("id")) {
             case "profile-tab":

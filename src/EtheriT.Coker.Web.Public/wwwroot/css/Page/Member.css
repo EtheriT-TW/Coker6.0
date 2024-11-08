@@ -142,39 +142,39 @@
         font-weight: 700;
     }
 
-.content img {
+#TabContent .content img {
     width: 180px;
     height: 180px;
     margin-top: 0.5rem;
 }
 
-.content figure figcaption {
+#TabContent .content figure figcaption {
     display: flex;
     flex-direction: column;
 }
 
-.content .type_change_frame div[data-key='price'] {
+#TabContent .content .type_change_frame div[data-key='price'] {
     flex-grow: 1;
     align-content: flex-end;
 }
 
-    .content.type_grid figure figcaption {
-        padding-top: 0;
-    }
+#TabContent .content.type_grid figure figcaption {
+    padding-top: 0;
+}
 
-.content.type_grid .type_change_frame {
+#TabContent .content.type_grid .type_change_frame {
     margin: 0rem;
     flex: 0 0 auto;
     width: 25%;
 }
 
-    .content.type_grid .type_change_frame div[data-key='itemNo'] {
+    #TabContent .content.type_grid .type_change_frame div[data-key='itemNo'] {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .content.type_grid .type_change_frame div[data-key='title'] {
+    #TabContent .content.type_grid .type_change_frame div[data-key='title'] {
         margin-top: 0.25rem;
         height: 3rem;
         overflow: hidden;
@@ -184,24 +184,24 @@
         -webkit-line-clamp: 2;
     }
 
-    .content.type_grid .type_change_frame div[data-key='description'] {
+    #TabContent .content.type_grid .type_change_frame div[data-key='description'] {
         display: none;
     }
 
-    .content.type_grid .type_change_frame div[data-key='price'] {
+    #TabContent .content.type_grid .type_change_frame div[data-key='price'] {
         margin-top: 1rem;
         text-align: start;
     }
 
-.content.type_list figure {
+#TabContent .content.type_list figure {
     display: flex;
 }
 
-    .content.type_list figure figcaption {
+    #TabContent .content.type_list figure figcaption {
         padding-top: 1rem;
     }
 
-.content.type_list .type_change_frame div[data-key='description'] {
+#TabContent .content.type_list .type_change_frame div[data-key='description'] {
     display: flex;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -210,7 +210,7 @@
     -webkit-line-clamp: 2;
 }
 
-.content.type_list .type_change_frame div[data-key='price'] {
+#TabContent .content.type_list .type_change_frame div[data-key='price'] {
     margin-top: 0;
     text-align: end;
 }

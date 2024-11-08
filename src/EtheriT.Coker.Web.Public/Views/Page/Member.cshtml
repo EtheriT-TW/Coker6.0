@@ -176,6 +176,22 @@
             </div>
             <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
                 <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
+
+                <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
+                    <li class="page-item btn_prev">
+                        <button class="page-link text-black" title="切換至上一頁">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item btn_next">
+                        <button class="page-link text-black" title="切換至下一頁">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="content"></div>
+
                 <template id="Template_Order_List">
                     <div class="border border-5 rounded p-3 mb-3">
                         <div class="row mb-1">

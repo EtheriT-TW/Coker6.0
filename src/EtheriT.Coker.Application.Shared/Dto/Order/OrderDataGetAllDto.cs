@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
     public class OrderDataGetAllDto: ResponseMessageDto
     {
         public List<OrderDataGetDto> OrderData { get; set; }
+        public int? Page_Total { get; set; }
     }
 }

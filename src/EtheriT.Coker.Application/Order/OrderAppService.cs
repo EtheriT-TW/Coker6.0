@@ -73,6 +73,18 @@ namespace EtheriT.Coker.Application.Order
                     db.Order_Headers.Add(oh);
                     db.SaveChanges();
 
+                    if(Token.IsLogin)
+                    {
+                        var font_user = await db.FrontUsers.Where(e => e.UUID == UUID && e.Name == oh.Orderer && e.Email == oh.OrdererEmail).FirstOrDefaultAsync();
+                        if(font_user != null)
+                        {
+                            if (font_user.CellPhone == null || font_user.CellPhone == "") font_user.CellPhone = oh.OrdererCellPhone;
+                            if (font_user.Address == null || font_user.Address == "") font_user.Address = oh.OrdererAddress;
+                            if (font_user.Sex == null) font_user.Sex = oh.OrdererSex;
+                            db.SaveChanges();
+                        }
+                    }
+
                     output = await AddDetails(oh.Id);
                     if (output.Success)
                     {

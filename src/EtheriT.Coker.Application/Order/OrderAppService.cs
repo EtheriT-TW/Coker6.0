@@ -281,8 +281,8 @@ namespace EtheriT.Coker.Application.Order
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
-                        item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp[int.Parse(item.S1Title) - 1].Title;
-                        item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp[int.Parse(item.S2Title) - 1].Title;
+						item.S1Title = int.Parse(item.S1Title??"0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
+						item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
                     }
 
                     return output;
@@ -294,7 +294,7 @@ namespace EtheriT.Coker.Application.Order
 
             }
 
-            return null;
+            return new List<OrderDetailsGetAllDto>();
         }
         public async Task<OrderDataGetAllDto> GetHistoryOrder()
         {

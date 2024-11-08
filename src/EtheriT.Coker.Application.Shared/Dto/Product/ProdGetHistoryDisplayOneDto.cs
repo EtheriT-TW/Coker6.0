@@ -1,11 +1,8 @@
 ﻿
-using EtheriT.Coker.Application.Shared.Dto.Product;
-
-namespace EtheriT.Coker.Application.Shared.Dto.Favorites
+namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
-    public class FavoritesGetDisplayDto
+    public class ProdGetHistoryDisplayOneDto
     {
-        public long FId { get; set; }
         public long PId { get; set; }
         public string Title { get; set; }
         public string Introduction { get; set; }

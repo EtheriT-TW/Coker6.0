@@ -514,7 +514,7 @@ function CheckToken() {
             if (result.isLogin && result.name != "") {
                 $("#HiUser > .name").text(`${result.name} 您好!`);
             }
-            console.log("userData:", result);
+            //console.log("userData:", result);
         }
     })
 }

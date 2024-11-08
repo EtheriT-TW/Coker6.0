@@ -73,14 +73,24 @@ namespace EtheriT.Coker.Application.Order
                     db.Order_Headers.Add(oh);
                     db.SaveChanges();
 
+                    if(Token.IsLogin)
+                    {
+                        var font_user = await db.FrontUsers.Where(e => e.UUID == UUID && e.Name == oh.Orderer && e.Email == oh.OrdererEmail).FirstOrDefaultAsync();
+                        if(font_user != null)
+                        {
+                            if (font_user.CellPhone == null || font_user.CellPhone == "") font_user.CellPhone = oh.OrdererCellPhone;
+                            if (font_user.Address == null || font_user.Address == "") font_user.Address = oh.OrdererAddress;
+                            if (font_user.Sex == null) font_user.Sex = oh.OrdererSex;
+                            db.SaveChanges();
+                        }
+                    }
+
                     output = await AddDetails(oh.Id);
                     if (output.Success)
                     {
-                        output = await SendMail(oh.Id);
-                        if (output.Success)
-                        {
-                            output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
-                        }
+                        var mailoutput = await SendMail(oh.Id);
+                        output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                        if(!mailoutput.Success) output.Error = mailoutput.Message;
                     }
                 }
                 else throw new Exception("查無Token");
@@ -307,9 +317,9 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
+                uuids.Add(UUID);
                 if (uuids.Any())
                 {
-                    uuids.Add(UUID);
                     var order_headers = await db.Order_Headers
                         .Where(e => uuids.Contains(e.FK_UUID))
                         // 重新排版後增加下方程式碼撈取3個月資料
@@ -482,7 +492,6 @@ namespace EtheriT.Coker.Application.Order
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();

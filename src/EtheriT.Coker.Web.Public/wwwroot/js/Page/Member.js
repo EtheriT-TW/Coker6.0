@@ -348,8 +348,8 @@ function HistoryDataInsert(Datas) {
         })
 
         $.each(order_details, function (index, detail) {
-            var list_frame = $($("#Template_Order_Details_List").html()).clone();
             if (detail != null) {
+                var list_frame = $($("#Template_Order_Details_List").html()).clone();
                 list_frame.find("a").attr("href", `/${OrgName}/Member/product/${detail.pId}`);
                 list_frame.find("a").attr("title", `連結至：${detail.title}`);
                 list_frame.find("img").attr("src", detail.imagePath);

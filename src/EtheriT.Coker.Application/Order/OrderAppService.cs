@@ -260,43 +260,42 @@ namespace EtheriT.Coker.Application.Order
                 if (db_oh != null)
                 {
                     output = await (from od in db.Order_Details
-                                        where od.FK_OId == db_oh.Id
-                                        from sc in db.ShoppingCarts
-                                        where sc.Id == od.FK_SCId
-                                        from ps in db.Prod_Stocks
-                                        where ps.Id == sc.FK_PSid
-                                        from pp in db.Prod_Prices
-                                        where !pp.IsDeleted && pp.FK_PSId == ps.Id
-                                        from p in db.Prods
-                                        where p.Id == ps.FK_Pid
-                                        select new OrderDetailsGetAllDto
-                                        {
-                                            PId = p.Id,
-                                            Title = p.Title,
-                                            S1Title = ps.FK_S1id.ToString(),
-                                            S2Title = ps.FK_S2id.ToString(),
-                                            Description = p.Description,
-                                            Price = pp.Price ?? 0,
-                                            Quantity = sc.Quantity,
-                                            Subtotal = ps.Price * sc.Quantity,
-                                            ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId)
-                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
-                                                  .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                          select new DirectoryReleInfoDto
-                                                          {
-                                                              Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
-                                                          }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-                                        }).ToListAsync();
+                                    where od.FK_OId == db_oh.Id
+                                    from sc in db.ShoppingCarts
+                                    where sc.Id == od.FK_SCId
+                                    from ps in db.Prod_Stocks
+                                    where ps.Id == sc.FK_PSid
+                                    from pp in db.Prod_Prices
+                                    where !pp.IsDeleted && pp.FK_PSId == ps.Id
+                                    from p in db.Prods
+                                    where p.Id == ps.FK_Pid
+                                    select new OrderDetailsGetAllDto
+                                    {
+                                        PId = p.Id,
+                                        Title = p.Title,
+                                        S1Title = ps.FK_S1id.ToString(),
+                                        S2Title = ps.FK_S2id.ToString(),
+                                        Description = p.Description,
+                                        Price = pp.Price ?? 0,
+                                        Quantity = sc.Quantity,
+                                        Subtotal = ps.Price * sc.Quantity,
+                                        ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId)
+                                              .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                              .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                      select new DirectoryReleInfoDto
+                                                      {
+                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                      }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
+                                    }).ToListAsync();
 
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
-						item.S1Title = int.Parse(item.S1Title??"0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
-						item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
+                        item.S1Title = int.Parse(item.S1Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
+                        item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
                     }
-
                 }
                 else throw new Exception("查無訂單資料");
             }
@@ -304,7 +303,7 @@ namespace EtheriT.Coker.Application.Order
             {
 
             }
-            return new List<OrderDetailsGetAllDto>();
+            return output;
         }
         public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
         {

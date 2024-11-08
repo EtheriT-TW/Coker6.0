@@ -511,7 +511,6 @@ function RadioPayment() {
         var $this = $(this);
         if ($this.is(":checked")) {
             var val = $this.val();
-            console.log(val)
             if (val == 1) {
                 $(".pay_info").removeClass("d-none");
             } else {
@@ -801,13 +800,25 @@ function OrderSuccess(result) {
 
     $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
 
-    Swal.fire({
-        title: "小提醒",
-        icon: "info",
-        html: $(".storememo").text().replaceAll("\n", "<br/>"),
-        focusConfirm: false,
-        confirmButtonText: "確認",
-    }).then((confirm) => {
+    if ($(".storememo").text() != "") {
+        Swal.fire({
+            title: "小提醒",
+            icon: "info",
+            html: $(".storememo").text().replaceAll("\n", "<br/>"),
+            focusConfirm: false,
+            confirmButtonText: "確認",
+        }).then((confirm) => {
+            if (result.error != null) {
+                Coker.Token.CheckToken().done(function (token) {
+                    if (!token.isLogin) {
+                        Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看訂單詳細，或將訂單完成頁面截圖。")
+                    } else {
+                        Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。")
+                    }
+                });
+            }
+        });
+    } else {
         if (result.error != null) {
             Coker.Token.CheckToken().done(function (token) {
                 if (!token.isLogin) {
@@ -817,7 +828,7 @@ function OrderSuccess(result) {
                 }
             });
         }
-    });
+    }
 
     $(".storememo").empty();
 

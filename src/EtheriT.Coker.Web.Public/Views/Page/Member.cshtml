@@ -218,19 +218,6 @@
                                             <div class="col-2 text-end">小計</div>
                                         </div>
                                     </li>
-                                    <template id="Template_Order_Details_List">
-                                        <li class="list-group-item">
-                                            <a href="" title="" target="_self">
-                                                <div class="row d-lg-flex">
-                                                    <div class="col-2 text-center"><img src="" alt="" /></div>
-                                                    <div class="title col-4 text-start align-content-center"></div>
-                                                    <div class="price col-2 text-end align-content-center"></div>
-                                                    <div class="quantity col-2 text-end align-content-center"></div>
-                                                    <div class="subtotal price col-2 text-end align-content-center"></div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </template>
                                 </ul>
                                 <div class="row d-lg-flex px-3">
                                     <div class="col-10 text-end align-content-center">商品金額：</div>
@@ -251,6 +238,21 @@
                         </button>
                     </div>
                 </template>
+
+                <template id="Template_Order_Details_List">
+                    <li class="list-group-item">
+                        <a href="" title="" target="_self">
+                            <div class="row d-lg-flex">
+                                <div class="col-2 text-center"><img src="" alt="" /></div>
+                                <div class="title col-4 text-start align-content-center"></div>
+                                <div class="price col-2 text-end align-content-center"></div>
+                                <div class="quantity col-2 text-end align-content-center"></div>
+                                <div class="subtotal price col-2 text-end align-content-center"></div>
+                            </div>
+                        </a>
+                    </li>
+                </template>
+
             </div>
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
                 <div class="nodata h5 text-center fw-bold  d-none">查無收藏紀錄</div>

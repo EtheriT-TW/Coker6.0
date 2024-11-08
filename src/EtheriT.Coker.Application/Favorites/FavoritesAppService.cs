@@ -75,9 +75,9 @@ namespace EtheriT.Coker.Application.Favorites
             }
             return response;
         }
-        public async Task<List<FavoritesGetDisplayDto>> GetDisplay()
+        public async Task<FavoritesGetDisplayAllDto> GetDisplay(int page)
         {
-            var output = new List<FavoritesGetDisplayDto>();
+            var output = new FavoritesGetDisplayAllDto();
             Guid UUID = await tokenAppService.GetUUID();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
@@ -86,55 +86,60 @@ namespace EtheriT.Coker.Application.Favorites
                 var favorites = await db.Favorites.Where(e => e.UUID == UUID).ToListAsync();
                 if (favorites != null)
                 {
-                    output = (from favorite in favorites
-                              join prod in db.Prods on favorite.FK_AssocId equals prod.Id
-                              where favorite.UUID == UUID && favorite.Type == (int)FavoritesTypeEnum.商品
-                              orderby favorite.Id descending
-                              select new FavoritesGetDisplayDto()
-                              {
-                                  FId = favorite.Id,
-                                  PId = prod.Id,
-                                  Title = prod.Title,
-                                  Introduction = prod.Introduction,
-                                  Description = prod.Description,
-                                  Link = "/product/" + prod.Id,
-                                  Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                          .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
-                                          .Where(e => e.fileUpload != null)
-                                          .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
-                                          .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                            select new DirectoryReleInfoDto
-                                            {
-                                                Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
-                                            }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                  Price = new List<double>() { },
-                                  ItemNo = prod.ItemNo,
-                              }).ToList();
+                    var favorites_data = (from favorite in favorites
+                                          join prod in db.Prods on favorite.FK_AssocId equals prod.Id
+                                          where favorite.UUID == UUID && favorite.Type == (int)FavoritesTypeEnum.商品
+                                          orderby favorite.Id descending
+                                          select new FavoritesGetDisplayOneDto()
+                                          {
+                                              FId = favorite.Id,
+                                              PId = prod.Id,
+                                              Title = prod.Title,
+                                              Introduction = prod.Introduction,
+                                              Description = prod.Description,
+                                              Link = "/product/" + prod.Id,
+                                              Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                                      .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
+                                                      .Where(e => e.fileUpload != null)
+                                                      .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                      .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                        select new DirectoryReleInfoDto
+                                                        {
+                                                            Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                                        }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
+                                              Price = new List<double>() { },
+                                              ItemNo = prod.ItemNo,
+                                          }).ToList();
+                    output.Page_Total = (int)Math.Ceiling(favorites_data.Count / 8.0);
+                    favorites_data = favorites_data.Skip((page - 1) * 8).Take(8).ToList();
 
-                    for (var i = 0; i < output.Count; i++)
+                    for (var i = 0; i < favorites_data.Count; i++)
                     {
                         var prod_prices = await (from prod_stock in db.Prod_Stocks
                                                  join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                 where prod_stock.FK_Pid == output[i].PId
+                                                 where prod_stock.FK_Pid == favorites_data[i].PId
                                                  where prod_price.Price > 0
                                                  orderby prod_price descending
                                                  select prod_price).ToListAsync();
                         if (prod_prices.Count > 1)
                         {
-                            output[i].Price.Add((double)prod_prices[0].Price);
-                            output[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            favorites_data[i].Price.Add((double)prod_prices[0].Price);
+                            favorites_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
                         }
                         else if (prod_prices.Count == 1)
                         {
-                            output[i].Price.Add((double)prod_prices[0].Price);
+                            favorites_data[i].Price.Add((double)prod_prices[0].Price);
                         }
-                        else output[i].Price.Add(0);
+                        else favorites_data[i].Price.Add(0);
                     }
+                    output.Data = favorites_data;
+                    output.Page = page + 1;
+                    output.Success = true;
                 }
             }
             catch (Exception ex)
             {
-
+                output.Error = ex.Message;
             }
 
             return output;
@@ -157,7 +162,7 @@ namespace EtheriT.Coker.Application.Favorites
                     favorites.DeletionTime = DateTime.Now;
                     await loginUserData.SaveChanges(favorites);
 
-                    if(favorites.Type == (int)FavoritesTypeEnum.商品)
+                    if (favorites.Type == (int)FavoritesTypeEnum.商品)
                     {
                         Core.Models.Prod_Log prod_log = new Core.Models.Prod_Log
                         {

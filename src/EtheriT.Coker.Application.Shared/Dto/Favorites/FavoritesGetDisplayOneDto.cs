@@ -3,7 +3,7 @@ using EtheriT.Coker.Application.Shared.Dto.Product;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Favorites
 {
-    public class FavoritesGetDisplayDto
+    public class FavoritesGetDisplayOneDto
     {
         public long FId { get; set; }
         public long PId { get; set; }

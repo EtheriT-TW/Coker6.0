@@ -75,10 +75,10 @@ namespace EtheriT.Coker.Application.Order
                     db.Order_Headers.Add(oh);
                     db.SaveChanges();
 
-                    if(Token.IsLogin)
+                    if (Token.IsLogin)
                     {
                         var font_user = await db.FrontUsers.Where(e => e.UUID == UUID && e.Name == oh.Orderer && e.Email == oh.OrdererEmail).FirstOrDefaultAsync();
-                        if(font_user != null)
+                        if (font_user != null)
                         {
                             if (font_user.CellPhone == null || font_user.CellPhone == "") font_user.CellPhone = oh.OrdererCellPhone;
                             if (font_user.Address == null || font_user.Address == "") font_user.Address = oh.OrdererAddress;
@@ -92,7 +92,7 @@ namespace EtheriT.Coker.Application.Order
                     {
                         var mailoutput = await SendMail(oh.Id);
                         output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
-                        if(!mailoutput.Success) output.Error = mailoutput.Message;
+                        if (!mailoutput.Success) output.Error = mailoutput.Message;
                     }
                 }
                 else throw new Exception("查無Token");
@@ -253,51 +253,50 @@ namespace EtheriT.Coker.Application.Order
         }
         public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
+            List<OrderDetailsGetAllDto> output = new List<OrderDetailsGetAllDto>();
             try
             {
                 var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
                 var orgName = await loginUserData.GetWebsiteOrgName();
                 if (db_oh != null)
                 {
-                    var output = await (from od in db.Order_Details
-                                        where od.FK_OId == db_oh.Id
-                                        from sc in db.ShoppingCarts
-                                        where sc.Id == od.FK_SCId
-                                        from ps in db.Prod_Stocks
-                                        where ps.Id == sc.FK_PSid
-                                        from pp in db.Prod_Prices
-                                        where !pp.IsDeleted && pp.FK_PSId == ps.Id
-                                        from p in db.Prods
-                                        where p.Id == ps.FK_Pid
-                                        select new OrderDetailsGetAllDto
-                                        {
-                                            PId = p.Id,
-                                            Title = p.Title,
-                                            S1Title = ps.FK_S1id.ToString(),
-                                            S2Title = ps.FK_S2id.ToString(),
-                                            Description = p.Description,
-                                            Price = pp.Price ?? 0,
-                                            Quantity = sc.Quantity,
-                                            Subtotal = ps.Price * sc.Quantity,
-                                            ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId)
-                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
-                                                  .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                          select new DirectoryReleInfoDto
-                                                          {
-                                                              Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
-                                                          }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-                                        }).ToListAsync();
+                    output = await (from od in db.Order_Details
+                                    where od.FK_OId == db_oh.Id
+                                    from sc in db.ShoppingCarts
+                                    where sc.Id == od.FK_SCId
+                                    from ps in db.Prod_Stocks
+                                    where ps.Id == sc.FK_PSid
+                                    from pp in db.Prod_Prices
+                                    where !pp.IsDeleted && pp.FK_PSId == ps.Id
+                                    from p in db.Prods
+                                    where p.Id == ps.FK_Pid
+                                    select new OrderDetailsGetAllDto
+                                    {
+                                        PId = p.Id,
+                                        Title = p.Title,
+                                        S1Title = ps.FK_S1id.ToString(),
+                                        S2Title = ps.FK_S2id.ToString(),
+                                        Description = p.Description,
+                                        Price = pp.Price ?? 0,
+                                        Quantity = sc.Quantity,
+                                        Subtotal = ps.Price * sc.Quantity,
+                                        ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == p.FK_WebsiteId)
+                                              .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                              .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                      select new DirectoryReleInfoDto
+                                                      {
+                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                      }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
+                                    }).ToListAsync();
 
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
-						item.S1Title = int.Parse(item.S1Title??"0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
-						item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
+                        item.S1Title = int.Parse(item.S1Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
+                        item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
                     }
-
-                    return output;
                 }
                 else throw new Exception("查無訂單資料");
             }
@@ -305,10 +304,9 @@ namespace EtheriT.Coker.Application.Order
             {
 
             }
-
-            return new List<OrderDetailsGetAllDto>();
+            return output;
         }
-        public async Task<OrderDataGetAllDto> GetHistoryOrder()
+        public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
         {
             var response = new OrderDataGetAllDto();
             var output = new List<OrderDataGetDto>();
@@ -324,10 +322,12 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var order_headers = await db.Order_Headers
                         .Where(e => uuids.Contains(e.FK_UUID))
-                        // 重新排版後增加下方程式碼撈取3個月資料
-                        //.Where(e => (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)e.CreationTime) < 0))
-                        // 重新排版後移除Take(10)撈取3個月資料
-                        .OrderByDescending(e => e.CreationTime).Take(10).ToListAsync();
+                        .Where(e => (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)e.CreationTime) < 0))
+                        .OrderByDescending(e => e.CreationTime).ToListAsync();
+
+                    response.Page_Total = (int)Math.Ceiling(order_headers.Count / 8.0);
+                    order_headers = order_headers.Skip((page - 1) * 8).Take(8).ToList();
+
                     foreach (var order_header in order_headers)
                     {
                         var temp_OrderDetails = new List<ShoppingCartGetDrop>();
@@ -354,7 +354,6 @@ namespace EtheriT.Coker.Application.Order
             {
                 response.Message = ex.Message;
             }
-
             return response;
         }
         public async Task<ResponseMessageDto> Delete(int id)
@@ -457,16 +456,16 @@ namespace EtheriT.Coker.Application.Order
                         if (state == (int)OrderStatusEnum.已取消)
                         {
                             var shoppingCarts = await (from sc in db.ShoppingCarts
-                                                    join od in db.Order_Details on sc.Id equals od.FK_SCId
-                                                    where od.FK_OId == ohid && sc.IsOrder
-                                                    select sc).ToListAsync();
+                                                       join od in db.Order_Details on sc.Id equals od.FK_SCId
+                                                       where od.FK_OId == ohid && sc.IsOrder
+                                                       select sc).ToListAsync();
                             if (shoppingCarts != null)
                             {
-                                var prod_stocks = new List<Prod_Stock>();  
+                                var prod_stocks = new List<Prod_Stock>();
                                 foreach (var sc in shoppingCarts)
                                 {
                                     var prod_stock = await db.Prod_Stocks.Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
-                                    if(prod_stock != null)
+                                    if (prod_stock != null)
                                     {
                                         prod_stock.Stock += sc.Quantity;
                                         prod_stocks.Add(prod_stock);

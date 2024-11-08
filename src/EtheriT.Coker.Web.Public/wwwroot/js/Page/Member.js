@@ -5,7 +5,7 @@ var TabNow = "info", date_now = "";
 
 function PageReady() {
     Coker.Member = {
-        GetOrderHistory: function () {
+        GetOrderHistory: function (page) {
             return $.ajax({
                 url: "/api/Order/GetHistoryOrder/",
                 type: "GET",
@@ -13,6 +13,7 @@ function PageReady() {
                 headers: {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
+                data: { page: page },
             });
         },
         CanceOrder: function (ohid) {
@@ -60,7 +61,6 @@ function Member(data) {
     $("#ResetModal .btn_resetforget").removeClass("d-none");
 
     SetMemberData();
-    SetHistoryOrderData();
     WebPageChange();
 
     $(".btn_logout").on("click", function () {
@@ -101,7 +101,6 @@ function Member(data) {
                     datacheck = false;
                 }
             }
-            //console.log(data)
             if (datacheck) {
                 co.User.UserEdit(data).done(function (result) {
                     co.sweet.success("資料修改完成！", null, true);
@@ -163,15 +162,23 @@ function Member(data) {
         var $content = $this.parents(".tab-pane").find(".content");
         switch ($this.data("type")) {
             case "grid":
+                localStorage.setItem(`switchViewType-Member${$content.data("storagename")}`, "grid");
                 if (!$content.hasClass("type_grid")) $content.addClass("type_grid");
                 if ($content.hasClass("type_list")) $content.removeClass("type_list");
                 break;
             case "list":
+                localStorage.setItem(`switchViewType-Member${$content.data("storagename")}`, "list");
                 if (!$content.hasClass("type_list")) $content.addClass("type_list");
                 if ($content.hasClass("type_grid")) $content.removeClass("type_grid");
                 break;
         }
     })
+    if (typeof (localStorage["switchViewType-MemberFavorite"]) != "undefined") {
+        if (localStorage["switchViewType-MemberFavorite"] == "list") $("#favorite-tab-pane .btn_switchViewType button[data-type='list'").click();
+    }
+    if (typeof (localStorage["switchViewType-MemberBrowsing"]) != "undefined") {
+        if (localStorage["switchViewType-MemberBrowsing"] == "list") $("#history-tab-pane .btn_switchViewType button[data-type='list'").click();
+    }
     $("#ToolList > li button").on("click", function () {
         switch ($(this).attr("id")) {
             case "profile-tab":
@@ -216,21 +223,32 @@ function WebPageChange() {
         if (window.location.hash.startsWith("#order")) {
             $("#TabContent > div#profile-tab-pane").addClass("active show");
             $("#ToolList > li button#profile-tab").addClass("active");
+            if (window.location.hash.indexOf("-") > 0) {
+                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                if ($.isNumeric(pagenumber)) SetHistoryOrderPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                else window.location.hash = "#order-1";
+            } else {
+                window.location.hash = "#order-1";
+            }
         } else if (window.location.hash.startsWith("#browsing")) {
             $("#TabContent > div#history-tab-pane").addClass("active show");
             $("#ToolList > li button#history-tab").addClass("active");
             if (window.location.hash.indexOf("-") > 0) {
-                SetBrowsingHistoryPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                if ($.isNumeric(pagenumber)) SetBrowsingHistoryPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                else window.location.hash = "#browsing-1";
             } else {
-                SetBrowsingHistoryPage(1);
+                window.location.hash = "#browsing-1";
             }
         } else if (window.location.hash.startsWith("#favorites")) {
             $("#TabContent > div#favorite-tab-pane").addClass("active show");
             $("#ToolList > li button#favorite-tab").addClass("active");
             if (window.location.hash.indexOf("-") > 0) {
-                SetFavoritesPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                if ($.isNumeric(pagenumber)) SetFavoritesPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                else window.location.hash = "#favorites-1";
             } else {
-                SetFavoritesPage(1);
+                window.location.hash = "#favorites-1";
             }
         } else {
             $("#TabContent > div#info-tab-pane").addClass("active show");
@@ -269,80 +287,90 @@ function SetMemberData() {
         }
     });
 }
-function SetHistoryOrderData() {
-    Coker.Member.GetOrderHistory().done(function (result) {
-        //console.log(result)
+function SetHistoryOrderPage(number) {
+    Coker.Member.GetOrderHistory(number).done(function (result) {
         if (result.success && result.orderData != null && result.orderData.length > 0) {
-            $.each(result.orderData, function (index, data) {
-                var order_header = data.orderHeader;
-                var order_details = data.orderDetails;
-                var frame = $($("#Template_Order_List").html()).clone();
-                frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
-                frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
-                frame.find(".amount").text((order_header.total).toLocaleString());
-                if ((order_header.creationTime.split(' ')[0] == date_now) && order_header.state == 1) {
-                    frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
-                    frame.find(".state .btn_canceOrder").on("click", function () {
-                        var $this = $(this);
-                        Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
-                            Coker.sweet.loading();
-                            Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
-                                if (result.success) {
-                                    $this.parent(".state").addClass("text-danger fw-bold");
-                                    $this.parent(".state").text("已取消");
-                                    Coker.sweet.success("已取消訂單", null, false);
-                                } else {
-                                    console.log(result.message);
-                                }
-                            })
-                        })
-                    });
+            if (result.page_Total > 1) {
+                if (!$("#profile-tab-pane .page_btn").data("init")) {
+                    PageButtonInit($("#profile-tab-pane .page_btn"), result.page_Total, "order");
                 }
-                else {
-                    frame.find(".state").text(order_header.stateStr);
-                    if (order_header.state == 4 || order_header.state == 5) {
-                        frame.find(".state").addClass("text-danger fw-bold");
-                    }
-                }
-
-                $("#profile-tab-pane").append(frame);
-
-                frame.find(".collapse").addClass(`collapse_${order_header.id}`);
-                frame.find(".btn_collapse").attr("data-bs-target", `.collapse_${order_header.id}`);
-
-                frame.find(".btn_collapse").on("click", function () {
-                    if ($(this).hasClass("collapsed")) $(this).text("點擊查看訂單詳細");
-                    else $(this).text("點擊關閉訂單詳細");
-                })
-
-                $.each(order_details, function (index, detail) {
-                    var list_frame = $($("#Template_Order_Details_List").html()).clone();
-                    if (detail != null) {
-                        list_frame.find("a").attr("href", `/${OrgName}/Member/product/${detail.pId}`);
-                        list_frame.find("a").attr("title", `連結至：${detail.title}`);
-                        list_frame.find("img").attr("src", detail.imagePath);
-                        list_frame.find("img").attr("alt", `${detail.title}的主要圖片`);
-                        list_frame.find(".title").text(detail.title);
-                        list_frame.find(".price").text((detail.price).toLocaleString());
-                        list_frame.find(".quantity").text(detail.quantity);
-                        list_frame.find(".subtotal").text(((parseInt(detail.price)) * (parseInt(detail.quantity))).toLocaleString());
-                        frame.find(".list-group").append(list_frame);
-                    }
-                })
-
-                frame.find(".collapse .header_subtotal").text((order_header.subtotal).toLocaleString());
-                frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
-                frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
-
-            })
+                ContentPageChage($("#profile-tab-pane .page_btn"), number, result.page_Total);
+            }
+            if ($("#profile-tab-pane .btn_switchViewType").hasClass("d-none")) $("#profile-tab-pane .btn_switchViewType").removeClass("d-none")
+            HistoryDataInsert(result.orderData)
+        } else if (number != 1) {
+            window.location.hash = "#order-1";
         } else {
-            $("#profile-tab-pane .nodata").removeClass("d-none");
+            if ($("#profile-tab-pane .nodata").hasClass("d-none")) $("#profile-tab-pane .nodata").removeClass("d-none")
         }
-    });
+    })
+}
+function HistoryDataInsert(Datas) {
+    $("#profile-tab-pane .content").empty();
+    $.each(Datas, function (index, data) {
+        var order_header = data.orderHeader;
+        var order_details = data.orderDetails;
+        var frame = $($("#Template_Order_List").html()).clone();
+        frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
+        frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
+        frame.find(".amount").text((order_header.total).toLocaleString());
+        if ((order_header.creationTime.split(' ')[0] == date_now) && order_header.state == 1) {
+            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            frame.find(".state .btn_canceOrder").on("click", function () {
+                var $this = $(this);
+                Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
+                    Coker.sweet.loading();
+                    Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
+                        if (result.success) {
+                            $this.parent(".state").addClass("text-danger fw-bold");
+                            $this.parent(".state").text("已取消");
+                            Coker.sweet.success("已取消訂單", null, false);
+                        } else {
+                            console.log(result.message);
+                        }
+                    })
+                })
+            });
+        }
+        else {
+            frame.find(".state").text(order_header.stateStr);
+            if (order_header.state == 4 || order_header.state == 5) {
+                frame.find(".state").addClass("text-danger fw-bold");
+            }
+        }
+
+        frame.find(".collapse").addClass(`collapse_${order_header.id}`);
+        frame.find(".btn_collapse").attr("data-bs-target", `.collapse_${order_header.id}`);
+
+        frame.find(".btn_collapse").on("click", function () {
+            if ($(this).hasClass("collapsed")) $(this).text("點擊查看訂單詳細");
+            else $(this).text("點擊關閉訂單詳細");
+        })
+
+        $.each(order_details, function (index, detail) {
+            if (detail != null) {
+                var list_frame = $($("#Template_Order_Details_List").html()).clone();
+                list_frame.find("a").attr("href", `/${OrgName}/Member/product/${detail.pId}`);
+                list_frame.find("a").attr("title", `連結至：${detail.title}`);
+                list_frame.find("img").attr("src", detail.imagePath);
+                list_frame.find("img").attr("alt", `${detail.title}的主要圖片`);
+                list_frame.find(".title").text(detail.title);
+                list_frame.find(".price").text((detail.price).toLocaleString());
+                list_frame.find(".quantity").text(detail.quantity);
+                list_frame.find(".subtotal").text(((parseInt(detail.price)) * (parseInt(detail.quantity))).toLocaleString());
+                frame.find(".list-group").append(list_frame);
+            }
+        })
+
+        frame.find(".collapse .header_subtotal").text((order_header.subtotal).toLocaleString());
+        frame.find(".collapse .header_freight").text((order_header.freight).toLocaleString());
+        frame.find(".collapse .header_total").text((order_header.total).toLocaleString());
+
+        $("#profile-tab-pane .content").append(frame);
+    })
 }
 function SetFavoritesPage(number) {
     Coker.Favorites.GetDisplay(number).done(function (result) {
-        //console.log(result)
         if (result.data.length > 0) {
             if (result.page_Total > 1) {
                 if (!$("#favorite-tab-pane .page_btn").data("init")) {

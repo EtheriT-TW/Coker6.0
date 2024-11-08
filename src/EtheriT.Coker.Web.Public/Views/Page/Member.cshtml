@@ -176,6 +176,22 @@
             </div>
             <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
                 <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
+
+                <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
+                    <li class="page-item btn_prev">
+                        <button class="page-link text-black" title="切換至上一頁">
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item btn_next">
+                        <button class="page-link text-black" title="切換至下一頁">
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="content"></div>
+
                 <template id="Template_Order_List">
                     <div class="border border-5 rounded p-3 mb-3">
                         <div class="row mb-1">
@@ -202,19 +218,6 @@
                                             <div class="col-2 text-end">小計</div>
                                         </div>
                                     </li>
-                                    <template id="Template_Order_Details_List">
-                                        <li class="list-group-item">
-                                            <a href="" title="" target="_self">
-                                                <div class="row d-lg-flex">
-                                                    <div class="col-2 text-center"><img src="" alt="" /></div>
-                                                    <div class="title col-4 text-start align-content-center"></div>
-                                                    <div class="price col-2 text-end align-content-center"></div>
-                                                    <div class="quantity col-2 text-end align-content-center"></div>
-                                                    <div class="subtotal price col-2 text-end align-content-center"></div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </template>
                                 </ul>
                                 <div class="row d-lg-flex px-3">
                                     <div class="col-10 text-end align-content-center">商品金額：</div>
@@ -235,6 +238,21 @@
                         </button>
                     </div>
                 </template>
+
+                <template id="Template_Order_Details_List">
+                    <li class="list-group-item">
+                        <a href="" title="" target="_self">
+                            <div class="row d-lg-flex">
+                                <div class="col-2 text-center"><img src="" alt="" /></div>
+                                <div class="title col-4 text-start align-content-center"></div>
+                                <div class="price col-2 text-end align-content-center"></div>
+                                <div class="quantity col-2 text-end align-content-center"></div>
+                                <div class="subtotal price col-2 text-end align-content-center"></div>
+                            </div>
+                        </a>
+                    </li>
+                </template>
+
             </div>
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
                 <div class="nodata h5 text-center fw-bold  d-none">查無收藏紀錄</div>
@@ -276,7 +294,8 @@
                         </div>
                     </div>
                 </template>
-                <div class="content row px-5 type_grid">
+
+                <div class="content row px-5 type_grid" data-storagename="Favorite">
                 </div>
 
                 <ul class="page_btn d-flex justify-content-center my-4 pagination d-none" data-init="false">
@@ -332,7 +351,8 @@
                         </div>
                     </div>
                 </template>
-                <div class="content row px-5 type_grid">
+
+                <div class="content row px-5 type_grid" data-storagename="Browsing">
                 </div>
 
                 <ul class="page_btn d-flex justify-content-center my-4 pagination d-none" data-init="false">

@@ -38,9 +38,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<OrderDataGetAllDto> GetHistoryOrder()
+        public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
         {
-            return await orderAppService.GetHistoryOrder();
+            return await orderAppService.GetHistoryOrder(page);
         }
 
         [HttpPost]

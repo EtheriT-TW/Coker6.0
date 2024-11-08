@@ -36,5 +36,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             }
             return View("ContactUs");
         }
+
+        public IActionResult SettingCSS()
+        {
+            return View("SettingCSS");
+        }
     }
 }

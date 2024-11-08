@@ -333,7 +333,7 @@
                                         "title": $self.find("a").attr("title"),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
-                                        "a_tag": $self.find("a").length > 0 ? true : flase,
+                                        "a_tag": $self.find("a").length > 0 ? true : false,
                                         "target": $self.find("a").attr("target"),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容

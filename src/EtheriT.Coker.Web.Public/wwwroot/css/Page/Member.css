@@ -15,7 +15,6 @@
     display: flex;
     width: 10rem;
     padding: 1rem 0;
-    min-height: 30rem;
 }
 
     #ToolList .nav-link {
@@ -174,7 +173,27 @@
         transform: translateX(-50%) scaleX(1) !important;
     }
 
+@media (max-width:992px) {
+    #history-tab-pane .description {
+        display:none;
+    }
+
+    #favorite-tab-pane .description {
+        display: none;
+    }
+
+    #profile-tab-pane .description {
+        display: none;
+    }
+}
+
 @media (max-width:768px) {
+    #ToolList > li > button .material-symbols-outlined {
+        font-size: 24px !important;
+        display: flex;
+        align-items:center;
+        flex-direction: column;
+    }
     #main > .container {
         flex-direction: column !important;
     }
@@ -187,6 +206,7 @@
 
             #main > .container > #ToolList > li {
                 width: 25%;
+                text-align: center;
             }
 
         #main > .container > #TabContent {
@@ -203,27 +223,54 @@
 
                 #main > .container > #TabContent > #info-tab-pane > div {
                     justify-content: center;
-                    flex-wrap: wrap;
                     flex-direction: row !important;
                     box-sizing: border-box;
                 }
-
-                    #main > .container > #TabContent > #info-tab-pane > div > div > button {
-                        width: 40%;
-                        margin-right: .5rem;
-                    }
 }
 
 @media(max-width:576px) {
-    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
-        width: 35% !important;
+    #ToolList > li > button {
+        padding:8px;
     }
 
     #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:nth-child(2) {
         margin-left: 0;
+        width: 40%;
     }
 
-    #main > .container > #TabContent > #history-tab-pane > div:not(first-chlid) {
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:nth-child(3) {
+        padding-left: 0;
+        width: 25%;
+    }
 
+    #main > .container > #TabContent > #info-tab-pane > div > div {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > div > div > button {
+        width: 40%;
+        margin-right: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .btn_logout {
+        margin-left:unset !important;
+    }
+
+    #history-tab-pane figure > figcaption > div > div:first-child {
+        flex-direction:column;
+    }
+
+    #history-tab-pane figure {
+        flex-direction: column;
+    }
+
+    #favorite-tab-pane figure > figcaption > div > div:first-child {
+        flex-direction: column;
+    }
+
+    #favorite-tab-pane figure {
+        flex-direction: column;
     }
 }

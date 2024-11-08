@@ -1,9 +1,9 @@
 ﻿
 namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
-    public class ProdGetHistoryDisplayDto
+    public class ProdGetHistoryDisplayOneDto
     {
-        public long Id { get; set; }
+        public long PId { get; set; }
         public string Title { get; set; }
         public string Introduction { get; set; }
         public string Description { get; set; }

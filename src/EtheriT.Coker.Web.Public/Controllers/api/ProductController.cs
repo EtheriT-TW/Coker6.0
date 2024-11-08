@@ -44,9 +44,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplaySimple(id);
         }
         [HttpGet]
-        public async Task<List<ProdGetHistoryDisplayDto>> GetHistoryDisplay()
+        public async Task<ProdGetHistoryDisplayAllDto> GetHistoryDisplay(int page)
         {
-            return await productAppService.GetHistoryDisplay();
+            return await productAppService.GetHistoryDisplay(page);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> ClickLog(long FK_Pid)

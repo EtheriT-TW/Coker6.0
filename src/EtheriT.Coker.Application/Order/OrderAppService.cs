@@ -482,7 +482,6 @@ namespace EtheriT.Coker.Application.Order
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
                 if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();

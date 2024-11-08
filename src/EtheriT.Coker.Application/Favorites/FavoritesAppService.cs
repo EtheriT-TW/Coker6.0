@@ -133,7 +133,6 @@ namespace EtheriT.Coker.Application.Favorites
                         else favorites_data[i].Price.Add(0);
                     }
                     output.Data = favorites_data;
-                    output.Page = page + 1;
                     output.Success = true;
                 }
             }

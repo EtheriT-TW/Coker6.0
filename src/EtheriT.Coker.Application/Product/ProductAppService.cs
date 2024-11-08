@@ -31,6 +31,7 @@ using System.Linq;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.CodeAnalysis.CSharp;
+using EtheriT.Coker.Application.Shared.Dto.Favorites;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -1004,8 +1005,9 @@ namespace EtheriT.Coker.Application.Product
 
             return new JsonResult(new List<ProdGetDisplayDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        public async Task<List<ProdGetHistoryDisplayDto>> GetHistoryDisplay()
+        public async Task<ProdGetHistoryDisplayAllDto> GetHistoryDisplay(int page)
         {
+            var output = new ProdGetHistoryDisplayAllDto();
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
@@ -1014,8 +1016,7 @@ namespace EtheriT.Coker.Application.Product
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
                                        where prod_log.Action == (int)ProdLogActionEnum.點擊
-                                       // 重新排版後增加下方程式碼撈取3個月資料
-                                       //where (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)prod_log.CreationTime) < 0)
+                                       where (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)prod_log.CreationTime) < 0)
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();
                 List<long> pids = new List<long>();
@@ -1028,57 +1029,58 @@ namespace EtheriT.Coker.Application.Product
                         {
                             pids.Add(prod_log);
                         }
-                        // 重新排版後移除下方判斷撈取3個月資料
-                        if (pids.Count == 10)
-                        {
-                            break;
-                        }
                     }
                 }
 
                 if (pids.Count > 0)
                 {
-                    var output = (from pid in pids
-                                  join prod in db.Prods on pid equals prod.Id
-                                  select new ProdGetHistoryDisplayDto()
-                                  {
-                                      Id = prod.Id,
-                                      Title = prod.Title,
-                                      Introduction = prod.Introduction,
-                                      Description = prod.Description,
-                                      Link = "/product/" + prod.Id,
-                                      Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
-                                              .Where(e => e.fileUpload != null)
-                                              .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
-                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                select new DirectoryReleInfoDto
-                                                {
-                                                    Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
-                                                }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                      Price = new List<double>(),
-                                      ItemNo = prod.ItemNo,
-                                  }).ToList();
+                    var prod_log_data = (from pid in pids
+                                         join prod in db.Prods on pid equals prod.Id
+                                         select new ProdGetHistoryDisplayOneDto()
+                                         {
+                                             PId = prod.Id,
+                                             Title = prod.Title,
+                                             Introduction = prod.Introduction,
+                                             Description = prod.Description,
+                                             Link = "/product/" + prod.Id,
+                                             Image = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                                     .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
+                                                     .Where(e => e.fileUpload != null)
+                                                     .Where(e => e.Sid == prod.Id && e.type == (int)FileBindTypeEnum.產品)
+                                                     .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                       select new DirectoryReleInfoDto
+                                                       {
+                                                           Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
+                                             Price = new List<double>(),
+                                             ItemNo = prod.ItemNo,
+                                         }).ToList();
 
-                    for (var i = 0; i < output.Count; i++)
+                    output.Page_Total = (int)Math.Ceiling(prod_log_data.Count / 8.0);
+                    prod_log_data = prod_log_data.Skip((page - 1) * 8).Take(8).ToList();
+
+                    for (var i = 0; i < prod_log_data.Count; i++)
                     {
                         var prod_prices = await (from prod_stock in db.Prod_Stocks
                                                  join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                 where prod_stock.FK_Pid == output[i].Id
+                                                 where prod_stock.FK_Pid == prod_log_data[i].PId
                                                  where prod_price.Price > 0
                                                  orderby prod_price descending
                                                  select prod_price).ToListAsync();
                         if (prod_prices.Count > 1)
                         {
-                            output[i].Price.Add((double)prod_prices[0].Price);
-                            output[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            prod_log_data[i].Price.Add((double)prod_prices[0].Price);
+                            prod_log_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
                         }
                         else if (prod_prices.Count == 1)
                         {
-                            output[i].Price.Add((double)prod_prices[0].Price);
+                            prod_log_data[i].Price.Add((double)prod_prices[0].Price);
                         }
-                        else output[i].Price.Add(0);
+                        else prod_log_data[i].Price.Add(0);
                     }
+
+                    output.Data = prod_log_data;
+                    output.Success = true;
 
                     return output;
                 }
@@ -1086,9 +1088,9 @@ namespace EtheriT.Coker.Application.Product
             }
             catch (Exception e)
             {
-                return null;
+                output.Error = e.Message;
             }
-            return null;
+            return output;
         }
         /* Product Import */
         public async Task<ImportOutputDto> ProdReplace(IList<IFormFile> files)

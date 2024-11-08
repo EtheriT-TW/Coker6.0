@@ -1,6 +1,6 @@
 ﻿var keyId
 var order_list
-let $btn_reSend;
+let $btn_reSend, $btn_save;
 function PageReady() {
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
@@ -13,9 +13,23 @@ function PageReady() {
         });
     })
     $btn_reSend.on("click", function () {
-        console.log(co.Order);
-        Coker.sweet.confirm("重新發送通知信", "是否確認重發訂單通知信?", "確定", "取消", function () {
+        co.sweet.confirm("重新發送通知信", "是否確認重發訂單通知信?", "確定", "取消", function () {
             co.Order.SendMail(keyId);
+        });
+    });
+    $btn_save.on("click", function () {
+        const status = $(".status_select > option:selected").text();
+        co.sweet.confirm("變更訂單狀態", `是否確認將訂單狀態變更為【${status}】?`, "確定", "取消", function () {
+            co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {
+                if (result.success) co.sweet.success("儲存成功");
+                else co.sweet.error("儲存失敗", result.error);
+            });
+            
+        });
+    });
+    co.Order.GetOrderStatusLookup().done(function (result) {
+        $(result).each(function () {
+            $order_status.append(`<option value="${this.id}">${this.name}</option>`);
         });
     });
 
@@ -24,9 +38,6 @@ function PageReady() {
     } else {
         setInterval(hashChange, 1000);
     }
-
-    $(".status_select").on("change", function () {
-    })
 }
 
 function ElementInit() {
@@ -40,6 +51,7 @@ function ElementInit() {
     $order_shipping = $(".order_shipping")
     $order_status = $(".status_select")
     $order_notes = $(".order_notes")
+    $memo_block = $(".memo_block");
 
     /* Recipient */
     $recipient_name = $(".recipient_name")
@@ -55,6 +67,7 @@ function ElementInit() {
 
     /*bottom*/
     $btn_reSend = $(".btn_reSend");
+    $btn_save = $(".btn_save");
 }
 
 function FormDataClear() {
@@ -134,6 +147,7 @@ function HeaderDataSet(result) {
     $order_payment.text(result.payment)
     $order_shipping.text(result.shipping)
     $order_status.val(result.state);
+    if (result.state == 4 || result.state == 7) $order_status.prop("disabled",true);
     $order_notes.text(result.remark)
 
     $recipient_name.text(result.recipient)
@@ -174,12 +188,14 @@ function MoveToContent() {
     $("#OrderList").addClass("d-none");
     $("#OrderContent").removeClass("d-none");
     $btn_reSend.removeClass("d-none");
+    $btn_save.removeClass("d-none");
 }
 
 function BackToList() {
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
     $btn_reSend.addClass("d-none");
+    $btn_save.addClass("d-none");
     window.location.hash = ""
 
     $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {

@@ -11,8 +11,9 @@
 	<div id="TopLine" class="d-flex justify-content-between mb-4">
 		<div class="title fw-bold fs-4">訂單列表</div>
 		<div class="tool">
-			<button class="btn_reSend btn-primary border-0 px-4 py-1 text-white fw-bold fs-5">重送訂單通知信</button>
-			<button class="btn_print btn-primary border-0 px-4 py-1 text-white fw-bold fs-5">列印訂單</button>
+			<button class="btn_print btn-dark border-0 px-4 py-1 text-white fw-bold fs-5 d-none">列印訂單</button>
+			<button class="btn_reSend btn-success border-0 px-4 py-1 text-white fw-bold fs-5">重送訂單通知信</button>
+			<button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5">儲存</button>
 		</div>
 	</div>
 
@@ -160,15 +161,9 @@
 							<div class="d-flex flex-wrap justify-content-between pb-3 pt-5">
 								<div class="d-flex align-items-center">
 									<div class="fw-bold fs-5">狀態：</div>
-									<select class="status_select m-2" aria-label="Select status">
-										<option value="1">待確認</option>
-										<option value="2">已付款</option>
-										<option value="3">已出貨</option>
-										<option value="4">已取消</option>
-										<option value="5">付款失敗</option>
-									</select>
+									<select class="status_select m-2" aria-label="Select status"></select>
 								</div>
-								<button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0">發送出貨通知</button>
+								<button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0 d-none">發送出貨通知</button>
 							</div>
 
 							<p class="gray_text">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>

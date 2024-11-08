@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Core.Entity;
+using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
 {
@@ -34,6 +35,8 @@ namespace EtheriT.Coker.Core.Models
         public long? CouponId { get; set; }
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
+        [StringLength(500)]
+        public string Memo {  get; set; }
         public List<Order_Details> Order_Details { get; set; }
 
     }

@@ -1,5 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Order;
@@ -58,5 +59,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 			return await orderAppService.SendMail(Id);
 		}
 
+		[HttpGet]
+		public List<SelectDto> getOrderStatusLookup()
+		{
+			return orderAppService.getOrderStatusLookup();
+		}
+        [HttpPost]
+        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto) {
+            return await orderAppService.UpdateStatus(dto);
+		}
 	}
 }

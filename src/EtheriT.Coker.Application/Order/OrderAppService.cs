@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using Org.BouncyCastle.Cms;
 using System.Globalization;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -29,7 +30,7 @@ namespace EtheriT.Coker.Application.Order
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        private readonly ITokenAppService tokenAppService;
+		private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
@@ -37,7 +38,7 @@ namespace EtheriT.Coker.Application.Order
         public OrderAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            ITokenAppService tokenAppService,
+			ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
             MailAppService mailAppService,
             IConfiguration configuration,
@@ -51,7 +52,8 @@ namespace EtheriT.Coker.Application.Order
             this.mailAppService = mailAppService;
             this.configuration = configuration;
             this.mapper = mapper;
-        }
+
+		}
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -720,5 +722,11 @@ namespace EtheriT.Coker.Application.Order
 
             return response;
         }
-    }
+        public List<SelectDto> getOrderStatusLookup() {
+			return EnumHelper.EnumToKeyValueList<OrderStatusEnum>();
+		}
+        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto) { 
+            throw new NotImplementedException();
+        }
+	}
 }

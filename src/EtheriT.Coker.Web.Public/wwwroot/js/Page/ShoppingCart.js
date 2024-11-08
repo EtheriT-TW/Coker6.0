@@ -772,7 +772,7 @@ function OrderHeaderAdd() {
         Coker.Order.AddHeader(order_header_data).done(function (result) {
             if (result.success) {
                 Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
-                    OrderSuccess(result.message);
+                    OrderSuccess(result);
                     setTimeout(function () {
                         isCheckout = true;
                         setTimeout(function () {
@@ -791,9 +791,9 @@ function OrderHeaderAdd() {
         });
     }
 }
-function OrderSuccess(results) {
-    var result = results.split(",")
-    var order_header_id = result[0];
+function OrderSuccess(result) {
+    var message = result.message.split(",")
+    var order_header_id = message[0];
 
     CartClear();
 
@@ -807,6 +807,16 @@ function OrderSuccess(results) {
         html: $(".storememo").text().replaceAll("\n", "<br/>"),
         focusConfirm: false,
         confirmButtonText: "確認",
+    }).then((confirm) => {
+        if (result.error != null) {
+            Coker.Token.CheckToken().done(function (token) {
+                if (!token.isLogin) {
+                    Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看訂單詳細，或將訂單完成頁面截圖。")
+                } else {
+                    Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。")
+                }
+            });
+        }
     });
 
     $(".storememo").empty();
@@ -833,30 +843,30 @@ function OrderSuccess(results) {
             break;
     }
 
-    $("#PaymentData .pay_info .paid_date").append(`${result[1]}<span>${result[2]}23點59分</span>`);
+    $("#PaymentData .pay_info .paid_date").append(`${message[1]}<span>${message[2]}23點59分</span>`);
     var tempmail = order_header_data.ordererEmail;
     $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:${tempmail.substr(0, 1)}******${tempmail.substr(tempmail.indexOf("@") - 1)}`);
 
-    Coker.Order.GetDetails(order_header_id).done(function (result) {
-        if (result.length > 0) {
-            if (result.length > 1) {
+    Coker.Order.GetDetails(order_header_id).done(function (message) {
+        if (message.length > 0) {
+            if (message.length > 1) {
                 $(".btn_view_list").removeClass("d-none")
             }
-            for (var i = 0; i < result.length; i++) {
+            for (var i = 0; i < message.length; i++) {
                 if (i == 0) {
-                    PurchaseAdd(result[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list").first())
+                    PurchaseAdd(message[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list").first())
                 } else {
-                    PurchaseAdd(result[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list.collapse"))
+                    PurchaseAdd(message[i], $("#Step4 > .card-body > .pruchase_content > .purchase_list.collapse"))
                 }
             }
         }
     })
 
-    Coker.Payment.GetPaymentInfo(order_header_data.payment).done(function (result) {
-        //console.log(result)
-        if (result != null && result.length > 0) {
+    Coker.Payment.GetPaymentInfo(order_header_data.payment).done(function (message) {
+        //console.log(message)
+        if (message != null && message.length > 0) {
             var html = "";
-            $.each(result, function (index, value) {
+            $.each(message, function (index, value) {
                 html += `<div class="mb-2 row">
                                         <div class="col-auto col-sm-2 py-0 text-end">${value.title}：</div>
                                         <div class="col">${value.value}</div>

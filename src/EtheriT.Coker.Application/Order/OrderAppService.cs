@@ -76,11 +76,9 @@ namespace EtheriT.Coker.Application.Order
                     output = await AddDetails(oh.Id);
                     if (output.Success)
                     {
-                        output = await SendMail(oh.Id);
-                        if (output.Success)
-                        {
-                            output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
-                        }
+                        var mailoutput = await SendMail(oh.Id);
+                        output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                        if(!mailoutput.Success) output.Error = mailoutput.Message;
                     }
                 }
                 else throw new Exception("查無Token");
@@ -281,8 +279,8 @@ namespace EtheriT.Coker.Application.Order
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
-                        item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp[int.Parse(item.S1Title) - 1].Title;
-                        item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp[int.Parse(item.S2Title) - 1].Title;
+                        item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title))?.Title;
+                        item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title))?.Title;
                     }
 
                     return output;
@@ -307,9 +305,9 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
+                uuids.Add(UUID);
                 if (uuids.Any())
                 {
-                    uuids.Add(UUID);
                     var order_headers = await db.Order_Headers
                         .Where(e => uuids.Contains(e.FK_UUID))
                         // 重新排版後增加下方程式碼撈取3個月資料

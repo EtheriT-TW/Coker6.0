@@ -115,6 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BuildBundlerMinifier" Version="3.2.449" />
+    <PackageReference Include="DevExpress.Xpo" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Core" Version="21.2.14" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="2.8.6" />
     <PackageReference Include="GoogleAuthenticatorService.Core" Version="1.0.2" />

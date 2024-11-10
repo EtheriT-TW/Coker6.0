@@ -89,7 +89,7 @@ namespace EtheriT.Coker.Application.Newsletter
                 output.Success = false;
                 output.Error = e.Message;
             }
-            await loginUserData.SetLogs(controllerName, "RecipientAddUp",
+            await loginUserData.SetLogs(
                 JsonConvert.SerializeObject(dto),
                 JsonConvert.SerializeObject(output)
             );
@@ -116,7 +116,7 @@ namespace EtheriT.Coker.Application.Newsletter
                 output.Success = false;
                 output.Error = e.Message;
             }
-            await loginUserData.SetLogs(controllerName, "DeleteRecipients",
+            await loginUserData.SetLogs(
                 JsonConvert.SerializeObject(new { Id }),
                 JsonConvert.SerializeObject(output)
             );
@@ -147,7 +147,7 @@ namespace EtheriT.Coker.Application.Newsletter
                 output.Success = false;
                 output.Error = e.Message;
             }
-            await loginUserData.SetLogs(controllerName, "DeleteRecipients",
+            await loginUserData.SetLogs(
                 JsonConvert.SerializeObject(new { Id }),
                 JsonConvert.SerializeObject(output)
             );
@@ -180,7 +180,7 @@ namespace EtheriT.Coker.Application.Newsletter
             {
                 output.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "UpdateJson",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<ResponseMessageDto> SaveConten(HtmlContentDetailDto dto) { 

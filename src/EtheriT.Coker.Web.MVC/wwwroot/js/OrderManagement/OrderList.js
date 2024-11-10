@@ -19,13 +19,12 @@ function PageReady() {
     });
     $btn_save.on("click", function () {
         const status = $(".status_select > option:selected").text();
-        co.sweet.confirm("變更訂單狀態", `是否確認將訂單狀態變更為【${status}】?`, "確定", "取消", function () {
-            co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {
-                if (result.success) co.sweet.success("儲存成功");
-                else co.sweet.error("儲存失敗", result.error);
+        if ($order_status.prop("disable")) updateOrder();
+        else {
+            co.sweet.confirm("變更訂單狀態", `是否確認將訂單狀態變更為【${status}】?`, "確定", "取消", function () {
+                updateOrder();
             });
-            
-        });
+        }
     });
     co.Order.GetOrderStatusLookup().done(function (result) {
         $(result).each(function () {
@@ -38,6 +37,12 @@ function PageReady() {
     } else {
         setInterval(hashChange, 1000);
     }
+}
+function updateOrder() {
+    co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {
+        if (result.success) co.sweet.success("儲存成功");
+        else co.sweet.error("儲存失敗", result.error);
+    });
 }
 
 function ElementInit() {
@@ -160,6 +165,8 @@ function HeaderDataSet(result) {
     $orderer_cellphone.text(result.ordererCellPhone)
     var or_telIndex = result.ordererTelephone.indexOf("-", 5)
     $orderer_telphone.text(result.ordererTelephone.substr(or_telIndex + 1).length > 0 ? result.ordererTelephone : result.ordererTelephone.subtotal(0, or_telIndex))
+
+    $memo_block.val(result.memo);
 }
 
 function DetailsDataSet(result) {

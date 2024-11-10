@@ -387,6 +387,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 if (view.IndexOf("Error/") < 0)
                 {
+                    if (!string.IsNullOrEmpty(defaultData.Css) && model.PageData != null)
+                    {
+                        model.PageData.Css = defaultData.Css + model.PageData.Css ?? "";
+                    }
                     if (siteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);

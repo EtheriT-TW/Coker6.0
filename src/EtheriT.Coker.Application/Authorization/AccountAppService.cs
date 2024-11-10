@@ -138,7 +138,7 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Error = e.Message;
             }
             dto.Password = "******";
-            await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto)
@@ -409,7 +409,7 @@ namespace EtheriT.Coker.Application.Authorization
                     output.Message = ex.Message;
                 }
             }
-            await loginUserData.SetLogs("Account", "UpdatePassword", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto)
@@ -437,7 +437,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 output.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "GetEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<ResponseMessageDto> AddUser(AddUser dto)
@@ -467,7 +467,7 @@ namespace EtheriT.Coker.Application.Authorization
             }
             dto.Password = "*********";
             dto.PasswordConfirm = "*********";
-            await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto)
@@ -592,7 +592,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 dto.Password = "*********";
                 dto.PasswordConfirm = "*********";
-                await loginUserData.SetLogs(controllerName, "saveEditUser", userid, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(userid, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             catch (Exception ex)
             {
@@ -1211,7 +1211,7 @@ namespace EtheriT.Coker.Application.Authorization
                 output.EndDateTime = EndDateTime;
 
                 if (dto != null) dto.Password = "******";
-                await loginUserData.SetLogs("Account", "Login", frontuser.Id, WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(frontuser.Id, WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
 
                 account_Log = new Account_Log()
                 {

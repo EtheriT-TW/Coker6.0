@@ -238,7 +238,8 @@ namespace EtheriT.Coker.Application.Order
                         CouponId = result.CouponId,
                         Freight = result.Freight,
                         Service_Charge = result.Service_Charge,
-                        CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss")
+                        CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        Memo = result.Memo
                     };
                     return output;
                 }
@@ -450,9 +451,9 @@ namespace EtheriT.Coker.Application.Order
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 if (order_header != null)
                 {
-                    if (order_header.State != (int)OrderStatusEnum.已取消)
+                    if (order_header.State != OrderStatusEnum.已取消)
                     {
-                        order_header.State = state;
+                        order_header.State = (OrderStatusEnum)state;
                         if (state == (int)OrderStatusEnum.已取消)
                         {
                             var shoppingCarts = await (from sc in db.ShoppingCarts
@@ -724,8 +725,29 @@ namespace EtheriT.Coker.Application.Order
         public List<SelectDto> getOrderStatusLookup() {
 			return EnumHelper.EnumToKeyValueList<OrderStatusEnum>();
 		}
-        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto) { 
-            throw new NotImplementedException();
+        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto) {
+			ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var webSiteId = await loginUserData.GetWebsiteId();
+                var order = await db.Order_Headers.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
+                if (order != null)
+                {
+                    if (!new List<OrderStatusEnum> { OrderStatusEnum.已取消, OrderStatusEnum.已完成 }.Contains(order.State)) {
+						order.State = dto.Status;
+					}
+					order.Memo = dto.Memo;
+                    await loginUserData.SaveChanges(order);
+                    response.Success = true;
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+
+				}
+                else throw new Exception("訂單不存在");
+            }
+            catch(Exception e) {
+				response.Error = e.Message;
+			}
+			return response;
         }
 	}
 }

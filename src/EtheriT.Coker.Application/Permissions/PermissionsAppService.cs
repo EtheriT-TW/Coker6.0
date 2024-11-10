@@ -96,7 +96,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 output.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "GetPermissionsUserData", "", JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs("", JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<GetUserPermissionsRsponseDto> GetPermissions(SavePermissionsDto dto)
@@ -117,7 +117,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "GetPermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<List<SavePermissionsItem>> GetLoginUserPermissions()
@@ -172,7 +172,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "SavePermissions", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         private async Task AddPermissions(SavePermissionsDto dto)
@@ -240,7 +240,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "RemoveMappingUserAndWebsite", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> MappingUserAndWebsite(AddMapingUserAndWebsiteDto dto)
@@ -296,7 +296,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "MappingUserAndWebsite", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> AddUserToRole(AddUserToRoleDto dto)
@@ -338,7 +338,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "AddUserToRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> RemoveUserToRole(AddUserToRoleDto dto)
@@ -366,7 +366,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "AddUserToRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> AddRole(AddRoleDto dto)
@@ -395,7 +395,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "AddRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> EditRole(AddRoleDto dto)
@@ -420,7 +420,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "EditRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
 
@@ -443,7 +443,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "DeleteRole", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> GetPagePermission(GetPagePermissionInputDto dto)
@@ -577,7 +577,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 response.Error = ex.Message;
             }finally {
-                await loginUserData.SetLogs(controllerName, "SavePagePermission",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

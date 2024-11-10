@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
@@ -28,7 +29,7 @@ namespace EtheriT.Coker.Core.Models
         public string InvoiceAddress { get; set; }
         public int Shipping { get; set; }
         public int Payment { get; set; }
-        public int State { get; set; }
+        public OrderStatusEnum State { get; set; }
         public int Subtotal { get; set; }
         public int? Discount { get; set; }
         public int? Bonus { get; set; }

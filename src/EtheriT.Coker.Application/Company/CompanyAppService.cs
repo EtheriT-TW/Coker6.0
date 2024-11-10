@@ -54,7 +54,7 @@ namespace EtheriT.Coker.Application.Company
             {
                 responseMessageDto.Error = ex.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "Save",JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
         }
         private async Task<ResponseMessageDto> Insert(CompanyDto dto) {
@@ -71,7 +71,7 @@ namespace EtheriT.Coker.Application.Company
 			{
 				responseMessageDto.Error = ex.Message;
 			}
-			await loginUserData.SetLogs(ApplicationName, "Insert", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
+			await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
 			return responseMessageDto;
 		}
         private async Task WebsiteMapping(long cid) { 

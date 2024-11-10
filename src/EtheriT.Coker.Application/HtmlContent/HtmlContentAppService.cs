@@ -77,7 +77,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                 output.Success = false;
                 output.Error = e.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<HtmlContentListOutpotDto> GetAllComponent()

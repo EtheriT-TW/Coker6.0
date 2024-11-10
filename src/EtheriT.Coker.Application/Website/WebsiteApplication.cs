@@ -71,7 +71,8 @@ namespace EtheriT.Coker.Application
 					Level = (WebsiteLevelEnum)site.Level,
                     locale = site.Locale,
                     Root = site.DefaultUrl,
-                    Description = site.Description
+                    Description = site.Description,
+                    Css = site.Css
 				};
                 if(!string.IsNullOrEmpty(defaultData.Root))
                     defaultData.Root = Regex.Replace(defaultData.Root,"/$","");
@@ -230,7 +231,7 @@ namespace EtheriT.Coker.Application
                 responseMessageDto.Success = false;
                 responseMessageDto.Error = e.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "Exchange", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
         }
         public async Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto) {
@@ -292,7 +293,41 @@ namespace EtheriT.Coker.Application
             {
                 response.Error = e.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "Save", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> LoadFrameCss() {
+            var response = new ResponseMessageDto() { Success = false };
+            var websiteid = await loginUserData.GetWebsiteId();
+            try {
+                if (websiteid == 0) throw new Exception("未再登入狀態");
+                var data = await db.Websites.Where(e => e.Id == websiteid).FirstOrDefaultAsync();
+                if (data == null) throw new Exception("網站不存在");
+                response.Message = data.Css;
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SettingCss(FrameCssDto dto) {
+            var response = new ResponseMessageDto() { Success = false };
+            var websiteid = await loginUserData.GetWebsiteId();
+            try
+            {
+                if (websiteid == 0) throw new Exception("未再登入狀態");
+                var data = await db.Websites.Where(e => e.Id == websiteid).FirstOrDefaultAsync();
+                if (data == null) throw new Exception("網站不存在");
+                data.Css = dto.Css;
+                response.Success = true;
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
             return response;
         }
     }

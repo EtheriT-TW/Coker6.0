@@ -14,7 +14,9 @@
         },
         insertData: function (obj, $self) {
             if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
-            else if (typeof ($self) == "string") $self = $($self);
+            else if (typeof ($self) == "string") {
+                $self = /^#/.test($self) ? $($self) : $(`#${$self}`);
+            } 
             const formTypeSet = (type, $e, value) => {
                 switch (type) {
                     case "zipcode":

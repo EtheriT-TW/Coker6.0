@@ -88,7 +88,7 @@ namespace EtheriT.Coker.Application
                 response.Message= e.Message;
             }
             finally {
-                await loginUserData.SetLogs(ApplicationName, "createOrEdit", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }
@@ -148,7 +148,7 @@ namespace EtheriT.Coker.Application
                 response.Message = e.Message;
             }
             finally {
-                await loginUserData.SetLogs(ApplicationName, "Delete", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }
@@ -184,7 +184,7 @@ namespace EtheriT.Coker.Application
                 response.Error = ex.ToString();
             }
             finally {
-                await loginUserData.SetLogs(ApplicationName, "updateSerNo", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }
@@ -299,7 +299,7 @@ namespace EtheriT.Coker.Application
             }
             finally
             {
-                await loginUserData.SetLogs(ApplicationName, "updateSerNo", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

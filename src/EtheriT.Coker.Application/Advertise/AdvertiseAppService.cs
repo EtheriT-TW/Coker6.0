@@ -107,7 +107,7 @@ namespace EtheriT.Coker.Application.Advertise
             }
             finally
             {
-                await loginUserData.SetLogs(ApplicationName, "AddUp", JsonConvert.SerializeObject(new { asoid }), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(new { asoid }), JsonConvert.SerializeObject(output));
             }
             return output;
         }
@@ -255,7 +255,7 @@ namespace EtheriT.Coker.Application.Advertise
             }
             finally
             {
-                await loginUserData.SetLogs(ApplicationName, "Delete", JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
             }
             return output;
         }

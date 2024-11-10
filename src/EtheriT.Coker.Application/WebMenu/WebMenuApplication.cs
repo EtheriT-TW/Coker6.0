@@ -78,7 +78,7 @@ namespace EtheriT.Coker.Application
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "GetAll", "", JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs("", JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<SiteMapDto> GetDisplayAll(long WebsiteID)
@@ -478,7 +478,7 @@ namespace EtheriT.Coker.Application
                 response.Success = false;
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "CreateOrEdit", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         private async Task<long> Create(MenuItemDto dto)
@@ -710,7 +710,7 @@ namespace EtheriT.Coker.Application
                 response.Success = false;
                 response.Error = ex.ToString();
             }
-            await loginUserData.SetLogs(ApplicationName, "updateSerNo", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs( JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<PageTypeDto> GetPageTypeList()

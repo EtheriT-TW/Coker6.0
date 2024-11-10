@@ -50,7 +50,7 @@ namespace EtheriT.Coker.Application
         public async Task<UploadFileOutputDto> uploadHtmlContentFiles(IList<IFormFile> files)
         {
             UploadFileOutputDto response = await uploadFiles(files, "htmlConten");
-            await loginUserData.SetLogs(AppName, "uploadHtmlFiles", "FileBinary...", JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs("FileBinary...", JsonConvert.SerializeObject(response));
             return response;
         }
         private async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string type, bool isTemp = false)
@@ -952,7 +952,7 @@ namespace EtheriT.Coker.Application
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(AppName, "deleteFile", path, JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(path, JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> deleteFile(Guid key)
@@ -979,7 +979,7 @@ namespace EtheriT.Coker.Application
             {
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(AppName, "deleteFile", key.ToString(), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(key.ToString(), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto)
@@ -1060,7 +1060,7 @@ namespace EtheriT.Coker.Application
                                 db.SaveChanges();
                             }
                         }
-                        await loginUserData.SetLogs(AppName, "deleteImgFile", dto.Fid.ToString(), JsonConvert.SerializeObject(response));
+                        await loginUserData.SetLogs(dto.Fid.ToString(), JsonConvert.SerializeObject(response));
 
                         var websiteid = await loginUserData.GetWebsiteId();
                         switch (dto.Type)

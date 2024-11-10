@@ -473,7 +473,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "Delete", JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
             }
             return output;
         }
@@ -550,7 +550,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "ImportConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }
@@ -577,7 +577,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "SaveConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

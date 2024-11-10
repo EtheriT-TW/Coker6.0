@@ -10,12 +10,14 @@ using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -338,8 +340,11 @@ namespace EtheriT.Coker.Application
                 entity.LastModificationTime = DateTime.Now;
             }
         }
-        public async Task SetLogs(string Controller, string Action, string Paramater, string response) {
+        public async Task SetLogs(string Paramater, string response) {
             var user = await GetUser();
+            var routeData = httpContextAccessor.HttpContext.GetRouteData();
+			var Action = routeData.Values["action"]?.ToString();
+			var Controller = routeData.Values["controller"]?.ToString();
 
 			db.AuditLogs.Add(new Core.Models.AuditLog { 
                 ClientIpAddress = GetClientIP(),
@@ -355,9 +360,12 @@ namespace EtheriT.Coker.Application
             });
             db.SaveChanges();
         }
-        public async Task SetLogs(string Controller, string Action,long? UsetId,long? WebsiteId, string Paramater, string response)
+        public async Task SetLogs(long? UsetId,long? WebsiteId, string Paramater, string response)
         {
 			var user = await GetUser(UsetId??0);
+			var routeData = httpContextAccessor.HttpContext.GetRouteData();
+			var Action = routeData.Values["action"]?.ToString();
+			var Controller = routeData.Values["controller"]?.ToString();
 			db.AuditLogs.Add(new Core.Models.AuditLog
             {
                 ClientIpAddress = GetClientIP(),

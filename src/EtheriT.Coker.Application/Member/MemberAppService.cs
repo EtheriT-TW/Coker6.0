@@ -91,7 +91,7 @@ namespace EtheriT.Coker.Application.Member
 										Email = e.Email.Substring(0, 2) + "***" + e.Email.Substring(e.Email.IndexOf("@") - 1),
 										Total = (
                                             from order in db.Order_Headers
-                                            where order.State == (int)OrderStatusEnum.已完成 &&
+                                            where order.State == OrderStatusEnum.已完成 &&
                                                 (
                                                     (  
                                                         from m in db.MappingOldNewUUID

@@ -40,7 +40,15 @@ function PageReady() {
 }
 function updateOrder() {
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val() }).done(function (result) {
-        if (result.success) co.sweet.success("儲存成功");
+        if (result.success) {
+            co.sweet.success("儲存成功");
+            switch (parseInt($order_status.val())) {
+                case 4:
+                case 5:
+                    $order_status.prop("disabled", true)
+                    break;
+            }
+        }
         else co.sweet.error("儲存失敗", result.error);
     });
 }
@@ -86,6 +94,7 @@ function FormDataClear() {
     $order_payment.text("")
     $order_shipping.text("")
     $order_status.val(0);
+    $order_status.prop("disabled", false);
     $order_notes.text("")
 
     $recipient_name.text("")
@@ -114,6 +123,7 @@ function hashChange(e) {
 }
 
 function HashDataEdit() {
+    FormDataClear();
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
@@ -146,9 +156,9 @@ function editButtonClicked(e) {
 function HeaderDataSet(result) {
     $order_number.text(("000000000" + result.id).substr(result.id.length));
     $order_date.text(result.creationTime)
-    $order_subtotal.text(result.subtotal.toLocaleString("en-US"))
-    $order_freight.text(result.freight.toLocaleString("en-US"))
-    $order_total.text(result.total.toLocaleString("en-US"))
+    $order_subtotal.text(`$${result.subtotal.toLocaleString("en-US")}`)
+    $order_freight.text(`$${result.freight.toLocaleString("en-US")}`)
+    $order_total.text(`$${result.total.toLocaleString("en-US")}`)
     $order_payment.text(result.payment)
     $order_shipping.text(result.shipping)
     $order_status.val(result.state);
@@ -167,6 +177,50 @@ function HeaderDataSet(result) {
     $orderer_telphone.text(result.ordererTelephone.substr(or_telIndex + 1).length > 0 ? result.ordererTelephone : result.ordererTelephone.subtotal(0, or_telIndex))
 
     $memo_block.val(result.memo);
+
+    $("#InvoiceData").find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "invoiceRecipient":
+                    switch (parseInt(result.invoiceRecipient)) {
+                        case 1:
+                            if ($self.parent("div").hasClass("d-none")) $self.parent("div").removeClass("d-none");
+                            $self.siblings("div").text("同訂購人：");
+                            $self.text(result["orderer"]);
+                            break;
+                        case 2:
+                            if ($self.parent("div").hasClass("d-none")) $self.parent("div").removeClass("d-none");
+                            $self.siblings("div").text("同收件人：");
+                            $self.text(result["recipient"]);
+                            break;
+                        case 3:
+                            if (!$self.parent("div").hasClass("d-none")) $self.parent("div").addClass("d-none");
+                            break;
+                    }
+                    break;
+                case "invoiceTitle":
+                    if (result[key] != null) {
+                        if ($self.parent("div").hasClass("d-none")) $self.parent("div").removeClass("d-none");
+                        $self.text(result[key]);
+                    }
+                    break;
+                case "uniformId":
+                    if (result[key] != null) {
+                        if ($self.parent("div").hasClass("d-none")) $self.parent("div").removeClass("d-none");
+                        $self.text(result[key]);
+                    }
+                    break;
+                case "invoiceAddress":
+                    $self.text(result[key].replaceAll(" ", ""));
+                    break;
+                default:
+                    $self.text(result[key]);
+                    break;
+            }
+        }
+    });
 }
 
 function DetailsDataSet(result) {
@@ -185,7 +239,7 @@ function DetailsDataSet(result) {
     item_instructions.text(result.description);
     item_unit.text(result.price.toLocaleString("en-US"))
     item_quantity.text(result.quantity);
-    item_subtotal.text((result.price * result.quantity).toLocaleString("en-US"))
+    item_subtotal.text(`$${(result.price * result.quantity).toLocaleString("en-US") }`)
 
     var item_list_ul = $("#OrderDetails > .card-body > .purchase_list");
     item_list_ul.append(item);

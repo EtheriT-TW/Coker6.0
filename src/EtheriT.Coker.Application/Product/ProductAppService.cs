@@ -487,6 +487,7 @@ namespace EtheriT.Coker.Application.Product
         }
         public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
         {
+            ProdGetMainDisplayDto output = new ProdGetMainDisplayDto();
             try
             {
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -494,7 +495,7 @@ namespace EtheriT.Coker.Application.Product
 
                 if (db_p != null)
                 {
-                    ProdGetMainDisplayDto output = new ProdGetMainDisplayDto()
+                    output = new ProdGetMainDisplayDto()
                     {
                         Id = db_p.Id,
                         Title = db_p.Title,
@@ -583,15 +584,13 @@ namespace EtheriT.Coker.Application.Product
                         FileType = 1,
                         SerNo = 500
                     });
-
-                    return output;
                 }
                 else throw new Exception("查無商品資料");
             }
             catch (Exception e)
             {
-                return null;
             }
+            return output;
         }
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {

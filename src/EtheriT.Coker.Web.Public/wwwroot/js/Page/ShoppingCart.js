@@ -758,7 +758,7 @@ function OrderHeaderAdd() {
     order_header_data.discount = 0;
     order_header_data.bonus = 0;
     order_header_data.couponId = 0;
-    order_header_data.freight = 0;
+    order_header_data.freight = freight == "" ? 0 : freight;
     order_header_data.Service_Charge = 0;
 
     //console.log(order_data)

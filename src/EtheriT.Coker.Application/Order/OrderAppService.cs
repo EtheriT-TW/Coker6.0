@@ -806,7 +806,7 @@ namespace EtheriT.Coker.Application.Order
                                 select new MemberOrderDto()
                                 {
                                     Id = oh.Id,
-                                    OrderDate = oh.CreationTime.ToString("yyyy/MM/dd"),
+                                    OrderDate = oh.CreationTime.ToString("g"),
                                     Payment = pt.Title == null ? "" : pt.Title,
                                     OrderTotal = oh.Subtotal.ToString("N0"),
                                     Status = ((OrderStatusEnum)oh.State).ToString(),

@@ -254,7 +254,6 @@ function PageDefaultSet(result) {
     } else {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
-
         var price = result.stocks[0].prices.find(e => e.fK_RId == roleid).price;
         $pro_discount.text(price.toLocaleString('en-US'));
     }

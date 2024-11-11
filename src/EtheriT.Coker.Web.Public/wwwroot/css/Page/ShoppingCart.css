@@ -263,6 +263,7 @@ input[type="number"] {
     #Step4 > .card-header > .order_number::before {
         content: '\8a02\55ae\7de8\865f';
         color: var(--black-text);
+        padding-right: 1rem;
     }
 
 #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .image > a {

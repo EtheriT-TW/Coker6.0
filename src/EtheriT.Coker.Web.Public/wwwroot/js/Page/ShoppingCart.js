@@ -351,6 +351,7 @@ function CartAdd(result) {
 
     item.data("scid", result.scId);
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
+    item_link.attr("title", `連結至：${result.title}`);
     item_image.attr("src", result.imagePath);
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -465,11 +466,11 @@ function TotalCount() {
         $(this).text(subtotal.toLocaleString())
     })
     $(".shipping_fee").each(function () {
-        $(this).text(freight == null ? 0 : freight.toLocaleString())
+        $(this).text(((freight == null || freight == "") || freight == "") ? 0 : freight.toLocaleString())
     })
     $(".total_amount").each(function () {
-        total = freight == null ? subtotal : subtotal + freight;
-        $(this).text(total.toLocaleString())
+        total = (freight == null || freight == "") ? subtotal : subtotal + freight;
+        $(this).text(parseInt(total).toLocaleString())
     })
 }
 function CartDelete(self, id, success, error) {
@@ -833,23 +834,23 @@ function OrderSuccess(result) {
     $(".storememo").empty();
 
     DataInsert(order_data, $("#Step4 .orderer_data"));
-    HiddenCode($("#Step4 .orderer_data"))
+    //HiddenCode($("#Step4 .orderer_data"))
     DataInsert(recipient_data, $("#Step4 .recipient_data"));
-    HiddenCode($("#Step4 .recipient_data"))
+    //HiddenCode($("#Step4 .recipient_data"))
     switch (invoice_data.invoiceRecipient) {
         case 1:
             DataInsert(order_data, $("#Step4 .invoice_data .orderer"));
-            HiddenCode($("#Step4 .invoice_data .orderer"))
+            //HiddenCode($("#Step4 .invoice_data .orderer"))
             $("#Step4 .invoice_data .orderer").removeClass("d-none");
             break;
         case 2:
             DataInsert(recipient_data, $("#Step4 .invoice_data .recipient"));
-            HiddenCode($("#Step4 .invoice_data .recipient"))
+            //HiddenCode($("#Step4 .invoice_data .recipient"))
             $("#Step4 .invoice_data .recipient").removeClass("d-none");
             break;
         case 3:
             DataInsert(invoice_data, $("#Step4 .invoice_data .company"));
-            HiddenCode($("#Step4 .invoice_data .company"))
+            //HiddenCode($("#Step4 .invoice_data .company"))
             $("#Step4 .invoice_data .company").removeClass("d-none");
             break;
     }
@@ -880,7 +881,7 @@ function OrderSuccess(result) {
             $.each(message, function (index, value) {
                 html += `<div class="mb-2 row">
                                         <div class="col-auto col-sm-2 py-0 text-end">${value.title}：</div>
-                                        <div class="col">${value.value}</div>
+                                        <div class="col ps-0">${value.value}</div>
                                     </div>`;
             })
             $(".pay_info > div").prepend(html);
@@ -899,12 +900,13 @@ function PurchaseAdd(result, item_list_ul) {
         item_subtotal = item.find(".pro_subtotal");
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
+    item_link.attr("title", `連結至：${result.title}`);
     item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
     item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
     item_instructions.text(result.description);
-    item_unit.text((result.price).toLocaleString('en-US'))
+    item_unit.text(`$${(result.price).toLocaleString('en-US')}`)
     item_quantity.text(result.quantity);
     item_subtotal.text((result.price * result.quantity).toLocaleString('en-US'))
 

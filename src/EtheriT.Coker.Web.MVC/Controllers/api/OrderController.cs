@@ -54,19 +54,26 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await orderAppService.GetShippingTypeEnum();
         }
-		[HttpGet]
-		public async Task<ResponseMessageDto> SendMail(long Id) {
-			return await orderAppService.SendMail(Id);
-		}
-
-		[HttpGet]
-		public List<SelectDto> getOrderStatusLookup()
-		{
-			return orderAppService.getOrderStatusLookup();
-		}
+        [HttpGet]
+        public async Task<ResponseMessageDto> SendMail(long Id)
+        {
+            return await orderAppService.SendMail(Id);
+        }
+        [HttpGet]
+        public List<SelectDto> getOrderStatusLookup()
+        {
+            return orderAppService.getOrderStatusLookup();
+        }
         [HttpPost]
-        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto) {
+        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto)
+        {
             return await orderAppService.UpdateStatus(dto);
-		}
-	}
+        }
+        [HttpGet]
+        public async Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID)
+        {
+            return await orderAppService.GetMemberOrder(UUID);
+        }
+
+    }
 }

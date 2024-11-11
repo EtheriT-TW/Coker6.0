@@ -817,7 +817,6 @@ namespace EtheriT.Coker.Application.Authorization
             return response;
 
 		}
-
 		public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
         {
 

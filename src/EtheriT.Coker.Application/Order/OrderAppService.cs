@@ -288,7 +288,7 @@ namespace EtheriT.Coker.Application.Order
                                               .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                       select new DirectoryReleInfoDto
                                                       {
-                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload").Replace("//", "/")
+                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                     }).ToListAsync();
 
@@ -793,6 +793,31 @@ namespace EtheriT.Coker.Application.Order
                 response.Error = e.Message;
             }
             return response;
+        }
+        public async Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID)
+        {
+            List<MemberOrderDto> output = new List<MemberOrderDto>();
+
+            try
+            {
+                output = await (from oh in db.Order_Headers
+                                join pt in db.PaymentTypes on oh.Payment equals pt.Id
+                                where oh.FK_UUID == UUID
+                                select new MemberOrderDto()
+                                {
+                                    Id = oh.Id,
+                                    OrderDate = oh.CreationTime.ToString("yyyy/MM/dd"),
+                                    Payment = pt.Title == null ? "" : pt.Title,
+                                    OrderTotal = oh.Subtotal.ToString("N0"),
+                                    Status = ((OrderStatusEnum)oh.State).ToString(),
+                                }).Take(3).ToListAsync();
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return output;
         }
     }
 }

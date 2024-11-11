@@ -23,6 +23,8 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<ResponseMessageDto> SendMail(long ohid);
         public List<SelectDto> getOrderStatusLookup();
         public Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto);
+        public Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID);
 
-	}
+
+    }
 }

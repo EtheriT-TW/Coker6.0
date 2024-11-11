@@ -18,9 +18,12 @@ function PageReady() {
         OrderDetailsPosition();
     });
 
-    $(".order_data").each(function () {
-        var $self_status = $(this).children("div").children(".status");
-        ($self_status.text() == "出貨中") && $self_status.addClass("bg_fluorescent");
+    Coker.Member.GetAllRole().done(function (result) {
+        if (result.length > 0) {
+            $.each(result, function (index, data) {
+                $("#MemberLevel").append(`<option value="${data.id}">${data.name}</option>`)
+            })
+        }
     });
 
     if ($email_login.val() != "") {
@@ -98,7 +101,6 @@ function ElementInit() {
     $newpass = $("#InputPasswordNew");
     $passcheck = $("#InputPasswordCheck");
 }
-
 function FormDataClear() {
     keyId = 0;
     $name.val("");
@@ -120,13 +122,14 @@ function FormDataClear() {
     $email_login.val("");
     $newpass.val("");
     $passcheck.val("");
-}
 
+    $("#MemberLevel ").val(0);
+    $(".latest_order").children().not(".no_clear").remove();
+}
 function contentReady(e) {
     member_list = e;
     HashDataEdit();
 }
-
 function hashChange(e) {
     if (!!e) {
         HashDataEdit();
@@ -135,7 +138,6 @@ function hashChange(e) {
         console.log("HashChange錯誤")
     }
 }
-
 function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
@@ -155,14 +157,13 @@ function HashDataEdit() {
         BackToList();
     }
 }
-
 function editButtonClicked(e) {
     keyId = e.row.key;
     window.location.hash = keyId;
     HashDataEdit();
 }
-
 function FormDataSet(result) {
+    FormDataClear();
     $member_number.text(result.id)
     $name.val(result.name);
     $sex.each(function () {
@@ -190,8 +191,44 @@ function FormDataSet(result) {
         });
     }
     $email_login.val(result.email);
-}
+    $("#MemberLevel ").val(result.roleId == null ? 1 : result.roleId);
+    Coker.Member.GetHistoryOrder(result.uuid).done(function (result) {
+        if (result.length > 0) {
+            $.each(result, function (index, data) {
+                var frame = $($("#TemplateMemberOrder").html()).clone();
+                frame.data("Oid", data.id);
+                frame.find("*").each(function () {
+                    var $self = $(this);
+                    if (typeof ($self.data("key")) != "undefined") {
+                        var key = $self.data("key");
+                        switch (key) {
+                            case "id":
+                                $self.text(("000000000" + data[key]).slice(-9));
+                                break;
+                            case "link":
+                                $self.attr("href", `/OrderManagement#${data.id}`);
+                                break;
+                            default:
+                                $self.text(data[key]);
+                                break;
+                        }
+                    }
+                });
+                $(".latest_order > .title").after(frame);
+                if (!$(".latest_order a").hasClass("d-flex")) $(".latest_order a").addClass("d-flex")
+                if (!$(".nodata").hasClass("d-none")) $(".nodata").addClass("d-none")
+            });
+        } else {
+            if ($(".latest_order a").hasClass("d-flex")) $(".latest_order a").removeClass("d-flex")
+            if ($(".nodata").hasClass("d-none")) $(".nodata").removeClass("d-none")
+        }
+    });
 
+    $(".order_data").each(function () {
+        var $self_status = $(this).children("div").children(".status");
+        ($self_status.text() == "出貨中") && $self_status.addClass("bg_fluorescent");
+    });
+}
 function Update(success_text, error_text) {
     var sex = 3
     $sex.each(function () {
@@ -207,8 +244,9 @@ function Update(success_text, error_text) {
         Level: $level.val(),
         Email: $email_basic.val(),
         CellPhone: $cellphone.val(),
-        TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + ($telphone_ext.val() ==""?"":"#" + $telphone_ext.val()),
-        Address: $address_city.val() + " " + $address_town.val() + " " + $address.val()
+        TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + ($telphone_ext.val() == "" ? "" : "#" + $telphone_ext.val()),
+        Address: $address_city.val() + " " + $address_town.val() + " " + $address.val(),
+        RoleId: $("#MemberLevel ").val(),
     }).done(function () {
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () {
@@ -219,7 +257,6 @@ function Update(success_text, error_text) {
         Coker.sweet.error("錯誤", error_text, null, true);
     });
 }
-
 function DataSave() {
     BasicInfoFilled = FormCheck(BasicInfoForm);
     if (BasicInfoFilled) {
@@ -236,7 +273,6 @@ function ForgetPassword() {
         else co.sweet.error(resulte.error);
     });
 }
-
 function FormCheck(Forms) {
     var Check = false;
     Array.from(Forms).forEach(form => {
@@ -247,7 +283,6 @@ function FormCheck(Forms) {
     })
     return Check;
 }
-
 function PassCheck() {
     let typesCount = 0;
     const password = $newpass.val();
@@ -286,7 +321,6 @@ function PassCheck() {
     }
     return false;
 }
-
 function mail_lock($self) {
     var $self_span = $self.children("span")
     LoginMailFilled = FormCheck(LoginMailForm);
@@ -302,7 +336,6 @@ function mail_lock($self) {
         $btn_mail_lock.addClass("pe-4");
     }
 }
-
 function PassDisplay($self, display) {
     var $self_span = $self.children("span")
     if (display) {
@@ -316,14 +349,12 @@ function PassDisplay($self, display) {
     }
     return display;
 }
-
 function MoveToContent() {
     $(".btn_back").addClass("d-flex");
     $(".btn_save").removeClass("d-none");
     $("#MemberList").addClass("d-none");
     $("#MemberContent").removeClass("d-none");
 }
-
 function BackToList() {
     $(".btn_back").removeClass("d-flex");
     $(".btn_save").addClass("d-none");
@@ -332,7 +363,6 @@ function BackToList() {
     $("#MemberForm").removeClass("was-validated");
     window.location.hash = ""
 }
-
 function ManagementDataCollapse() {
     $this_body = $("body > .wrapper > .content-area > .content-wrapper");
     $OrderDetails = $("#MainBlock");
@@ -351,7 +381,6 @@ function ManagementDataCollapse() {
         $ManagementData.removeClass("col-3");
     }
 }
-
 function OrderDetailsPosition() {
     if ($("#SideBlock").width() < 280) {
         $(".order_data").each(function () {

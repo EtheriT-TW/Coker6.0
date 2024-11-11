@@ -152,7 +152,7 @@ function HeaderDataSet(result) {
     $order_payment.text(result.payment)
     $order_shipping.text(result.shipping)
     $order_status.val(result.state);
-    if (result.state == 4 || result.state == 7) $order_status.prop("disabled",true);
+    if (result.state == 4 || result.state == 7) $order_status.prop("disabled", true);
     $order_notes.text(result.remark)
 
     $recipient_name.text(result.recipient)

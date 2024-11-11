@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
 {
     public class MemberGetAllDataDto
     {
+        public Guid UUID { get; set; }
         public string Id { get; set; }
         public string Name { get; set; }
         public string NickName { get; set; }
@@ -18,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public string? CellPhone { get; set; }
         public string? TelPhone { get; set; }
         public string? Address { get; set; }
+        public long? RoleId { get; set; }
 
     }
 }

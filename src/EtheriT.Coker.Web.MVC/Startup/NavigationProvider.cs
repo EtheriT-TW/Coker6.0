@@ -448,6 +448,10 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     break;
                 case WebsiteLevelEnum.會員:
                     seting.AddRange(new List<JobMenu> {
+                        new JobMenu{
+                             PageName="MemberData",
+                             Enable=false
+                        },
                         new JobMenu
                         {
                             PageName="OrderManagement",

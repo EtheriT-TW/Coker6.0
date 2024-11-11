@@ -83,16 +83,16 @@
             background-color: var(--gray-bg-dark);
         }
 
-figure {
+#TabContent .content.type_grid figure {
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 
-    figure > figcaption {
-        margin-top: auto;
-        padding-bottom: 10px;
-    }
+#TabContent .content.type_grid figure > figcaption {
+    margin-top: auto;
+    padding-bottom: 10px;
+}
 
     /* Button Mega Menu */
     #Mega_Menu > .logo {

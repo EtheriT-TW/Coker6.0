@@ -8,6 +8,14 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
+.describe > ul {
+    padding-left:0rem;
+}
+
+.specification > ul {
+    padding-left:0rem;
+}
+
 /* Product Display Modal */
 #ProDisplayModal.show {
     display: flex !important;
@@ -83,7 +91,7 @@ input[type="number"] {
 /* Product - Content */
 #Product > .content > .describe {
     color: var(--gray-text);
-    font-size: 0.8rem;
+    font-size: 1rem;
 }
 
     #Product > .content > .describe > .introduce, #ProductDescription {
@@ -133,7 +141,7 @@ input[type="number"] {
 
 #Product > .content > .specification {
     color: var(--gray-text);
-    font-size: 0.8rem;
+    font-size: 1rem;
 }
 
     #Product > .content > .specification > .collapse:not(.show) {
@@ -390,10 +398,28 @@ input:disabled + .btn_radio {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {
         height: 300px;
     }
+
+    #CenterLine {
+        justify-content: center !important;
+    }
 }
 
 @media only screen and (max-width: 576px) {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {
         height: 80vw;
+    }
+}
+
+@media (max-width:410px) {
+    #btn_tab > .nav-item > button.nav-link {
+        padding:.5rem 1rem;
+    }
+
+    .pro_tc {
+        padding:0 !important;
+    }
+
+    .pro_tc .image {
+        padding:0;
     }
 }

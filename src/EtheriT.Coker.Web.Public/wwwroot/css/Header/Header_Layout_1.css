@@ -142,7 +142,7 @@
 /* Mega Menu */
 #Mega_Menu {
     position: relative;
-    padding: 0 3rem;
+    /*padding: 0 3rem;*/
 }
 
 .mega_menu_canvas .nav-link::after {

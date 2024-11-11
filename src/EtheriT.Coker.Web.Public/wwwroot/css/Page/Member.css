@@ -41,7 +41,7 @@
 
     #TabContent > .tab-pane {
         width: 100%;
-        min-height: 100%;
+        min-height: 40rem;
         padding: 1rem;
         overflow: auto;
         background: var(--bs-nav-pills-link-active-bg);

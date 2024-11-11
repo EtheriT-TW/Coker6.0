@@ -78,6 +78,7 @@ function SwiperInit(obj) {
                 if ($video.attr('controls')) {
                     $video.removeAttr('controls');
                     $video.prop('muted', true);
+                    $video.prop('playsinline', true);
                 }
             });
             var Id = "#" + $self.attr("id") + " > .swiper";

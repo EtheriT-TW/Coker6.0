@@ -30,7 +30,7 @@ namespace EtheriT.Coker.Application.Order
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-		private readonly ITokenAppService tokenAppService;
+        private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
@@ -38,7 +38,7 @@ namespace EtheriT.Coker.Application.Order
         public OrderAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-			ITokenAppService tokenAppService,
+            ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
             MailAppService mailAppService,
             IConfiguration configuration,
@@ -53,7 +53,7 @@ namespace EtheriT.Coker.Application.Order
             this.configuration = configuration;
             this.mapper = mapper;
 
-		}
+        }
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -288,7 +288,7 @@ namespace EtheriT.Coker.Application.Order
                                               .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
                                                       select new DirectoryReleInfoDto
                                                       {
-                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload/{orgName}").Replace("//", "/")
+                                                          Link = (f.fileUpload.DownloadFileName ?? "").Replace("upload", $"upload").Replace("//", "/")
                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                     }).ToListAsync();
 
@@ -722,32 +722,36 @@ namespace EtheriT.Coker.Application.Order
 
             return response;
         }
-        public List<SelectDto> getOrderStatusLookup() {
-			return EnumHelper.EnumToKeyValueList<OrderStatusEnum>();
-		}
-        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto) {
-			ResponseMessageDto response = new ResponseMessageDto();
+        public List<SelectDto> getOrderStatusLookup()
+        {
+            return EnumHelper.EnumToKeyValueList<OrderStatusEnum>();
+        }
+        public async Task<ResponseMessageDto> UpdateStatus(OrderUpdateStatusDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
             try
             {
                 var webSiteId = await loginUserData.GetWebsiteId();
                 var order = await db.Order_Headers.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
                 if (order != null)
                 {
-                    if (!new List<OrderStatusEnum> { OrderStatusEnum.已取消, OrderStatusEnum.已完成 }.Contains(order.State)) {
-						order.State = dto.Status;
-					}
-					order.Memo = dto.Memo;
+                    if (!new List<OrderStatusEnum> { OrderStatusEnum.已取消, OrderStatusEnum.已完成 }.Contains(order.State))
+                    {
+                        order.State = dto.Status;
+                    }
+                    order.Memo = dto.Memo;
                     await loginUserData.SaveChanges(order);
                     response.Success = true;
                     await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
 
-				}
+                }
                 else throw new Exception("訂單不存在");
             }
-            catch(Exception e) {
-				response.Error = e.Message;
-			}
-			return response;
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+            return response;
         }
-	}
+    }
 }

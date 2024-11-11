@@ -389,7 +389,7 @@ function SetFavoritesPage(number) {
 }
 function SetBrowsingHistoryPage(number) {
     Product.GetAll.History(number).done(function (result) {
-        if (result.data.length > 0) {
+        if (result.success && result.data.length > 0) {
             if (result.page_Total > 1) {
                 if (!$("#history-tab-pane .page_btn").data("init")) {
                     PageButtonInit($("#history-tab-pane .page_btn"), result.page_Total, "browsing");

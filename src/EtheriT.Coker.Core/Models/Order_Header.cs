@@ -10,18 +10,29 @@ namespace EtheriT.Coker.Core.Models
         public Guid Fk_Tid { get; set; }
         public Guid FK_UUID { get; set; }
         public long FK_WebsiteId { get; set; }
+        [StringLength(150)]
         public string Orderer { get; set; }
         public int OrdererSex { get; set; }
+        [StringLength(150)]
         public string OrdererEmail { get; set; }
+        [StringLength(50)]
         public string? OrdererTelephone { get; set; }
+        [StringLength(50)]
         public string OrdererCellPhone { get; set; }
+        [StringLength(250)]
         public string OrdererAddress { get; set; }
+        [StringLength(150)]
         public string Recipient { get; set; }
         public int RecipientSex { get; set; }
+        [StringLength(150)]
         public string RecipientEmail { get; set; }
+        [StringLength(50)]
         public string? RecipientTelephone { get; set; }
+        [StringLength(50)]
         public string RecipientCellPhone { get; set; }
+        [StringLength(250)]
         public string RecipientAddress { get; set; }
+        [StringLength(500)]
         public string? Remark { get; set; }
         public int InvoiceRecipient { get; set; }
         public string? InvoiceTitle { get; set; }
@@ -37,7 +48,7 @@ namespace EtheriT.Coker.Core.Models
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
         [StringLength(500)]
-        public string Memo {  get; set; }
+        public string? Memo {  get; set; }
         public List<Order_Details> Order_Details { get; set; }
 
     }

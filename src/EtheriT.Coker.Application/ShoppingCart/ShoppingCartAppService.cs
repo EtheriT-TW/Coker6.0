@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace EtheriT.Coker.Application.ShoppingCart
 {
@@ -199,6 +200,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         }
         public async Task<List<ShoppingCartGetAllDto>> GetAll()
         {
+            List < ShoppingCartGetAllDto > output = new List < ShoppingCartGetAllDto >();
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
@@ -220,7 +222,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
-                var output = await (from sc in db.ShoppingCarts
+                output = await (from sc in db.ShoppingCarts
                                     where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID) && !sc.IsOrder
                                     from ps in db.Prod_Stocks
                                     where ps.Id == sc.FK_PSid
@@ -259,7 +261,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title))?.Title;
                     }
 
-                    return output;
                 }
                 else throw new Exception("查無購物車資料");
             }
@@ -267,8 +268,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             {
                 Console.WriteLine(e.Message);
             }
-
-            return null;
+            return output;
         }
         public async Task<ShoppingCartGetDrop> GetDropOne(long id, bool isorder)
         {

@@ -83,10 +83,21 @@
             background-color: var(--gray-bg-dark);
         }
 
-/* Button Mega Menu */
-#Mega_Menu > .logo {
-    font-size: 0;
+figure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
+
+    figure > figcaption {
+        margin-top: auto;
+        padding-bottom: 10px;
+    }
+
+    /* Button Mega Menu */
+    #Mega_Menu > .logo {
+        font-size: 0;
+    }
 
     #Mega_Menu > .logo img {
         height: 60px;
@@ -142,7 +153,7 @@
 /* Mega Menu */
 #Mega_Menu {
     position: relative;
-    /*padding: 0 3rem;*/
+    padding: 0 3rem;
 }
 
 .mega_menu_canvas .nav-link::after {
@@ -507,4 +518,14 @@
     .subtitle > .subtitle_title > .material-symbols-outlined {
         padding-bottom: 0.5rem;
     }
+}
+
+@media(max-width:503px) {
+    #Mega_Menu {
+        padding:0 0 !important;
+    }
+
+        #Mega_Menu > .logo {
+            width: 40% !important;
+        }
 }

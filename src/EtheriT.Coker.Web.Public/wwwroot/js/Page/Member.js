@@ -343,9 +343,13 @@ function HistoryDataInsert(Datas) {
         frame.find(".btn_collapse").attr("data-bs-target", `.collapse_${order_header.id}`);
 
         frame.find(".btn_collapse").on("click", function () {
-            if ($(this).hasClass("collapsed")) $(this).text("點擊查看訂單詳細");
-            else $(this).text("點擊關閉訂單詳細");
+            if ($(this).hasClass("collapsed")) $(this).text("查看訂單明細");
+            else $(this).text("關閉訂單明細");
         })
+        //frame.find(".btn_buyagain").data("ohid", order_header.id);
+        //frame.find(".btn_buyagain").on("click", function () {
+        //訂單再次購買鈕
+        //})
 
         $.each(order_details, function (index, detail) {
             if (detail != null) {

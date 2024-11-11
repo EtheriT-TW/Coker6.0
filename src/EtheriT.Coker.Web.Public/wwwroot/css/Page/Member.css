@@ -48,6 +48,12 @@
         border-radius: 0.8rem;
     }
 
+.btn_buyagain::after {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: "\f217 ";
+}
+
 #ResetEmailModal > .modal-dialog > .modal-content {
     max-width: 80vw;
     width: 375px;

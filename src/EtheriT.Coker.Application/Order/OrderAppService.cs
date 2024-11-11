@@ -489,6 +489,47 @@ namespace EtheriT.Coker.Application.Order
 
             return response;
         }
+        public async Task<OrderAgainDto> OrderAgain(long ohid)
+        {
+            OrderAgainDto output = new OrderAgainDto();
+            //try
+            //{
+            //    var ShoppingCarts = await (from sc in db.ShoppingCarts
+            //                               join od in db.Order_Details on sc.Id equals od.FK_SCId
+            //                               where od.FK_OId == ohid
+            //                               orderby sc.FK_PSid
+            //                               select sc).ToListAsync();
+            //    if (ShoppingCarts.Any())
+            //    {
+            //        var Prod_Stocks = await (from ps in db.Prod_Stocks
+            //                                 join sc in ShoppingCarts on ps.Id equals sc.FK_PSid
+            //                                 select ps).ToListAsync();
+            //        List<Core.Models.ShoppingCart> NewDatas = new List<Core.Models.ShoppingCart>();
+            //        foreach (var sc in ShoppingCarts)
+            //        {
+            //            var prod_stock = Prod_Stocks.Find(e => e.Id == sc.FK_PSid);
+            //            if (prod_stock != null && prod_stock.Stock > 0)
+            //            {
+            //                // 再次購買寫入
+            //            }
+            //            else
+            //            {
+            //                var temp_details = await shoppingCartAppService.GetDropOne(sc.Id, true);
+            //                if (prod_stock == null)
+            //                {
+            //                    temp_details.Quantity = -1;
+            //                }
+            //                output.OutOfStockDetails.Add(temp_details);
+            //            }
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    output.Error = ex.Message;
+            //}
+            return output;
+        }
         public async Task<ResponseMessageDto> SendMail(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();

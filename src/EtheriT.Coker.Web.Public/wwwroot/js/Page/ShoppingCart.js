@@ -811,7 +811,7 @@ function OrderSuccess(result) {
             if (result.error != null) {
                 Coker.Token.CheckToken().done(function (token) {
                     if (!token.isLogin) {
-                        Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看訂單詳細，或將訂單完成頁面截圖。")
+                        Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。")
                     } else {
                         Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。")
                     }
@@ -822,7 +822,7 @@ function OrderSuccess(result) {
         if (result.error != null) {
             Coker.Token.CheckToken().done(function (token) {
                 if (!token.isLogin) {
-                    Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看訂單詳細，或將訂單完成頁面截圖。")
+                    Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。")
                 } else {
                     Coker.sweet.error("信件發送失敗", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。")
                 }

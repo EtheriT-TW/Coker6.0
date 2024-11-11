@@ -421,12 +421,12 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },new JobMenu{
                             PageName="OrderManagement",
                             Enable=false,
-                        }, new JobMenu
-                        {
-                            PageName="ProductManagement",
-                            Enable=false
                         },new JobMenu{
                             PageName="ManagerList",
+                            Enable=false
+                        },new JobMenu
+                        {
+                            PageName="MemberData",
                             Enable=false
                         }, new JobMenu
                         {
@@ -450,14 +450,14 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     seting.AddRange(new List<JobMenu> {
                         new JobMenu
                         {
-                            PageName="ProductManagement",
-                            Enable=false
-                        }, new JobMenu
-                        {
-                            PageName="ProductManagement",
+                            PageName="OrderManagement",
                             Enable=false
                         },new JobMenu{
                             PageName="ManagerList",
+                            Enable=false
+                        },new JobMenu
+                        {
+                            PageName="StoreSettings",
                             Enable=false
                         },new JobMenu{
                             PageName="CustSearch",
@@ -472,6 +472,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
                             Enable=false
                         }
                     });
+                    break;
+                case WebsiteLevelEnum.購物:
                     break;
             }
             SetJobs(site.Jobs, seting);

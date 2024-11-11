@@ -344,7 +344,7 @@
                 }
 }
 
-@media(max-width:576px) {
+@media (max-width:576px) {
     #history-tab-pane .content {
         padding-right: 12px !important;
         padding-left: 12px !important;

@@ -511,10 +511,17 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
+            //console.log("userData:", result);
+            //console.log("CheckToken")
             if (result.isLogin && result.name != "") {
                 $("#HiUser > .name").text(`${result.name} 您好!`);
             }
-            //console.log("userData:", result);
+            if ($("#Cart_Dropdown_Parent").length > 0) {
+                CartDropInit();
+            }
+            if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
+                CartInit();
+            }
         }
     })
 }

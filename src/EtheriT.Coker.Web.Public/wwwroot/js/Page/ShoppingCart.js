@@ -75,57 +75,6 @@ function PageReady() {
 
     $("#btn_car_dropdown").attr("disabled", "disabled")
 
-    Coker.Token.CheckToken().done(function (checkresult) {
-        if (checkresult.isLogin) {
-            Coker.User.GetUser().done(function (result) {
-                //console.log(result.data);
-                if (result.success) {
-                    var data_insert = true;
-                    user_data['orderer'] = result.data.name;
-                    user_data['ordererSex'] = result.data.sex;
-                    user_data['ordererEmail'] = result.data.email;
-
-                    if (result.data.cellPhone == null) data_insert = false;
-                    else user_data['ordererCellphone'] = result.data.cellPhone;
-
-                    if (result.data.telPhone != null) {
-                        user_data['zone'] = (result.data.telPhone).split('-')[0];
-                        user_data['ordererTelephone'] = (result.data.telPhone).split('-')[1];
-                        user_data['ext'] = (result.data.telPhone).split('-')[2];
-                    }
-
-                    if (result.data.address != null) {
-                        user_data['county'] = (result.data.address).split(' ')[0];
-                        user_data['district'] = (result.data.address).split(' ')[1];
-                        user_data['ordererAddress'] = (result.data.address).split(' ')[2];
-                        user_data['address'] = result.data.address;
-                    } else data_insert = false;
-
-                    if (!data_insert) $(".btn_edit_data").on("click");
-
-                    co.Form.insertData(user_data, "#Form_Orderer");
-
-                    order_data = user_data;
-                    order_data.ordererAddress = user_data['address'];
-                    DataInsert(order_data, $("#OrdererForm .default_data"));
-                    RecipientSameOrderer();
-
-                    co.Zipcode.setData({
-                        el: $("#Orderer_TWzipcode"),
-                        addr: order_data.ordererAddress
-                    });
-                }
-            });
-        }
-    });
-
-    ElementInit();
-    CartInit();
-
-    $(".btn_call_login").on("click", function (event) {
-        loginModal.show();
-    })
-
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
         slidesPerView: 1,
@@ -196,6 +145,57 @@ function PageReady() {
                 break;
         }
     });
+
+
+    Coker.Token.CheckToken().done(function (checkresult) {
+        if (checkresult.isLogin) {
+            Coker.User.GetUser().done(function (result) {
+                //console.log(result.data);
+                if (result.success) {
+                    var data_insert = true;
+                    user_data['orderer'] = result.data.name;
+                    user_data['ordererSex'] = result.data.sex;
+                    user_data['ordererEmail'] = result.data.email;
+
+                    if (result.data.cellPhone == null) data_insert = false;
+                    else user_data['ordererCellphone'] = result.data.cellPhone;
+
+                    if (result.data.telPhone != null) {
+                        user_data['zone'] = (result.data.telPhone).split('-')[0];
+                        user_data['ordererTelephone'] = (result.data.telPhone).split('-')[1];
+                        user_data['ext'] = (result.data.telPhone).split('-')[2];
+                    }
+
+                    if (result.data.address != null) {
+                        user_data['county'] = (result.data.address).split(' ')[0];
+                        user_data['district'] = (result.data.address).split(' ')[1];
+                        user_data['ordererAddress'] = (result.data.address).split(' ')[2];
+                        user_data['address'] = result.data.address;
+                    } else data_insert = false;
+
+                    if (!data_insert) $(".btn_edit_data").on("click");
+
+                    co.Form.insertData(user_data, "#Form_Orderer");
+
+                    order_data = user_data;
+                    order_data.ordererAddress = user_data['address'];
+                    DataInsert(order_data, $("#OrdererForm .default_data"));
+                    RecipientSameOrderer();
+
+                    co.Zipcode.setData({
+                        el: $("#Orderer_TWzipcode"),
+                        addr: order_data.ordererAddress
+                    });
+                }
+            });
+        }
+    });
+
+    ElementInit();
+
+    $(".btn_call_login").on("click", function (event) {
+        loginModal.show();
+    })
 
     /* 根據畫面高度判斷切換Swiper是否滑動到上方 */
     top_position = $(".swiper").offset().top;

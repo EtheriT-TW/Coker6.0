@@ -19,9 +19,6 @@
         MenuLiSize();
     });
 
-    if ($("#Cart_Dropdown_Parent").length > 0) {
-        CartDropInit();
-    }
     MenuLiSize();
 
     if ($(window).width() > 767) {

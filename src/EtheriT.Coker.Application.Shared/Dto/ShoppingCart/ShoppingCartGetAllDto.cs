@@ -4,6 +4,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
     public class ShoppingCartGetAllDto
     {
         public long? SCId { get; set; }
+        public long? PSId { get; set; }
         public long? PId { get; set; }
         public string Title { get; set; }
         public string? S1Title { get; set; }

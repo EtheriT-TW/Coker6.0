@@ -511,10 +511,17 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
+            //console.log("userData:", result);
+            //console.log("CheckToken")
             if (result.isLogin && result.name != "") {
                 $("#HiUser > .name").text(`${result.name} 您好!`);
             }
-            //console.log("userData:", result);
+            if ($("#Cart_Dropdown_Parent").length > 0) {
+                CartDropInit();
+            }
+            if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
+                CartInit();
+            }
         }
     })
 }
@@ -620,7 +627,7 @@ function RegisterAction() {
     data.RoleId = 2;
     co.User.AddUser(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("註冊成功，系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中，您必須完成帳號開通程序後，才能登入網站與使用會員功能，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候開通帳號通知信。", null, false);
+            Coker.sweet.success("<div>註冊成功</div><div>您將收到開通帳號的通知信</div><div>請至信箱確認以完成帳號開通</div>", null, false);
             registerModal.hide();
         } else {
             console.log(result)

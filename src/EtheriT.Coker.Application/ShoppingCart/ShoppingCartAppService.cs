@@ -133,7 +133,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                                 db.SaveChanges();
                                 output.Message = "N" + sc.Id.ToString();
-
                             }
                             else
                             {
@@ -200,7 +199,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         }
         public async Task<List<ShoppingCartGetAllDto>> GetAll()
         {
-            List < ShoppingCartGetAllDto > output = new List < ShoppingCartGetAllDto >();
+            List<ShoppingCartGetAllDto> output = new List<ShoppingCartGetAllDto>();
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
@@ -223,44 +222,53 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
                 output = await (from sc in db.ShoppingCarts
-                                    where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID) && !sc.IsOrder
-                                    from ps in db.Prod_Stocks
-                                    where ps.Id == sc.FK_PSid
-                                    from pp in db.Prod_Prices
-                                    where pp.FK_PSId == ps.Id
-                                    from p in db.Prods
-                                    where p.FK_WebsiteId == WebsiteId && p.Id == ps.FK_Pid
-                                    select new ShoppingCartGetAllDto
-                                    {
-                                        SCId = sc.Id,
-                                        PId = p.Id,
-                                        Title = p.Title,
-                                        S1Title = ps.FK_S1id.ToString(),
-                                        S2Title = ps.FK_S2id.ToString(),
-                                        Description = p.Description,
-                                        Price = pp.Price ?? 0,
-                                        OldPrice = sc.Price,
-                                        Quantity = sc.Quantity,
-                                        ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                              .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
-                                              .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
-                                              .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                              .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                      select new DirectoryReleInfoDto
-                                                      {
-                                                          Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
-                                                      }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-                                    }).ToListAsync();
+                                where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID) && !sc.IsOrder
+                                from ps in db.Prod_Stocks
+                                where ps.Id == sc.FK_PSid
+                                from pp in db.Prod_Prices
+                                where pp.FK_PSId == ps.Id && pp.FK_RId == 1
+                                from p in db.Prods
+                                where p.FK_WebsiteId == WebsiteId && p.Id == ps.FK_Pid
+                                select new ShoppingCartGetAllDto
+                                {
+                                    SCId = sc.Id,
+                                    PSId = ps.Id,
+                                    PId = p.Id,
+                                    Title = p.Title,
+                                    S1Title = ps.FK_S1id.ToString(),
+                                    S2Title = ps.FK_S2id.ToString(),
+                                    Description = p.Description,
+                                    Price = pp.Price ?? 0,
+                                    OldPrice = sc.Price,
+                                    Quantity = sc.Quantity,
+                                    ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
+                                          .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
+                                          .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
+                                          .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
+                                          .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
+                                                  select new DirectoryReleInfoDto
+                                                  {
+                                                      Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
+                                                  }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
+                                }).ToListAsync();
+
+                var token = tokenAppService.CheckToken();
+                long role = 0;
+                if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 
                 if (output != null)
                 {
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
+                        if (role > 1)
+                        {
+                            var price = await db.Prod_Prices.Where(e => e.FK_RId == role && e.FK_PSId == item.PSId).Select(e => e.Price).FirstOrDefaultAsync();
+                            if (price != null && price != 0) item.Price = (double)price;
+                        }
                         item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title))?.Title;
                         item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title))?.Title;
                     }
-
                 }
                 else throw new Exception("查無購物車資料");
             }
@@ -279,9 +287,22 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var db_sc = db.ShoppingCarts.Where(e => e.Id == id && e.IsOrder == isorder).FirstOrDefault();
                 var db_ps = db.Prod_Stocks.Where(e => e.Id == db_sc.FK_PSid).FirstOrDefault();
                 var db_prod = db.Prods.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == db_ps.FK_Pid).FirstOrDefault();
-                var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).FirstOrDefault();
+                var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).ToList();
                 if (db_sc != null)
                 {
+                    if (tokenAppService.CheckToken().IsLogin)
+                    {
+                        Guid UUID = await tokenAppService.GetUUID();
+                        var role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                        role = role == 0 ? 1 : role;
+                        var temp_price = new List<Prod_Price>();
+                        foreach (var price in db_price)
+                        {
+                            if (price.FK_RId == role) temp_price.Add(price);
+                        }
+                        if (temp_price.Count() > 0) db_price = temp_price;
+                    }
+
                     ShoppingCartGetDrop output = new ShoppingCartGetDrop()
                     {
                         SCId = db_sc.Id,
@@ -290,7 +311,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         S1Title = db_ps.FK_S1id.ToString(),
                         S2Title = db_ps.FK_S2id.ToString(),
                         Quantity = db_sc.Quantity,
-                        Price = db_price == null ? 0 : db_price.Price ?? 0,
+                        Price = db_price == null ? 0 : db_price[0].Price ?? 0,
                         ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
                                                   .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
                                                   .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)

@@ -32,6 +32,7 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.CodeAnalysis.CSharp;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
+using System.Collections.Generic;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -535,6 +536,24 @@ namespace EtheriT.Coker.Application.Product
                     var stockDatas = await this.GetStockDataAll(output.Id);
                     if (stockDatas != null)
                     {
+                        Guid UUID = await tokenAppService.GetUUID();
+                        var token = tokenAppService.CheckToken();
+                        long role = 0;
+                        if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                        role = role == 0 ? 1 : role;
+                        foreach (var stock in stockDatas)
+                        {
+                            if (stock.Prices.Count > 1)
+                            {
+                                var temp_prices = stock.Prices;
+                                stock.Prices = new List<ProductPriceDto>();
+                                foreach (var price in temp_prices)
+                                {
+                                    if (price.FK_RId == role) stock.Prices.Add(price);
+                                }
+                                if (stock.Prices.Count == 0) stock.Prices = temp_prices;
+                            }
+                        }
                         output.Stocks = stockDatas;
                     }
 
@@ -1015,7 +1034,7 @@ namespace EtheriT.Coker.Application.Product
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
                                        where prod_log.Action == (int)ProdLogActionEnum.點擊
-                                       where (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)prod_log.CreationTime) < 0)
+                                       where (DateTime.Compare(DateTime.Now.AddMonths(-3), (DateTime)prod_log.CreationTime) < 0)
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();
                 List<long> pids = new List<long>();

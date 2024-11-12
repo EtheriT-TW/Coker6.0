@@ -112,7 +112,6 @@ function PageReady() {
         })
     }
 }
-
 function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
     $counter_input = $(".counter_input");
@@ -127,7 +126,6 @@ function ElementInit() {
 
     $options = $prod_content.find(".options");
 }
-
 function PageDefaultSet(result) {
 
     if (result.stocks.length == 1 && result.stocks[0].stock == 0) $(".btn_addToCar").addClass("close")
@@ -183,7 +181,6 @@ function PageDefaultSet(result) {
     }
     if (result.techCertDatas.length == 0) $("#btn_tab > .technical,.pro_tc").remove();
 
-    var roleid = 1;
     if (result.stocks.length > 1) {
         var obj = {};
 
@@ -202,7 +199,7 @@ function PageDefaultSet(result) {
                 s2id: data.fK_S2id,
                 stock: data.stock,
                 minQty: data.min_Qty,
-                price: data.prices.find(e => e.fK_RId == roleid).price
+                price: data.prices[0].price
             };
             price_list.push(obj);
             maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
@@ -252,9 +249,10 @@ function PageDefaultSet(result) {
             }
         } else $pro_discount.text(maxprice.toLocaleString('en-US'));
     } else {
+        console.log(result.stocks)
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
-        var price = result.stocks[0].prices.find(e => e.fK_RId == roleid).price;
+        var price = result.stocks[0].prices[0].price;
         $pro_discount.text(price.toLocaleString('en-US'));
     }
     if (result.stocks.length > 0) {
@@ -387,7 +385,6 @@ function PageDefaultSet(result) {
     $("#btn_tab>li>button").first().trigger("click");
     LinkWithIconInit();
 }
-
 function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
@@ -481,7 +478,6 @@ function SpecRadio() {
     }
 
 }
-
 function AddToCart() {
     if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
@@ -539,7 +535,6 @@ function AddToCart() {
         }
     }
 }
-
 function ShowBigPro() {
     var pro_self = $(this);
     var pro_viewModalSpace = $("#ProDisplayModal > .modal-dialog > .modal-content > .modal-body");
@@ -562,7 +557,6 @@ function ShowBigPro() {
             break;
     }
 }
-
 function addImage(pro_self) {
     var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
 
@@ -579,12 +573,10 @@ function addImage(pro_self) {
         window.CI360.add("Pro_Image");
     });
 }
-
 function addYoutube(pro_self) {
     var pro_YoutubeLink = pro_self.data("youtube-link");
     $("#Pro_Youtube").attr("src", "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink);
 }
-
 function add360View(pro_self) {
     var pro360View_Self = $("#Pro_360View");
     pro360View_Self.attr("data-filename-x", pro_self.data("filename-x"));

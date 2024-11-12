@@ -23,6 +23,7 @@ using Org.BouncyCastle.Cms;
 using System.Globalization;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto;
+using System;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -110,6 +111,8 @@ namespace EtheriT.Coker.Application.Order
             var Token = tokenAppService.CheckToken();
             var userid = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
             var uuids = new List<Guid>();
+            long role = 0;
+            if (Token != null && Token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             try
@@ -144,6 +147,19 @@ namespace EtheriT.Coker.Application.Order
                             Db_Name = "Order_Details"
                         };
                         db.Prod_Logs.Add(pl);
+
+                        var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == prod_stock.Id).ToListAsync();
+                        if (db_price != null)
+                        {
+                            if (role > 0 && db_price.Find(e => e.FK_RId == role) != null)
+                            {
+                                shoppingCart.Price = (int)(db_price.Find(e => e.FK_RId == role).Price ?? 0);
+                            }
+                            else
+                            {
+                                shoppingCart.Price = (int)(db_price.FirstOrDefault().Price ?? 0);
+                            }
+                        }
 
                         shoppingCart.IsOrder = true;
                         shoppingCart.LastModifierUserId = userid;
@@ -257,6 +273,7 @@ namespace EtheriT.Coker.Application.Order
             List<OrderDetailsGetAllDto> output = new List<OrderDetailsGetAllDto>();
             try
             {
+                Guid UUID = await tokenAppService.GetUUID();
                 var db_oh = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
                 var orgName = await loginUserData.GetWebsiteOrgName();
                 if (db_oh != null)
@@ -268,17 +285,19 @@ namespace EtheriT.Coker.Application.Order
                                     from ps in db.Prod_Stocks
                                     where ps.Id == sc.FK_PSid
                                     from pp in db.Prod_Prices
-                                    where !pp.IsDeleted && pp.FK_PSId == ps.Id
+                                    where pp.FK_PSId == ps.Id && pp.FK_RId == 1
                                     from p in db.Prods
                                     where p.Id == ps.FK_Pid
                                     select new OrderDetailsGetAllDto
                                     {
                                         PId = p.Id,
+                                        PSId = ps.Id,
                                         Title = p.Title,
                                         S1Title = ps.FK_S1id.ToString(),
                                         S2Title = ps.FK_S2id.ToString(),
                                         Description = p.Description,
-                                        Price = pp.Price ?? 0,
+                                        Price = sc.Price == 0 ? pp.Price ?? 0 : sc.Price,
+                                        SCPrice = sc.Price,
                                         Quantity = sc.Quantity,
                                         Subtotal = ps.Price * sc.Quantity,
                                         ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
@@ -292,9 +311,18 @@ namespace EtheriT.Coker.Application.Order
                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                     }).ToListAsync();
 
+                    var token = tokenAppService.CheckToken();
+                    long role = 0;
+                    if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+
                     var db_sp = db.Prod_Specs.ToList();
                     foreach (var item in output)
                     {
+                        if (item.SCPrice == 0 && role > 1)
+                        {
+                            var price = await db.Prod_Prices.Where(e => e.FK_RId == role && e.FK_PSId == item.PSId).Select(e => e.Price).FirstOrDefaultAsync();
+                            if (price != null && price != 0) item.Price = (double)price;
+                        }
                         item.S1Title = int.Parse(item.S1Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title!))?.Title;
                         item.S2Title = int.Parse(item.S2Title ?? "0") == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title!))?.Title;
                     }

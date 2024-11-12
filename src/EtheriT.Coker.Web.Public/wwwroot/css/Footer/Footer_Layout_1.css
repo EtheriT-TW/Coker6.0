@@ -36,6 +36,14 @@ footer {
             animation-duration: 1s;
         }
 
+.navbar {
+    z-index:500;
+}
+
+#ContainerBody {
+    padding-top:96px;
+}
+
 .footer_pack_up #Collapse_Button > i {
     transform: rotate(360deg);
     transition: all 1s;
@@ -198,6 +206,9 @@ footer {
 }
 
 @media only screen and (max-width: 992px) {
+    #ContainerBody {
+        padding-top: 58px !important;
+    }
 
     #Footer_Menu {
         justify-content: flex-start;
@@ -269,9 +280,12 @@ footer {
 }
 
 @media only screen and (max-width: 576px) {
+    .offcanvas-header {
+        flex-direction: column;
+    }
 
     #Footer_Menu {
-        padding:0
+        padding: 0
     }
     .paging_frame {
         padding: 1rem;
@@ -316,6 +330,12 @@ footer {
     */
     #Logo_Bottom::before, #Logo_Bottom::after {
         width: 12.5%;
+    }
+}
+
+@media(max-width:400px) {
+    .paging_frame {
+        padding: .5rem;
     }
 }
 

@@ -77,7 +77,23 @@
     });*/
 }
 
+function moveHiUserToMenu() {
+    const hiUser = document.getElementById('HiUser');
+    const hamburgerMenu = document.querySelector('.offcanvas-header');
+    const iconBlock = document.querySelector('.icon-block');
+    if (window.innerWidth <= 576) {
+        // 如果屏幕宽度 <= 576px, 移动到汉堡菜单中
+        hamburgerMenu.appendChild(hiUser);
+    } else {
+        // 否则, 移回原来的位置
+        iconBlock.appendChild(hiUser);
+    }
+}
+
 function MenuLiSize() {
+
+    moveHiUserToMenu();
+
     if ($(window).width() > 768) {
         $(".subtitle").removeClass("w-100")
         $(".subtitle li").removeClass("w-100")

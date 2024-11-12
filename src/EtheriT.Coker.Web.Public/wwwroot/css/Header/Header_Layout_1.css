@@ -15,8 +15,9 @@
 #btn_car_dropdown > .badge {
     border: 0.15rem black solid;
     background-color: var(--red-popup);
-    top: 0.5rem;
-    left: 1rem;
+    top: 0.5rem !important;
+    left: 1rem !important;
+    -webkit-transform: scale(0.75);
     transform: scale(0.75);
     z-index: 1;
     height: 1.8rem;
@@ -82,17 +83,6 @@
         #Car_Dropdown > .btn_car_buy[disabled] {
             background-color: var(--gray-bg-dark);
         }
-
-#TabContent .content.type_grid figure {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-#TabContent .content.type_grid figure > figcaption {
-    margin-top: auto;
-    padding-bottom: 10px;
-}
 
     /* Button Mega Menu */
     #Mega_Menu > .logo {
@@ -486,6 +476,9 @@
 }
 
 @media only screen and (max-width: 768px) {
+    #Mega_Menu > .logo {
+        width: 40% !important;
+    }
 
     #Offcanvas_Mega_Menu > ul > .title > .text-black {
         text-align: start;
@@ -524,8 +517,10 @@
     #Mega_Menu {
         padding:0 0 !important;
     }
+}
 
-        #Mega_Menu > .logo {
-            width: 40% !important;
-        }
+@media(max-width:400px) {
+    #HiUser > span.name {
+        display: none;
+    }
 }

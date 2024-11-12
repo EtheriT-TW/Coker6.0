@@ -405,8 +405,51 @@ input:disabled + .btn_radio {
 }
 
 @media only screen and (max-width: 576px) {
+    [class*=btn_swiper_] {
+        height: 35px !important;
+        width: 35px !important;
+    }
+
+    .describe > .track {
+        top:-6rem !important;
+    }
+
+    .btn_favorites .icon_love::before {
+        font-size: 2rem;
+    }
+
+    #Product {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
     .ProductSwiper > .swiper-wrapper > .swiper-slide {
         height: 80vw;
+    }
+
+    .btn_swiper_prev_product {
+        left: -3% !important;
+    }
+
+    .btn_swiper_next_product {
+        right: -3% !important;
+    }
+
+    .quantity > button > i {
+        justify-self: center;
+    }
+
+    .counter_input > .quantity > button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+@media(max-width:448px) {
+    .describe > .track {
+        top: -8rem !important;
+        right: -1rem !important;
     }
 }
 

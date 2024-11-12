@@ -11,6 +11,33 @@
         padding: 0.5rem;
     }
 
+.type_grid > .type_change_frame > a {
+    background-color: #eeeeee;
+}
+
+    .type_grid > .type_change_frame > a img {
+        border-radius: .5rem;
+    }
+
+.type_list > .type_change_frame > a {
+    background-color: #eeeeee;
+}
+
+    .type_list > .type_change_frame > a img {
+        border-radius: .5rem;
+    }
+
+#TabContent .content.type_grid figure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+    #TabContent .content.type_grid figure > figcaption {
+        margin-top: auto;
+        padding-bottom: 10px;
+    }
+
 #ToolList {
     display: flex;
     width: 10rem;
@@ -204,6 +231,7 @@
 
     #TabContent .content.type_list figure figcaption {
         padding-top: 1rem;
+        padding-left:1rem;
     }
 
 #TabContent .content.type_list .type_change_frame div[data-key='description'] {

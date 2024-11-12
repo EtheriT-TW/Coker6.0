@@ -79,13 +79,16 @@
                     </span>個人資料
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">
-                    <span class="material-symbols-outlined mx-2">
-                        other_admission
-                    </span>歷史訂單
-                </button>
-            </li>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">
+                        <span class="material-symbols-outlined mx-2">
+                            other_admission
+                        </span>歷史訂單
+                    </button>
+                </li>
+            }
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="favorite-tab" data-bs-toggle="tab" data-bs-target="#favorite-tab-pane" type="button" role="tab" aria-controls="favorite-tab-pane" aria-selected="false">
                     <span class="material-symbols-outlined mx-2">
@@ -174,89 +177,92 @@
                     </div>
                 </div>
             </div>
-            <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
-                <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
+                    <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
 
-                <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
-                    <li class="page-item btn_prev">
-                        <button class="page-link text-black" title="切換至上一頁">
-                            <i class="fa-solid fa-angle-left"></i>
-                        </button>
-                    </li>
-                    <li class="page-item btn_next">
-                        <button class="page-link text-black" title="切換至下一頁">
-                            <i class="fa-solid fa-angle-right"></i>
-                        </button>
-                    </li>
-                </ul>
+                    <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
+                        <li class="page-item btn_prev">
+                            <button class="page-link text-black" title="切換至上一頁">
+                                <i class="fa-solid fa-angle-left"></i>
+                            </button>
+                        </li>
+                        <li class="page-item btn_next">
+                            <button class="page-link text-black" title="切換至下一頁">
+                                <i class="fa-solid fa-angle-right"></i>
+                            </button>
+                        </li>
+                    </ul>
 
-                <div class="content"></div>
+                    <div class="content"></div>
 
-                <template id="Template_Order_List">
-                    <div class="border border-5 rounded p-3 mb-3">
-                        <div class="row mb-1">
-                            <div class="col-3 text-center">訂單編號</div>
-                            <div class="col-3 text-center">訂單日期</div>
-                            <div class="col-3 text-center">訂購總額</div>
-                            <div class="col-3 text-center">訂單狀態</div>
-                        </div>
-                        <div class="row my-1">
-                            <div class="number col-3 text-center"></div>
-                            <div class="date col-3 text-center"></div>
-                            <div class="amount col-3 text-center"></div>
-                            <div class="state col-3 text-center"></div>
-                        </div>
-                        <div class="collapse">
-                            <div class="card card-body">
-                                <ul class="list-group list-group-flush mb-3">
-                                    <li class="list-group-item">
-                                        <div class="row d-lg-flex">
-                                            <div class="col-2 text-center">商品圖片</div>
-                                            <div class="col-4 text-start">商品名稱</div>
-                                            <div class="col-2 text-end">單價</div>
-                                            <div class="col-2 text-end">數量</div>
-                                            <div class="col-2 text-end">小計</div>
-                                        </div>
-                                    </li>
-                                </ul>
-                                <div class="row d-lg-flex px-3">
-                                    <div class="col-10 text-end align-content-center">商品金額：</div>
-                                    <div class="header_subtotal price col-2 text-end align-content-center"></div>
-                                </div>
-                                <div class="row d-lg-flex px-3">
-                                    <div class="col-10 text-end align-content-center">運費：</div>
-                                    <div class="header_freight price col-2 text-end align-content-center"></div>
-                                </div>
-                                <div class="row d-lg-flex px-3">
-                                    <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
-                                    <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
-                                </div>
-                                @* <div class="text-end px-2 pt-3">
+                    <template id="Template_Order_List">
+                        <div class="border border-5 rounded p-3 mb-3">
+                            <div class="row mb-1">
+                                <div class="col-3 text-center">訂單編號</div>
+                                <div class="col-3 text-center">訂單日期</div>
+                                <div class="col-3 text-center">訂購總額</div>
+                                <div class="col-3 text-center">訂單狀態</div>
+                            </div>
+                            <div class="row my-1">
+                                <div class="number col-3 text-center"></div>
+                                <div class="date col-3 text-center"></div>
+                                <div class="amount col-3 text-center"></div>
+                                <div class="state col-3 text-center"></div>
+                            </div>
+                            <div class="collapse">
+                                <div class="card card-body">
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item">
+                                            <div class="row d-lg-flex">
+                                                <div class="col-2 text-center">商品圖片</div>
+                                                <div class="col-4 text-start">商品名稱</div>
+                                                <div class="col-2 text-end">單價</div>
+                                                <div class="col-2 text-end">數量</div>
+                                                <div class="col-2 text-end">小計</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div class="row d-lg-flex px-3">
+                                        <div class="col-10 text-end align-content-center">商品金額：</div>
+                                        <div class="header_subtotal price col-2 text-end align-content-center"></div>
+                                    </div>
+                                    <div class="row d-lg-flex px-3">
+                                        <div class="col-10 text-end align-content-center">運費：</div>
+                                        <div class="header_freight price col-2 text-end align-content-center"></div>
+                                    </div>
+                                    <div class="row d-lg-flex px-3">
+                                        <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
+                                        <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
+                                    </div>
+                                    @* <div class="text-end px-2 pt-3">
                                 <button class="btn_buyagain border-0 bg-transparent fw-bold">再次購買</button>
                                 </div> *@
+                                </div>
                             </div>
+                            <button class="btn_collapse btn bg_gray border-0 rounded text-black w-100" type="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">
+                                查看訂單明細
+                            </button>
                         </div>
-                        <button class="btn_collapse btn bg_gray border-0 rounded text-black w-100" type="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">
-                            查看訂單明細
-                        </button>
-                    </div>
-                </template>
+                    </template>
 
-                <template id="Template_Order_Details_List">
-                    <li class="list-group-item">
-                        <a href="" title="" target="_self">
-                            <div class="row d-lg-flex">
-                                <div class="col-2 text-center"><img src="" alt="" /></div>
-                                <div class="title col-4 text-start align-content-center"></div>
-                                <div class="price col-2 text-end align-content-center"></div>
-                                <div class="quantity col-2 text-end align-content-center"></div>
-                                <div class="subtotal price col-2 text-end align-content-center"></div>
-                            </div>
-                        </a>
-                    </li>
-                </template>
+                    <template id="Template_Order_Details_List">
+                        <li class="list-group-item">
+                            <a href="" title="" target="_self">
+                                <div class="row d-lg-flex">
+                                    <div class="col-2 text-center"><img src="" alt="" /></div>
+                                    <div class="title col-4 text-start align-content-center"></div>
+                                    <div class="price col-2 text-end align-content-center"></div>
+                                    <div class="quantity col-2 text-end align-content-center"></div>
+                                    <div class="subtotal price col-2 text-end align-content-center"></div>
+                                </div>
+                            </a>
+                        </li>
+                    </template>
 
-            </div>
+                </div>
+            }
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
                 <div class="nodata h5 text-center fw-bold  d-none">查無收藏紀錄</div>
 

@@ -221,14 +221,18 @@ function WebPageChange() {
             if ($this.hasClass("active")) $this.removeClass("active");
         });
         if (window.location.hash.startsWith("#order")) {
-            $("#TabContent > div#profile-tab-pane").addClass("active show");
-            $("#ToolList > li button#profile-tab").addClass("active");
-            if (window.location.hash.indexOf("-") > 0) {
-                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if ($.isNumeric(pagenumber)) SetHistoryOrderPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
-                else window.location.hash = "#order-1";
+            if ($("#TabContent > div#profile-tab-pane").length > 0) {
+                $("#TabContent > div#profile-tab-pane").addClass("active show");
+                $("#ToolList > li button#profile-tab").addClass("active");
+                if (window.location.hash.indexOf("-") > 0) {
+                    var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                    if ($.isNumeric(pagenumber)) SetHistoryOrderPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                    else window.location.hash = "#order-1";
+                } else {
+                    window.location.hash = "#order-1";
+                }
             } else {
-                window.location.hash = "#order-1";
+                window.location.hash = "";
             }
         } else if (window.location.hash.startsWith("#browsing")) {
             $("#TabContent > div#history-tab-pane").addClass("active show");

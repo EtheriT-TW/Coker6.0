@@ -1034,7 +1034,7 @@ namespace EtheriT.Coker.Application.Product
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
                                        where prod_log.Action == (int)ProdLogActionEnum.點擊
-                                       where (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)prod_log.CreationTime) < 0)
+                                       where (DateTime.Compare(DateTime.Now.AddMonths(-3), (DateTime)prod_log.CreationTime) < 0)
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();
                 List<long> pids = new List<long>();

@@ -517,6 +517,34 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "E001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 7,
+                    key = "prodCatalog",
+                    name = "商品目錄",
+                    memo = "輸入商品目錄連結，以利前台新增返回目錄按鈕。",
+                    FK_StoreSetGroupId = 2,
+                    type = 1,
+                    maxlength = 255,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 12, 11, 59, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 8,
+                    key = "membershipTerms",
+                    name = "會員條款",
+                    memo = "請輸入會員條款內文",
+                    FK_StoreSetGroupId = 2,
+                    type = 2,
+                    maxlength = 5000,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 12, 11, 59, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(

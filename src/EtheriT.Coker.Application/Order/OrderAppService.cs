@@ -351,7 +351,6 @@ namespace EtheriT.Coker.Application.Order
                 {
                     var order_headers = await db.Order_Headers
                         .Where(e => uuids.Contains(e.FK_UUID))
-                        .Where(e => (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)e.CreationTime) < 0))
                         .OrderByDescending(e => e.CreationTime).ToListAsync();
 
                     response.Page_Total = (int)Math.Ceiling(order_headers.Count / 8.0);

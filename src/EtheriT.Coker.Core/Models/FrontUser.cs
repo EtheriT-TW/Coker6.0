@@ -30,6 +30,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime OpenIDSendDate { get; set; }
         public Guid? ForgetID { get; set; }
         public DateTime? ForgeIDSendDate { get; set; }
+        public DateTime? PrivacyAgreeTime { get; set; }
         public long? FK_User { get; set; }
         public List<MappingFrontUserAndWebsite> Websites { get; set; }
     }

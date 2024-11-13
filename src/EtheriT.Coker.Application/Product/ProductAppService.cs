@@ -537,7 +537,7 @@ namespace EtheriT.Coker.Application.Product
                     if (stockDatas != null)
                     {
                         Guid UUID = await tokenAppService.GetUUID();
-                        var token = tokenAppService.CheckToken();
+                        var token = await tokenAppService.CheckToken();
                         long role = 0;
                         if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
                         role = role == 0 ? 1 : role;
@@ -863,7 +863,7 @@ namespace EtheriT.Coker.Application.Product
 
             try
             {
-                var token = tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken();
                 Guid UUID = await tokenAppService.GetUUID();
 
                 var prod = db.Prods.Where(e => e.Id == FK_Pid).FirstOrDefault();

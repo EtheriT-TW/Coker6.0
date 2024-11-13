@@ -151,6 +151,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 var tokenItem = await tokenAppService.CreateToken();
                 Guid Temp_UUID = await tokenAppService.GetUUID();
+                var oldtoken = await db.Tokens.Where(e => e.UUID == Temp_UUID).FirstOrDefaultAsync();
 
                 var frontuser = await (from user in db.FrontUsers
                                        join MapFrontUserAndWeb in db.MappingFrontUserAndWebsite on user.Id equals MapFrontUserAndWeb.FK_UserId
@@ -181,6 +182,7 @@ namespace EtheriT.Coker.Application.Authorization
                             {
                                 output = await NoPasswordLogin(frontuser, dto.WebsiteId, dto);
 
+                                if (oldtoken != null && frontuser.PrivacyAgreeTime == null) frontuser.PrivacyAgreeTime = oldtoken.PrivacyAgreeTime;
                                 frontuser.ErrorTimes = 0;
                                 frontuser.LockTime = null;
                                 if (frontuser.Status == (int)UserStatusEnum.停權) frontuser.Status = (int)UserStatusEnum.開通;
@@ -637,7 +639,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
                 Guid UUID = await tokenAppService.GetUUID();
-                var token = tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken();
 
                 if (token != null && token.IsLogin)
                 {
@@ -787,15 +789,15 @@ namespace EtheriT.Coker.Application.Authorization
         }
         public async Task<ResponseMessageDto> SendForget(long userId)
         {
-			ResponseMessageDto response = new ResponseMessageDto();
-			try
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
 
-				var frontUser = await (from user in db.FrontUsers
-									   join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-									   where user.Id == userId && mapuserweb.FK_WebsiteId == websiteId
-									   select user).FirstOrDefaultAsync();
+                var frontUser = await (from user in db.FrontUsers
+                                       join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                       where user.Id == userId && mapuserweb.FK_WebsiteId == websiteId
+                                       select user).FirstOrDefaultAsync();
                 if (frontUser != null)
                 {
 
@@ -808,16 +810,16 @@ namespace EtheriT.Coker.Application.Authorization
                     });
                 }
                 else throw new Exception();
-			}
+            }
             catch
             {
                 response.Error = "會員資料錯誤";
 
-			}
+            }
             return response;
 
-		}
-		public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
+        }
+        public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
         {
 
             ResponseMessageDto response = new ResponseMessageDto();

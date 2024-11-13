@@ -212,7 +212,7 @@ function ModalSpecRadio() {
 
 function AddToCart() {
 
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
+    if ($.cookie('cookie') == null) {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
         if (modal_s1 != null && modal_s2 != null) {

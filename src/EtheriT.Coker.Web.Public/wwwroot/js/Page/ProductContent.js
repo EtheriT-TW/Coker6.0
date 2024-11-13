@@ -479,7 +479,7 @@ function SpecRadio() {
 
 }
 function AddToCart() {
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
+    if ($.cookie('cookie') == null) {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
         if (s1 != null && s2 != null && $input_quantity.val() != 0) {

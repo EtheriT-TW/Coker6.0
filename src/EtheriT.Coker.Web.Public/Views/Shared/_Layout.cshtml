@@ -65,14 +65,17 @@
 
         // 覆寫 appendChild 方法
         Element.prototype.appendChild = function (child) {
-            // 檢查是否為 <script> 或 <style> 元素
-            if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE') {
-                // 為元素添加 nonce 屬性
-                child.setAttribute('nonce', nonce);
-            }
+            // child 是否為 undefined
+            if (child) {
+                // 檢查是否為 <script> 或 <style> 元素
+                if (child.tagName && (child.tagName === 'SCRIPT' || child.tagName === 'STYLE')) {
+                    // 為元素添加 nonce 屬性
+                    child.setAttribute('nonce', nonce);
+                }
 
-            // 調用原始的 appendChild 方法
-            return originalAppendChild.call(this, child);
+                // 調用原始的 appendChild 方法
+                return originalAppendChild.call(this, child);
+            }
         };
 
         // 覆寫 insertBefore 方法

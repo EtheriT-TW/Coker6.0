@@ -62,7 +62,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken();
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
                 if (Token != null)
@@ -108,7 +108,7 @@ namespace EtheriT.Coker.Application.Order
         private async Task<ResponseMessageDto> AddDetails(long order_header_id)
         {
             Guid UUID = await tokenAppService.GetUUID();
-            var Token = tokenAppService.CheckToken();
+            var Token = await tokenAppService.CheckToken();
             var userid = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
             var uuids = new List<Guid>();
             long role = 0;
@@ -311,7 +311,7 @@ namespace EtheriT.Coker.Application.Order
                                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                     }).ToListAsync();
 
-                    var token = tokenAppService.CheckToken();
+                    var token = await tokenAppService.CheckToken();
                     long role = 0;
                     if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 

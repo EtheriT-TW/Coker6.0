@@ -172,6 +172,15 @@ function ready() {
                 },
                 type: "GET"
             });
+        },
+        AgreePrivacy: function () {
+            return $.ajax({
+                url: "/api/Token/AgreePrivacy/",
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                type: "GET"
+            });
         }
     };
     typeof (PageReady) === "function" && PageReady();
@@ -179,7 +188,6 @@ function ready() {
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
     CreateToken();
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");
 
     const enterAdModalEl = $('#EnterAdModal')
     var enteradid = enterAdModalEl.data("enteradid")
@@ -495,12 +503,17 @@ function scrollFunction() {
     }
 }
 function cookie_accept() {
-    $.cookie('cookie', 'accept', { expires: 7, path: '/' });
-    $("#Cookie").toggleClass("show");
+    Coker.Token.AgreePrivacy().done(function (result) {
+        if (result.success) {
+            $.cookie('cookie', 'accept', { path: '/' });
+            if ($("#Cookie").hasClass("show")) $("#Cookie").removeClass("show")
+        } else {
+            console.log(result)
+        }
+    });
 }
 function cookie_reject() {
-    $.cookie('cookie', 'reject');
-    $("#Cookie").toggleClass("show");
+    if ($("#Cookie").hasClass("show")) $("#Cookie").removeClass("show")
 }
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
@@ -522,6 +535,8 @@ function CheckToken() {
             if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
                 CartInit();
             }
+            if (result.agreePrivacy) cookie_accept();
+            else if (!$("#Cookie").hasClass("show")) $("#Cookie").addClass("show")
         }
     })
 }

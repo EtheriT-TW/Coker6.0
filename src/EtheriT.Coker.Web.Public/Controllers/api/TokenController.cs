@@ -28,10 +28,14 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public TokenResponseDto CheckToken()
+        public Task<TokenResponseDto> CheckToken()
         {
             return tokenAppService.CheckToken();
         }
-
+        [HttpGet]
+        public async Task<ResponseMessageDto> AgreePrivacy()
+        {
+            return await tokenAppService.AgreePrivacy();
+        }
     }
 }

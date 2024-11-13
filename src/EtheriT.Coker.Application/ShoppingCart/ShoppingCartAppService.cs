@@ -71,7 +71,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken();
 
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
@@ -167,7 +167,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var UUID = await tokenAppService.GetUUID();
-                var token = tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken();
                 var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
 
@@ -203,7 +203,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken();
 
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
@@ -252,7 +252,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                                   }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                 }).ToListAsync();
 
-                var token = tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken();
                 long role = 0;
                 if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 
@@ -290,7 +290,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).ToList();
                 if (db_sc != null)
                 {
-                    if (tokenAppService.CheckToken().IsLogin)
+                    var checkToken = await tokenAppService.CheckToken();
+                    if (checkToken.IsLogin)
                     {
                         Guid UUID = await tokenAppService.GetUUID();
                         var role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();

@@ -271,7 +271,7 @@ namespace EtheriT.Coker.Application.Article
                                             permanent = e.permanent,
                                             DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
                                         }).FirstOrDefaultAsync();
-
+                    
                     if (output != null)
                     {
                         var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()

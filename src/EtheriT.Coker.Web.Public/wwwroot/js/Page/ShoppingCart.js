@@ -774,10 +774,24 @@ function OrderHeaderAdd() {
                     OrderSuccess(result);
                     setTimeout(function () {
                         isCheckout = true;
-                        setTimeout(function () {
-                            buy_step_swiper.slideNext();
-                            buy_step_swiper.disable();
-                        }, 300);
+                        var paymenttype = result.message.split(",")[0];
+                        switch (paymenttype) {
+                            case "LinePay":
+                                Coker.ThirdParty.LinePay.Request(result.message.split(",")[1]).done(function (result) {
+                                    if (result.success) {
+                                        window.location.replace(result.message);
+                                    } else {
+                                        console.log(result);
+                                    }
+                                });
+                                break;
+                            case "Default":
+                                setTimeout(function () {
+                                    buy_step_swiper.slideNext();
+                                    buy_step_swiper.disable();
+                                }, 300);
+                                break;
+                        }
                     }, 300);
                 })
             } else {
@@ -792,7 +806,7 @@ function OrderHeaderAdd() {
 }
 function OrderSuccess(result) {
     var message = result.message.split(",")
-    var order_header_id = message[0];
+    var order_header_id = message[1];
 
     CartClear();
 
@@ -854,7 +868,7 @@ function OrderSuccess(result) {
             break;
     }
 
-    $("#PaymentData .pay_info .paid_date").append(`${message[1]}<span>${message[2]}23點59分</span>`);
+    $("#PaymentData .pay_info .paid_date").append(`${message[2]}<span>${message[3]}23點59分</span>`);
     var tempmail = order_header_data.ordererEmail;
     $("#PaymentData .pay_mail").append(`如因交易條件有誤、商品缺貨或價格物刊或有其他本公司無法接受訂單之情形,本公司保留商品出貨與否的權利。<br />．隨後我們也會將轉帳的資料mail到您指定的電子信箱:${tempmail.substr(0, 1)}******${tempmail.substr(tempmail.indexOf("@") - 1)}`);
 

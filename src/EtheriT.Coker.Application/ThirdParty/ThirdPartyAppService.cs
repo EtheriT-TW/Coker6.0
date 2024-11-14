@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using EtheriT.Coker.Application.Dto;
+﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -16,18 +15,15 @@ namespace EtheriT.Coker.Application.ThirdParty
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        private readonly IMapper mapper;
         private readonly IConfiguration configuration;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IMapper mapper,
             IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
-            this.mapper = mapper;
             this.configuration = configuration;
         }
 

@@ -44,7 +44,6 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.CookiePolicy;
-using SimpleCaptcha;
 using System.Net;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using EtheriT.Coker.Application.Advertise;
@@ -182,6 +181,7 @@ builder.Services.AddTransient<IProductAppService, ProductAppService>();
 builder.Services.AddTransient<IFavoritesAppService, FavoritesAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
+builder.Services.AddTransient<ILinePayAppService, LinePayAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<StringHandler>();
@@ -220,6 +220,12 @@ if (builder.Environment.EnvironmentName == "EPZA")
 {
     builder.WebHost.UseStaticWebAssets();
 }
+
+//註冊HttpClient
+builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
+{
+    client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
+});
 
 var app = builder.Build();
 

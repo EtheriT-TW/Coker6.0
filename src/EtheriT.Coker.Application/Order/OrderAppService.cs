@@ -14,16 +14,13 @@ using EtheriT.Coker.Application.Token;
 using Microsoft.Extensions.Configuration;
 using AutoMapper;
 using EtheriT.Coker.Core.Models;
-using Microsoft.JSInterop.Implementation;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
-using Org.BouncyCastle.Cms;
 using System.Globalization;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto;
-using System;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -91,8 +88,23 @@ namespace EtheriT.Coker.Application.Order
                     output = await AddDetails(oh.Id);
                     if (output.Success)
                     {
+                        var PaymentType = await (from pt in db.PaymentTypes
+                                                 join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                                 where ptv.FK_WebsiteId == WebsiteId
+                                                 select pt).ToListAsync();
                         var mailoutput = await SendMail(oh.Id);
-                        output.Message = $"{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                        if (PaymentType != null)
+                        {
+                            switch (PaymentType.Find(e => e.Id == oh.Payment).Code)
+                            {
+                                case "LinePay":
+                                    output.Message = $"LinePay,{oh.Id}";
+                                    break;
+                                default:
+                                    output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                                    break;
+                            }
+                        }
                         if (!mailoutput.Success) output.Error = mailoutput.Message;
                     }
                 }

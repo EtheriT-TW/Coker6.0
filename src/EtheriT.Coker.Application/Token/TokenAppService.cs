@@ -19,6 +19,7 @@ using EtheriT.Coker.Web.Core.Models;
 using System.Security.Claims;
 using System.Text;
 using Org.BouncyCastle.Asn1.Ess;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 
 namespace EtheriT.Coker.Application.Token
 {

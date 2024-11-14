@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Member;
 using EtheriT.Coker.Application.Shared.Member;
+using EtheriT.Coker.Application.Tag;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -66,5 +67,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await memberAppService.GetAllRole();
         }
+        [HttpGet]
+        public async Task<JsonResult> GetDevAllRole(DataSourceLoadOptions loadOptions)
+        {
+            return await memberAppService.GetDevAllRole(loadOptions);
+        }
+        /*[HttpPost]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
+        [Consumes("application/x-www-form-urlencoded")]
+        public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto)
+        {
+            return await memberAppService.RoleAddUp(dto);
+        }*/
     }
 }

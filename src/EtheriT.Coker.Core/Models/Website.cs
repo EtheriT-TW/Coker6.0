@@ -54,5 +54,6 @@ namespace EtheriT.Coker.Core.Models
         public List<SearchLog> SearchLogs { get; set; }
         public List<ThirdPartyKeypairValue> thirdPartyKeypairValues { get; set; }
         public List<PaymentTypesValue> paymentTypesValues { get; set; }
+        public List<Theme> Themes { get; set; }
     }
 }

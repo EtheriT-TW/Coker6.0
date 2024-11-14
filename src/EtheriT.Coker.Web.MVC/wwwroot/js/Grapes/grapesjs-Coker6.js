@@ -152,7 +152,10 @@
             }, init() {
                 this.on('change:attributes:data-text', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
-                        component.find(".name")[0].components(component.getAttributes()["data-text"]);
+                        if (component.find(".name").length > 0)
+                            component.find(".name")[0].components(component.getAttributes()["data-text"]);
+                        else
+                            component.component(component.getAttributes()["data-text"]);
                     }
                 });
             }

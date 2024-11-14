@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
             var tokens = _antiforgery.GetAndStoreTokens(context);
 
             // 在這裡設定斷點，檢查 tokens.RequestToken 和 tokens.HeaderName
+            Debug.WriteLine($"Request Path: {context.Request.Path}");
             Debug.WriteLine($"Request Token: {tokens.RequestToken}");
             Debug.WriteLine($"Header Name: {tokens.HeaderName}");
 

@@ -1,16 +1,16 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Article
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@using EtheriT.Coker.Application.Shared.Dto;
 @{
     ViewData["Title"] = "MemberType";
 }
 
-<link rel="stylesheet" href="~/css/ContentManagement/Article.min.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/MemberManagement/MemberType.min.css" asp-append-version="true" />
+<script src="~/js/MemberManagement/MemberType.min.js" asp-append-version="true"></script>
 @{
-    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
+    await Html.RenderPartialAsync(@"DevExpress\_GridCSRF");
 }
-<script src="~/js/ContentManagement/Article.min.js" asp-append-version="true"></script>
-@Html.AntiForgeryToken()
 <div id="TopLine" class="py-2 px-4">
     <div class="d-flex">
         <div class="fw-bold fs-3">會員角色管理</div>
@@ -24,10 +24,14 @@
                 <span class="material-symbols-outlined">add</span>
             </button>
             @(
-                Html.DevExtreme().DataGrid<ArticleListGetDto>()
+                Html.DevExtreme().DataGrid<SelectDto>()
                 .DataSource(d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Article/GetAllList").LoadMethod("Get")
+                .LoadUrl("/api/Member/GetDevAllRole").LoadMethod("Get")
+                .InsertUrl("/api/Member/RoleAddUp").InsertMethod("Post")
+                .UpdateUrl("/api/Member/RoleAddUp").UpdateMethod("Post")
+                .OnBeforeSend("onBeforeSend")
                 )
+                .OnContentReady("contentReady")
                 .HeaderFilter(headerFilter => headerFilter.Visible(true))
                 .RemoteOperations(true)
                 .ColumnHidingEnabled(true)
@@ -44,22 +48,13 @@
                 .ShowRowLines(true)
                 .Columns(c =>
                 {
-                    c.AddFor(e => e.Id).Caption("編號").Width(90);
-                    c.AddFor(e => e.Title).Caption("標題");
-                    c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
-                    c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90);
-                    c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
-                    c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
-                    c.AddFor(e => e.permanent).Caption("永久顯示").Width(90);
-                    c.AddFor(e => e.SerNO).Caption("排序").Width(90);
-                    c.AddFor(e => e.Popular).Caption("人氣值").Width(90);
-                    c.AddFor(e => e.PopularVisible).Caption("是否顯示人氣值").Width(150);
+                    c.AddFor(e => e.Id).Caption("編號").Width(90).AllowEditing(false);
+                    c.AddFor(e => e.Name).Caption("角色名稱");
                     c.Add()
                     .Type(GridCommandColumnType.Buttons)
                     .Buttons(b =>
                     {
                         b.Add().Name("edit").OnClick("editButtonClicked");
-                        b.Add().Icon("palette").Name("edit").OnClick("paletteButtonClicked");
                         b.Add().Name("delete").OnClick("deleteButtonClicked");
                     });
                 })
@@ -74,11 +69,12 @@
                 })
                 .Editing(editing =>
                 {
+                    editing.Mode(GridEditMode.Row);
                     editing.AllowDeleting(true);
                     editing.AllowUpdating(true);
+                    editing.NewRowPosition(GridNewRowPosition.ViewportTop);
                     editing.UseIcons(true);
                 })
-                .OnContentReady("contentReady")
                 )
         </div>
     </div>

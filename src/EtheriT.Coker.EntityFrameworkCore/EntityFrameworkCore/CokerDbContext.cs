@@ -77,6 +77,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
         public DbSet<Contact> Contacts { get; set; }
+        public DbSet<Theme> Themes { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -96,6 +97,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Website>(o =>
             {
                 o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<Theme>(o =>
+            {
+                o.Property(w => w.Css).HasDefaultValue("").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasOne(w => w.Website).WithMany(t => t.Themes).HasForeignKey(f => f.FK_WebsiteID);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<MappingUserAndWebsite>(o =>

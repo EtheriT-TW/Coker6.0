@@ -1,5 +1,5 @@
 ﻿function HeaderInit() {
-    if ($('body.home').length) {
+    if ($('body.home').length && $('#layout1').length>0) {
         $('#ContainerBody').css('padding-top', '78px');
         /*setTimeout(function () {
             if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
@@ -98,8 +98,9 @@ function moveHiUserToMenu() {
 
 function MenuLiSize() {
 
-    moveHiUserToMenu();
-
+    if ($('#HiUser').length > 0) {
+        moveHiUserToMenu();
+    }
     if ($(window).width() > 768) {
         $(".subtitle").removeClass("w-100")
         $(".subtitle li").removeClass("w-100")

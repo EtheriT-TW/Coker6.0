@@ -1,13 +1,14 @@
 ﻿function HeaderInit() {
     if ($('body.home').length) {
-        setTimeout(function () {
-            if ((window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
+        $('#ContainerBody').css('padding-top', '78px');
+        /*setTimeout(function () {
+            if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
                 // 頁面加載完畢後滾動到目標元素
                 $('html,body').animate({
-                    scrollTop: $('.one_swiper').offset().top  // 滾動到目標元素的頂部
+                    scrollTop: $('.full-banner').offset().top - 78  // 滾動到目標元素的頂部
                 }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
             }
-        }, 500);
+        }, 500);*/
     }
 
     var mega_menu_height = $("#Mega_Menu").css("height");

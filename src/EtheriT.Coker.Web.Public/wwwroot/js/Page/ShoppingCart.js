@@ -439,7 +439,6 @@ function CartAdd(result) {
 function CartQuantityUpdate(self, price, scid, quantity) {
     Product.Update.Cart({
         Id: scid,
-        FK_Tid: $.cookie("Token"),
         Quantity: quantity,
     }).done(function (result) {
         Product.GetOne.Cart(result.message).done(function (result) {

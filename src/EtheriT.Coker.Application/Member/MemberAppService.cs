@@ -16,6 +16,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Shared.Dto;
 using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -243,6 +244,16 @@ namespace EtheriT.Coker.Application.Member
             }
             return output;
         }
+
+        public async Task<JsonResult> GetDevAllRole(DataSourceLoadOptions loadOptions)
+        {
+            var dataQuery = await GetAllRole();
+            var output = DataSourceLoader.Load(dataQuery, loadOptions);
+            return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
+        /*public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto) { 
+            
+        }*/
     }
 }
 

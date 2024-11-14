@@ -140,6 +140,9 @@ builder.Services.AddAntiforgery(options =>
     options.FormFieldName = "AntiforgeryField";
     // 指定header 的名稱
     options.HeaderName = "x-xsrf-token-coker";
+    options.Cookie.Name = "cokerAntiforgeryCookie"; // 指定固定的 Cookie 名稱
+    options.Cookie.MaxAge = TimeSpan.FromMinutes(30); // 設置 Cookie 的有效期
+    options.Cookie.HttpOnly = true;
 });
 
 builder.Services.AddAuthorization();

@@ -277,12 +277,20 @@ app.UseStaticFiles(new StaticFileOptions()
     OnPrepareResponse = ConfigureStaticFileHeaders
 });
 //upload資料夾下的靜態文件
+//其他靜態文件
+var fileProvider = new FileExtensionContentTypeProvider();
+fileProvider.Mappings[".properties"] = "application/octet-stream";
+fileProvider.Mappings[".bcmap"] = "image/svg+xml";
+fileProvider.Mappings[".ftl"] = "application/l10n";
+fileProvider.Mappings[".dwg"] = "image/vnd.dwg";
+
 //app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 app.UseStaticFiles(new StaticFileOptions()
 {
     FileProvider = new PhysicalFileProvider(builder.Configuration.GetValue<string>("VirtualDirectory:upload")),
     RequestPath = "/upload",
-    OnPrepareResponse = ConfigureStaticFileHeaders
+    OnPrepareResponse = ConfigureStaticFileHeaders,
+    ContentTypeProvider = fileProvider
 });
 //子站靜態文件
 List<string> childOrgNames = new List<string>();
@@ -300,22 +308,18 @@ if (childOrgNames != null)
         {
             FileProvider = new PhysicalFileProvider(childFilePath[i]),
             RequestPath = $"/upload/{childOrgNames[i]}",
-            OnPrepareResponse = ConfigureStaticFileHeaders
+            OnPrepareResponse = ConfigureStaticFileHeaders,
+            ContentTypeProvider = fileProvider
         });
     }
 }
 
-//其他靜態文件
-app.UseStaticFiles(new StaticFileOptions()
+app.UseStaticFiles(new StaticFileOptions
 {
-    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
-    {
-        {".properties","application/octet-stream"},
-        {".bcmap","image/svg+xml"},
-        {".ftl","application/l10n"}
-    }),
+    ContentTypeProvider = fileProvider,
     OnPrepareResponse = ConfigureStaticFileHeaders
 });
+
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
 app.UseHttpsRedirection();
 // Configure the HTTP request pipeline.

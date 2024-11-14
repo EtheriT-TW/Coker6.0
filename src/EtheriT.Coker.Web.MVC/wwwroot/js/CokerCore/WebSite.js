@@ -51,6 +51,7 @@
             const _dfr = $.Deferred();
             function isValidCss() {
                 try {
+                    if (cssString == "") return true;
                     // 使用 CSSStyleSheet 嘗試完整解析 CSS 字串
                     const sheet = new CSSStyleSheet();
                     sheet.replaceSync(cssString);

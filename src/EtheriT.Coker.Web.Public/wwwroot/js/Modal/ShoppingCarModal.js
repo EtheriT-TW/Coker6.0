@@ -211,13 +211,11 @@ function ModalSpecRadio() {
 }
 
 function AddToCart() {
-
-    if ($.cookie('cookie') == null) {
+    if (!localStorage.getItem("AgreePrivacy")) {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
         if (modal_s1 != null && modal_s2 != null) {
             Product.AddUp.Cart({
-                FK_Tid: $.cookie("Token"),
                 FK_Pid: $modal.data("pid"),
                 FK_S1id: modal_s1,
                 FK_S2id: modal_s2,

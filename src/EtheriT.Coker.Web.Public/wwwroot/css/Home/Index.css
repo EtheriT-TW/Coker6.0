@@ -21,6 +21,11 @@
     min-width: fit-content;
 }
 
+#EnterAdModal ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
 /* Banner */
 .template_full_swiper > figcaption {
     background-color: var(--black-text-trans);

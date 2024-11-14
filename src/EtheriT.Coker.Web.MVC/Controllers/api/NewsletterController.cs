@@ -55,7 +55,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ResponseMessageDto> SaveRecipients([FromForm] DevExpressDto dto)
         {

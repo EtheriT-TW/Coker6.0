@@ -191,13 +191,14 @@ function ready() {
 
     const enterAdModalEl = $('#EnterAdModal')
     var enteradid = enterAdModalEl.data("enteradid")
-    var temp_idlist = typeof ($.cookie('EnterAd_Show')) == "undefined" ? [] : $.cookie('EnterAd_Show').split(",");
-    if ($('#EnterAdModal').length > 0 && (typeof ($.cookie('EnterAd_Show')) == "undefined" || $.inArray(enteradid.toString(), temp_idlist) < 0)) {
+
+    var temp_idlist = localStorage.getItem(`AgreePrivacy`) == null ? [] : localStorage.getItem("EnterAd_Show") == null ? [] : localStorage.getItem("EnterAd_Show").split(",");
+    if ($('#EnterAdModal').length > 0 && (localStorage.getItem("EnterAd_Show") == null || $.inArray(enteradid.toString(), temp_idlist) < 0)) {
         var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
         enterAdModal.show();
         enterAdModalEl.on('hidden.bs.modal', event => {
             temp_idlist.push(enteradid);
-            $.cookie('EnterAd_Show', temp_idlist, { path: '/' });
+            localStorage.setItem("EnterAd_Show", temp_idlist);
         })
         var adid = $("#EnterAdModal .modal-content").data("aid");
         if (adid != "undefined") {
@@ -505,7 +506,7 @@ function scrollFunction() {
 function cookie_accept() {
     Coker.Token.AgreePrivacy().done(function (result) {
         if (result.success) {
-            $.cookie('cookie', 'accept', { path: '/' });
+            localStorage.setItem(`AgreePrivacy`, "True");
             if ($("#Cookie").hasClass("show")) $("#Cookie").removeClass("show")
         } else {
             console.log(result)

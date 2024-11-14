@@ -10,23 +10,29 @@
     .top_title_3 li {
         color: orange;
     }
-    .top_title_3 li a {
-        color: orange;
-    }
 
-    .top_title_3 li:not(:first-child)::before {
-        content: '>';
-        padding-right: 0.25rem;
-        color: orange;
-    }
+        .top_title_3 li a {
+            color: orange;
+        }
+
+        .top_title_3 li:not(:first-child)::before {
+            content: '>';
+            padding-right: 0.25rem;
+            color: orange;
+        }
 
 /* Enter Ad Modal */
 #EnterAdModal > .modal-dialog {
     min-width: fit-content;
 }
 
+#EnterAdModal ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
 @media only screen and (max-width: 768px) {
-        .top_title_3 > .title {
-            text-align: center;
-        }
+    .top_title_3 > .title {
+        text-align: center;
+    }
 }

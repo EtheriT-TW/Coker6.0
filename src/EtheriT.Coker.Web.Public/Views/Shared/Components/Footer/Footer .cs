@@ -18,7 +18,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public Footer(
             IWebsiteApplication websiteApplication,
             IConfiguration Configuration
-
             )
         {
             this.websiteApplication = websiteApplication;
@@ -293,14 +292,32 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     };
                     break;
                 case 7:
-					footerViewModel = new FooterViewModel
-					{
-						Content = new List<string>
-								{
+                    footerViewModel = new FooterViewModel
+                    {
+                        Content = new List<string>
+                                {
                                     "Copyright© 高鋒開發有限公司 版權所有 |<br id=\"iswrap\"> KaoFeng Development Co., Ltd. ALL Rights Reservd<br>電話：<a href=\"tel:07-3737909\">07-3737909</a> &nbsp; 傳真：07-3737915<br id=\"iswrap\"> &nbsp; 地址：<a href=\"https://maps.app.goo.gl/6Q8ggmAWi6VCQ9us5\" target=\"_blank\"> 高雄市仁武區鳳仁路177-2號</a>",
-								}
-					};
-					break;
+                                }
+                    };
+                    break;
+                case 8:
+                    string footerMessage = "";
+                    switch (siteId) {
+                        case 6:
+                            footerMessage = "Copyright©2024 榮唐運輸股份有限公司 版權所有 <br> 電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> &nbsp;傳真：07-8912380 &nbsp;統一編號:13179181 &nbsp;<br id=\"iswrap\">地址：<a href=\"https://g.co/kgs/cq8ePQe\" target=\"_blank\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a>";
+                            break;
+                        case 7:
+                            
+                            break;
+                     }
+                    footerViewModel = new FooterViewModel
+                    {
+                        Content = new List<string>
+                                 {
+                                     footerMessage,
+                                 }
+                    };
+                    break;
 				default:
 					footerViewModel = new FooterViewModel();
 					break;

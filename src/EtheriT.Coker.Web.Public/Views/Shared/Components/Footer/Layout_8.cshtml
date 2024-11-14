@@ -1,0 +1,43 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@using EtheriT.Coker.Application.Shared.i18n;
+@model FooterViewModel
+<link rel="stylesheet" href="~/css/Footer/Footer_Layout_7.min.css" asp-append-version="true" />
+@{
+	switch (ViewData["Locale"] == null ? "" : ViewData["Locale"].ToString())
+	{
+		case "en":
+			<link rel="stylesheet" href="~/css/Footer/Footer_Layout_7.en.min.css" asp-append-version="true" />
+			break;
+	}
+}
+
+@if (Model.footerViewModels != null && Model.footerViewModels.Count > 0)
+{
+	<div id="FootContainer" class="container listMenu d-flex justify-content-center align-items-center">
+		<div id="Footer_Menu" class="abreast row w-100">
+			@foreach (var menu in Model.footerViewModels)
+			{
+				<div class="paging_frame">
+					<p>@menu.Title</p>
+					<div class="abreast">
+						<ul>
+							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+							{
+								<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
+							}
+						</ul>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+}
+<div id="footer" class="w-100 d-flex justify-content-center align-items-center flex-column footer-bg">
+	<h5 class="my-1">@Model.Title</h5>
+	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">
+		@for (int i = 0; i < Model.Content.Count; i++)
+		{
+			<p>@Html.Raw(Model.Content[i])</p>
+		}
+	</div>
+</div>

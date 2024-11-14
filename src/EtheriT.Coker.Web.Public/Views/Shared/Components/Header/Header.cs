@@ -48,6 +48,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 case 1:
                 case 5:
                 case 7:
+                case 8:
                     webmenus_data = webmenus_data.ToList();
                     headerViewModel = new HeaderViewModel
                     {
@@ -55,7 +56,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         LogoImageUrl = "/upload/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
-
                     };
 					if (marquee.Count > 0)
                     {

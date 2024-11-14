@@ -1,6 +1,9 @@
 ﻿function HeaderInit() {
-    if ($('body.home').length && $('#layout1').length>0) {
-        $('#ContainerBody').css('padding-top', '78px');
+    if ($('body.home').length && $('#layout1').length > 0 || $('#layout8').length > 0) {
+        var navbarHeight = $('.navbar').outerHeight();
+        if (!$('#swiper-light').length) {
+            $('#ContainerBody').css('padding-top', navbarHeight);
+        }
         /*setTimeout(function () {
             if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
                 // 頁面加載完畢後滾動到目標元素

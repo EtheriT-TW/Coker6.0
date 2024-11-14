@@ -1,0 +1,272 @@
+﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
+@using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@model HeaderViewModel
+
+<link rel="stylesheet" href="~/css/Header/Header_Layout_8.min.css" asp-append-version="true" />
+<script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
+<script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
+@{
+    string imgurl = Model.LogoImageUrl.Substring(0, Model.LogoImageUrl.LastIndexOf("/"));
+}
+<nav class="navbar navbar-expand-lg flex-column p-0 shadow position-fixed vw-100">
+    <!-- Mega Menu -->
+    <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
+        <!-- Logo -->
+        <div class="d-none d-lg-flex logo justify-content-end">
+            @{
+                var home_target = Model.HomeTarget == true ? "_blank" : "_self";
+                var home_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+                if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
+            }
+            <a href="@Model.HomeLink" target="@home_target" title="@home_title">
+                @if (string.IsNullOrEmpty(Model.Title))
+                {
+                    <h1>@Model.Title</h1>
+                }
+                else
+                {
+                    <img src="@Model.LogoImageUrl" alt="@Model.Title" />
+                    <h1 class="d-none">@Model.Title</h1>
+                }
+            </a>
+        </div>
+        @{
+            List<MenuItemModel> MenuItems = Model.menuItemModels ?? new List<MenuItemModel>();
+        }
+        <!-- Menu Canvas -->
+        <div id="Offcanvas_Mega_Menu" class="mega_menu_canvas offcanvas offcanvas-start visible" tabindex="-1" aria-labelledby="offcanvasExampleLabel">
+            <!-- Menu Canvas Search Block -->
+            <div class="offcanvas-header pt-3 ps-5">
+                <h5 class="offcanvas-title mx-auto fs-5 fw-bold" id="offcanvasLabel">@Model.Title</h5>
+            </div>
+
+            <!-- Menu Canvas Menu -->
+            <ul class="navbar-nav offcanvas-body m-0 mx-3" id="accordion-menu">
+                <li class="">
+                    <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
+                </li>
+                @foreach (var menu in MenuItems)
+                {
+                    string headType = "metaMenu";
+                    List<MenuItemModel> subItems = menu.menuItemModels ?? new List<MenuItemModel>();
+                    string jc = menu.menuItemModels != null && menu.menuItemModels.Count() > 4 ? "" : "justify-content-center";
+                    <li class="title nav-item p-2 @headType">
+                        @if (subItems.Count() > 0)
+                        {
+                            <a href="@menu.Link" id="collapse-header-@menu.Title" class="m-0 nav-link p-0 text-nowrap text-black menu-item collapsed"
+                               data-bs-toggle="collapse" data-bs-target="#collapse-@menu.Title" aria-expanded="true" aria-controls="collapse-@menu.Title">
+                                @if (string.IsNullOrEmpty(menu.imageUrl))
+                                {
+                                    @menu.Title
+                                }
+                                else
+                                {
+                                    if (string.IsNullOrEmpty(menu.hoverImageUrl))
+                                    {
+                                        <img src="@menu.imageUrl" alt="@menu.Title" />
+                                        <span class="justify-content-center">@menu.Title</span>
+                                    }
+                                    else
+                                    {
+                                        <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                                        <span>@menu.Title</span>
+                                    }
+                                }
+                            </a>
+                            <div class="content collapse_menus translate-middle-x collapse" id="collapse-@menu.Title" aria-labelledby="collapse-header-@menu.Title" data-bs-parent="#accordion-menu">
+                                <div class="container">
+                                    <ul class="@jc">
+                                        @foreach (var secItem in subItems)
+                                        {
+                                            var iconclass = secItem.Icon == "" ? "d-none" : "";
+                                            var imageiconclass = secItem.ImageIcon == "" ? "d-none" : "";
+                                            var target = secItem.Target == true ? "_blank" : "_self";
+                                            var title = secItem.Target == true ? $"連結至：{secItem.Title}(另開視窗)" : $"連結至：{secItem.Title}";
+                                            string titleClass = (secItem.menuItemModels == null || secItem.menuItemModels.Count() == 0 || menu.Link.ToLower().Contains("product")) ? "" : "hasChild";
+                                            if (string.IsNullOrEmpty(secItem.Link))
+                                            {
+                                                secItem.Link = "#";
+                                                title = $"展開選單：{secItem.Title}";
+                                            }
+                                            <li class="subtitle nav-item my-0 @titleClass">
+                                                <a id="collapse-header-@secItem.Title" class="subtitle_title justify-content-between nav-link text-black py-0 text-nowrap text-start d-flex align-items-center collapsed" href="@secItem.Link" title="@title" target="@target"
+                                                   data-bs-toggle="" data-bs-target="#collapse-@secItem.Title" aria-expanded="true">
+                                                    <div>
+                                                        <i class="@secItem.IconClass me-2 @iconclass">@secItem.Icon</i>
+                                                        <img class="@imageiconclass me-2" src="@secItem.ImageIcon" alt="@secItem.Title" />
+                                                        @secItem.Title
+                                                    </div>
+                                                    <span class="material-symbols-outlined d-lg-none">
+                                                        double_arrow
+                                                    </span>
+                                                </a>
+                                                @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
+                                                {
+                                                    <ul id="collapse-@secItem.Title" aria-labelledby="collapse-header-@secItem.Title" data-bs-parent="#collapse-@menu.Title"
+                                                        class="row collapse px-3 mx-1@($" hasRow{secItem.menuItemModels.Count()/3 + 1}")@($"{(menu.Link.ToLower().Contains("product")?" d-lg-none":"")}")">
+                                                        @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
+                                                        {
+                                                            iconclass = thirdItem.Icon == "" ? "d-none" : "";
+                                                            imageiconclass = thirdItem.ImageIcon == "" ? "d-none" : "";
+                                                            <li class="px-0">
+                                                                @if (secItem.Link != "")
+                                                                {
+                                                                    target = thirdItem.Target == true ? "_blank" : "_self";
+                                                                    title = thirdItem.Target == true ? $"連結至：{thirdItem.Title}(另開視窗)" : $"連結至：{thirdItem.Title}";
+                                                                    <a class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center" href="@thirdItem.Link" title="@title" target="@target">
+                                                                        <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+                                                                        <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+                                                                        @thirdItem.Title
+                                                                    </a>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="subtitle_title ps-2 nav-link text-black py-0 text-nowrap text-start fw-normal d-flex align-items-center">
+                                                                        <i class="@thirdItem.IconClass me-2 @iconclass">@thirdItem.Icon</i>
+                                                                        <img class="@imageiconclass me-2" src="@thirdItem.ImageIcon" alt="@thirdItem.Title" />
+                                                                        @thirdItem.Title
+                                                                    </div>
+                                                                }
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                                @menu.Title
+                            </a>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="btn_menu navbar-toggler collapsed px-0 col-1 mt-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#Offcanvas_Mega_Menu">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+
+        <!-- Logo -->
+        <div class="logo d-lg-none col-7 text-center py-lg-0 py-1">
+            @{
+                var logo_target = Model.HomeTarget == true ? "_blank" : "_self";
+                var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
+            }
+            <a href="@Model.HomeLink" target="@logo_target" title="@logo_title">
+                @if (string.IsNullOrEmpty(Model.Title))
+                {
+                    <h1>@Model.Title</h1>
+                }
+                else
+                {
+                    <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" />
+                    <h1 class="d-none">@Model.Title</h1>
+                }
+            </a>
+        </div>
+
+        <!-- Tool Bar -->
+        <div class="d-flex justify-content-center icon-block">
+            <!-- Search Block -->
+            <a href="@Model.SearchPath" title="前往搜尋頁" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
+                <span class="material-symbols-outlined bg-secondary bg-grey text-muted rounded-circle p-1 fs-5 notranslate">search</span>
+                <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
+            </a>
+            <div id="google_translate_element"></div>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <div id="Cart_Dropdown_Parent" class="d-flex px-1">
+                    <button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
+                        <span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
+                    </button>
+
+                    <div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
+                        <ul class="m-0 ps-0">
+                            <template id="Template_Car_Dropdown">
+                                <li class="border-bottom me-4" data-scid="">
+                                    <figure class="position-relative mb-0">
+                                        <a class="pro_link d-flex" href="" title="連結至：商品">
+                                            <img class="pro_image me-2" src="" alt="商品" />
+                                            <figcaption class="overflow-hidden">
+                                                <div class="pro_name h-auto"></div>
+                                                <div class="pro_spec h-auto my-1"></div>
+                                                <div class="number d-flex">
+                                                    <div class="pro_unit price fw-bold"></div>
+                                                    <div class="pro_quantity fw-bold"></div>
+                                                </div>
+                                            </figcaption>
+                                        </a>
+                                        <button class="btn_cart_delete bg-transparent border-0 position-absolute">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </figure>
+                                </li>
+                            </template>
+                        </ul>
+
+                        <div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
+
+                        <a href="/@ViewData["OrgName"]/ShoppingCar" title="連結至購物車" class="btn_car_buy d-flex justify-content-center border-0 rounded-1 w-100 py-1 mt-2 text-white">結帳</a>
+                    </div>
+                </div>
+            }
+            @if (ViewBag.LoginEnable)
+            {
+                @if (ViewBag.isLogin)
+                {
+                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="登入會員">
+                        <span class="material-symbols-outlined">
+                            person
+                        </span>
+                        <span class="name">已登入</span>
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class="btn bg-transparent text-black border-0 d-flex" data-bs-toggle="modal" data-bs-target="#LoginModal">
+                        <span class="material-symbols-outlined">person</span>
+                    </button>
+                }
+            }
+        </div>
+    </div>
+</nav>
+<div class="image-wh">
+    <img id="header-title" class="titleimage m-auto d-block" src="@imgurl/headertitile.jpg" alt="Header Titile" />
+</div>
+<div id="swiper-light" class="headernews m-auto d-block position-relative">
+    <img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
+    <img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
+    <div class="content position-absolute row align-items-center w-100">
+        <div class="text overflow-hidden text-white p-0 col">
+            <div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
+                <div class="swiper-wrapper">
+                    @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
+                    {
+                        var target = marquee.target == true ? "_blank" : "_self";
+                        var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+                        var link = marquee.link;
+                        if (string.IsNullOrEmpty(link))
+                        {
+                            <div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title="@marquee.title">@marquee.title <span class="sr-only">(current)</span></div></div>
+                        }
+                        else
+                        {
+                            <div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

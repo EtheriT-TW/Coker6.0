@@ -1,0 +1,567 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC&display=swap');
+
+/* Color */
+:root {
+    --gray-light: #E2E2E2;
+    --gray-middle: #A0A0A0;
+    --gray-dark: #4A4A4A;
+    --blue-text: #007AEA;
+    --blue-button: #006FAE;
+    --yellow: #FBAB3C;
+    --green-button: #69BA6D;
+    --green-LINE: #00C300;
+    --green-main: #4A5859;
+    --green-main-trans: #4A585980;
+    --red-main: #B73925;
+    --red-main-light: #F3BDBD;
+    --red-number: #B8230F;
+    --red-text: #962209;
+    --red-popup: #FF5059;
+    --gray-blue: #E0E3E8;
+    --gray-bg-light: #F4F4F4;
+    --gray-bg-light-trans: #F4F4F4C0;
+    --gray-bg-dark: #E2E2E2;
+    --gray-icon: #BFBFBF;
+    --gray-text: #8E8E8E;
+    --black-text: #4F4F4F;
+    --black-text-trans: #4F4F4F80;
+    --black-bottom-line: #333333;
+    --black-top-line: #1E1E1E;
+    --gray-path: #bababa;
+}
+
+/*----------------------------Header-------------------------------*/
+.modal-body > #RegisterForm > #RegisterNewPassFeedBack {
+    font-size: 0.8rem;
+}
+
+.gray_text {
+    color: var(--gray-text);
+}
+
+.blue_text {
+    color: var(--blue-text);
+}
+
+/* Default */
+html {
+    font-size: 100%;
+}
+
+.pb-3 {
+    padding: 16px 0;
+}
+
+.center {
+    text-align: center;
+    margin: auto;
+}
+
+.abreast {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.top_title_1 li {
+    color: var(--gray-path);
+    cursor: default;
+    font-size: 0.9rem;
+}
+
+    .top_title_1 li a {
+        color: var(--gray-path);
+    }
+
+    .top_title_1 li:not(:first-child)::before {
+        content: '/';
+        padding-right: 0.25rem;
+        color: var(--gray-path);
+    }
+
+.editTime {
+    color: var(--gray-path);
+    font-size: 0.9rem;
+}
+/* Breadcrumb */
+#Breadcrumb {
+    --bs-breadcrumb-divider: '/';
+}
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
+        color: var(--gray-text);
+    }
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
+        color: var(--gray-text);
+    }
+
+/* Btn Close */
+.btn-close {
+    border: 1px solid;
+    font-size: 0.75rem;
+}
+
+/* Login Modal */
+#LoginModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #LoginModal > .modal-dialog > .modal-content > .modal-body > button {
+        background-color: var(--black-text);
+    }
+
+    #LoginModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+    #LoginModal > .modal-dialog > .modal-content > .modal-footer > button {
+        font-size: 0.8rem;
+    }
+
+#LoginForm > div > div {
+    z-index: 5;
+}
+
+#LoginForm > div > [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#LoginForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#LoginForm > div > input.pass {
+    padding-right: 3.5rem;
+}
+
+#LoginForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+/* OtherLogin Modal */
+#OtherLoginModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+#OtherLoginModal > div > div {
+    z-index: 5;
+}
+
+#OtherLoginModal > .modal-dialog > .modal-content > .modal-body > .btn_line {
+    background-color: #06C755;
+}
+
+#OtherLoginModal > .modal-dialog > .modal-content > .modal-body > .btn_google {
+    background-color: #ea4335;
+}
+
+#OtherLoginModal > .modal-dialog > .modal-content > .modal-body > .btn_facebook {
+    background-color: #3b5998;
+}
+/* Reset Modal */
+#ResetModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #ResetModal > .modal-dialog > .modal-content > .modal-body > div > div > div {
+        z-index: 5;
+    }
+
+    #ResetModal > .modal-dialog > .modal-content > .modal-body > div > div > [class*=input_bg] {
+        background-color: var(--gray-bg-dark);
+    }
+
+    #ResetModal > .modal-dialog > .modal-content > .modal-body > div > div > input:nth-child(2n) {
+        padding-left: 3.5rem;
+    }
+
+    #ResetModal > .modal-dialog > .modal-content > .modal-body > button {
+        background-color: var(--black-text);
+        font-size: 0.8rem;
+    }
+
+    #ResetModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+#CheckPassFeedBack, #NewPassFeedBack {
+    font-size: 0.8rem;
+    padding-bottom: 0.2rem;
+}
+
+#ResetForm > div > div {
+    z-index: 5;
+}
+
+#ResetForm > div > [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#ResetForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#ResetForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+/* Register Modal */
+#RegisterModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > div > div > div {
+        z-index: 5;
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > div > div > [class*=input_bg] {
+        background-color: var(--gray-bg-dark);
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > div > div > input:nth-child(2n) {
+        padding-left: 3.5rem;
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > .btn_register {
+        background-color: var(--black-text);
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-footer > button {
+        font-size: 0.8rem;
+    }
+
+#CheckPassFeedBack, #NewPassFeedBack {
+    font-size: 0.8rem;
+    padding-bottom: 0.2rem;
+}
+
+#RegisterForm > div > div {
+    z-index: 5;
+}
+
+#RegisterForm > div > [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#RegisterForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#RegisterForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+/* Forget Modal */
+#ForgetModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #ForgetModal > .modal-dialog > .modal-content > .modal-body > div > div > div {
+        z-index: 5;
+    }
+
+    #ForgetModal > .modal-dialog > .modal-content > .modal-body > div > div > [class*=input_bg] {
+        background-color: var(--gray-bg-dark);
+    }
+
+    #ForgetModal > .modal-dialog > .modal-content > .modal-body > div > div > input:nth-child(2n) {
+        padding-left: 3.5rem;
+    }
+
+    #ForgetModal > .modal-dialog > .modal-content > .modal-body > .btn_forget {
+        background-color: var(--black-text);
+    }
+
+    #ForgetModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+    #ForgetModal > .modal-dialog > .modal-content > .modal-footer > button {
+        font-size: 0.8rem;
+    }
+
+#CheckPassFeedBack, #NewPassFeedBack {
+    font-size: 0.8rem;
+    padding-bottom: 0.2rem;
+}
+
+#ForgetForm > div > div {
+    z-index: 5;
+}
+
+#ForgetForm > div > [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#ForgetForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#ForgetForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+/* Btn Favorites */
+.btn_favorites > .fa-solid.fa-heart {
+    color: #AB0125 !important;
+}
+
+/* Cookie */
+.cookie {
+    z-index: 1000;
+    background-color: #000000aa;
+    display: none;
+}
+
+    .cookie.show {
+        display: flex;
+    }
+
+.cookie_text {
+    text-align: justify;
+    width: 60vw;
+}
+
+#cookie_button {
+    display: flex;
+    align-items: center;
+}
+
+.btn_cookie_accept {
+    background-color: var(--red-main);
+    cursor: pointer;
+}
+
+.btn_cookie_reject {
+    background-color: gray;
+    cursor: pointer;
+}
+
+@media only screen and (max-width: 576px) {
+    #cookie_button {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/*----------------------------Footer------------------------------*/
+.gray_text {
+    color: var(--gray-text);
+}
+
+.blue_text {
+    color: var(--blue-text);
+}
+
+/* Default */
+html {
+    font-size: 100%;
+    font-family: 'Noto Serif TC', serif;
+}
+
+.pb-3 {
+    padding: 16px 0;
+}
+
+.center {
+    text-align: center;
+    margin: auto;
+}
+
+.abreast {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.top_title_1 li {
+    color: var(--gray-path);
+    cursor: default;
+    font-size: 0.9rem;
+}
+
+    .top_title_1 li a {
+        color: var(--gray-path);
+    }
+
+    .top_title_1 li:not(:first-child)::before {
+        content: '/';
+        padding-right: 0.25rem;
+        color: var(--gray-path);
+    }
+
+.editTime {
+    color: var(--gray-path);
+    font-size: 0.9rem;
+}
+/* Breadcrumb */
+#Breadcrumb {
+    --bs-breadcrumb-divider: '/';
+}
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item.active {
+        color: var(--gray-text);
+    }
+
+    #Breadcrumb > .breadcrumb > .breadcrumb-item, #Breadcrumb > .breadcrumb > .breadcrumb-item > a {
+        color: var(--gray-text);
+    }
+
+/* Btn Close */
+.btn-close {
+    border: 1px solid;
+    font-size: 0.75rem;
+}
+
+/* Login Modal */
+#LoginModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #LoginModal > .modal-dialog > .modal-content > .modal-body > .btn_login {
+        background-color: var(--black-text);
+    }
+
+    #LoginModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+    #LoginModal > .modal-dialog > .modal-content > .modal-footer > button {
+        font-size: 0.8rem;
+    }
+
+#LoginForm > div > div {
+    z-index: 5;
+}
+
+#LoginForm > div > [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#LoginForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#LoginForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+/* Register Modal */
+#RegisterModal > .modal-dialog > .modal-content {
+    max-width: 80vw;
+    width: 375px;
+}
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > div > div > div {
+        z-index: 5;
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > div > div > [class*=input_bg] {
+        background-color: var(--gray-bg-dark);
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > div > div > input:nth-child(2n) {
+        padding-left: 3.5rem;
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-body > .btn_register {
+        background-color: var(--black-text);
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-footer > div {
+        font-size: 0.8rem;
+    }
+
+    #RegisterModal > .modal-dialog > .modal-content > .modal-footer > button {
+        font-size: 0.8rem;
+    }
+
+#CheckPassFeedBack, #NewPassFeedBack {
+    font-size: 0.8rem;
+    padding-bottom: 0.2rem;
+}
+
+#RegisterForm > div > div {
+    z-index: 5;
+}
+
+#RegisterForm > div > [class*=input_bg] {
+    background-color: var(--gray-bg-dark);
+}
+
+#RegisterForm > div > input:nth-child(2n) {
+    padding-left: 3.5rem;
+}
+
+#RegisterForm > .btn_refresh {
+    font-size: 0.8rem;
+}
+
+/* Btn Favorites */
+.btn_favorites > .fa-solid.fa-heart {
+    color: #AB0125 !important;
+}
+
+/* Cookie */
+.cookie {
+    z-index: 1000;
+    background-color: #000000aa;
+    display: none;
+}
+
+    .cookie.show {
+        display: flex;
+    }
+
+.cookie_text {
+    text-align: justify;
+    width: 60vw;
+}
+
+#cookie_button {
+    display: flex;
+    align-items: center;
+}
+
+.btn_cookie_accept {
+    background-color: var(--red-main);
+    cursor: pointer;
+}
+
+.btn_cookie_reject {
+    background-color: gray;
+    cursor: pointer;
+}
+
+.pageTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 1rem 1rem;
+}
+
+    .pageTitle > .title {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        margin: 0 1rem;
+        max-width: calc(100% - 96px);
+    }
+
+@media only screen and (max-width: 576px) {
+    #cookie_button {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+}

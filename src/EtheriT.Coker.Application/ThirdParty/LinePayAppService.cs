@@ -11,8 +11,6 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Order;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto.LinePayRequestBodyDto;
-using MailKit.Search;
-using System.Linq.Expressions;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,17 +20,20 @@ namespace EtheriT.Coker.Application.ThirdParty
     {
         private readonly HttpClient ThirdPartyClient_Line;
         private readonly CokerDbContext db;
+        private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
         private readonly IOrderAppService orderAppService;
         public LinePayAppService(
             IHttpClientFactory httpClientFactory,
             CokerDbContext db,
+            LoginUserData loginUserData,
             IConfiguration configuration,
             IOrderAppService orderAppService
         )
         {
             ThirdPartyClient_Line = httpClientFactory.CreateClient("ThirdPartyClient_Line");
             this.db = db;
+            this.loginUserData = loginUserData;
             this.configuration = configuration;
             this.orderAppService = orderAppService;
         }
@@ -91,6 +92,9 @@ namespace EtheriT.Coker.Application.ThirdParty
         }
         public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
         {
+            ResponseMessageDto response = new ResponseMessageDto();
+            LinePayConfirmResponseDto linePayResponse = new LinePayConfirmResponseDto();
+            string RequestBodyStr = "";
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
             try
@@ -108,16 +112,18 @@ namespace EtheriT.Coker.Application.ThirdParty
                             amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
                             currency = "TWD",
                         };
-                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-                        ResponseMessageDto response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+                        RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
 
                         if (response.Success)
                         {
-                            var RequestContent = new StringContent(JsonConvert.SerializeObject(RequestBodyStr), Encoding.UTF8, "application/json");
+                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
                             var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
                             PostResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                            var linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
+                            linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
+                            Console.WriteLine($"-------------錯誤訊息查看-------------");
+                            Console.WriteLine($"LinePay回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
 
                             if (linePayResponse.ReturnCode == "0000")
                             {
@@ -166,9 +172,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     if (ohdata != null)
                     {
-                        var QueryString = $"transactionId={transactionId}&orderId={orderId}";
-                        var RequestUri = $"/v3/payments/requests/{transactionId}/check?{QueryString}";
-                        response = await LinePayDefaultRequestHeaders(RequestUri, QueryString);
+                        var RequestUri = $"/v3/payments/requests/{transactionId}/check";
+                        response = await LinePayDefaultRequestHeaders(RequestUri, "");
 
                         if (response.Success)
                         {
@@ -179,7 +184,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (linePayResponse.ReturnCode)
                             {
                                 case "0110":
-                                    if(ohdata.State == OrderStatusEnum.待確認)
+                                    if (ohdata.State == OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
                                         db.SaveChanges();

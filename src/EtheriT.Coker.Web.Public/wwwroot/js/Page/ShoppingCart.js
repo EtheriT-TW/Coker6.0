@@ -272,10 +272,11 @@ function hashChange(e) {
     }
 }
 function GetOrderPage() {
-    if ($.isNumeric(window.location.hash.substring(1))) {
+    if ($.isNumeric(window.location.search.substring(1))) {
         isCheckout = true;
-        var ohid = parseInt(window.location.hash.substring(1));
-        $("#Step4 > .card-header > .order_number").text(ohid);
+        var ohid = parseInt(window.location.search.substring(1));
+        console.log(`查詢編號${ohid}的訂單資料`)
+        $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
         buy_step_swiper.enable();
         buy_step_swiper.slideTo(4);

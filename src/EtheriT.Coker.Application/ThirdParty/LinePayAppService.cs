@@ -11,6 +11,10 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Order;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto.LinePayRequestBodyDto;
+using MailKit.Search;
+using System.Linq.Expressions;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -85,50 +89,133 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> LinePayConfirm(long ohid)
+        public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
             try
             {
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-                if (ohdata != null)
+                long.TryParse(orderId, out long ohid);
+                if (ohid > 0)
                 {
-                    var RequestUri = $"/v3/payments/{ohdata.TransactionId}/confirm";
-                    LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
-                    {
-                        Amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
-                        Currency = "TWD",
-                    };
-                    var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-                    response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
 
-                    if (response.Success)
+                    if (ohdata != null)
                     {
-                        var RequestContent = new StringContent(JsonConvert.SerializeObject(RequestBodyStr), Encoding.UTF8, "application/json");
-                        var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-                        PostResponse.EnsureSuccessStatusCode();
-                        var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                        var linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
+                        var RequestUri = $"/v3/payments/{transactionId}/confirm";
+                        LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
+                        {
+                            amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
+                            currency = "TWD",
+                        };
+                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        ResponseMessageDto response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
 
-                        if (linePayResponse.ReturnCode == "0000")
+                        if (response.Success)
                         {
-                            response.Success = true;
-                        }
-                        else
-                        {
-                            response.Error = linePayResponse.ReturnCode;
-                            response.Message = linePayResponse.ReturnMessage;
+                            var RequestContent = new StringContent(JsonConvert.SerializeObject(RequestBodyStr), Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
+
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                ohdata.State = OrderStatusEnum.已付款;
+                                db.SaveChanges();
+                            }
+                            else
+                            {
+                                ohdata.State = OrderStatusEnum.付款失敗;
+                                db.SaveChanges();
+                            }
                         }
                     }
                 }
-
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.Message);
             }
-            return response;
+            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+        }
+        public async Task<IActionResult> LinePayCancel(string transactionId, string orderId)
+        {
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
+            try
+            {
+                LinePayResponseDto linePayResponse = await LinePayCheckPaymentStatus(transactionId, orderId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+        }
+        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(string transactionId, string orderId)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            LinePayResponseDto linePayResponse = new LinePayResponseDto();
+            try
+            {
+                long.TryParse(orderId, out long ohid);
+                if (ohid > 0)
+                {
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && e.TransactionId == transactionId).FirstOrDefaultAsync();
+
+                    if (ohdata != null)
+                    {
+                        var QueryString = $"transactionId={transactionId}&orderId={orderId}";
+                        var RequestUri = $"/v3/payments/requests/{transactionId}/check?{QueryString}";
+                        response = await LinePayDefaultRequestHeaders(RequestUri, QueryString);
+
+                        if (response.Success)
+                        {
+                            var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
+                            GetResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                            linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
+                            switch (linePayResponse.ReturnCode)
+                            {
+                                case "0110":
+                                    if(ohdata.State == OrderStatusEnum.待確認)
+                                    {
+                                        ohdata.State = OrderStatusEnum.待付款;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                                case "0121":
+                                    if (ohdata.State == OrderStatusEnum.待確認)
+                                    {
+                                        response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
+                                    }
+                                    break;
+                                case "0122":
+                                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                    {
+                                        ohdata.State = OrderStatusEnum.付款失敗;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                                case "0123":
+                                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                    {
+                                        ohdata.State = OrderStatusEnum.已付款;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                linePayResponse.ReturnCode = "OtherErrors";
+                linePayResponse.ReturnMessage = ex.Message;
+            }
+            return linePayResponse;
         }
         private async Task<ResponseMessageDto> LinePayDefaultRequestHeaders(string RequestUri, string RequestBody)
         {
@@ -161,7 +248,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                     String signature = encrypt(ChannelSecretKey, ChannelSecretKey + RequestUri + RequestBody + Nonce);
                     ThirdPartyClient_Line.DefaultRequestHeaders.Add("X-LINE-Authorization", signature);
 
-                    response.Message = $"{ChannelId},{ChannelSecretKey},{Nonce}";
                     response.Success = true;
                 }
                 else throw new Exception("查無LinePay所需參數");
@@ -224,8 +310,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                     RequestBody.packages = Packages;
 
                     RequestBody.redirectUrls = new LinePayRedirectUrlsDto();
-                    RequestBody.redirectUrls.confirmUrl = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
-                    RequestBody.redirectUrls.cancelUrl = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
+                    RequestBody.redirectUrls.confirmUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayConfirm";
+                    RequestBody.redirectUrls.cancelUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayCancel";
 
                     RequestBody.options = new LinePayOptionDto();
 

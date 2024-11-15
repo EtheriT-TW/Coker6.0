@@ -146,6 +146,12 @@ function PageReady() {
         }
     });
 
+    if ("onhashchange" in window) {
+        window.onhashchange = hashChange;
+    } else {
+        setInterval(hashChange, 1000);
+    }
+    GetOrderPage();
 
     Coker.Token.CheckToken().done(function (checkresult) {
         if (checkresult.isLogin) {
@@ -257,6 +263,28 @@ function PageReady() {
         return false;
     });
 }
+function hashChange(e) {
+    if (!!e) {
+        e.preventDefault();
+        GetOrderPage();
+    } else {
+        console.log("HashChange錯誤")
+    }
+}
+function GetOrderPage() {
+    if ($.isNumeric(window.location.hash.substring(1))) {
+        isCheckout = true;
+        var ohid = parseInt(window.location.hash.substring(1));
+        $("#Step4 > .card-header > .order_number").text(ohid);
+        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+        buy_step_swiper.enable();
+        buy_step_swiper.slideTo(4);
+        buy_step_swiper.disable();
+    } else {
+        console.log(`免`)
+    }
+}
+
 /* 元素初始化 */
 function ElementInit() {
     /* TWzipcode 初始化 */

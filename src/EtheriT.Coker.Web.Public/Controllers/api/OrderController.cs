@@ -38,6 +38,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
+        public async Task<OrderGetDisplayDataOneDto> GetOrderDataOne(long ohid)
+        {
+            return await orderAppService.GetOrderDataOne(ohid);
+        }
+
+        [HttpGet]
         public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
         {
             return await orderAppService.GetHistoryOrder(page);

@@ -51,6 +51,17 @@ function PageReady() {
                 data: { id: id },
             });
         },
+        GetAllData: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/GetOrderDataOne/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
         GetPaymentTypeEnum: function () {
             return $.ajax({
                 url: "/api/Order/GetPaymentTypeEnum",
@@ -275,15 +286,44 @@ function GetOrderPage() {
     if ($.isNumeric(window.location.search.substring(1))) {
         isCheckout = true;
         var ohid = parseInt(window.location.search.substring(1));
-        console.log(`查詢編號${ohid}的訂單資料`)
-        $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
-        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
-        buy_step_swiper.enable();
-        buy_step_swiper.slideTo(4);
-        buy_step_swiper.disable();
-    } else {
-        console.log(`免`)
+        Coker.Order.GetAllData(ohid).done(function (result) {
+            console.log(result)
+            if (result.success) {
+                $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
+                switch (result.orderHeader.state) {
+                    case "待確認":
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+                        break;
+                    case "已付款":
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立並完成付款，謝謝您的訂購！");
+                        break;
+                    case "已取消":
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已取消。");
+                        break;
+                    case "付款失敗":
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單付款失敗！");
+                        break;
+                    case "待付款":
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，待商家確認付款資訊，謝謝您的訂購！");
+                        break;
+                }
+                SuccessPageDataInsert(result);
+            } else {
+                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("查無訂單資訊");
+            }
+            buy_step_swiper.enable();
+            buy_step_swiper.slideTo(4);
+            buy_step_swiper.disable();
+        });
     }
+}
+
+function SuccessPageDataInsert(data) {
+    var header = data.orderHeader;
+    var details = data.orderDetails;
+    DataInsert(header, $("#Step4 .card-body"))
+    console.log(header)
+    console.log(details)
 }
 
 /* 元素初始化 */

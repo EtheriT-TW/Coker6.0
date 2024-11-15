@@ -188,7 +188,10 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
 
+            // Order
             CreateMap<Order_Header, OrderHeaderAddDto>()
+                .ReverseMap();
+            CreateMap<Order_Header, OrderHeaderDisplayDto>()
                 .ReverseMap();
 
             //Tags

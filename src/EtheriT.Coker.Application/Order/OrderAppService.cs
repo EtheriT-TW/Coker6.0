@@ -280,6 +280,72 @@ namespace EtheriT.Coker.Application.Order
 
             return null;
         }
+        public async Task<OrderHeaderDisplayDto> GetDisplayHeaderOne(long id)
+        {
+            OrderHeaderDisplayDto output = new OrderHeaderDisplayDto();
+            try
+            {
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
+
+                if (result != null)
+                {
+                    output = mapper.Map<OrderHeaderDisplayDto>(result);
+                    output.Subtotal = result.Subtotal.ToString("$#,##0");
+                    output.Discount = (result.Discount ?? 0).ToString("$#,##0");
+                    output.Bonus = (result.Bonus ?? 0).ToString("$#,##0");
+                    output.CouponId = result.CouponId?.ToString() ?? "";
+                    output.Freight = result.Freight.ToString("$#,##0");
+                    output.Total = (result.Subtotal + result.Freight).ToString("$#,##0");
+                    switch (int.Parse(output.OrdererSex))
+                    {
+                        case (int)(SexEnum.男):
+                            output.OrdererSex = "先生";
+                            break;
+                        case (int)(SexEnum.女):
+                            output.OrdererSex = "小姐";
+                            break;
+                        case (int)(SexEnum.其他):
+                            output.OrdererSex = "君";
+                            break;
+                    }
+                    output.OrdererAddress = output.OrdererAddress.Replace(" ", "");
+                    switch (int.Parse(output.RecipientSex))
+                    {
+                        case (int)(SexEnum.男):
+                            output.RecipientSex = "先生";
+                            break;
+                        case (int)(SexEnum.女):
+                            output.RecipientSex = "小姐";
+                            break;
+                        case (int)(SexEnum.其他):
+                            output.RecipientSex = "君";
+                            break;
+                    }
+                    output.RecipientAddress = output.RecipientAddress.Replace(" ", "");
+                    output.InvoiceAddress = output.InvoiceAddress.Replace(" ", "");
+
+                    var shipping = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == result.Shipping).FirstOrDefaultAsync();
+                    var shipping_str1 = shipping?.Title ?? "";
+                    var shipping_str2 = ((PreserveTypeEnum)(shipping?.PreserveType ?? 0)).ToString();
+                    var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_","/");
+                    output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != ""? $"{shipping_str1}　{shipping_str2}-{shipping_str3}": $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
+                    var payment = await (from pt in db.PaymentTypes
+                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                         where ptv.FK_WebsiteId == WebsiteId
+                                         select pt).ToListAsync();
+                    output.Payment = payment.FirstOrDefault(e => e.Id == result.Payment)?.Title.ToString() ?? "";
+
+                    output.Success = true;
+                }
+                else throw new Exception("查無訂單資料");
+            }
+            catch (Exception e)
+            {
+                output.Message = e.Message;
+            }
+            return output;
+        }
         public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
             List<OrderDetailsGetAllDto> output = new List<OrderDetailsGetAllDto>();
@@ -344,6 +410,34 @@ namespace EtheriT.Coker.Application.Order
             catch (Exception e)
             {
 
+            }
+            return output;
+        }
+        public async Task<OrderGetDisplayDataOneDto> GetOrderDataOne(long ohid)
+        {
+            OrderGetDisplayDataOneDto output = new OrderGetDisplayDataOneDto();
+            Guid UUID = await tokenAppService.GetUUID();
+
+            try
+            {
+                var order_header = await GetDisplayHeaderOne(ohid);
+                if (order_header != null)
+                {
+                    var order_details = await GetOrderDetails(ohid);
+                    if (order_details.Any())
+                    {
+                        output.OrderHeader = order_header;
+                        output.OrderDetails = order_details;
+                        output.Success = true;
+                    }
+                    else throw new Exception("查無訂單明細");
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Order=>GetOrderDataOne：{e.Message}");
             }
             return output;
         }

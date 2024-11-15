@@ -596,7 +596,7 @@
 
                 <div class="card-body px-0">
                     <div class="pruchase_content">
-                        <div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
+                        <div class="status_alert fs-3 fw-bold mt-4 text-center"></div>
 
                         <ul class="purchase_list px-5"></ul>
 
@@ -642,15 +642,15 @@
                         <div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
                             <div class="py-2 d-flex justify-content-end text-end">
                                 <div>總金額</div>
-                                <div class="subtotal col-4 price"></div>
+                                <div data-key="subtotal" class="subtotal col-4 price">0</div>
                             </div>
                             <div class="py-2 d-flex justify-content-end text-end">
                                 <div>運費</div>
-                                <div class="shipping_fee col-4 price">0</div>
+                                <div data-key="freight" class="shipping_fee col-4 price">0</div>
                             </div>
                             <div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
                                 <div>本次消費總金額</div>
-                                <div class="total_amount col-4 price fs-5 fw-bold">26,200</div>
+                                <div data-key="total" class="total_amount col-4 price fs-5 fw-bold">0</div>
                             </div>
                         </div>
 
@@ -765,7 +765,7 @@
                         <div class="storememo d-none">@ViewData["storeMemo"]</div>
                         <div class="title px-3 py-2 my-3 d-flex align-items-center">
                             <div class="fs-5">付款方式</div>
-                            <div class="payment_method px-3">尚未選擇付款方式</div>
+                            <div data-key="payment" class="payment_method px-3">尚未選擇付款方式</div>
                         </div>
 
                         <div class="pay_info px-4 d-none">

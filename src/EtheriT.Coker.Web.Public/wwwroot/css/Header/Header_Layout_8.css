@@ -2,6 +2,11 @@
     padding-top: 0 !important;
 }
 
+#ContainerBody {
+    background: url(/upload/background.jpg) center top;
+}
+
+
 .marqueeSwiper {
     height: 1.5rem;
 }

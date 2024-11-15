@@ -56,10 +56,6 @@
     /* 确保超出的部分被裁剪 */
 }
 
-#swiper-light {
-    margin-top: 15px !important;
-}
-
 .marqueeSwiper {
     height: 1.5rem;
 }

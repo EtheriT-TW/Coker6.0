@@ -123,7 +123,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                             linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
                             Console.WriteLine($"-------------錯誤訊息查看-------------");
-                            Console.WriteLine($"LinePay回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
+                            Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
 
                             if (linePayResponse.ReturnCode == "0000")
                             {
@@ -139,9 +139,17 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Request failed: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                // 其他未知錯誤
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Other Error: {ex.Message}");
             }
             return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
         }
@@ -158,6 +166,106 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine(ex.Message);
             }
             return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+        }
+        public async Task<ResponseMessageDto> LinePayVoid(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null && ohdata.State == OrderStatusEnum.待付款)
+                {
+                    LinePayRequestBodyDto RequestBody = await LinePayGetRequestBody(ohdata);
+
+                    if (RequestBody != null)
+                    {
+                        var RequestUri = $"/v3/payments/authorizations/{ohdata.TransactionId}/void";
+                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+
+                        if (response.Success)
+                        {
+                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
+
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                            }
+                            else
+                            {
+                                response.Error = linePayResponse.ReturnCode;
+                                response.Message = linePayResponse.ReturnMessage;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null && ohdata.State == OrderStatusEnum.已付款)
+                {
+                    var RequestBody = new { refundAmount = refund };
+
+                    if (RequestBody != null)
+                    {
+                        var RequestUri = $"/v3/payments/{ohdata.TransactionId}/refund";
+                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+
+                        if (response.Success)
+                        {
+                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundResponseDto>(jsonResponse);
+
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                            }
+                            else
+                            {
+                                response.Error = linePayResponse.ReturnCode;
+                                response.Message = linePayResponse.ReturnMessage;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
         }
         public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(string transactionId, string orderId)
         {
@@ -214,6 +322,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                         }
                     }
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                linePayResponse.ReturnCode = "";
+                linePayResponse.ReturnMessage = $"Request failed: {ex.Message}";
             }
             catch (Exception ex)
             {

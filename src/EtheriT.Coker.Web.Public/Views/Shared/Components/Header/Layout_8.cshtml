@@ -139,7 +139,7 @@
                         }
                         else
                         {
-                            <a class="mt-0 nav-link pb-0 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
+                            <a class="mt-0 nav-link pb-0 text-nowrap text-black menu-item" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
                                 @if (string.IsNullOrEmpty(menu.imageUrl))
                                 {
                                     @menu.Title
@@ -257,6 +257,7 @@
 </nav>
 <div class="image-wh">
     <img id="header-title" class="titleimage m-auto d-block" src="@imgurl/headertitile.jpg" alt="Header Titile" />
+    <img id="header-title-phone" class="titleimage m-auto d-block" src="@imgurl/headertitile_phone.jpg" alt="Header Titile" />
 </div>
 <div id="swiper-light" class="headernews m-auto d-block position-relative">
     <img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />

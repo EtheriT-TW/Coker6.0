@@ -170,6 +170,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     };
                     break;
                 case 5:
+                case 9:
                     switch (defaultData.Id)
                     {
                         case 3:
@@ -252,7 +253,47 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                 }
                             };
                             break;
-                        default:
+						case 8:
+                            footerViewModel = new FooterViewModel
+                            {
+                                Title = "",
+                                footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "關於基金會", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "宗旨", Link = "/unitedtw/purpose" },
+                                            new FooterViewModel { Title = "組織章程", Link = "/unitedtw/regulations" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "活動訊息", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "社區活動", Link = "/unitedtw/activity" },
+                                            new FooterViewModel { Title = "影片連結", Link = "/unitedtw/video" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "公開資訊", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "年度預算及工作計畫", Link = "/unitedtw/plan" },
+                                            new FooterViewModel { Title = "年度財務報表", Link = "/unitedtw/financial" },
+                                            new FooterViewModel { Title = "年度工作報告書", Link = "/unitedtw/report" },
+                                            new FooterViewModel { Title = "捐款名錄", Link = "/unitedtw/Donationer" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "聯絡我們", Link = "", footerViewModels = new List<FooterViewModel> {
+                                            new FooterViewModel { Title = "位置諮詢", Link = "/unitedtw/address" },
+                                            new FooterViewModel { Title = "Mail聯繫", Link = "/unitedtw/mail" },
+                                        }
+                                    },
+                                    new FooterViewModel { Title = "相關連結", Link = "other", footerViewModels = new List<FooterViewModel> {
+                                        }
+                                    }
+                                },
+                                Content = new List<string>
+                                {
+                                    "<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" class=\"tel\">03-3179599</a><br>" +
+                                    "<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:03-3179599\">unitedte168@gmail.com</a><br>" +
+                                    "<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\">330桃園市桃園區經國路168號</a><br>" +
+                                    "<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\"></a></div>"
+                                }
+                            };
+                            break;
+						default:
                             footerViewModel = new FooterViewModel
                             {
                                 Title = "kao-feng.cocker.com.tw",
@@ -304,12 +345,25 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     string footerMessage = "";
                     switch (siteId) {
                         case 6:
-                            footerMessage = "Copyright©2024 榮唐運輸股份有限公司 版權所有 <br> 電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> &nbsp;傳真：07-8912380 &nbsp;統一編號:13179181 &nbsp;<br id=\"iswrap\">地址：<a href=\"https://g.co/kgs/cq8ePQe\" target=\"_blank\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a>";
+                            footerMessage = "Copyright©2024 榮唐運輸股份有限公司 版權所有 &nbsp;&nbsp;<br id=\"iswrap\">電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> &nbsp;&nbsp;傳真：07-8912380 &nbsp;&nbsp;統一編號:13179181 <br>地址：<a href=\"https://g.co/kgs/cq8ePQe\" target=\"_blank\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;&nbsp;<br id=\"iswrap\">E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a>";
                             break;
                         case 7:
-                            
+                            footerMessage = "<div class=\"d-flex\" id=\"footrow\">" +
+                                                 "<div class=\"span5\">" +
+                                                    "<a href=\"/upload/qrcode.png\" target=\"_blank\">" +
+                                                        "<img alt=\"\" src=\"/upload/qrcode.png\">" +
+                                                     "</a>" +
+                                                 "</div>" +
+                                                 "<div class=\"span6\" id=\"footword\">" +
+                                                    "<div class=\"wordfoot\">83163 高雄市大寮區濃公路79號</div>" +
+                                                    "<div class=\"wordfoot wordleft\">電話：(07)7884882-4</div>" +
+                                                    "<div class=\"wordfoot\">傳真：(07)788-4885-6</div>" +
+                                                    "<div class=\"wordfoot\">No.79, Nonggong Rd., Daliao Dist., Kaohsiung City 831, Taiwan (R.O.C.)</div>" +
+                                                    "<div class=\"wordfoot wordleft\">TEL：<a href=\"tel:886-77884882\">886-7-788-4882~4</a> &nbsp;&nbsp;FAX：886-7-788-4885~6</div>" +
+                                                 "</div>" +
+                                             "</div>";
                             break;
-                     }
+                    }
                     footerViewModel = new FooterViewModel
                     {
                         Content = new List<string>
@@ -318,7 +372,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                  }
                     };
                     break;
-				default:
+                default:
 					footerViewModel = new FooterViewModel();
 					break;
 			}

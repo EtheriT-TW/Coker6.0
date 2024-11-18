@@ -12,6 +12,8 @@
 		<Content Remove="appsettings.Haoguangen.json" />
 		<Content Remove="appsettings.kao-feng.json" />
 		<Content Remove="appsettings.longtop.json" />
+		<Content Remove="appsettings.kinglake.json" />
+		<Content Remove="appsettings.unitedtw.json" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />

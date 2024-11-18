@@ -2,10 +2,23 @@
     padding-top: 0 !important;
 }
 
+#footrow {
+    text-align-last: start;
+}
+
 #ContainerBody {
     background: url(/upload/background.jpg) center top;
 }
 
+#header-title-phone {
+    display: none !important;
+}
+
+.span5 img {
+    float: right;
+    width: 23%;
+    margin-right: 10px;
+}
 
 .marqueeSwiper {
     height: 1.5rem;
@@ -502,7 +515,7 @@
 
     #Offcanvas_Mega_Menu {
         /*background: #ffffffe6;*/
-        background: white;
+        background: #00a9e2;
         flex-direction: column;
     }
 
@@ -546,6 +559,11 @@
         .smart-search > input {
             width: calc(100% - 5rem);
         }
+}
+@media(max-width:810px) {
+    #iswrap {
+        display:unset;
+    }
 }
 
 @media only screen and (min-width: 768px) {
@@ -593,6 +611,14 @@
 }
 
 @media only screen and (max-width: 576px) {
+    #header-title-phone {
+        display: unset !important;
+    }
+
+    #header-title {
+        display:none !important;
+    }
+
     #Mega_Menu {
         padding: 0 1rem;
     }

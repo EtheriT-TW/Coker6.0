@@ -53,6 +53,23 @@
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5198"
+    },"EtheriT.Coker.Web.Public.kinglake": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "kinglake"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7195;http://localhost:5199"
+    },
+    "EtheriT.Coker.Web.Public.unitedtw": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "unitedtw"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7195;http://localhost:5120"
     },
     "WSL": {
       "commandName": "WSL2",

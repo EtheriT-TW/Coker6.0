@@ -1,8 +1,11 @@
 ﻿function HeaderInit() {
-    if ($('body.home').length && $('#layout1').length > 0 || $('#layout8').length > 0) {
+    if ($('.navbar').hasClass('position-fixed')) {
         var navbarHeight = $('.navbar').outerHeight();
         if (!$('#swiper-light').length) {
             $('#ContainerBody').css('padding-top', navbarHeight);
+        } else if ($('#header-title').length) {
+            $('#header-title').css('padding-top', navbarHeight);
+            $('#header-title-phone').css('padding-top', navbarHeight);
         }
         /*setTimeout(function () {
             if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {

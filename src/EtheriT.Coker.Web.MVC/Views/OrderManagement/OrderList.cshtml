@@ -20,40 +20,44 @@
     <div id="OrderList" class="card border-0">
         <div class="card-body position-relative pb-5">
             @(
-                Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
-                .DataSource(d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
-                )
-                .RemoteOperations(true)
-                .ColumnHidingEnabled(true)
-                .ShowBorders(true)
-                .FilterRow(filterRow => filterRow
-                .Visible(true)
-                .ApplyFilter(GridApplyFilterMode.Auto)
-                )
-                .SearchPanel(searchPanel => searchPanel
-                .Visible(true)
-                .Width(480)
-                .Placeholder("請輸入要搜尋的資料")
-                )
-                .ShowRowLines(true)
-                .Columns(c =>
-                {
-                    c.AddFor(e => e.Id).Caption("訂單編號");
-                    c.AddFor(e => e.CreationTime).Caption("訂單日期");
-                    c.AddFor(e => e.Orderer).Caption("寄件人");
-                    c.AddFor(e => e.RecipientAddress).Caption("收件者地址");
-                    c.AddFor(e => e.Shipping).Caption("運費方式");
-                    c.AddFor(e => e.Payment).Caption("付款方式");
-                    c.AddFor(e => e.State).Caption("訂單狀態");
-                    c.AddFor(e => e.Total).Caption("訂單金額");
-                    c.Add()
+                    Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("訂單編號");
+                        c.AddFor(e => e.CreationTime).Caption("訂單日期")
+                        c.AddFor(e => e.Orderer).Caption("寄件人");
+                        c.AddFor(e => e.RecipientAddress).Caption("收件者地址");
+                        c.AddFor(e => e.Shipping).Caption("運費方式");
+                        c.AddFor(e => e.Payment).Caption("付款方式");
+                        c.AddFor(e => e.State).Caption("訂單狀態");
+                        c.AddFor(e => e.Total).Caption("訂單金額").CellTemplate(
+                        @<text>
+                            $<%- value ? value.toLocaleString() : '0' %>
+                            </text>
+                        );
+                        c.Add()
                     .Type(GridCommandColumnType.Buttons)
                     .Buttons(b =>
                     {
                         b.Add().Name("edit").OnClick("editButtonClicked");
                     });
-                })
+                    })
                 .ColumnAutoWidth(true)
                 .Paging(paging => paging.PageSize(30))
                 .Pager(pager =>

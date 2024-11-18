@@ -17,7 +17,6 @@ using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Company;
-using System.Security.AccessControl;
 using EtheriT.Coker.Application.Dto.AuditLog;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Dto.Newsletter;
@@ -31,6 +30,7 @@ using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 
 namespace EtheriT.Coker.Application
@@ -191,10 +191,23 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
 
-            // Order
+            //Order
+            CreateMap<OrderHeaderDataDto, Order_Header>()
+                .ForMember(e => e.OrdererCellPhone, option => option.MapFrom(c => c.OrdererCellphone))
+                .ForMember(e => e.RecipientCellPhone, option => option.MapFrom(c => c.RecipientCellphone))
+                .ReverseMap();
             CreateMap<Order_Header, OrderHeaderAddDto>()
                 .ReverseMap();
             CreateMap<Order_Header, OrderHeaderDisplayDto>()
+                .ReverseMap();
+            CreateMap<ShoppingCartDisplayDto, OrderDetailDisplayDto>()
+                 .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))
+                .ReverseMap();
+
+            //ShoppingCart
+            CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()
+                 .ForMember(e => e.SCId, option => option.MapFrom(c => c.Id))
+                 .ForMember(e => e.FK_PSId, option => option.MapFrom(c => c.FK_PSid))
                 .ReverseMap();
 
             //Tags

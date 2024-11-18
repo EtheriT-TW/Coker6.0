@@ -123,7 +123,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                             linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
                             Console.WriteLine($"-------------錯誤訊息查看-------------");
-                            Console.WriteLine($"LinePay回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
+                            Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
 
                             if (linePayResponse.ReturnCode == "0000")
                             {
@@ -139,11 +139,78 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Request failed: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                // 其他未知錯誤
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Other Error: {ex.Message}");
             }
             return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+        }
+        public async Task<ResponseMessageDto> LinePayConfirm(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            LinePayConfirmResponseDto linePayResponse = new LinePayConfirmResponseDto();
+            string RequestBodyStr = "";
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null)
+                {
+                    var RequestUri = $"/v3/payments/{ohdata.TransactionId}/confirm";
+                    LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
+                    {
+                        amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
+                        currency = "TWD",
+                    };
+                    RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                    response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+
+                    if (response.Success)
+                    {
+                        response = new ResponseMessageDto();
+                        var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                        var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                        PostResponse.EnsureSuccessStatusCode();
+                        var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                        linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
+
+                        if (linePayResponse.ReturnCode == "0000")
+                        {
+                            ohdata.State = OrderStatusEnum.已付款;
+                            db.SaveChanges();
+                            response.Success = true;
+                        }
+                        else
+                        {
+                            ohdata.State = OrderStatusEnum.付款失敗;
+                            db.SaveChanges();
+                            response.Error = linePayResponse.ReturnCode;
+                            response.Message = linePayResponse.ReturnMessage;
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                response.Error = "Http Request Error";
+                response.Message = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                response.Error = "Other Error";
+                response.Message = ex.Message;
+            }
+            return response;
         }
         public async Task<IActionResult> LinePayCancel(string transactionId, string orderId)
         {
@@ -151,7 +218,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
             try
             {
-                LinePayResponseDto linePayResponse = await LinePayCheckPaymentStatus(transactionId, orderId);
+                LinePayResponseDto linePayResponse = await LinePayCheckPaymentStatus(int.Parse(orderId));
             }
             catch (Exception ex)
             {
@@ -159,20 +226,121 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
         }
-        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(string transactionId, string orderId)
+        public async Task<ResponseMessageDto> LinePayVoid(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null && ohdata.State == OrderStatusEnum.待付款)
+                {
+                    LinePayRequestBodyDto RequestBody = await LinePayGetRequestBody(ohdata);
+
+                    if (RequestBody != null)
+                    {
+                        var RequestUri = $"/v3/payments/authorizations/{ohdata.TransactionId}/void";
+                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+
+                        if (response.Success)
+                        {
+                            response = new ResponseMessageDto();
+                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
+
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                            }
+                            else
+                            {
+                                response.Error = linePayResponse.ReturnCode;
+                                response.Message = linePayResponse.ReturnMessage;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null && ohdata.State == OrderStatusEnum.已付款)
+                {
+                    var RequestBody = new { refundAmount = refund };
+
+                    if (RequestBody != null)
+                    {
+                        var RequestUri = $"/v3/payments/{ohdata.TransactionId}/refund";
+                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+
+                        if (response.Success)
+                        {
+                            response = new ResponseMessageDto();
+                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundResponseDto>(jsonResponse);
+
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                            }
+                            else
+                            {
+                                response.Error = linePayResponse.ReturnCode;
+                                response.Message = linePayResponse.ReturnMessage;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
+        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             LinePayResponseDto linePayResponse = new LinePayResponseDto();
             try
             {
-                long.TryParse(orderId, out long ohid);
                 if (ohid > 0)
                 {
-                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && e.TransactionId == transactionId).FirstOrDefaultAsync();
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
 
                     if (ohdata != null)
                     {
-                        var RequestUri = $"/v3/payments/requests/{transactionId}/check";
+                        var RequestUri = $"/v3/payments/requests/{ohdata.TransactionId}/check";
                         response = await LinePayDefaultRequestHeaders(RequestUri, "");
 
                         if (response.Success)
@@ -215,6 +383,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                linePayResponse.ReturnCode = "";
+                linePayResponse.ReturnMessage = $"Request failed: {ex.Message}";
+            }
             catch (Exception ex)
             {
                 linePayResponse.ReturnCode = "OtherErrors";
@@ -227,7 +401,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
                 var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
                                                      join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
                                                      join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id

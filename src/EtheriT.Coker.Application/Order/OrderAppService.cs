@@ -52,6 +52,37 @@ namespace EtheriT.Coker.Application.Order
             this.mapper = mapper;
 
         }
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        {
+            try
+            {
+                long WebsiteID = await loginUserData.GetWebsiteId();
+
+                var dataQuery = from oh in db.Order_Headers
+                                where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
+                                join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
+                                select new OrderHeaderGetAllListDto
+                                {
+                                    Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
+                                    Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
+                                    RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
+                                    Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
+                                    Payment = db.PaymentTypes.Where(e => e.Id == oh.Payment).Select(e => e.Title).FirstOrDefault() ?? "",
+                                    State = ((OrderStatusEnum)oh.State).ToString(),
+                                    Total = oh.Subtotal + oh.Freight,
+                                    CreationTime = oh.CreationTime,
+                                };
+
+                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return new JsonResult(new List<OrderHeaderGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+        }
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -115,6 +146,155 @@ namespace EtheriT.Coker.Application.Order
                 output.Error = e.Message;
             }
 
+            return output;
+        }
+        public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)
+        {
+            try
+            {
+                var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
+
+                if (result != null)
+                {
+                    var ship_text = "";
+                    if (result.Shipping == 0)
+                    {
+                        ship_text = "郵寄掛號";
+                    }
+                    else
+                    {
+                        var ls = db.LogisticsSettings.Where(e => e.Id == result.Shipping).Select(e => e.LogisticsType).FirstOrDefault();
+                        ship_text = ((ShippingTypeEnum)ls).ToString().Replace("_", "/").Replace("Seven", "7-11");
+                    }
+
+                    OrderHeaderGetOneDto output = new OrderHeaderGetOneDto()
+                    {
+                        Id = result.Id,
+                        Orderer = result.Orderer,
+                        OrdererTelephone = result.OrdererTelephone == null ? "-" : result.OrdererTelephone,
+                        OrdererCellPhone = result.OrdererCellPhone,
+                        Recipient = result.Recipient,
+                        RecipientTelephone = result.RecipientTelephone == null ? "-" : result.RecipientTelephone,
+                        RecipientCellPhone = result.RecipientCellPhone,
+                        RecipientAddress = result.RecipientAddress.Replace(" ", ""),
+                        InvoiceRecipient = result.InvoiceRecipient,
+                        InvoiceTitle = result.InvoiceTitle,
+                        UniformId = result.UniformId,
+                        InvoiceAddress = result.InvoiceAddress,
+                        Payment = (await db.PaymentTypes.Where(e => e.Id == result.Payment).Select(e => e.Title).FirstOrDefaultAsync())?.ToString() ?? "",
+                        Shipping = ship_text,
+                        State = result.State,
+                        StateStr = ((OrderStatusEnum)result.State).ToString(),
+                        Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
+                        Subtotal = result.Subtotal,
+                        Total = result.Subtotal + result.Freight,
+                        Discount = result.Discount,
+                        Bonus = result.Bonus,
+                        CouponId = result.CouponId,
+                        Freight = result.Freight,
+                        Service_Charge = result.Service_Charge,
+                        CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        Memo = result.Memo
+                    };
+                    return output;
+                }
+                else throw new Exception("查無訂單資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        // 改寫部分 後續會將舊程式碼移除
+        private async Task<List<OrderHeaderDisplayDto>> GetHeaderDisplay(List<long> ohids, bool check)
+        {
+            List<OrderHeaderDisplayDto> output = new List<OrderHeaderDisplayDto>();
+            try
+            {
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                List<Order_Header> order_headers = new List<Order_Header>();
+                if (check)
+                {
+                    var checktoken = await tokenAppService.CheckToken();
+                    if (checktoken != null)
+                    {
+                        if (checktoken.IsLogin)
+                        {
+                            Guid UUID = await tokenAppService.GetUUID();
+                            var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID).Select(e => e.TempUUID).ToListAsync();
+                            uuids.Add(UUID);
+                            var timeago = DateTime.Now.AddMinutes(-15);
+                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && e.CreationTime > timeago).ToListAsync();
+                        }
+                        else
+                        {
+                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && e.Fk_Tid == checktoken.RefreshToken).ToListAsync();
+                        }
+                    }
+                    else throw new Exception("查無Token資料");
+                }
+                else
+                {
+                    order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id)).ToListAsync();
+                }
+
+                foreach (var order_header in order_headers)
+                {
+                    var temp_output = mapper.Map<OrderHeaderDisplayDto>(order_header);
+                    temp_output.Subtotal = order_header.Subtotal.ToString("$#,##0");
+                    temp_output.Discount = (order_header.Discount ?? 0).ToString("$#,##0");
+                    temp_output.Bonus = (order_header.Bonus ?? 0).ToString("$#,##0");
+                    temp_output.CouponId = order_header.CouponId?.ToString() ?? "";
+                    temp_output.Freight = order_header.Freight.ToString("$#,##0");
+                    temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString("$#,##0");
+
+                    foreach (var property in temp_output.GetType().GetProperties())
+                    {
+                        var value = property.GetValue(temp_output)?.ToString();
+                        if (value != null)
+                        {
+                            if (property.Name.EndsWith("Sex"))
+                            {
+                                switch (int.Parse(value))
+                                {
+                                    case (int)(SexEnum.男):
+                                        property.SetValue(temp_output, "先生");
+                                        break;
+                                    case (int)(SexEnum.女):
+                                        property.SetValue(temp_output, "小姐");
+                                        break;
+                                    case (int)(SexEnum.其他):
+                                        property.SetValue(temp_output, "君");
+                                        break;
+                                }
+                            }
+                            else if (property.Name.EndsWith("Address"))
+                            {
+                                property.SetValue(temp_output, value.Replace(" ", ""));
+                            }
+                        }
+                    }
+
+                    var shipping = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == order_header.Shipping).FirstOrDefaultAsync();
+                    var shipping_str1 = shipping?.Title ?? "";
+                    var shipping_str2 = ((PreserveTypeEnum)(shipping?.PreserveType ?? 0)).ToString();
+                    var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_", "/");
+                    temp_output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str2}-{shipping_str3}" : $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
+                    var payment = await (from pt in db.PaymentTypes
+                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                         where ptv.FK_WebsiteId == WebsiteId
+                                         select pt).ToListAsync();
+                    temp_output.Payment = payment.FirstOrDefault(e => e.Id == order_header.Payment)?.Title?.ToString() ?? "";
+                    output.Add(temp_output);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Order=>GetHeaderDisplay回傳資料：{ex.Message}");
+            }
             return output;
         }
         private async Task<ResponseMessageDto> AddDetails(long order_header_id)
@@ -190,162 +370,6 @@ namespace EtheriT.Coker.Application.Order
             }
             return output;
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
-        {
-            try
-            {
-                long WebsiteID = await loginUserData.GetWebsiteId();
-
-                var dataQuery = from oh in db.Order_Headers
-                                where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
-                                join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
-                                select new OrderHeaderGetAllListDto
-                                {
-                                    Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
-                                    Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
-                                    RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
-                                    Shipping = oh.Shipping == 0 ? ShippingTypeEnum.郵寄掛號.ToString() : ((ShippingTypeEnum)ls.LogisticsType).ToString().Replace("_", "/").Replace("Seven", "7-11"),
-                                    Payment = ((PaymentTypeEnum)oh.Payment).ToString(),
-                                    State = ((OrderStatusEnum)oh.State).ToString(),
-                                    Total = oh.Subtotal + oh.Freight,
-                                    CreationTime = oh.CreationTime,
-                                };
-
-                var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return new JsonResult(new List<OrderHeaderGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-        }
-        public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)
-        {
-            try
-            {
-                var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
-
-                if (result != null)
-                {
-                    var ship_text = "";
-                    if (result.Shipping == 0)
-                    {
-                        ship_text = "郵寄掛號";
-                    }
-                    else
-                    {
-                        var ls = db.LogisticsSettings.Where(e => e.Id == result.Shipping).Select(e => e.LogisticsType).FirstOrDefault();
-                        ship_text = ((ShippingTypeEnum)ls).ToString().Replace("_", "/").Replace("Seven", "7-11");
-                    }
-
-                    OrderHeaderGetOneDto output = new OrderHeaderGetOneDto()
-                    {
-                        Id = result.Id,
-                        Orderer = result.Orderer,
-                        OrdererTelephone = result.OrdererTelephone == null ? "-" : result.OrdererTelephone,
-                        OrdererCellPhone = result.OrdererCellPhone,
-                        Recipient = result.Recipient,
-                        RecipientTelephone = result.RecipientTelephone == null ? "-" : result.RecipientTelephone,
-                        RecipientCellPhone = result.RecipientCellPhone,
-                        RecipientAddress = result.RecipientAddress.Replace(" ", ""),
-                        InvoiceRecipient = result.InvoiceRecipient,
-                        InvoiceTitle = result.InvoiceTitle,
-                        UniformId = result.UniformId,
-                        InvoiceAddress = result.InvoiceAddress,
-                        Payment = ((PaymentTypeEnum)result.Payment).ToString(),
-                        Shipping = ship_text,
-                        State = result.State,
-                        StateStr = ((OrderStatusEnum)result.State).ToString(),
-                        Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
-                        Subtotal = result.Subtotal,
-                        Total = result.Subtotal + result.Freight,
-                        Discount = result.Discount,
-                        Bonus = result.Bonus,
-                        CouponId = result.CouponId,
-                        Freight = result.Freight,
-                        Service_Charge = result.Service_Charge,
-                        CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                        Memo = result.Memo
-                    };
-                    return output;
-                }
-                else throw new Exception("查無訂單資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
-        }
-        public async Task<OrderHeaderDisplayDto> GetDisplayHeaderOne(long id)
-        {
-            OrderHeaderDisplayDto output = new OrderHeaderDisplayDto();
-            try
-            {
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-                var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
-
-                if (result != null)
-                {
-                    output = mapper.Map<OrderHeaderDisplayDto>(result);
-                    output.Subtotal = result.Subtotal.ToString("$#,##0");
-                    output.Discount = (result.Discount ?? 0).ToString("$#,##0");
-                    output.Bonus = (result.Bonus ?? 0).ToString("$#,##0");
-                    output.CouponId = result.CouponId?.ToString() ?? "";
-                    output.Freight = result.Freight.ToString("$#,##0");
-                    output.Total = (result.Subtotal + result.Freight).ToString("$#,##0");
-                    switch (int.Parse(output.OrdererSex))
-                    {
-                        case (int)(SexEnum.男):
-                            output.OrdererSex = "先生";
-                            break;
-                        case (int)(SexEnum.女):
-                            output.OrdererSex = "小姐";
-                            break;
-                        case (int)(SexEnum.其他):
-                            output.OrdererSex = "君";
-                            break;
-                    }
-                    output.OrdererAddress = output.OrdererAddress.Replace(" ", "");
-                    switch (int.Parse(output.RecipientSex))
-                    {
-                        case (int)(SexEnum.男):
-                            output.RecipientSex = "先生";
-                            break;
-                        case (int)(SexEnum.女):
-                            output.RecipientSex = "小姐";
-                            break;
-                        case (int)(SexEnum.其他):
-                            output.RecipientSex = "君";
-                            break;
-                    }
-                    output.RecipientAddress = output.RecipientAddress.Replace(" ", "");
-                    output.InvoiceAddress = output.InvoiceAddress.Replace(" ", "");
-
-                    var shipping = await db.LogisticsSettings.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == result.Shipping).FirstOrDefaultAsync();
-                    var shipping_str1 = shipping?.Title ?? "";
-                    var shipping_str2 = ((PreserveTypeEnum)(shipping?.PreserveType ?? 0)).ToString();
-                    var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_","/");
-                    output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != ""? $"{shipping_str1}　{shipping_str2}-{shipping_str3}": $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
-                    var payment = await (from pt in db.PaymentTypes
-                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
-                                         where ptv.FK_WebsiteId == WebsiteId
-                                         select pt).ToListAsync();
-                    output.Payment = payment.FirstOrDefault(e => e.Id == result.Payment)?.Title.ToString() ?? "";
-
-                    output.Success = true;
-                }
-                else throw new Exception("查無訂單資料");
-            }
-            catch (Exception e)
-            {
-                output.Message = e.Message;
-            }
-            return output;
-        }
         public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)
         {
             List<OrderDetailsGetAllDto> output = new List<OrderDetailsGetAllDto>();
@@ -413,31 +437,57 @@ namespace EtheriT.Coker.Application.Order
             }
             return output;
         }
-        public async Task<OrderGetDisplayDataOneDto> GetOrderDataOne(long ohid)
+        // 改寫部分 後續會將舊程式碼移除
+        private async Task<List<OrderDetailDisplayDto>> GetDetailsDisplay(long ohid)
         {
-            OrderGetDisplayDataOneDto output = new OrderGetDisplayDataOneDto();
+            List<OrderDetailDisplayDto> output = new List<OrderDetailDisplayDto>();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            try
+            {
+                var scids = await db.Order_Details.Where(e => e.FK_OId == ohid).Select(e => e.FK_SCId).ToListAsync();
+                if (scids.Any())
+                {
+                    var shopping_carts = await shoppingCartAppService.GetDisplay(scids);
+                    foreach (var shopping_cart in shopping_carts)
+                    {
+                        var temp_output = mapper.Map<OrderDetailDisplayDto>(shopping_cart);
+                        if (orgName != "") temp_output.ImagePath = temp_output.ImagePath.Replace("/upload/", $"/upload/{orgName}/");
+                        output.Add(temp_output);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Order=>GetDetailsDisplay回傳資料：{ex.Message}");
+            }
+            return output;
+        }
+        // 改寫部分 後續會將舊程式碼移除
+        public async Task<List<OrderDisplayDto>> GetOrderDisplay(List<long> ohids, bool check)
+        {
+            List<OrderDisplayDto> output = new List<OrderDisplayDto>();
             Guid UUID = await tokenAppService.GetUUID();
 
             try
             {
-                var order_header = await GetDisplayHeaderOne(ohid);
-                if (order_header != null)
+                var order_headers = await GetHeaderDisplay(ohids, check);
+                if (order_headers.Any())
                 {
-                    var order_details = await GetOrderDetails(ohid);
-                    if (order_details.Any())
+                    foreach (var order_header in order_headers)
                     {
-                        output.OrderHeader = order_header;
-                        output.OrderDetails = order_details;
-                        output.Success = true;
+                        var temp_output = new OrderDisplayDto();
+                        temp_output.OrderHeader = order_header;
+                        temp_output.OrderDetails = await GetDetailsDisplay(order_header.Id);
+                        output.Add(temp_output);
                     }
-                    else throw new Exception("查無訂單明細");
                 }
                 else throw new Exception("查無訂單資訊");
             }
             catch (Exception e)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"Order=>GetOrderDataOne：{e.Message}");
+                Console.WriteLine($"Order=>GetOrderDisplayOne：{e.Message}");
             }
             return output;
         }

@@ -236,6 +236,7 @@ input[type="number"] {
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
+
 #TextareaRemark {
     height: 150px
 }
@@ -256,6 +257,11 @@ input[type="number"] {
         }
 
 /* Step4 */
+/* 修改塞入資料的格式後要移除 */
+/*#Step4 > .card-body .price::before {
+    content: '';
+}*/
+
 #Step4 > .card-header > .order_number {
     color: var(--red-number);
 }
@@ -344,7 +350,7 @@ body > .popover.bs-popover-auto.fade {
 #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button {
     z-index: 1;
     bottom: 5rem;
-    margin:auto;
+    margin: auto;
 }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {

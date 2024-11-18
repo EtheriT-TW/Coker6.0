@@ -2,9 +2,9 @@
 
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
-    public class OrderGetDisplayDataOneDto : ResponseMessageDto
+    public class OrderDisplayDto : ResponseMessageDto
     {
         public OrderHeaderDisplayDto OrderHeader { get; set; }
-        public List<OrderDetailsGetAllDto> OrderDetails { get; set; }
+        public List<OrderDetailDisplayDto> OrderDetails { get; set; }
     }
 }

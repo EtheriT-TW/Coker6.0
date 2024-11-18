@@ -1,17 +1,19 @@
-﻿using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Order;
+﻿using AutoMapper;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.JSInterop.Infrastructure;
 using Microsoft.Extensions.Configuration;
-using System.Security.Cryptography;
-using System.Collections.Generic;
+using Org.BouncyCastle.Asn1.Ess;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace EtheriT.Coker.Application.ShoppingCart
 {
@@ -20,15 +22,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly CokerDbContext db;
         private readonly ITokenAppService tokenAppService;
         private readonly IConfiguration configuration;
+        private readonly IMapper mapper;
         public ShoppingCartAppService(
             CokerDbContext db,
             ITokenAppService tokenAppService,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IMapper mapper
         )
         {
             this.db = db;
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
+            this.mapper = mapper;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -322,7 +327,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                       {
                                           Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
                                       }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-
                     };
 
                     var db_sp = await db.Prod_Specs.ToListAsync();
@@ -340,6 +344,82 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
 
             return null;
+        }
+        // 改寫部分 後續會將舊程式碼移除
+        public async Task<List<ShoppingCartDisplayDto>> GetDisplay(List<long> scids)
+        {
+            List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var token = await tokenAppService.CheckToken();
+            Guid UUID = await tokenAppService.GetUUID();
+            long roleid = 1;
+            if (token != null && token.IsLogin)
+            {
+                var temp_roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.Id).FirstOrDefaultAsync();
+                if (temp_roleid != 0) roleid = temp_roleid;
+            }
+
+            try
+            {
+                var shoppingCarts = await db.ShoppingCarts.Include(e => e.Prod_Stock).ThenInclude(e => e.Prod).Where(e => scids.Contains(e.Id)).ToListAsync();
+
+                foreach (var shoppingCart in shoppingCarts)
+                {
+                    var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
+
+                    var pid = shoppingCart.Prod_Stock?.Prod?.Id;
+                    temp_output.ImagePath = await (from f in db.FileBinds
+                                                   join fu in db.FileUploads on f.FK_FileUploadId equals fu.Id
+                                                   where fu.FK_WebsiteId == WebsiteId && f.Sid == pid && f.type == (int)FileBindTypeEnum.產品
+                                                   orderby f.SerNo
+                                                   orderby f.CreationTime
+                                                   select fu.DownloadFileName).FirstOrDefaultAsync() ?? "";
+                    temp_output.PId = pid ?? 0;
+
+                    var db_sp = await db.Prod_Specs.ToListAsync();
+                    if (db_sp.Any())
+                    {
+                        temp_output.S1Title = shoppingCart.FK_S1id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S1id)?.Title ?? "" : "";
+                        temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
+                    }
+                    var psid = shoppingCart.Prod_Stock?.Id;
+                    var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
+                    if (db_price.Any())
+                    {
+                        if (roleid == 1)
+                        {
+                            var temp_price = db_price[0]?.Price?.ToString();
+                            temp_output.Price = temp_price ?? "0";
+                        }
+                        else
+                        {
+                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
+                            if (temp_price == null)
+                            {
+                                temp_price = db_price[0]?.Price?.ToString();
+                                temp_output.Price = temp_price ?? "0";
+                            }
+                            else temp_output.Price = temp_price;
+                        }
+
+                        var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
+
+                        temp_output.Price = int.Parse(temp_output.Price).ToString("$#,##0");
+                        temp_output.Subtotal = subtotal.ToString("$#,##0");
+                        temp_output.Bonus = (shoppingCart.Bonus ?? 0).ToString("$#,##0");
+
+                        temp_output.Describe = shoppingCart.Prod_Stock?.Prod?.Description ?? "";
+
+                        output.Add(temp_output);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"ShoppingCart=>GetDisplay回傳資料：{ex.Message}");
+            }
+            return output;
         }
         public async Task<ResponseMessageDto> DeleteDrop(long id)
         {

@@ -598,48 +598,48 @@
                     <div class="pruchase_content">
                         <div class="status_alert fs-3 fw-bold mt-4 text-center"></div>
 
-                        <ul class="purchase_list px-5"></ul>
+                        <ul id="Purchase" class="purchase_list px-5 mb-0"></ul>
 
                         <ul id="CollapsePurchase" class="purchase_list pb-4 px-5 collapse"></ul>
 
                         <template id="Template_Purchase_Details">
-                            <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+                            <li class="purchase_item row border-bottom py-2 align-items-lg-center position-relative">
                                 <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
-                                        <img class="pro_image img-fluid" alt="商品" src="">
+                                    <a data-key="link" class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
+                                        <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
                                     </a>
                                     <a class="pro_link col text-start overflow-hidden" href="" title="連結至：商品">
                                         <div class="content d-lg-block d-none">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
+                                                <div data-key="describe" class="pro_instructions single_line"></div>
                                             </div>
                                         </div>
                                     </a>
                                 </div>
 
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a class="pro_link" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link" href="" title="連結至：商品">
                                         <div class="d-lg-none d-block text-start">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
+                                                <div data-key="describe" class="pro_instructions single_line"></div>
                                             </div>
                                         </div>
                                     </a>
 
-                                    <div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
+                                    <div data-key="price" class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
 
-                                    <div class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
+                                    <div data-key="quantity" class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
 
-                                    <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
+                                    <div data-key="subtotal" class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
                                 </div>
                             </li>
                         </template>
 
-                        <div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+                        <div class="mt-3 endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
                             <div class="py-2 d-flex justify-content-end text-end">
                                 <div>總金額</div>
                                 <div data-key="subtotal" class="subtotal col-4 price">0</div>
@@ -765,7 +765,7 @@
                         <div class="storememo d-none">@ViewData["storeMemo"]</div>
                         <div class="title px-3 py-2 my-3 d-flex align-items-center">
                             <div class="fs-5">付款方式</div>
-                            <div data-key="payment" class="payment_method px-3">尚未選擇付款方式</div>
+                            <div data-key="payment" class="payment_method px-3 fs-5">尚未選擇付款方式</div>
                         </div>
 
                         <div class="pay_info px-4 d-none">

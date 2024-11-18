@@ -4,7 +4,6 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace EtheriT.Coker.Application.Shared.Order
 {
@@ -14,7 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<OrderHeaderGetOneDto> GetHeaderOne(long id);
         public Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id);
-        public Task<OrderGetDisplayDataOneDto> GetOrderDataOne(long ohid);
+        public Task<List<OrderDisplayDto>> GetOrderDisplay(List<long> ohids, bool check);
         public Task<OrderDataGetAllDto> GetHistoryOrder(int page);
         public Task<ResponseMessageDto> Delete(int id);
         public Task<List<EnumDictionaryDto>> GetPreserveTypeEnum();

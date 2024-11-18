@@ -184,6 +184,7 @@ builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
+builder.Services.AddTransient<ILinePayAppService, LinePayAppService>();
 builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
 
@@ -250,6 +251,12 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
         options.HttpsPort = 443;
     });
 }
+
+//註冊HttpClient
+builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
+{
+    client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
+});
 
 var app = builder.Build();
 

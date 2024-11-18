@@ -181,7 +181,7 @@ namespace EtheriT.Coker.Application.Order
                         InvoiceTitle = result.InvoiceTitle,
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
-                        Payment = ((PaymentTypeEnum)result.Payment).ToString(),
+                        Payment = (await db.PaymentTypes.Where(e => e.Id == result.Payment).Select(e => e.Title).FirstOrDefaultAsync())?.ToString() ?? "",
                         Shipping = ship_text,
                         State = result.State,
                         StateStr = ((OrderStatusEnum)result.State).ToString(),

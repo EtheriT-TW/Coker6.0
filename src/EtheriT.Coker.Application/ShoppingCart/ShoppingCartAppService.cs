@@ -2,18 +2,13 @@
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Org.BouncyCastle.Asn1.Ess;
-using System.IO;
-using System.Runtime.CompilerServices;
 
 namespace EtheriT.Coker.Application.ShoppingCart
 {
@@ -213,8 +208,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
                 {
-                    userid.Add(UUID);
                     var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID).ToListAsync();
+                    userid.Add(UUID);
                     if (uuids.Count > 0)
                     {
                         foreach (var item in uuids)
@@ -227,7 +222,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
 
                 output = await (from sc in db.ShoppingCarts
-                                where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID) && !sc.IsOrder
+                                where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID)
+                                where !sc.IsOrder
                                 from ps in db.Prod_Stocks
                                 where ps.Id == sc.FK_PSid
                                 from pp in db.Prod_Prices

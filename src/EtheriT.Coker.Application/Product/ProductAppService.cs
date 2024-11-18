@@ -121,7 +121,7 @@ namespace EtheriT.Coker.Application.Product
                             Id = data.Id,
                             FK_AId = (long)asoid,
                             FK_TId = data.FK_TId,
-                            Type = (int)TagAssociateTypeEnum.商品,
+                            Type = TagAssociateTypeEnum.商品,
                             IsDeleted = data.IsDeleted
                         });
                     }
@@ -373,7 +373,7 @@ namespace EtheriT.Coker.Application.Product
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
                         Fk_Aid = output.Id,
-                        Type = (int)TagAssociateTypeEnum.商品,
+                        Type = TagAssociateTypeEnum.商品,
                     }
                     );
 
@@ -517,7 +517,7 @@ namespace EtheriT.Coker.Application.Product
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
                         Fk_Aid = output.Id,
-                        Type = (int)TagAssociateTypeEnum.商品,
+                        Type = TagAssociateTypeEnum.商品,
                     }
                     );
 
@@ -646,7 +646,7 @@ namespace EtheriT.Coker.Application.Product
                                   tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == WebsiteID)
                                           join a in db.Tag_Associates.Where(e => !e.IsDeleted)
                                                        .Where(e => e.FK_AId == p.Id)
-                                                       .Where(e => e.Type == (int)TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
+                                                       .Where(e => e.Type == TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
                                           group t by new { t.Id, t.Title } into g
                                           select new TagGetSelectedDto
                                           {
@@ -734,7 +734,7 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
 
-                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted).ToListAsync();
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted).ToListAsync();
 
                     if (tagids != null)
                     {
@@ -1412,7 +1412,7 @@ namespace EtheriT.Coker.Application.Product
                 .Where(e => !string.IsNullOrEmpty(e.Title) && strings.Contains(e.Title)).ToListAsync();
             var TagAssociate = await db.Tag_Associates.Include(t => t.Tag)
                     .Where(e => !e.IsDeleted)
-                    .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                    .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                     .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID).ToListAsync();
             for (int i = 0; i < menuMap.Count; i++)
             {
@@ -1443,7 +1443,7 @@ namespace EtheriT.Coker.Application.Product
                                 {
                                     FK_AId = dir.Id,
                                     FK_TId = tag.Id.Value,
-                                    Type = (int)TagAssociateTypeEnum.目錄
+                                    Type = TagAssociateTypeEnum.目錄
                                 };
                                 loginUserData.setOptionParameter(associate, UserID);
                                 associates.Add(associate);
@@ -1641,14 +1641,17 @@ namespace EtheriT.Coker.Application.Product
                     continue;
                 }
                 item.Id = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo).Id;
-                var tag = nowTags.FindAll(e => e.Title == item.Tag1 || e.Title == item.Tag2 || e.Title == item.Tag3 || e.Title == item.Tag4 || e.Title == item.Tag5 || e.Title == item.Tag6);
+                var tag = nowTags.FindAll(e => 
+                    !string.IsNullOrEmpty(e.Title) && 
+                    new List<string?> { item.Tag1, item.Tag2, item.Tag3, item.Tag4, item.Tag5, item.Tag6 }.Contains(e.Title)
+                );
                 if (tag != null)
                 {
                     for (int j = 0; j < tag.Count; j++)
                     {
                         TagAssociates.Add(new TagAssociateDto
                         {
-                            Type = (int)TagAssociateTypeEnum.商品,
+                            Type = TagAssociateTypeEnum.商品,
                             FK_TId = tag[j].Id,
                             FK_AId = item.Id,
                             IsDeleted = false

@@ -61,6 +61,8 @@ using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Web.MVC.Middleware;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.ShoppingCart;
+using EtheriT.Coker.Application.Shared.UserHabits;
+using EtheriT.Coker.Application.UserHabits;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -186,6 +188,7 @@ builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
+builder.Services.AddTransient<IUserHabitsAppService, UserHabitsAppService>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

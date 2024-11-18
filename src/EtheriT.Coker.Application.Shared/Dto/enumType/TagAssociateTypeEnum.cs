@@ -14,5 +14,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         自訂搜尋 = 4,
         目錄拒絕 = 5,
         廣告 = 6,
+        使用者分群 = 7
     }
 }

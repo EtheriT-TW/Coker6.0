@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Article
+@using EtheriT.Coker.Application.Shared.Dto.UserHabits
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
     ViewData["Title"] = "UserType";
@@ -20,15 +21,13 @@
 <div class="">
     <div id="ArticleList" class="card py-2 border-0">
         <div class="card-body position-relative">
-            <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
-                <span class="material-symbols-outlined">add</span>
-            </button>
             @(
-                Html.DevExtreme().DataGrid<ArticleListGetDto>()
+                Html.DevExtreme().DataGrid<UserGroupListDto>()
                 .DataSource(d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Article/GetAllList").LoadMethod("Get")
+                .LoadUrl("/api/UserHabits/GetUserGroupList").LoadMethod("Get")
                 )
                 .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                .OnContentReady("contentReady")
                 .RemoteOperations(true)
                 .ColumnHidingEnabled(true)
                 .ShowBorders(true)
@@ -46,6 +45,7 @@
                 {
                     c.AddFor(e => e.Id).Caption("編號").Width(90);
                     c.AddFor(e => e.Title).Caption("標題");
+                    c.AddFor(e => e.Description).Caption("描述");
                     c.AddFor(e => e.Tags).Caption("標籤").MinWidth(200);
                     c.Add()
                     .Type(GridCommandColumnType.Buttons)
@@ -69,8 +69,24 @@
                     editing.AllowDeleting(true);
                     editing.AllowUpdating(true);
                     editing.UseIcons(true);
+                }).Toolbar(toolbar =>
+                {
+                    toolbar.Items(i =>
+                    {
+                        i.Add()
+                    .Name(DataGridToolbarItem.AddRowButton)
+                    .ShowText(ToolbarItemShowTextMode.Always)
+                    .Location(ToolbarItemLocation.Before);
+                    });
+
+                    toolbar.Items(i =>
+                    {
+                        i.Add()
+                    .Name(DataGridToolbarItem.SearchPanel)
+                    .ShowText(ToolbarItemShowTextMode.Always)
+                    .Location(ToolbarItemLocation.After);
+                    });
                 })
-                .OnContentReady("contentReady")
                 )
         </div>
     </div>

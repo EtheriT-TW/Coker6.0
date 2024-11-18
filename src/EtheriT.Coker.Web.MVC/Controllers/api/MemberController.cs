@@ -74,10 +74,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         /*[HttpPost]
         //[ValidateAntiForgeryToken] //驗證異常暫時關閉
-        [Consumes("application/x-www-form-urlencoded")]
+        [Consumes("application/x-www-form-urlencoded")]*/
         public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto)
         {
             return await memberAppService.RoleAddUp(dto);
-        }*/
+        }
+        [HttpDelete]
+        public async Task<ResponseMessageDto> RoleDelete(long Id) {
+            return await memberAppService.RoleDelete(Id);
+        }
     }
 }

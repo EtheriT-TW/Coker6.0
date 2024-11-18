@@ -17,5 +17,7 @@ namespace EtheriT.Coker.Application.Shared.Member
 		public Task<ResponseMessageDto> Update(MemberUpdateDto dto);
         public Task<List<SelectDto>> GetAllRole();
         public Task<JsonResult> GetDevAllRole(DataSourceLoadOptions loadOptions);
+        public Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto);
+        public Task<ResponseMessageDto> RoleDelete(long id);
     }
 }

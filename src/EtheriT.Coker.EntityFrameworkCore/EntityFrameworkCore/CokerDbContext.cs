@@ -10,6 +10,7 @@ using EtheriT.Coker.EntityFrameworkCore.Migrations.Seed;
 using EtheriT.Coker.Core.Models;
 using Directory = EtheriT.Coker.Core.Models.Directory;
 using System.Text.Json.Nodes;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -78,6 +79,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Theme> Themes { get; set; }
+        public DbSet<UserGrouping> UserGroupings { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -91,6 +93,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<FrontUser>(o =>
+            {
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<UserGrouping>(o =>
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
@@ -313,7 +319,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Role>(o =>
             {
-                o.Property(w => w.Type).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.Property(w => w.Type).HasDefaultValue(RoleTypeEnum.前台).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<MappingUserAndRole>(o =>

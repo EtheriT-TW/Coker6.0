@@ -119,7 +119,7 @@ namespace EtheriT.Coker.Application.Directory
                     var oldtaglist = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
                         Fk_Aid = (long)asoid,
-                        Type = (int)TagAssociateTypeEnum.目錄,
+                        Type = TagAssociateTypeEnum.目錄,
                     });
                     var tagitem = new List<TagAssociateDto>();
                     var newtagid = new List<long>();
@@ -132,7 +132,7 @@ namespace EtheriT.Coker.Application.Directory
                             Id = data.Id,
                             FK_AId = (long)asoid,
                             FK_TId = data.FK_TId,
-                            Type = (int)TagAssociateTypeEnum.目錄,
+                            Type = TagAssociateTypeEnum.目錄,
                             IsDeleted = data.IsDeleted
                         });
                     }
@@ -169,7 +169,7 @@ namespace EtheriT.Coker.Application.Directory
                                             Id = ad.Id,
                                             FK_AId = (long)ad.Id,
                                             FK_TId = newtag,
-                                            Type = (int)TagAssociateTypeEnum.廣告,
+                                            Type = TagAssociateTypeEnum.廣告,
                                             IsDeleted = false,
                                         });
                                     }
@@ -213,7 +213,7 @@ namespace EtheriT.Coker.Application.Directory
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
                         Fk_Aid = output.Id,
-                        Type = (int)TagAssociateTypeEnum.目錄,
+                        Type = TagAssociateTypeEnum.目錄,
                     }
                     );
 
@@ -343,7 +343,7 @@ namespace EtheriT.Coker.Application.Directory
                                 (e.Description ?? "").Contains(dto.SearchText ?? "") ||
                                 (e.Html ?? "").Contains(dto.SearchText ?? "") ||
 								db.Tag_Associates.Include(ta => ta.Tag)
-                                    .Where(ta => !ta.IsDeleted && ta.Type == (int)TagAssociateTypeEnum.文章 && ta.FK_AId == e.Id && ta.Tag!=null && ta.Tag.Title == dto.SearchText).Any()
+                                    .Where(ta => !ta.IsDeleted && ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == e.Id && ta.Tag!=null && ta.Tag.Title == dto.SearchText).Any()
 							);
             int skip = (page - 1) * shownum - 1;
             if (skip < 0) skip = 0;
@@ -508,7 +508,7 @@ namespace EtheriT.Coker.Application.Directory
                     (e.Html ?? "").Contains(dto.SearchText ?? "") ||
                     (e.ItemNo != null && e.ItemNo.Contains(dto.SearchText ?? "")) ||
                     db.Tag_Associates.Include(t => t.Tag)
-                        .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == (int)TagAssociateTypeEnum.商品 && !t.Tag.IsDeleted && !t.IsDeleted)
+                        .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == TagAssociateTypeEnum.商品 && !t.Tag.IsDeleted && !t.IsDeleted)
                         .Where(t => t.Tag != null && t.Tag.Title.Contains(dto.SearchText ?? ""))
                         .Select(t => t.FK_AId).Contains(e.Id) ||
                     db.Prod_TechCerts.Include(t => t.TechnicalCertificate)
@@ -521,10 +521,10 @@ namespace EtheriT.Coker.Application.Directory
             {
                 prods = prods.Where(e =>
                     db.Tag_Associates.Include(t => t.Tag)
-                        .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == (int)TagAssociateTypeEnum.商品 && !t.Tag.IsDeleted && !t.IsDeleted)
+                        .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == TagAssociateTypeEnum.商品 && !t.Tag.IsDeleted && !t.IsDeleted)
                         .Where(d =>
                             db.Tag_Associates.Include(t => t.Tag)
-                                .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == (int)TagAssociateTypeEnum.目錄 && !t.Tag.IsDeleted && !t.IsDeleted)
+                                .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == TagAssociateTypeEnum.目錄 && !t.Tag.IsDeleted && !t.IsDeleted)
                                 .Where(t => t.FK_AId == dto.DirectoryType)
                                 .Select(t => t.FK_TId).Contains(d.FK_TId)
                         )
@@ -546,7 +546,7 @@ namespace EtheriT.Coker.Application.Directory
                                 {
                                     var tid = from p in prods
                                               join ta in db.Tag_Associates.Include(e => e.Tag)
-                                                              .Where(e => !e.IsDeleted && e.Type == (int)TagAssociateTypeEnum.商品 && !e.Tag.IsDeleted)
+                                                              .Where(e => !e.IsDeleted && e.Type == TagAssociateTypeEnum.商品 && !e.Tag.IsDeleted)
                                                       on p.Id equals ta.FK_AId
                                               join tg in db.Tag_TagGroups.Include(e => e.Tag_Group)
                                                               .Where(e => !e.IsDeleted && !e.Tag_Group.IsDeleted && e.Tag_Group.FK_WebsiteId == WebsiteID)
@@ -559,7 +559,7 @@ namespace EtheriT.Coker.Application.Directory
                                 {
                                     var tid = from p in prods
                                               join ta in db.Tag_Associates.Include(e => e.Tag)
-                                                              .Where(e => !e.IsDeleted && e.Type == (int)TagAssociateTypeEnum.商品 && !e.Tag.IsDeleted)
+                                                              .Where(e => !e.IsDeleted && e.Type == TagAssociateTypeEnum.商品 && !e.Tag.IsDeleted)
                                                       on p.Id equals ta.FK_AId
                                               where g.Tags.Contains(ta.FK_TId)
                                               select p.Id;
@@ -582,7 +582,7 @@ namespace EtheriT.Coker.Application.Directory
             });
             var tagbind = db.Tag_Associates.Include(e => e.Tag).Where(e => !e.IsDeleted)
                     .Where(e => e.Tag != null && e.Tag.FK_WebsiteId == WebsiteID && !e.Tag.IsDeleted)
-                    .Where(e => Ids.Contains(e.FK_AId) && e.Type == (int)TagAssociateTypeEnum.商品);
+                    .Where(e => Ids.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品);
             List<long> tagsId = tagbind.Select(e => e.FK_TId).ToList();
             var allGropTagsId = await db.Tag_TagGroups.Include(e => e.Tag).Where(e => !e.IsDeleted)
                 .Where(e => e.Tag != null && !e.Tag.IsDeleted && e.Tag.FK_WebsiteId == WebsiteID)
@@ -607,9 +607,9 @@ namespace EtheriT.Coker.Application.Directory
                 from dir in db.Directory.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
                     .Where(d =>
                         db.Tag_Associates
-                            .Where(a => !a.IsDeleted && a.Type == (int)TagAssociateTypeEnum.目錄 && a.FK_AId == d.Id)
+                            .Where(a => !a.IsDeleted && a.Type == TagAssociateTypeEnum.目錄 && a.FK_AId == d.Id)
                             .Where(a =>
-                                db.Tag_Associates.Where(p => !p.IsDeleted && p.Type == (int)TagAssociateTypeEnum.商品 && dirFilterIds.Contains(p.FK_AId))
+                                db.Tag_Associates.Where(p => !p.IsDeleted && p.Type == TagAssociateTypeEnum.商品 && dirFilterIds.Contains(p.FK_AId))
                                 .Select(p => p.FK_TId).Contains(a.FK_TId)
                             )
                             .Select(a => a.FK_AId).Contains(d.Id)
@@ -680,7 +680,7 @@ namespace EtheriT.Coker.Application.Directory
                                   StatusName = ((ProdStatusEnum)p.Status).ToString(),
                                   tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
                                           join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
-                                          where m.FK_AId == p.Id && m.Type == (int)TagAssociateTypeEnum.商品
+                                          where m.FK_AId == p.Id && m.Type == TagAssociateTypeEnum.商品
                                           select new TagGetSelectedDto
                                           {
                                               Tag_Name = t.Title,
@@ -753,7 +753,7 @@ namespace EtheriT.Coker.Application.Directory
                 var tags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => dto.Ids.Contains(e.FK_AId))
                     .Where(e => !e.IsDeleted)
-                    .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                    .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
 
@@ -765,7 +765,7 @@ namespace EtheriT.Coker.Application.Directory
                 var notTags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => dto.Ids.Contains(e.FK_AId))
                     .Where(e => !e.IsDeleted)
-                    .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄拒絕)
+                    .Where(e => e.Type == TagAssociateTypeEnum.目錄拒絕)
                     .Where(e => siteIds.Contains(e.Tag.FK_WebsiteId))
                     .ToListAsync();
                 var notTagIds = notTags.Select(e => e.FK_TId).ToList() ?? new List<long>();
@@ -776,10 +776,10 @@ namespace EtheriT.Coker.Application.Directory
                     switch ((DirectoryTypeEnum)db_d[0].Type)
                     {
                         case DirectoryTypeEnum.商品:
-                            var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
+                            var pd_notId = await (db.Tag_Associates.Where(e => notTagIds.Contains(e.FK_TId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).Select(e => e.FK_AId).ToListAsync();
                             foreach (var id in FKTIds)
                             {
-                                var pd_as = await (db.Tag_Associates.Where(e => e.FK_TId == id && !pd_notId.Contains(e.FK_AId) && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
+                                var pd_as = await (db.Tag_Associates.Where(e => e.FK_TId == id && !pd_notId.Contains(e.FK_AId) && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted)).ToListAsync();
                                 if (!allIds.Any()) allIds = pd_as.Select(e => e.FK_AId).ToList();
                                 else
                                 {
@@ -803,7 +803,7 @@ namespace EtheriT.Coker.Application.Directory
 
                             var db_as = await db.Tag_Associates
                                     .Where(e => !e.IsDeleted)
-                                    .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
+                                    .Where(e => e.Type == TagAssociateTypeEnum.文章)
                                     .Where(e => FKTIds.Contains(e.FK_TId))
                                     .ToListAsync();
                             var tempcorr = new List<CorrDTAID>();
@@ -959,7 +959,7 @@ namespace EtheriT.Coker.Application.Directory
                                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                                     {
                                         Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
-                                        Type = (int)TagAssociateTypeEnum.目錄
+                                        Type = TagAssociateTypeEnum.目錄
                                     });
                                     var tag_text = "";
                                     foreach (var tagData in tagDatas) tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
@@ -1030,7 +1030,7 @@ namespace EtheriT.Coker.Application.Directory
                             var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                             {
                                 Fk_Aid = (long)data.GetType().GetProperty("Id").GetValue(data, null),
-                                Type = (int)TagAssociateTypeEnum.目錄
+                                Type = TagAssociateTypeEnum.目錄
                             });
                             var tag_text = "";
                             foreach (var tagData in tagDatas) tag_text += tag_text == "" ? tagData.Tag_Name : $"、{tagData.Tag_Name}";
@@ -1060,7 +1060,7 @@ namespace EtheriT.Coker.Application.Directory
 
                 if (result != null)
                 {
-                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.目錄 && !e.IsDeleted).ToListAsync();
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == TagAssociateTypeEnum.目錄 && !e.IsDeleted).ToListAsync();
 
                     if (tagids != null)
                     {
@@ -1100,7 +1100,7 @@ namespace EtheriT.Coker.Application.Directory
                     var d_tags = await db.Tag_Associates.Include(e => e.Tag)
                         .Where(e => e.FK_AId == id)
                         .Where(e => !e.IsDeleted)
-                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                         .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
                         .ToListAsync();
 
@@ -1111,7 +1111,7 @@ namespace EtheriT.Coker.Application.Directory
                         var a_tags = await db.Tag_Associates.Include(e => e.Tag)
                             .Where(e => tlist.Contains(e.FK_TId))
                             .Where(e => !e.IsDeleted)
-                            .Where(e => e.Type == (int)TagAssociateTypeEnum.文章)
+                            .Where(e => e.Type == TagAssociateTypeEnum.文章)
                             .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
                             .ToListAsync();
                         if (!a_tags.Any()) throw new Exception("資料不存在");
@@ -1152,7 +1152,7 @@ namespace EtheriT.Coker.Application.Directory
                     var tags = await db.Tag_Associates.Include(e => e.Tag)
                         .Where(e => e.FK_AId == id)
                         .Where(e => !e.IsDeleted)
-                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                         .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
                         .ToListAsync();
 
@@ -1202,7 +1202,7 @@ namespace EtheriT.Coker.Application.Directory
                     var d_tags = await db.Tag_Associates.Include(e => e.Tag)
                         .Where(e => e.FK_AId == id)
                         .Where(e => !e.IsDeleted)
-                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                         .Where(e => e.Tag.FK_WebsiteId == WebsiteID)
                         .ToListAsync();
 
@@ -1251,7 +1251,7 @@ namespace EtheriT.Coker.Application.Directory
                     var d_tags = await db.Tag_Associates.Include(e => e.Tag)
                         .Where(e => dto.Ids.Contains(e.FK_AId))
                         .Where(e => !e.IsDeleted)
-                        .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                        .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                         .Where(e => e.Tag.FK_WebsiteId == websiteid)
                         .ToListAsync();
 
@@ -1306,7 +1306,7 @@ namespace EtheriT.Coker.Application.Directory
                 var a_tags = await db.Tag_Associates.Include(e => e.Tag)
                     .Where(e => FK_Tid_List.Contains(e.FK_TId))
                     .Where(e => !e.IsDeleted)
-                    .Where(e => e.Type == (int)TagAssociateTypeEnum.廣告)
+                    .Where(e => e.Type == TagAssociateTypeEnum.廣告)
                     .ToListAsync();
                 if (!a_tags.Any()) throw new Exception("資料不存在");
                 var temp_aid = new Dictionary<long, long>();

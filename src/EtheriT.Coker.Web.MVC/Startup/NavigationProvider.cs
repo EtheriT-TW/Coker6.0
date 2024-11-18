@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace EtheriT.Coker.Web.MVC.Startup
@@ -289,6 +290,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Title="會員設定",
                                 Controller="MemberManagement",
                                 Action="MemberSet",
+                                Enable=false,
                                 Icon="",
                             },
                             new JobMenu {
@@ -299,17 +301,17 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Icon=""
                             },
                             new JobMenu {
-                                PageName="UserType",
-                                Title="使用者分群",
-                                Controller="MemberManagement",
-                                Action="UserType",
-                                Icon=""
-                            },
-                            new JobMenu {
                                 PageName="MemberType",
                                 Title="會員角色管理",
                                 Controller="MemberManagement",
                                 Action="MemberType",
+                                Icon=""
+                            },
+                            new JobMenu {
+                                PageName="UserType",
+                                Title="使用者分群",
+                                Controller="MemberManagement",
+                                Action="UserType",
                                 Icon=""
                             }
                         }

@@ -31,6 +31,7 @@ using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.Role;
 
 namespace EtheriT.Coker.Application
 {
@@ -46,6 +47,8 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.EndTime, option => option.MapFrom(c => DateTime.Now.AddDays(30)))
                 .ReverseMap()
                 .ForMember(e => e.IsLogin, option => option.MapFrom(t => t.UserID!=null&& DateTime.Now > t.EndTime));
+            //Role
+            CreateMap<AddRoleDto, Role>().ReverseMap();
             //Users
             CreateMap<UserSimplifyDto, User>()
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))

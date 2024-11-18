@@ -17,6 +17,10 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Shared.Dto;
 using System.Diagnostics;
 using System.Xml.Linq;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Core.Models;
+using System.Data;
 
 namespace EtheriT.Coker.Application.Member
 {
@@ -231,7 +235,7 @@ namespace EtheriT.Coker.Application.Member
             {
                 output = await (from role in db.Roles
                                 where role.FK_WebsiteId == websideId
-                                where role.Type == (int)RoleTypeEnum.前台
+                                where role.Type == RoleTypeEnum.前台
                                 select new SelectDto()
                                 {
                                     Id = role.Id,
@@ -251,9 +255,57 @@ namespace EtheriT.Coker.Application.Member
             var output = DataSourceLoader.Load(dataQuery, loadOptions);
             return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
-        /*public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto) { 
-            
-        }*/
+        public async Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto) {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+            try
+            {
+                var data = JsonConvert.DeserializeObject<AddRoleDto>(dto.Values);
+                if (string.IsNullOrEmpty(data?.Name)) throw new Exception("角色名稱不可為空");
+                var websiteId = await loginUserData.GetWebsiteId();
+                var id = dto.Key;
+                if (data != null) {
+                    Role? role;
+                    if (id == null || id == 0)
+                    {
+                        role = mapper.Map<Role>(data);
+                        role.Type = RoleTypeEnum.前台;
+                        role.FK_WebsiteId = websiteId;
+                        db.Roles.Add(role);
+                    }
+                    else {
+                        data.Id = id;
+                        role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
+                        if(role != null) mapper.Map(data,role);
+                    }
+                    if (role == null) throw new Exception("角色不存在");
+                    await loginUserData.SaveChanges(role);
+                    output.Success = true;
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+                }
+            }
+            catch (Exception e) {
+                output.Error = e.Message;
+            }
+            return output;
+        }
+        public async Task<ResponseMessageDto> RoleDelete(long id) {
+            ResponseMessageDto output = new ResponseMessageDto();
+            try {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
+                if (role != null)
+                {
+                    role.IsDeleted = true;
+                    await loginUserData.SaveChanges(role);
+                    output.Success = true;
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(new { id }), JsonConvert.SerializeObject(output));
+                }
+                else throw new Exception();
+            } catch (Exception e) {
+                output.Error=e.Message;
+            }
+            return output;
+        }
     }
 }
 

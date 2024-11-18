@@ -14,9 +14,9 @@ function editButtonClicked(e) {
 
 function deleteButtonClicked(e) {
     co.sweet.confirm("刪除角色", "確定刪除？角色刪除後不可復原", "確　定", "取　消", function () {
-        /*co.Tag.TagGroupDelete(e.row.key).done(function () {
-            GroupList_dxData.refresh();
-            TagList_dxData.refresh();
-        })*/
+        console.log(co.Role);
+        co.Role.Delete(e.row.key).done(function () {
+            dxData.refresh();
+        });
     })
 }

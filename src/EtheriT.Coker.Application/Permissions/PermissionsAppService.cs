@@ -48,7 +48,7 @@ namespace EtheriT.Coker.Application.Permissions
             {
                 var result = await (
                     from o in db.Roles.Where(e => !e.IsDeleted)
-                    where o.FK_WebsiteId == websideId && o.Type == (int)RoleTypeEnum.後台
+                    where o.FK_WebsiteId == websideId && o.Type == RoleTypeEnum.後台
                     select new PermissionsRoleDto
                     {
                         Id = o.Id,
@@ -382,7 +382,7 @@ namespace EtheriT.Coker.Application.Permissions
                     Role myRole = new Role
                     {
                         Name = dto.Name,
-                        Type = 2,
+                        Type = RoleTypeEnum.後台,
                         FK_WebsiteId = websiteId,
                     };
                     db.Roles.Add(myRole);

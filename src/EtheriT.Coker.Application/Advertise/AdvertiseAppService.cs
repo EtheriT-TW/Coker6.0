@@ -84,7 +84,7 @@ namespace EtheriT.Coker.Application.Advertise
                             Id = data.Id,
                             FK_AId = (long)asoid,
                             FK_TId = data.FK_TId,
-                            Type = (int)TagAssociateTypeEnum.廣告,
+                            Type = TagAssociateTypeEnum.廣告,
                             IsDeleted = data.IsDeleted
                         });
                     }
@@ -188,7 +188,7 @@ namespace EtheriT.Coker.Application.Advertise
                         var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                         {
                             Fk_Aid = output.Id,
-                            Type = (int)TagAssociateTypeEnum.廣告,
+                            Type = TagAssociateTypeEnum.廣告,
                         }
                         );
 
@@ -220,7 +220,7 @@ namespace EtheriT.Coker.Application.Advertise
 
                 if (result != null)
                 {
-                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.廣告 && !e.IsDeleted).ToListAsync();
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == TagAssociateTypeEnum.廣告 && !e.IsDeleted).ToListAsync();
 
                     if (tagids != null)
                     {

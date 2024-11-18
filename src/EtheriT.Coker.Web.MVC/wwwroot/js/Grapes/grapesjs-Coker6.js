@@ -155,7 +155,7 @@
                         if (component.find(".name").length > 0)
                             component.find(".name")[0].components(component.getAttributes()["data-text"]);
                         else
-                            component.component(component.getAttributes()["data-text"]);
+                            component.components(component.getAttributes()["data-text"]);
                     }
                 });
             }

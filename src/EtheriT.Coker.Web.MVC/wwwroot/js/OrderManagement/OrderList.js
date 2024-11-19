@@ -1,7 +1,6 @@
 ﻿var keyId
 var order_list
 let $btn_reSend, $btn_save;
-var OrderList_dxData;
 var oristate = 0, payment = "";
 function PageReady() {
     OrderDataCollapse();
@@ -91,14 +90,12 @@ function updateOrder() {
                     $order_status.prop("disabled", true)
                     break;
             }
-            OrderList_dxData.refresh();
+            //order_list.component.refresh();
         }
         else co.sweet.error("儲存失敗", result.error);
     });
 }
 function ElementInit() {
-
-    OrderList_dxData = $("#OrderList").dxDataGrid("instance");
 
     /* Header */
     $order_number = $(".order_number")

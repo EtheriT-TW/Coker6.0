@@ -161,6 +161,36 @@
             }
         },
     });
+    //Youtube Modal
+    editor.DomComponents.addType('Youtube放大檢視', {
+        isComponent: el => el.classList?.contains('YTmodal_frame'),
+        model: {
+            defaults: {
+                traits: [
+                    { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入Youtube標題' },
+                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入Youtube網址' }
+                ]
+            }, init() {
+
+                this.on('change:attributes:link', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        var link = component.getAttributes()["link"];
+                        var vid = link.substring(link.indexOf("v=") + 2)
+                        var img_link = `http://img.youtube.com/vi/${vid}/sddefault.jpg`
+                        var $self = $(component.getEl());
+                        $self.find("img").attr("src", img_link);
+                    }
+                });
+                this.on('change:attributes:yttitle', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        var title = component.getAttributes()["yttitle"];
+                        var $self = $(component.getEl());
+                        $self.find("img").attr("alt", `${title}的圖片`);
+                    }
+                });
+            }
+        },
+    });
     editor.DomComponents.addType('電子書', {
         isComponent: el => el.classList?.contains('FlipBookItem'),
         model: {
@@ -391,7 +421,7 @@
                                     title: "",
                                     synopsis_title: "",
                                     synopsis_caption: "",
-                                    visible:false,
+                                    visible: false,
                                     a_tag: true
                                 }, data);
                                 var content = $($("#TemplateSwiperList").html());
@@ -447,13 +477,14 @@
 
                                     AssetManager.onSelect((result) => {
                                         // 使用選擇的圖片更新 img 的 src 屬性
-                                        if (result && result.id) {const imgName = result.attributes.name.split(".");
+                                        if (result && result.id) {
+                                            const imgName = result.attributes.name.split(".");
                                             let newName = "";
                                             for (let i = 0; i < imgName.length; i++) {
                                                 if (i == imgName.length - 1) {
                                                     break;
                                                 }
-                                                newName+= imgName[i];
+                                                newName += imgName[i];
                                             }
                                             $("#slideTitle").val(newName).trigger("change");//消除副檔名
                                             $imgElement.attr("src", result.id); // 假設 result.id 是圖片的 URL
@@ -513,7 +544,7 @@
                                             $($new_slide).removeClass('backstageType');
                                         }
                                         $b.append($new_slide);
-                                        
+
                                     } else {
                                         var $selected = editor.getSelected();
                                         var swiper = $selected.find(".swiper")[0].getEl().swiper;
@@ -528,8 +559,8 @@
                                             $new_slide = $($new_slide);
                                             $new_slide.find('img').attr('src', newImgSrc);
                                             $new_slide.find('img').attr('alt', newTitle);
-                                            if (newLink) { 
-                                                 $new_slide.find('a').attr('href', newLink);
+                                            if (newLink) {
+                                                $new_slide.find('a').attr('href', newLink);
                                             }
                                             $new_slide.find('a').attr('title', newTitle);
                                             $new_slide.find('a').attr('target', newTarget);

@@ -302,6 +302,7 @@ var grapesInit = function (options) {
                                 checkClass[0].parameter.autoplay = false;
                                 break;
                             case "masonry":
+                            case "YTmodal_frame":
                                 setConfig(1, s);
                                 break;
                             case "frame":

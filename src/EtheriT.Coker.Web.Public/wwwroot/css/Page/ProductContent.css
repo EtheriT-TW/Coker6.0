@@ -81,7 +81,7 @@ input[type="number"] {
 
     .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_youtube {
         font-size: 4.5rem;
-        color: #a39292;
+        color: #FF0000;
         Opacity: 0.8;
         pointer-events: none
     }

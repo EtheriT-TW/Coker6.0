@@ -86,7 +86,7 @@ function PageReady() {
         }
     }
 
-    $("#btn_car_dropdown").attr("disabled", "disabled")
+    if (!$("#btn_car_dropdown").hasClass("d-none")) $("#btn_car_dropdown").addClass("d-none")
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {

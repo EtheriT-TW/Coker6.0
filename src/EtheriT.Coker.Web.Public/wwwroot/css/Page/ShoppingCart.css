@@ -388,6 +388,21 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 768px) {
+    div.e-mail, div.cell-phone {
+        width:100%;
+    }
+
+    div.tel-phone {
+        flex:auto;
+    }
+
+    div.tel-area {
+        width:30%;
+    }
+
+    #OrdererForm > .default_data > div > div:nth-child(1) {
+        width:auto;
+    }
 }
 
 @media only screen and (max-width: 576px) {
@@ -409,5 +424,36 @@ body > .popover.bs-popover-auto.fade {
 
     #Step3 > .card-body > .record > button {
         width: 5rem;
+    }
+
+    #Form_Orderer > div:nth-child(5) > div:nth-child(3) {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    #Step1 > .card-body > .purchase_list > .purchase_item {
+        padding-right: 1rem;
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
+        width: 6rem;
+    }
+
+    .btn_gray_dark {
+        width: 7.5rem;
+    }
+
+    ul.purchase_list {
+        padding-right: 0rem !important;
+        padding-left: 0rem !important;
+    }
+
+    input#OrdererInputTelPhoneArea {
+        padding-top:0rem;
+    }
+
+    .form-floating > label {
+        font-size:14px;
     }
 }

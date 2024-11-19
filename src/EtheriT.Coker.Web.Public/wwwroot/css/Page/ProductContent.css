@@ -8,6 +8,27 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.container-fluid > .btn_swiper_next_product {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    position: absolute;
+    right: 0;
+    opacity: 0.5;
+}
+
+i.fa-chevron-right {
+    line-height: 1;
+}
+
 .describe > ul {
     padding-left:0rem;
 }
@@ -408,6 +429,18 @@ input:disabled + .btn_radio {
     [class*=btn_swiper_] {
         height: 35px !important;
         width: 35px !important;
+    }
+
+    #btn_car_dropdown .material-symbols-outlined {
+        font-size: 24px;
+        color: #000;
+        line-height: 1;
+    }
+
+    #btn_car_dropdown > #Car_Badge {
+        left: unset !important;
+        top: -50% !important;
+        right: -10% !important;
     }
 
     .describe > .track {

@@ -543,14 +543,17 @@ function ShowBigPro() {
     console.log(pro_self.data("display-protype"));
     switch (pro_self.data("display-protype")) {
         case "image":
+            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");
             addImage(pro_self);
             break;
         case "youtube":
+            if (!$(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").addClass("ytshow")
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
             addYoutube(pro_self);
             break;
         case "360view":
+            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
             add360View(pro_self);
             break;

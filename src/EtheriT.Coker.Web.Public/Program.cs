@@ -128,7 +128,8 @@ builder.Services.AddAntiforgery(options =>
     // Set Cookie properties using CookieBuilder properties†.
     options.FormFieldName = "AntiforgeryFieldname";
     options.HeaderName = "X-CSRF-TOKEN-HEADERNAME";
-    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+    //options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.HttpOnly = true;
     //iis setting

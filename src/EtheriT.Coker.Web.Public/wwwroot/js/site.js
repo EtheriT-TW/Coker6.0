@@ -73,7 +73,7 @@ function ready() {
     //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
     if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
     if ($(".marqueeSwiper").length > 0) MarqueeSwiper();
-    if ($(".masonry").length > 0) FrameInit();
+    if ($(".masonry").length > 0 || $(".YTmodal_frame").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
     if ($(".hover_mask").length > 0) HoverEffectInit();
     if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0 || $(".advertise_directory").length > 0) DirectoryGetDataInit();
@@ -525,8 +525,7 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
-            //console.log("userData:", result);
-            //console.log("CheckToken")
+            console.log("userData:", result);
             if (result.isLogin && result.name != "") {
                 $("#HiUser > .name").text(`${result.name} 您好!`);
             }

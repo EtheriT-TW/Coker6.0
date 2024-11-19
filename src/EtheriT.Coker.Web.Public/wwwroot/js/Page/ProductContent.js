@@ -249,7 +249,6 @@ function PageDefaultSet(result) {
             }
         } else $pro_discount.text(maxprice.toLocaleString('en-US'));
     } else {
-        console.log(result.stocks)
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
         var price = result.stocks[0].prices[0].price;
@@ -289,6 +288,7 @@ function PageDefaultSet(result) {
                         "data-youtube-link": img_med.name,
                         src: `https://img.youtube.com/vi/${img_med.name}/0.jpg`
                     })
+                    slide_image.siblings(".schematic_image").replaceWith('<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>');
                     break;
                 default:
                     slide_image.attr("src", img_med.link[0]);
@@ -540,17 +540,19 @@ function ShowBigPro() {
     pro_viewModalSpace.children(".pro_img").addClass("d-none");
     pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
     pro_viewModalSpace.children(".pro_360view").addClass("d-none");
-    console.log(pro_self.data("display-protype"));
     switch (pro_self.data("display-protype")) {
         case "image":
+            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");
             addImage(pro_self);
             break;
         case "youtube":
+            if (!$(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").addClass("ytshow")
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
             addYoutube(pro_self);
             break;
         case "360view":
+            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
             add360View(pro_self);
             break;

@@ -318,25 +318,32 @@ function HistoryDataInsert(Datas) {
         frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
         frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
         frame.find(".amount").text((order_header.total).toLocaleString());
-        if ((order_header.creationTime.split(' ')[0] == date_now) && order_header.state == 1) {
-            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
-            frame.find(".state .btn_canceOrder").on("click", function () {
-                var $this = $(this);
-                Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
-                    Coker.sweet.loading();
-                    Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
-                        if (result.success) {
-                            $this.parent(".state").addClass("text-danger fw-bold");
-                            $this.parent(".state").text("已取消");
-                            Coker.sweet.success("已取消訂單", null, false);
-                        } else {
-                            console.log(result.message);
-                        }
+        frame.find(".payment").text(order_header.payment);
+        if (order_header.state == 1) {
+            if (order_header.creationTime.split(' ')[0] == date_now) {
+                frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+                frame.find(".state .btn_canceOrder").on("click", function () {
+                    var $this = $(this);
+                    Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
+                        Coker.sweet.loading();
+                        Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
+                            if (result.success) {
+                                $this.parent(".state").addClass("text-danger fw-bold");
+                                $this.parent(".state").text("已取消");
+                                Coker.sweet.success("已取消訂單", null, false);
+                            } else {
+                                console.log(result.message);
+                            }
+                        })
                     })
-                })
-            });
-        }
-        else {
+                });
+            }
+            //switch (order_header.payment) {
+            //    case "LINEPay":
+            //        frame.find(".state").append(`<button data-ohid="${order_header.id}" class="btn_confirm bg-transparent border-0 text-decoration-underline text-primary" title="付款">付款</button>`)
+            //        break;
+            //}
+        } else {
             frame.find(".state").text(order_header.stateStr);
             if (order_header.state == 4 || order_header.state == 5) {
                 frame.find(".state").addClass("text-danger fw-bold");

@@ -252,15 +252,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                             var linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
 
-                            if (linePayResponse.ReturnCode == "0000")
-                            {
-                                response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
-                            }
-                            else
-                            {
-                                response.Error = linePayResponse.ReturnCode;
-                                response.Message = linePayResponse.ReturnMessage;
-                            }
+                            if (linePayResponse.ReturnCode == "0000") response.Success = true;
+                            response.Error = linePayResponse.ReturnCode;
+                            response.Message = linePayResponse.ReturnMessage;
                         }
                     }
                 }
@@ -305,13 +299,17 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                             if (linePayResponse.ReturnCode == "0000")
                             {
-                                response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                                response.Success = true;
+                                response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
+                                ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
+                                ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
+                                db.SaveChanges();
                             }
                             else
                             {
-                                response.Error = linePayResponse.ReturnCode;
                                 response.Message = linePayResponse.ReturnMessage;
                             }
+                            response.Error = linePayResponse.ReturnCode;
                         }
                     }
                 }

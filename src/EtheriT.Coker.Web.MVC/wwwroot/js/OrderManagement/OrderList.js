@@ -1,6 +1,7 @@
 ﻿var keyId
 var order_list
 let $btn_reSend, $btn_save;
+var OrderList_dxData;
 var oristate = 0, payment = "";
 function PageReady() {
     OrderDataCollapse();
@@ -32,6 +33,7 @@ function PageReady() {
                                 Coker.ThirdParty.Line.PayVoid(keyId).done(function (result) {
                                     if (result.success) {
                                         updateOrder();
+                                        console.log(result.message);
                                     } else {
                                         co.sweet.error(result.error, result.message, null, false);
                                     }
@@ -50,6 +52,7 @@ function PageReady() {
                                 Coker.ThirdParty.Line.PayRefund(keyId).done(function (result) {
                                     if (result.success) {
                                         updateOrder();
+                                        console.log(result.message);
                                     } else {
                                         co.sweet.error(result.error, result.message, null, false);
                                     }
@@ -88,12 +91,15 @@ function updateOrder() {
                     $order_status.prop("disabled", true)
                     break;
             }
+            OrderList_dxData.refresh();
         }
         else co.sweet.error("儲存失敗", result.error);
     });
 }
-
 function ElementInit() {
+
+    OrderList_dxData = $("#OrderList").dxDataGrid("instance");
+
     /* Header */
     $order_number = $(".order_number")
     $order_date = $(".order_date")
@@ -122,7 +128,6 @@ function ElementInit() {
     $btn_reSend = $(".btn_reSend");
     $btn_save = $(".btn_save");
 }
-
 function FormDataClear() {
     keyId = 0;
 
@@ -149,7 +154,6 @@ function FormDataClear() {
     $orderer_telphone.text("")
     $orderer_address.text("")
 }
-
 function contentReady(e) {
     order_list = e;
     HashDataEdit();

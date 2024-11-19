@@ -50,6 +50,8 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(500)]
         public string? Memo { get; set; }
         public string? TransactionId { get; set; }
+        public string? refundTransactionId { get; set; }
+        public DateTime? refundTransactionDate { get; set; }
         public List<Order_Details> Order_Details { get; set; }
 
     }

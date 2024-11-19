@@ -301,6 +301,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                             {
                                 response.Success = true;
                                 response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
+                                ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
+                                ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
+                                db.SaveChanges();
                             }
                             else
                             {

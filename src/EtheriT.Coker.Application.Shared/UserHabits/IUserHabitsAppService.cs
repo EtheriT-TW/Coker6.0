@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Shared.UserHabits
@@ -11,5 +12,6 @@ namespace EtheriT.Coker.Application.Shared.UserHabits
     public interface IUserHabitsAppService
     {
         public Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions);
+        public Task<ResponseMessageDto> AddUpUserGroup();
     }
 }

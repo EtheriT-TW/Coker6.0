@@ -321,6 +321,10 @@ function GetOrderPage() {
             buy_step_swiper.slideTo(4);
             buy_step_swiper.disable();
         });
+    } else if (window.location.search.substring(1) == "success") {
+        console.log(localStorage.getItem('lastorderid'))
+    } else if (window.location.search.substring(1) == "fail") {
+        console.log(localStorage.getItem('lastorderid'))
     }
 }
 function SuccessPageDataInsert(data) {
@@ -850,6 +854,7 @@ function OrderHeaderAdd() {
                             case "PCHomePay":
                                 Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                     if (result.success) {
+                                        localStorage.setItem(`lastorderid`, result.message.split(",")[1]);
                                         window.location.replace(result.message);
                                     } else {
                                         console.log(result);

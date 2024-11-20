@@ -61,20 +61,20 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
         }
-        //[HttpGet]
-        //public async Task<ResponseMessageDto> PChomePayReturn()
+        //[HttpPost]
+        //public async Task<ResponseMessageDto> PChomePayReturn(object dto)
         //{
-        //    return await pchomePayAppService.PChomePayReturn();
-        //}
-        //[HttpGet]
-        //public async Task<ResponseMessageDto> PChomePayFailReturn()
-        //{
-        //    return await pchomePayAppService.PChomePayFailReturn();
+        //    return await pchomePayAppService.PChomePayReturn(dto);
         //}
         //[HttpPost]
-        //public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
+        //public async Task<ResponseMessageDto> PChomePayFailReturn(object dto)
         //{
-        //    return await pchomePayAppService.PChomePayNotify(dto);
+        //    return await pchomePayAppService.PChomePayFailReturn(dto);
         //}
+        [HttpPost]
+        public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
+        {
+            return await pchomePayAppService.PChomePayNotify(dto);
+        }
     }
 }

@@ -11,6 +11,9 @@ using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using Newtonsoft.Json.Linq;
+using Microsoft.JSInterop.Infrastructure;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -103,60 +106,76 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        //public async Task<ResponseMessageDto> PChomePayReturn()
+        //public async Task<ResponseMessageDto> PChomePayReturn(object dto)
         //{
         //    ResponseMessageDto response = new ResponseMessageDto();
+        //    response.Message = dto.ToString();
         //    return response;
         //}
-        //public async Task<ResponseMessageDto> PChomePayFailReturn()
+        //public async Task<ResponseMessageDto> PChomePayFailReturn(object dto)
         //{
         //    ResponseMessageDto response = new ResponseMessageDto();
+        //    response.Message = dto.ToString();
         //    return response;
         //}
-        //public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
-        //{
-        //    if (dto.notify_type == "refund_success")
-        //    {
-        //        // 退款查詢
-        //    }
-        //    else
-        //    {
-        //        PChomePayPaymentDto message = JsonConvert.DeserializeObject<PChomePayPaymentDto>(dto.notify_message);
-        //        var ohdata = await db.Order_Headers.Where(e => e.Id == long.Parse(message.order_id)).FirstOrDefaultAsync();
-        //        if (ohdata != null)
-        //        {
-        //            switch (dto.notify_type)
-        //            {
-        //                case "order_audit":
-        //                    Console.WriteLine($"-------------訊息查看-------------");
-        //                    Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：{dto.notify_message}");
-        //                    break;
-        //                case "order_confirm":
-        //                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-        //                    {
-        //                        ohdata.State = OrderStatusEnum.已付款;
-        //                        db.SaveChanges();
-        //                    }
-        //                    break;
-        //                case "order_expired":
-        //                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-        //                    {
-        //                        ohdata.State = OrderStatusEnum.已取消;
-        //                        db.SaveChanges();
-        //                    }
-        //                    break;
-        //                case "order_failed":
-        //                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-        //                    {
-        //                        ohdata.State = OrderStatusEnum.付款失敗;
-        //                        db.SaveChanges();
-        //                    }
-        //                    break;
-        //            }
-        //        }
-        //    }
-        //    return "success";
-        //}
+        public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
+        {
+            if (dto.notify_type == "refund_success")
+            {
+                // 退款查詢
+            }
+            else
+            {
+                JObject jsonMessage = JObject.Parse(dto.notify_message);
+
+                if (jsonMessage.ContainsKey("order_id"))
+                {
+                    long orderId = jsonMessage["order_id"] != null && !string.IsNullOrEmpty(jsonMessage["order_id"].ToString())? long.Parse(jsonMessage["order_id"].ToString()): 0;
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == orderId).FirstOrDefaultAsync();
+                    if(ohdata != null)
+                    {
+                        switch (dto.notify_type)
+                        {
+                            case "order_audit":
+                                Console.WriteLine($"-------------訊息查看-------------");
+                                Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：{dto.notify_message}");
+                                break;
+                            case "order_confirm":
+                                if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                {
+                                    ohdata.State = OrderStatusEnum.已付款;
+                                    db.SaveChanges();
+                                }
+                                break;
+                            case "order_expired":
+                                if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                {
+                                    ohdata.State = OrderStatusEnum.已取消;
+                                    db.SaveChanges();
+                                }
+                                break;
+                            case "order_failed":
+                                if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                {
+                                    ohdata.State = OrderStatusEnum.付款失敗;
+                                    db.SaveChanges();
+                                }
+                                break;
+                        }
+                    }
+                    {
+                        Console.WriteLine($"-------------訊息查看-------------");
+                        Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：order不存在");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"-------------訊息查看-------------");
+                    Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：order_id不存在");
+                }
+            }
+            return "success";
+        }
         public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
         {
             PChomePayStateDto PChomePayState = new PChomePayStateDto();
@@ -338,12 +357,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                     PaymentBody.items = items;
 
-                    PaymentBody.return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
-                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
-                    PaymentBody.notify_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
+                    PaymentBody.return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar?success";
+                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar?fail";
+                    //PaymentBody.notify_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
                     //PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn";
                     //PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayFailReturn";
-                    //PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
+                    PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
 
                     PaymentBody.buyer_email = ohdata.OrdererEmail;
                     PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days =5 };

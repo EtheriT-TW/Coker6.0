@@ -1068,6 +1068,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         });
                         break;
                     case "imagePath":
+                        data[key].replace(`/${OrgName}/`, '/');
                         $this.attr({
                             src: data[key],
                             alt: data['title']

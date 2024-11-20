@@ -471,6 +471,11 @@ function ready() {
                 break;
         }
     });
+
+    console.log("PCHomePay！")
+    Coker.ThirdParty.PCHomePay.Get().done(function (result) {
+        console.log(result)
+    });
 }
 
 function SiteElementInit() {
@@ -916,6 +921,18 @@ var Coker = {
                 });
             }
         },
+        PCHomePay: {
+            Get: function () {
+                return $.ajax({
+                    url: "/api/ThirdParty/PChomePayHeaders/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: {
+                        Authorization: 'Bearer ' + localStorage.getItem("token")
+                    },
+                });
+            }
+        }
     },
     Favorites: {
         Add: function (Pid) {

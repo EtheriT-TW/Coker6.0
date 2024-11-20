@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.ThirdParty;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
@@ -10,10 +11,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class ThirdPartyController : Controller
     {
         private readonly ILinePayAppService linePayAppService;
+        private readonly IPChomePayAppService pchomePayAppService;
         public ThirdPartyController(
-            ILinePayAppService linePayAppService)
+            ILinePayAppService linePayAppService,
+            IPChomePayAppService pchomePayAppService)
         {
             this.linePayAppService = linePayAppService;
+            this.pchomePayAppService = pchomePayAppService;
         }
         [HttpGet]
         public async Task<ResponseMessageDto> LinePayRequest(long ohid)
@@ -34,6 +38,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
         {
             return await linePayAppService.LinePayCheckPaymentStatus(ohid);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> PChomePayHeaders()
+        {
+            return await pchomePayAppService.PChomePayHeaders();
         }
     }
 }

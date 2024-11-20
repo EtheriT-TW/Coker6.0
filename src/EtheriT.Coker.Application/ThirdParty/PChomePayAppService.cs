@@ -9,6 +9,8 @@ using System.Text;
 using EtheriT.Coker.Application.Token;
 using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -43,364 +45,182 @@ namespace EtheriT.Coker.Application.ThirdParty
             return response;
         }
 
-        //public async Task<ResponseMessageDto> LinePayRequest(long ohid)
+        public async Task<ResponseMessageDto> PChomePayRequest(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null)
+                {
+                    PChomePayPaymentDto PaymentBody = await PChomeGetPaymentBody(ohdata);
+
+                    if (PaymentBody != null)
+                    {
+                        var RequestUri = "/v1/payment";
+                        var PaymentBodyStr = JsonConvert.SerializeObject(PaymentBody);
+                        response = await PChomePayHeaders();
+
+                        if (response.Success)
+                        {
+                            response = new ResponseMessageDto();
+                            var RequestContent = new StringContent(PaymentBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_PCHome.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var pchomePayResponse = JsonConvert.DeserializeObject<PChomePayPaymentResponseDto>(jsonResponse);
+
+                            if (pchomePayResponse != null)
+                            {
+                                if (pchomePayResponse.code == null)
+                                {
+                                    response.Success = true;
+                                    response.Message = pchomePayResponse.payment_url;
+                                    ohdata.TransactionId = pchomePayResponse.order_id;
+                                    db.SaveChanges();
+                                }
+                                else
+                                {
+                                    response.Error = $"{pchomePayResponse.error_type}: {pchomePayResponse.code}";
+                                    response.Message = pchomePayResponse.message;
+                                }
+                            }
+                            else throw new Exception("PChomePayRequest錯誤");
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
+        //public async Task<ResponseMessageDto> PChomePayReturn()
         //{
         //    ResponseMessageDto response = new ResponseMessageDto();
-        //    try
-        //    {
-        //        var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-        //        if (ohdata != null)
-        //        {
-        //            LinePayRequestBodyDto RequestBody = await LinePayGetRequestBody(ohdata);
-
-        //            if (RequestBody != null)
-        //            {
-        //                var RequestUri = "/v3/payments/request";
-        //                var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-        //                response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
-
-        //                if (response.Success)
-        //                {
-        //                    var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-        //                    var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-        //                    PostResponse.EnsureSuccessStatusCode();
-        //                    var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-        //                    var linePayResponse = JsonConvert.DeserializeObject<LinePayRequestResponseDto>(jsonResponse);
-
-        //                    if (linePayResponse.ReturnCode == "0000")
-        //                    {
-        //                        response.Success = true;
-        //                        response.Message = linePayResponse.Info.PaymentUrl.Web;
-        //                        ohdata.TransactionId = linePayResponse.Info.TransactionId;
-        //                        db.SaveChanges();
-        //                    }
-        //                    else
-        //                    {
-        //                        response.Error = linePayResponse.ReturnCode;
-        //                        response.Message = linePayResponse.ReturnMessage;
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (HttpRequestException ex)
-        //    {
-        //        // Http 請求錯誤
-        //        response.Message = $"Request failed: {ex.Message}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // 其他未知錯誤
-        //        response.Message = $"Other Error: {ex.Message}";
-        //    }
         //    return response;
         //}
-        //public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
+        //public async Task<ResponseMessageDto> PChomePayFailReturn()
         //{
         //    ResponseMessageDto response = new ResponseMessageDto();
-        //    LinePayConfirmResponseDto linePayResponse = new LinePayConfirmResponseDto();
-        //    string RequestBodyStr = "";
-        //    var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-        //    var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
-        //    try
+        //    return response;
+        //}
+        //public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
+        //{
+        //    if (dto.notify_type == "refund_success")
         //    {
-        //        long.TryParse(orderId, out long ohid);
-        //        if (ohid > 0)
+        //        // 退款查詢
+        //    }
+        //    else
+        //    {
+        //        PChomePayPaymentDto message = JsonConvert.DeserializeObject<PChomePayPaymentDto>(dto.notify_message);
+        //        var ohdata = await db.Order_Headers.Where(e => e.Id == long.Parse(message.order_id)).FirstOrDefaultAsync();
+        //        if (ohdata != null)
         //        {
-        //            var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-        //            if (ohdata != null)
+        //            switch (dto.notify_type)
         //            {
-        //                var RequestUri = $"/v3/payments/{transactionId}/confirm";
-        //                LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
-        //                {
-        //                    amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
-        //                    currency = "TWD",
-        //                };
-        //                RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-        //                response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
-
-        //                if (response.Success)
-        //                {
-        //                    var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-        //                    var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-        //                    PostResponse.EnsureSuccessStatusCode();
-        //                    var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-        //                    linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
-        //                    Console.WriteLine($"-------------錯誤訊息查看-------------");
-        //                    Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
-
-        //                    if (linePayResponse.ReturnCode == "0000")
+        //                case "order_audit":
+        //                    Console.WriteLine($"-------------訊息查看-------------");
+        //                    Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：{dto.notify_message}");
+        //                    break;
+        //                case "order_confirm":
+        //                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
         //                    {
         //                        ohdata.State = OrderStatusEnum.已付款;
         //                        db.SaveChanges();
         //                    }
-        //                    else
+        //                    break;
+        //                case "order_expired":
+        //                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+        //                    {
+        //                        ohdata.State = OrderStatusEnum.已取消;
+        //                        db.SaveChanges();
+        //                    }
+        //                    break;
+        //                case "order_failed":
+        //                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
         //                    {
         //                        ohdata.State = OrderStatusEnum.付款失敗;
         //                        db.SaveChanges();
         //                    }
-        //                }
+        //                    break;
         //            }
         //        }
         //    }
-        //    catch (HttpRequestException ex)
-        //    {
-        //        // Http 請求錯誤
-        //        Console.WriteLine($"-------------錯誤訊息查看-------------");
-        //        Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Request failed: {ex.Message}");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // 其他未知錯誤
-        //        Console.WriteLine($"-------------錯誤訊息查看-------------");
-        //        Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Other Error: {ex.Message}");
-        //    }
-        //    return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+        //    return "success";
         //}
-        //public async Task<ResponseMessageDto> LinePayConfirm(long ohid)
-        //{
-        //    ResponseMessageDto response = new ResponseMessageDto();
-        //    LinePayConfirmResponseDto linePayResponse = new LinePayConfirmResponseDto();
-        //    string RequestBodyStr = "";
-        //    var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-        //    var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
-        //    try
-        //    {
-        //        var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+        public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
+        {
+            PChomePayStateDto PChomePayState = new PChomePayStateDto();
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                if (ohid > 0)
+                {
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
 
-        //        if (ohdata != null)
-        //        {
-        //            var RequestUri = $"/v3/payments/{ohdata.TransactionId}/confirm";
-        //            LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
-        //            {
-        //                amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
-        //                currency = "TWD",
-        //            };
-        //            RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-        //            response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+                    if (ohdata != null)
+                    {
+                        var orderidstr = ("000000000" + ohid).Substring(ohid.ToString().Length);
+                        var RequestUri = $"/v1/payment/{orderidstr}";
+                        response = await PChomePayHeaders();
 
-        //            if (response.Success)
-        //            {
-        //                response = new ResponseMessageDto();
-        //                var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-        //                var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-        //                PostResponse.EnsureSuccessStatusCode();
-        //                var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-        //                linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
-
-        //                if (linePayResponse.ReturnCode == "0000")
-        //                {
-        //                    ohdata.State = OrderStatusEnum.已付款;
-        //                    db.SaveChanges();
-        //                    response.Success = true;
-        //                }
-        //                else
-        //                {
-        //                    ohdata.State = OrderStatusEnum.付款失敗;
-        //                    db.SaveChanges();
-        //                    response.Error = linePayResponse.ReturnCode;
-        //                    response.Message = linePayResponse.ReturnMessage;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (HttpRequestException ex)
-        //    {
-        //        response.Error = "Http Request Error";
-        //        response.Message = ex.Message;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.Error = "Other Error";
-        //        response.Message = ex.Message;
-        //    }
-        //    return response;
-        //}
-        //public async Task<IActionResult> LinePayCancel(string transactionId, string orderId)
-        //{
-        //    var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-        //    var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
-        //    try
-        //    {
-        //        LinePayResponseDto linePayResponse = await LinePayCheckPaymentStatus(int.Parse(orderId));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.Message);
-        //    }
-        //    return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
-        //}
-        //public async Task<ResponseMessageDto> LinePayVoid(long ohid)
-        //{
-        //    ResponseMessageDto response = new ResponseMessageDto();
-        //    try
-        //    {
-        //        var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-        //        if (ohdata != null && ohdata.State == OrderStatusEnum.待付款)
-        //        {
-        //            LinePayRequestBodyDto RequestBody = await LinePayGetRequestBody(ohdata);
-
-        //            if (RequestBody != null)
-        //            {
-        //                var RequestUri = $"/v3/payments/authorizations/{ohdata.TransactionId}/void";
-        //                var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-        //                response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
-
-        //                if (response.Success)
-        //                {
-        //                    response = new ResponseMessageDto();
-        //                    var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-        //                    var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-        //                    PostResponse.EnsureSuccessStatusCode();
-        //                    var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-        //                    var linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
-
-        //                    if (linePayResponse.ReturnCode == "0000") response.Success = true;
-        //                    response.Error = linePayResponse.ReturnCode;
-        //                    response.Message = linePayResponse.ReturnMessage;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (HttpRequestException ex)
-        //    {
-        //        // Http 請求錯誤
-        //        response.Message = $"Request failed: {ex.Message}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // 其他未知錯誤
-        //        response.Message = $"Other Error: {ex.Message}";
-        //    }
-        //    return response;
-        //}
-        //public async Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund)
-        //{
-        //    ResponseMessageDto response = new ResponseMessageDto();
-        //    try
-        //    {
-        //        var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-        //        if (ohdata != null && ohdata.State == OrderStatusEnum.已付款)
-        //        {
-        //            var RequestBody = new { refundAmount = refund };
-
-        //            if (RequestBody != null)
-        //            {
-        //                var RequestUri = $"/v3/payments/{ohdata.TransactionId}/refund";
-        //                var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-        //                response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
-
-        //                if (response.Success)
-        //                {
-        //                    response = new ResponseMessageDto();
-        //                    var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-        //                    var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-        //                    PostResponse.EnsureSuccessStatusCode();
-        //                    var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-        //                    var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundResponseDto>(jsonResponse);
-
-        //                    if (linePayResponse.ReturnCode == "0000")
-        //                    {
-        //                        response.Success = true;
-        //                        response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
-        //                        ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
-        //                        ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
-        //                        db.SaveChanges();
-        //                    }
-        //                    else
-        //                    {
-        //                        response.Message = linePayResponse.ReturnMessage;
-        //                    }
-        //                    response.Error = linePayResponse.ReturnCode;
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (HttpRequestException ex)
-        //    {
-        //        // Http 請求錯誤
-        //        response.Message = $"Request failed: {ex.Message}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // 其他未知錯誤
-        //        response.Message = $"Other Error: {ex.Message}";
-        //    }
-        //    return response;
-        //}
-        //public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
-        //{
-        //    ResponseMessageDto response = new ResponseMessageDto();
-        //    LinePayResponseDto linePayResponse = new LinePayResponseDto();
-        //    try
-        //    {
-        //        if (ohid > 0)
-        //        {
-        //            var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-        //            if (ohdata != null)
-        //            {
-        //                var RequestUri = $"/v3/payments/requests/{ohdata.TransactionId}/check";
-        //                response = await LinePayDefaultRequestHeaders(RequestUri, "");
-
-        //                if (response.Success)
-        //                {
-        //                    var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
-        //                    GetResponse.EnsureSuccessStatusCode();
-        //                    var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
-        //                    linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
-        //                    switch (linePayResponse.ReturnCode)
-        //                    {
-        //                        case "0110":
-        //                            if (ohdata.State == OrderStatusEnum.待確認)
-        //                            {
-        //                                ohdata.State = OrderStatusEnum.待付款;
-        //                                db.SaveChanges();
-        //                            }
-        //                            break;
-        //                        case "0121":
-        //                            if (ohdata.State == OrderStatusEnum.待確認)
-        //                            {
-        //                                response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
-        //                            }
-        //                            break;
-        //                        case "0122":
-        //                            if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-        //                            {
-        //                                ohdata.State = OrderStatusEnum.付款失敗;
-        //                                db.SaveChanges();
-        //                            }
-        //                            break;
-        //                        case "0123":
-        //                            if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-        //                            {
-        //                                ohdata.State = OrderStatusEnum.已付款;
-        //                                db.SaveChanges();
-        //                            }
-        //                            break;
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (HttpRequestException ex)
-        //    {
-        //        // Http 請求錯誤
-        //        linePayResponse.ReturnCode = "";
-        //        linePayResponse.ReturnMessage = $"Request failed: {ex.Message}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        linePayResponse.ReturnCode = "OtherErrors";
-        //        linePayResponse.ReturnMessage = ex.Message;
-        //    }
-        //    return linePayResponse;
-        //}
-        public async Task<ResponseMessageDto> PChomePayHeaders(/*string RequestUri, string RequestBody*/)
+                        if (response.Success)
+                        {
+                            var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
+                            GetResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                            PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
+                            switch (PChomePayState.status)
+                            {
+                                case "W":
+                                    if (ohdata.State == OrderStatusEnum.待確認)
+                                    {
+                                        ohdata.State = OrderStatusEnum.待付款;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                                case "S":
+                                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                    {
+                                        ohdata.State = OrderStatusEnum.已付款;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                                default:
+                                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
+                                    {
+                                        ohdata.State = OrderStatusEnum.付款失敗;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                PChomePayState.status_code = "RequestErrors";
+                PChomePayState.status = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                PChomePayState.status_code = "OtherErrors";
+                PChomePayState.status = $"Request failed: {ex.Message}";
+            }
+            return PChomePayState;
+        }
+        public async Task<ResponseMessageDto> PChomePayHeaders()
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -423,7 +243,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         PchomePayAppId = thirdPartyKeypairValues.Find(e => e.Key == "PchomePayAppId").Value;
                         PchomePaySecre = thirdPartyKeypairValues.Find(e => e.Key == "PchomePaySecre").Value;
                     }
-                    if (PchomePayAppId != "" && PchomePaySecre != "")
+                    if (PchomePayAppId != "")
                     {
                         string credentials = $"{PchomePayAppId}:{PchomePaySecre}";
                         string encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
@@ -432,16 +252,23 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                         ThirdPartyClient_PCHome.DefaultRequestHeaders.Clear();
 
-                        //ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("Authorization", "Basic RTIzNjc5QkY2NEFFNDU0RjRDQjY3MTFGQUMzNjp4UGdWTmdXb2I4YkdnRVQyZUJSc25pX3lYRW10cXV0bHhVa19VVXVo");
                         ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("Authorization", $"Basic {encodedCredentials}");
                         ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("Cookie", $"RefreshToken={token.RefreshToken.ToString()}");
 
                         var PostResponse = await ThirdPartyClient_PCHome.PostAsync(RequestUri, null);
                         PostResponse.EnsureSuccessStatusCode();
                         var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                        var pchomePayResponse = JsonConvert.DeserializeObject<PChomePayTokenDto>(jsonResponse);
+                        var tokenPayResponse = JsonConvert.DeserializeObject<PChomePayTokenDto>(jsonResponse);
 
-                        response.Success = true;
+                        if (tokenPayResponse != null)
+                        {
+                            ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("pcpay-token", tokenPayResponse.token);
+
+                            response.Message = $"{tokenPayResponse.token}; {tokenPayResponse.expired_in}; {tokenPayResponse.expired_timestamp}";
+                            response.Success = true;
+
+                        }
+                        else throw new Exception("取得PChomeToken發生錯誤");
                     }
                     else throw new Exception("查無PCHomePay所需參數");
                 }
@@ -457,81 +284,80 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        //private async Task<LinePayRequestBodyDto> LinePayGetRequestBody(Order_Header ohdata)
-        //{
-        //    LinePayRequestBodyDto RequestBody = new LinePayRequestBodyDto();
-        //    var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-        //    var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
+        private async Task<PChomePayPaymentDto> PChomeGetPaymentBody(Order_Header ohdata)
+        {
+            PChomePayPaymentDto PaymentBody = new PChomePayPaymentDto();
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
-        //    try
-        //    {
-        //        var oddatas = await orderAppService.GetOrderDetails(ohdata.Id);
+            try
+            {
+                var oddatas = await orderAppService.GetOrderDetails(ohdata.Id);
 
-        //        if (oddatas.Any())
-        //        {
-        //            RequestBody.currency = "TWD";
+                if (oddatas.Any())
+                {
+                    var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
+                    PaymentBody.order_id = oid;
 
-        //            RequestBody.amount = (ohdata.Subtotal + ohdata.Freight).ToString();
-        //            var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-        //            RequestBody.orderId = oid;
+                    var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).FirstOrDefaultAsync();
 
-        //            var Packages = new List<LinePayPackageDto>();
-        //            Packages.Add(new LinePayPackageDto()
-        //            {
-        //                id = oid,
-        //                amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
-        //                userFee = 0.ToString(),
-        //                name = $"訂單編號：{oid}",
-        //            });
+                    PaymentBody.pay_type = new List<string>();
+                    if (paytype != null)
+                    {
+                        if (paytype.Code.StartsWith("PchomePayInstallment"))
+                        {
+                            PaymentBody.card_installment = $"{paytype.Code.Substring("PchomePayInstallment".Length)}";
+                            PaymentBody.pay_type.Add("CARD");
+                        }
+                        else if (paytype.Code.EndsWith("CARD"))
+                        {
+                            PaymentBody.card_installment = "1";
+                            PaymentBody.pay_type.Add(paytype.Code.Substring("PchomePay".Length).ToString());
+                        }
+                        else if (paytype.Code.StartsWith("PchomePay"))
+                        {
+                            PaymentBody.pay_type.Add(paytype.Code.Substring("PchomePay".Length).ToString());
+                        }
+                        else
+                        {
+                            PaymentBody.pay_type.Add(paytype.Code.Substring("Pchome".Length).ToString());
+                        }
+                    }
+                    else throw new Exception("付款方式錯誤");
 
-        //            var Products = new List<LinePayProductsDto>();
-        //            foreach (var od in oddatas)
-        //            {
-        //                Products.Add(new LinePayProductsDto()
-        //                {
-        //                    id = od.PId.ToString(),
-        //                    name = od.Title,
-        //                    imageUrl = $"{Website.DefaultUrl}{od.ImagePath}",
-        //                    quantity = od.Quantity.ToString(),
-        //                    price = od.Price.ToString(),
-        //                });
-        //            }
+                    PaymentBody.amount = ohdata.Subtotal + ohdata.Freight;
 
-        //            Packages[0].products = Products;
-        //            Packages[0].products.Add(new LinePayProductsDto()
-        //            {
-        //                id = "",
-        //                name = "運費",
-        //                imageUrl = "",
-        //                quantity = 1.ToString(),
-        //                price = ohdata.Freight.ToString(),
-        //            });
-        //            RequestBody.packages = Packages;
+                    var items = new List<PChomePayItemsDto>();
+                    foreach (var oddata in oddatas)
+                    {
+                        items.Add(new PChomePayItemsDto()
+                        {
+                            name = oddata.Title,
+                            url = $"{Website.DefaultUrl}/{Website.OrgName}/home/product/{oddata.PId}"
+                        });
+                    }
+                    PaymentBody.items = items;
 
-        //            RequestBody.redirectUrls = new LinePayRedirectUrlsDto();
-        //            RequestBody.redirectUrls.confirmUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayConfirm";
-        //            RequestBody.redirectUrls.cancelUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayCancel";
+                    PaymentBody.return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
+                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
+                    PaymentBody.notify_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
+                    //PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn";
+                    //PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayFailReturn";
+                    //PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
 
-        //            RequestBody.options = new LinePayOptionDto();
+                    PaymentBody.buyer_email = ohdata.OrdererEmail;
+                    PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days =5 };
 
-        //            RequestBody.options.payment = new LinePayOptionDto.LinePayPaymentDto();
-        //            RequestBody.options.payment.capture = true;
-
-        //            RequestBody.options.display = new LinePayOptionDto.LinePayDisplayDto();
-        //            RequestBody.options.display.locale = "zh_TW";
-        //            RequestBody.options.display.checkConfirmUrlBrowser = false;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-
-        //    }
-        //    return RequestBody;
-        //}
-        //private string encrypt(string keys, string data)
-        //{
-        //    HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes(keys));
-        //    return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(data)));
-        //}
+                    PaymentBody.return_timer = "Y";
+                    PaymentBody.member_key = ohdata.Fk_UserId?.ToString() ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"PChomePay=>PChomePayPaymentBody回傳資料：{ex.Message}");
+            }
+            return PaymentBody;
+        }
     }
 }

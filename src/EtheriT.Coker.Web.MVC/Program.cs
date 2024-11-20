@@ -259,6 +259,7 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
 builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 {
     client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
+    //client.BaseAddress = new Uri("https://api-pay.line.me");
 });
 
 var app = builder.Build();

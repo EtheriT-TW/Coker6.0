@@ -132,7 +132,14 @@ namespace EtheriT.Coker.Application.Order
                                     output.Message = $"LinePay,{oh.Id}";
                                     break;
                                 default:
-                                    output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                                    if (PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("PCHome") || PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("Pchome"))
+                                    {
+                                        output.Message = $"PCHomePay,{oh.Id}";
+                                    }
+                                    else
+                                    {
+                                        output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                                    }
                                     break;
                             }
                         }

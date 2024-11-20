@@ -471,11 +471,6 @@ function ready() {
                 break;
         }
     });
-
-    console.log("PCHomePay！")
-    Coker.ThirdParty.PCHomePay.Get().done(function (result) {
-        console.log(result)
-    });
 }
 
 function SiteElementInit() {
@@ -908,30 +903,16 @@ var Coker = {
         },
     },
     ThirdParty: {
-        LinePay: {
-            Request: function (ohid) {
-                return $.ajax({
-                    url: "/api/ThirdParty/LinePayRequest/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: {
-                        Authorization: 'Bearer ' + localStorage.getItem("token")
-                    },
-                    data: { ohid: ohid },
-                });
-            }
-        },
-        PCHomePay: {
-            Get: function () {
-                return $.ajax({
-                    url: "/api/ThirdParty/PChomePayHeaders/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: {
-                        Authorization: 'Bearer ' + localStorage.getItem("token")
-                    },
-                });
-            }
+        Request: function (ohid, paytype) {
+            return $.ajax({
+                url: "/api/ThirdParty/PayRequest/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid, paytype: paytype },
+            });
         }
     },
     Favorites: {

@@ -847,7 +847,8 @@ function OrderHeaderAdd() {
                         var paymenttype = result.message.split(",")[0];
                         switch (paymenttype) {
                             case "LinePay":
-                                Coker.ThirdParty.LinePay.Request(result.message.split(",")[1]).done(function (result) {
+                            case "PCHomePay":
+                                Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                     if (result.success) {
                                         window.location.replace(result.message);
                                     } else {

@@ -91,20 +91,32 @@
 
 function moveHiUserToMenu() {
     const hiUser = document.getElementById('HiUser');
+    const login = document.querySelector('.login');
     const hamburgerMenu = document.querySelector('.offcanvas-header');
     const iconBlock = document.querySelector('.icon-block');
     if (window.innerWidth <= 576) {
         // 如果屏幕宽度 <= 576px, 移动到汉堡菜单中
-        hamburgerMenu.appendChild(hiUser);
+        if ($('#HiUser').length>0) {
+            hamburgerMenu.appendChild(hiUser);
+        } else {
+            hamburgerMenu.appendChild(login);
+            const loginText = document.createElement('p');
+            loginText.textContent = '會員登入';
+            login.appendChild(loginText);
+        }
     } else {
         // 否则, 移回原来的位置
-        iconBlock.appendChild(hiUser);
+        if ($('#HiUser').length>0) {
+            iconBlock.appendChild(hiUser);
+        } else {
+            iconBlock.appendChild(login);
+        }
     }
 }
 
 function MenuLiSize() {
 
-    if ($('#HiUser').length > 0) {
+    if ($(window).width() < 576) {
         moveHiUserToMenu();
     }
     if ($(window).width() > 768) {

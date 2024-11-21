@@ -321,8 +321,7 @@
     }
 
     #Mega_Menu > .logo > a > img {
-        max-height: 50px;
-        max-width: 50%;
+        max-height: 60px;
     }
 
     #Offcanvas_Mega_Menu > ul {

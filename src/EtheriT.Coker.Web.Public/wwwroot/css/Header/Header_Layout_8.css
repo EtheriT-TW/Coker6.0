@@ -2,6 +2,15 @@
     padding-top: 0 !important;
 }
 
+footer .abreast {
+    display: flex;
+    flex-direction: column;
+}
+
+#smail-wrap {
+    display: none;
+}
+
 #footrow {
     text-align-last: start;
 }
@@ -645,6 +654,39 @@
     #Mega_Menu {
         padding: 0 0 !important;
     }
+    #smail-wrap {
+        display:unset;
+    }
+
+    #footer {
+        text-align:unset !important;
+    }
+
+    footer .abreast {
+        justify-content: start !important;
+        align-items: start !important;
+        flex-direction:unset;
+        margin-left:0.5rem;
+    }
+
+    footer .abreast p {
+        text-align-last: start;
+    }
+
+        footer .abreast span {
+            margin-left:0.5rem;
+        }
+
+    hr {
+        width: 100%;
+        opacity: 1;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+        hr:not([size]) {
+            height: 0.5px;
+        }
 }
 
 @media(max-width:400px) {

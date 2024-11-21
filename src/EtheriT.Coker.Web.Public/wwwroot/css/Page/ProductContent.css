@@ -13,7 +13,7 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
-.container-fluid > .btn_swiper_next_product {
+.container-fluid > .btn_swiper_next_product, .btn_swiper_prev_product {
     display: flex;
     justify-content: center;
     align-items: center;

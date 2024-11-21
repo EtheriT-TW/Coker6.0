@@ -59,11 +59,11 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         marqueeModels = new List<MarqueeDisplayDto> { },
                     };
                     switch (defaultData.Id) {
-                        case 7:
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage= "/upload/headertitile.jpg",PhoneImage= "headertitile_phone.jpg" });
+                        case 6:
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage= "/upload/headertitile.jpg",PhoneImage= "/upload/headertitile_phone.jpg" });
                             break;
-                        case 8:
-                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "headertitile_phone.jpg" });
+                        case 7:
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
                             break;
                     }
 

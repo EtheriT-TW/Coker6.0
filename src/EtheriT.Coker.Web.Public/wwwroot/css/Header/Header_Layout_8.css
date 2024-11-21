@@ -395,8 +395,8 @@
 }
 
 @media only screen and (max-width: 1200px) {
-    #Offcanvas_Mega_Menu > ul > .title {
-        width: 120px;
+    #Offcanvas_Mega_Menu > ul > .title:not(:last-child) {
+        width: 8.5rem;
     }
 
     .metaMenu .collapse_menus > .container > ul > li {

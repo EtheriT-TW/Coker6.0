@@ -905,7 +905,7 @@ var Coker = {
     ThirdParty: {
         Request: function (ohid, paytype) {
             return $.ajax({
-                url: "/api/ThirdParty/PayRequest/",
+                url: "/api/ThirdParty/PayRequest",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: {

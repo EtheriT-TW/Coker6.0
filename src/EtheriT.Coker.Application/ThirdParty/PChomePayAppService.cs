@@ -14,6 +14,8 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Newtonsoft.Json.Linq;
 using Microsoft.JSInterop.Infrastructure;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Mvc;
+using MailKit.Search;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -106,23 +108,33 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        //public async Task<ResponseMessageDto> PChomePayReturn(object dto)
-        //{
-        //    ResponseMessageDto response = new ResponseMessageDto();
-        //    response.Message = dto.ToString();
-        //    return response;
-        //}
-        //public async Task<ResponseMessageDto> PChomePayFailReturn(object dto)
-        //{
-        //    ResponseMessageDto response = new ResponseMessageDto();
-        //    response.Message = dto.ToString();
-        //    return response;
-        //}
+        public async Task<IActionResult> PChomePayReturn(string ohid)
+        {
+            var orderid = long.Parse(ohid);
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
+            try
+            {
+                if (orderid > 0)
+                {
+                    PChomePayStateDto statte = await PChomePayCheckPaymentStatus(orderid);
+                    if (statte == null) throw new Exception("查無訂單狀態");
+                }
+                else throw new Exception("查無訂單資料");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"PChomePay=>PChomePayReturn回傳資料：{ex.Message}");
+            }
+            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{ohid}");
+        }
         public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
         {
             if (dto.notify_type == "refund_success")
             {
-                // 退款查詢
+                Console.WriteLine($"-------------訊息查看-------------");
+                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
             }
             else
             {
@@ -130,15 +142,15 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (jsonMessage.ContainsKey("order_id"))
                 {
-                    long orderId = jsonMessage["order_id"] != null && !string.IsNullOrEmpty(jsonMessage["order_id"].ToString())? long.Parse(jsonMessage["order_id"].ToString()): 0;
+                    long orderId = jsonMessage["order_id"] != null && !string.IsNullOrEmpty(jsonMessage["order_id"].ToString()) ? long.Parse(jsonMessage["order_id"].ToString()) : 0;
                     var ohdata = await db.Order_Headers.Where(e => e.Id == orderId).FirstOrDefaultAsync();
-                    if(ohdata != null)
+                    if (ohdata != null)
                     {
                         switch (dto.notify_type)
                         {
                             case "order_audit":
                                 Console.WriteLine($"-------------訊息查看-------------");
-                                Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：{dto.notify_message}");
+                                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
                                 break;
                             case "order_confirm":
                                 if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
@@ -165,13 +177,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                     {
                         Console.WriteLine($"-------------訊息查看-------------");
-                        Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：order不存在");
+                        Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order不存在");
                     }
                 }
                 else
                 {
                     Console.WriteLine($"-------------訊息查看-------------");
-                    Console.WriteLine($"PChomePayNotify=>PChomePayNotify回傳資料：order_id不存在");
+                    Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order_id不存在");
                 }
             }
             return "success";
@@ -357,15 +369,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                     }
                     PaymentBody.items = items;
 
-                    PaymentBody.return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar?success";
-                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar?fail";
-                    //PaymentBody.notify_url = $"{Website.DefaultUrl}/{Website.OrgName}/ShoppingCar";
-                    //PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn";
-                    //PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayFailReturn";
+                    PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={PaymentBody.order_id}";
+                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={PaymentBody.order_id}";
                     PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
 
                     PaymentBody.buyer_email = ohdata.OrdererEmail;
-                    PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days =5 };
+                    PaymentBody.atm_info = new PChomePayPaymentDto.PChomePayPaymentInfo() { expire_days = 5 };
 
                     PaymentBody.return_timer = "Y";
                     PaymentBody.member_key = ohdata.Fk_UserId?.ToString() ?? "";

@@ -858,6 +858,11 @@ function OrderHeaderAdd() {
                                         window.location.replace(result.message);
                                     } else {
                                         console.log(result);
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
+                                        setTimeout(function () {
+                                            buy_step_swiper.slideNext();
+                                            buy_step_swiper.disable();
+                                        }, 300);
                                     }
                                 });
                                 break;

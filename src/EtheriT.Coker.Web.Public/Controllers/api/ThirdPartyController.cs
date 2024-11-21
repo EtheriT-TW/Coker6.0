@@ -2,9 +2,7 @@
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
-using EtheriT.Coker.Application.ThirdParty;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -36,11 +34,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             response.Message = "支付方式不存在";
             return response;
         }
-        //[HttpGet]
-        //public async Task<ResponseMessageDto> LinePayRequest(long ohid)
-        //{
-        //    return await linePayAppService.LinePayRequest(ohid);
-        //}
         [HttpGet]
         public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
         {
@@ -61,16 +54,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
         }
-        //[HttpPost]
-        //public async Task<ResponseMessageDto> PChomePayReturn(object dto)
-        //{
-        //    return await pchomePayAppService.PChomePayReturn(dto);
-        //}
-        //[HttpPost]
-        //public async Task<ResponseMessageDto> PChomePayFailReturn(object dto)
-        //{
-        //    return await pchomePayAppService.PChomePayFailReturn(dto);
-        //}
+        [HttpGet]
+        public async Task<IActionResult> PChomePayReturn(string ohid)
+        {
+            return await pchomePayAppService.PChomePayReturn(ohid);
+        }
         [HttpPost]
         public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
         {

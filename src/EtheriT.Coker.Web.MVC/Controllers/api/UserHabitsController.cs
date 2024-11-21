@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.UserHabits;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions)
         {
             return await userHabitsAppService.GetUserGroupList(loadOptions);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> AddUpUserGroup()
+        {
+            return await userHabitsAppService.AddUpUserGroup();
         }
     }
 }

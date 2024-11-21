@@ -903,19 +903,17 @@ var Coker = {
         },
     },
     ThirdParty: {
-        LinePay: {
-            Request: function (ohid) {
-                return $.ajax({
-                    url: "/api/ThirdParty/LinePayRequest/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: {
-                        Authorization: 'Bearer ' + localStorage.getItem("token")
-                    },
-                    data: { ohid: ohid },
-                });
-            }
-        },
+        Request: function (ohid, paytype) {
+            return $.ajax({
+                url: "/api/ThirdParty/PayRequest",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid, paytype: paytype },
+            });
+        }
     },
     Favorites: {
         Add: function (Pid) {

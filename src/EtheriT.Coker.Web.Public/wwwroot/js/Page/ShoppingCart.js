@@ -321,6 +321,10 @@ function GetOrderPage() {
             buy_step_swiper.slideTo(4);
             buy_step_swiper.disable();
         });
+    } else if (window.location.search.substring(1) == "success") {
+        console.log(localStorage.getItem('lastorderid'))
+    } else if (window.location.search.substring(1) == "fail") {
+        console.log(localStorage.getItem('lastorderid'))
     }
 }
 function SuccessPageDataInsert(data) {
@@ -847,11 +851,18 @@ function OrderHeaderAdd() {
                         var paymenttype = result.message.split(",")[0];
                         switch (paymenttype) {
                             case "LinePay":
-                                Coker.ThirdParty.LinePay.Request(result.message.split(",")[1]).done(function (result) {
+                            case "PCHomePay":
+                                Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                     if (result.success) {
+                                        localStorage.setItem(`lastorderid`, result.message.split(",")[1]);
                                         window.location.replace(result.message);
                                     } else {
                                         console.log(result);
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
+                                        setTimeout(function () {
+                                            buy_step_swiper.slideNext();
+                                            buy_step_swiper.disable();
+                                        }, 300);
                                     }
                                 });
                                 break;
@@ -1062,6 +1073,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         });
                         break;
                     case "imagePath":
+                        data[key].replace(`/${OrgName}/`, '/');
                         $this.attr({
                             src: data[key],
                             alt: data['title']

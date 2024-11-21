@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto;
+using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,15 +11,28 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class ThirdPartyController : Controller
     {
         private readonly ILinePayAppService linePayAppService;
+        private readonly IPChomePayAppService pchomePayAppService;
         public ThirdPartyController(
-            ILinePayAppService linePayAppService)
+            ILinePayAppService linePayAppService,
+            IPChomePayAppService pchomePayAppService)
         {
             this.linePayAppService = linePayAppService;
+            this.pchomePayAppService = pchomePayAppService;
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> LinePayRequest(long ohid)
+        public async Task<ResponseMessageDto> PayRequest(long ohid, string paytype)
         {
-            return await linePayAppService.LinePayRequest(ohid);
+            ResponseMessageDto response = new ResponseMessageDto();
+            switch (paytype)
+            {
+                case "LinePay":
+                    return await linePayAppService.LinePayRequest(ohid);
+                case "PCHomePay":
+                    return await pchomePayAppService.PChomePayRequest(ohid);
+            }
+            response.Success = false;
+            response.Message = "支付方式不存在";
+            return response;
         }
         [HttpGet]
         public async Task<IActionResult> LinePayConfirm(string transactionId, string orderId)
@@ -34,6 +48,21 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
         {
             return await linePayAppService.LinePayCheckPaymentStatus(ohid);
+        }
+        [HttpGet]
+        public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
+        {
+            return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
+        }
+        [HttpGet]
+        public async Task<IActionResult> PChomePayReturn(string ohid)
+        {
+            return await pchomePayAppService.PChomePayReturn(ohid);
+        }
+        [HttpPost]
+        public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
+        {
+            return await pchomePayAppService.PChomePayNotify(dto);
         }
     }
 }

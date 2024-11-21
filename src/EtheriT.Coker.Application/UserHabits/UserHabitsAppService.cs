@@ -13,10 +13,11 @@ using System.Text;
 using System.Threading.Tasks;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.UserHabits;
+using EtheriT.Coker.Application.Dto;
 
 namespace EtheriT.Coker.Application.UserHabits
 {
-    public class UserHabitsAppService: IUserHabitsAppService
+    public class UserHabitsAppService : IUserHabitsAppService
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
@@ -25,12 +26,12 @@ namespace EtheriT.Coker.Application.UserHabits
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper
-        ) { 
+        ) {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
         }
-        public async Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions) { 
+        public async Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions) {
             try {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var group = db.UserGroupings.Where(e => e.FK_WebsiteId == websiteId);
@@ -41,6 +42,9 @@ namespace EtheriT.Coker.Application.UserHabits
             catch (Exception ex) {
                 return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
+        }
+        public async Task<ResponseMessageDto> AddUpUserGroup() { 
+            throw new NotImplementedException();
         }
     }
 }

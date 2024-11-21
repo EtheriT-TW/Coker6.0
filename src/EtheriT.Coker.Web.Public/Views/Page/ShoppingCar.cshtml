@@ -106,7 +106,7 @@
             </div>
         }
     }
-    
+
     <div class="swiper shadow-lg mt-5">
         <div class="swiper-wrapper">
             <div id="Step1" class="card text-center swiper-slide">
@@ -268,7 +268,7 @@
                             {
                                 <div class="form-check text-start col-12 col-sm-3 my-2 py-2">
                                     <input id="radio_payment_@payment.Code" class="form-check-input" type="radio" name="RadioPayment" value="@payment.Id" required>
-                                    <label class="form-check-label" for="radio_payment_@payment.Code">@payment.Title</label>
+                                    <label class="form-check-label" for="radio_payment_@payment.Code">@if (payment.Code.StartsWith("PCHome") || payment.Code.StartsWith("Pchome")) { payment.Title = "支付連-" + payment.Title; }@payment.Title</label>
                                     @{
                                         if (!has_invalid)
                                         {

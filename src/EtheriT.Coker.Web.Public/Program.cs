@@ -182,6 +182,7 @@ builder.Services.AddTransient<IFavoritesAppService, FavoritesAppService>();
 builder.Services.AddTransient<IFreightAppService, FreightAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddTransient<ILinePayAppService, LinePayAppService>();
+builder.Services.AddTransient<IPChomePayAppService, PChomePayAppService>();
 builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
 builder.Services.AddTransient<LoginUserData>();
 builder.Services.AddTransient<StringHandler>();
@@ -225,6 +226,12 @@ if (builder.Environment.EnvironmentName == "EPZA")
 builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 {
     client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
+    //client.BaseAddress = new Uri("https://api-pay.line.me");
+});
+builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
+{
+    client.BaseAddress = new Uri("https://sandbox-api.pchomepay.com.tw");
+    //client.BaseAddress = new Uri("https://api.pchomepay.com.tw");
 });
 
 var app = builder.Build();

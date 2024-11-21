@@ -38,6 +38,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await orderAppService.GetOrderDetails(id);
         }
         [HttpGet]
+        public async Task<List<OrderDisplayDto>> GetOrderDisplay(string ohids)
+        {
+            List<long> list_ohid = ohids.Split(",").Where(x => long.TryParse(x, out _)).Select(long.Parse).ToList(); ;
+            return await orderAppService.GetOrderDisplay(list_ohid, false);
+        }
+        [HttpGet]
         public async Task<ResponseMessageDto> Delete(int id)
         {
             return await orderAppService.Delete(id);

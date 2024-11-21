@@ -746,8 +746,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 1,
                     Used = false,
                     Title = "ATM",
-					Code = "atm",
-					SerNo = 1,
+                    Code = "atm",
+                    SerNo = 1,
                     FK_ThirdPartyId = 1,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -830,6 +830,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 500,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    IsDeleted = true,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -881,6 +882,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     FK_ThirdPartyId = 3,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 15,
+                    Used = false,
+                    Title = "超商條碼付款",
+                    Code = "PCHomeIBRCD",
+                    SerNo = 500,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
         }

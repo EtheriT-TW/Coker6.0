@@ -18,5 +18,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto
         public PChomePayPaymentInfoDto payment_info { get; set; }
         public string available_date { get; set; }
         public List<PChomePayItemsDto> items { get; set; }
+        public int order_state { get; set; }
     }
 }

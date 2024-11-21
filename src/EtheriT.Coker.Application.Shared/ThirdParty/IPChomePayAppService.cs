@@ -11,5 +11,7 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
         public Task<IActionResult> PChomePayReturn(string ohid);
         public Task<string> PChomePayNotify(PChomePayNotifyDto dto);
         public Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid);
+        public Task<ResponseMessageDto> PChomePayRefund(long ohid, int? refund);
+        public Task<ResponseMessageDto> PChomePayBalance();
     }
 }

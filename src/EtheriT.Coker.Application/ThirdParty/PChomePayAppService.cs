@@ -12,10 +12,7 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Newtonsoft.Json.Linq;
-using Microsoft.JSInterop.Infrastructure;
-using System.Xml.Linq;
 using Microsoft.AspNetCore.Mvc;
-using MailKit.Search;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -49,7 +46,6 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             return response;
         }
-
         public async Task<ResponseMessageDto> PChomePayRequest(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -234,6 +230,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                             }
+                            PChomePayState.order_state = (int)ohdata.State;
                         }
                     }
                 }
@@ -250,6 +247,59 @@ namespace EtheriT.Coker.Application.ThirdParty
                 PChomePayState.status = $"Request failed: {ex.Message}";
             }
             return PChomePayState;
+        }
+        public async Task<ResponseMessageDto> PChomePayRefund(long ohid, int? refund)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null)
+                {
+                    var ohidstr = $"000000000{ohid}".Substring(ohid.ToString().Length);
+                    var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund == null ? ohdata.Subtotal + ohdata.Freight : refund };
+
+                    if (RefundBody != null)
+                    {
+                        var RefundUri = $"/v1/refund";
+                        var RefundBodyStr = JsonConvert.SerializeObject(RefundBody);
+                        response = await PChomePayHeaders();
+
+                        if (response.Success)
+                        {
+                            response = new ResponseMessageDto();
+                            var RefundContent = new StringContent(RefundBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_PCHome.PostAsync(RefundUri, RefundContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var pchomePayResponse = JsonConvert.DeserializeObject<PChomeRefundDto>(jsonResponse);
+
+                            if (pchomePayResponse != null && pchomePayResponse.order_id != null)
+                            {
+                                response.Success = true;
+                                response.Message = pchomePayResponse.ToString();
+                                db.SaveChanges();
+                            }
+                            else
+                            {
+                                response.Message = "退款發生未知錯誤";
+                            }
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
         }
         public async Task<ResponseMessageDto> PChomePayHeaders()
         {
@@ -386,6 +436,31 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine($"PChomePay=>PChomePayPaymentBody回傳資料：{ex.Message}");
             }
             return PaymentBody;
+        }
+        public async Task<ResponseMessageDto> PChomePayBalance()
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            var RequestUri = $"/v1/balance";
+
+            try
+            {
+                response = await PChomePayHeaders();
+
+                if (response.Success)
+                {
+                    response = new ResponseMessageDto();
+                    var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
+                    GetResponse.EnsureSuccessStatusCode();
+                    var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                    response.Success = true;
+                    response.Message = jsonResponse.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
         }
     }
 }

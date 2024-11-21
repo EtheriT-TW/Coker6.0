@@ -9,6 +9,15 @@
                 data: { payment: payment, ohid: ohid, refund: refund },
             });
         },
+        CheckRefund: function (payment, refundid) {
+            return $.ajax({
+                url: "/api/ThirdParty/CheckRefund/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { payment: payment, refundid: refundid },
+            });
+        },
         Line: {
             Confirm: function (ohid) {
                 return $.ajax({

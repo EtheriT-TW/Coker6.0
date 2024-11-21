@@ -30,6 +30,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
         public string CreationTime { get; set; }
-        public string Memo {  get; set; }
+        public string Memo { get; set; }
+        public string refundTransactionId { get; set; }
     }
 }

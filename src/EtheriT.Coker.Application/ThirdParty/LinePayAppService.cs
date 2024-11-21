@@ -13,6 +13,8 @@ using EtheriT.Coker.Application.Shared.Order;
 using static EtheriT.Coker.Application.Shared.Dto.ThirdParty.LinePayDto.LinePayRequestBodyDto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.AspNetCore.Mvc;
+using System.Xml.Linq;
+using System.Globalization;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -278,7 +280,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
 
-                if (ohdata != null && ohdata.State == OrderStatusEnum.已付款)
+                if (ohdata != null)
                 {
                     var RequestBody = new { refundAmount = refund };
 
@@ -393,6 +395,48 @@ namespace EtheriT.Coker.Application.ThirdParty
                 linePayResponse.ReturnMessage = ex.Message;
             }
             return linePayResponse;
+        }
+        public async Task<ResponseMessageDto> LinePayRefundState(string refundid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                List<string> refund_str = new List<string> { refundid};
+
+                var RequestUri = $"/v3/payments/{refund_str.ToString()}";
+                response = await LinePayDefaultRequestHeaders(RequestUri, "");
+
+                if (response.Success)
+                {
+                    response = new ResponseMessageDto();
+                    var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
+                    GetResponse.EnsureSuccessStatusCode();
+                    var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                    var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundCheckResponseDto>(jsonResponse);
+
+                    if (linePayResponse.ReturnCode == "0000")
+                    {
+                        response.Success = true;
+                        response.Message = $"退款編號{linePayResponse.info[0].refundList[0].refundTransactionId}已於{DateTime.Parse(linePayResponse.info[0].refundList[0].refundTransactionDate).ToString("yyyy/MM/dd")}退款，退款金額為{linePayResponse.info[0].refundList[0].refundAmount.ToString("$#,##0")}";
+                    }
+                    else
+                    {
+                        response.Message = linePayResponse.ReturnMessage;
+                    }
+                    response.Error = linePayResponse.ReturnCode;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
         }
         private async Task<ResponseMessageDto> LinePayDefaultRequestHeaders(string RequestUri, string RequestBody)
         {

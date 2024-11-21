@@ -31,5 +31,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string InvoiceAddress { get; set; }
         public string Shipping { get; set; }
         public string Payment { get; set; }
+        public string refundTransactionId { get; set; }
     }
 }

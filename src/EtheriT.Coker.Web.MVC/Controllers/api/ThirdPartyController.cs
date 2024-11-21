@@ -5,6 +5,8 @@ using EtheriT.Coker.Application.Shared.Dto.ThirdParty.PChomePayDto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -69,6 +71,21 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> PChomePayBalance()
         {
             return await pchomePayAppService.PChomePayBalance();
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> CheckRefund(string payment, string refundid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            switch (payment)
+            {
+                case "LinePay":
+                    return await linePayAppService.LinePayRefundState(refundid);
+                case "PCHomePay":
+                    return await pchomePayAppService.PChomePayRefundState(refundid);
+            }
+            response.Success = false;
+            response.Message = "支付方式不存在";
+            return response;
         }
     }
 }

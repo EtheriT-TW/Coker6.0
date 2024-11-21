@@ -13,6 +13,7 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -279,6 +280,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             {
                                 response.Success = true;
                                 response.Message = pchomePayResponse.ToString();
+                                ohdata.refundTransactionId = pchomePayResponse.refund_id; ;
+                                ohdata.refundTransactionDate = DateTime.Now;
                                 db.SaveChanges();
                             }
                             else
@@ -441,7 +444,6 @@ namespace EtheriT.Coker.Application.ThirdParty
         {
             ResponseMessageDto response = new ResponseMessageDto();
             var RequestUri = $"/v1/balance";
-
             try
             {
                 response = await PChomePayHeaders();
@@ -454,6 +456,52 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                     response.Success = true;
                     response.Message = jsonResponse.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> PChomePayRefundState(string refundid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            var RequestUri = $"/v1/refund/{refundid}";
+            try
+            {
+                response = await PChomePayHeaders();
+
+                if (response.Success)
+                {
+                    response = new ResponseMessageDto();
+                    var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
+                    GetResponse.EnsureSuccessStatusCode();
+                    var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                    var pchomePayResponse = JsonConvert.DeserializeObject<PChomePayRefundStateDto>(jsonResponse);
+                    if (pchomePayResponse.refund_id != null)
+                    {
+                        response.Success = true;
+                        switch (pchomePayResponse.status)
+                        {
+                            case "INIT":
+                                response.Message = $"退款編號{pchomePayResponse.refund_id}已於{DateTime.ParseExact(pchomePayResponse.refund_date, "yyyyMMddHHmmss", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd")}建立，退款金額為{pchomePayResponse.amount.ToString("$#,##0")}";
+                                break;
+                            case "WAIT":
+                                response.Message = $"退款編號{pchomePayResponse.refund_id}正在處理中";
+                                break;
+                            case "SUCC":
+                                response.Message = $"退款編號{pchomePayResponse.refund_id}已於{DateTime.ParseExact(pchomePayResponse.actual_refund_date, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd")}退款成功，退款金額為{pchomePayResponse.amount.ToString("$#,##0")}，退款手續費{pchomePayResponse.transfer_fee.ToString("$#,##0")}";
+                                break;
+                            case "FAIL":
+                                response.Message = $"退款編號{pchomePayResponse.refund_id}退款失敗";
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        response.Message = "查詢退款發生錯誤";
+                    }
                 }
             }
             catch (Exception ex)

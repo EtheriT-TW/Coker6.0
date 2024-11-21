@@ -407,8 +407,58 @@ function CartInit() {
 
             buy_step_swiper.update();
             TotalCount();
+
+            PaymentForms.children("div").each(function () {
+                var $this = $(this);
+                var $this_in = $this.find("input");
+                var code = $this_in.attr("id").replaceAll("radio_payment_", "");
+                if (code.toLowerCase().startsWith("pchome")) {
+                    if (code.startsWith("PchomePayInstallment")) {
+                        code = "CARD";
+                        $this.attr("data-paycode", code);
+                    } else if (code.startsWith("PchomePay")) {
+                        code = code.replaceAll("PchomePay", "");
+                        $this.attr("data-paycode", code);
+                    } else if (code.startsWith("PCHome")) {
+                        code = code.replaceAll("PCHome", "");
+                        $this.attr("data-paycode", code);
+                    }
+                }
+            })
+            PaymentHideShow();
         }
     })
+}
+function PaymentHideShow() {
+    PaymentForms.find("div[data-paycode]").removeClass("d-none");
+
+    if (subtotal < 1) {
+        PaymentForms.find("div[data-paycode]").addClass("d-none");
+    } else {
+        if (subtotal < 65) {
+            PaymentForms.find("div[data-paycode^='IP']").addClass("d-none");
+        }
+        if (subtotal < 30) {
+            PaymentForms.find("div[data-paycode='CARD']").addClass("d-none");
+        }
+        if (subtotal < 25) {
+            PaymentForms.find("div[data-paycode]").addClass("d-none");
+        }
+    }
+
+    if (subtotal > 199999) {
+        var $this = PaymentForms.find("div[data-paycode]");
+        if ($this.length > 0) $this.addClass("d-none");
+    } else {
+        if (subtotal > 20000) {
+            var $this = PaymentForms.find("div[data-paycode^='IP'], div[data-paycode='IBRCD']");
+            if ($this.length > 0) $this.addClass("d-none");
+        } 
+        if (subtotal > 49999) {
+            var $this = PaymentForms.find("div[data-paycode='ATM'], div[data-paycode='EACH']");
+            if ($this.length > 0) $this.addClass("d-none");
+        }
+    }
 }
 function CartAdd(result) {
     //console.log(result)
@@ -545,6 +595,7 @@ function TotalCount() {
         total = (freight == null || freight == "") ? subtotal : subtotal + freight;
         $(this).text(parseInt(total).toLocaleString())
     })
+    PaymentHideShow()
 }
 function CartDelete(self, id, success, error) {
     self.remove();

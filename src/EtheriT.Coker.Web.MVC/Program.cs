@@ -187,6 +187,7 @@ builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddTransient<IContactAppService, ContactAppService>();
 builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
 builder.Services.AddTransient<ILinePayAppService, LinePayAppService>();
+builder.Services.AddTransient<IPChomePayAppService, PChomePayAppService>();
 builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddTransient<IUserHabitsAppService, UserHabitsAppService>();
@@ -260,6 +261,11 @@ builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 {
     client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
     //client.BaseAddress = new Uri("https://api-pay.line.me");
+});
+builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
+{
+    client.BaseAddress = new Uri("https://sandbox-api.pchomepay.com.tw");
+    //client.BaseAddress = new Uri("https://api.pchomepay.com.tw");
 });
 
 var app = builder.Build();

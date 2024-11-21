@@ -160,6 +160,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var result = db.Order_Headers.Where(e => e.Id == id).FirstOrDefault();
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
 
                 if (result != null)
                 {
@@ -188,7 +189,7 @@ namespace EtheriT.Coker.Application.Order
                         InvoiceTitle = result.InvoiceTitle,
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
-                        Payment = (await db.PaymentTypes.Where(e => e.Id == result.Payment).Select(e => e.Title).FirstOrDefaultAsync())?.ToString() ?? "",
+                        Payment = result.Payment==0?"":result.Payment.ToString(),
                         Shipping = ship_text,
                         State = result.State,
                         StateStr = ((OrderStatusEnum)result.State).ToString(),
@@ -202,7 +203,28 @@ namespace EtheriT.Coker.Application.Order
                         Service_Charge = result.Service_Charge,
                         CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
                         Memo = result.Memo
-                    };
+                    }; 
+                    if(output.Payment != "")
+                    {
+                        var payments = await (from pt in db.PaymentTypes
+                                              join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                              where ptv.FK_WebsiteId == WebsiteId
+                                              select pt).ToListAsync();
+
+                        if (payments.FirstOrDefault(e => e.Id == long.Parse(output.Payment)) != null)
+                        {
+                            var payment = payments.FirstOrDefault(e => e.Id == long.Parse(output.Payment));
+                            if (payment.Code.ToLower().StartsWith("pchome"))
+                            {
+                                output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
+                            }
+                            else
+                            {
+                                output.Payment = payment.Title?.ToString() ?? "";
+                            }
+                        }
+                    }
+                    
                     return output;
                 }
                 else throw new Exception("查無訂單資料");
@@ -220,7 +242,7 @@ namespace EtheriT.Coker.Application.Order
             List<OrderHeaderDisplayDto> output = new List<OrderHeaderDisplayDto>();
             try
             {
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
                 List<Order_Header> order_headers = new List<Order_Header>();
                 if (check)
                 {
@@ -289,11 +311,22 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str2 = ((PreserveTypeEnum)(shipping?.PreserveType ?? 0)).ToString();
                     var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str2}-{shipping_str3}" : $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
-                    var payment = await (from pt in db.PaymentTypes
+                    var payments = await (from pt in db.PaymentTypes
                                          join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
                                          where ptv.FK_WebsiteId == WebsiteId
                                          select pt).ToListAsync();
-                    temp_output.Payment = payment.FirstOrDefault(e => e.Id == order_header.Payment)?.Title?.ToString() ?? "";
+                    if(payments.FirstOrDefault(e => e.Id == order_header.Payment) != null)
+                    {
+                        var payment = payments.FirstOrDefault(e => e.Id == order_header.Payment);
+                        if (payment.Code.ToLower().StartsWith("pchome"))
+                        {
+                            temp_output.Payment = "支付連-" + payment.Title?.ToString() ?? "";
+                        }
+                        else
+                        {
+                            temp_output.Payment = payment.Title?.ToString() ?? "";
+                        }
+                    }
                     output.Add(temp_output);
                 }
             }

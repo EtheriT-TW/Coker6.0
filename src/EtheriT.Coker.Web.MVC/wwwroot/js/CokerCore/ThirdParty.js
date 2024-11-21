@@ -1,5 +1,14 @@
 ﻿Coker.extend({
     ThirdParty: {
+        PayRefund: function (payment, ohid, refund) {
+            return $.ajax({
+                url: "/api/ThirdParty/PayRefund/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { payment: payment, ohid: ohid, refund: refund },
+            });
+        },
         Line: {
             Confirm: function (ohid) {
                 return $.ajax({
@@ -19,15 +28,6 @@
                     data: { ohid: ohid },
                 });
             },
-            PayRefund: function (ohid, refund) {
-                return $.ajax({
-                    url: "/api/ThirdParty/LinePayRefund/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { ohid: ohid, refund: refund },
-                });
-            },
             CheckPaymentStatus: function (ohid) {
                 return $.ajax({
                     url: "/api/ThirdParty/LinePayCheckPaymentStatus/",
@@ -37,6 +37,17 @@
                     data: { ohid: ohid },
                 });
             }
+        },
+        PChomePay: {
+            CheckStatus: function (ohid) {
+                return $.ajax({
+                    url: "/api/ThirdParty/PChomePayCheckPaymentStatus/",
+                    type: "GET",
+                    contentType: 'application/json; charset=utf-8',
+                    headers: _c.Data.Header,
+                    data: { ohid: ohid },
+                });
+            },
         }
     }
 });

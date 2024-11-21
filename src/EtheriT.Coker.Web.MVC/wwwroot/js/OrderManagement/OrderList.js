@@ -48,7 +48,27 @@ function PageReady() {
                     } else if ([2, 3, 7].includes(oristate) && [1, 4, 5].includes(newstate)) {
                         co.sweet.confirm("變更訂單狀態", `訂單已完成付款，是否確認將訂單狀態變更為【${status}】？`, "確定", "取消", function () {
                             co.sweet.confirm("變更訂單狀態", "是否退回貨款?", "確定", "取消", function () {
-                                Coker.ThirdParty.Line.PayRefund(keyId).done(function (result) {
+                                Coker.ThirdParty.PayRefund("LinePay", keyId).done(function (result) {
+                                    if (result.success) {
+                                        updateOrder();
+                                        console.log(result.message);
+                                    } else {
+                                        co.sweet.error(result.error, result.message, null, false);
+                                    }
+                                });
+                            }, updateOrder);
+                        });
+                    } else updateOrder();
+                    break;
+                case "支付連":
+                    if (newstate == 6) {
+                        co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
+                    } else if (oristate == 6) {
+                        co.sweet.error("訂單狀態錯誤", `訂單交易等待中不可更改，請先確認付款狀態`);
+                    } else if ([2, 3, 7].includes(oristate) && [1, 4, 5].includes(newstate)) {
+                        co.sweet.confirm("變更訂單狀態", `訂單已完成付款，是否確認將訂單狀態變更為【${status}】？`, "確定", "取消", function () {
+                            co.sweet.confirm("變更訂單狀態", "是否退回貨款?", "確定", "取消", function () {
+                                Coker.ThirdParty.PayRefund("PCHomePay", keyId).done(function (result) {
                                     if (result.success) {
                                         updateOrder();
                                         console.log(result.message);
@@ -140,6 +160,7 @@ function FormDataClear() {
     $order_notes.text("")
     if (!$(".btn_failReason").hasClass("d-none")) $(".btn_failReason").addClass("d-none");
     if (!$(".btn_confirm").hasClass("d-none")) $(".btn_confirm").addClass("d-none");
+    if (!$(".btn_recheck").hasClass("d-none")) $(".btn_recheck").addClass("d-none");
 
     $recipient_name.text("")
     $recipient_cellphone.text("")
@@ -168,7 +189,16 @@ function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
-            co.Order.GetHeader(parseInt(hash)).done(function (result) {
+            var ohids = `${hash}`;
+            //co.Order.GetDisplay(ohids).done(function (result) {
+            //    if (result.length > 0) {
+            //        var order_header = result[0].orderHeader;
+            //        console.log("order_header", order_header);
+            //        var order_details = result[0].orderDetails;
+            //        console.log("order_details", order_details);
+            //    }
+            //});
+            co.Order.GetHeaderOld(parseInt(hash)).done(function (result) {
                 if (result != null) {
                     keyId = result.id;
                     HeaderDataSet(result);
@@ -193,7 +223,11 @@ function editButtonClicked(e) {
     MoveToContent();
 }
 function HeaderDataSet(result) {
-    payment = result.payment
+    if (result.payment.indexOf("-")) {
+        payment = result.payment.substring(0, result.payment.indexOf("-"));
+    } else {
+        payment = result.payment
+    }
 
     $order_number.text(("000000000" + result.id).substr(result.id.length));
     $order_date.text(result.creationTime)
@@ -220,6 +254,9 @@ function HeaderDataSet(result) {
             switch (payment) {
                 case "LINEPay":
                     if ($(".btn_confirm").hasClass("d-none")) $(".btn_confirm").removeClass("d-none");
+                    break;
+                case "支付連":
+                    if ($(".btn_recheck").hasClass("d-none")) $(".btn_recheck").removeClass("d-none");
                     break;
             }
             break;
@@ -283,7 +320,7 @@ function HeaderDataSet(result) {
         }
     });
 
-    switch (result.payment) {
+    switch (payment) {
         case "LINEPay":
             $(".btn_failReason").on("click", function () {
                 Coker.ThirdParty.Line.CheckPaymentStatus(keyId).done(function (result) {
@@ -301,6 +338,19 @@ function HeaderDataSet(result) {
                         }, false);
                     } else {
                         co.sweet.error(result.error, result.message, null, false);
+                    }
+                });
+            });
+            break;
+        case "支付連":
+            $(".btn_recheck").on("click", function () {
+                co.sweet.loading();
+                Coker.ThirdParty.PChomePay.CheckStatus(keyId).done(function (result) {
+                    if (result.order_state != 0 && result.order_state != result.state) {
+                        $order_status.val(result.order_state);
+                        if (!$(".btn_recheck").hasClass("d-none")) $(".btn_recheck").addClass("d-none");
+                        oristate = result.order_state;
+                        co.sweet.success(`訂單狀態變更為【${$order_status.find("option:selected").text()}】`);
                     }
                 });
             });

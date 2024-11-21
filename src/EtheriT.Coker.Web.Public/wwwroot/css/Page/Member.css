@@ -136,7 +136,6 @@
 }
 
 #history-tab-pane img {
-    width: 180px;
     height: 180px;
 }
 
@@ -175,7 +174,6 @@
     }
 
 #TabContent .content img {
-    width: 180px;
     height: auto;
     margin-top: 0.5rem;
 }
@@ -188,6 +186,9 @@
 #TabContent .content .type_change_frame div[data-key='price'] {
     flex-grow: 1;
     align-content: flex-end;
+    word-break: keep-all;
+    white-space: nowrap;
+    overflow-wrap: break-word;
 }
 
 #TabContent .content.type_grid figure figcaption {
@@ -373,14 +374,26 @@
 }
 
 @media (max-width:576px) {
-    #history-tab-pane .content {
-        padding-right: 12px !important;
-        padding-left: 12px !important;
+    #history-tab-pane .type_list {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        justify-content:center;
     }
 
-    #favorite-tab-pane .content {
-        padding-right: 12px !important;
-        padding-left: 12px !important;
+    #favorite-tab-pane .type_list {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        justify-content: center;
+    }
+
+    #history-tab-pane .type_grid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    #favorite-tab-pane .type_grid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
     }
 
     #ToolList > li > button {
@@ -431,6 +444,6 @@
 
 @media (max-width:440px) {
     #TabContent .content.type_grid .type_change_frame {
-        width: 100% !important;
+        flex:0 0 auto;
     }
 }

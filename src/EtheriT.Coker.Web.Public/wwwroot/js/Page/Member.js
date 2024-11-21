@@ -539,7 +539,7 @@ function DataInsert($content, $frame, datas) {
                         break;
                     case "price":
                         var prices = data['price'];
-                        if (prices.length > 1) $self.text(`$${prices[0].toLocaleString()}~$${[prices[prices.length - 1].toLocaleString()]}`)
+                        if (prices.length > 1) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`)
                         else $self.text(`$${prices[0].toLocaleString()}`)
                         break;
                     default:

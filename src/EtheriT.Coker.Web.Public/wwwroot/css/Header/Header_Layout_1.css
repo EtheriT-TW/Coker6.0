@@ -504,10 +504,6 @@
         flex-direction: column;
     }
 
-        #Offcanvas_Mega_Menu > ul > .title > .content > ul > li, a {
-            padding-right: 0 !important;
-        }
-
     .subtitle > .subtitle_title > .material-symbols-outlined {
         padding-bottom: 0.5rem;
     }

@@ -47,6 +47,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await memberAppService.GetAllData(id);
         }
         [HttpGet]
+        public async Task<MemberGetAllDataDto> GetFrontAllData(long id)
+        {
+            return await memberAppService.GetFrontAllData(id);
+        }
+        [HttpGet]
         public async Task<MemberGetAllDataDto> GetSelfData()
         {
             return await memberAppService.GetSelfData();
@@ -61,6 +66,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> Update(MemberUpdateDto dto)
         {
             return await memberAppService.Update(dto);
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> FrontUpdate(MemberUpdateDto dto)
+        {
+            return await memberAppService.FrontUpdate(dto);
         }
         [HttpGet]
         public async Task<List<SelectDto>> GetAllRole()

@@ -40,6 +40,7 @@
     <Content Remove="wwwroot\js\Grapes\grapesjs-Coker6.js" />
     <Content Remove="wwwroot\js\Grapes\index.js" />
     <Content Remove="wwwroot\js\Grapes\locale\tw.js" />
+    <Content Remove="wwwroot\js\MemberManagement\ManagerList.js" />
     <Content Remove="wwwroot\js\MemberManagement\MemberData.js" />
     <Content Remove="wwwroot\js\MemberManagement\SelfData.js" />
     <Content Remove="wwwroot\js\Newsletter\Index.js" />
@@ -94,6 +95,7 @@
     <None Include="wwwroot\js\Grapes\grapesjs-Coker6.js" />
     <None Include="wwwroot\js\Grapes\index.js" />
     <None Include="wwwroot\js\Grapes\locale\tw.js" />
+    <None Include="wwwroot\js\MemberManagement\ManagerList.js" />
     <None Include="wwwroot\js\MemberManagement\MemberData.js" />
     <None Include="wwwroot\js\MemberManagement\SelfData.js" />
     <None Include="wwwroot\js\Newsletter\Index.js" />

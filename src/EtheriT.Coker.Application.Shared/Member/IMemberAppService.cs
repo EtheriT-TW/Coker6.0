@@ -13,8 +13,10 @@ namespace EtheriT.Coker.Application.Shared.Member
 		public Task<JsonResult> GetAllFrontList(DataSourceLoadOptions loadOptions);
 		public Task<JsonResult> GetAllManagerList(DataSourceLoadOptions loadOptions);
 		public Task<MemberGetAllDataDto> GetAllData(long id);
-		public Task<MemberGetAllDataDto> GetSelfData();
+        public Task<MemberGetAllDataDto> GetFrontAllData(long id);
+        public Task<MemberGetAllDataDto> GetSelfData();
 		public Task<ResponseMessageDto> Update(MemberUpdateDto dto);
+        public Task<ResponseMessageDto> FrontUpdate(MemberUpdateDto dto);
         public Task<List<SelectDto>> GetAllRole();
         public Task<JsonResult> GetDevAllRole(DataSourceLoadOptions loadOptions);
         public Task<ResponseMessageDto> RoleAddUp([FromForm] DevExpressDto dto);

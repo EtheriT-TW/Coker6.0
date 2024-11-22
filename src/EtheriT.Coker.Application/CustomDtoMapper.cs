@@ -32,6 +32,7 @@ using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 
 namespace EtheriT.Coker.Application
 {
@@ -53,6 +54,8 @@ namespace EtheriT.Coker.Application
             CreateMap<UserSimplifyDto, User>()
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
                 .ReverseMap();
+            CreateMap<MemberGetAllDataDto, User>().ReverseMap();
+            CreateMap<MemberUpdateDto, User>().ReverseMap();
             CreateMap<MemberGetAllDataDto, FrontUser>().ReverseMap();
             CreateMap<MemberUpdateDto, FrontUser>().ReverseMap();
             CreateMap<ManagerAllListDto, User>().ReverseMap();
@@ -64,6 +67,10 @@ namespace EtheriT.Coker.Application
             CreateMap<FrontUser, User>().ReverseMap();
             CreateMap<FrontAddUserDto, MappingFrontUserAndWebsite>().ReverseMap();
             CreateMap<FrontAddUserDto, SendOpeningDto>().ReverseMap();
+
+            //UserGroup
+            CreateMap<UserGroupAddUpDto, UserGrouping>().ReverseMap();
+            CreateMap<UserGroupListDto, UserGrouping>().ReverseMap();
 
             //Website
             CreateMap<Website, WebsiteEditDto>()

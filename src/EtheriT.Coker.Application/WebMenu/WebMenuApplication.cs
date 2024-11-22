@@ -617,6 +617,7 @@ namespace EtheriT.Coker.Application
                 response.Success = false;
                 response.Error = ex.Message;
             }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto)
@@ -638,6 +639,7 @@ namespace EtheriT.Coker.Application
                 response.Success = false;
                 response.Error = ex.Message;
             }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> Delete(DataDelectDto dto)
@@ -686,6 +688,7 @@ namespace EtheriT.Coker.Application
             {
                 response.Success = false;
             }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> updateSerNo(UpdateSerNoListDto dto)

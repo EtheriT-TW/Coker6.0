@@ -217,7 +217,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     },
                     new JobMenu{
                         PageName="MemberManagement",
-                        Title="使用者管理",
+                        Title="管理者管理",
                         Controller="MemberManagement",
                         Action="Index",
                         Icon="people_alt",
@@ -225,7 +225,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         jobItemModels= new List<JobMenu> {
                             new JobMenu{
                                 PageName="ManagerList",
-                                Title="使用者名單",
+                                Title="管理者名單",
                                 Controller="MemberManagement",
                                 Action="ManagerList",
                                 Icon=""

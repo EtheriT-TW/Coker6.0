@@ -1,9 +1,6 @@
-﻿var $btn_display, $btn_pop_visible, $title, $title_text, $subtitle_input, $describe, $describe_text, $longitude, $latitude, $sort, $sort_input, $sort_checkbox, $picker, $nodeDate, $permanent, $removedFromShelves;
-var startDate, endDate, keyId, disp_opt = false, pop_visible = false;
-var article_list;
+﻿let keyId,article_list,$from;
 
 function PageReady() {
-    ImageUploadModalInit($("#ImageUpload"));
     ElementInit();
     TagListModalInit();
 
@@ -39,91 +36,6 @@ function PageReady() {
         HashDataEdit();
     });
 
-    $(".btn_to_canvas").on("click", function (event) {
-        event.preventDefault()
-
-        Swal.fire({
-            icon: 'info',
-            title: "前往文章編輯頁",
-            html: "是否保存資料?",
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#888888',
-            denyButtonColor: '#d33',
-            confirmButtonText: "　是　",
-            denyButtonText: "　否　",
-            cancelButtonText: "　取消　",
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                AddUp("資料已儲存", "儲存發生未知錯誤", "canvas");
-            } else if (result.isDenied) {
-                var hash = window.location.hash.replace("#", "") + "-1";
-                window.location.hash = hash;
-                MoveToCanvas();
-            }
-        })
-    });
-
-    $btn_display.on("click", function () {
-        if (disp_opt) {
-            $btn_display.children("span").text("visibility_off");
-            disp_opt = !disp_opt;
-        } else {
-            $btn_display.children("span").text("visibility");
-            disp_opt = !disp_opt;
-        }
-    })
-
-    $btn_pop_visible.on("click", function () {
-        if (pop_visible) {
-            $btn_pop_visible.children("span").text("group_off");
-            pop_visible = !pop_visible;
-        } else {
-            $btn_pop_visible.children("span").text("group");
-            pop_visible = !pop_visible;
-        }
-    })
-
-    $title_text.on('keyup', function () {
-        var $self = $(this);
-        $title.children("div").children(".count").text($self.val().length)
-    });
-
-    $describe_text.on('keyup', function () {
-        var $self = $(this);
-        $describe.children("div").children(".count").text($self.val().length)
-    });
-
-    $sort_checkbox.on("click", function () {
-        var $self = $(this);
-        if ($self.is(":checked")) {
-            $sort_input.removeAttr("disabled");
-        } else {
-            $sort_input.val('');
-            $sort_input.attr("disabled", "disabled");
-        }
-    })
-
-    co.Picker.Init($picker);
-    co.Picker.Init($nodeDate, { singleDatePicker: true, timePicker: false, locale: { format: 'YYYY/MM/DD' } });
-    $picker.on('apply.daterangepicker', function (ev, picker) {
-        $(this).val(picker.startDate.format('YYYY/MM/DD HH:mm') + ' ~ ' + picker.endDate.format('YYYY/MM/DD HH:mm'));
-        startDate = picker.startDate.format("");
-        endDate = picker.endDate.format("");
-    });
-    $permanent.on("click", function () {
-        if ($permanent.is(":checked")) {
-            $picker.val('');
-            $picker.attr("disabled", "disabled");
-            startDate = null;
-            endDate = null;
-        } else {
-            $picker.removeAttr("disabled");
-        }
-    })
-
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -132,22 +44,7 @@ function PageReady() {
 }
 
 function ElementInit() {
-    $btn_display = $(".btn_display");
-    $btn_pop_visible = $(".btn_pop_visible");
-    $title = $(".title");
-    $title_text = $title.children("textarea");
-    $subtitle_input = $(".subtitle").children("input");
-    $longitude = $(".longitude");
-    $latitude = $(".latitude");
-    $describe = $(".describe");
-    $describe_text = $describe.children("textarea");
-    $sort = $(".sort");
-    $sort_input = $sort.children("input");
-    $sort_checkbox = $sort.children(".checkbox").children("input");
-    $picker = $("#InputDate");
-    $nodeDate = $("#NodeDate");
-    $permanent = $("#PermanentCheck");
-    $removedFromShelves = $("#RemovedFromShelves");
+    $from = $("#PageForm");
 }
 
 function contentReady(e) {
@@ -174,7 +71,7 @@ function HashDataEdit() {
                 FormDataClear();
                 MoveToContent();
             } else {
-                co.Articles.GetDataOne(parseInt(hash)).done(function (result) {
+                co.UserHabits.GetUserGroupOne(parseInt(hash)).done(function (result) {
                     if (result != null) {
                         keyId = parseInt(hash);
                         if (hash.indexOf("-") > 0) {
@@ -203,80 +100,15 @@ function editButtonClicked(e) {
 
 function FormDataClear() {
     TagDataClear();
-    ImageUploadModalClear($("#ImageUpload"));
     keyId = 0;
-    $btn_display.children("span").text("visibility_off");
-    $btn_pop_visible.children("span").text("group_off");
-    $title_text.val("");
-    $subtitle_input.val("");
-    $longitude.val("");
-    $latitude.val("");
-    $title.children("div").children(".count").text(0);
-    $describe_text.val("");
-    $describe.children("div").children(".count").text(0);
-    $sort_input.val("");
-    $sort_input.attr("disabled", "disabled");
-    $sort_checkbox.prop("checked", false);
-    $permanent.prop("checked", true);
-    $removedFromShelves.prop("checked", true);
-    pop_visible = false;
-    disp_opt = false;
+    co.Form.clear("PageForm");
 }
 
 function FormDataSet(result) {
     FormDataClear();
-    co.File.getImgFile({ Sid: result.id, Type: 6, Size: 3 }).done(function (file) {
-        if (file.length > 0)
-            ImageUploadModalDataInsert($("#ImageUpload"), file[0].id, file[0].link, file[0].name)
-    });
     keyId = result.id;
-
-    if (result.visible) {
-        $btn_display.children("span").text("visibility");
-    }
-
-    if (result.popularVisible) {
-        $btn_pop_visible.children("span").text("group");
-    }
-
-    $title_text.val(result.title);
-    $subtitle_input.val(result.subtitle);
-    $longitude.val(result.longitude);
-    $latitude.val(result.latitude);
-    $title.children("div").children(".count").text(result.title.length);
-    $describe_text.val(result.description);
-    $describe.children("div").children(".count").text(result.description.length);
-    $nodeDate.val(result.nodeDate);
-    startDate = result.startTime;
-    endDate = result.endTime;
-    pop_visible = result.popularVisible;
-    disp_opt = result.visible;
-    $removedFromShelves.prop("checked", result.removedFromShelves);
-
-
-    if (result.serNO != 500) {
-        $sort_input.val(result.serNO);
-        $sort_input.removeAttr("disabled");
-        $sort_checkbox.prop("checked", true);
-    }
-
-    if (result.permanent) {
-        $picker.val('');
-        $picker.attr("disabled", "disabled");
-        $permanent.prop("checked", true);
-    } else {
-        startDate != null && $picker.data('daterangepicker').setStartDate(startDate);
-        endDate != null && $picker.data('daterangepicker').setEndDate(endDate);
-        $permanent.prop("checked", false);
-    }
-
-    if (result.nodeDate != null) {
-        $nodeDate.data('daterangepicker').setStartDate(result.nodeDate);
-        $nodeDate.data('daterangepicker').setEndDate(result.nodeDate);
-    }
-
+    co.Form.insertData(result,"PageForm");
     TagDataSet(result.tagDatas);
-
 }
 
 function paletteButtonClicked(e) {
@@ -286,7 +118,7 @@ function paletteButtonClicked(e) {
 
 function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
-        co.Articles.Delete(e.row.key).done(function (result) {
+        co.UserHabits.DeleteUserGroup(e.row.key).done(function (result) {
             if (result.success) {
                 e.component.refresh();
             }
@@ -295,72 +127,15 @@ function deleteButtonClicked(e) {
 }
 
 function AddUp(success_text, error_text, place) {
-    if ($("#ImageUpload .img_input_frame").data("delectList") != null) {
-        co.File.DeleteFileById({
-            Sid: keyId,
-            Type: 6,
-            Fid: $("#ImageUpload").data("delectList")
-        });
-    }
-
-    co.Articles.AddUp({
-        Id: keyId,
-        Title: $title_text.val(),
-        Subtitle: $subtitle_input.val(),
-        Longitude: $longitude.val(),
-        Latitude: $latitude.val(),
-        Description: $describe_text.val(),
-        Visible: disp_opt,
-        SerNO: $sort_checkbox.is(":checked") ? $sort_input.val() : 500,
-        PopularVisible: pop_visible,
-        TagSelected: tag_list,
-        permanent: $permanent.is(":checked"),
-        StartTime: startDate,
-        EndTime: endDate,
-        NodeDate: $nodeDate.val(),
-        RemovedFromShelves: $removedFromShelves.is(":checked")
-    }).done(function (result) {
+    let data = co.Form.getJson("PageForm");
+    console.log(data);
+    co.UserHabits.AddUpUserGroup(data).done(function (result) {
         if (result.success) {
-            if ($("#ImageUpload .img_input").data("file") != null && $("#ImageUpload .img_input").data("file").File != null && $("#ImageUpload .img_input").data("file").id == 0) {
-                var formData = new FormData();
-                formData.append("files", $("#ImageUpload .img_input").data("file").File);
-                formData.append("type", 6);
-                formData.append("sid", result.message);
-                formData.append("serno", 500);
-                co.File.Upload(formData).done(function (response) {
-                    if (response.success) {
-                        Coker.sweet.success(success_text, null, true);
-                        setTimeout(function () {
-                            if (place == "canvas") {
-                                setTimeout(function () {
-                                    if (keyId == 0) window.location.hash = `${result.message}-1`;
-                                    else window.location.hash += "-1";
-                                }, 1000);
-                            } else {
-                                setTimeout(function () {
-                                    article_list.component.refresh();
-                                    BackToList();
-                                }, 1000);
-                            }
-                        }, 1000);
-                    }
-                });
-            } else {
-                Coker.sweet.success(success_text, null, true);
-                setTimeout(function () {
-                    if (place == "canvas") {
-                        setTimeout(function () {
-                            if (keyId == 0) window.location.hash = `${result.message}-1`;
-                            else window.location.hash += "-1";
-                        }, 1000);
-                    } else {
-                        setTimeout(function () {
-                            article_list.component.refresh();
-                            BackToList();
-                        }, 1000);
-                    }
-                }, 1000);
-            }
+            Coker.sweet.success(success_text, null, true);
+            setTimeout(function () {
+                article_list.component.refresh();
+                BackToList();
+            }, 1000);
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
         }
@@ -386,10 +161,8 @@ function BackToList() {
 }
 
 function WasValidated() {
-    $sort.children(".checkbox").addClass("pe-4");
 }
 
 function UnValidated() {
     $("#PageForm").removeClass("was-validated");
-    $sort.children(".checkbox").removeClass("pe-4");
 }

@@ -35,6 +35,7 @@
         "wwwroot/js/CokerCore/sweet.js",
         "wwwroot/js/CokerCore/TechnicalCertificate.js",
         "wwwroot/js/CokerCore/User.js",
+        "wwwroot/js/CokerCore/UserHabits.js",
         "wwwroot/js/CokerCore/WebMesnus.js",
         "wwwroot/js/CokerCore/WebSite.js"
       ]

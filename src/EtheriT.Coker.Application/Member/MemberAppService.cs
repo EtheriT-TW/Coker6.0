@@ -129,12 +129,14 @@ namespace EtheriT.Coker.Application.Member
         {
             try
             {
+                var websiteId = await loginUserData.GetWebsiteId();
                 var result = db.Users;
 
                 if (result != null)
                 {
                     var dataQuery = from e in db.Users.Include(n => n.Roles)
-                                    where !e.IsDeleted
+                                    join r in db.MappingUserAndWebsites on e.Id equals r.UserId
+                                    where r.WebsiteId == websiteId
                                     select new ManagerAllListDto
                                     {
                                         Id = e.Id,
@@ -143,7 +145,7 @@ namespace EtheriT.Coker.Application.Member
                                         Email = e.Email.Substring(0, 2) + "***" + e.Email.Substring(e.Email.IndexOf("@") - 1),
                                         Status = (UserStatusEnum)(e.Status ?? 0),
                                         Roles = String.Join("、", (
-                                            from o in db.Roles
+                                            from o in db.Roles.Where(e => e.FK_WebsiteId == websiteId)
                                             join ur in e.Roles on o.Id equals ur.RoleId
                                             select o.Name
                                         ).ToList())
@@ -161,6 +163,33 @@ namespace EtheriT.Coker.Application.Member
             return new JsonResult(new List<MemberGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<MemberGetAllDataDto> GetAllData(long id)
+        {
+            try
+            {
+                long websideId = await loginUserData.GetWebsiteId();
+                var result = await (from user in db.Users.Where(e => e.Id == id)
+                                    join map in db.MappingUserAndWebsites on user.Id equals map.UserId
+                                    where map.WebsiteId == websideId
+                                    select user).FirstOrDefaultAsync();
+
+
+                if (result != null)
+                {
+                    MemberGetAllDataDto output = mapper.Map<MemberGetAllDataDto>(result);
+                    output.RoleId = await db.MappingUserAndRoles.Where(e => e.UUID == result.UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                    output.Id = ("000000000" + result.Id).Substring(result.Id.ToString().Length);
+                    return output;
+                }
+                else throw new Exception("查無會員資料");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return null;
+        }
+        public async Task<MemberGetAllDataDto> GetFrontAllData(long id)
         {
             try
             {
@@ -199,7 +228,7 @@ namespace EtheriT.Coker.Application.Member
 
             try
             {
-                var result = db.FrontUsers.Where(e => e.Id == dto.Id).FirstOrDefault();
+                var result = db.Users.Where(e => e.Id == dto.Id).FirstOrDefault();
 
                 if (result != null)
                 {
@@ -215,6 +244,42 @@ namespace EtheriT.Coker.Application.Member
                         await loginUserData.SaveChanges(role);
                     }
                     
+                    output.Success = true;
+                }
+                else throw new Exception("查無會員資料");
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> FrontUpdate(MemberUpdateDto dto)
+        {
+            long usetId = await loginUserData.GetUserId();
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                var result = db.FrontUsers.Where(e => e.Id == dto.Id).FirstOrDefault();
+
+                if (result != null)
+                {
+                    if (dto.Status == null) dto.Status = result.Status;
+                    if (dto.TelPhone == null) dto.TelPhone = result.TelPhone;
+
+                    mapper.Map(dto, result);
+                    await loginUserData.SaveChanges(result);
+
+                    var role = await db.MappingUserAndRoles.Where(e => e.UUID == result.UUID).FirstOrDefaultAsync();
+                    if (dto.RoleId != null && role != null && role.RoleId != dto.RoleId)
+                    {
+                        role.RoleId = (long)dto.RoleId;
+                        await loginUserData.SaveChanges(role);
+                    }
+
                     output.Success = true;
                 }
                 else throw new Exception("查無會員資料");

@@ -210,11 +210,11 @@ div {
         margin-left: 0.5rem;
     }
 
-        footer .abreast p {
+        footer .abreast > p {
             text-align-last: start;
         }
 
-        footer .abreast span {
+        footer .abreast span.footer-massage {
             margin-left: 0.5rem;
         }
 

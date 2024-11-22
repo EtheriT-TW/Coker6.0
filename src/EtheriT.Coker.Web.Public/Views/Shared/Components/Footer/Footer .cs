@@ -345,7 +345,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                     string footerMessage = "";
                     switch (siteId) {
                         case 6:
-                            footerMessage = "<span>Copyright©2024 榮唐運輸股份有限公司 版權所有 <br id=\"iswrap\">&nbsp;&nbsp;電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> <br id=\"smail-wrap\">&nbsp;&nbsp;傳真：07-8912380 <br id=\"smail-wrap\">&nbsp;&nbsp;統一編號:13179181</span><hr id=\"smail-wrap\"><span>地址：<a href=\"https://g.co/kgs/cq8ePQe\" target=\"_blank\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;&nbsp;<br id=\"iswrap\">E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a></span>";
+                            footerMessage = "<span class=\"footer-massage\">Copyright©2024 榮唐運輸股份有限公司 版權所有 <br id=\"iswrap\">&nbsp;&nbsp;電話：<a href=\"tel:07-8912360\">07-8912360(代表號)</a> <br id=\"smail-wrap\">&nbsp;&nbsp;傳真：<span>07-8912380</span><br id=\"smail-wrap\">&nbsp;&nbsp;統一編號:<span>13179181</span></span><hr id=\"smail-wrap\"><span class=\"footer-massage\">地址：<a href=\"https://maps.app.goo.gl/VcnQ5HaZ8ZVnstX27\" target=\"_blank\">高雄市小港區高坪十一路大坪頂停車場2號</a> &nbsp;&nbsp;<br id=\"iswrap\">E-mail：<a href=mailto:\"longtop.mail@msa.hinet.net\">longtop.mail@msa.hinet.net</a></span>";
                             break;
                         case 7:
                             footerMessage = "<div class=\"d-flex\" id=\"footrow\">" +

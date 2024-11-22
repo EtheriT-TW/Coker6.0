@@ -2,11 +2,16 @@
 var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
 var preview_swiper, product_swiper, $pro_itemNo, $counter_input;
+var CanShop;
 const showRange = false;
 
 function PageReady() {
 
     ElementInit();
+
+    if ($(".btn_addToCar").length > 0) CanShop = true;
+    else CanShop = false;
+
     window.CI360.init();
     if (ProdId != null && !isNaN(ProdId)) Pid = ProdId;
     else Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
@@ -127,7 +132,6 @@ function ElementInit() {
     $options = $prod_content.find(".options");
 }
 function PageDefaultSet(result) {
-
     if (result.stocks.length == 1 && result.stocks[0].stock == 0) $(".btn_addToCar").addClass("close")
 
     $pro_name.text(result.title);
@@ -193,6 +197,7 @@ function PageDefaultSet(result) {
 
         var maxprice = 0, minprice = 0;
 
+        var hasstock = false;
         result.stocks.forEach(data => {
             obj = {
                 s1id: data.fK_S1id,
@@ -205,10 +210,17 @@ function PageDefaultSet(result) {
             maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
             minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
             obj = {}
+            var nostock = "";
+            console.log(data)
+            if (data.stock == 0 && CanShop) {
+                nostock = 'disabled="disabled"'
+            } else {
+                hasstock = true;
+            }
 
             if (data.fK_S1id > 0) {
                 if (s1_list.indexOf(data.fK_S1id) < 0) {
-                    item1_control.append('<input id="s1_' + data.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + data.fK_S1id + '">');
+                    item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
                     item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
                     s1_list.push(data.fK_S1id);
                 }
@@ -220,7 +232,7 @@ function PageDefaultSet(result) {
 
             if (data.fK_S2id > 0) {
                 if (s2_list.indexOf(data.fK_S2id) < 0) {
-                    item2_control.append('<input id="s2_' + data.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + data.fK_S2id + '">');
+                    item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
                     item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
                     s2_list.push(data.fK_S2id);
                 }
@@ -230,6 +242,8 @@ function PageDefaultSet(result) {
                 }
             }
         });
+        if (!hasstock) $(".btn_addToCar").addClass("close")
+        else $counter_input.removeClass("isEmpty");
 
         $options.prepend(item2);
         $options.prepend(item1);
@@ -385,6 +399,14 @@ function PageDefaultSet(result) {
     $("#btn_tab>li>button").first().trigger("click");
     LinkWithIconInit();
 }
+function SpecRadioSet(stocks, $parent) {
+    var item1 = $($("#Template_Spec_Radio").html()).clone(),
+        item2 = $($("#Template_Spec_Radio").html()).clone();
+
+    var item1_control = item1.find(".spec_control"),
+        item2_control = item2.find(".spec_control");
+
+}
 function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
@@ -400,7 +422,7 @@ function SpecRadio() {
                     temp_list.push(item.s2id)
                 }
             })
-            $self_s.find("input").attr("disabled", "disabled");
+            if (CanShop) $self_s.find("input").attr("disabled", "disabled");
             var radioclosenum = $self_s.find("input").length;
             $self_s.find("input").each(function () {
                 $radio = $(this)
@@ -410,8 +432,8 @@ function SpecRadio() {
                 }
             })
             if (radioclosenum == $self_s.find("input").length) {
-                if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
-                if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
+                $(".btn_addToCar").addClass("close")
+                $counter_input.addClass("isEmpty");
             }
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s2 = null;
@@ -439,7 +461,7 @@ function SpecRadio() {
             $self_s.find("input").each(function () {
                 $radio = $(this)
                 var this_price_list = price_list.find(e => e.s1id == $radio.val() && e.s2id == s2);
-                if (typeof (this_price_list) != "undefined" && this_price_list.stock == 0) {
+                if (typeof (this_price_list) != "undefined" && this_price_list.stock == 0 && CanShop) {
                     $radio.attr("disabled", "disabled");
                     radioclosenum += 1;
                 } else $radio.removeAttr("disabled");
@@ -467,13 +489,14 @@ function SpecRadio() {
         })
     }
 
+    if (s2 == null) s2 = 0
     var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
     //console.log(this_price_list)
     if (this_price_list.stock == 0) {
         if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
     }
     else {
-        if ($(".btn_addToCar").hasClass("close")) $(".btn_addToCar").removeClass("close")
+        $(".btn_addToCar").removeClass("close")
         $input_quantity.attr("max", this_price_list.stock)
     }
 

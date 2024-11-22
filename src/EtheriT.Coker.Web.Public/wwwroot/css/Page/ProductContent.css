@@ -292,11 +292,20 @@ input:disabled + .btn_radio {
     line-height: 3;
 }
 
+    #Product > .content > .btn_addToCar::after {
+        content: '我要購買';
+    }
+
     #Product > .content > .btn_addToCar.close {
         background-color: gray;
         cursor: default;
         line-height: 3;
     }
+
+        #Product > .content > .btn_addToCar.close::after {
+            content: '已售完';
+            opacity: 50%;
+        }
 
 #Product > .content .btn_favorites {
     background-color: gray;
@@ -312,10 +321,15 @@ input:disabled + .btn_radio {
     line-height: 3;
 }
 
-.icon_plus::before {
+#Product > .content > .btn_addToCar .icon_plus::before {
     font-family: 'Font Awesome 6 Free';
     font-weight: 400;
     content: "\f0fe  ";
+    padding-right: 0.25rem;
+}
+
+#Product > .content > .btn_addToCar.close .icon_plus::before {
+    opacity: 50%;
 }
 
 .btn_favorites .icon_love::before {

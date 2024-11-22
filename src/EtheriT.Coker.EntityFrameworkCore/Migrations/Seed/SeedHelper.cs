@@ -790,6 +790,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 500,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    IsDeleted = true,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {

@@ -5,7 +5,7 @@
 
 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "TagSelectModal" })
 
-<div class="tag input-group mb-3">
+<div class="tag input-group mb-3" name="tags" data-form-type="tags">
     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
         <span class="material-symbols-outlined me-1">alternate_email</span>標籤
     </div>

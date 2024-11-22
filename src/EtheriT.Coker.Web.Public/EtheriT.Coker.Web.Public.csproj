@@ -11,8 +11,8 @@
 		<Content Remove="appsettings.Haoguang.json" />
 		<Content Remove="appsettings.Haoguangen.json" />
 		<Content Remove="appsettings.kao-feng.json" />
-		<Content Remove="appsettings.longtop.json" />
 		<Content Remove="appsettings.kinglake.json" />
+		<Content Remove="appsettings.longtop.json" />
 		<Content Remove="appsettings.unitedtw.json" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
@@ -73,6 +73,7 @@
 		<None Include="appsettings.kao-feng.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
+		<None Include="appsettings.kinglake.json" />
 		<None Include="appsettings.longtop.json">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>

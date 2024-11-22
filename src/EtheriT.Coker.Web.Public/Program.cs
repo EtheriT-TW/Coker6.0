@@ -189,7 +189,7 @@ builder.Services.AddTransient<StringHandler>();
 builder.Services.AddTransient<MailAppService>();
 builder.Services.AddTransient<ITagAppService, TagAppService>();
 builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
-builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
+builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
 builder.Services.AddTransient<IAdvertiseAppService, AdvertiseAppService>();
 builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
@@ -225,13 +225,11 @@ if (builder.Environment.EnvironmentName == "EPZA")
 //註冊HttpClient
 builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
 {
-    client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
-    //client.BaseAddress = new Uri("https://api-pay.line.me");
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:Line:PaymentUrl"));
 });
 builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
 {
-    client.BaseAddress = new Uri("https://sandbox-api.pchomepay.com.tw");
-    //client.BaseAddress = new Uri("https://api.pchomepay.com.tw");
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:PCHomePay:PaymentUrl"));
 });
 
 var app = builder.Build();
@@ -269,9 +267,9 @@ app.UseCookiePolicy(
         Secure = CookieSecurePolicy.Always,
         HttpOnly = HttpOnlyPolicy.Always,
         MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None
-        //MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
     }
 );
+//app.UseMiddleware<CookieHandlingMiddleware>();
 
 // 定義共用的 OnPrepareResponse 委派
 static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)

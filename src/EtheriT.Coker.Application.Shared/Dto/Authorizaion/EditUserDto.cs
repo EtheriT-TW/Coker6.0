@@ -11,7 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Authorizaion
         public long Id { get; set; } = 0;
         public string Name { get; set; }
         public string Nickname { get; set; } = "";
-        public string Sex { get; set; } = "";
+        public int? Sex { get; set; }
         public string TelPhone { get; set; } = "";
         public string CellPhone { get; set; } = "";
         public string Email { get; set; }

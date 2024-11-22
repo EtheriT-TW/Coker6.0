@@ -14,6 +14,12 @@ using System.Threading.Tasks;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.UserHabits;
 using EtheriT.Coker.Application.Dto;
+using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Tag;
+using EtheriT.Coker.Application.Shared.Dto.Tag;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Tag;
 
 namespace EtheriT.Coker.Application.UserHabits
 {
@@ -21,14 +27,17 @@ namespace EtheriT.Coker.Application.UserHabits
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
+        private readonly ITagAppService tagAppService;
         private IMapper mapper;
         public UserHabitsAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
+            ITagAppService tagAppService,
             IMapper mapper
         ) {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.tagAppService = tagAppService;
             this.mapper = mapper;
         }
         public async Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions) {
@@ -43,8 +52,59 @@ namespace EtheriT.Coker.Application.UserHabits
                 return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
         }
-        public async Task<ResponseMessageDto> AddUpUserGroup() { 
-            throw new NotImplementedException();
+        public async Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                UserGrouping? group = await db.UserGroupings.Where(e => e.FK_WebsiteId == websiteId && e.Id == dto.Id).FirstOrDefaultAsync();
+                if (group == null)
+                {
+                    dto.Id = 0;
+                    group = mapper.Map<UserGrouping>(dto);
+                    group.FK_WebsiteId = websiteId;
+                    db.UserGroupings.Add(group);
+                }
+                else {
+                    group = mapper.Map<UserGrouping>(dto);
+                }
+                await loginUserData.SaveChanges(group);
+                response.Success = true;
+            }
+            catch (Exception ex) {
+                response.Error = ex.Message;
+            }
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto),JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> GetUserGroupOne(long id) {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                UserGrouping? group = await db.UserGroupings.Where(e => e.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
+                if (group != null)
+                {
+                    UserGroupAddUpDto obj = mapper.Map<UserGroupAddUpDto>(group);
+                    var tags = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
+                        {
+                            Fk_Aid = id,
+                            Type = TagAssociateTypeEnum.使用者分群,
+                        }
+                    );
+                    if (tags != null) obj.Tags = tags;
+
+                    response.Object = obj;
+                }
+                else throw new Exception("資料不存在");
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
         }
     }
 }

@@ -142,7 +142,7 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             FormDataClear();
             var hash = window.location.hash.replace("#", "");
-            co.Member.GetFront(parseInt(hash)).done(function (result) {
+            co.Member.Get(parseInt(hash)).done(function (result) {
                 if (result != null) {
                     MoveToContent();
                     keyId = parseInt(hash);
@@ -234,7 +234,7 @@ function Update(success_text, error_text) {
             sex = $(this).val();
         }
     })
-    co.Member.FrontUpdate({
+    co.Member.Update({
         Id: keyId,
         Name: $name.val(),
         Sex: sex,

@@ -48,7 +48,7 @@ function PageReady() {
                         } else {
                             co.sweet.error("訂單狀態錯誤", `訂單已授權付款，如要變更訂單狀態，請先完成付款程序。`);
                         }
-                    } else if ([2, 3, 7].includes(oristate) && newstate==4) {
+                    } else if ([2, 3, 7].includes(oristate) && newstate == 4) {
                         co.sweet.confirm("變更訂單狀態", `訂單已完成付款，是否確認將訂單狀態變更為【${status}】？`, "確定", "取消", function () {
                             co.sweet.confirm("變更訂單狀態", "是否退回貨款?", "確定", "取消", function () {
                                 co.sweet.loading();
@@ -252,12 +252,16 @@ function HeaderDataSet(result) {
                 case "LINEPay":
                     $(".btn_checkrefund").removeClass("d-none");
                     $(".btn_checkrefund").on("click", function () {
-                        Coker.ThirdParty.CheckRefund("LinePay", result.refundTransactionId).done(function (result) {
+                        $(".btn_checkrefund").off("click");
+                        co.sweet.loading();
+                        Coker.ThirdParty.CheckRefund("LinePay", result.transactionId).done(function (result) {
                             if (result.success) {
                                 Swal.fire({
                                     title: `退款狀態查詢`,
-                                    text: result.returnMessage,
+                                    text: result.message,
                                 });
+                            } else {
+                                co.sweet.error("錯誤", result.message, null, false);
                             }
                         });
                     });
@@ -265,12 +269,16 @@ function HeaderDataSet(result) {
                 case "支付連":
                     $(".btn_checkrefund").removeClass("d-none");
                     $(".btn_checkrefund").on("click", function () {
-                        Coker.ThirdParty.CheckRefund("PCHomePay", result.refundTransactionId).done(function (result) {
+                        $(".btn_checkrefund").off("click");
+                        co.sweet.loading();
+                        Coker.ThirdParty.CheckRefund("PCHomePay", `${result.transactionId}-Refund`).done(function (result) {
                             if (result.success) {
                                 Swal.fire({
                                     title: `退款狀態查詢`,
-                                    text: result.returnMessage,
+                                    text: result.message,
                                 });
+                            } else {
+                                co.sweet.error("錯誤", result.message, null, false);
                             }
                         });
                     });

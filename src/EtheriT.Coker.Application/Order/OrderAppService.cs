@@ -202,7 +202,7 @@ namespace EtheriT.Coker.Application.Order
                         Freight = result.Freight,
                         Service_Charge = result.Service_Charge,
                         CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                        refundTransactionId = result.refundTransactionId??"",
+                        TransactionId = result.TransactionId??"",
                         Memo = result.Memo??""
                     }; 
                     if(output.Payment != "")

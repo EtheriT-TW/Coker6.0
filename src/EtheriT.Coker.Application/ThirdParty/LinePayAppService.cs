@@ -396,15 +396,15 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return linePayResponse;
         }
-        public async Task<ResponseMessageDto> LinePayRefundState(string refundid)
+        public async Task<ResponseMessageDto> LinePayRefundState(string transactionId)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                List<string> refund_str = new List<string> { refundid};
-
-                var RequestUri = $"/v3/payments/{refund_str.ToString()}";
-                response = await LinePayDefaultRequestHeaders(RequestUri, "");
+                var RequestUri = $"/v3/payments";
+                string queryString = $"transactionId={transactionId}";
+                response = await LinePayDefaultRequestHeaders(RequestUri, queryString);
+                RequestUri += $"?{queryString}";
 
                 if (response.Success)
                 {
@@ -412,12 +412,20 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
                     GetResponse.EnsureSuccessStatusCode();
                     var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                    response.Message = jsonResponse.ToString();
                     var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundCheckResponseDto>(jsonResponse);
 
                     if (linePayResponse.ReturnCode == "0000")
                     {
-                        response.Success = true;
-                        response.Message = $"退款編號{linePayResponse.info[0].refundList[0].refundTransactionId}已於{DateTime.Parse(linePayResponse.info[0].refundList[0].refundTransactionDate).ToString("yyyy/MM/dd")}退款，退款金額為{linePayResponse.info[0].refundList[0].refundAmount.ToString("$#,##0")}";
+                        if (linePayResponse.info[0].refundList != null)
+                        {
+                            response.Success = true;
+                            response.Message = $"退款編號{linePayResponse.info[0].refundList[0].refundTransactionId}已於{linePayResponse.info[0].refundList[0].refundTransactionDate.ToString("yyyy/MM/dd")}退款，退款金額為{(linePayResponse.info[0].refundList[0].refundAmount * -1).ToString("$#,##0")}";
+                        }
+                        else
+                        {
+                            response.Message = "該筆訂單不存在退款資訊";
+                        }
                     }
                     else
                     {

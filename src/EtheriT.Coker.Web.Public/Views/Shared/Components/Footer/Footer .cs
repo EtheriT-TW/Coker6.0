@@ -349,11 +349,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                             break;
                         case 7:
                             footerMessage = "<div class=\"d-flex\" id=\"footrow\">" +
-                                                 "<div class=\"span5\">" +
-                                                    "<a href=\"/upload/qrcode.png\" target=\"_blank\">" +
-                                                        "<img alt=\"\" src=\"/upload/qrcode.png\">" +
-                                                     "</a>" +
-                                                 "</div>" +
                                                  "<div class=\"span6\" id=\"footword\">" +
                                                     "<div class=\"wordfoot\">83163 高雄市大寮區濃公路79號</div>" +
                                                     "<div class=\"wordfoot wordleft\">電話：(07)7884882-4</div>" +

@@ -7,6 +7,10 @@
     background-image: none !important;
 }
 
+header {
+    background: url("/upload/background.jpg") center top;
+}
+
 #footrow {
     text-align-last: start;
 }

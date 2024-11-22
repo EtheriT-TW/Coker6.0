@@ -10,6 +10,14 @@ function ready() {
     forgetModal = $("#ForgetModal").length > 0 ? new bootstrap.Modal($("#ForgetModal")) : null;
     resetModal = $("#ResetModal").length > 0 ? new bootstrap.Modal($("#ResetModal")) : null;
     jqueryExtend();
+
+    $('.navbar-nav > .nav-item').each(function () {
+        $this = $(this);
+        if ($this.find('.subtitle').length == 0) {
+            $this.find('.menu-item').addClass('no-arrow');
+        }
+    });
+
     $("link").each(function () {
         var $self = $(this);
         if ($self.data("orgname") != undefined) {

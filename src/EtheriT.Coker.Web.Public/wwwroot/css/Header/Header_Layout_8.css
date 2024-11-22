@@ -2,6 +2,11 @@
     padding-top: 0 !important;
 }
 
+.no-arrow::after {
+    content: none !important;
+    background-image: none !important;
+}
+
 #footrow {
     text-align-last: start;
 }

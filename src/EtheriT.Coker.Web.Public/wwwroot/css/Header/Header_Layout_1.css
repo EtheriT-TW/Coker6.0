@@ -2,6 +2,11 @@
     padding-top: 0 !important;
 }
 
+.no-arrow::after {
+    content: none !important;
+    background-image: none !important;
+}
+
 #breadcrumb {
     padding-top: 0 !important;
     padding-bottom: 0 !important;

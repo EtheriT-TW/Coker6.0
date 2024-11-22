@@ -94,7 +94,7 @@ function moveHiUserToMenu() {
     const login = document.querySelector('.login');
     const hamburgerMenu = document.querySelector('.offcanvas-header');
     const iconBlock = document.querySelector('.icon-block');
-    if (window.innerWidth <= 576) {
+    if (hiUser != null || login != null) {
         // 如果屏幕宽度 <= 576px, 移动到汉堡菜单中
         if ($('#HiUser').length>0) {
             hamburgerMenu.appendChild(hiUser);

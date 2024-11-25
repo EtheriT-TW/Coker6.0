@@ -132,7 +132,10 @@ function ElementInit() {
     $options = $prod_content.find(".options");
 }
 function PageDefaultSet(result) {
-    if (result.stocks.length == 1 && result.stocks[0].stock == 0) $(".btn_addToCar").addClass("close")
+    if (result.stocks.length == 1 && result.stocks[0].stock == 0) {
+        $(".btn_addToCar").addClass("close")
+        $("#Product .content .options").addClass("d-none")
+    }
 
     $pro_name.text(result.title);
     $pro_itemNo.text(result.itemNo);
@@ -242,7 +245,10 @@ function PageDefaultSet(result) {
                 }
             }
         });
-        if (!hasstock) $(".btn_addToCar").addClass("close")
+        if (!hasstock) {
+            $("#Product .content .options").addClass("d-none")
+            $(".btn_addToCar").addClass("close")
+        }
         else $counter_input.removeClass("isEmpty");
 
         $options.prepend(item2);

@@ -119,7 +119,7 @@ namespace EtheriT.Coker.Application
             //Html_Content
             CreateMap<HtmlContentDto, Html_Content>()
                 .ReverseMap()
-                .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
+                .ForMember(e => e.TypeName, option => option.MapFrom(c => c.ObjectClassify.Title));
             CreateMap<ObjectTypeItemDto, Html_Content>()
                .ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
                .ForMember(e => e.Disp_opt, option => option.MapFrom(c => c.Visible))

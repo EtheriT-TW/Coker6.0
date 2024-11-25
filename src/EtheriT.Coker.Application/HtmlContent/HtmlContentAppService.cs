@@ -85,13 +85,9 @@ namespace EtheriT.Coker.Application.HtmlContent
             HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();
             try
             {
-                List<long> t = Enum.GetValues(typeof(ObjectTypeEnum)).Cast<ObjectTypeEnum>()
-                   .Select(e => { return (long)e; })
-                   .ToList();
-                var result = await db.Html_Contents
-                        .Where(e => t.Contains(e.Type))
+                var result = await db.Html_Contents.Include(e => e.ObjectClassify)
                         .Where(e => !e.IsDeleted && e.Disp_opt)
-                        .OrderBy(e => e.Type)
+                        .OrderBy(e => e.ObjectClassify.SerNo)
                         .ThenBy(e => e.Ser_no)
                         .ToListAsync();
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
@@ -104,12 +100,12 @@ namespace EtheriT.Coker.Application.HtmlContent
 
             return respose;
         }
-        public async Task<HtmlContentListOutpotDto> GetComponent(ObjectTypeEnum type)
+        public async Task<HtmlContentListOutpotDto> GetComponent(long type)
         {
             HtmlContentListOutpotDto respose = new HtmlContentListOutpotDto();
             try
             {
-                var result = await db.Html_Contents.Where(e => e.Id == (long)type).ToListAsync();
+                var result = await db.Html_Contents.Include(e => e.ObjectClassify).Where(e => e.Type == type).ToListAsync();
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
                 respose.Success = true;
             }
@@ -336,8 +332,8 @@ namespace EtheriT.Coker.Application.HtmlContent
             HtmlContentTypeDto response = new HtmlContentTypeDto { Success = true };
             try
             {
-                long userId = await loginUserData.GetUserId();
-                if (userId == 1)
+                bool isSupUser = await loginUserData.isSystemUser();
+                if (isSupUser)
                 {
                     bool othersOnly = await loginUserData.IsExtraSuperUser();
                     response.Type = (from o in db.ObjectTypes.Where(e => !e.IsDeleted)

@@ -105,8 +105,8 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             if (!response.Success && ohdata != null)
             {
-                ohdata.State = OrderStatusEnum.付款失敗;
-                db.SaveChanges();
+                var temp_response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.付款失敗);
+                if (!temp_response.Success) response.Message += $"&{temp_response.Message}";
             }
             return response;
         }

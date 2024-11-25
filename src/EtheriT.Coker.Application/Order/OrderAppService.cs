@@ -192,6 +192,7 @@ namespace EtheriT.Coker.Application.Order
                         Payment = result.Payment == 0 ? "" : result.Payment.ToString(),
                         Shipping = ship_text,
                         State = result.State,
+                        CompletedDate = result.CompletedDate,
                         StateStr = ((OrderStatusEnum)result.State).ToString(),
                         Remark = (result.Remark == "" || result.Remark == null) ? "無" : result.Remark,
                         Subtotal = result.Subtotal,
@@ -677,36 +678,43 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-                if (order_header != null)
+                DateTime now = DateTime.Now.AddDays(-7);
+                if (order_header != null && order_header.State != (OrderStatusEnum)state)
                 {
-                    if (order_header.State != OrderStatusEnum.已取消)
+                    if (!(order_header.State == OrderStatusEnum.已取消 || (order_header.State == OrderStatusEnum.已完成 && order_header.CompletedDate != null && order_header.CompletedDate < now)))
                     {
                         order_header.State = (OrderStatusEnum)state;
-                        if (state == (int)OrderStatusEnum.已取消)
+                        switch (state)
                         {
-                            var shoppingCarts = await (from sc in db.ShoppingCarts
-                                                       join od in db.Order_Details on sc.Id equals od.FK_SCId
-                                                       where od.FK_OId == ohid && sc.IsOrder
-                                                       select sc).ToListAsync();
-                            if (shoppingCarts != null)
-                            {
-                                var prod_stocks = new List<Prod_Stock>();
-                                foreach (var sc in shoppingCarts)
+                            case (int)OrderStatusEnum.已取消:
+                            case (int)OrderStatusEnum.付款失敗:
+                                var shoppingCarts = await (from sc in db.ShoppingCarts
+                                                           join od in db.Order_Details on sc.Id equals od.FK_SCId
+                                                           where od.FK_OId == ohid && sc.IsOrder
+                                                           select sc).ToListAsync();
+                                if (shoppingCarts != null)
                                 {
-                                    var prod_stock = await db.Prod_Stocks.Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
-                                    if (prod_stock != null)
+                                    var prod_stocks = new List<Prod_Stock>();
+                                    foreach (var sc in shoppingCarts)
                                     {
-                                        prod_stock.Stock += sc.Quantity;
-                                        prod_stocks.Add(prod_stock);
+                                        var prod_stock = await db.Prod_Stocks.Where(e => e.Id == sc.FK_PSid).FirstOrDefaultAsync();
+                                        if (prod_stock != null)
+                                        {
+                                            prod_stock.Stock += sc.Quantity;
+                                            prod_stocks.Add(prod_stock);
+                                        }
                                     }
+                                    db.SaveChanges();
                                 }
-                                db.SaveChanges();
-                            }
+                                break;
+                            case (int)OrderStatusEnum.已完成:
+                                order_header.CompletedDate = DateTime.Now;
+                                break;
                         }
                         db.SaveChanges();
                         response.Success = true;
                     }
-                    else throw new Exception("訂單已取消，不可更改狀態");
+                    else throw new Exception("訂單不可更改狀態");
                 }
                 else throw new Exception("查無訂單資訊");
             }
@@ -1004,15 +1012,14 @@ namespace EtheriT.Coker.Application.Order
                 var order = await db.Order_Headers.Where(e => e.Id == dto.Id && e.FK_WebsiteId == webSiteId).FirstOrDefaultAsync();
                 if (order != null)
                 {
-                    if (!new List<OrderStatusEnum> { OrderStatusEnum.已取消, OrderStatusEnum.已完成 }.Contains(order.State))
+                    response = await OrderStateChange(order.Id, (int)dto.Status);
+                    if (response.Success)
                     {
-                        order.State = dto.Status;
+                        order.Memo = dto.Memo;
+                        await loginUserData.SaveChanges(order);
+                        response.Success = true;
+                        await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
                     }
-                    order.Memo = dto.Memo;
-                    await loginUserData.SaveChanges(order);
-                    response.Success = true;
-                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
-
                 }
                 else throw new Exception("訂單不存在");
             }

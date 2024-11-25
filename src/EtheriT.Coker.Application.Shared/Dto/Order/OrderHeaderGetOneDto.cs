@@ -21,6 +21,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public long ThirdParties { get; set; }
         public string Shipping { get; set; }
         public OrderStatusEnum State { get; set; }
+        public DateTime? CompletedDate { get; set; }
         public string StateStr { get; set; }
         public string Remark { get; set; }
         public int Subtotal { get; set; }

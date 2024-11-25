@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string Freight { get; set; }
         public string Total { get; set; }
         public int State { get; set; }
+        public DateTime? CompletedDate { get; set; }
         public string StateStr { get; set; }
         public string Orderer { get; set; }
         public string OrdererSex { get; set; }

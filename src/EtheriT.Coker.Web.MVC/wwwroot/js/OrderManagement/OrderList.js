@@ -269,6 +269,7 @@ function HeaderDataInsert(data) {
     DataInsert(data, $("#OrderDetails .card-body > div"));
     DataInsert(data, $("#OrderDetails .card-body > .purchase_amount"));
     DataInsert(data, $("#OrderData"));
+
 }
 function HeaderDataSet(result) {
     if (result.payment.indexOf("-") > 0) {
@@ -279,31 +280,39 @@ function HeaderDataSet(result) {
 
     $order_status.val(result.state);
     oristate = parseInt(result.state);
-    console.log(result)
     if (result.thirdParties != 1) {
-        if (result.transactionId != "" && result.transactionId != null && ![1, 5, 6].includes(oristate)) {
-            $(".btn_refund").removeClass("d-none");
-        } else if (result.refundTransactionId != null) {
-            $(".btn_checkrefund").removeClass("d-none");
-        } else {
-            switch (oristate) {
-                case 5:
-                    // 顯示查詢失敗原因 PChome未實作
-                    $order_status.prop("disabled", true);
-                    if (payment == "LINEPay") {
-                        $(".btn_failReason").removeClass("d-none");
-                    }
-                    break;
-                case 6:
-                    switch (payment) {
-                        case "LINEPay":
-                            $(".confirm").removeClass("d-none");
+        if (oristate == 7) {
+            var sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            if (new Date(result.completedDate) < sevenDaysAgo) {
+                $order_status.prop("disabled", true);
+            } else {
+                if (result.transactionId != "" && result.transactionId != null && ![1, 5, 6].includes(oristate)) {
+                    $(".btn_refund").removeClass("d-none");
+                } else if (result.refundTransactionId != null) {
+                    $(".btn_checkrefund").removeClass("d-none");
+                } else {
+                    console.log(oristate)
+                    switch (oristate) {
+                        case 5:
+                            // 顯示查詢失敗原因 PChome未實作
+                            $order_status.prop("disabled", true);
+                            if (payment == "LINEPay") {
+                                $(".btn_failReason").removeClass("d-none");
+                            }
                             break;
-                        case "支付連":
-                            if ($(".btn_recheck").hasClass("d-none")) $(".btn_recheck").removeClass("d-none");
+                        case 6:
+                            switch (payment) {
+                                case "LINEPay":
+                                    $(".confirm").removeClass("d-none");
+                                    break;
+                                case "支付連":
+                                    if ($(".btn_recheck").hasClass("d-none")) $(".btn_recheck").removeClass("d-none");
+                                    break;
+                            }
                             break;
                     }
-                    break;
+                }
             }
         }
     }

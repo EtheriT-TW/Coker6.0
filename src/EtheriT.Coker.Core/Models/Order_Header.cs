@@ -41,6 +41,7 @@ namespace EtheriT.Coker.Core.Models
         public int Shipping { get; set; }
         public int Payment { get; set; }
         public OrderStatusEnum State { get; set; }
+        public DateTime? CompletedDate { get; set; }
         public int Subtotal { get; set; }
         public int? Discount { get; set; }
         public int? Bonus { get; set; }

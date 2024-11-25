@@ -292,7 +292,7 @@ function GetOrderPage() {
             if (results.length > 0) {
                 var result = results[0];
                 $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
-                switch (result.orderHeader.state) {
+                switch (result.orderHeader.stateStr) {
                     case "待確認":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
                         break;
@@ -453,7 +453,7 @@ function PaymentHideShow() {
         if (subtotal > 20000) {
             var $this = PaymentForms.find("div[data-paycode^='IP'], div[data-paycode='IBRCD']");
             if ($this.length > 0) $this.addClass("d-none");
-        } 
+        }
         if (subtotal > 49999) {
             var $this = PaymentForms.find("div[data-paycode='ATM'], div[data-paycode='EACH']");
             if ($this.length > 0) $this.addClass("d-none");

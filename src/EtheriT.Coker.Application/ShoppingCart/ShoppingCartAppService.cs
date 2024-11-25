@@ -15,17 +15,20 @@ namespace EtheriT.Coker.Application.ShoppingCart
     public class ShoppingCartAppService : IShoppingCartAppService
     {
         private readonly CokerDbContext db;
+        private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         public ShoppingCartAppService(
             CokerDbContext db,
+            LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IConfiguration configuration,
             IMapper mapper
         )
         {
             this.db = db;
+            this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.configuration = configuration;
             this.mapper = mapper;
@@ -345,7 +348,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         public async Task<List<ShoppingCartDisplayDto>> GetDisplay(List<long> scids)
         {
             List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
-            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
             var token = await tokenAppService.CheckToken();
             Guid UUID = await tokenAppService.GetUUID();
             long roleid = 1;
@@ -363,14 +366,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
 
+                    temp_output.Title = shoppingCart.Prod_Stock?.Prod?.Title ?? "";
+
                     var pid = shoppingCart.Prod_Stock?.Prod?.Id;
-                    temp_output.ImagePath = await (from f in db.FileBinds
-                                                   join fu in db.FileUploads on f.FK_FileUploadId equals fu.Id
-                                                   where fu.FK_WebsiteId == WebsiteId && f.Sid == pid && f.type == (int)FileBindTypeEnum.產品
-                                                   orderby f.SerNo
-                                                   orderby f.CreationTime
-                                                   select fu.DownloadFileName).FirstOrDefaultAsync() ?? "";
                     temp_output.PId = pid ?? 0;
+                    var imagepath = await (from fu in db.FileUploads
+                                           join fb in db.FileBinds on fu.Id equals fb.FK_FileUploadId
+                                           where fb.Sid == pid && fb.type == (int)FileBindTypeEnum.產品
+                                           where fu.FK_WebsiteId == WebsiteId
+                                           orderby fb.SerNo
+                                           orderby fb.CreationTime
+                                           select fu.DownloadFileName).FirstOrDefaultAsync();
+                    temp_output.ImagePath = imagepath?.ToString() ?? "";
 
                     var db_sp = await db.Prod_Specs.ToListAsync();
                     if (db_sp.Any())
@@ -400,9 +407,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
 
                         var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
 
-                        temp_output.Price = int.Parse(temp_output.Price).ToString("$#,##0");
-                        temp_output.Subtotal = subtotal.ToString("$#,##0");
-                        temp_output.Bonus = (shoppingCart.Bonus ?? 0).ToString("$#,##0");
+                        temp_output.Price = int.Parse(temp_output.Price).ToString("#,##0");
+                        temp_output.Subtotal = subtotal.ToString("#,##0");
+                        temp_output.Bonus = (shoppingCart.Bonus ?? 0).ToString("#,##0");
 
                         temp_output.Describe = shoppingCart.Prod_Stock?.Prod?.Description ?? "";
 

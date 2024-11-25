@@ -189,7 +189,7 @@ namespace EtheriT.Coker.Application.Order
                         InvoiceTitle = result.InvoiceTitle,
                         UniformId = result.UniformId,
                         InvoiceAddress = result.InvoiceAddress,
-                        Payment = result.Payment==0?"":result.Payment.ToString(),
+                        Payment = result.Payment == 0 ? "" : result.Payment.ToString(),
                         Shipping = ship_text,
                         State = result.State,
                         StateStr = ((OrderStatusEnum)result.State).ToString(),
@@ -202,10 +202,10 @@ namespace EtheriT.Coker.Application.Order
                         Freight = result.Freight,
                         Service_Charge = result.Service_Charge,
                         CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                        TransactionId = result.TransactionId??"",
-                        Memo = result.Memo??""
-                    }; 
-                    if(output.Payment != "")
+                        TransactionId = result.TransactionId ?? "",
+                        Memo = result.Memo ?? ""
+                    };
+                    if (output.Payment != "")
                     {
                         var payments = await (from pt in db.PaymentTypes
                                               join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
@@ -223,9 +223,10 @@ namespace EtheriT.Coker.Application.Order
                             {
                                 output.Payment = payment.Title?.ToString() ?? "";
                             }
+                            output.ThirdParties = payment.FK_ThirdPartyId;
                         }
                     }
-                    
+
                     return output;
                 }
                 else throw new Exception("查無訂單資料");
@@ -273,12 +274,13 @@ namespace EtheriT.Coker.Application.Order
                 foreach (var order_header in order_headers)
                 {
                     var temp_output = mapper.Map<OrderHeaderDisplayDto>(order_header);
-                    temp_output.Subtotal = order_header.Subtotal.ToString("$#,##0");
-                    temp_output.Discount = (order_header.Discount ?? 0).ToString("$#,##0");
-                    temp_output.Bonus = (order_header.Bonus ?? 0).ToString("$#,##0");
+                    temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
+                    temp_output.Discount = (order_header.Discount ?? 0).ToString("#,##0");
+                    temp_output.Bonus = (order_header.Bonus ?? 0).ToString("#,##0");
                     temp_output.CouponId = order_header.CouponId?.ToString() ?? "";
-                    temp_output.Freight = order_header.Freight.ToString("$#,##0");
-                    temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString("$#,##0");
+                    temp_output.Freight = order_header.Freight.ToString("#,##0");
+                    temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString("#,##0");
+                    temp_output.StateStr = ((OrderStatusEnum)temp_output.State).ToString();
 
                     foreach (var property in temp_output.GetType().GetProperties())
                     {
@@ -313,10 +315,10 @@ namespace EtheriT.Coker.Application.Order
                     var shipping_str3 = ((ShippingTypeEnum)(shipping?.LogisticsType ?? 0)).ToString().Replace("_", "/");
                     temp_output.Shipping = shipping_str1 != "" ? shipping_str2 != "" ? shipping_str3 != "" ? $"{shipping_str1}　{shipping_str2}-{shipping_str3}" : $"{shipping_str1}　{shipping_str2}" : $"{shipping_str1}" : "";
                     var payments = await (from pt in db.PaymentTypes
-                                         join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
-                                         where ptv.FK_WebsiteId == WebsiteId
-                                         select pt).ToListAsync();
-                    if(payments.FirstOrDefault(e => e.Id == order_header.Payment) != null)
+                                          join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                          where ptv.FK_WebsiteId == WebsiteId
+                                          select pt).ToListAsync();
+                    if (payments.FirstOrDefault(e => e.Id == order_header.Payment) != null)
                     {
                         var payment = payments.FirstOrDefault(e => e.Id == order_header.Payment);
                         if (payment.Code.ToLower().StartsWith("pchome"))
@@ -327,7 +329,9 @@ namespace EtheriT.Coker.Application.Order
                         {
                             temp_output.Payment = payment.Title?.ToString() ?? "";
                         }
+                        temp_output.ThirdParties = payment.FK_ThirdPartyId;
                     }
+                    temp_output.CreationTime = order_header.CreationTime.ToString("yyyy-MM-dd HH:mm:ss");
                     output.Add(temp_output);
                 }
             }

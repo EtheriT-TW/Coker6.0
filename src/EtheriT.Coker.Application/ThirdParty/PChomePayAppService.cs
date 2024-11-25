@@ -50,10 +50,9 @@ namespace EtheriT.Coker.Application.ThirdParty
         public async Task<ResponseMessageDto> PChomePayRequest(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
             try
             {
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
                 if (ohdata != null)
                 {
                     PChomePayPaymentDto PaymentBody = await PChomeGetPaymentBody(ohdata);
@@ -80,6 +79,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     response.Success = true;
                                     response.Message = pchomePayResponse.payment_url;
                                     ohdata.TransactionId = pchomePayResponse.order_id;
+                                    ohdata.State = OrderStatusEnum.待付款;
                                     db.SaveChanges();
                                 }
                                 else
@@ -102,6 +102,11 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 // 其他未知錯誤
                 response.Message = $"Other Error: {ex.Message}";
+            }
+            if (!response.Success && ohdata != null)
+            {
+                ohdata.State = OrderStatusEnum.付款失敗;
+                db.SaveChanges();
             }
             return response;
         }

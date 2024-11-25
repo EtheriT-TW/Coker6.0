@@ -33,6 +33,10 @@
     content: "\55ae\50f9\ff1a$";
 }
 
+.price::before {
+    content: "$";
+}
+
 .pro_quantity::before {
     content: "\00d7";
 }

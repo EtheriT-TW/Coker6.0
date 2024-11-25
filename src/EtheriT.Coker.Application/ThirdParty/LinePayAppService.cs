@@ -42,10 +42,9 @@ namespace EtheriT.Coker.Application.ThirdParty
         public async Task<ResponseMessageDto> LinePayRequest(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
             try
             {
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
                 if (ohdata != null)
                 {
                     LinePayRequestBodyDto RequestBody = await LinePayGetRequestBody(ohdata);
@@ -89,6 +88,11 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 // 其他未知錯誤
                 response.Message = $"Other Error: {ex.Message}";
+            }
+            if (!response.Success && ohdata != null)
+            {
+                ohdata.State = OrderStatusEnum.付款失敗;
+                db.SaveChanges();
             }
             return response;
         }

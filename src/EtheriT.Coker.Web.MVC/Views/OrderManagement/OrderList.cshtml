@@ -90,34 +90,34 @@
                         <div class="lh-lg">訂單明細</div>
                     </div>
                     <div class="col">訂單編號</div>
-                    <div class="col-auto order_number"></div>
+                    <div data-key="id" class="col-auto order_number"></div>
                 </div>
 
                 <div class="card-body">
                     <div class="row text-end gray_text">
                         <div class="col">訂單成立時間</div>
-                        <div class="order_date col-auto"></div>
+                        <div data-key="creationTime" class="col-auto"></div>
                     </div>
 
                     <ul class="purchase_list px-2 px-sm-5"></ul>
 
-                    <template id="Templat_Purchase_List">
+                    <template id="Template_Purchase_List">
                         <li class="purchase_item border-bottom align-items-lg-center row py-2">
-                            <div class="col-4 col-sm-2"><img class="pro_image img-fluid" src=""></div>
+                            <div class="col-4 col-sm-2"><img data-key="imagePath" class="pro_image img-fluid" src=""></div>
 
-                            <div class="pro_text col-8 col-sm-6">
-                                <div class="pro_name fw-bold"></div>
-                                <div class="pro_detail gray_text d-flex flex-wrap">
-                                    <div class="pro_specification pe-3"></div>
-                                    <div class="pro_instructions"></div>
+                            <div class="col-8 col-sm-6">
+                                <div data-key="title" class="pro_name fw-bold"></div>
+                                <div class="gray_text d-flex flex-wrap">
+                                    <div data-key="spec" class="pro_specification border me-3 pro_specification px-1"></div>
+                                    <div data-key="describe"></div>
                                 </div>
                             </div>
 
-                            <div class="pro_unit col-auto gray_text text-end"></div>
+                            <div data-key="price" class="pro_unit col-auto gray_text text-end"></div>
 
-                            <div class="pro_quantity col-auto gray_text text-start"></div>
+                            <div data-key="quantity" class="pro_quantity col-auto gray_text text-start"></div>
 
-                            <div class="pro_subtotal col price color_red_number text-end"></div>
+                            <div data-key="subtotal" class="pro_subtotal col price color_red_number text-end"></div>
                         </li>
                     </template>
 
@@ -125,16 +125,16 @@
                         <div class="border-bottom py-2 text-end">
                             <div class="d-flex">
                                 <div class="col fw-bold">總金額：</div>
-                                <div class="order_subtotal price color_red_number col-4 col-sm-2">26,200</div>
+                                <div data-key="subtotal" class="order_subtotal price color_red_number col-4 col-sm-2"></div>
                             </div>
                             <div class="d-flex">
                                 <div class="col fw-bold">運費：</div>
-                                <div class="order_freight price color_red_number col-4 col-sm-2">0</div>
+                                <div data-key="freight" class="order_freight price color_red_number col-4 col-sm-2"></div>
                             </div>
                         </div>
                         <div class="row align-items-center text-end fw-bold">
                             <div class="col p-0">本次消費總金額：</div>
-                            <div class="order_total price color_red_number col-auto py-3 fs-5 text-end">26,200</div>
+                            <div data-key="total" class="order_total price color_red_number col-auto py-3 fs-5 text-end"></div>
                         </div>
                     </div>
                 </div>
@@ -156,22 +156,26 @@
                                     <div class="gray_text">付款方式：</div>
                                 </div>
                                 <div class="col ps-0">
-                                    <div class="order_number"></div>
-                                    <div class="order_shipping"></div>
-                                    <div class="order_payment"></div>
+                                    <div data-key="id" class="order_number"></div>
+                                    <div data-key="shipping" class="order_shipping"></div>
+                                    <div data-key="payment" class="order_payment"></div>
                                 </div>
                             </div>
 
                             <div class="d-flex flex-wrap justify-content-between pb-3 pt-5">
                                 <div class="d-flex align-items-center">
                                     <div class="fw-bold fs-5">狀態：</div>
-                                    <select class="status_select m-2" aria-label="Select status"></select>
+                                    <select @* data-key="state" *@ class="status_select m-2" aria-label="Select status"></select>
                                 </div>
-                                <button class="btn_failReason bg-transparent border-0 text-black-50 text-decoration-underline d-none" title="點擊查看失敗原因">查看失敗原因</button>
-                                <button class="btn_confirm bg-transparent border-0 text-black-50 text-decoration-underline d-none" title="點擊完成付款程序">完成付款程序</button>
                                 <button class="btn_recheck bg-transparent border-0 text-black-50 text-decoration-underline d-none" title="點擊重新確認付款狀態">重新確認付款狀態</button>
-                                <button class="btn_checkrefund opacity-50  bg-transparent border-0 px-3 text-decoration-underline d-none">查看退款狀態</button>
+                                <button class="btn_refund border-0 btn-danger px-4 rounded text-white d-none">退　款</button>
+                                <div class="confirm flex-column d-none">
+                                    <button class="btn_confirm border-0 btn-success mb-1 px-4 py-1 rounded text-white">完成付款</button>
+                                    <button class="btn_void border-0 btn-danger mt-1 px-4 py-1 rounded text-white">取消交易</button>
+                                </div>
                                 <button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0 d-none">發送出貨通知</button>
+                                <button class="btn_failReason bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start w-100 d-none" title="點擊查看失敗原因">查看失敗原因</button>
+                                <button class="btn_checkrefund bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start w-100 d-none" title="點擊查看退款狀態">查看退款狀態</button>
                             </div>
 
                             <p class="gray_text">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>

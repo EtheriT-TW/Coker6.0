@@ -161,7 +161,7 @@ function editButtonClicked(e) {
     window.location.hash = keyId;
 }
 function FormDataSet(result) {
-    FormDataClear();
+    //FormDataClear();
     $member_number.text(result.id)
     $name.val(result.name);
     $sex.each(function () {

@@ -11,7 +11,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string Service_Charge { get; set; }
         public string Freight { get; set; }
         public string Total { get; set; }
-        public string State { get; set; }
+        public int State { get; set; }
+        public string StateStr { get; set; }
         public string Orderer { get; set; }
         public string OrdererSex { get; set; }
         public string OrdererEmail { get; set; }
@@ -31,6 +32,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string InvoiceAddress { get; set; }
         public string Shipping { get; set; }
         public string Payment { get; set; }
+        public long ThirdParties { get; set; }
+        public string Memo { get; set; }
         public string TransactionId { get; set; }
+        public string RefundTransactionId { get; set; }
+        public string CreationTime { get; set; }
     }
 }

@@ -48,9 +48,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             ResponseMessageDto response = new ResponseMessageDto();
             switch (payment)
             {
-                case "LinePay":
+                case "LINEPay":
                     return await linePayAppService.LinePayRefund(ohid, refund);
-                case "PCHomePay":
+                case "支付連":
                     return await pchomePayAppService.PChomePayRefund(ohid, refund);
             }
             response.Success = false;
@@ -78,9 +78,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             ResponseMessageDto response = new ResponseMessageDto();
             switch (payment)
             {
-                case "LinePay":
+                case "LINEPay":
                     return await linePayAppService.LinePayRefundState(refundid);
-                case "PCHomePay":
+                case "支付連":
                     return await pchomePayAppService.PChomePayRefundState(refundid);
             }
             response.Success = false;

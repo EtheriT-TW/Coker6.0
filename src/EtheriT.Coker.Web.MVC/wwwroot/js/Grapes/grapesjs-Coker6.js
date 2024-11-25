@@ -166,6 +166,8 @@
         isComponent: el => el.classList?.contains('YTmodal_frame'),
         model: {
             defaults: {
+                removable: true,
+                editable: false,
                 traits: [
                     { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入Youtube標題' },
                     { name: 'link', type: 'text', label: '網址', placeholder: '請輸入Youtube網址' }
@@ -175,21 +177,43 @@
                 this.on('change:attributes:link', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
                         var link = component.getAttributes()["link"];
-                        var vid = link.substring(link.indexOf("v=") + 2)
-                        var img_link = `http://img.youtube.com/vi/${vid}/sddefault.jpg`
-                        var $self = $(component.getEl());
-                        $self.find("img").attr("src", img_link);
+                        if (typeof (link) != "undefined") {
+                            if (link.indexOf("&") > 0) {
+                                link = link.substring(0, link.indexOf("&"));
+                                var yttitle = typeof (component.getAttributes()["yttitle"]) == 'undefined' ? "" : component.getAttributes()["yttitle"];
+                                component.setAttributes({ 'link': link, 'yttitle': yttitle });
+                            }
+                            var vid = link.substring(link.indexOf("v=") + 2)
+                            var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
+                            var $self = $(component.getEl());
+                            $self.find("img").attr("src", img_link);
+                        }
                     }
                 });
                 this.on('change:attributes:yttitle', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
                         var title = component.getAttributes()["yttitle"];
-                        var $self = $(component.getEl());
-                        $self.find("img").attr("alt", `${title}的圖片`);
+                        if (typeof (title) != "undefined") {
+                            var $self = $(component.getEl());
+                            $self.find("img").attr("alt", `${title}的圖片`);
+                        }
                     }
                 });
             }
         },
+        view: {
+            onRender() {
+                const el = this.el; // 這裡獲取渲染後的 DOM 元素
+                var $parent = $(el);
+                var link = $parent.attr("link");
+                if (typeof (link) != "undefined") {
+                    var vid = link.substring(link.indexOf("v=") + 2)
+                    var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
+                    $parent.find("img").attr("src", img_link)
+                    $parent.attr("data-isinit", true);
+                }
+            }
+        }
     });
     editor.DomComponents.addType('電子書', {
         isComponent: el => el.classList?.contains('FlipBookItem'),

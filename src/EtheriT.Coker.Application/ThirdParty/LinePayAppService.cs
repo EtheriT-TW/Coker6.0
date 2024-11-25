@@ -276,61 +276,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            try
-            {
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-                if (ohdata != null)
-                {
-                    var RequestBody = new { refundAmount = refund };
-
-                    if (RequestBody != null)
-                    {
-                        var RequestUri = $"/v3/payments/{ohdata.TransactionId}/refund";
-                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
-
-                        if (response.Success)
-                        {
-                            response = new ResponseMessageDto();
-                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-                            PostResponse.EnsureSuccessStatusCode();
-                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                            var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundResponseDto>(jsonResponse);
-
-                            if (linePayResponse.ReturnCode == "0000")
-                            {
-                                response.Success = true;
-                                response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
-                                ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
-                                ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
-                                db.SaveChanges();
-                            }
-                            else
-                            {
-                                response.Message = linePayResponse.ReturnMessage;
-                            }
-                            response.Error = linePayResponse.ReturnCode;
-                        }
-                    }
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                // Http 請求錯誤
-                response.Message = $"Request failed: {ex.Message}";
-            }
-            catch (Exception ex)
-            {
-                // 其他未知錯誤
-                response.Message = $"Other Error: {ex.Message}";
-            }
-            return response;
-        }
         public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -399,6 +344,61 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return linePayResponse;
         }
+        public async Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (ohdata != null)
+                {
+                    var RequestBody = new { refundAmount = refund };
+
+                    if (RequestBody != null)
+                    {
+                        var RequestUri = $"/v3/payments/{ohdata.TransactionId}/refund";
+                        var RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+
+                        if (response.Success)
+                        {
+                            response = new ResponseMessageDto();
+                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                            PostResponse.EnsureSuccessStatusCode();
+                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                            var linePayResponse = JsonConvert.DeserializeObject<LinePayRefundResponseDto>(jsonResponse);
+
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                response.Success = true;
+                                response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
+                                ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
+                                ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
+                                db.SaveChanges();
+                            }
+                            else
+                            {
+                                response.Message = linePayResponse.ReturnMessage;
+                            }
+                            response.Error = linePayResponse.ReturnCode;
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                response.Message = $"Request failed: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                // 其他未知錯誤
+                response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
         public async Task<ResponseMessageDto> LinePayRefundState(string transactionId)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -446,6 +446,44 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 // 其他未知錯誤
                 response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> LinePayPayCancelOrder(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                LinePayResponseDto temp_response = await LinePayCheckPaymentStatus(ohid);
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                if (ohdata != null)
+                {
+                    if (ohdata.TransactionId != null)
+                    {
+                        switch (ohdata.State)
+                        {
+                            case OrderStatusEnum.待付款:
+                                response = await LinePayVoid(ohdata.Id);
+                                if (response.Success) response.Message = "訂單已取消並送出退款申請。";
+                                break;
+                            case OrderStatusEnum.已付款:
+                                response = await LinePayRefund(ohdata.Id, null);
+                                if (response.Success) response.Message = "訂單已取消並送出退款申請。";
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                        if (response.Success) response.Message = "訂單已取消。";
+                    }
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                response.Error = "Other Error";
+                response.Message = ex.Message;
             }
             return response;
         }

@@ -78,8 +78,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     response = await pchomePayAppService.PChomePayCancelOrder(ohid);
                     break;
                 case 3:
-                    response.Success = true;
-                    response.Message = "LinePay前台退款未串接";
+                    response = await linePayAppService.LinePayPayCancelOrder(ohid);
                     break;
             }
             if (response.Message == "") response.Message = "支付方式不存在";

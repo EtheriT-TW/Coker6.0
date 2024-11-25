@@ -16,12 +16,12 @@ function PageReady() {
                 data: { page: page },
             });
         },
-        CanceOrder: function (ohid) {
+        CancelOrder: function (ohid, payment) {
             return $.ajax({
-                url: "/api/Order/CanceOrder/",
+                url: "/api/Order/CancelOrder/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
-                data: { ohid: ohid },
+                data: { ohid: ohid, payment: payment },
             });
         }
     }
@@ -319,35 +319,42 @@ function HistoryDataInsert(Datas) {
         frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
         frame.find(".amount").text((order_header.total).toLocaleString());
         frame.find(".payment").text(order_header.payment);
-        if (order_header.state == 1) {
-            if (order_header.creationTime.split(' ')[0] == date_now) {
-                frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
-                frame.find(".state .btn_canceOrder").on("click", function () {
-                    var $this = $(this);
-                    Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
-                        Coker.sweet.loading();
-                        Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
-                            if (result.success) {
-                                $this.parent(".state").addClass("text-danger fw-bold");
-                                $this.parent(".state").text("已取消");
-                                Coker.sweet.success("已取消訂單", null, false);
-                            } else {
-                                console.log(result.message);
-                            }
-                        })
+        console.log(order_header)
+
+        if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
+            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            frame.find(".state .btn_cancelOrder").on("click", function () {
+                var $this = $(this);
+                console.log(`訂單編號${$this.data("ohid")}要取消訂單`)
+                var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "並退回款項?" : "？(退款事宜請聯繫客服處理)" : "?";
+                Coker.sweet.confirm("取消訂單", `確定要取消這筆訂單${confirm_text}`, "確定", "取消", function () {
+                    Coker.sweet.loading();
+                    Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
+                        if (result.success) {
+                            $this.parent(".state").addClass("text-danger fw-bold");
+                            $this.parent(".state").text("已取消");
+                            Coker.sweet.success(result.message, null, false);
+                        } else {
+                            Coker.sweet.error("取消訂單發生錯誤", result.message);
+                        }
                     })
-                });
-            }
-            //switch (order_header.payment) {
-            //    case "LINEPay":
-            //        frame.find(".state").append(`<button data-ohid="${order_header.id}" class="btn_confirm bg-transparent border-0 text-decoration-underline text-primary" title="付款">付款</button>`)
-            //        break;
-            //}
-        } else {
+                })
+            });
+        } else if (order_header.thirdParties != 1 && order_header.state == 5) {
+            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_payAgain bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">重新付款</button>`)
+            frame.find(".state .btn_payAgain").on("click", function () {
+                var $this = $(this);
+                console.log(`訂單編號${$this.data("ohid")}要重新付款`)
+                Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
+                    Coker.sweet.loading();
+                })
+            });
+        }
+        else {
             frame.find(".state").text(order_header.stateStr);
-            if (order_header.state == 4 || order_header.state == 5) {
-                frame.find(".state").addClass("text-danger fw-bold");
-            }
+        }
+        if (order_header.state == 4 || order_header.state == 5) {
+            frame.find(".state").addClass("text-danger fw-bold");
         }
 
         frame.find(".collapse").addClass(`collapse_${order_header.id}`);
@@ -357,10 +364,15 @@ function HistoryDataInsert(Datas) {
             if ($(this).hasClass("collapsed")) $(this).text("查看訂單明細");
             else $(this).text("關閉訂單明細");
         })
-        //frame.find(".btn_buyagain").data("ohid", order_header.id);
-        //frame.find(".btn_buyagain").on("click", function () {
-        //訂單再次購買鈕
-        //})
+
+        frame.find(".btn_buyAgain").data("ohid", order_header.id);
+        frame.find(".btn_buyAgain").on("click", function () {
+            var $this = $(this);
+            console.log(`訂單編號${$this.data("ohid")}再次購買`)
+            Coker.sweet.confirm("確定要再次購買？", "", "確定", "取消", function () {
+                Coker.sweet.loading();
+            })
+        })
 
         $.each(order_details, function (index, detail) {
             if (detail != null) {

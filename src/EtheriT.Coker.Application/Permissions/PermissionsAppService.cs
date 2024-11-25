@@ -141,6 +141,8 @@ namespace EtheriT.Coker.Application.Permissions
         }
         public async Task<bool> IsPowerUserPermissions() {
             List<long> Roles = await loginUserData.GetUserRoleIds();
+            var s = await loginUserData.isSystemUser();
+            if(s) return true;
             var p = await db.Roles.Where(e => Roles.Contains(e.Id))
                     .Where(e => e.IsSuperUser)
                     .FirstOrDefaultAsync();

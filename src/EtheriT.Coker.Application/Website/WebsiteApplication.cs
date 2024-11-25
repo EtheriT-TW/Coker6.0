@@ -16,6 +16,9 @@ using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Linq;
+using EtheriT.Coker.Application.Authorization;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -133,7 +136,21 @@ namespace EtheriT.Coker.Application
         {
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
-            var date = from w in db.Websites
+            bool isysUser = await loginUserData.isSystemUser();
+            IQueryable<WebsDto> date;
+            if (isysUser)
+            {
+                date = from w in db.Websites
+                       select new WebsDto
+                       {
+                           Id = w.Id,
+                           Name = w.Title,
+                           Description = w.Description ?? "",
+                           Images = w.Icon ?? ""
+                       };
+            }
+            else {
+                date = from w in db.Websites
                        join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
                        join u in db.Users on bind.UserId equals u.Id
                        where u.Account == name
@@ -144,6 +161,7 @@ namespace EtheriT.Coker.Application
                            Description = w.Description ?? "",
                            Images = w.Icon ?? ""
                        };
+            }
             if (date.Any())
             {
                 long siteId = await loginUserData.GetWebsiteId();

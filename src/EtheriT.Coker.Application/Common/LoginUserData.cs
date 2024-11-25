@@ -152,8 +152,13 @@ namespace EtheriT.Coker.Application
             }
             else
             {
+                var isSysUser = await isSystemUser();
                 var userDetail = await db.Users.Where(u => u.Id == token.UserID).FirstOrDefaultAsync();
                 if (userDetail == null) return 0;
+                else if (isSysUser) {
+                    var website = await db.Websites.Where(e => e.Id == token.websiteId).FirstOrDefaultAsync();
+                    return website == null ? 0 : website.Id;
+                }
                 var check = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
                 int c = check.Count();
                 if (check.Any()) return token.websiteId;
@@ -289,6 +294,8 @@ namespace EtheriT.Coker.Application
         public async Task<bool> CheckedWebSiteId(long id) {
             bool check = false;
             long userId = await GetUserId();
+            check = await isSystemUser();
+            if(check) return true;
             if (userId != 0) {
                 var userDetail = db.Users.Where(u => u.Id == userId).Where(u => !u.IsDeleted);
                 if (userDetail.Any())
@@ -298,6 +305,12 @@ namespace EtheriT.Coker.Application
                 }
             }
             return check;
+        }
+        public async Task<bool> isSystemUser()
+        {
+            var userId = await GetUserId();
+            var data = db.MappingUserAndRoles.Include(e => e.Role).Where(e => e.UserId == userId && e.Role!.Type == RoleTypeEnum.系統維護);
+            return data.Any();
         }
         public async Task<bool> CheckedWebSiteId(long userId,long websiteId) {
             bool check = false;

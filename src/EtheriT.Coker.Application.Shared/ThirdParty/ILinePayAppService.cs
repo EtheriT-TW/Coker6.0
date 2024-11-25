@@ -11,8 +11,9 @@ namespace EtheriT.Coker.Application.Shared.ThirdParty
         public Task<ResponseMessageDto> LinePayConfirm(long ohid);
         public Task<IActionResult> LinePayCancel(string transactionId, string orderId);
         public Task<ResponseMessageDto> LinePayVoid(long ohid);
-        public Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund);
         public Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid);
+        public Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund);
         public Task<ResponseMessageDto> LinePayRefundState(string transactionId);
+        public Task<ResponseMessageDto> LinePayPayCancelOrder(long ohid);
     }
 }

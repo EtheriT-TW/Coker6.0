@@ -59,7 +59,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await htmlContentAppService.GetAllComponent(); 
         }
         [HttpGet]
-        public async Task<HtmlContentListOutpotDto> GetComponent(ObjectTypeEnum type) { 
+        public async Task<HtmlContentListOutpotDto> GetComponent(long type) { 
             return await htmlContentAppService.GetComponent(type);
         }
     }

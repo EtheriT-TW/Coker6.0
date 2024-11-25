@@ -287,6 +287,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 response.Message = pchomePayResponse.ToString();
                                 ohdata.refundTransactionId = pchomePayResponse.refund_id; ;
                                 ohdata.refundTransactionDate = DateTime.Now;
+                                var temp_response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
+                                if (!temp_response.Success)
+                                {
+                                    response.Success = false;
+                                    response.Message = $"【{temp_response.Message}】{response.Message}";
+                                }
                                 db.SaveChanges();
                             }
                             else
@@ -306,6 +312,85 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 // 其他未知錯誤
                 response.Message = $"Other Error: {ex.Message}";
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> PChomePayRefundState(string transactionId)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            var ohdata = await db.Order_Headers.Where(e => e.TransactionId == transactionId).FirstOrDefaultAsync();
+            try
+            {
+                if (ohdata != null)
+                {
+                    var RequestUri = $"/v1/refund/{ohdata.refundTransactionId}";
+                    response = await PChomePayHeaders();
+
+                    if (response.Success)
+                    {
+                        response = new ResponseMessageDto();
+                        var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
+                        GetResponse.EnsureSuccessStatusCode();
+                        var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
+                        var pchomePayResponse = JsonConvert.DeserializeObject<PChomePayRefundStateDto>(jsonResponse);
+                        if (pchomePayResponse.refund_id != null)
+                        {
+                            response.Success = true;
+                            switch (pchomePayResponse.status)
+                            {
+                                case "INIT":
+                                    response.Message = $"退款編號{pchomePayResponse.refund_id}已於{DateTime.ParseExact(pchomePayResponse.refund_date, "yyyyMMddHHmmss", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd")}建立，退款金額為{pchomePayResponse.amount.ToString("$#,##0")}";
+                                    break;
+                                case "WAIT":
+                                    response.Message = $"退款編號{pchomePayResponse.refund_id}正在處理中";
+                                    break;
+                                case "SUCC":
+                                    response.Message = $"退款編號{pchomePayResponse.refund_id}已於{DateTime.ParseExact(pchomePayResponse.actual_refund_date, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd")}退款成功，退款金額為{pchomePayResponse.amount.ToString("$#,##0")}，退款手續費{pchomePayResponse.transfer_fee.ToString("$#,##0")}";
+                                    break;
+                                case "FAIL":
+                                    response.Message = $"退款編號{pchomePayResponse.refund_id}退款失敗";
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            response.Message = "查詢退款發生錯誤";
+                        }
+                    }
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> PChomePayCancelOrder(long ohid)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                if (ohdata != null)
+                {
+                    if (ohdata.TransactionId != null)
+                    {
+                        response = await PChomePayRefund(ohdata.Id, null);
+                        if (response.Success) response.Message = "訂單已取消並送出退款申請。";
+                    }
+                    else
+                    {
+                        response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
+                        if (response.Success) response.Message = "訂單已取消。";
+                    }
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                response.Error = "Other Error";
+                response.Message = ex.Message;
             }
             return response;
         }
@@ -461,52 +546,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                     response.Success = true;
                     response.Message = jsonResponse.ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                response.Message = ex.Message;
-            }
-            return response;
-        }
-        public async Task<ResponseMessageDto> PChomePayRefundState(string refundid)
-        {
-            ResponseMessageDto response = new ResponseMessageDto();
-            var RequestUri = $"/v1/refund/{refundid}";
-            try
-            {
-                response = await PChomePayHeaders();
-
-                if (response.Success)
-                {
-                    response = new ResponseMessageDto();
-                    var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
-                    GetResponse.EnsureSuccessStatusCode();
-                    var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
-                    var pchomePayResponse = JsonConvert.DeserializeObject<PChomePayRefundStateDto>(jsonResponse);
-                    if (pchomePayResponse.refund_id != null)
-                    {
-                        response.Success = true;
-                        switch (pchomePayResponse.status)
-                        {
-                            case "INIT":
-                                response.Message = $"退款編號{pchomePayResponse.refund_id}已於{DateTime.ParseExact(pchomePayResponse.refund_date, "yyyyMMddHHmmss", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd")}建立，退款金額為{pchomePayResponse.amount.ToString("$#,##0")}";
-                                break;
-                            case "WAIT":
-                                response.Message = $"退款編號{pchomePayResponse.refund_id}正在處理中";
-                                break;
-                            case "SUCC":
-                                response.Message = $"退款編號{pchomePayResponse.refund_id}已於{DateTime.ParseExact(pchomePayResponse.actual_refund_date, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyy/MM/dd")}退款成功，退款金額為{pchomePayResponse.amount.ToString("$#,##0")}，退款手續費{pchomePayResponse.transfer_fee.ToString("$#,##0")}";
-                                break;
-                            case "FAIL":
-                                response.Message = $"退款編號{pchomePayResponse.refund_id}退款失敗";
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        response.Message = "查詢退款發生錯誤";
-                    }
                 }
             }
             catch (Exception ex)

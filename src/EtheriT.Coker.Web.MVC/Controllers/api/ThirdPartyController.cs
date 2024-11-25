@@ -73,15 +73,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await pchomePayAppService.PChomePayBalance();
         }
         [HttpGet]
-        public async Task<ResponseMessageDto> CheckRefund(string payment, string refundid)
+        public async Task<ResponseMessageDto> CheckRefund(string payment, string transactionId)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             switch (payment)
             {
                 case "LINEPay":
-                    return await linePayAppService.LinePayRefundState(refundid);
+                    return await linePayAppService.LinePayRefundState(transactionId);
                 case "支付連":
-                    return await pchomePayAppService.PChomePayRefundState(refundid);
+                    return await pchomePayAppService.PChomePayRefundState(transactionId);
             }
             response.Success = false;
             response.Message = "支付方式不存在";

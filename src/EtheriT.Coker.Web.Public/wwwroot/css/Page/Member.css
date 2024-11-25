@@ -75,11 +75,20 @@
         border-radius: 0.8rem;
     }
 
-.btn_buyagain::after {
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    content: "\f217 ";
+.btn_buyAgain {
+    color: white;
+    background-color: var(--red-main);
 }
+
+    .btn_buyAgain:hover {
+        color: white !important;
+    }
+
+    .btn_buyAgain::after {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        content: "\f217 ";
+    }
 
 #ResetEmailModal > .modal-dialog > .modal-content {
     max-width: 80vw;
@@ -232,7 +241,7 @@
 
     #TabContent .content.type_list figure figcaption {
         padding-top: 1rem;
-        padding-left:1rem;
+        padding-left: 1rem;
     }
 
 #TabContent .content.type_list .type_change_frame div[data-key='description'] {
@@ -377,7 +386,7 @@
     #history-tab-pane .type_list {
         padding-right: 0 !important;
         padding-left: 0 !important;
-        justify-content:center;
+        justify-content: center;
     }
 
     #favorite-tab-pane .type_list {
@@ -444,6 +453,6 @@
 
 @media (max-width:440px) {
     #TabContent .content.type_grid .type_change_frame {
-        flex:0 0 auto;
+        flex: 0 0 auto;
     }
 }

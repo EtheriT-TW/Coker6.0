@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
@@ -11,11 +12,17 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class OrderController : Controller
     {
         private readonly IOrderAppService orderAppService;
+        private readonly ILinePayAppService linePayAppService;
+        private readonly IPChomePayAppService pchomePayAppService;
         public OrderController(
-            IOrderAppService orderAppService
+            IOrderAppService orderAppService,
+            ILinePayAppService linePayAppService,
+            IPChomePayAppService pchomePayAppService
             )
         {
             this.orderAppService = orderAppService;
+            this.linePayAppService = linePayAppService;
+            this.pchomePayAppService = pchomePayAppService;
         }
 
         [HttpPost]
@@ -56,10 +63,27 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<ResponseMessageDto> CanceOrder(long ohid)
+        public async Task<ResponseMessageDto> CancelOrder(long ohid, int payment)
         {
-            var state = (int)OrderStatusEnum.已取消;
-            return await orderAppService.OrderStateChange(ohid, state);
+            ResponseMessageDto response = new ResponseMessageDto();
+            switch (payment)
+            {
+                case 1:
+                    var state = (int)OrderStatusEnum.已取消;
+                    response = await orderAppService.OrderStateChange(ohid, state);
+                    if (response.Success && response.Message == "已付款") response.Message = "訂單已取消，請主動聯繫客服處理退款。";
+                    else response.Message = "訂單已取消。";
+                    break;
+                case 2:
+                    response = await pchomePayAppService.PChomePayCancelOrder(ohid);
+                    break;
+                case 3:
+                    response.Success = true;
+                    response.Message = "LinePay前台退款未串接";
+                    break;
+            }
+            if (response.Message == "") response.Message = "支付方式不存在";
+            return response;
         }
 
     }

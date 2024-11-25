@@ -203,7 +203,8 @@ namespace EtheriT.Coker.Application.Order
                         Freight = result.Freight,
                         Service_Charge = result.Service_Charge,
                         CreationTime = result.CreationTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                        TransactionId = result.TransactionId ?? "",
+                        TransactionId = result.TransactionId,
+                        RefundTransactionId = result.refundTransactionId,
                         Memo = result.Memo ?? ""
                     };
                     if (output.Payment != "")
@@ -683,6 +684,7 @@ namespace EtheriT.Coker.Application.Order
                 {
                     if (!(order_header.State == OrderStatusEnum.已取消 || (order_header.State == OrderStatusEnum.已完成 && order_header.CompletedDate != null && order_header.CompletedDate < now)))
                     {
+                        if (order_header.State == OrderStatusEnum.已付款) response.Message = "已付款";
                         order_header.State = (OrderStatusEnum)state;
                         switch (state)
                         {

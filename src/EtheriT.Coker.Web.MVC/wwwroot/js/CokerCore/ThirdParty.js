@@ -9,13 +9,13 @@
                 data: { payment: payment, ohid: ohid, refund: refund },
             });
         },
-        CheckRefund: function (payment, refundid) {
+        CheckRefund: function (payment, transactionId) {
             return $.ajax({
                 url: "/api/ThirdParty/CheckRefund/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
-                data: { payment: payment, refundid: refundid },
+                data: { payment: payment, transactionId: transactionId },
             });
         },
         Line: {

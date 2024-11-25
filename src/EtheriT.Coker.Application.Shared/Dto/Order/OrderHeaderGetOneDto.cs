@@ -34,5 +34,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string CreationTime { get; set; }
         public string Memo { get; set; }
         public string TransactionId { get; set; }
+        public string RefundTransactionId { get; set; }
     }
 }

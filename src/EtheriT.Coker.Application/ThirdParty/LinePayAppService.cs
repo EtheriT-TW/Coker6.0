@@ -66,6 +66,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 response.Success = true;
                                 response.Message = linePayResponse.Info.PaymentUrl.Web;
                                 ohdata.TransactionId = linePayResponse.Info.TransactionId;
+                                ohdata.State = OrderStatusEnum.待付款;
                                 db.SaveChanges();
                             }
                             else

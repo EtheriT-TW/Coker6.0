@@ -94,22 +94,33 @@ function moveHiUserToMenu() {
     const login = document.querySelector('.login');
     const hamburgerMenu = document.querySelector('.offcanvas-header');
     const iconBlock = document.querySelector('.icon-block');
-    if (hiUser != null || login != null) {
-        // 如果屏幕宽度 <= 576px, 移动到汉堡菜单中
-        if ($('#HiUser').length>0) {
-            hamburgerMenu.appendChild(hiUser);
-        } else {
-            hamburgerMenu.appendChild(login);
-            const loginText = document.createElement('p');
-            loginText.textContent = '會員登入';
-            login.appendChild(loginText);
+    if (window.innerWidth <= 576) { // 如果屏幕宽度 <= 576px
+        if (hiUser) {
+            if (!hamburgerMenu.contains(hiUser)) { // 避免重复移动
+                hamburgerMenu.appendChild(hiUser); // 移动 HiUser 到汉堡菜单
+            }
+        } else if (login) {
+            if (!hamburgerMenu.contains(login)) { // 避免重复移动
+                hamburgerMenu.appendChild(login); // 移动 login 到汉堡菜单
+
+                // 添加 "會員登入" 文本
+                if (!login.querySelector('p')) { // 避免重复添加文本
+                    const loginText = document.createElement('p');
+                    loginText.textContent = '會員登入';
+                    login.appendChild(loginText);
+                }
+            }
         }
     } else {
         // 否则, 移回原来的位置
         if ($('#HiUser').length>0) {
-            iconBlock.appendChild(hiUser);
-        } else {
-            iconBlock.appendChild(login);
+            if (!iconBlock.contains(hiUser)) { // 避免重复移动
+                iconBlock.appendChild(hiUser); // 移动 HiUser 回原来的位置
+            }
+        } else if (login) {
+            if (!iconBlock.contains(login)) { // 避免重复移动
+                iconBlock.appendChild(login); // 移动 login 回原来的位置
+            }
         }
     }
 }

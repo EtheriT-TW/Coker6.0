@@ -131,8 +131,16 @@
     content: '';
 }
 
-#profile-tab-pane img {
+#profile-tab-pane .type_list img {
     width: 75px;
+}
+
+#history-tab-pane .type_list img {
+    width: 180px;
+}
+
+#favorite-tab-pane .type_list img {
+    width: 180px;
 }
 
 #history-tab-pane img {
@@ -374,6 +382,13 @@
 }
 
 @media (max-width:576px) {
+    #history-tab-pane .type_list img {
+        width: 100%;
+    }
+
+    #favorite-tab-pane .type_list img {
+        width: 100%;
+    }
     #history-tab-pane .type_list {
         padding-right: 0 !important;
         padding-left: 0 !important;

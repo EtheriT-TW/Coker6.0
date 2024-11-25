@@ -16,7 +16,8 @@
             if (typeof ($self.attr("link")) != "undefined" && $self.attr("link") != "") {
                 var vid = $self.attr('link').substring($self.attr("link").indexOf('v=') + 2);
                 $self.attr("vid", vid);
-                var img_link = `http://img.youtube.com/vi/${vid}/sddefault.jpg`;
+                //var img_link = `http://img.youtube.com/vi/${vid}/maxresdefault.jpg`;
+                var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`;
                 $self.find("img").attr("src", img_link)
             }
             if (typeof ($self.attr("yttitle")) != "undefined" && $self.attr("yttitle") != "") {

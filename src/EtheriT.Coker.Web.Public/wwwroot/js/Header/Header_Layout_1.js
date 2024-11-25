@@ -28,6 +28,8 @@
 
     MenuLiSize();
 
+    moveHiUserToMenu();
+
     if ($(window).width() > 767) {
         const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
         if (Cart_Dropdown != null) {
@@ -126,10 +128,6 @@ function moveHiUserToMenu() {
 }
 
 function MenuLiSize() {
-
-    if ($(window).width() < 576) {
-        moveHiUserToMenu();
-    }
     if ($(window).width() > 768) {
         $(".subtitle").removeClass("w-100")
         $(".subtitle li").removeClass("w-100")

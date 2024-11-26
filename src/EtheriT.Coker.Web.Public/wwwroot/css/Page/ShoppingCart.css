@@ -12,8 +12,17 @@ input[type="number"] {
     -moz-appearance: textfield;
 }
 
-/* Required Sign */
-.required_front::before {
+#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_minus {
+    justify-items:center;
+}
+#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_plus {
+    justify-items: center;
+}
+#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > quantityInput1 {
+    border-radius: 0;
+}
+    /* Required Sign */
+    .required_front::before {
     color: var(--red-text);
     content: '*';
 }

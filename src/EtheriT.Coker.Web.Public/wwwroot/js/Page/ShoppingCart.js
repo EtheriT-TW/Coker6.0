@@ -905,7 +905,7 @@ function OrderHeaderAdd() {
                             case "PCHomePay":
                                 Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                     if (result.success) {
-                                        localStorage.setItem(`lastorderid`, result.message.split(",")[1]);
+                                        localStorage.setItem("lastSaveTime", new Date().toISOString())
                                         window.location.replace(result.message);
                                     } else {
                                         console.log(result);
@@ -1124,7 +1124,10 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         });
                         break;
                     case "imagePath":
+                        console.log(data[key])
+                        console.log(OrgName)
                         data[key].replace(`/${OrgName}/`, '/');
+                        console.log(data[key])
                         $this.attr({
                             src: data[key],
                             alt: data['title']

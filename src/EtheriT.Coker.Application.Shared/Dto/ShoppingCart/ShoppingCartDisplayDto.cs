@@ -14,7 +14,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public string Price { get; set; }
         public string Discont { get; set; }
         public string Bonus { get; set; }
+        public string OldPrice { get; set; }
         public string Quantity { get; set; }
+        public string OldQuantity { get; set; }
         public string Subtotal { get; set; }
     }
 }

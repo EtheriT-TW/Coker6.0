@@ -38,6 +38,10 @@ input[type="number"] {
     font-size: 0.5rem;
 }
 
+.red_text {
+    color: var(--red-number);
+}
+
 /* Generic Button Style */
 .btn_gray_dark {
     background-color: var(--gray-text);

@@ -16,6 +16,17 @@ function PageReady() {
                 data: { page: page },
             });
         },
+        Reorder: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/Reorder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
         CancelOrder: function (ohid, payment) {
             return $.ajax({
                 url: "/api/Order/CancelOrder/",
@@ -371,6 +382,17 @@ function HistoryDataInsert(Datas) {
             console.log(`訂單編號${$this.data("ohid")}再次購買`)
             Coker.sweet.confirm("確定要再次購買？", "", "確定", "取消", function () {
                 Coker.sweet.loading();
+                Coker.Member.Reorder($this.data("ohid")).done(function (result) {
+                    if (result.success) {
+                        console.log(result.message)
+                        console.log(result.message.length)
+                        console.log(result.message.toString().length)
+                        var ohidstr = `000000000${result.message}`.substring(result.message.length);
+                        window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
+                    } else {
+                        Coker.sweet.error("錯誤", result.message)
+                    }
+                });
             })
         })
 

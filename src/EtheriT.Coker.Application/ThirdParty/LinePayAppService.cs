@@ -257,7 +257,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                             var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                             var linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
 
-                            if (linePayResponse.ReturnCode == "0000") response.Success = true;
+                            if (linePayResponse.ReturnCode == "0000")
+                            {
+                                response.Success = true;
+                                ohdata.State = OrderStatusEnum.已取消;
+                                db.SaveChanges();
+                            }
                             response.Error = linePayResponse.ReturnCode;
                             response.Message = linePayResponse.ReturnMessage;
                         }
@@ -376,6 +381,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
                                 ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
                                 ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
+                                ohdata.State = OrderStatusEnum.已取消;
                                 db.SaveChanges();
                             }
                             else
@@ -562,7 +568,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         {
                             id = od.PId.ToString(),
                             name = od.Title,
-                            imageUrl = $"{Website.DefaultUrl}{od.ImagePath}",
+                            imageUrl = $"{Website.DefaultUrl}{od.ImagePath}".Replace($"/{Website.OrgName}/","/"),
                             quantity = od.Quantity.ToString(),
                             price = od.Price.ToString(),
                         });

@@ -70,6 +70,7 @@ namespace EtheriT.Coker.Application
 
             //UserGroup
             CreateMap<UserGroupAddUpDto, UserGrouping>().ReverseMap();
+            CreateMap<UserGroupAddUpInputDto, UserGrouping>().ReverseMap();
             CreateMap<UserGroupListDto, UserGrouping>().ReverseMap();
 
             //Website

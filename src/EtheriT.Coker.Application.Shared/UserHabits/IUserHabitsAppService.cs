@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Application.Shared.UserHabits
     public interface IUserHabitsAppService
     {
         public Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions);
-        public Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpDto dto);
+        public Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpInputDto dto);
         public Task<ResponseMessageDto> GetUserGroupOne(long id);
     }
 }

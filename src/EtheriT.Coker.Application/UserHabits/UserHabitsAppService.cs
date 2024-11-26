@@ -20,6 +20,7 @@ using EtheriT.Coker.Application.Tag;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Tag;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Application.UserHabits
 {
@@ -43,7 +44,19 @@ namespace EtheriT.Coker.Application.UserHabits
         public async Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions) {
             try {
                 var websiteId = await loginUserData.GetWebsiteId();
-                var group = db.UserGroupings.Where(e => e.FK_WebsiteId == websiteId);
+                var group = from grouing in db.UserGroupings.Where(e => e.FK_WebsiteId == websiteId)
+                            select new UserGroupListDto { 
+                                Id = grouing.Id,
+                                Description = grouing.Description,
+                                Title = grouing.Title,
+                                Tags = String.Join("、", (
+                                    from ta in db.Tag_Associates
+                                    where ta.FK_AId == grouing.Id && ta.Type == TagAssociateTypeEnum.使用者分群
+                                    join t in db.Tags on ta.FK_TId equals t.Id
+                                    where t.FK_WebsiteId == websiteId
+                                    select t.Title
+                                ).ToList())
+                            };
                 var dataQuery = mapper.Map<List<UserGroupListDto>>(group);
                 var output = DataSourceLoader.Load(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
@@ -52,7 +65,7 @@ namespace EtheriT.Coker.Application.UserHabits
                 return new JsonResult(new List<ArticleListGetDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
         }
-        public async Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpDto dto)
+        public async Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpInputDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -67,9 +80,25 @@ namespace EtheriT.Coker.Application.UserHabits
                     db.UserGroupings.Add(group);
                 }
                 else {
-                    group = mapper.Map<UserGrouping>(dto);
+                    mapper.Map(dto, group);
                 }
                 await loginUserData.SaveChanges(group);
+                await db.SaveChangesAsync();
+
+                var tags = new List<TagAssociateDto>();
+                foreach (var data in dto.Tags)
+                {
+                    tags.Add(new TagAssociateDto()
+                    {
+                        Id = data.Id,
+                        FK_AId = group.Id,
+                        FK_TId = data.FK_TId,
+                        Type = TagAssociateTypeEnum.使用者分群,
+                        IsDeleted = data.IsDeleted
+                    });
+                }
+                var tag_response = await tagAppService.TagAssociateAddDelect(tags);
+                if (!tag_response.Success) throw new Exception(tag_response.Error);
                 response.Success = true;
             }
             catch (Exception ex) {

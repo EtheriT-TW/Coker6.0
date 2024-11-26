@@ -3,8 +3,10 @@
 function PageReady() {
     ElementInit();
     TagListModalInit();
-
     const forms = $('#PageForm');
+    $Tags = $(forms).find(".InputTag").TagListModalInit();
+
+    
     (() => {
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
@@ -99,7 +101,7 @@ function editButtonClicked(e) {
 }
 
 function FormDataClear() {
-    TagDataClear();
+    $Tags.TagDataClear();
     keyId = 0;
     co.Form.clear("PageForm");
 }
@@ -107,8 +109,8 @@ function FormDataClear() {
 function FormDataSet(result) {
     FormDataClear();
     keyId = result.id;
-    co.Form.insertData(result,"PageForm");
-    TagDataSet(result.tagDatas);
+    co.Form.insertData(result.object, "PageForm");
+    $Tags.TagDataSet(result.object.tags);
 }
 
 function paletteButtonClicked(e) {
@@ -128,7 +130,7 @@ function deleteButtonClicked(e) {
 
 function AddUp(success_text, error_text, place) {
     let data = co.Form.getJson("PageForm");
-    console.log(data);
+    data.tags = $Tags.data("tagList");
     co.UserHabits.AddUpUserGroup(data).done(function (result) {
         if (result.success) {
             Coker.sweet.success(success_text, null, true);

@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -42,14 +43,22 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await orderAppService.GetOrderDetails(id);
         }
-
         [HttpGet]
         public async Task<List<OrderDisplayDto>> GetOrderDisplay(long ohid, bool check)
         {
             List<long> ohids = new List<long> { ohid };
             return await orderAppService.GetOrderDisplay(ohids, check);
         }
-
+        [HttpGet]
+        public async Task<ResponseMessageDto> Reorder(long ohid)
+        {
+            return await orderAppService.Reorder(ohid);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> ReorderDisplay(long ohid)
+        {
+            return await orderAppService.ReorderDisplay(ohid);
+        }
         [HttpGet]
         public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
         {

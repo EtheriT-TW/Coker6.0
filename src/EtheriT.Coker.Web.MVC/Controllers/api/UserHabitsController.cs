@@ -22,7 +22,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return await userHabitsAppService.GetUserGroupList(loadOptions);
         }
         [HttpPost]
-        public async Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpDto dto)
+        public async Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpInputDto dto)
         {
             return await userHabitsAppService.AddUpUserGroup(dto);
         }

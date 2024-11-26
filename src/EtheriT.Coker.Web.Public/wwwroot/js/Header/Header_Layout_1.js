@@ -115,7 +115,7 @@ function moveHiUserToMenu() {
         }
     } else {
         // 否则, 移回原来的位置
-        if ($('#HiUser').length>0) {
+        if ($('#HiUser').length > 0) {
             if (!iconBlock.contains(hiUser)) { // 避免重复移动
                 iconBlock.appendChild(hiUser); // 移动 HiUser 回原来的位置
             }
@@ -182,7 +182,11 @@ function CartDropAdd(result) {
     item_name.text(result.title);
     item_spec.append(result.s1Title == "" ? "" : `<span class="border px-1 me-1">${result.s1Title}</span>`)
     item_spec.append(result.s2Title == "" ? "" : `<span class="border px-1">${result.s2Title}</span>`)
-    item_unit.text((result.price + "").toLocaleString('en-US'));
+    if ($.isNumeric(result.price)) {
+        item_unit.text((parseInt(result.price)).toLocaleString('en-US'))
+    } else {
+        item_unit.text(result.price)
+    }
     item_quantity.text(result.quantity);
     item_btn_delete.on("click", function () {
         var $self = $(this).parents("li").first();

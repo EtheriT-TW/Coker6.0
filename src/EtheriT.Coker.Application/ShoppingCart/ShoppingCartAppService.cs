@@ -99,7 +99,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     if (db_token != null && db_prod != null && Token.RefreshToken != null)
                     {
-                        var price = (db_prod != null) ? (int)(db_ps.Price * dto.Quantity) : 0;
+                        //var price = (db_prod != null) ? (int)(db_ps.Price * dto.Quantity) : 0;
                         if (db_ps.Stock >= dto.Quantity)
                         {
                             if (db_shoppingcart == null)
@@ -113,12 +113,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                     FK_S1id = dto.FK_S1id,
                                     FK_S2id = dto.FK_S2id,
                                     Quantity = dto.Quantity,
-                                    Price = price,
+                                    //Price = price,
                                     Discont = dto.Discont,
                                     Bonus = dto.Bonus,
                                     PriceType = dto.PriceType,
                                     IsAdditional = dto.IsAdditional,
-                                    Ser_No = dto.Ser_No == null ? 500 : (int)dto.Ser_No
+                                    Ser_No = dto.Ser_No == null ? 500 : (int)dto.Ser_No,
                                 };
                                 db.ShoppingCarts.Add(sc);
 
@@ -316,7 +316,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         S1Title = db_ps.FK_S1id.ToString(),
                         S2Title = db_ps.FK_S2id.ToString(),
                         Quantity = db_sc.Quantity,
-                        Price = db_price == null ? 0 : db_price[0].Price ?? 0,
+                        Price = db_sc.Price > 0 ? db_sc.Price : db_price == null ? 0 : db_price[0].Price ?? 0,
                         ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
                                                   .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
                                                   .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
@@ -386,41 +386,87 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
                     }
                     var psid = shoppingCart.Prod_Stock?.Id;
-                    var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
-                    if (db_price.Any())
+                    if (temp_output.Price == "")
                     {
-                        if (roleid == 1)
+                        var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
+                        if (db_price.Any())
                         {
-                            var temp_price = db_price[0]?.Price?.ToString();
-                            temp_output.Price = temp_price ?? "0";
-                        }
-                        else
-                        {
-                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
-                            if (temp_price == null)
+                            if (roleid == 1)
                             {
-                                temp_price = db_price[0]?.Price?.ToString();
+                                var temp_price = db_price[0]?.Price?.ToString();
                                 temp_output.Price = temp_price ?? "0";
                             }
-                            else temp_output.Price = temp_price;
+                            else
+                            {
+                                var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
+                                if (temp_price == null)
+                                {
+                                    temp_price = db_price[0]?.Price?.ToString();
+                                    temp_output.Price = temp_price ?? "0";
+                                }
+                                else temp_output.Price = temp_price;
+                            }
                         }
-
-                        var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
-
-                        temp_output.Price = int.Parse(temp_output.Price).ToString("#,##0");
-                        temp_output.Subtotal = subtotal.ToString("#,##0");
-                        temp_output.Bonus = (shoppingCart.Bonus ?? 0).ToString("#,##0");
-
-                        temp_output.Describe = shoppingCart.Prod_Stock?.Prod?.Description ?? "";
-
-                        output.Add(temp_output);
                     }
+                    var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
+
+                    temp_output.Price = int.Parse(temp_output.Price).ToString("#,##0");
+                    temp_output.Subtotal = subtotal.ToString("#,##0");
+                    temp_output.Bonus = (shoppingCart.Bonus ?? 0).ToString("#,##0");
+
+                    temp_output.Describe = shoppingCart.Prod_Stock?.Prod?.Description ?? "";
+
+                    output.Add(temp_output);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"ShoppingCart=>GetDisplay回傳資料：{ex.Message}");
+            }
+            return output;
+        }
+        public async Task<ResponseMessageDto> Reorder(List<long> scids)
+        {
+            ResponseMessageDto output = new ResponseMessageDto();
+            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var StockAllNull = true;
+
+            try
+            {
+                var oldscs = await db.ShoppingCarts.Include(e => e.Prod_Stock).ThenInclude(e => e.Prod).Where(e => scids.Contains(e.Id)).ToListAsync();
+                if (oldscs.Any())
+                {
+                    var tags = await (from ta in db.Tag_Associates
+                                      join t in db.Tags on ta.FK_TId equals t.Id
+                                      where t.Title == "售完" && t.FK_WebsiteId == WebsiteId && ta.Type == TagAssociateTypeEnum.商品
+                                      select ta).ToListAsync();
+                    foreach (var oldsc in oldscs)
+                    {
+                        if (!tags.Any() || (tags.Any() && tags.Find(e => e.FK_AId == oldsc.Prod_Stock.Prod.Id) == null))
+                        {
+                            if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && oldsc.Prod_Stock.Stock > 0)
+                            {
+                                ShoppingCartAddUpDto newsc = mapper.Map<ShoppingCartAddUpDto>(oldsc);
+                                if (newsc.Quantity > oldsc.Prod_Stock.Stock) newsc.Quantity = (int)oldsc.Prod_Stock.Stock;
+                                newsc.Id = null;
+                                newsc.FK_Pid = oldsc.Prod_Stock.Prod.Id;
+                                newsc.Price = 0;
+                                var temp_response = await AddUp(newsc);
+                                if (temp_response.Success) StockAllNull = false;
+                                else throw new Exception(temp_response.Message);
+                            }
+                        }
+                    }
+                    if (!StockAllNull) output.Success = true;
+                    else throw new Exception("訂單中商品皆已無庫存或已下架");
+                }
+                else throw new Exception("查無舊購物車資料");
+            }
+            catch (Exception ex)
+            {
+                output.Error = "Error";
+                output.Message = ex.Message;
             }
             return output;
         }

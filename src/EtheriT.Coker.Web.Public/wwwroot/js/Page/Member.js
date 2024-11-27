@@ -330,13 +330,11 @@ function HistoryDataInsert(Datas) {
         frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
         frame.find(".amount").text((order_header.total).toLocaleString());
         frame.find(".payment").text(order_header.payment);
-        console.log(order_header)
 
         if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
             frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
             frame.find(".state .btn_cancelOrder").on("click", function () {
                 var $this = $(this);
-                console.log(`訂單編號${$this.data("ohid")}要取消訂單`)
                 var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "並退回款項?" : "？(退款事宜請聯繫客服處理)" : "?";
                 Coker.sweet.confirm("取消訂單", `確定要取消這筆訂單${confirm_text}`, "確定", "取消", function () {
                     Coker.sweet.loading();
@@ -379,14 +377,10 @@ function HistoryDataInsert(Datas) {
         frame.find(".btn_buyAgain").data("ohid", order_header.id);
         frame.find(".btn_buyAgain").on("click", function () {
             var $this = $(this);
-            console.log(`訂單編號${$this.data("ohid")}再次購買`)
             Coker.sweet.confirm("確定要再次購買？", "", "確定", "取消", function () {
                 Coker.sweet.loading();
                 Coker.Member.Reorder($this.data("ohid")).done(function (result) {
                     if (result.success) {
-                        console.log(result.message)
-                        console.log(result.message.length)
-                        console.log(result.message.toString().length)
                         var ohidstr = `000000000${result.message}`.substring(result.message.length);
                         window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
                     } else {
@@ -395,7 +389,6 @@ function HistoryDataInsert(Datas) {
                 });
             })
         })
-
         $.each(order_details, function (index, detail) {
             if (detail != null) {
                 var list_frame = $($("#Template_Order_Details_List").html()).clone();
@@ -404,6 +397,8 @@ function HistoryDataInsert(Datas) {
                 list_frame.find("img").attr("src", detail.imagePath);
                 list_frame.find("img").attr("alt", `${detail.title}的主要圖片`);
                 list_frame.find(".title").text(detail.title);
+                if (detail.s1Title != "") list_frame.find(".spec").append(`<span class="border px-1 me-1">${detail.s1Title}</span>`)
+                if (detail.s2Title != "") list_frame.find(".spec").append(`<span class="border px-1 me-1">${detail.s2Title}</span>`)
                 list_frame.find(".price").text((detail.price).toLocaleString());
                 list_frame.find(".quantity").text(detail.quantity);
                 list_frame.find(".subtotal").text(((parseInt(detail.price)) * (parseInt(detail.quantity))).toLocaleString());

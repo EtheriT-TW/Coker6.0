@@ -541,7 +541,7 @@ function CheckToken() {
                 CartDropInit();
             }
             if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
-                CartInit();
+                if (window.location.search == "") CardDataGet();
             }
             if (result.agreePrivacy) cookie_accept();
             else if (!$("#Cookie").hasClass("show")) $("#Cookie").addClass("show")

@@ -213,6 +213,9 @@
                                 <div class="payment col-2 text-center"></div>
                                 <div class="state col-3 text-center"></div>
                             </div>
+                            <button class="btn_buyAgain btn bg_gray border-0 rounded w-100 my-3" type="button">
+                                再買一次
+                            </button>
                             <div class="collapse">
                                 <div class="card card-body">
                                     <ul class="list-group list-group-flush mb-3">
@@ -238,9 +241,6 @@
                                         <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
                                         <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
                                     </div>
-                                    @* <div class="text-end px-2 pt-3">
-                                <button class="btn_buyagain border-0 bg-transparent fw-bold">再次購買</button>
-                                </div> *@
                                 </div>
                             </div>
                             <button class="btn_collapse btn bg_gray border-0 rounded text-black w-100" type="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">
@@ -255,9 +255,10 @@
                                 <div class="row d-lg-flex">
                                     <div class="col-2 text-center"><img src="" alt="" /></div>
                                     <div class="title col-4 text-start align-content-center"></div>
-                                    <span class="isHide">單價:</span><div class="price col-2 text-end align-content-center"></div><br class="isWrap">
-                                    <span class="isHide">數量:</span><div class="quantity col-2 text-end align-content-center"></div><br class="isWrap">
-                                    <span class="isHide">小計:</span><div class="subtotal price col-2 text-end align-content-center"></div><br class="isWrap">
+                                    <span class="isHide">單價:</span><div class="price col-2 text-end align-content-center"></div>
+                                    <p class="isWrap"></p>
+                                    <span class="isHide">數量:</span><div class="quantity col-2 text-end align-content-center"></div>
+                                    <span class="isHide hideTotal">小計:</span><div class="subtotal price col-2 text-end align-content-center"></div>
                                 </div>
                             </a>
                         </li>

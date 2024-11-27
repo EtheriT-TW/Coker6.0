@@ -12,8 +12,8 @@
     }
 
 #profile-tab-pane {
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
 }
 
 .isHide, .isWrap {
@@ -322,42 +322,27 @@
 }
 
 @media (max-width:992px) {
-    .header_subtotal, .header_freight, .header_total {
-        width:auto;
-        padding:0;
+    .collapse > .card-body > .list-group > li:first-child {
+        display: none;
     }
-    .collapse > .card-body > div {
-        align-self: flex-start;
+    #TabContent {
+        width:100%;
     }
-    .collapse > .card-body > div > div:first-child {
-        width:auto;
+    #main > .container {
+        flex-direction: column !important;
     }
-    .collapse > .card-body > div:nth-child(3) {
-        padding-left:2.2rem;
-    }
-        .collapse > .card-body > div:nth-child(4) {
-            padding-left: .9rem;
+
+        #main > .container > #ToolList {
+            width: 100%;
+            min-height: unset;
+            flex-direction: unset !important;
         }
 
-    #profile-tab-pane > .content > div {
-        display: flex;
-        flex-wrap: wrap;
-        line-height: 1.7rem;
-    }
-        #profile-tab-pane > .content > div > div:not(div:nth-child(3)) {
-            display: flex;
-            flex-direction: column;
-            flex: 1 1 auto;
-            margin-top: 0 !important;
-        }
-        #profile-tab-pane > .content > div > div:first-child > div {
-            width: auto;
-            text-align-last: left;
-        }
-        #profile-tab-pane > .content > div > div:nth-child(2) > div {
-            width: auto;
-            text-align-last: right;
-        }
+            #main > .container > #ToolList > li {
+                width: 25%;
+                text-align: center;
+            }
+    
     #TabContent .content.type_grid .type_change_frame {
         width: 50% !important;
     }
@@ -381,7 +366,90 @@
 }
 
 @media (max-width:768px) {
+    .quantity {
+        width: auto;
+    }
 
+    #profile-tab-pane > .content .collapse {
+        width: 100%;
+    }
+
+    .isHide, .isWrap {
+        display: unset;
+    }
+
+    .isHide:not(.hideTotal) {
+        width: 45%;
+        text-align-last: end;
+    }
+
+    .hideTotal {
+        flex: 1 1 auto;
+        text-align-last: end;
+        width:auto;
+    }
+
+    .collapse > .card-body > .list-group > li {
+        padding: 0;
+    }
+
+        .collapse > .card-body > .list-group > li > a > div > div:first-child {
+            width: 30%;
+            padding-bottom: .5rem;
+        }
+
+        .collapse > .card-body > .list-group > li > a > div > .title {
+            width: 70%;
+            padding-bottom: .5rem;
+        }
+
+        .collapse > .card-body > .list-group > li > a > div > .price {
+            padding: 0;
+            text-align-last: left;
+        }
+
+        .collapse > .card-body > .list-group > li > a > div > .subtotal {
+            width: auto;
+        }
+
+    .list-group-item > a > div > div:first-child {
+        width: 30%;
+    }
+    .header_subtotal, .header_freight, .header_total {
+        width: auto;
+        padding: 0;
+    }
+
+        .collapse > .card-body > div:nth-child(3) {
+            padding-left: 2.2rem;
+        }
+
+        .collapse > .card-body > div:nth-child(4) {
+            padding-left: .9rem;
+        }
+
+    #profile-tab-pane > .content > div {
+        display: flex;
+        flex-wrap: wrap;
+        line-height: 1.7rem;
+    }
+
+        #profile-tab-pane > .content > div > div:not(div:nth-child(3)) {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > div > div:first-child > div {
+            width: auto;
+            text-align-last: left;
+        }
+
+        #profile-tab-pane > .content > div > div:nth-child(2) > div {
+            width: auto;
+            text-align-last: right;
+        }
 
     #favorite-tab-pane {
         padding-right: 12px !important;
@@ -399,21 +467,6 @@
         align-items: center;
         flex-direction: column;
     }
-
-    #main > .container {
-        flex-direction: column !important;
-    }
-
-        #main > .container > #ToolList {
-            width: 100%;
-            min-height: unset;
-            flex-direction: unset !important;
-        }
-
-            #main > .container > #ToolList > li {
-                width: 25%;
-                text-align: center;
-            }
 
         #main > .container > #TabContent {
             width: unset;
@@ -435,33 +488,15 @@
 }
 
 @media (max-width:576px) {
-    #profile-tab-pane > .content .collapse {
-        width:100%;
+    .collapse > .card-body > div {
+        align-self:flex-start;
     }
-    .isHide, .isWrap {
-        display:unset;
+    .collapse > .card-body > .list-group > li > a > div > .price {
+        width: auto;
     }
-    .collapse > .card-body > .list-group > li:first-child {
-        display:none;
-    }
-        .collapse > .card-body > .list-group > li:nth-child(2) {
-            padding:0;
+        .isHide {
+            width: auto !important;
         }
-            .collapse > .card-body > .list-group > li:nth-child(2) > a > div > div:first-child {
-                width:30%;
-            }
-                .collapse > .card-body > .list-group > li:nth-child(2) > a > div > .title {
-                    width:70%;
-                }
-            .collapse > .card-body > .list-group > li:nth-child(2) > a > div > .price, .quantity {
-                padding:0;
-                text-align-last: left;
-                width: 60%;
-            }
-                .list-group-item img {
-                    width: 30%;
-                }
-
     #history-tab-pane .type_list img {
         width: 100%;
     }
@@ -541,4 +576,12 @@
     #TabContent .content.type_grid .type_change_frame {
         flex: 0 0 auto;
     }
+
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+        width:33%;
+    }
+
+        #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child > label {
+            padding-right:0 !important;
+        }
 }

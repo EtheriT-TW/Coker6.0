@@ -64,6 +64,17 @@ function PageReady() {
                 data: { ohid: ohid, check: check },
             });
         },
+        GetReorder: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/ReorderDisplay",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
         GetPaymentTypeEnum: function () {
             return $.ajax({
                 url: "/api/Order/GetPaymentTypeEnum",
@@ -321,10 +332,19 @@ function GetOrderPage() {
             buy_step_swiper.slideTo(4);
             buy_step_swiper.disable();
         });
-    } else if (window.location.search.substring(1) == "success") {
-        console.log(localStorage.getItem('lastorderid'))
-    } else if (window.location.search.substring(1) == "fail") {
-        console.log(localStorage.getItem('lastorderid'))
+    } else if (window.location.search.substring(1).startsWith("reorder")) {
+        var ohid = parseInt(window.location.search.substring("reorder".length + 1));
+        Coker.Order.GetReorder(ohid).done(function (result) {
+            if (result.success && result.orderHeader != null && result.orderDetails != null) {
+                $("#Step1 > .card-body").removeClass("d-none");
+                buy_step_swiper.enable();
+                $("#Purchase_Null").addClass("d-none");
+                console.log(result);
+                CartInit(result.orderDetails)
+            } else {
+                window.location.href = `/${OrgName}/ShoppingCar`;
+            }
+        })
     }
 }
 function SuccessPageDataInsert(data) {
@@ -390,44 +410,48 @@ function ElementInit() {
     })
     $pay_method = $("input[name=RadioPayment]");
 }
-function CartInit() {
+function CardDataGet() {
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
-            $("#Step1 > .card-body").removeClass("d-none");
-            for (var i = 0; i < result.length; i++) {
-                CartAdd(result[i])
+            CartInit(result)
+        }
+    });
+}
+function CartInit(result) {
+    console.log(result);
+    $("#Step1 > .card-body").removeClass("d-none");
+    for (var i = 0; i < result.length; i++) {
+        CartAdd(result[i])
+    }
+    $("#Purchase_Null").addClass("d-none");
+    buy_step_swiper.enable();
+
+    var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl)
+    })
+
+    buy_step_swiper.update();
+    TotalCount();
+
+    PaymentForms.children("div").each(function () {
+        var $this = $(this);
+        var $this_in = $this.find("input");
+        var code = $this_in.attr("id").replaceAll("radio_payment_", "");
+        if (code.toLowerCase().startsWith("pchome")) {
+            if (code.startsWith("PchomePayInstallment")) {
+                code = "CARD";
+                $this.attr("data-paycode", code);
+            } else if (code.startsWith("PchomePay")) {
+                code = code.replaceAll("PchomePay", "");
+                $this.attr("data-paycode", code);
+            } else if (code.startsWith("PCHome")) {
+                code = code.replaceAll("PCHome", "");
+                $this.attr("data-paycode", code);
             }
-            $("#Purchase_Null").addClass("d-none");
-            buy_step_swiper.enable();
-
-            var popoverTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl)
-            })
-
-            buy_step_swiper.update();
-            TotalCount();
-
-            PaymentForms.children("div").each(function () {
-                var $this = $(this);
-                var $this_in = $this.find("input");
-                var code = $this_in.attr("id").replaceAll("radio_payment_", "");
-                if (code.toLowerCase().startsWith("pchome")) {
-                    if (code.startsWith("PchomePayInstallment")) {
-                        code = "CARD";
-                        $this.attr("data-paycode", code);
-                    } else if (code.startsWith("PchomePay")) {
-                        code = code.replaceAll("PchomePay", "");
-                        $this.attr("data-paycode", code);
-                    } else if (code.startsWith("PCHome")) {
-                        code = code.replaceAll("PCHome", "");
-                        $this.attr("data-paycode", code);
-                    }
-                }
-            })
-            PaymentHideShow();
         }
     })
+    PaymentHideShow();
 }
 function PaymentHideShow() {
     PaymentForms.find("div[data-paycode]").removeClass("d-none");
@@ -462,12 +486,12 @@ function PaymentHideShow() {
 }
 function CartAdd(result) {
     //console.log(result)
+    var item_list_ul = $("#Step1 > .card-body > .purchase_list");
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
         item_image = item.find(".pro_image"),
         item_name = item.find(".pro_name"),
         item_specification = item.find(".pro_specification"),
-        item_instructions = item.find(".pro_instructions"),
         item_unit = item.find(".pro_unit"),
         item_quantity = item.find(".pro_quantity"),
         item_total = item.find(".pro_subtotal"),
@@ -475,86 +499,109 @@ function CartAdd(result) {
         item_btn_count_minus = item.find(".btn_count_minus"),
         item_btn_remove_pro = item.find(".btn_remove_pro");
 
-    item.data("scid", result.scId);
-    item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
-    item_link.attr("title", `連結至：${result.title}`);
-    item_image.attr("src", result.imagePath);
-    item_name.text(result.title);
-    item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
-    item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
-    item_instructions.append(result.description.replaceAll("\n", "<br/>"))
-    item_unit.text((result.price).toLocaleString('en-US'))
-    item_quantity.val(result.quantity);
-    item_total.data("subtotal", result.price * result.quantity)
-    item_total.text(item_total.data("subtotal").toLocaleString('en-US'))
-
-    item_btn_remove_pro.on("click", function () {
-        var $self = $(this).parents("li").first();
-        Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-            CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
-        });
-    });
-    item_btn_count_plus.on("click", function () {
-        var $self_bro = $(this).siblings(".pro_quantity");
-        $self_bro.val(parseInt($self_bro.val()) + 1)
-        CartQuantityUpdate(item_total, result.price, item.data("scid"), $self_bro.val());
-    });
-    item_btn_count_minus.on("click", function () {
-        var $self_bro = $(this).siblings(".pro_quantity");
-        if ($self_bro.val() > 1) {
-            $self_bro.val(parseInt($self_bro.val()) - 1)
-            CartQuantityUpdate(item_total, result.price, item.data("scid"), $self_bro.val());
+    if (parseInt(result.quantity) == 0) {
+        item_image.attr("src", result.imagePath);
+        item_image.attr("alt", `${result.title}的圖片`);
+        item_name.text(result.title);
+        item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
+        item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
+        item.find(".nostock").removeClass("d-none");
+        item.find(".content").addClass("d-none");
+        item.find(".btn_side_icon").addClass("d-none");
+        item_total.data("subtotal", 0)
+    } else {
+        item.data("scid", result.scId);
+        item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
+        item_link.attr("title", `連結至：${result.title}`);
+        item_image.attr("src", result.imagePath);
+        item_image.attr("alt", `${result.title}的圖片`);
+        item_name.text(result.title);
+        item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
+        item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
+        if ($.isNumeric(result.price)) {
+            item_unit.text((parseInt(result.price)).toLocaleString('en-US'))
+        } else {
+            item_unit.text(result.price)
         }
-    });
-    item_quantity.on("change", function () {
-        var $self = $(this);
-        if ($self.val() < 1) { $self.val(1); }
-        CartQuantityUpdate(item_total, result.price, item.data("scid"), $self.val());
-    });
+        if (parseInt(result.oldPrice) > 0) {
+            item.find(".pro_old_unit").removeClass("d-none");
+            if ($.isNumeric(result.price)) {
+                item.find(".pro_old_unit").text((parseInt(result.oldPrice)).toLocaleString('en-US'))
+            } else {
+                item.find(".pro_old_unit").text(result.oldPrice)
+            }
+            item_unit.addClass("red_text")
+        }
+        item_quantity.val(result.quantity);
+        item_total.data("subtotal", result.price * result.quantity)
+        item_total.text(item_total.data("subtotal").toLocaleString('en-US'))
 
-    var item_list_ul = $("#Step1 > .card-body > .purchase_list");
-
-    if (item.find(".btn_move_to_favorites").length > 0) {
-        if (islogin) {
-            var $btn_favorites = item.find(".btn_move_to_favorites");
-            $btn_favorites.parent("span").removeClass("d-none");
-
-            Coker.Favorites.Check(result.pId).done(function (check) {
-                if (check.success) {
-                    $btn_favorites.data("Fid", check.message);
-                    $btn_favorites.find("i").addClass("fa-solid")
-                    $btn_favorites.find("i").removeClass("fa-regular")
-                }
+        item_btn_remove_pro.on("click", function () {
+            var $self = $(this).parents("li").first();
+            Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
+                CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
             });
+        });
+        item_btn_count_plus.on("click", function () {
+            var $self_bro = $(this).siblings(".pro_quantity");
+            $self_bro.val(parseInt($self_bro.val()) + 1)
+            CartQuantityUpdate(item_total, result.price, item.data("scid"), $self_bro.val());
+        });
+        item_btn_count_minus.on("click", function () {
+            var $self_bro = $(this).siblings(".pro_quantity");
+            if ($self_bro.val() > 1) {
+                $self_bro.val(parseInt($self_bro.val()) - 1)
+                CartQuantityUpdate(item_total, result.price, item.data("scid"), $self_bro.val());
+            }
+        });
+        item_quantity.on("change", function () {
+            var $self = $(this);
+            if ($self.val() < 1) { $self.val(1); }
+            CartQuantityUpdate(item_total, result.price, item.data("scid"), $self.val());
+        });
 
-            $btn_favorites.on("click", function () {
-                var $self = $(this).find("i");
-                if ($self.hasClass("fa-regular")) {
-                    Coker.Favorites.Add(result.pId).done(function (favorites) {
-                        if (favorites.success) {
-                            $btn_favorites.data("Fid", favorites.message);
-                            $self.addClass("fa-solid")
-                            $self.removeClass("fa-regular")
-                            Coker.sweet.success("成功將商品加入收藏", null, true);
-                        } else {
-                            console.log(favorites.message)
-                        }
-                    });
-                } else {
-                    if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
-                        Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (favorites) {
+        if (item.find(".btn_move_to_favorites").length > 0) {
+            if (islogin) {
+                var $btn_favorites = item.find(".btn_move_to_favorites");
+                $btn_favorites.parent("span").removeClass("d-none");
+
+                Coker.Favorites.Check(result.pId).done(function (check) {
+                    if (check.success) {
+                        $btn_favorites.data("Fid", check.message);
+                        $btn_favorites.find("i").addClass("fa-solid")
+                        $btn_favorites.find("i").removeClass("fa-regular")
+                    }
+                });
+
+                $btn_favorites.on("click", function () {
+                    var $self = $(this).find("i");
+                    if ($self.hasClass("fa-regular")) {
+                        Coker.Favorites.Add(result.pId).done(function (favorites) {
                             if (favorites.success) {
-                                $btn_favorites.data("Fid", "");
-                                $self.addClass("fa-regular")
-                                $self.removeClass("fa-solid")
-                                Coker.sweet.success("已將商品從收藏中移除", null, true);
+                                $btn_favorites.data("Fid", favorites.message);
+                                $self.addClass("fa-solid")
+                                $self.removeClass("fa-regular")
+                                Coker.sweet.success("成功將商品加入收藏", null, true);
                             } else {
                                 console.log(favorites.message)
                             }
                         });
+                    } else {
+                        if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
+                            Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (favorites) {
+                                if (favorites.success) {
+                                    $btn_favorites.data("Fid", "");
+                                    $self.addClass("fa-regular")
+                                    $self.removeClass("fa-solid")
+                                    Coker.sweet.success("已將商品從收藏中移除", null, true);
+                                } else {
+                                    console.log(favorites.message)
+                                }
+                            });
+                        }
                     }
-                }
-            })
+                })
+            }
         }
     }
 
@@ -1035,7 +1082,6 @@ function PurchaseAdd(result, item_list_ul) {
         item_image = item.find(".pro_image"),
         item_name = item.find(".pro_name"),
         item_specification = item.find(".pro_specification"),
-        item_instructions = item.find(".pro_instructions"),
         item_unit = item.find(".pro_unit"),
         item_quantity = item.find(".pro_quantity"),
         item_subtotal = item.find(".pro_subtotal");
@@ -1046,7 +1092,6 @@ function PurchaseAdd(result, item_list_ul) {
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
     item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
-    item_instructions.text(result.description);
     item_unit.text(`$${(result.price).toLocaleString('en-US')}`)
     item_quantity.text(result.quantity);
     item_subtotal.text((result.price * result.quantity).toLocaleString('en-US'))

@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<OrderHeaderGetOneDto> GetHeaderOne(long id);
         public Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id);
         public Task<List<OrderDisplayDto>> GetOrderDisplay(List<long> ohids, bool check);
+        public Task<ResponseMessageDto> Reorder(long ohid);
+        public Task<OrderDisplayDto> ReorderDisplay(long ohid);
         public Task<OrderDataGetAllDto> GetHistoryOrder(int page);
         public Task<ResponseMessageDto> Delete(int id);
         public Task<List<EnumDictionaryDto>> GetPreserveTypeEnum();

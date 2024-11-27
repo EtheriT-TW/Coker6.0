@@ -21,6 +21,10 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using System.Globalization;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto;
+using Microsoft.AspNetCore.Mvc.Razor.Infrastructure;
+using System;
+using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -514,8 +518,6 @@ namespace EtheriT.Coker.Application.Order
         public async Task<List<OrderDisplayDto>> GetOrderDisplay(List<long> ohids, bool check)
         {
             List<OrderDisplayDto> output = new List<OrderDisplayDto>();
-            Guid UUID = await tokenAppService.GetUUID();
-
             try
             {
                 var order_headers = await GetHeaderDisplay(ohids, check);
@@ -531,10 +533,91 @@ namespace EtheriT.Coker.Application.Order
                 }
                 else throw new Exception("查無訂單資訊");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"Order=>GetOrderDisplayOne：{e.Message}");
+                Console.WriteLine($"Order=>GetOrderDisplayOne：{ex.Message}");
+            }
+            return output;
+        }
+        public async Task<ResponseMessageDto> Reorder(long ohid)
+        {
+            ResponseMessageDto output = new ResponseMessageDto();
+
+            try
+            {
+                var oldscids = await (from sc in db.ShoppingCarts
+                                      join od in db.Order_Details on sc.Id equals od.FK_SCId
+                                      join oh in db.Order_Headers on od.FK_OId equals oh.Id
+                                      where oh.Id == ohid
+                                      select sc.Id).ToListAsync();
+                if (oldscids.Any())
+                {
+                    output = await shoppingCartAppService.Reorder(oldscids);
+                    if (output.Success) output.Message = ohid.ToString();
+                }
+                else throw new Exception("查無舊訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                output.Error = "Error";
+                output.Message = ex.Message;
+            }
+            return output;
+        }
+        public async Task<OrderDisplayDto> ReorderDisplay(long ohid)
+        {
+            OrderDisplayDto output = new OrderDisplayDto();
+            try
+            {
+                var order_headers = await GetHeaderDisplay(new List<long> { ohid }, false);
+                if (order_headers.Any())
+                {
+                    output.OrderHeader = order_headers[0];
+                    List<OrderDetailDisplayDto> order_details = new List<OrderDetailDisplayDto>();
+                    List<OrderDetailDisplayDto> order_details_lock = new List<OrderDetailDisplayDto>();
+                    var old_order_details = await GetDetailsDisplay(output.OrderHeader.Id);
+                    var new_order_details = await shoppingCartAppService.GetAll();
+                    if (old_order_details.Any())
+                    {
+                        if (new_order_details.Any())
+                        {
+                            output.OrderDetails = new List<OrderDetailDisplayDto>();
+                            foreach (var old_order_detail in old_order_details)
+                            {
+                                if (new_order_details.Find(e => e.PSId == old_order_detail.ProdStockId) != null)
+                                {
+                                    var temp_new_order_detail = mapper.Map<OrderDetailDisplayDto>(new_order_details.Find(e => e.PSId == old_order_detail.ProdStockId));
+                                    old_order_detail.Price = old_order_detail.Price.Replace(",", "");
+                                    if (temp_new_order_detail.Price != old_order_detail.Price) temp_new_order_detail.OldPrice = old_order_detail.Price;
+                                    else temp_new_order_detail.OldPrice = "0";
+                                    if (temp_new_order_detail.Quantity != old_order_detail.Quantity) temp_new_order_detail.OldQuantity = old_order_detail.Quantity;
+                                    output.OrderDetails.Add(temp_new_order_detail);
+                                }
+                                else
+                                {
+                                    old_order_detail.Quantity = "0";
+                                    order_details_lock.Add(old_order_detail);
+                                }
+                            }
+                            if (output.OrderDetails.Any())
+                            {
+                                output.OrderDetails.AddRange(order_details_lock);
+                                output.Success = true;
+                            }
+                            else throw new Exception("查無再次下訂資訊");
+                        }
+                        else throw new Exception("查無再次下訂資訊");
+                    }
+                    else throw new Exception("查無舊訂單資訊");
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                output.OrderHeader = new OrderHeaderDisplayDto();
+                output.Error = "Error";
+                output.Message = ex.Message;
             }
             return output;
         }
@@ -726,47 +809,6 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return response;
-        }
-        public async Task<OrderAgainDto> OrderAgain(long ohid)
-        {
-            OrderAgainDto output = new OrderAgainDto();
-            //try
-            //{
-            //    var ShoppingCarts = await (from sc in db.ShoppingCarts
-            //                               join od in db.Order_Details on sc.Id equals od.FK_SCId
-            //                               where od.FK_OId == ohid
-            //                               orderby sc.FK_PSid
-            //                               select sc).ToListAsync();
-            //    if (ShoppingCarts.Any())
-            //    {
-            //        var Prod_Stocks = await (from ps in db.Prod_Stocks
-            //                                 join sc in ShoppingCarts on ps.Id equals sc.FK_PSid
-            //                                 select ps).ToListAsync();
-            //        List<Core.Models.ShoppingCart> NewDatas = new List<Core.Models.ShoppingCart>();
-            //        foreach (var sc in ShoppingCarts)
-            //        {
-            //            var prod_stock = Prod_Stocks.Find(e => e.Id == sc.FK_PSid);
-            //            if (prod_stock != null && prod_stock.Stock > 0)
-            //            {
-            //                // 再次購買寫入
-            //            }
-            //            else
-            //            {
-            //                var temp_details = await shoppingCartAppService.GetDropOne(sc.Id, true);
-            //                if (prod_stock == null)
-            //                {
-            //                    temp_details.Quantity = -1;
-            //                }
-            //                output.OutOfStockDetails.Add(temp_details);
-            //            }
-            //        }
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    output.Error = ex.Message;
-            //}
-            return output;
         }
         public async Task<ResponseMessageDto> SendMail(long ohid)
         {

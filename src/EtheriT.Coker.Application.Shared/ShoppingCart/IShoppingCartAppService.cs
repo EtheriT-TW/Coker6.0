@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.ShoppingCart
         public Task<List<ShoppingCartGetAllDto>> GetAll();
         public Task<ShoppingCartGetDrop> GetDropOne(long id, bool isorder);
         public Task<List<ShoppingCartDisplayDto>> GetDisplay(List<long> scids);
+        public Task<ResponseMessageDto> Reorder(List<long> scids);
         public Task<ResponseMessageDto> DeleteDrop(long id);
         public Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID);
 

@@ -4,7 +4,7 @@
         var token = $(`input[name="AntiforgeryField"]`).val();
         console.log(token);
         if (token) {
-            ajaxOptions.headers = { "x-xsrf-token-coker": token };
+            ajaxOptions.headers = { "x-xsrf-token": token };
         }
 
         if (method === "delete") {

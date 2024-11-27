@@ -63,10 +63,18 @@ using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.ShoppingCart;
 using EtheriT.Coker.Application.Shared.UserHabits;
 using EtheriT.Coker.Application.UserHabits;
+using Hangfire;
+using Hangfire.SqlServer;
+using EtheriT.Coker.Application.Filters;
+using Hangfire.Dashboard;
+using EtheriT.Coker.Application.BackgroundJob;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -141,13 +149,21 @@ builder.Services.AddAntiforgery(options =>
     // input name的名稱
     options.FormFieldName = "AntiforgeryField";
     // 指定header 的名稱
-    options.HeaderName = "x-xsrf-token-coker";
+    options.HeaderName = "x-xsrf-token";
     options.Cookie.Name = "cokerAntiforgeryCookie"; // 指定固定的 Cookie 名稱
     options.Cookie.MaxAge = TimeSpan.FromMinutes(30); // 設置 Cookie 的有效期
     options.Cookie.HttpOnly = true;
 });
 
+// 添加 Hangfire 服務，並配置使用 SQL Server 存儲
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(configuration.GetConnectionString("Default"))
+);
+// 註冊 Hangfire 跟蹤服務
+builder.Services.AddHangfireServer();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<BackgroundJobService>();
 
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IAccountAppService, AccountAppService>();
@@ -191,6 +207,7 @@ builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
 builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<IUserHabitsAppService, UserHabitsAppService>();
+builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAuthorizationFilter>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -299,6 +316,10 @@ app.UseCookiePolicy(
         MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
     }
 );
+
+var backgroundJobService = app.Services.GetRequiredService<BackgroundJobService>();
+backgroundJobService.InitializeJobs();
+
 /*
 app.Use((context, next) =>
 {
@@ -327,6 +348,14 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 設定 Hangfire 儀表板（可以設置需要權限控制的路徑）
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { app.Services.GetRequiredService<IDashboardAuthorizationFilter>() },  // 使用 DI 解析授權過濾器
+    IgnoreAntiforgeryToken = true,
+    StatsPollingInterval = 60*1000
+});
 
 app.MapControllerRoute(
     name: "default",

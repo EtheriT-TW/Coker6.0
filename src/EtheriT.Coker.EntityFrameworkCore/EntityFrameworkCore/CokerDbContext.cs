@@ -11,6 +11,8 @@ using EtheriT.Coker.Core.Models;
 using Directory = EtheriT.Coker.Core.Models.Directory;
 using System.Text.Json.Nodes;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
+using EtheriT.Coker.EntityFrameworkCore.Configurations;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -87,6 +89,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // 掃描所有繼承自 FullAuditedEntity 的類別
+            var entityType = typeof(FullAuditedEntity); // 基類型
+            var configurations = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .Where(t => t.IsClass && !t.IsAbstract && entityType.IsAssignableFrom(t)) // 篩選繼承類別
+                .Select(entity => typeof(FullAuditedEntityConfiguration<>).MakeGenericType(entity)) // 動態構造類型
+                .ToList();
+
+            // 動態套用配置
+            foreach (var configType in configurations)
+            {
+                var configurationInstance = Activator.CreateInstance(configType); // 建立配置類別的實例
+                modelBuilder.ApplyConfiguration((dynamic)configurationInstance); // 使用 ApplyConfiguration
+            }
+
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>(o =>
             {
@@ -189,6 +206,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<WebMenu>(o =>
             {
+                o.HasIndex(m => m.Title);
                 o.HasOne(u => u.Website).WithMany(u => u.WebMenus).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(t => t.FK_TopNode).WithMany(u => u.FK_ChildNodes).HasForeignKey(f => f.FK_TopNodeId).IsRequired(false);
                 o.Property(m => m.VisibleHeader).HasDefaultValue(true);
@@ -251,6 +269,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Prods).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasIndex(u => u.Title);
                 o.Property(p => p.Visible).HasDefaultValue(true);
                 o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
                 o.Property(p => p.Status).HasDefaultValue(0);
@@ -329,8 +348,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Tag>(o =>
             {
+                o.HasIndex(t => new { t.Title,t.FK_WebsiteId }).HasFilter("[IsDeleted] = 0").IsUnique();
                 o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);
-                o.HasQueryFilter(e => !e.IsDeleted);
+                o.Property(t => t.IsTemporary).HasDefaultValue(false);
+                o.HasQueryFilter(e => !e.IsDeleted && !e.IsTemporary);
             });
             modelBuilder.Entity<Tag_Associate>(o =>
             {
@@ -374,6 +395,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Article>(o =>
             {
+                o.HasIndex(a => a.Title);
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
@@ -441,6 +463,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
                 o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
+                o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
             });
             modelBuilder.Entity<NotFoundImage>(o =>
             {
@@ -462,6 +485,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
+
             new SeedHelper(modelBuilder).SeedHost();
         }
     }

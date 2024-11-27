@@ -97,10 +97,10 @@ builder.Services.AddAuthentication(options =>
             // filter by auth type
             string authorization = context.Request.Headers[HeaderNames.Authorization];
             if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
-                return "Bearer";
+                return JwtBearerDefaults.AuthenticationScheme;
 
             // otherwise always check for cookie auth
-            return "Cookies";
+            return CookieAuthenticationDefaults.AuthenticationScheme;
         };
     });
 

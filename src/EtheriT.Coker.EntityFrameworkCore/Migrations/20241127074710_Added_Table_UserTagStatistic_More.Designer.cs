@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241127074710_Added_Table_UserTagStatistic_More")]
+    partial class Added_Table_UserTagStatistic_More
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -307,8 +309,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
-
-                    b.HasIndex("Title");
 
                     b.ToTable("Article");
                 });
@@ -2554,8 +2554,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.HasIndex("Title");
-
                     b.ToTable("Prods");
 
                     b.HasData(
@@ -4017,10 +4015,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
-                    b.HasIndex("Title", "FK_WebsiteId")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
-
                     b.ToTable("Tags");
                 });
 
@@ -4844,8 +4838,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_TopNodeId");
 
                     b.HasIndex("FK_WebsiteId");
-
-                    b.HasIndex("Title");
 
                     b.ToTable("WebMenus");
                 });

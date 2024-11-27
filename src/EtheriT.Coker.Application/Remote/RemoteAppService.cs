@@ -20,6 +20,7 @@ using DevExtreme.AspNet.Mvc;
 using System.Collections;
 using System.Data;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -27,13 +28,15 @@ namespace EtheriT.Coker.Application.Remote
 	{
 		private readonly CokerDbContext db;
 		private readonly LoginUserData loginUserData;
-		private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ITokenAppService tokenAppService;
+        private readonly IHttpContextAccessor httpContextAccessor;
 		private readonly IMapper mapper;
-		public RemoteAppService(CokerDbContext db, LoginUserData loginUserData, IMapper mapper, IHttpContextAccessor httpContextAccessor) { 
+		public RemoteAppService(CokerDbContext db, LoginUserData loginUserData, ITokenAppService tokenAppService, IMapper mapper, IHttpContextAccessor httpContextAccessor) { 
 			this.db = db;
 			this.loginUserData = loginUserData;
 			this.mapper = mapper;
 			this.httpContextAccessor = httpContextAccessor;
+            this.tokenAppService = tokenAppService;
 		}
 		public async Task<ResponseMessageDto> insertRemote(RemoteInputDto dto) {
 			ResponseMessageDto response= new ResponseMessageDto();
@@ -42,7 +45,8 @@ namespace EtheriT.Coker.Application.Remote
                 if (httpContextAccessor.HttpContext != null)
 					r.BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString();
 				r.ClientIpAddress = loginUserData.GetClientIP();
-				db.Add(r);
+                r.UUID = await tokenAppService.GetUUID();
+                db.Add(r);
 				await db.SaveChangesAsync();
 				response.Success = true;
 			}catch (Exception ex)

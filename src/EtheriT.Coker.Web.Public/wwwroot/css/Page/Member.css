@@ -19,6 +19,7 @@
 .isHide, .isWrap {
     display: none;
 }
+
 .type_grid > .type_change_frame > a {
     background-color: #eeeeee;
 }
@@ -150,6 +151,14 @@
 
 #profile-tab-pane .type_list img {
     width: 75px;
+}
+
+#profile-tab-pane .spec {
+    color: var(--gray-text);
+}
+
+#profile-tab-pane .quantity::before {
+    content: '\00d7';
 }
 
 #history-tab-pane .type_list img {
@@ -325,9 +334,11 @@
     .collapse > .card-body > .list-group > li:first-child {
         display: none;
     }
+
     #TabContent {
-        width:100%;
+        width: 100%;
     }
+
     #main > .container {
         flex-direction: column !important;
     }
@@ -342,7 +353,7 @@
                 width: 25%;
                 text-align: center;
             }
-    
+
     #TabContent .content.type_grid .type_change_frame {
         width: 50% !important;
     }
@@ -378,15 +389,15 @@
         display: unset;
     }
 
-    .isHide:not(.hideTotal) {
-        width: 45%;
-        text-align-last: end;
-    }
+        .isHide:not(.hideTotal) {
+            width: 45%;
+            text-align-last: end;
+        }
 
     .hideTotal {
         flex: 1 1 auto;
         text-align-last: end;
-        width:auto;
+        width: auto;
     }
 
     .collapse > .card-body > .list-group > li {
@@ -415,18 +426,19 @@
     .list-group-item > a > div > div:first-child {
         width: 30%;
     }
+
     .header_subtotal, .header_freight, .header_total {
         width: auto;
         padding: 0;
     }
 
-        .collapse > .card-body > div:nth-child(3) {
-            padding-left: 2.2rem;
-        }
+    .collapse > .card-body > div:nth-child(3) {
+        padding-left: 2.2rem;
+    }
 
-        .collapse > .card-body > div:nth-child(4) {
-            padding-left: .9rem;
-        }
+    .collapse > .card-body > div:nth-child(4) {
+        padding-left: .9rem;
+    }
 
     #profile-tab-pane > .content > div {
         display: flex;
@@ -468,35 +480,38 @@
         flex-direction: column;
     }
 
-        #main > .container > #TabContent {
-            width: unset;
+    #main > .container > #TabContent {
+        width: unset;
+    }
+
+        #main > .container > #TabContent > #info-tab-pane {
+            padding: 1rem !important;
         }
 
-            #main > .container > #TabContent > #info-tab-pane {
-                padding: 1rem !important;
+            #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+                width: 30%;
             }
 
-                #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
-                    width: 30%;
-                }
-
-                #main > .container > #TabContent > #info-tab-pane > div {
-                    justify-content: center;
-                    flex-direction: row !important;
-                    box-sizing: border-box;
-                }
+            #main > .container > #TabContent > #info-tab-pane > div {
+                justify-content: center;
+                flex-direction: row !important;
+                box-sizing: border-box;
+            }
 }
 
 @media (max-width:576px) {
     .collapse > .card-body > div {
-        align-self:flex-start;
+        align-self: flex-start;
     }
+
     .collapse > .card-body > .list-group > li > a > div > .price {
         width: auto;
     }
-        .isHide {
-            width: auto !important;
-        }
+
+    .isHide {
+        width: auto !important;
+    }
+
     #history-tab-pane .type_list img {
         width: 100%;
     }
@@ -504,6 +519,7 @@
     #favorite-tab-pane .type_list img {
         width: 100%;
     }
+
     #history-tab-pane .type_list {
         padding-right: 0 !important;
         padding-left: 0 !important;
@@ -578,10 +594,10 @@
     }
 
     #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
-        width:33%;
+        width: 33%;
     }
 
         #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child > label {
-            padding-right:0 !important;
+            padding-right: 0 !important;
         }
 }

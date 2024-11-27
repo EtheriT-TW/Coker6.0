@@ -1,5 +1,5 @@
 ﻿
-var resetEmailModal, ResetEmailModal, $InputResetEmailVCode, $ResetEmailImgCaptcha, ResetEmailForms
+var resetEmailModal, ResetEmailModal, $InputResetEmailVCode, $ResetEmailImgCaptcha, ResetEmailForms, reOrderAlertModal, ReOrderAlertModal
 var old_email
 var TabNow = "info", date_now = "";
 
@@ -25,6 +25,28 @@ function PageReady() {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
                 data: { ohid: ohid },
+            });
+        },
+        CheckOrder: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/CheckOrder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
+        OrderRepay: function (ohid, new_price) {
+            return $.ajax({
+                url: "/api/Order/OrderRepay/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid, new_price: new_price },
             });
         },
         CancelOrder: function (ohid, payment) {
@@ -62,6 +84,7 @@ function Member(data) {
     date_now = `${now.getFullYear()}-${month}-${day}`
 
     resetEmailModal = $("#ResetEmailModal").length > 0 ? new bootstrap.Modal($("#ResetEmailModal")) : null;
+    reOrderAlertModal = $("#ReOrderAlertModal").length > 0 ? new bootstrap.Modal($("#ReOrderAlertModal")) : null;
     $InputResetEmailVCode = $("#InputNewMailVCode");
     $ResetEmailImgCaptcha = $('#NewMailImgCaptcha');
     ResetEmailForms = $('#ResetEmailForm');
@@ -146,6 +169,14 @@ function Member(data) {
             FormClear(ResetEmailForms, $InputResetEmailVCode)
         })
     }
+
+    ReOrderAlertModal = document.getElementById('ReOrderAlertModal')
+    if (ReOrderAlertModal != null) {
+        ReOrderAlertModal.addEventListener('hidden.bs.modal', function (event) {
+            $(".btn_repay").removeClass("d-none")
+            $("#ReOrderAlertModal .orderlist ul li").remove();
+        })
+    }
     $("#ResetEmailForm input").on("keypress", function (event) {
         if (event.which == 13) {
             event.preventDefault();
@@ -206,6 +237,21 @@ function Member(data) {
                 break;
         }
     });
+    $("#ReOrderAlertModal .btn_repay").on("click", function () {
+        var $this = $(this);
+        reOrderAlertModal.hide();
+        OrderRePay($this.data("ohid"), $this.data("thirdParties"), $this.data("new_price"))
+        $(".btn_repay").data("ohid", null)
+        $(".btn_repay").data("new_price", null)
+        $(".btn_repay").data("thirdParties", null)
+    })
+    $("#ReOrderAlertModal .btn_cancelrepay").on("click", function () {
+        reOrderAlertModal.hide();
+        $(".btn_repay").data("ohid", null)
+        $(".btn_repay").data("new_price", null)
+        $(".btn_repay").data("thirdParties", null)
+    })
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -312,7 +358,7 @@ function SetHistoryOrderPage(number) {
                 ContentPageChage($("#profile-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#profile-tab-pane .btn_switchViewType").hasClass("d-none")) $("#profile-tab-pane .btn_switchViewType").removeClass("d-none")
-            HistoryDataInsert(result.orderData)
+            HistoryTemplateDataInsert(result.orderData)
         } else if (number != 1) {
             window.location.hash = "#order-1";
         } else {
@@ -320,7 +366,7 @@ function SetHistoryOrderPage(number) {
         }
     })
 }
-function HistoryDataInsert(Datas) {
+function HistoryTemplateDataInsert(Datas) {
     $("#profile-tab-pane .content").empty();
     $.each(Datas, function (index, data) {
         var order_header = data.orderHeader;
@@ -332,7 +378,8 @@ function HistoryDataInsert(Datas) {
         frame.find(".payment").text(order_header.payment);
 
         if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
-            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            frame.find(".state button").data("ohid", order_header.id)
             frame.find(".state .btn_cancelOrder").on("click", function () {
                 var $this = $(this);
                 var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "並退回款項?" : "？(退款事宜請聯繫客服處理)" : "?";
@@ -350,12 +397,46 @@ function HistoryDataInsert(Datas) {
                 })
             });
         } else if (order_header.thirdParties != 1 && order_header.state == 5) {
-            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_payAgain bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">重新付款</button>`)
+            frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_payAgain bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">重新付款</button>`)
+            frame.find(".state button").data("ohid", order_header.id)
+            frame.find(".state button").data("thirdParties", order_header.thirdParties)
             frame.find(".state .btn_payAgain").on("click", function () {
                 var $this = $(this);
-                console.log(`訂單編號${$this.data("ohid")}要重新付款`)
                 Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
                     Coker.sweet.loading();
+                    Coker.Member.CheckOrder($this.data("ohid")).done(function (result) {
+                        if (result.success) {
+                            if (result.message == "NoChange") {
+                                OrderRePay($this.data("ohid"), $this.data("thirdParties"))
+                            } else {
+                                Swal.close();
+                                reOrderAlertModal.show()
+                                var $frame = $("#ReOrderAlertModal .orderlist");
+                                console.log(result.orderHeader)
+                                var old_subtotal = parseInt(result.orderHeader.oldSubtotal);
+                                var freight = parseInt(result.orderHeader.freight.replaceAll(",", ""));
+                                var new_subtotal = parseInt(result.orderHeader.subtotal.replaceAll(",", ""));
+
+                                $frame.find(".oh_subtotal_old").text(old_subtotal.toLocaleString());
+                                $frame.find(".oh_subtotal_new").text(new_subtotal.toLocaleString());
+                                $frame.find(".oh_freight").text(freight.toLocaleString());
+                                $frame.find(".oh_total").text((new_subtotal + freight).toLocaleString());
+
+                                if (new_subtotal == 0) {
+                                    freight = 0;
+                                    $(".btn_repay").addClass("d-none")
+                                } else {
+                                    $(".btn_repay").data("ohid", order_header.id)
+                                    $(".btn_repay").data("thirdParties", order_header.thirdParties)
+                                    $(".btn_repay").data("new_price", (new_subtotal + freight))
+                                }
+
+                                TemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails)
+                            }
+                        } else {
+                            Coker.sweet.error("重新付款發生錯誤", result.message);
+                        }
+                    });
                 })
             });
         }
@@ -413,6 +494,19 @@ function HistoryDataInsert(Datas) {
         $("#profile-tab-pane .content").append(frame);
     })
 }
+function OrderRePay(ohid, thirdParties, new_price) {
+    Coker.sweet.loading();
+    console.log(`跑付款程序，編號${ohid};第三方支付代號${thirdParties}`)
+    console.log(`新價格${new_price}`)
+    if (typeof (new_price) == "undefined") new_price = null;
+    Coker.Member.OrderRepay(ohid, new_price).done(function (result) {
+        if (result.success) {
+            Coker.sweet.success(`執行第三方支付(實作中)，${result.message}`);
+        } else {
+            Coker.sweet.error("訂單更動發生錯誤", result.message);
+        }
+    });
+}
 function SetFavoritesPage(number) {
     Coker.Favorites.GetDisplay(number).done(function (result) {
         if (result.data.length > 0) {
@@ -423,7 +517,7 @@ function SetFavoritesPage(number) {
                 ContentPageChage($("#favorite-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#favorite-tab-pane .btn_switchViewType").hasClass("d-none")) $("#favorite-tab-pane .btn_switchViewType").removeClass("d-none")
-            DataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
+            TemplateDataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
         } else if (number != 1) {
             window.location.hash = "#favorites-1";
         } else {
@@ -441,7 +535,7 @@ function SetBrowsingHistoryPage(number) {
                 ContentPageChage($("#history-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#history-tab-pane .btn_switchViewType").hasClass("d-none")) $("#history-tab-pane .btn_switchViewType").removeClass("d-none")
-            DataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data)
+            TemplateDataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data)
         } else if (number != 1) {
             window.location.hash = "#browsing-1";
         } else {
@@ -548,39 +642,80 @@ function ContentPageChage($self, page, page_total) {
         });
     }
 }
-function DataInsert($content, $frame, datas) {
+function TemplateDataInsert($content, $frame, datas) {
     $content.empty();
     $.each(datas, function (index, data) {
         var frame = $($frame.html()).clone();
-        frame.data("Pid", data.pId);
-        frame.find("*").each(function () {
-            var $self = $(this);
-            if (typeof ($self.data("key")) != "undefined") {
-                var key = $self.data("key");
-                switch (key) {
-                    case "link":
-                        $self.attr("href", `/${OrgName}/Member${data['link']}`);
-                        $self.attr("title", `連結至：${data['title']}`);
-                        break;
-                    case "image":
-                        $self.attr("src", data['image']);
-                        $self.attr("alt", `${data['title']}的主要照片`);
-                        break;
-                    case "price":
-                        var prices = data['price'];
-                        if (prices.length > 1) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`)
-                        else $self.text(`$${prices[0].toLocaleString()}`)
-                        break;
-                    default:
-                        $self.text(data[key]);
-                        break;
-                }
-            }
-        });
-        FavoritesButtonInit(frame);
-        ShareButtonInit(frame.find(".shareBlock"));
+        frame = DataInsert(frame, data);
+        if (frame.find(".btn_favorite").length > 0) FavoritesButtonInit(frame);
+        if (frame.find(".shareBlock").length > 0) ShareButtonInit(frame.find(".shareBlock"));
         $content.append(frame);
     })
+}
+function DataInsert(frame, data) {
+    frame.data("Pid", data.pId);
+    frame.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "link":
+                    $self.attr("href", `/${OrgName}/Member${data[key]}`);
+                    $self.attr("title", `連結至：${data['title']}`);
+                    break;
+                case "image":
+                case "imagePath":
+                    $self.attr("src", data[key]);
+                    $self.attr("alt", `${data['title']}的主要照片`);
+                    break;
+                case "price":
+                    switch (typeof (data[key])) {
+                        case "string":
+                            $self.text(data[key]);
+                            break;
+                        case "object":
+                            var prices = data[key];
+                            if (prices.length > 1 && prices[0] != prices[prices.length - 1]) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`)
+                            else $self.text(`$${prices[0].toLocaleString()}`)
+                            break;
+                    }
+                    break;
+                case "describe":
+                    if (data[key] == "商品已下架") {
+                        $self.removeClass("d-none");
+                        $self.siblings().addClass("d-none");
+                    }
+                    $self.text(data[key]);
+                    break;
+                case "s1Title":
+                case "s2Title":
+                    if (data[key] != "") $self.removeClass("d-none")
+                    $self.text(data[key]);
+                    break;
+                case "oldPrice":
+                case "oldQuantity":
+                    if (data[key] != null) {
+                        $self.removeClass("d-none")
+                        $self.text(data[key]);
+                        $self.siblings().addClass("red_text");
+                    }
+                    break;
+                case "subtotal_old":
+                    var price = data['oldPrice'] != null ? parseInt(data['oldPrice'].replaceAll(",", "")) : parseInt(data['price'].replaceAll(",", ""));
+                    var quantity = data['oldQuantity'] != null ? parseInt(data['oldQuantity']) : parseInt(data['quantity']);
+                    $self.text((price * quantity).toLocaleString());
+                    break;
+                case "subtotal_new":
+                    var sbutotal = parseInt(data['price'].replaceAll(",", "")) * parseInt(data['quantity']);
+                    $self.text(sbutotal.toLocaleString());
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+        }
+    });
+    return frame;
 }
 function ShareButtonInit($ShareBlock) {
     $ShareBlock.hover(function () {

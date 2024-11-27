@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public string S2Title { get; set; }
         public string ImagePath { get; set; }
         public string Price { get; set; }
+        public string DynamicPrice { get; set; }
         public string Discont { get; set; }
         public string Bonus { get; set; }
         public string OldPrice { get; set; }

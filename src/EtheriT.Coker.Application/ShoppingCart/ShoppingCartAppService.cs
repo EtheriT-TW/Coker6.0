@@ -386,28 +386,27 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
                     }
                     var psid = shoppingCart.Prod_Stock?.Id;
-                    if (temp_output.Price == "")
+                    var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
+                    if (db_price.Any())
                     {
-                        var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
-                        if (db_price.Any())
+                        if (roleid == 1)
                         {
-                            if (roleid == 1)
+                            var temp_price = db_price[0]?.Price?.ToString();
+                            temp_output.DynamicPrice = temp_price ?? "0";
+                        }
+                        else
+                        {
+                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
+                            if (temp_price == null)
                             {
-                                var temp_price = db_price[0]?.Price?.ToString();
-                                temp_output.Price = temp_price ?? "0";
+                                temp_price = db_price[0]?.Price?.ToString();
+                                temp_output.DynamicPrice = temp_price ?? "0";
                             }
-                            else
-                            {
-                                var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
-                                if (temp_price == null)
-                                {
-                                    temp_price = db_price[0]?.Price?.ToString();
-                                    temp_output.Price = temp_price ?? "0";
-                                }
-                                else temp_output.Price = temp_price;
-                            }
+                            else temp_output.DynamicPrice = temp_price;
                         }
                     }
+
+                    if (temp_output.Price == "") temp_output.Price = temp_output.DynamicPrice;
                     var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
 
                     temp_output.Price = int.Parse(temp_output.Price).ToString("#,##0");
@@ -467,6 +466,25 @@ namespace EtheriT.Coker.Application.ShoppingCart
             {
                 output.Error = "Error";
                 output.Message = ex.Message;
+            }
+            return output;
+        }
+        public async Task<List<ShoppingCartDisplayDto>> CheckStockPrice(List<long> scids)
+        {
+            List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
+            try
+            {
+                var temp_outputs = await GetDisplay(scids);
+                if (temp_outputs.Any())
+                {
+                    output = temp_outputs;
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"ShoppingCart=>CheckStockPrice回傳資料：{ex.Message}");
             }
             return output;
         }

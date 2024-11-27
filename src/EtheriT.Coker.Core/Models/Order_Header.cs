@@ -53,6 +53,7 @@ namespace EtheriT.Coker.Core.Models
         public string? TransactionId { get; set; }
         public string? refundTransactionId { get; set; }
         public DateTime? refundTransactionDate { get; set; }
+        public int? RepayTimes { get; set; }
         public List<Order_Details> Order_Details { get; set; }
 
     }

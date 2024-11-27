@@ -11,6 +11,21 @@
         padding: 0.5rem;
     }
 
+.red_text {
+    color: var(--red-number);
+}
+
+#ReOrderAlertModal .orderlist img {
+    height: 5rem;
+}
+
+#ReOrderAlertModal .orderlist .quantity::before {
+    content: '\00d7';
+}
+#ReOrderAlertModal .orderlist .spec {
+    color: var(--gray-text);
+}
+
 #profile-tab-pane {
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;

@@ -60,6 +60,16 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await orderAppService.ReorderDisplay(ohid);
         }
         [HttpGet]
+        public async Task<OrderDisplayDto> CheckOrder(long ohid)
+        {
+            return await orderAppService.CheckOrder(ohid);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> OrderRepay(long ohid, int? new_price)
+        {
+            return await orderAppService.OrderRepay(ohid, new_price);
+        }
+        [HttpGet]
         public async Task<OrderDataGetAllDto> GetHistoryOrder(int page)
         {
             return await orderAppService.GetHistoryOrder(page);

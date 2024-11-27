@@ -81,6 +81,17 @@ function PageReady() {
                 type: "POST",
             });
         },
+        Reorder: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/Reorder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
     };
 
     Coker.Payment = {
@@ -315,6 +326,20 @@ function GetOrderPage() {
                         break;
                     case "付款失敗":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單付款失敗！");
+                        if ($('.buyagain_text').length > 0) {
+                            $('.buyagain_text').removeClass("d-none");
+                            $('.buyagain_text span').on("click", function () {
+                                var ohid = parseInt($("#Step4 .card-header .order_number").text());
+                                Coker.Order.Reorder(ohid).done(function (result) {
+                                    if (result.success) {
+                                        var ohidstr = `000000000${result.message}`.substring(result.message.length);
+                                        window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
+                                    } else {
+                                        Coker.sweet.error("錯誤", result.message)
+                                    }
+                                });
+                            });
+                        }
                         break;
                     case "待付款":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，待商家確認付款資訊，謝謝您的訂購！");
@@ -498,7 +523,6 @@ function CartAdd(result) {
         item_btn_count_plus = item.find(".btn_count_plus"),
         item_btn_count_minus = item.find(".btn_count_minus"),
         item_btn_remove_pro = item.find(".btn_remove_pro");
-
     if (parseInt(result.quantity) == 0) {
         item_image.attr("src", result.imagePath);
         item_image.attr("alt", `${result.title}的圖片`);
@@ -511,7 +535,8 @@ function CartAdd(result) {
         item_total.data("subtotal", 0)
     } else {
         item.data("scid", result.scId);
-        item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
+        if (typeof (result.pId) == "undefined") item_link.attr("href", `/${OrgName}/Home/product/` + result.prodId);
+        else item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
         item_link.attr("title", `連結至：${result.title}`);
         item_image.attr("src", result.imagePath);
         item_image.attr("alt", `${result.title}的圖片`);

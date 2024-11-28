@@ -56,7 +56,7 @@ namespace EtheriT.Coker.Application
                 if (httpContextAccessor.HttpContext == null) throw new Exception();
                 ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
                 string name = user.Identity?.Name;
-                id = (await db.Users.Where(e => e.Account == name).FirstOrDefaultAsync()).Id;
+                id = (await db.Users.Where(e => e.Account == name).FirstOrDefaultAsync())?.Id ?? 0;
             }
             catch(Exception ex)
             {

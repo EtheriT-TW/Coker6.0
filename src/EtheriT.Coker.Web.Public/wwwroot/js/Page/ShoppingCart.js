@@ -364,7 +364,6 @@ function GetOrderPage() {
                 $("#Step1 > .card-body").removeClass("d-none");
                 buy_step_swiper.enable();
                 $("#Purchase_Null").addClass("d-none");
-                console.log(result);
                 CartInit(result.orderDetails)
             } else {
                 window.location.href = `/${OrgName}/ShoppingCar`;
@@ -443,7 +442,6 @@ function CardDataGet() {
     });
 }
 function CartInit(result) {
-    console.log(result);
     $("#Step1 > .card-body").removeClass("d-none");
     for (var i = 0; i < result.length; i++) {
         CartAdd(result[i])
@@ -510,7 +508,7 @@ function PaymentHideShow() {
     }
 }
 function CartAdd(result) {
-    //console.log(result)
+    if (typeof (result.pId) == "undefined") result.pId = result.prodId;
     var item_list_ul = $("#Step1 > .card-body > .purchase_list");
     var item = $($("#Template_Cart_Details").html()).clone();
     var item_link = item.find(".pro_link"),
@@ -978,9 +976,9 @@ function OrderHeaderAdd() {
                                 Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
                                     if (result.success) {
                                         localStorage.setItem("lastSaveTime", new Date().toISOString())
+                                        localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
                                         window.location.replace(result.message);
                                     } else {
-                                        console.log(result);
                                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
                                         setTimeout(function () {
                                             buy_step_swiper.slideNext();
@@ -1113,6 +1111,9 @@ function PurchaseAdd(result, item_list_ul) {
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_link.attr("title", `連結至：${result.title}`);
+    console.log("result", result)
+    console.log("result.imagePath", result.imagePath)
+    console.log("result.imagePath", result.imagePath.replace(`upload/${OrgName}/`, "upload/"))
     item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -1194,10 +1195,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         });
                         break;
                     case "imagePath":
-                        console.log(data[key])
-                        console.log(OrgName)
                         data[key].replace(`/${OrgName}/`, '/');
-                        console.log(data[key])
                         $this.attr({
                             src: data[key],
                             alt: data['title']

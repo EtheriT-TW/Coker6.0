@@ -639,7 +639,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
                 Guid UUID = await tokenAppService.GetUUID();
-                var token = await tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
 
                 if (token != null && token.IsLogin)
                 {

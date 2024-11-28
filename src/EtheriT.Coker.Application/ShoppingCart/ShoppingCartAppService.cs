@@ -74,7 +74,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = await tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken(null);
 
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
@@ -170,7 +170,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var UUID = await tokenAppService.GetUUID();
-                var token = await tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
                 var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
 
@@ -206,7 +206,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = await tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken(null);
 
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
@@ -256,7 +256,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                                   }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                 }).ToListAsync();
 
-                var token = await tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
                 long role = 0;
                 if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 
@@ -294,7 +294,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).ToList();
                 if (db_sc != null)
                 {
-                    var checkToken = await tokenAppService.CheckToken();
+                    var checkToken = await tokenAppService.CheckToken(null);
                     if (checkToken.IsLogin)
                     {
                         Guid UUID = await tokenAppService.GetUUID();
@@ -349,7 +349,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         {
             List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
-            var token = await tokenAppService.CheckToken();
+            var token = await tokenAppService.CheckToken(null);
             Guid UUID = await tokenAppService.GetUUID();
             long roleid = 1;
             if (token != null && token.IsLogin)

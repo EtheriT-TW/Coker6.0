@@ -38,15 +38,16 @@ function PageReady() {
                 data: { ohid: ohid },
             });
         },
-        OrderRepay: function (ohid, new_price) {
+        OrderRepay: function (data) {
             return $.ajax({
-                url: "/api/Order/OrderRepay/",
-                type: "GET",
+                url: "/api/Order/OrderRepay",
+                type: "POST",
                 contentType: 'application/json; charset=utf-8',
                 headers: {
                     Authorization: 'Bearer ' + localStorage.getItem("token")
                 },
-                data: { ohid: ohid, new_price: new_price },
+                data: JSON.stringify(data),
+                dataType: "json"
             });
         },
         CancelOrder: function (ohid, payment) {
@@ -237,19 +238,8 @@ function Member(data) {
                 break;
         }
     });
-    $("#ReOrderAlertModal .btn_repay").on("click", function () {
-        var $this = $(this);
-        reOrderAlertModal.hide();
-        OrderRePay($this.data("ohid"), $this.data("thirdParties"), $this.data("new_price"))
-        $(".btn_repay").data("ohid", null)
-        $(".btn_repay").data("new_price", null)
-        $(".btn_repay").data("thirdParties", null)
-    })
     $("#ReOrderAlertModal .btn_cancelrepay").on("click", function () {
         reOrderAlertModal.hide();
-        $(".btn_repay").data("ohid", null)
-        $(".btn_repay").data("new_price", null)
-        $(".btn_repay").data("thirdParties", null)
     })
 
     if ("onhashchange" in window) {
@@ -398,21 +388,18 @@ function HistoryTemplateDataInsert(Datas) {
             });
         } else if (order_header.thirdParties != 1 && order_header.state == 5) {
             frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_payAgain bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">重新付款</button>`)
-            frame.find(".state button").data("ohid", order_header.id)
-            frame.find(".state button").data("thirdParties", order_header.thirdParties)
             frame.find(".state .btn_payAgain").on("click", function () {
                 var $this = $(this);
                 Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
                     Coker.sweet.loading();
-                    Coker.Member.CheckOrder($this.data("ohid")).done(function (result) {
+                    Coker.Member.CheckOrder(order_header.id).done(function (result) {
                         if (result.success) {
                             if (result.message == "NoChange") {
-                                OrderRePay($this.data("ohid"), $this.data("thirdParties"))
+                                OrderRepay(result)
                             } else {
                                 Swal.close();
                                 reOrderAlertModal.show()
                                 var $frame = $("#ReOrderAlertModal .orderlist");
-                                console.log(result.orderHeader)
                                 var old_subtotal = parseInt(result.orderHeader.oldSubtotal);
                                 var freight = parseInt(result.orderHeader.freight.replaceAll(",", ""));
                                 var new_subtotal = parseInt(result.orderHeader.subtotal.replaceAll(",", ""));
@@ -422,6 +409,8 @@ function HistoryTemplateDataInsert(Datas) {
                                 $frame.find(".oh_freight").text(freight.toLocaleString());
                                 $frame.find(".oh_total").text((new_subtotal + freight).toLocaleString());
 
+                                TemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails)
+
                                 if (new_subtotal == 0) {
                                     freight = 0;
                                     $(".btn_repay").addClass("d-none")
@@ -430,8 +419,12 @@ function HistoryTemplateDataInsert(Datas) {
                                     $(".btn_repay").data("thirdParties", order_header.thirdParties)
                                     $(".btn_repay").data("new_price", (new_subtotal + freight))
                                 }
-
-                                TemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails)
+                                $("#ReOrderAlertModal .btn_repay").off("click")
+                                $("#ReOrderAlertModal .btn_repay").on("click", function () {
+                                    Coker.sweet.loading();
+                                    reOrderAlertModal.hide();
+                                    OrderRepay(result)
+                                })
                             }
                         } else {
                             Coker.sweet.error("重新付款發生錯誤", result.message);
@@ -494,14 +487,29 @@ function HistoryTemplateDataInsert(Datas) {
         $("#profile-tab-pane .content").append(frame);
     })
 }
-function OrderRePay(ohid, thirdParties, new_price) {
-    Coker.sweet.loading();
-    console.log(`跑付款程序，編號${ohid};第三方支付代號${thirdParties}`)
-    console.log(`新價格${new_price}`)
-    if (typeof (new_price) == "undefined") new_price = null;
-    Coker.Member.OrderRepay(ohid, new_price).done(function (result) {
+function OrderRepay(datas) {
+    var data = {}, details = [];
+    $.each(datas.orderDetails, function (index, detail) {
+        var temp_detail = {};
+        temp_detail['scid'] = detail.scId;
+        temp_detail['psid'] = detail.prodStockId;
+        temp_detail['Quantity'] = parseInt(detail.quantity);
+        temp_detail['Price'] = parseInt(detail.price.replaceAll(",", ""));
+        details.push(temp_detail);
+    });
+    data['ohid'] = datas.orderHeader.id;
+    data['Subtotal'] = parseInt(datas.orderHeader.subtotal.replaceAll(",", ""));
+    data['Details'] = details;
+    Coker.Member.OrderRepay(data).done(function (result) {
         if (result.success) {
-            Coker.sweet.success(`執行第三方支付(實作中)，${result.message}`);
+            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties).done(function (result) {
+                if (result.success) {
+                    localStorage.setItem("lastSaveTime", new Date().toISOString())
+                    window.location.replace(result.message);
+                } else {
+                    Coker.sweet.error("重新付款發生錯誤", result.message, null, false);
+                }
+            });
         } else {
             Coker.sweet.error("訂單更動發生錯誤", result.message);
         }

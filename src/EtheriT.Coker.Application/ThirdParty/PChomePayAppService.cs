@@ -79,6 +79,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     response.Success = true;
                                     response.Message = pchomePayResponse.payment_url;
                                     ohdata.TransactionId = pchomePayResponse.order_id;
+                                    if (ohdata.RepayTimes != null) ohdata.RepayDate = DateTime.Now;
                                     ohdata.State = OrderStatusEnum.待付款;
                                     db.SaveChanges();
                                 }
@@ -119,8 +120,8 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 if (orderid > 0)
                 {
-                    PChomePayStateDto statte = await PChomePayCheckPaymentStatus(orderid);
-                    if (statte == null) throw new Exception("查無訂單狀態");
+                    ResponseMessageDto response = await PChomePayCheckPaymentStatus(orderid);
+                    if (!response.Success) throw new Exception("查無訂單狀態");
                 }
                 else throw new Exception("查無訂單資料");
             }
@@ -190,7 +191,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return "success";
         }
-        public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
+        public async Task<ResponseMessageDto> PChomePayCheckPaymentStatus(long ohid)
         {
             PChomePayStateDto PChomePayState = new PChomePayStateDto();
             ResponseMessageDto response = new ResponseMessageDto();
@@ -202,16 +203,20 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     if (ohdata != null)
                     {
-                        var orderidstr = ("000000000" + ohid).Substring(ohid.ToString().Length);
-                        var RequestUri = $"/v1/payment/{orderidstr}";
+                        var RequestUri = $"/v1/payment/{ohdata.TransactionId}";
                         response = await PChomePayHeaders();
 
                         if (response.Success)
                         {
+                            response = new ResponseMessageDto();
                             var GetResponse = await ThirdPartyClient_PCHome.GetAsync(RequestUri);
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                             PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
+                            response.Success = true;
+                            response.Error = PChomePayState.status_code;
+
+                            var message = "";
                             switch (PChomePayState.status)
                             {
                                 case "W":
@@ -219,6 +224,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
                                         db.SaveChanges();
+                                        message = "交易處理中";
                                     }
                                     break;
                                 case "S":
@@ -226,6 +232,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
                                         db.SaveChanges();
+                                        message = "交易已完成";
                                     }
                                     break;
                                 default:
@@ -233,10 +240,90 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     {
                                         ohdata.State = OrderStatusEnum.付款失敗;
                                         db.SaveChanges();
+                                        message = "交易失敗：";
                                     }
                                     break;
                             }
-                            PChomePayState.order_state = (int)ohdata.State;
+                            if (PChomePayState.status != null)
+                            {
+                                switch (PChomePayState.status_code)
+                                {
+                                    case "FE":
+                                        message += "訂單逾時";
+                                        break;
+                                    case "FT":
+                                        message += "連線失敗";
+                                        break;
+                                    case "FF":
+                                    case "FA":
+                                        message += "信用卡授權失敗";
+                                        break;
+                                    case "FF-1":
+                                        message += "信用卡授權失敗-請與發卡銀行聯絡";
+                                        break;
+                                    case "FF-2":
+                                        message += "信用卡授權失敗-拒絕交易";
+                                        break;
+                                    case "FF-3":
+                                        message += "信用卡授權失敗-異常卡片";
+                                        break;
+                                    case "FF-4":
+                                        message += "信用卡授權失敗-卡片過期";
+                                        break;
+                                    case "FF-5":
+                                        message += "信用卡授權失敗-交易日期錯誤";
+                                        break;
+                                    case "FF-6":
+                                        message += "信用卡授權失敗-交易逾時";
+                                        break;
+                                    case "FX":
+                                        message += "ATM虛擬帳號失效";
+                                        break;
+                                    case "FP":
+                                        message += "審單拒絕";
+                                        break;
+                                    case "FC":
+                                        message += "合作方審單拒絕";
+                                        break;
+                                    case "FEL":
+                                        message += "銀行支付超過限額";
+                                        break;
+                                    case "FEC":
+                                        message += "銀行支付超過交易次數";
+                                        break;
+                                    case "FEB":
+                                        message += "銀行支付帳戶存款不足";
+                                        break;
+                                    case "FEA":
+                                        message += "銀行支付帳戶異常";
+                                        break;
+                                    case "FES":
+                                        message += "銀行支付接收單位業務停止或關閉";
+                                        break;
+                                    case "FET":
+                                        message += "銀行支付交易逾時";
+                                        break;
+                                    case "FB":
+                                        message += "支付連餘額不足";
+                                        break;
+                                    case "WB":
+                                        message += "尚未選擇銀行";
+                                        break;
+                                    case "WP":
+                                        message += "ATM 待繳款";
+                                        break;
+                                    case "WAP":
+                                        message += "審單中";
+                                        break;
+                                    case "WAC":
+                                        message += "合作方自行審單中";
+                                        break;
+                                    case "WO":
+                                        message += "等待 OTP 驗證";
+                                        break;
+                                }
+                            }
+                            response.Message = $"{(int)ohdata.State},{message}";
                         }
                     }
                 }
@@ -244,15 +331,15 @@ namespace EtheriT.Coker.Application.ThirdParty
             catch (HttpRequestException ex)
             {
                 // Http 請求錯誤
-                PChomePayState.status_code = "RequestErrors";
-                PChomePayState.status = $"Request failed: {ex.Message}";
+                response.Error = "Request Errors";
+                response.Message = ex.Message;
             }
             catch (Exception ex)
             {
-                PChomePayState.status_code = "OtherErrors";
-                PChomePayState.status = $"Request failed: {ex.Message}";
+                response.Error = "Other Errors";
+                response.Message = ex.Message;
             }
-            return PChomePayState;
+            return response;
         }
         public async Task<ResponseMessageDto> PChomePayRefund(long ohid, int? refund)
         {
@@ -471,7 +558,14 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (oddatas.Any())
                 {
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    PaymentBody.order_id = oid;
+                    if (ohdata.TransactionId == null) PaymentBody.order_id = oid;
+                    else
+                    {
+                        if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
+                        else ohdata.RepayTimes += 1;
+                        db.SaveChanges();
+                        PaymentBody.order_id = $"{oid}-{ohdata.RepayTimes}";
+                    }
 
                     var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).FirstOrDefaultAsync();
 
@@ -502,18 +596,47 @@ namespace EtheriT.Coker.Application.ThirdParty
                     PaymentBody.amount = ohdata.Subtotal + ohdata.Freight;
 
                     var items = new List<PChomePayItemsDto>();
+                    var items_length = 0;
                     foreach (var oddata in oddatas)
                     {
-                        items.Add(new PChomePayItemsDto()
+                        var temp_item = new PChomePayItemsDto()
                         {
                             name = oddata.Title,
                             url = $"{Website.DefaultUrl}/{Website.OrgName}/home/product/{oddata.PId}"
-                        });
+                        };
+
+                        int totalLength = temp_item.GetType()
+                                                        .GetProperties()
+                                                        .Where(prop => prop.PropertyType == typeof(string))
+                                                        .Select(prop => prop.GetValue(temp_item) as string)
+                                                        .Where(value => value != null)
+                                                        .Sum(value => value.Length);
+
+                        if (items_length + totalLength > 8000)
+                        {
+                            if (items.Count() > 0)
+                            {
+                                items.Last().name = "剩餘商品...";
+                                items.Last().url = "";
+                            }
+                            else
+                            {
+                                temp_item.name = "商品...";
+                                temp_item.url = "";
+                                items.Add(temp_item);
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            items_length += totalLength;
+                            items.Add(temp_item);
+                        }
                     }
                     PaymentBody.items = items;
 
-                    PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={PaymentBody.order_id}";
-                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={PaymentBody.order_id}";
+                    PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
+                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
                     PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
 
                     PaymentBody.buyer_email = ohdata.OrdererEmail;

@@ -162,23 +162,23 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex flex-wrap justify-content-between pb-3 pt-5">
+                            <div class="d-flex flex-wrap justify-content-between pt-5">
                                 <div class="d-flex align-items-center">
                                     <div class="fw-bold fs-5">狀態：</div>
                                     <select @* data-key="state" *@ class="status_select m-2" aria-label="Select status"></select>
                                 </div>
-                                <button class="btn_recheck bg-transparent border-0 text-black-50 text-decoration-underline d-none" title="點擊重新確認付款狀態">重新確認付款狀態</button>
                                 <button class="btn_refund border-0 btn-danger px-4 rounded text-white d-none">退　款</button>
                                 <div class="confirm flex-column d-none">
                                     <button class="btn_confirm border-0 btn-success mb-1 px-4 py-1 rounded text-white">完成付款</button>
                                     <button class="btn_void border-0 btn-danger mt-1 px-4 py-1 rounded text-white">取消交易</button>
                                 </div>
                                 <button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0 d-none">發送出貨通知</button>
-                                <button class="btn_failReason bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start w-100 d-none" title="點擊查看失敗原因">查看失敗原因</button>
-                                <button class="btn_checkrefund bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start w-100 d-none" title="點擊查看退款狀態">查看退款狀態</button>
                             </div>
+                            <button class="btn_recheck bg-transparent border-0 text-black-50 px-0 text-decoration-underline d-none" title="點擊重新確認付款狀態">重新確認付款狀態</button>
+                            <button class="btn_failReason bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start d-none" title="點擊查看失敗原因">查看失敗原因</button>
+                            <button class="btn_checkrefund bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start d-none" title="點擊查看退款狀態">查看退款狀態</button>
 
-                            <p class="gray_text">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>
+                            <p class="gray_text mt-3">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>
                         </div>
                     </div>
 

@@ -25,8 +25,10 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             ResponseMessageDto response = new ResponseMessageDto();
             switch (paytype)
             {
+                case "3":
                 case "LinePay":
                     return await linePayAppService.LinePayRequest(ohid);
+                case "2":
                 case "PCHomePay":
                     return await pchomePayAppService.PChomePayRequest(ohid);
             }
@@ -43,16 +45,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<IActionResult> LinePayCancel(string transactionId, string orderId)
         {
             return await linePayAppService.LinePayCancel(transactionId, orderId);
-        }
-        [HttpGet]
-        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
-        {
-            return await linePayAppService.LinePayCheckPaymentStatus(ohid);
-        }
-        [HttpGet]
-        public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
-        {
-            return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
         }
         [HttpGet]
         public async Task<IActionResult> PChomePayReturn(string ohid)

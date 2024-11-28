@@ -1111,6 +1111,9 @@ function PurchaseAdd(result, item_list_ul) {
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_link.attr("title", `連結至：${result.title}`);
+    console.log("result", result)
+    console.log("result.imagePath", result.imagePath)
+    console.log("result.imagePath", result.imagePath.replace(`upload/${OrgName}/`, "upload/"))
     item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')

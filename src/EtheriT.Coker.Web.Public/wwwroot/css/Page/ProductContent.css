@@ -269,6 +269,7 @@ input:disabled + .btn_radio {
     border: 1px solid var(--gray-text);
     width: 8rem;
     height: 2rem;
+    border-radius: 0;
 }
 
 .counter_input > .quantity {

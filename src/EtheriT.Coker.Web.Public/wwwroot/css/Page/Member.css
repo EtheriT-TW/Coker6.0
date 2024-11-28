@@ -15,6 +15,10 @@
     color: var(--red-number);
 }
 
+.smailWrap {
+    display:none;
+}
+
 #ReOrderAlertModal .orderlist img {
     height: 5rem;
 }
@@ -346,10 +350,6 @@
 }
 
 @media (max-width:992px) {
-    .collapse > .card-body > .list-group > li:first-child {
-        display: none;
-    }
-
     #TabContent {
         width: 100%;
     }
@@ -392,9 +392,21 @@
 }
 
 @media (max-width:768px) {
-    .quantity {
-        width: auto;
+    .collapse > .card-body > div > div:first-child {
+        width:7rem;
+        text-align-last:right;
     }
+    .collapse > .card-body > .list-group > li:first-child {
+        display: none;
+    }
+
+        .collapse > .card-body > .list-group > li:not(first-child) > a >  div > div:nth-child(2) {
+            width:auto;
+        }
+
+        .quantity {
+            width: auto;
+        }
 
     #profile-tab-pane > .content .collapse {
         width: 100%;
@@ -443,8 +455,14 @@
     }
 
     .header_subtotal, .header_freight, .header_total {
-        width: auto;
+        white-space: nowrap;
         padding: 0;
+        text-align: unset !important;
+        width: 5rem;
+    }
+
+    .collapse > .card-body > div {
+        justify-content: end;
     }
 
     .collapse > .card-body > div:nth-child(3) {
@@ -454,7 +472,7 @@
     .collapse > .card-body > div:nth-child(4) {
         padding-left: .9rem;
     }
-
+    
     #profile-tab-pane > .content > div {
         display: flex;
         flex-wrap: wrap;
@@ -515,16 +533,12 @@
 }
 
 @media (max-width:576px) {
-    .collapse > .card-body > div {
-        align-self: flex-start;
+        .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
+        width:70%;
     }
 
     .collapse > .card-body > .list-group > li > a > div > .price {
         width: auto;
-    }
-
-    .isHide {
-        width: auto !important;
     }
 
     #history-tab-pane .type_list img {
@@ -604,6 +618,25 @@
 }
 
 @media (max-width:440px) {
+    .isHide:not(.hideTotal) {
+        width: 50%;
+    }
+    .hideTotal {
+        width:50%;
+        text-align-last:end;
+    }
+    .smailWrap {
+        display: unset;
+    }
+    .collapse > .card-body > div {
+        justify-content: center;
+    }
+        .collapse > .card-body > div {
+        padding: 0 !important;
+    }
+    .hideTotal {
+        padding-left:0;
+    }
     #TabContent .content.type_grid .type_change_frame {
         flex: 0 0 auto;
     }
@@ -615,4 +648,14 @@
         #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child > label {
             padding-right: 0 !important;
         }
+}
+
+@media (max-width:400px) {
+    .hideTotal {
+        flex:unset;
+        width: 55%;
+    }
+    .isHide:not(.hideTotal) {
+        width:55%;
+    }
 }

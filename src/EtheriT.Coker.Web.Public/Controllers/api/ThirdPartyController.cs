@@ -25,8 +25,10 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             ResponseMessageDto response = new ResponseMessageDto();
             switch (paytype)
             {
+                case "3":
                 case "LinePay":
                     return await linePayAppService.LinePayRequest(ohid);
+                case "2":
                 case "PCHomePay":
                     return await pchomePayAppService.PChomePayRequest(ohid);
             }

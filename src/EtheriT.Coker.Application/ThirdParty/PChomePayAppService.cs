@@ -79,6 +79,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     response.Success = true;
                                     response.Message = pchomePayResponse.payment_url;
                                     ohdata.TransactionId = pchomePayResponse.order_id;
+                                    if (ohdata.RepayTimes != null) ohdata.RepayDate = DateTime.Now;
                                     ohdata.State = OrderStatusEnum.待付款;
                                     db.SaveChanges();
                                 }
@@ -202,8 +203,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     if (ohdata != null)
                     {
-                        var orderidstr = ("000000000" + ohid).Substring(ohid.ToString().Length);
-                        var RequestUri = $"/v1/payment/{orderidstr}";
+                        var RequestUri = $"/v1/payment/{ohdata.TransactionId}";
                         response = await PChomePayHeaders();
 
                         if (response.Success)
@@ -471,7 +471,14 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (oddatas.Any())
                 {
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    PaymentBody.order_id = oid;
+                    if (ohdata.TransactionId == null) PaymentBody.order_id = oid;
+                    else
+                    {
+                        if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
+                        else ohdata.RepayTimes += 1;
+                        db.SaveChanges();
+                        PaymentBody.order_id = $"{oid}-{ohdata.RepayTimes}";
+                    }
 
                     var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).FirstOrDefaultAsync();
 
@@ -502,18 +509,47 @@ namespace EtheriT.Coker.Application.ThirdParty
                     PaymentBody.amount = ohdata.Subtotal + ohdata.Freight;
 
                     var items = new List<PChomePayItemsDto>();
+                    var items_length = 0;
                     foreach (var oddata in oddatas)
                     {
-                        items.Add(new PChomePayItemsDto()
+                        var temp_item = new PChomePayItemsDto()
                         {
                             name = oddata.Title,
                             url = $"{Website.DefaultUrl}/{Website.OrgName}/home/product/{oddata.PId}"
-                        });
+                        };
+
+                        int totalLength = temp_item.GetType()
+                                                        .GetProperties()
+                                                        .Where(prop => prop.PropertyType == typeof(string))
+                                                        .Select(prop => prop.GetValue(temp_item) as string)
+                                                        .Where(value => value != null)
+                                                        .Sum(value => value.Length);
+
+                        if (items_length + totalLength > 8000)
+                        {
+                            if(items.Count() > 0)
+                            {
+                                items.Last().name = "剩餘商品...";
+                                items.Last().url = "";
+                            }
+                            else
+                            {
+                                temp_item.name = "商品...";
+                                temp_item.url = "";
+                                items.Add(temp_item);
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            items_length += totalLength;
+                            items.Add(temp_item);
+                        }
                     }
                     PaymentBody.items = items;
 
-                    PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={PaymentBody.order_id}";
-                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={PaymentBody.order_id}";
+                    PaymentBody.return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
+                    PaymentBody.fail_return_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayReturn?ohid={oid}";
                     PaymentBody.notify_url = $"{Website.DefaultUrl}/api/ThirdParty/PChomePayNotify";
 
                     PaymentBody.buyer_email = ohdata.OrdererEmail;

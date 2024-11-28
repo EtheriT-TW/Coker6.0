@@ -63,6 +63,14 @@
                     const $o = $select.children(":selected");
                     if (/^#/.test($o.val())) $o.data("trigger").trigger("click");
                     else location.href = $o.val();
+
+                    const anchor = $o.val().split('#')[1];
+                    const $targetElement = $('#' + anchor);
+                    if ($('nav').hasClass('position-fixed')) {
+                        $('html, body').animate({
+                            scrollTop: $targetElement.offset().top - $('nav').outerHeight() - 10
+                        });
+                    }
                 });
                 $self.append($select);
             }

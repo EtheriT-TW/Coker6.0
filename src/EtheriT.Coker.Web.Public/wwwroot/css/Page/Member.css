@@ -479,7 +479,14 @@
         line-height: 1.7rem;
     }
 
-        #profile-tab-pane > .content > div > div:not(div:nth-child(3)) {
+        #profile-tab-pane > .content > div > div:not(.collapse) {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > div > .collapse.show {
             display: flex;
             flex-direction: column;
             flex: 1 1 auto;

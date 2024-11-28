@@ -105,44 +105,41 @@ namespace EtheriT.Coker.Application.ThirdParty
             string RequestBodyStr = "";
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
+            var ohdata = await db.Order_Headers.Where(e => e.TransactionId == transactionId).FirstOrDefaultAsync();
+            var ohidstr = "";
             try
             {
-                long.TryParse(orderId, out long ohid);
-                if (ohid > 0)
+                if (ohdata != null)
                 {
-                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
-
-                    if (ohdata != null)
+                    ohidstr = $"000000000{ohdata.Id}".Substring(ohdata.Id.ToString().Length);
+                    var RequestUri = $"/v3/payments/{transactionId}/confirm";
+                    LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
                     {
-                        var RequestUri = $"/v3/payments/{transactionId}/confirm";
-                        LinePayConfirmRequestDto RequestBody = new LinePayConfirmRequestDto()
-                        {
-                            amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
-                            currency = "TWD",
-                        };
-                        RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
-                        response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
+                        amount = (ohdata.Subtotal + ohdata.Freight).ToString(),
+                        currency = "TWD",
+                    };
+                    RequestBodyStr = JsonConvert.SerializeObject(RequestBody);
+                    response = await LinePayDefaultRequestHeaders(RequestUri, RequestBodyStr);
 
-                        if (response.Success)
-                        {
-                            var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
-                            var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
-                            PostResponse.EnsureSuccessStatusCode();
-                            var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                            linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
-                            Console.WriteLine($"-------------錯誤訊息查看-------------");
-                            Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
+                    if (response.Success)
+                    {
+                        var RequestContent = new StringContent(RequestBodyStr, Encoding.UTF8, "application/json");
+                        var PostResponse = await ThirdPartyClient_Line.PostAsync(RequestUri, RequestContent);
+                        PostResponse.EnsureSuccessStatusCode();
+                        var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+                        linePayResponse = JsonConvert.DeserializeObject<LinePayConfirmResponseDto>(jsonResponse);
+                        Console.WriteLine($"-------------錯誤訊息查看-------------");
+                        Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：({linePayResponse.ReturnCode}：{linePayResponse.ReturnCode})");
 
-                            if (linePayResponse.ReturnCode == "0000")
-                            {
-                                ohdata.State = OrderStatusEnum.已付款;
-                                db.SaveChanges();
-                            }
-                            else
-                            {
-                                ohdata.State = OrderStatusEnum.付款失敗;
-                                db.SaveChanges();
-                            }
+                        if (linePayResponse.ReturnCode == "0000")
+                        {
+                            ohdata.State = OrderStatusEnum.已付款;
+                            db.SaveChanges();
+                        }
+                        else
+                        {
+                            ohdata.State = OrderStatusEnum.付款失敗;
+                            db.SaveChanges();
                         }
                     }
                 }
@@ -159,7 +156,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"LinePay=>LinePayConfirm回傳資料：Other Error: {ex.Message}");
             }
-            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{ohidstr}");
         }
         public async Task<ResponseMessageDto> LinePayConfirm(long ohid)
         {
@@ -224,15 +221,29 @@ namespace EtheriT.Coker.Application.ThirdParty
         {
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
+            var ohdata = await db.Order_Headers.Where(e => e.TransactionId == transactionId).FirstOrDefaultAsync();
+            var ohidstr = "";
             try
             {
-                ResponseMessageDto linePayResponse = await LinePayCheckPaymentStatus(int.Parse(orderId));
+                if (ohdata != null)
+                {
+                    ohidstr = $"000000000{ohdata.Id}".Substring(ohdata.Id.ToString().Length);
+                    ResponseMessageDto linePayResponse = await LinePayCheckPaymentStatus(int.Parse(orderId));
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Http 請求錯誤
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"LinePay=>LinePayCancel回傳資料：Request failed: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                // 其他未知錯誤
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"LinePay=>LinePayCancel回傳資料：Other Error: {ex.Message}");
             }
-            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{orderId}");
+            return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{ohidstr}");
         }
         public async Task<ResponseMessageDto> LinePayVoid(long ohid)
         {
@@ -310,34 +321,21 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response.Error = linePayResponse.ReturnCode;
                             switch (linePayResponse.ReturnCode)
                             {
+                                case "0000":
                                 case "0110":
-                                    if (ohdata.State == OrderStatusEnum.待確認)
-                                    {
-                                        ohdata.State = OrderStatusEnum.待付款;
-                                        db.SaveChanges();
-                                    }
+                                    ohdata.State = OrderStatusEnum.待付款;
                                     break;
                                 case "0121":
-                                    if (ohdata.State == OrderStatusEnum.待確認)
-                                    {
-                                        response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
-                                    }
-                                    break;
-                                case "0122":
-                                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-                                    {
-                                        ohdata.State = OrderStatusEnum.付款失敗;
-                                        db.SaveChanges();
-                                    }
+                                    response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
                                     break;
                                 case "0123":
-                                    if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-                                    {
-                                        ohdata.State = OrderStatusEnum.已付款;
-                                        db.SaveChanges();
-                                    }
+                                    ohdata.State = OrderStatusEnum.已付款;
+                                    break;
+                                default:
+                                    ohdata.State = OrderStatusEnum.付款失敗;
                                     break;
                             }
+                            db.SaveChanges();
                             response.Message = $"{(int)ohdata.State},{linePayResponse.ReturnMessage}";
                         }
                     }
@@ -554,16 +552,16 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (oddatas.Any())
                 {
                     RequestBody.currency = "TWD";
-
+                    
                     RequestBody.amount = (ohdata.Subtotal + ohdata.Freight).ToString();
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    if (ohdata.TransactionId == null) RequestBody.orderId = oid;
+                    if (ohdata.TransactionId == null) RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";
                     else
                     {
                         if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
                         else ohdata.RepayTimes += 1;
                         db.SaveChanges();
-                        RequestBody.orderId = $"{oid}-{ohdata.RepayTimes}";
+                        RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
                     }
 
                     var Packages = new List<LinePayPackageDto>();

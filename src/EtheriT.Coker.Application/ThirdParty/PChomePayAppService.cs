@@ -159,24 +159,19 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                 {
                                     ohdata.State = OrderStatusEnum.已付款;
-                                    db.SaveChanges();
                                 }
                                 break;
                             case "order_expired":
                                 if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                 {
                                     ohdata.State = OrderStatusEnum.已取消;
-                                    db.SaveChanges();
                                 }
                                 break;
                             case "order_failed":
-                                if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-                                {
-                                    ohdata.State = OrderStatusEnum.付款失敗;
-                                    db.SaveChanges();
-                                }
+                                ohdata.State = OrderStatusEnum.付款失敗;
                                 break;
                         }
+                        db.SaveChanges();
                     }
                     {
                         Console.WriteLine($"-------------訊息查看-------------");
@@ -213,8 +208,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                             PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
-                            response.Success = true;
-                            response.Error = PChomePayState.status_code;
 
                             var message = "";
                             switch (PChomePayState.status)
@@ -223,7 +216,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     if (ohdata.State == OrderStatusEnum.待確認)
                                     {
                                         ohdata.State = OrderStatusEnum.待付款;
-                                        db.SaveChanges();
                                         message = "交易處理中";
                                     }
                                     break;
@@ -231,7 +223,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
-                                        db.SaveChanges();
                                         message = "交易已完成";
                                     }
                                     break;
@@ -239,11 +230,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                     {
                                         ohdata.State = OrderStatusEnum.付款失敗;
-                                        db.SaveChanges();
                                         message = "交易失敗：";
                                     }
                                     break;
                             }
+                            db.SaveChanges();
                             if (PChomePayState.status != null)
                             {
                                 switch (PChomePayState.status_code)
@@ -321,8 +312,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     case "WO":
                                         message += "等待 OTP 驗證";
                                         break;
+                                    default:
+                                        message += "未列出的原因";
+                                        break;
                                 }
                             }
+                            response.Success = true;
+                            response.Error = PChomePayState.status_code;
                             response.Message = $"{(int)ohdata.State},{message}";
                         }
                     }
@@ -350,7 +346,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (ohdata != null)
                 {
-                    var ohidstr = $"000000000{ohid}".Substring(ohid.ToString().Length);
+                    var ohidstr = ohdata.TransactionId;
                     var RefundBody = new { order_id = ohidstr, refund_id = $"{ohidstr}-Refund", trade_amount = refund == null ? ohdata.Subtotal + ohdata.Freight : refund };
 
                     if (RefundBody != null)
@@ -558,13 +554,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (oddatas.Any())
                 {
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    if (ohdata.TransactionId == null) PaymentBody.order_id = oid;
+                    if (ohdata.TransactionId == null) PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";
                     else
                     {
                         if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
                         else ohdata.RepayTimes += 1;
                         db.SaveChanges();
-                        PaymentBody.order_id = $"{oid}-{ohdata.RepayTimes}";
+                        PaymentBody.order_id = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}-{ohdata.RepayTimes}";
                     }
 
                     var paytype = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).FirstOrDefaultAsync();

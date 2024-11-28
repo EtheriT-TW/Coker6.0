@@ -486,7 +486,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var token = await tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
                 if (token != null)
                 {
                     var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();

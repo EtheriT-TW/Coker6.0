@@ -541,7 +541,23 @@ function CheckToken() {
                 CartDropInit();
             }
             if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
-                if (window.location.search == "") CardDataGet();
+                var search = window.location.search;
+                if (search == "") CardDataGet();
+                else if ($.isNumeric(search.substring(1))) {
+                    if (!localStorage.getItem("lastSaveToken") == result.token && localStorage.getItem("lastSaveTime") != null) {
+                        var tokenSaveTime = new Date(localStorage.getItem('lastSaveTime'));
+                        var fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+                        if (tokenSaveTime > fifteenMinutesAgo) {
+                            Coker.Token.CheckToken(localStorage.getItem("lastSaveToken")).done(function (result) {
+                                if (result.success) {
+                                    localStorage.setItem("token", result.token);
+                                    localStorage.setItem("lastSaveTime", null)
+                                }
+                            });
+                        }
+                    }
+                }
             }
             if (result.agreePrivacy) cookie_accept();
             else if (!$("#Cookie").hasClass("show")) $("#Cookie").addClass("show")

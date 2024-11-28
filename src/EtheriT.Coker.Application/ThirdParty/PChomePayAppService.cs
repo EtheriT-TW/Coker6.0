@@ -213,8 +213,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                             PChomePayState = JsonConvert.DeserializeObject<PChomePayStateDto>(jsonResponse);
-                            response.Success = true;
-                            response.Error = PChomePayState.status_code;
 
                             var message = "";
                             switch (PChomePayState.status)
@@ -321,8 +319,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     case "WO":
                                         message += "等待 OTP 驗證";
                                         break;
+                                    default:
+                                        message += "未列出的原因";
+                                        break;
                                 }
                             }
+                            response.Success = true;
+                            response.Error = PChomePayState.status_code;
                             response.Message = $"{(int)ohdata.State},{message}";
                         }
                     }

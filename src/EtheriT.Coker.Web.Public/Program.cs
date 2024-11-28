@@ -83,7 +83,6 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = true, // 是否驗證接收者
             ValidateLifetime = true, // 是否驗證 Token 的有效期
             ValidateIssuerSigningKey = true, // 是否驗證簽名密鑰
-
             ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"), // JWT 發行者
             ValidAudience = builder.Configuration.GetValue<string>("JwtSettings:Audience"), // JWT 接收者
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey"))), // 密鑰
@@ -271,6 +270,16 @@ app.UseCookiePolicy(
 );
 //app.UseMiddleware<CookieHandlingMiddleware>();
 
+//禁用X-HTTP-Method-Override
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.ContainsKey("X-HTTP-Method-Override"))
+    {
+        context.Request.Headers.Remove("X-HTTP-Method-Override");
+    }
+    await next();
+});
+
 // 定義共用的 OnPrepareResponse 委派
 static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
 {
@@ -333,7 +342,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
-app.UseHttpsRedirection();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -341,8 +350,9 @@ if (!app.Environment.IsDevelopment())
     app.UseStatusCodePagesWithReExecute("/Error/{0}");
     app.UseMiddleware<CustomBadRequestMiddleware>();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
+app.UseHsts();
+app.UseHttpsRedirection();
 
 app.Use(async (context, next) =>
 {
@@ -352,12 +362,14 @@ app.Use(async (context, next) =>
     context.Items["CSPNonce"] = nonce;
     // 添加 CSP(內容限制) header
     context.Response.Headers["Content-Security-Policy"] =
-        $"default-src *;" +
-        $"script-src 'self' 'nonce-{nonce}' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com 'unsafe-eval'; " +
+        $"default-src 'self';" +
+        $"script-src 'self' 'nonce-{nonce}' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com; " +
         $"style-src 'self' 'nonce-{nonce}' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; " +
         $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
         $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
-        $"frame-ancestors 'self' *.ezsale.tw ";
+        $"frame-src 'self' *.ezsale.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net;" +
+        $"connect-src 'self' *.google.com *.google-analytics.com;" +
+        $"frame-ancestors 'self' *.ezsale.tw;";
     //cache 限制設定
     context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
     //Pragma 為http 1.0以下使用，以上已被 Cache-Control取代

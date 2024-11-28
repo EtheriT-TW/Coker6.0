@@ -20,6 +20,7 @@ using System.Security.Claims;
 using System.Text;
 using Org.BouncyCastle.Asn1.Ess;
 using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Token
@@ -106,7 +107,7 @@ namespace EtheriT.Coker.Application.Token
         public async Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null)
         {
             if (string.IsNullOrEmpty(Accont)) Accont = Guid.NewGuid().ToString();
-            if (UUID == null) UUID = generateUUID();
+            if (UUID.IsNullOrEmpty()) UUID = generateUUID();
             DateTime date = DateTime.Now;
             DateTime EndDateTime = date.AddDays(30);
             var item = new TokenKeyItem { UUID = UUID.Value };
@@ -133,6 +134,7 @@ namespace EtheriT.Coker.Application.Token
             {
                 if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out token);
+                if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Items["Token"]?.ToString();
                 if (!string.IsNullOrEmpty(token))
                 {
                     var handler = new JwtSecurityTokenHandler();
@@ -334,6 +336,7 @@ namespace EtheriT.Coker.Application.Token
             {
                 Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
             });
+            httpContextAccessor.HttpContext?.Items.Add("Token", token);
             return token;
         }
         public async Task<bool> DelToken()

@@ -48,7 +48,11 @@ namespace EtheriT.Coker.Application.Remote
                 r.UUID = await tokenAppService.GetUUID();
                 db.Add(r);
 				await db.SaveChangesAsync();
-				response.Success = true;
+                httpContextAccessor.HttpContext?.Response.Cookies.Append("RemoteId",r.Id.ToString(), new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddHours(1) // 設定過期時間
+                });
+                response.Success = true;
 			}catch (Exception ex)
 			{
 				response.Message = ex.Message;

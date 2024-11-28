@@ -74,7 +74,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = await tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken(null);
 
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
@@ -170,7 +170,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var UUID = await tokenAppService.GetUUID();
-                var token = await tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
                 var db_shoppingcart = db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefault();
                 var db_token = db.Tokens.Where(e => e.id == token.RefreshToken).FirstOrDefault();
 
@@ -206,7 +206,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = await tokenAppService.CheckToken();
+                var Token = await tokenAppService.CheckToken(null);
 
                 var userid = new List<Guid>();
                 if (Token.IsLogin)
@@ -256,7 +256,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                                   }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
                                 }).ToListAsync();
 
-                var token = await tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
                 long role = 0;
                 if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
 
@@ -294,7 +294,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).ToList();
                 if (db_sc != null)
                 {
-                    var checkToken = await tokenAppService.CheckToken();
+                    var checkToken = await tokenAppService.CheckToken(null);
                     if (checkToken.IsLogin)
                     {
                         Guid UUID = await tokenAppService.GetUUID();
@@ -349,7 +349,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         {
             List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
-            var token = await tokenAppService.CheckToken();
+            var token = await tokenAppService.CheckToken(null);
             Guid UUID = await tokenAppService.GetUUID();
             long roleid = 1;
             if (token != null && token.IsLogin)
@@ -386,28 +386,27 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
                     }
                     var psid = shoppingCart.Prod_Stock?.Id;
-                    if (temp_output.Price == "")
+                    var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
+                    if (db_price.Any())
                     {
-                        var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
-                        if (db_price.Any())
+                        if (roleid == 1)
                         {
-                            if (roleid == 1)
+                            var temp_price = db_price[0]?.Price?.ToString();
+                            temp_output.DynamicPrice = temp_price ?? "0";
+                        }
+                        else
+                        {
+                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
+                            if (temp_price == null)
                             {
-                                var temp_price = db_price[0]?.Price?.ToString();
-                                temp_output.Price = temp_price ?? "0";
+                                temp_price = db_price[0]?.Price?.ToString();
+                                temp_output.DynamicPrice = temp_price ?? "0";
                             }
-                            else
-                            {
-                                var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
-                                if (temp_price == null)
-                                {
-                                    temp_price = db_price[0]?.Price?.ToString();
-                                    temp_output.Price = temp_price ?? "0";
-                                }
-                                else temp_output.Price = temp_price;
-                            }
+                            else temp_output.DynamicPrice = temp_price;
                         }
                     }
+
+                    if (temp_output.Price == "") temp_output.Price = temp_output.DynamicPrice;
                     var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
 
                     temp_output.Price = int.Parse(temp_output.Price).ToString("#,##0");
@@ -467,6 +466,25 @@ namespace EtheriT.Coker.Application.ShoppingCart
             {
                 output.Error = "Error";
                 output.Message = ex.Message;
+            }
+            return output;
+        }
+        public async Task<List<ShoppingCartDisplayDto>> CheckStockPrice(List<long> scids)
+        {
+            List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
+            try
+            {
+                var temp_outputs = await GetDisplay(scids);
+                if (temp_outputs.Any())
+                {
+                    output = temp_outputs;
+                }
+                else throw new Exception("查無訂單資訊");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"ShoppingCart=>CheckStockPrice回傳資料：{ex.Message}");
             }
             return output;
         }

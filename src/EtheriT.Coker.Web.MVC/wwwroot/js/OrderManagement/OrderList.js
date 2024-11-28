@@ -1,7 +1,7 @@
 ﻿var keyId
 var order_list
 let $btn_reSend, $btn_save;
-var oristate = 0, payment = "", transactionId = "";
+var oristate = 0, payment = "", transactionId = "", thirdparty = 0;
 function PageReady() {
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
@@ -68,15 +68,16 @@ function PageReady() {
     });
     $(".btn_recheck").on("click", function () {
         co.sweet.loading();
-        Coker.ThirdParty.PChomePay.CheckStatus(keyId).done(function (result) {
-            if (result.order_state != 0) {
-                if (result.order_state != oristate) {
+        Coker.ThirdParty.CheckPaymentStatus(keyId, thirdparty).done(function (result) {
+            if (result.success) {
+                var state = result.message.split(",")[0];
+                if (state != oristate) {
                     $(".btn_recheck").addClass("d-none");
-                    $order_status.val(result.order_state);
-                    oristate = result.order_state;
+                    $order_status.val(state);
+                    oristate = state;
                     co.sweet.success(`訂單狀態變更為【${$order_status.find("option:selected").text()}】`, function () {
                         updateOrder();
-                        console.log(result.message);
+                        console.log(result.message.split(",")[1]);
                     });
                 } else {
                     Swal.fire({
@@ -119,10 +120,10 @@ function PageReady() {
     });
     $(".btn_failReason").on("click", function () {
         co.sweet.loading();
-        Coker.ThirdParty.Line.CheckPaymentStatus(keyId).done(function (result) {
+        Coker.ThirdParty.CheckPaymentStatus(keyId, thirdparty).done(function (result) {
             Swal.fire({
-                title: `Code: ${result.returnCode}`,
-                text: result.returnMessage,
+                title: `Code: ${result.error}`,
+                text: result.message.split(",")[1],
             });
         });
     });
@@ -231,6 +232,7 @@ function HashDataEdit() {
                     //keyId = order_header.id;
                     console.log("order_header", order_header);
                     HeaderDataInsert(order_header)
+                    thirdparty = order_header.thirdParties;
 
                     var order_details = result[0].orderDetails;
                     $.each(order_details, function (index, data) {
@@ -298,9 +300,7 @@ function HeaderDataSet(result) {
         switch (oristate) {
             case 5:
                 // 顯示查詢失敗原因 PChome未實作
-                if (payment == "LINEPay") {
-                    $(".btn_failReason").removeClass("d-none");
-                }
+                if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
                 break;
             case 6:
                 switch (payment) {

@@ -18,6 +18,15 @@
                 data: { payment: payment, transactionId: transactionId },
             });
         },
+        CheckPaymentStatus: function (ohid, thirdparty) {
+            return $.ajax({
+                url: "/api/ThirdParty/CheckPaymentStatus/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { ohid: ohid, thirdparty: thirdparty },
+            });
+        },
         Line: {
             Confirm: function (ohid) {
                 return $.ajax({
@@ -37,26 +46,6 @@
                     data: { ohid: ohid },
                 });
             },
-            CheckPaymentStatus: function (ohid) {
-                return $.ajax({
-                    url: "/api/ThirdParty/LinePayCheckPaymentStatus/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { ohid: ohid },
-                });
-            }
         },
-        PChomePay: {
-            CheckStatus: function (ohid) {
-                return $.ajax({
-                    url: "/api/ThirdParty/PChomePayCheckPaymentStatus/",
-                    type: "GET",
-                    contentType: 'application/json; charset=utf-8',
-                    headers: _c.Data.Header,
-                    data: { ohid: ohid },
-                });
-            },
-        }
     }
 });

@@ -21,6 +21,7 @@ using System.Text;
 using Org.BouncyCastle.Asn1.Ess;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Common;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -62,7 +63,7 @@ namespace EtheriT.Coker.Application.Token
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
                 if (!string.IsNullOrEmpty(tokenStr))
                 {
-                    output = await CheckToken();
+                    output = await CheckToken(null);
                     if (output.Success) return output;
                 }
                 httpContextAccessor.HttpContext?.Response.Cookies.Delete("Token");
@@ -126,12 +127,12 @@ namespace EtheriT.Coker.Application.Token
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
             return item;
         }
-        public async Task<TokenResponseDto> CheckToken()
+        public async Task<TokenResponseDto> CheckToken(string? token)
         {
             TokenResponseDto output = new TokenResponseDto();
             try
             {
-                string? token = httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out token);
                 if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Items["Token"]?.ToString();
                 if (!string.IsNullOrEmpty(token))
@@ -157,12 +158,13 @@ namespace EtheriT.Coker.Application.Token
                     output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
 
                     var db_token = await db.Tokens.Where(e => e.id == Sid).FirstOrDefaultAsync();
-                    if(db_token != null)
+                    if (db_token != null)
                     {
                         if (output.IsLogin)
                         {
                             var frontUser = await db.FrontUsers.Where(e => e.UUID == db_token.UUID).FirstOrDefaultAsync();
-                            if (frontUser != null && frontUser.Status == (int)UserStatusEnum.開通 ){
+                            if (frontUser != null && frontUser.Status == (int)UserStatusEnum.開通)
+                            {
                                 if (frontUser.PrivacyAgreeTime != null)
                                 {
                                     var agreetime = frontUser.PrivacyAgreeTime.Value;
@@ -197,7 +199,7 @@ namespace EtheriT.Coker.Application.Token
 
             try
             {
-                var tokencheck = await CheckToken();
+                var tokencheck = await CheckToken(null);
                 if (tokencheck != null)
                 {
                     var token = await db.Tokens.Where(e => e.id == tokencheck.RefreshToken).FirstOrDefaultAsync();
@@ -228,7 +230,7 @@ namespace EtheriT.Coker.Application.Token
         {
             Guid tokenId = new Guid();
             Guid UUID = new Guid();
-            var token = await CheckToken();
+            var token = await CheckToken(null);
             if (token != null && token.Success)
             {
                 if (token.RefreshToken != null)

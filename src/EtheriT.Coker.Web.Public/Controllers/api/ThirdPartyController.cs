@@ -47,16 +47,6 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await linePayAppService.LinePayCancel(transactionId, orderId);
         }
         [HttpGet]
-        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
-        {
-            return await linePayAppService.LinePayCheckPaymentStatus(ohid);
-        }
-        [HttpGet]
-        public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
-        {
-            return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
-        }
-        [HttpGet]
         public async Task<IActionResult> PChomePayReturn(string ohid)
         {
             return await pchomePayAppService.PChomePayReturn(ohid);

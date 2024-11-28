@@ -58,14 +58,19 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return response;
         }
         [HttpGet]
-        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
+        public async Task<ResponseMessageDto> CheckPaymentStatus(long ohid, int thirdparty)
         {
-            return await linePayAppService.LinePayCheckPaymentStatus(ohid);
-        }
-        [HttpGet]
-        public async Task<PChomePayStateDto> PChomePayCheckPaymentStatus(long ohid)
-        {
-            return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
+            ResponseMessageDto response = new ResponseMessageDto();
+            switch (thirdparty)
+            {
+                case 2:
+                    return await pchomePayAppService.PChomePayCheckPaymentStatus(ohid);
+                case 3:
+                    return await linePayAppService.LinePayCheckPaymentStatus(ohid);
+            }
+            response.Success = false;
+            response.Message = "支付方式不存在";
+            return response;
         }
         [HttpGet]
         public async Task<ResponseMessageDto> PChomePayBalance()

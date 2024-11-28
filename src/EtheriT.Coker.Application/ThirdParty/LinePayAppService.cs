@@ -66,11 +66,14 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 response.Success = true;
                                 response.Message = linePayResponse.Info.PaymentUrl.Web;
                                 ohdata.TransactionId = linePayResponse.Info.TransactionId;
+                                if (ohdata.RepayTimes != null) ohdata.RepayDate = DateTime.Now;
                                 ohdata.State = OrderStatusEnum.待付款;
                                 db.SaveChanges();
                             }
                             else
                             {
+                                ohdata.State = OrderStatusEnum.付款失敗;
+                                db.SaveChanges();
                                 response.Error = linePayResponse.ReturnCode;
                                 response.Message = linePayResponse.ReturnMessage;
                             }
@@ -223,7 +226,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
             try
             {
-                LinePayResponseDto linePayResponse = await LinePayCheckPaymentStatus(int.Parse(orderId));
+                ResponseMessageDto linePayResponse = await LinePayCheckPaymentStatus(int.Parse(orderId));
             }
             catch (Exception ex)
             {
@@ -281,7 +284,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-        public async Task<LinePayResponseDto> LinePayCheckPaymentStatus(long ohid)
+        public async Task<ResponseMessageDto> LinePayCheckPaymentStatus(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             LinePayResponseDto linePayResponse = new LinePayResponseDto();
@@ -298,10 +301,13 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                         if (response.Success)
                         {
+                            response = new ResponseMessageDto();
                             var GetResponse = await ThirdPartyClient_Line.GetAsync(RequestUri);
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                             linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
+                            response.Success = true;
+                            response.Error = linePayResponse.ReturnCode;
                             switch (linePayResponse.ReturnCode)
                             {
                                 case "0110":
@@ -332,6 +338,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     }
                                     break;
                             }
+                            response.Message = $"{(int)ohdata.State},{linePayResponse.ReturnMessage}";
                         }
                     }
                 }
@@ -339,15 +346,15 @@ namespace EtheriT.Coker.Application.ThirdParty
             catch (HttpRequestException ex)
             {
                 // Http 請求錯誤
-                linePayResponse.ReturnCode = "";
-                linePayResponse.ReturnMessage = $"Request failed: {ex.Message}";
+                response.Error = "Request failed";
+                response.Error = "ex.Message";
             }
             catch (Exception ex)
             {
-                linePayResponse.ReturnCode = "OtherErrors";
-                linePayResponse.ReturnMessage = ex.Message;
+                response.Error = "Other Error";
+                response.Error = "ex.Message";
             }
-            return linePayResponse;
+            return response;
         }
         public async Task<ResponseMessageDto> LinePayRefund(long ohid, int? refund)
         {
@@ -460,7 +467,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                LinePayResponseDto temp_response = await LinePayCheckPaymentStatus(ohid);
+                ResponseMessageDto temp_response = await LinePayCheckPaymentStatus(ohid);
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 if (ohdata != null)
                 {
@@ -550,7 +557,14 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                     RequestBody.amount = (ohdata.Subtotal + ohdata.Freight).ToString();
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
-                    RequestBody.orderId = oid;
+                    if (ohdata.TransactionId == null) RequestBody.orderId = oid;
+                    else
+                    {
+                        if (ohdata.RepayTimes == null) ohdata.RepayTimes = 1;
+                        else ohdata.RepayTimes += 1;
+                        db.SaveChanges();
+                        RequestBody.orderId = $"{oid}-{ohdata.RepayTimes}";
+                    }
 
                     var Packages = new List<LinePayPackageDto>();
                     Packages.Add(new LinePayPackageDto()
@@ -568,7 +582,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         {
                             id = od.PId.ToString(),
                             name = od.Title,
-                            imageUrl = $"{Website.DefaultUrl}{od.ImagePath}".Replace($"/{Website.OrgName}/","/"),
+                            imageUrl = $"{Website.DefaultUrl}{od.ImagePath}".Replace($"/{Website.OrgName}/", "/"),
                             quantity = od.Quantity.ToString(),
                             price = od.Price.ToString(),
                         });

@@ -33,5 +33,7 @@ namespace EtheriT.Coker.Core.Models
 		public Article? Article { get; set; }
 		public TechnicalCertificate? TechnicalCertificate { get; set; }
         public Prod? Prod { get; set; }
-	}
+		public List<UserActivityTags>? UserActivityTags { get; set; }
+
+    }
 }

@@ -118,6 +118,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<UserActivityTags>(o =>
             {
                 o.Property(e => e.CreateTime).HasDefaultValueSql("getdate()");
+                o.HasOne(e => e.Remote).WithMany(e => e.UserActivityTags).HasForeignKey(f => f.FK_RemoteId);
             });
             modelBuilder.Entity<UserGrouping>(o =>
             {

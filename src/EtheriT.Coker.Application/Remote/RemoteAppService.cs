@@ -253,26 +253,31 @@ namespace EtheriT.Coker.Application.Remote
                     remote.State = RemoteStateEnum.未處理;
                     remote.UUID = UUID;
                     db.SaveChanges();
-                    /* if (!remote.FK_ProdId.IsNullOrEmpty()) {
-                         //double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
-                         var prodTags = from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
-                                        select new UserActivityTags
-                                        {
-                                            FK_TId = t.FK_TId,
-                                            FK_RemoteId = id,
-                                            Weight = (float)(0.5 * Math.Pow(1 + 0.1, remote.TimeOnPage))
-                                        };
-                         await prodTags.ForEachAsync(e => {
-                             double daysSinceLastInteraction = 0;
-                             var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
-                             if (last != null) {
-                                 daysSinceLastInteraction = (DateTime.Now - last.CreateTime).TotalDays;
-                                 double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
-                                 e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, remote.TimeOnPage));
-                             }
-                         });
-                         db.SaveChanges();
-                     }*/
+                    /*if (!remote.FK_ProdId.IsNullOrEmpty()) {
+                        var prodTags = from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
+                                       select new UserActivityTags
+                                       {
+                                           FK_TId = t.FK_TId,
+                                           FK_RemoteId = id,
+                                           Weight = (float)(0.5 * Math.Pow(1 + 0.1, remote.TimeOnPage))
+                                       };
+                        List<UserActivityTags> AddUserActivityTags = new List<UserActivityTags>();
+                        await prodTags.ForEachAsync(e => {
+                            double daysSinceLastInteraction = 0;
+                            var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
+                            if (last != null) {
+                                daysSinceLastInteraction = (DateTime.Now - last.CreateTime).TotalDays;
+                                double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
+                                e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, remote.TimeOnPage));
+                            }
+                            var item = db.UserActivityTags.Where(u => u.FK_RemoteId == e.FK_RemoteId && u.FK_TId == e.FK_TId).FirstOrDefault();
+                            if (item != null) { 
+                                item.Weight = e.Weight;
+                            }else AddUserActivityTags.Add(e);
+                        });
+                        db.UserActivityTags.AddRange(AddUserActivityTags);
+                        db.SaveChanges();
+                    }*/
                 }
             }
             

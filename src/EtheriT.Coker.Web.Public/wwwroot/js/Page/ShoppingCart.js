@@ -228,6 +228,7 @@ function PageReady() {
                     addr: order_data.ordererAddress
                 });
             }
+            else user_data = null;
         });
     });
 
@@ -889,8 +890,14 @@ function OrderHeaderAdd() {
         }
     }
     else {
-        order_data = user_data;
-        order_data.ordererAddress = user_data['address'];
+        if (user_data == null) {
+            checksuccess = false;
+            Coker.sweet.error("資料填寫錯誤", "請確實填寫訂購人資訊。", null, false);
+            OrdererEdit();
+        } else {
+            order_data = user_data;
+            order_data.ordererAddress = user_data['address'];
+        }
     }
 
     for (var key in order_data) {

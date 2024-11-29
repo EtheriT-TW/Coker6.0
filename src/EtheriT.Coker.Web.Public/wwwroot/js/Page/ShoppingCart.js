@@ -140,6 +140,7 @@ function PageReady() {
         //console.log("changeSlide", buy_step_swiper.activeIndex);
         switch (buy_step_swiper.activeIndex) {
             case 2:
+                RadioPayment();
                 if (ShippingForms.find("input").length == 0) {
                     Coker.sweet.error("錯誤", "店家尚未設置運費方式，無法繼續", null, false);
                     buy_step_swiper.slideTo(1);
@@ -961,11 +962,6 @@ function OrderHeaderAdd() {
     order_header_data.couponId = 0;
     order_header_data.freight = freight == "" ? 0 : freight;
     order_header_data.Service_Charge = 0;
-
-    //console.log(order_data)
-    //console.log(recipient_data)
-    //console.log(invoice_data)
-    //console.log(order_header_data)
 
     if (checksuccess) {
         Coker.sweet.loading();

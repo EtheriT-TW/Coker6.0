@@ -509,9 +509,9 @@ function ready() {
     });
 
     var string = $("#TermsModal .modal-body .content").text().toString();
-    console.log(string)
+    //console.log(string)
     string = $.trim(string);
-    console.log(string)
+    //console.log(string)
     $("#TermsModal .modal-body .content").html(string)
 }
 

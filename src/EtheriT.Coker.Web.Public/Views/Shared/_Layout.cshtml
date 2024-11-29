@@ -336,10 +336,26 @@
                             </div>
                             <div class="form-check">
                                 <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
-                                <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><a class="text-black text-decoration-underline" href="/@ViewData["OrgName"]/Terms" title="連結至：會員條款(另開新視窗)" target="_blank">會員條款</a></span></label>
+                                @* <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><a class="text-black text-decoration-underline" href="/@ViewData["OrgName"]/Terms" title="連結至：會員條款(另開新視窗)" target="_blank">會員條款</a></span></label> *@
+                                <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> 會員條款 </button></span></label>
                             </div>
                         </div>
                         <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">註　冊</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="TermsModal" class="modal fade" aria-hidden="true" aria-labelledby="TermsModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable justify-content-center">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center fs-4 fw-bold pb-3">會員條款</div>
+                        <div class="content px-4">
+                            @ViewData["membershipTerms"]
+                        </div>
                     </div>
                 </div>
             </div>

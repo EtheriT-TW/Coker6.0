@@ -78,6 +78,10 @@ a[href="https://translate.google.com"] {
     display: block;
 }
 
+#TermsModal .modal-body .content {
+    white-space: pre-wrap;
+}
+
 #YTPreviewModal .modal-content {
     height: 90vh;
 }

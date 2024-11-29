@@ -1053,9 +1053,9 @@ namespace EtheriT.Coker.Application.Order
                         DetailsTable += $"<tr>" +
                                                         $"<td class='text-start'>{data.Title}</td>" +
                                                         $"<td>{Specification}</td>" +
-                                                        $"<td>{data.Price.ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                                        $"<td>{data.Price.ToString("$#,##0")}</td>" +
                                                         $"<td>{data.Quantity}</td>" +
-                                                        $"<td>${(data.Price * data.Quantity).ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                                        $"<td>{(data.Price * data.Quantity).ToString("$#,##0")}</td>" +
                                                         $"</tr>";
                     }
 
@@ -1147,10 +1147,10 @@ namespace EtheriT.Coker.Application.Order
                                              $"</tbody>" +
                                              $"<tfoot>" +
                                              $"<tr>" +
-                                             $"<th colspan='6' class='text-end'>運費<span class='text-red ms-1 text-size1_25'>${order_header.Freight.ToString("N", CultureInfo.CurrentCulture)}</span></th>" +
+                                             $"<th colspan='6' class='text-end'>運費<span class='text-red ms-1 text-size1_25'>{order_header.Freight.ToString("$#,##0")}</span></th>" +
                                              $"</tr>" +
                                              $"<tr>" +
-                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>${order_header.Subtotal.ToString("N", CultureInfo.CurrentCulture)}</span></th>" +
+                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>{order_header.Subtotal.ToString("$#,##0")}</span></th>" +
                                              $"</tr>" +
                                              $"</tfoot>" +
                                              $"</table>" +
@@ -1176,7 +1176,7 @@ namespace EtheriT.Coker.Application.Order
                                              PaymentInfo +
                                              $"<tr>" +
                                              $"<td scope='row' class='text-end'>應繳金額</td>" +
-                                             $"<td class='text-start'>${order_header.Subtotal.ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                             $"<td class='text-start'>{order_header.Subtotal.ToString("$#,##0")}</td>" +
                                              $"</tr>" +
                                              $"<tr>" +
                                              $"<td scope='row' class='text-end text-red'>繳費期限</td>" +
@@ -1186,7 +1186,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"</table>" +
                                              $"<br/>" +
                                              $"<hr/>" +
-                                             $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
+                                             $"<div class='text-bold text-red'>提醒您：此封『訂購通知』為系統發出，請勿直接回覆。</div>" +
                                              $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
                                              $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                              $"<hr/>" +

@@ -14,5 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.StoreSet
         public string storeMemo {  get; set; } = string.Empty;
         public string storeBuyState { get; set; } = string.Empty;
         public string linkMore { get; set; } = string.Empty;
+        public string prodCatalog { get; set; } = string.Empty;
+        public string membershipTerms { get; set; } = string.Empty;
     }
 }

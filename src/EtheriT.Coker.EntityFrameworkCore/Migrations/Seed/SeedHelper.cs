@@ -765,7 +765,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 3,
                     Used = false,
-                    Title = "ATM付款",
+                    Title = "ATM(虛擬帳戶)",
                     Code = "PchomePayATM",
                     SerNo = 500,
                     FK_ThirdPartyId = 2,

@@ -126,10 +126,10 @@
                         <template id="Template_Cart_Details">
                             <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
                                 <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a class="align-content-center pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品">
+                                    <a class="align-content-center pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品" target="_blank">
                                         <img class="pro_image img-fluid" alt="商品" src="">
                                     </a>
-                                    <a class="pro_link col text-start overflow-hidden" href="">
+                                    <a class="pro_link col text-start overflow-hidden" href="" target="_blank">
                                         <div class="content d-lg-block d-none">
                                             <div class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
@@ -145,7 +145,7 @@
                                     <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
                                 </div>
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a class="pro_link" href="" title="連結至：商品">
+                                    <a class="pro_link" href="" title="連結至：商品" target="_blank">
                                         <div class="d-lg-none d-block text-start">
                                             <div class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
@@ -209,11 +209,11 @@
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div>小計</div>
-                            <div class="subtotal price"></div>
+                            <div class="subtotal price fs-5 fw-bold red_text"></div>
                         </div>
                     </div>
                     <div class="swiper_button my-5 d-flex justify-content-center">
-                        <a href="#" title="繼續購物：返回上一頁" class="btn_backshop btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
+                        <a href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄" class="btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
                         <button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
                             下一步
                         </button>
@@ -222,7 +222,7 @@
 
                 <div id="Purchase_Null" class="align-items-center flex-column justify-content-center">
                     <div class="mt-5">您的購物車是空的</div>
-                    <a class="btn_backshop btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="#">點此返回選購</a>
+                    <a class="btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄">點此返回選購</a>
                 </div>
             </div>
 
@@ -275,7 +275,7 @@
                             {
                                 <div class="form-check text-start col-12 col-sm-3 my-2 py-2">
                                     <input id="radio_payment_@payment.Code" class="form-check-input" type="radio" name="RadioPayment" value="@payment.Id" required>
-                                    <label class="form-check-label" for="radio_payment_@payment.Code">@if (payment.Code.StartsWith("PCHome") || payment.Code.StartsWith("Pchome")) { payment.Title = "支付連-" + payment.Title; }@payment.Title</label>
+                                    <label class="form-check-label" for="radio_payment_@payment.Code">@payment.Title</label>
                                     @{
                                         if (!has_invalid)
                                         {
@@ -303,7 +303,7 @@
                         </div>
                         <div class="py-2 border-top d-flex justify-content-end text-end">
                             <div>小計</div>
-                            <div class="total_amount price"></div>
+                            <div class="total_amount price  fs-5 fw-bold red_text"></div>
                         </div>
                     </div>
 
@@ -322,7 +322,7 @@
             <div id="Step3" class="card text-center swiper-slide">
                 <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
                     <div class="fs-5 my-2">購物明細</div>
-                    <a class="btn_backshop px-4 py-2 text-decoration-underline" title="返回上一頁" href="#">我要再選購</a>
+                    <a class="px-4 py-2 text-decoration-underline" title="繼續購物：回商品目錄" href="@ViewData["prodCatalog"]">我要再選購</a>
                 </div>
 
                 <div class="card-body px-0">
@@ -590,7 +590,7 @@
                             </button>
                         </div>
 
-                        <a class="btn_backshop btn_gray_underline btn_gray_dark col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="#">我要再選購</a>
+                        <a class="btn_gray_underline btn_gray_dark col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄">我要再選購</a>
                     </div>
                 </div>
             </div>
@@ -616,10 +616,10 @@
                         <template id="Template_Purchase_Details">
                             <li class="purchase_item row border-bottom py-2 align-items-lg-center position-relative">
                                 <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a data-key="link" class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link col-lg-2 col-12" href="" title="連結至：商品" target="_blank">
                                         <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
                                     </a>
-                                    <a data-key="link" class="pro_link col text-start overflow-hidden" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link col text-start overflow-hidden" href="" title="連結至：商品" target="_blank">
                                         <div class="content d-lg-block d-none">
                                             <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
@@ -631,7 +631,7 @@
                                 </div>
 
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a data-key="link" class="pro_link" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank">
                                         <div class="d-lg-none d-block text-start">
                                             <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">

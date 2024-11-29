@@ -108,7 +108,7 @@ function PageReady() {
         }
     }
 
-    if (!$("#btn_car_dropdown").hasClass("d-none")) $("#btn_car_dropdown").addClass("d-none")
+    $("#btn_car_dropdown").addClass("d-none")
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
@@ -187,7 +187,6 @@ function PageReady() {
         setInterval(hashChange, 1000);
     }
     GetOrderPage();
-
 
     Coker.Token.CheckToken().done(function (checkresult) {
         islogin = checkresult.isLogin;
@@ -535,7 +534,7 @@ function CartAdd(result) {
         item.data("scid", result.scId);
         if (typeof (result.pId) == "undefined") item_link.attr("href", `/${OrgName}/Home/product/` + result.prodId);
         else item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
-        item_link.attr("title", `連結至：${result.title}`);
+        item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
         item_image.attr("src", result.imagePath);
         item_image.attr("alt", `${result.title}的圖片`);
         item_name.text(result.title);
@@ -1110,7 +1109,7 @@ function PurchaseAdd(result, item_list_ul) {
         item_subtotal = item.find(".pro_subtotal");
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
-    item_link.attr("title", `連結至：${result.title}`);
+    item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
     console.log("result", result)
     console.log("result.imagePath", result.imagePath)
     console.log("result.imagePath", result.imagePath.replace(`upload/${OrgName}/`, "upload/"))
@@ -1191,7 +1190,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                     case "link":
                         $this.attr({
                             href: `/${OrgName}/Home/product/${data['prodId']}`,
-                            title: `連結至：${data['title']}`
+                            title: `連結至：${data['title']}(另開新視窗)`
                         });
                         break;
                     case "imagePath":

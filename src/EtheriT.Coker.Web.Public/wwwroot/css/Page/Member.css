@@ -500,7 +500,7 @@
 
         #profile-tab-pane > .content > div > div:nth-child(2) > div {
             width: auto;
-            text-align-last: right;
+            text-align-last: right !important;
         }
 
     #favorite-tab-pane {

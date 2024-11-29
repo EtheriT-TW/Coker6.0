@@ -345,12 +345,12 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 // Http 請求錯誤
                 response.Error = "Request failed";
-                response.Error = "ex.Message";
+                response.Message = "ex.Message";
             }
             catch (Exception ex)
             {
                 response.Error = "Other Error";
-                response.Error = "ex.Message";
+                response.Message = "ex.Message";
             }
             return response;
         }

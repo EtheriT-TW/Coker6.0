@@ -979,7 +979,12 @@ function OrderHeaderAdd() {
                                     if (result.success) {
                                         localStorage.setItem("lastSaveTime", new Date().toISOString())
                                         localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-                                        window.location.replace(result.message);
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入付款流程。");
+                                        setTimeout(function () {
+                                            buy_step_swiper.slideNext();
+                                            buy_step_swiper.disable();
+                                        }, 300);
+                                        window.open(result.message, "_blank");
                                     } else {
                                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
                                         setTimeout(function () {

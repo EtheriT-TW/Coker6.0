@@ -259,7 +259,7 @@ namespace EtheriT.Coker.Application.Order
                             var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID).Select(e => e.TempUUID).ToListAsync();
                             uuids.Add(UUID);
                             var timeago = DateTime.Now.AddMinutes(-15);
-                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && (e.CreationTime > timeago || e.RepayDate > timeago )).ToListAsync();
+                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && (e.CreationTime > timeago || e.RepayDate > timeago)).ToListAsync();
                         }
                         else
                         {
@@ -653,7 +653,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e=>e.FK_User).FirstOrDefaultAsync();
+                var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e => e.FK_User).FirstOrDefaultAsync();
                 var ohdata = await db.Order_Headers.Where(e => e.Id == dto.ohid).FirstOrDefaultAsync();
                 if (ohdata != null)
                 {
@@ -693,7 +693,8 @@ namespace EtheriT.Coker.Application.Order
                                 }
                                 else throw new Exception("查無庫存資料");
                             }
-                            if (subtotal == dto.Subtotal){
+                            if (subtotal == dto.Subtotal)
+                            {
                                 ohdata.Subtotal = subtotal;
                                 ohdata.State = OrderStatusEnum.待確認;
                                 ohdata.LastModifierUserId = userid;
@@ -941,7 +942,7 @@ namespace EtheriT.Coker.Application.Order
                 DateTime now = DateTime.Now.AddDays(-7);
                 if (order_header != null)
                 {
-                    if(order_header.State != (OrderStatusEnum)state)
+                    if (order_header.State != (OrderStatusEnum)state)
                     {
                         if (order_header.State == OrderStatusEnum.已付款) response.Message = "已付款";
                         order_header.State = (OrderStatusEnum)state;
@@ -1016,7 +1017,7 @@ namespace EtheriT.Coker.Application.Order
                                                         $"</tr>";
                     }
                     var Shipping = await db.LogisticsSettings.Where(e => e.Id == order_header.Shipping).FirstOrDefaultAsync();
-                    var PaymentType = await db.PaymentTypes.Where(e => e.FK_ThirdPartyId == order_header.Payment).Select(e => e.Title).FirstOrDefaultAsync();
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => e.Title).FirstOrDefaultAsync();
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId
                                             where tpk.FK_TPid == order_header.Payment

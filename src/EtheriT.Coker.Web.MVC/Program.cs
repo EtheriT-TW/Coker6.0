@@ -208,6 +208,7 @@ builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddScoped<IUserHabitsAppService, UserHabitsAppService>();
 builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAuthorizationFilter>();
+builder.Services.AddScoped<UserHabitsWorking>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

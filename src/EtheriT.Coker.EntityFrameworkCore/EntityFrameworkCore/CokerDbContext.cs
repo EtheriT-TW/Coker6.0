@@ -82,6 +82,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Theme> Themes { get; set; }
         public DbSet<UserGrouping> UserGroupings { get; set; }
+        public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
+        public DbSet<UserActivityTags> UserActivityTags { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -112,6 +114,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<FrontUser>(o =>
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<UserActivityTags>(o =>
+            {
+                o.Property(e => e.CreateTime).HasDefaultValueSql("getdate()");
             });
             modelBuilder.Entity<UserGrouping>(o =>
             {

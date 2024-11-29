@@ -65,6 +65,9 @@ var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<IConfiguration>();
 
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
+
 // 配置 JWT Bearer 認證
 builder.Services.AddAuthentication(options =>
     {

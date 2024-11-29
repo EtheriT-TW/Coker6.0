@@ -189,7 +189,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var output = from pv in db.PaymentTypesValues
                              join pt in db.PaymentTypes on pv.FK_PaymentTypesId equals pt.Id
                              where pv.FK_WebsiteId == WebsiteId && pv.Used
-                             orderby pt.FK_ThirdPartyId
+                             orderby pt.SerNo
                              select new PaymentTypeItemOutputDto
                              {
                                  Id = pt.Id,

@@ -294,9 +294,18 @@ function PageReady() {
     $('input[type=radio][name=RecipientRadio]').on("change", RecipientRadio);
     $('input[type=radio][name=InvoiceRadio]').on("change", InvoiceRadio);
 
-    $(".btn_backshop").on("click", function () {
-        history.back();
-        return false;
+    $(".btn_backshop").each(function () {
+        var $this = $(this);
+        console.log($this.attr("href"))
+        if ($this.attr("href") == "") $this.attr("title", "繼續購物：返回上一頁");
+    })
+    $(".btn_backshop").on("click", function (event) {
+        var $this = $(this);
+        console.log($this.attr("href"))
+        if ($this.attr("href") == "") {
+            history.back();
+            return false;
+        }
     });
 }
 function hashChange(e) {

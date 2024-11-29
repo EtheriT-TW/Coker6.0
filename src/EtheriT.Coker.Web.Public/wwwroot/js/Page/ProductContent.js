@@ -517,11 +517,6 @@ function AddToCart() {
                 FK_S1id: s1,
                 FK_S2id: s2,
                 Quantity: $input_quantity.val(),
-                Discont: 0,
-                Bonus: 0,
-                PriceType: 0,
-                IsAdditional: false,
-                Ser_No: 500,
             }).done(function (result) {
                 if (result.success) {
                     Coker.sweet.success("商品已成功加入購物車", null, true);
@@ -553,7 +548,13 @@ function AddToCart() {
                     }
                     $input_quantity.val(1);
                 } else {
-                    Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+                    if (result.error == "商品庫存不足") {
+                        Coker.sweet.error(result.error, result.message, function () {
+                            location.reload(true);
+                        }, false);
+                    } else {
+                        Coker.sweet.error("商品加入購物車發生錯誤", result.message, null, true);
+                    }
                 }
             }).fail(function () {
                 Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);

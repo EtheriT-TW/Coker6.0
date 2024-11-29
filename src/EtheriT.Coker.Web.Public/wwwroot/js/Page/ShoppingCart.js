@@ -645,12 +645,22 @@ function CartQuantityUpdate(self, price, scid, quantity) {
         Id: scid,
         Quantity: quantity,
     }).done(function (result) {
-        Product.GetOne.Cart(result.message).done(function (result) {
-            self.data("subtotal", price * quantity)
-            self.text(self.data("subtotal").toLocaleString('en-US'))
-            TotalCount();
-            CartDropReset(scid, quantity)
-        });
+        if (result.success) {
+            Product.GetOne.Cart(result.message).done(function (result) {
+                self.data("subtotal", price * quantity)
+                self.text(self.data("subtotal").toLocaleString('en-US'))
+                TotalCount();
+                CartDropReset(scid, quantity)
+            });
+        } else {
+            if (result.error == "商品庫存不足") {
+                Coker.sweet.error(result.error, result.message, function () {
+                    location.reload(true);
+                }, false);
+            } else {
+                Coker.sweet.error("商品更改數量發生錯誤", result.message, null, true);
+            }
+        }
     }).fail(function () {
         Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
     });

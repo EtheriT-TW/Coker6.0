@@ -132,7 +132,7 @@ function ElementInit() {
     $options = $prod_content.find(".options");
 }
 function PageDefaultSet(result) {
-    if (result.stocks.length == 1 && result.stocks[0].stock == 0) {
+    if (result.stocks.length == 1 && result.stocks[0].stock <= 0) {
         $(".btn_addToCar").addClass("close")
         $("#Product .content .options").addClass("d-none")
     }
@@ -215,7 +215,7 @@ function PageDefaultSet(result) {
             obj = {}
             var nostock = "";
             console.log(data)
-            if (data.stock == 0 && CanShop) {
+            if (data.stock <= 0 && CanShop) {
                 nostock = 'disabled="disabled"'
             } else {
                 hasstock = true;
@@ -467,7 +467,7 @@ function SpecRadio() {
             $self_s.find("input").each(function () {
                 $radio = $(this)
                 var this_price_list = price_list.find(e => e.s1id == $radio.val() && e.s2id == s2);
-                if (typeof (this_price_list) != "undefined" && this_price_list.stock == 0 && CanShop) {
+                if (typeof (this_price_list) != "undefined" && this_price_list.stock <= 0 && CanShop) {
                     $radio.attr("disabled", "disabled");
                     radioclosenum += 1;
                 } else $radio.removeAttr("disabled");
@@ -488,7 +488,7 @@ function SpecRadio() {
                     max: item.stock - (item.stock % item.minQty),
                     step: item.minQty
                 });
-                if (item.stock == 0) $counter_input.addClass("isEmpty");
+                if (item.stock <= 0) $counter_input.addClass("isEmpty");
                 else $counter_input.removeClass("isEmpty");
                 $input_quantity.trigger("change");
             }
@@ -498,7 +498,7 @@ function SpecRadio() {
     if (s2 == null) s2 = 0
     var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
     //console.log(this_price_list)
-    if (this_price_list.stock == 0) {
+    if (this_price_list.stock <= 0) {
         if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
     }
     else {
@@ -538,13 +538,13 @@ function AddToCart() {
                         var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
                         this_price_list.stock -= $input_quantity.val();
                         $input_quantity.attr("max", this_price_list.stock)
-                        if (this_price_list.stock == 0) {
+                        if (this_price_list.stock <= 0) {
                             if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
                             if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
                         }
                     } else {
                         var stock = $input_quantity.attr("max") - $input_quantity.val();
-                        if (stock == 0) {
+                        if (stock <= 0) {
                             if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
                             if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
                         } else {

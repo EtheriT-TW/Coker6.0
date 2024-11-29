@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Core.Models
         public long FK_RemoteId { get; set; }
         public long FK_TId { get; set; }
         public float Weight { get; set; }
+        public DateTime CreateTime { get; set; }
         public Remote Remote { get; set; }
     }
 }

@@ -130,6 +130,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
             var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
+            var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
+            var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
 
             RemoteInputDto remoteInputDto = new RemoteInputDto { FK_WebsiteId = siteId };
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
@@ -153,9 +155,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     GTM = (GTM != null && GTM.value != null) ? String.Join(",", GTM.value!) : "",
                     storeBuyState = (storeBuyState != null && storeBuyState.value != null) ? String.Join(",", storeBuyState.value!) : "",
                     storeMemo = (GA4 != null && storeMemo != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
-                    linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
+                    linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : "",
+                    prodCatalog = (prodCatalog != null && prodCatalog.value != null) ? String.Join(",", prodCatalog.value!) : "",
+                    membershipTerms = (membershipTerms != null && membershipTerms.value != null) ? String.Join(",", membershipTerms.value!) : "",
                 }
             };
+            ViewData["membershipTerms"] = model.storeSet.membershipTerms;
             string view;
             if (new List<string> { "article" }.Contains(key.ToLower()) && int.TryParse(option, out id))
             {
@@ -321,6 +326,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         else if (key.ToLower() == "shoppingcar")
                         {
+                            ViewData["prodCatalog"] = model.storeSet.prodCatalog;
                             ViewData["storeMemo"] = model.storeSet.storeMemo;
                             model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;

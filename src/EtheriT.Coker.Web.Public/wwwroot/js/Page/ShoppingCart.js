@@ -108,7 +108,7 @@ function PageReady() {
         }
     }
 
-    if (!$("#btn_car_dropdown").hasClass("d-none")) $("#btn_car_dropdown").addClass("d-none")
+    $("#btn_car_dropdown").addClass("d-none")
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
@@ -140,6 +140,7 @@ function PageReady() {
         //console.log("changeSlide", buy_step_swiper.activeIndex);
         switch (buy_step_swiper.activeIndex) {
             case 2:
+                RadioPayment();
                 if (ShippingForms.find("input").length == 0) {
                     Coker.sweet.error("錯誤", "店家尚未設置運費方式，無法繼續", null, false);
                     buy_step_swiper.slideTo(1);
@@ -188,7 +189,6 @@ function PageReady() {
     }
     GetOrderPage();
 
-
     Coker.Token.CheckToken().done(function (checkresult) {
         islogin = checkresult.isLogin;
         Coker.User.GetUser().done(function (result) {
@@ -229,6 +229,7 @@ function PageReady() {
                     addr: order_data.ordererAddress
                 });
             }
+            else user_data = null;
         });
     });
 
@@ -535,7 +536,7 @@ function CartAdd(result) {
         item.data("scid", result.scId);
         if (typeof (result.pId) == "undefined") item_link.attr("href", `/${OrgName}/Home/product/` + result.prodId);
         else item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
-        item_link.attr("title", `連結至：${result.title}`);
+        item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
         item_image.attr("src", result.imagePath);
         item_image.attr("alt", `${result.title}的圖片`);
         item_name.text(result.title);
@@ -890,8 +891,14 @@ function OrderHeaderAdd() {
         }
     }
     else {
-        order_data = user_data;
-        order_data.ordererAddress = user_data['address'];
+        if (user_data == null) {
+            checksuccess = false;
+            Coker.sweet.error("資料填寫錯誤", "請確實填寫訂購人資訊。", null, false);
+            OrdererEdit();
+        } else {
+            order_data = user_data;
+            order_data.ordererAddress = user_data['address'];
+        }
     }
 
     for (var key in order_data) {
@@ -956,11 +963,6 @@ function OrderHeaderAdd() {
     order_header_data.freight = freight == "" ? 0 : freight;
     order_header_data.Service_Charge = 0;
 
-    //console.log(order_data)
-    //console.log(recipient_data)
-    //console.log(invoice_data)
-    //console.log(order_header_data)
-
     if (checksuccess) {
         Coker.sweet.loading();
         Coker.Order.AddHeader(order_header_data).done(function (result) {
@@ -977,7 +979,12 @@ function OrderHeaderAdd() {
                                     if (result.success) {
                                         localStorage.setItem("lastSaveTime", new Date().toISOString())
                                         localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-                                        window.location.replace(result.message);
+                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入付款流程。");
+                                        setTimeout(function () {
+                                            buy_step_swiper.slideNext();
+                                            buy_step_swiper.disable();
+                                        }, 300);
+                                        window.open(result.message, "_blank");
                                     } else {
                                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
                                         setTimeout(function () {
@@ -1110,7 +1117,7 @@ function PurchaseAdd(result, item_list_ul) {
         item_subtotal = item.find(".pro_subtotal");
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
-    item_link.attr("title", `連結至：${result.title}`);
+    item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
     console.log("result", result)
     console.log("result.imagePath", result.imagePath)
     console.log("result.imagePath", result.imagePath.replace(`upload/${OrgName}/`, "upload/"))
@@ -1191,7 +1198,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                     case "link":
                         $this.attr({
                             href: `/${OrgName}/Home/product/${data['prodId']}`,
-                            title: `連結至：${data['title']}`
+                            title: `連結至：${data['title']}(另開新視窗)`
                         });
                         break;
                     case "imagePath":

@@ -259,7 +259,7 @@ namespace EtheriT.Coker.Application.Order
                             var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID).Select(e => e.TempUUID).ToListAsync();
                             uuids.Add(UUID);
                             var timeago = DateTime.Now.AddMinutes(-15);
-                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && (e.CreationTime > timeago || e.RepayDate > timeago )).ToListAsync();
+                            order_headers = await db.Order_Headers.Where(e => ohids.Contains(e.Id) && uuids.Contains(e.FK_UUID) && (e.CreationTime > timeago || e.RepayDate > timeago)).ToListAsync();
                         }
                         else
                         {
@@ -653,7 +653,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e=>e.FK_User).FirstOrDefaultAsync();
+                var userid = await db.FrontUsers.Where(e => e.UUID == UUID).Select(e => e.FK_User).FirstOrDefaultAsync();
                 var ohdata = await db.Order_Headers.Where(e => e.Id == dto.ohid).FirstOrDefaultAsync();
                 if (ohdata != null)
                 {
@@ -693,7 +693,8 @@ namespace EtheriT.Coker.Application.Order
                                 }
                                 else throw new Exception("查無庫存資料");
                             }
-                            if (subtotal == dto.Subtotal){
+                            if (subtotal == dto.Subtotal)
+                            {
                                 ohdata.Subtotal = subtotal;
                                 ohdata.State = OrderStatusEnum.待確認;
                                 ohdata.LastModifierUserId = userid;
@@ -941,7 +942,7 @@ namespace EtheriT.Coker.Application.Order
                 DateTime now = DateTime.Now.AddDays(-7);
                 if (order_header != null)
                 {
-                    if(order_header.State != (OrderStatusEnum)state)
+                    if (order_header.State != (OrderStatusEnum)state)
                     {
                         if (order_header.State == OrderStatusEnum.已付款) response.Message = "已付款";
                         order_header.State = (OrderStatusEnum)state;
@@ -1016,7 +1017,7 @@ namespace EtheriT.Coker.Application.Order
                                                         $"</tr>";
                     }
                     var Shipping = await db.LogisticsSettings.Where(e => e.Id == order_header.Shipping).FirstOrDefaultAsync();
-                    var PaymentType = await db.PaymentTypes.Where(e => e.FK_ThirdPartyId == order_header.Payment).Select(e => e.Title).FirstOrDefaultAsync();
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).Select(e => e.Title).FirstOrDefaultAsync();
                     var ThirdParty = await (from tpk in db.ThirdPartyKeypairs
                                             join tpkv in db.ThirdPartyKeypairValues on tpk.Id equals tpkv.FK_ThirdPartyKeypairId
                                             where tpk.FK_TPid == order_header.Payment
@@ -1053,9 +1054,9 @@ namespace EtheriT.Coker.Application.Order
                         DetailsTable += $"<tr>" +
                                                         $"<td class='text-start'>{data.Title}</td>" +
                                                         $"<td>{Specification}</td>" +
-                                                        $"<td>{data.Price.ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                                        $"<td>{data.Price.ToString("$#,##0")}</td>" +
                                                         $"<td>{data.Quantity}</td>" +
-                                                        $"<td>${(data.Price * data.Quantity).ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                                        $"<td>{(data.Price * data.Quantity).ToString("$#,##0")}</td>" +
                                                         $"</tr>";
                     }
 
@@ -1147,10 +1148,10 @@ namespace EtheriT.Coker.Application.Order
                                              $"</tbody>" +
                                              $"<tfoot>" +
                                              $"<tr>" +
-                                             $"<th colspan='6' class='text-end'>運費<span class='text-red ms-1 text-size1_25'>${order_header.Freight.ToString("N", CultureInfo.CurrentCulture)}</span></th>" +
+                                             $"<th colspan='6' class='text-end'>運費<span class='text-red ms-1 text-size1_25'>{order_header.Freight.ToString("$#,##0")}</span></th>" +
                                              $"</tr>" +
                                              $"<tr>" +
-                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>${order_header.Subtotal.ToString("N", CultureInfo.CurrentCulture)}</span></th>" +
+                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>{order_header.Subtotal.ToString("$#,##0")}</span></th>" +
                                              $"</tr>" +
                                              $"</tfoot>" +
                                              $"</table>" +
@@ -1176,7 +1177,7 @@ namespace EtheriT.Coker.Application.Order
                                              PaymentInfo +
                                              $"<tr>" +
                                              $"<td scope='row' class='text-end'>應繳金額</td>" +
-                                             $"<td class='text-start'>${order_header.Subtotal.ToString("N", CultureInfo.CurrentCulture)}</td>" +
+                                             $"<td class='text-start'>{order_header.Subtotal.ToString("$#,##0")}</td>" +
                                              $"</tr>" +
                                              $"<tr>" +
                                              $"<td scope='row' class='text-end text-red'>繳費期限</td>" +
@@ -1186,7 +1187,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"</table>" +
                                              $"<br/>" +
                                              $"<hr/>" +
-                                             $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
+                                             $"<div class='text-bold text-red'>提醒您：此封『訂購通知』為系統發出，請勿直接回覆。</div>" +
                                              $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
                                              $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
                                              $"<hr/>" +

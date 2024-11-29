@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241128111320_Alter_Remote_TimeOnPage")]
+    partial class Alter_Remote_TimeOnPage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2166,7 +2168,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
                             SerNo = 500,
-                            Title = "ATM(虛擬帳戶)",
+                            Title = "ATM付款",
                             Used = false
                         },
                         new
@@ -4632,36 +4634,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("Tokens");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserActivityTags", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getdate()");
-
-                    b.Property<long>("FK_RemoteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("FK_TId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("RemoteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<float>("Weight")
-                        .HasColumnType("real");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RemoteId");
-
-                    b.ToTable("UserActivityTags");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGrouping", b =>
                 {
                     b.Property<long>("Id")
@@ -4744,7 +4716,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("UserTagStatistics");
+                    b.ToTable("UserTagStatistic");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -5810,17 +5782,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("ThirdPartyKeypair");
 
                     b.Navigation("Website");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserActivityTags", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Remote", "Remote")
-                        .WithMany()
-                        .HasForeignKey("RemoteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Remote");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.UserTagStatistic", b =>

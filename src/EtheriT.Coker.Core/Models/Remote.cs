@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Core.Models
 		public DateTime LeaveTime { get; set; }
 		public DateTime LastStatComputedAt { get; set; }
 		public RemoteStateEnum State { get; set; }
+		public int TimeOnPage { get; set; }
         [StringLength(64)]
 		public string? ClientIpAddress { get; set; }
 		[StringLength(512)] 

@@ -21,6 +21,9 @@ using System.Collections;
 using System.Data;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -239,5 +242,40 @@ namespace EtheriT.Coker.Application.Remote
             }
 			else throw new Exception("查無資料");
 		}
+        public async Task UpdateRemoteTime(int timeSpan) {
+            long id;
+            if (long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["RemoteId"]?.ToString(),out id)) {
+                var remote = await db.Remotes.Where(e => e.Id == id).FirstOrDefaultAsync();
+                if (remote != null) {
+                    var UUID = await tokenAppService.GetUUID();
+                    remote.LeaveTime = DateTime.Now;
+                    remote.TimeOnPage += (int)Math.Round(timeSpan/1000.0);
+                    remote.State = RemoteStateEnum.未處理;
+                    remote.UUID = UUID;
+                    db.SaveChanges();
+                    /* if (!remote.FK_ProdId.IsNullOrEmpty()) {
+                         //double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
+                         var prodTags = from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
+                                        select new UserActivityTags
+                                        {
+                                            FK_TId = t.FK_TId,
+                                            FK_RemoteId = id,
+                                            Weight = (float)(0.5 * Math.Pow(1 + 0.1, remote.TimeOnPage))
+                                        };
+                         await prodTags.ForEachAsync(e => {
+                             double daysSinceLastInteraction = 0;
+                             var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
+                             if (last != null) {
+                                 daysSinceLastInteraction = (DateTime.Now - last.CreateTime).TotalDays;
+                                 double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
+                                 e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, remote.TimeOnPage));
+                             }
+                         });
+                         db.SaveChanges();
+                     }*/
+                }
+            }
+            
+        }
     };
 }

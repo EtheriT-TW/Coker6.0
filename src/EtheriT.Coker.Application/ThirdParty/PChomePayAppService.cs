@@ -328,12 +328,12 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 // Http 請求錯誤
                 response.Error = "Request Errors";
-                response.Message = ex.Message;
+                response.Message = $"{0},{ex.Message}";
             }
             catch (Exception ex)
             {
                 response.Error = "Other Errors";
-                response.Message = ex.Message;
+                response.Message = $"{0},{ex.Message}";
             }
             return response;
         }

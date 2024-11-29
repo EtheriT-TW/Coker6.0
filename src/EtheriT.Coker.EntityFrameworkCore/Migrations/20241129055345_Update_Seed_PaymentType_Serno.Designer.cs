@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241129055345_Update_Seed_PaymentType_Serno")]
+    partial class Update_Seed_PaymentType_Serno
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4649,12 +4651,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("FK_TId")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("RemoteId")
+                        .HasColumnType("bigint");
+
                     b.Property<float>("Weight")
                         .HasColumnType("real");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_RemoteId");
+                    b.HasIndex("RemoteId");
 
                     b.ToTable("UserActivityTags");
                 });
@@ -5812,8 +5817,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.UserActivityTags", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Remote", "Remote")
-                        .WithMany("UserActivityTags")
-                        .HasForeignKey("FK_RemoteId")
+                        .WithMany()
+                        .HasForeignKey("RemoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -5937,11 +5942,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Prod_Prices");
 
                     b.Navigation("ShoppingCarts");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.Remote", b =>
-                {
-                    b.Navigation("UserActivityTags");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>

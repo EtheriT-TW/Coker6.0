@@ -298,8 +298,10 @@ function HeaderDataSet(result) {
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) $(".btn_refund").removeClass("d-none");
     else {
         switch (oristate) {
+            case 1:
+                if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
+                break;
             case 5:
-                // 顯示查詢失敗原因 PChome未實作
                 if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
                 break;
             case 6:
@@ -308,7 +310,7 @@ function HeaderDataSet(result) {
                         $(".confirm").removeClass("d-none");
                         break;
                     case "支付連":
-                        if ($(".btn_recheck").hasClass("d-none")) $(".btn_recheck").removeClass("d-none");
+                        $(".btn_recheck").removeClass("d-none");
                         break;
                 }
                 break;

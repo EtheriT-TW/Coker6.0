@@ -70,6 +70,10 @@
                 content: '\00d7';
             }
 
+            #Car_Dropdown > ul > li > figure > a > figcaption > .number > .pro_oldquantity::before {
+                content: '\00d7';
+            }
+
         #Car_Dropdown > ul > li > figure > .btn_cart_delete {
             top: 50%;
             right: -1.5rem;
@@ -89,10 +93,10 @@
             background-color: var(--gray-bg-dark);
         }
 
-    /* Button Mega Menu */
-    #Mega_Menu > .logo {
-        font-size: 0;
-    }
+/* Button Mega Menu */
+#Mega_Menu > .logo {
+    font-size: 0;
+}
 
     #Mega_Menu > .logo img {
         height: 60px;
@@ -111,7 +115,7 @@
 }
 
 #Mega_Menu > .btn_menu {
-    background-color:#ffffff;
+    background-color: #ffffff;
     margin-top: 0.25rem;
     transition: 0.3s;
     z-index: 1046;
@@ -515,6 +519,6 @@
 
 @media(max-width:503px) {
     #Mega_Menu {
-        padding:0 0 !important;
+        padding: 0 0 !important;
     }
 }

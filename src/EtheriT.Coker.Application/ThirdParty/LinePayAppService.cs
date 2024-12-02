@@ -67,7 +67,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 response.Message = linePayResponse.Info.PaymentUrl.Web;
                                 ohdata.TransactionId = linePayResponse.Info.TransactionId;
                                 if (ohdata.RepayTimes != null) ohdata.RepayDate = DateTime.Now;
-                                ohdata.State = OrderStatusEnum.待付款;
+                                ohdata.State = OrderStatusEnum.待確認;
                                 db.SaveChanges();
                             }
                             else
@@ -322,6 +322,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (linePayResponse.ReturnCode)
                             {
                                 case "0000":
+                                    ohdata.State = OrderStatusEnum.待確認;
+                                    break;
                                 case "0110":
                                     ohdata.State = OrderStatusEnum.待付款;
                                     break;
@@ -552,7 +554,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (oddatas.Any())
                 {
                     RequestBody.currency = "TWD";
-                    
+
                     RequestBody.amount = (ohdata.Subtotal + ohdata.Freight).ToString();
                     var oid = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
                     if (ohdata.TransactionId == null) RequestBody.orderId = $"{DateTime.Now.ToString("yyyyMMdd")}{oid}";

@@ -1238,6 +1238,7 @@ var Coker = {
             $e.find(".btn_sear").on("click", function () {
                 if ($t.val() == "") {
                     co.sweet.error("錯誤", "請輸入搜尋文字", null, false);
+                    $t2.focus();
                 } else {
                     window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
                 }

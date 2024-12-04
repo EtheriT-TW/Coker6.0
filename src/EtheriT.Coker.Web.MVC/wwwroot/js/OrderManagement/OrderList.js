@@ -22,7 +22,7 @@ function PageReady() {
         const status = $(".status_select > option:selected").text();
         var newstate = parseInt($(".status_select > option:selected").val());
         if (newstate != oristate && (payment == "LINEPay" || payment == "支付連")) {
-            if (([1, 5, 6].includes(newstate) || oristate == 6)) {
+            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1) || oristate == 6)) {
                 co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
             } else updateOrder();
         } else updateOrder();

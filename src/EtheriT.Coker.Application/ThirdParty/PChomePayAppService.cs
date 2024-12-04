@@ -138,6 +138,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             {
                 Console.WriteLine($"-------------訊息查看-------------");
                 Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
+                return "success";
             }
             else
             {
@@ -149,30 +150,22 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var ohdata = await db.Order_Headers.Where(e => e.Id == orderId).FirstOrDefaultAsync();
                     if (ohdata != null)
                     {
-                        switch (dto.notify_type)
+                        switch (jsonMessage["status"]?.ToString())
                         {
-                            case "order_audit":
-                                Console.WriteLine($"-------------訊息查看-------------");
-                                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
+                            case "S":
+                                ohdata.State = OrderStatusEnum.已付款;
                                 break;
-                            case "order_confirm":
-                                if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-                                {
-                                    ohdata.State = OrderStatusEnum.已付款;
-                                }
+                            case "W":
+                                ohdata.State = OrderStatusEnum.待付款;
                                 break;
-                            case "order_expired":
-                                if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
-                                {
-                                    ohdata.State = OrderStatusEnum.已取消;
-                                }
-                                break;
-                            case "order_failed":
+                            case "F":
                                 ohdata.State = OrderStatusEnum.付款失敗;
                                 break;
                         }
                         db.SaveChanges();
+                        return "success";
                     }
+                    else
                     {
                         Console.WriteLine($"-------------訊息查看-------------");
                         Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order不存在");
@@ -184,7 +177,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order_id不存在");
                 }
             }
-            return "success";
+            return "fail";
         }
         public async Task<ResponseMessageDto> PChomePayCheckPaymentStatus(long ohid)
         {

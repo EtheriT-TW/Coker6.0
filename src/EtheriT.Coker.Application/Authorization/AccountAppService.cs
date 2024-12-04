@@ -757,8 +757,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<hr/>" +
                                                         $"<hr/>" +
                                                         $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                                         $"<hr/>" +
                                                         $"<hr/>" +
                                                         $"<br/></div>";
@@ -851,8 +851,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                     $"<hr/>" +
                                                     $"<hr/>" +
                                                     $"<div class='text-bold text-red'>提醒您：此封『密碼重設通知』為系統發出，請勿直接回覆。</div>" +
-                                                    $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                    $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                    $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                                    $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                                     $"<hr/>" +
                                                     $"<hr/>" +
                                                     $"<br/></div>";
@@ -1055,8 +1055,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                             $"<hr/>" +
                                                             $"<hr/>" +
                                                             $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                            $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                            $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                            $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                                            $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                                             $"<hr/>" +
                                                             $"<hr/>" +
                                                             $"<br/></div>";

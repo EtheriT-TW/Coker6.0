@@ -134,6 +134,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                         if (linePayResponse.ReturnCode == "0000")
                         {
                             ohdata.State = OrderStatusEnum.已付款;
+                            var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, DateTime.Now);
                             db.SaveChanges();
                         }
                         else

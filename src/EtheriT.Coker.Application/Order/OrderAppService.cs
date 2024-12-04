@@ -22,6 +22,8 @@ using System.Globalization;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Web.Core.Models;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System.Drawing;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -1149,7 +1151,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"<th colspan='6' class='text-end'>運費<span class='text-red ms-1 text-size1_25'>{order_header.Freight.ToString("$#,##0")}</span></th>" +
                                              $"</tr>" +
                                              $"<tr>" +
-                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>{order_header.Subtotal.ToString("$#,##0")}</span></th>" +
+                                             $"<th colspan='6' class='text-end'>消費總計<span class='text-red ms-1 text-size1_5'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</span></th>" +
                                              $"</tr>" +
                                              $"</tfoot>" +
                                              $"</table>" +
@@ -1175,15 +1177,15 @@ namespace EtheriT.Coker.Application.Order
                                              PaymentInfo +
                                              $"<tr>" +
                                              $"<td scope='row' class='text-end'>應繳金額</td>" +
-                                             $"<td class='text-start'>{order_header.Subtotal.ToString("$#,##0")}</td>" +
+                                             $"<td class='text-start'>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</td>" +
                                              $"</tr>" +
                                              $"</tbody>" +
                                              $"</table>" +
                                              $"<br/>" +
                                              $"<hr/>" +
                                              $"<div class='text-bold text-red'>提醒您：此封『訂購通知』為系統發出，請勿直接回覆。</div>" +
-                                             $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                             $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                             $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                             $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                              $"<hr/>" +
                                              $"</div>";
                     var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
@@ -1210,7 +1212,6 @@ namespace EtheriT.Coker.Application.Order
             {
                 response.Error = ex.Message;
             }
-
             return response;
         }
         public List<SelectDto> getOrderStatusLookup()
@@ -1267,6 +1268,119 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return output;
+        }
+        public async Task<ResponseMessageDto> PaySuccessMailSend(long ohid, DateTime date)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") == 0 ? await loginUserData.GetWebsiteId() : configuration.GetValue<long>("WebConfig:SiteId");
+                var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
+                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+
+                if (order_header != null)
+                {
+                    var PaymentType = await db.PaymentTypes.Where(e => e.Id == order_header.Payment).FirstOrDefaultAsync();
+                    var ThirdParty = await db.ThirdParties.Where(e => e.Id == PaymentType.FK_ThirdPartyId).FirstOrDefaultAsync();
+                    var Payment = PaymentType?.Title ?? "";
+                    var ThirdParty_Content = "";
+                    switch (ThirdParty?.Id)
+                    {
+                        case 1:
+                            Payment = "ATM轉帳";
+                            break;
+                        case 2:
+                            ThirdParty_Content = $"<div>感謝您使用{ThirdParty?.Title ?? ""}平台進行付款</div>";
+                            break;
+                        case 3:
+                            if (PaymentType?.Code == "PchomePayCARD")
+                            {
+                                Payment = "信用卡一次付清(信用卡)";
+                            }
+                            else if (PaymentType?.Code?.StartsWith("PchomePayInstallment") ?? false)
+                            {
+                                Payment += "(信用卡)";
+                            }
+                            ThirdParty_Content = $"<div>感謝您使用{ThirdParty?.Title ?? ""}平台進行付款</div>";
+                            break;
+                    }
+
+                    var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
+                                                            <br/>
+                                                             <div>您於【{Website?.Title ?? ""}】進行了{Payment}交易，以下為您的付款完成資訊</div>
+                                                            <br/>
+                                                            <table>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>商店訂單編號</td>
+                                                                        <td>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{ThirdParty?.Title ?? ""}交易序號</td>
+                                                                        <td>{order_header.TransactionId}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>訂單金額</td>
+                                                                        <td>{(order_header.Freight + order_header.Subtotal).ToString("$#,##0")}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>支付方式</td>
+                                                                        <td>{Payment}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>付款結果</td>
+                                                                        <td>付款成功</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>付款完成日期</td>
+                                                                        <td>{date.ToString("yyyy/MM/dd HH:mm")}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                            <br/>
+                                                             {ThirdParty_Content}
+                                                             <div class='text-red'>貼心提醒：若欲詢問如商品資訊、商品出貨進度或退貨退款問題，請您與原訂購商店/網站聯繫。</div>
+                                                            <br/>
+                                                             <div class='text-red'>以上為您實際付款資訊，若您接獲自稱商店通知交易有「信用卡誤設分期付款」或「連續扣款」或「中獎通知」或「需加入LINE等社群帳號要求核對資料」等問題，皆為詐騙手法，請小心勿受騙上當，以免被有心詐騙者利用。</div>
+                                                            <br/>
+                                                             <hr/>
+                                                             <div class='text-bold text-red'>提醒您：此封『付款完成通知』為系統發出，請勿直接回覆。</div>
+                                                             <div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>
+                                                             <div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>
+                                                             <hr/>
+                                                        </div>";
+                    var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
+
+                    if (ThirdParty?.Id == 3 && (PaymentType?.Code == "PchomePayCARD" || (PaymentType?.Code?.StartsWith("PchomePayInstallment") ?? false))) Payment = "信用卡付款";
+
+                    var sedResult = await mailAppService.sendMail(new SenderDto
+                    {
+                        Recipients = new List<MailUserDataDto>(){
+                                        new MailUserDataDto()
+                                        {
+                                            Name = order_header.Orderer,
+                                            Email = order_header.OrdererEmail,
+                                        }
+                                    },
+                        Subject = $"付款完成通知信({Payment})【{Website.Title}】",
+                        Body = mailhtml,
+                        Css = mailcss,
+                    }, WebsiteID);
+
+                    response = sedResult;
+                }
+                else throw new Exception("查無訂購資料");
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            return response;
         }
     }
 }

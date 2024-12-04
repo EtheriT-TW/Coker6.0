@@ -27,6 +27,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpPost]
+        public async Task<ResponseMessageDto> CheckStock(List<OrderDetailAddDto> dto)
+        {
+            return await orderAppService.CheckStock(dto);
+        }
+        [HttpPost]
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             return await orderAppService.AddHeader(dto);

@@ -313,7 +313,6 @@ namespace EtheriT.Coker.Application.Member
             }
             return output;
         }
-
         public async Task<JsonResult> GetDevAllRole(DataSourceLoadOptions loadOptions)
         {
             var dataQuery = await GetAllRole();

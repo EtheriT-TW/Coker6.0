@@ -41,13 +41,13 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<List<ShoppingCartGetAllDto>> GetAll()
+        public async Task<List<ShoppingCartDisplayDto>> GetAll()
         {
             return await shoppingCartAppService.GetAll();
         }
 
         [HttpGet]
-        public async Task<ShoppingCartGetDrop> GetDropOne(long id)
+        public async Task<ShoppingCartDisplayDto> GetDropOne(long id, bool isorder)
         {
             return await shoppingCartAppService.GetDropOne(id, false);
         }

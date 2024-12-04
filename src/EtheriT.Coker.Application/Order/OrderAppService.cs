@@ -21,6 +21,7 @@ using EtheriT.Coker.Application.Shared.Dto.Mail;
 using System.Globalization;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto;
+using EtheriT.Coker.Web.Core.Models;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -83,6 +84,30 @@ namespace EtheriT.Coker.Application.Order
 
             return new JsonResult(new List<OrderHeaderGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
+        public async Task<ResponseMessageDto> CheckStock(List<OrderDetailAddDto> dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var scids = dto.Select(e => e.Id).ToList();
+                var scs = await db.ShoppingCarts.Where(e => scids.Contains(e.Id)).ToListAsync();
+                if (scs.Count == scids.Count)
+                {
+                    for (int i = 0; i < scs.Count; i++)
+                    {
+                        if (scs[i].Quantity != dto[i].Quantity) throw new Exception("商品規格於結帳過程中發生變動");
+                    }
+                }
+                else throw new Exception("查無購物車資料");
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = "Error";
+                response.Message = ex.Message;
+            }
+            return response;
+        }
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
@@ -92,6 +117,7 @@ namespace EtheriT.Coker.Application.Order
                 Guid UUID = await tokenAppService.GetUUID();
                 var Token = await tokenAppService.CheckToken(null);
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var datetime_now = DateTime.Now;
 
                 if (Token != null)
                 {
@@ -100,6 +126,7 @@ namespace EtheriT.Coker.Application.Order
                     oh.FK_UUID = UUID;
                     oh.Fk_Tid = (Guid)Token.RefreshToken;
                     oh.Fk_UserId = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
+                    oh.CreationTime = datetime_now;
 
                     db.Order_Headers.Add(oh);
                     db.SaveChanges();
@@ -110,41 +137,80 @@ namespace EtheriT.Coker.Application.Order
                         if (font_user != null)
                         {
                             if (font_user.CellPhone == null || font_user.CellPhone == "") font_user.CellPhone = oh.OrdererCellPhone;
+                            if (font_user.TelPhone == null || font_user.TelPhone == "") font_user.TelPhone = oh.OrdererTelephone;
                             if (font_user.Address == null || font_user.Address == "") font_user.Address = oh.OrdererAddress;
                             if (font_user.Sex == null) font_user.Sex = oh.OrdererSex;
+                            font_user.LastModifierUserId = font_user.FK_User;
+                            font_user.LastModificationTime = datetime_now;
                             db.SaveChanges();
                         }
                     }
 
-                    output = await AddDetails(oh.Id);
-                    if (output.Success)
+                    List<Core.Models.Order_Details> ods = new List<Core.Models.Order_Details>();
+                    List<long> scids = new List<long>();
+                    foreach (var data in dto.OrderDetails)
                     {
-                        var PaymentType = await (from pt in db.PaymentTypes
-                                                 join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
-                                                 where ptv.FK_WebsiteId == WebsiteId
-                                                 select pt).ToListAsync();
-                        var mailoutput = await SendMail(oh.Id);
-                        if (PaymentType != null)
+                        scids.Add(data.Id);
+                        ods.Add(new Core.Models.Order_Details()
                         {
-                            switch (PaymentType.Find(e => e.Id == oh.Payment).Code)
-                            {
-                                case "LinePay":
-                                    output.Message = $"LinePay,{oh.Id}";
-                                    break;
-                                default:
-                                    if (PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("PCHome") || PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("Pchome"))
-                                    {
-                                        output.Message = $"PCHomePay,{oh.Id}";
-                                    }
-                                    else
-                                    {
-                                        output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
-                                    }
-                                    break;
-                            }
-                        }
-                        if (!mailoutput.Success) output.Error = mailoutput.Message;
+                            FK_OId = oh.Id,
+                            FK_SCId = data.Id,
+                            CreationTime = datetime_now,
+                        });
                     }
+                    db.Order_Details.AddRange(ods);
+                    db.SaveChanges();
+
+                    List<Core.Models.ShoppingCart> scs = await db.ShoppingCarts.Where(e => scids.Contains(e.Id)).ToListAsync();
+                    List<Core.Models.Prod_Log> pls = new List<Core.Models.Prod_Log>();
+                    for (int i = 0; i < scs.Count; i++)
+                    {
+                        scs[i].Quantity = dto.OrderDetails[i].Quantity;
+                        scs[i].Price = dto.OrderDetails[i].Price;
+                        scs[i].IsOrder = true;
+                        scs[i].LastModifierUserId = oh.CreatorUserId;
+                        scs[i].LastModificationTime = datetime_now;
+
+                        pls.Add(new Core.Models.Prod_Log()
+                        {
+                            FK_Pid = await db.Prod_Stocks.Where(e => e.Id == scs[i].FK_PSid).Select(e => e.FK_Pid).FirstOrDefaultAsync(),
+                            FK_UserId = oh.CreatorUserId,
+                            UUID = UUID,
+                            Action = (int)LogActionEnum.加入訂單,
+                            Db_Name = "Order",
+                            CreationTime = datetime_now,
+                        });
+                    }
+                    db.Prod_Logs.AddRange(pls);
+                    db.SaveChanges();
+
+                    output.Success = true;
+
+                    var PaymentType = await (from pt in db.PaymentTypes
+                                             join ptv in db.PaymentTypesValues on pt.Id equals ptv.FK_PaymentTypesId
+                                             where ptv.FK_WebsiteId == WebsiteId
+                                             select pt).ToListAsync();
+                    var mailoutput = await SendMail(oh.Id);
+                    if (PaymentType != null)
+                    {
+                        switch (PaymentType.Find(e => e.Id == oh.Payment).Code)
+                        {
+                            case "LinePay":
+                                output.Message = $"LinePay,{oh.Id}";
+                                break;
+                            default:
+                                if (PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("PCHome") || PaymentType.Find(e => e.Id == oh.Payment).Code.StartsWith("Pchome"))
+                                {
+                                    output.Message = $"PCHomePay,{oh.Id}";
+                                }
+                                else
+                                {
+                                    output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                                }
+                                break;
+                        }
+                    }
+                    if (!mailoutput.Success) output.Error = mailoutput.Message;
                 }
                 else throw new Exception("查無Token");
             }
@@ -333,7 +399,7 @@ namespace EtheriT.Coker.Application.Order
                         }
                         temp_output.ThirdParties = payment.FK_ThirdPartyId;
                     }
-                    temp_output.CreationTime = order_header.CreationTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    temp_output.CreationTime = order_header.CreationTime.ToString("yyyy-MM-dd HH:mm");
                     output.Add(temp_output);
                 }
             }
@@ -341,79 +407,6 @@ namespace EtheriT.Coker.Application.Order
             {
                 Console.WriteLine($"-------------錯誤訊息查看-------------");
                 Console.WriteLine($"Order=>GetHeaderDisplay回傳資料：{ex.Message}");
-            }
-            return output;
-        }
-        private async Task<ResponseMessageDto> AddDetails(long order_header_id)
-        {
-            Guid UUID = await tokenAppService.GetUUID();
-            var Token = await tokenAppService.CheckToken(null);
-            var userid = await db.Tokens.Where(e => e.id == Token.RefreshToken).Select(e => e.UserID).FirstOrDefaultAsync();
-            var uuids = new List<Guid>();
-            long role = 0;
-            if (Token != null && Token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-
-            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            try
-            {
-                if (Token.IsLogin)
-                {
-                    uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
-                    uuids.Add(UUID);
-                }
-
-                var shoppingCarts = await db.ShoppingCarts.Where(e => uuids.Count == 0 ? e.FK_Tid == Token.RefreshToken : uuids.Contains(e.UUID)).Where(e => !e.IsOrder).ToListAsync();
-
-                foreach (var shoppingCart in shoppingCarts)
-                {
-                    var prod_stock = await db.Prod_Stocks.Where(e => e.Id == shoppingCart.FK_PSid).FirstOrDefaultAsync();
-
-                    if (prod_stock != null)
-                    {
-                        Core.Models.Order_Details od = new Core.Models.Order_Details
-                        {
-                            FK_OId = order_header_id,
-                            FK_SCId = shoppingCart.Id,
-                        };
-                        db.Order_Details.Add(od);
-
-                        Core.Models.Prod_Log pl = new Core.Models.Prod_Log
-                        {
-                            FK_Pid = prod_stock.FK_Pid,
-                            FK_UserId = userid,
-                            UUID = UUID,
-                            Action = (int)LogActionEnum.加入訂單,
-                            Db_Name = "Order_Details"
-                        };
-                        db.Prod_Logs.Add(pl);
-
-                        var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == prod_stock.Id).ToListAsync();
-                        if (db_price != null)
-                        {
-                            if (role > 0 && db_price.Find(e => e.FK_RId == role) != null)
-                            {
-                                shoppingCart.Price = (int)(db_price.Find(e => e.FK_RId == role).Price ?? 0);
-                            }
-                            else
-                            {
-                                shoppingCart.Price = (int)(db_price.FirstOrDefault().Price ?? 0);
-                            }
-                        }
-
-                        shoppingCart.IsOrder = true;
-                        shoppingCart.LastModifierUserId = userid;
-                        shoppingCart.LastModificationTime = DateTime.Now;
-
-                        db.SaveChanges();
-                        output.Success = true;
-                    }
-                    else throw new Exception("查無商品資料");
-                }
-            }
-            catch (Exception e)
-            {
-                output.Success = false;
-                output.Error = e.Message;
             }
             return output;
         }
@@ -437,6 +430,7 @@ namespace EtheriT.Coker.Application.Order
                                     where pp.FK_PSId == ps.Id && pp.FK_RId == 1
                                     from p in db.Prods
                                     where p.Id == ps.FK_Pid
+                                    where sc.Quantity > 0
                                     select new OrderDetailsGetAllDto
                                     {
                                         PId = p.Id,
@@ -571,8 +565,8 @@ namespace EtheriT.Coker.Application.Order
                                     if (tag != null)
                                     {
                                         temp_detail.Describe = "商品已下架";
-                                        var price = int.Parse(temp_detail.Price.Replace(",", ""));
-                                        var quantity = int.Parse(temp_detail.Quantity);
+                                        var price = temp_detail.Price;
+                                        var quantity = temp_detail.Quantity;
                                         subtotal -= price * quantity;
                                         ohdata[0].Subtotal = subtotal.ToString("#,##0");
                                         dis_details.Add(temp_detail);
@@ -581,8 +575,8 @@ namespace EtheriT.Coker.Application.Order
                                     {
                                         var change = false;
                                         ohdata[0].OldSubtotal = oldsubtotal;
-                                        var old_price = int.Parse(temp_detail.Price.Replace(",", ""));
-                                        var old_quantity = int.Parse(temp_detail.Quantity);
+                                        var old_price = temp_detail.Price;
+                                        var old_quantity = temp_detail.Quantity;
                                         var new_price = old_price;
                                         var new_quantity = old_quantity;
                                         var stock = await db.Prod_Stocks.Where(e => e.Id == temp_detail.ProdStockId).FirstOrDefaultAsync();
@@ -591,24 +585,24 @@ namespace EtheriT.Coker.Application.Order
                                             if (stock.Stock == 0)
                                             {
                                                 temp_detail.OldQuantity = temp_detail.Quantity;
-                                                temp_detail.Quantity = "0";
+                                                temp_detail.Quantity = 0;
                                                 new_quantity = 0;
                                                 temp_detail.Describe = "商品規格庫存為0";
                                                 change = true;
                                             }
-                                            else if (stock.Stock < int.Parse(temp_detail.Quantity))
+                                            else if (stock.Stock < temp_detail.Quantity)
                                             {
                                                 temp_detail.OldQuantity = temp_detail.Quantity;
-                                                temp_detail.Quantity = stock.Stock.ToString() ?? "0";
+                                                temp_detail.Quantity = stock.Stock ?? 0;
                                                 new_quantity = stock.Stock ?? 0;
                                                 temp_detail.Describe = "商品規格庫存不足";
                                                 change = true;
                                             }
-                                            if (temp_detail.DynamicPrice != (temp_detail.Price.Replace(",", "")))
+                                            if (temp_detail.DynamicPrice != temp_detail.Price)
                                             {
                                                 temp_detail.OldPrice = temp_detail.Price;
-                                                temp_detail.Price = (int.Parse(temp_detail.DynamicPrice)).ToString("#,##0");
-                                                new_price = int.Parse(temp_detail.DynamicPrice);
+                                                temp_detail.Price = temp_detail.DynamicPrice;
+                                                new_price = temp_detail.DynamicPrice;
                                                 temp_detail.Describe = "商品規格價格更動";
                                                 change = true;
                                             }
@@ -616,8 +610,7 @@ namespace EtheriT.Coker.Application.Order
                                             {
                                                 subtotal += (new_price * new_quantity) - (old_price * old_quantity);
                                                 ohdata[0].Subtotal = subtotal.ToString("#,##0");
-                                                // 之後把Display回傳的金額全部改數值
-                                                temp_detail.Price = temp_detail.Price.Replace(",", "");
+                                                temp_detail.Price = temp_detail.Price;
                                                 dis_details.Add(temp_detail);
                                             }
                                         }
@@ -765,15 +758,15 @@ namespace EtheriT.Coker.Application.Order
                                 if (new_order_details.Find(e => e.PSId == old_order_detail.ProdStockId) != null)
                                 {
                                     var temp_new_order_detail = mapper.Map<OrderDetailDisplayDto>(new_order_details.Find(e => e.PSId == old_order_detail.ProdStockId));
-                                    old_order_detail.Price = old_order_detail.Price.Replace(",", "");
+                                    old_order_detail.Price = old_order_detail.Price;
                                     if (temp_new_order_detail.Price != old_order_detail.Price) temp_new_order_detail.OldPrice = old_order_detail.Price;
-                                    else temp_new_order_detail.OldPrice = "0";
+                                    else temp_new_order_detail.OldPrice = 0;
                                     if (temp_new_order_detail.Quantity != old_order_detail.Quantity) temp_new_order_detail.OldQuantity = old_order_detail.Quantity;
                                     output.OrderDetails.Add(temp_new_order_detail);
                                 }
                                 else
                                 {
-                                    old_order_detail.Quantity = "0";
+                                    old_order_detail.Quantity = 0;
                                     order_details_lock.Add(old_order_detail);
                                 }
                             }
@@ -821,11 +814,11 @@ namespace EtheriT.Coker.Application.Order
 
                     foreach (var order_header in order_headers)
                     {
-                        var temp_OrderDetails = new List<ShoppingCartGetDrop>();
+                        var temp_OrderDetails = new List<ShoppingCartDisplayDto>();
                         var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
                         foreach (var order_detail in order_details)
                         {
-                            var shoppingCart = await db.ShoppingCarts.Where(e => e.Id == order_detail.FK_SCId && e.IsOrder).FirstOrDefaultAsync();
+                            var shoppingCart = await db.ShoppingCarts.Where(e => e.Id == order_detail.FK_SCId && e.Quantity > 0 && e.IsOrder).FirstOrDefaultAsync();
                             if (shoppingCart != null)
                             {
                                 temp_OrderDetails.Add(await shoppingCartAppService.GetDropOne(shoppingCart.Id, true));

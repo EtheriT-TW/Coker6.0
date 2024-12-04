@@ -132,7 +132,7 @@ function ElementInit() {
     $options = $prod_content.find(".options");
 }
 function PageDefaultSet(result) {
-    if (result.stocks.length == 1 && result.stocks[0].stock <= 0) {
+    if (result.status == 2 || (result.stocks.length == 1 && result.stocks[0].stock <= 0)) {
         $(".btn_addToCar").addClass("close")
         $("#Product .content .options").addClass("d-none")
     }
@@ -274,6 +274,7 @@ function PageDefaultSet(result) {
         var price = result.stocks[0].prices[0].price;
         $pro_discount.text(price.toLocaleString('en-US'));
     }
+    console.log(result.stocks[0].stock)
     if (result.stocks.length > 0) {
         $input_quantity.attr({
             min: 0,

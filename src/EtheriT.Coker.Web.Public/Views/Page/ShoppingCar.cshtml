@@ -126,38 +126,39 @@
                         <template id="Template_Cart_Details">
                             <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
                                 <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a class="align-content-center pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品" target="_blank">
-                                        <img class="pro_image img-fluid" alt="商品" src="">
+                                    <a data-key="link" class="align-content-center pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品" target="_blank">
+                                        <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
                                     </a>
-                                    <a class="pro_link col text-start overflow-hidden" href="" target="_blank">
+                                    <a data-key="link" class="pro_link col text-start overflow-hidden" href="" target="_blank">
                                         <div class="content d-lg-block d-none">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                @* <div class="pro_instructions single_line"></div> *@
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
                                             </div>
                                         </div>
                                     </a>
                                 </div>
                                 <div class="nostock text-start col-sm-6 col d-none">
-                                    <div class="pro_name d-lg-none single_line fw-bold"></div>
-                                    <div class="pro_detail d-lg-none d-flex flex-wrap"><div class="pro_specification pe-3"></div></div>
+                                    <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
+                                    <div class="pro_detail d-lg-none d-flex flex-wrap">
+                                        <div data-key="spec" class="pro_specification pe-3"></div>
+                                        </div>
                                     <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
                                 </div>
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a class="pro_link" href="" title="連結至：商品" target="_blank">
+                                    <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank">
                                         <div class="d-lg-none d-block text-start">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
+                                                @* <div class="pro_instructions single_line"></div> *@
                                             </div>
                                         </div>
                                     </a>
 
                                     <div class=" col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center">
-                                        <div class="pro_old_unit price fw-light text-decoration-line-through d-none"></div>
-                                        <div class="pro_unit price"></div>
+                                        <div data-key="oldPrice" data-type="price" class="pro_old_unit price fw-light text-decoration-line-through d-none"></div>
+                                        <div data-key="price" data-type="price" class="pro_unit price"></div>
                                     </div>
 
                                     <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
@@ -166,7 +167,7 @@
                                             <span class="d-none">減少</span>
                                         </button>
                                         <label class="d-none" for="quantityInput1">數量</label>
-                                        <input id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
+                                        <input data-key="quantity" id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
 
                                         <button class="btn_count_plus bg-white border-start-0">
                                             <i class="fa-solid fa-plus"></i>
@@ -174,7 +175,7 @@
                                         </button>
                                     </div>
 
-                                    <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
+                                    <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
                                 </div>
 
                                 <div class="btn_side_icon position-absolute d-flex flex-column top-50 translate-middle-y end-0 p-2">
@@ -205,11 +206,11 @@
                     <div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
                         <div class="border-bottom py-2 d-flex justify-content-end text-end">
                             <div>商品金額</div>
-                            <div class="subtotal price"></div>
+                            <div data-key="subtotal" data-type="price" class="subtotal price"></div>
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div>小計</div>
-                            <div class="subtotal price fs-5 fw-bold red_text"></div>
+                            <div data-key="total" data-type="price" class="subtotal price fs-5 fw-bold red_text"></div>
                         </div>
                     </div>
                     <div class="swiper_button my-5 d-flex justify-content-center">

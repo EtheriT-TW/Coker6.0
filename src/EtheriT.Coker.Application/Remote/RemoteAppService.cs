@@ -24,6 +24,8 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
+using Microsoft.Extensions.Caching.Memory;
+using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 
 namespace EtheriT.Coker.Application.Remote
 {
@@ -31,15 +33,27 @@ namespace EtheriT.Coker.Application.Remote
 	{
 		private readonly CokerDbContext db;
 		private readonly LoginUserData loginUserData;
+        private readonly StringHandler stringHandler;
         private readonly ITokenAppService tokenAppService;
         private readonly IHttpContextAccessor httpContextAccessor;
-		private readonly IMapper mapper;
-		public RemoteAppService(CokerDbContext db, LoginUserData loginUserData, ITokenAppService tokenAppService, IMapper mapper, IHttpContextAccessor httpContextAccessor) { 
+        private readonly IMemoryCache memoryCache;
+        private readonly IMapper mapper;
+		public RemoteAppService(
+            CokerDbContext db, 
+            LoginUserData loginUserData,
+            StringHandler stringHandler,
+            ITokenAppService tokenAppService, 
+            IMapper mapper,
+            IMemoryCache memoryCache,
+            IHttpContextAccessor httpContextAccessor
+        ) { 
 			this.db = db;
 			this.loginUserData = loginUserData;
+            this.stringHandler = stringHandler;
 			this.mapper = mapper;
 			this.httpContextAccessor = httpContextAccessor;
             this.tokenAppService = tokenAppService;
+            this.memoryCache = memoryCache;
 		}
 		public async Task<ResponseMessageDto> insertRemote(RemoteInputDto dto) {
 			ResponseMessageDto response= new ResponseMessageDto();
@@ -51,14 +65,17 @@ namespace EtheriT.Coker.Application.Remote
                 r.UUID = await tokenAppService.GetUUID();
                 db.Add(r);
 				await db.SaveChangesAsync();
-                httpContextAccessor.HttpContext?.Response.Cookies.Append("RemoteId",r.Id.ToString(), new CookieOptions
+                string PageKey = stringHandler.RandonCode(RandomStringType.數字加英文大小寫 ,8);
+                memoryCache.Set($"RemoteId-{PageKey}-{r.UUID}", r.Id, new MemoryCacheEntryOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddHours(1) // 設定過期時間
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1), // 最多存活 1 小時
+                    SlidingExpiration = TimeSpan.FromMinutes(10) // 每次訪問後延長 10 分鐘
                 });
+                response.Message = PageKey;
                 response.Success = true;
 			}catch (Exception ex)
 			{
-				response.Message = ex.Message;
+				response.Error = ex.Message;
 			}
 			return response;
 		}
@@ -242,33 +259,36 @@ namespace EtheriT.Coker.Application.Remote
             }
 			else throw new Exception("查無資料");
 		}
-        public async Task UpdateRemoteTime(int timeSpan) {
-            long id;
-            if (long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["RemoteId"]?.ToString(),out id)) {
+        public async Task UpdateRemoteTime(SetTrackTimeDto dto) {
+            Guid UUID = await tokenAppService.GetUUID();
+            long id = memoryCache.Get<long>($"RemoteId-{dto.PageKey}-{UUID}");
+            int maxspan = 5 * 60 * 1000;
+            if (id != 0) {
                 var remote = await db.Remotes.Where(e => e.Id == id).FirstOrDefaultAsync();
                 if (remote != null) {
-                    var UUID = await tokenAppService.GetUUID();
                     remote.LeaveTime = DateTime.Now;
-                    remote.TimeOnPage += (int)Math.Round(timeSpan/1000.0);
+                    remote.TimeOnPage += (int)Math.Round(dto.TimeSpan / 1000.0);
+                    remote.TimeOnPage = Math.Min(remote.TimeOnPage, maxspan);
                     remote.State = RemoteStateEnum.未處理;
                     remote.UUID = UUID;
                     db.SaveChanges();
-                    /*if (!remote.FK_ProdId.IsNullOrEmpty()) {
-                        var prodTags = from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
+                    if (!remote.FK_ProdId.IsNullOrEmpty()) {
+                        double TimeOnPage = remote.TimeOnPage / 60.0;
+                        var prodTags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
                                        select new UserActivityTags
                                        {
                                            FK_TId = t.FK_TId,
                                            FK_RemoteId = id,
-                                           Weight = (float)(0.5 * Math.Pow(1 + 0.1, remote.TimeOnPage))
-                                       };
+                                           Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
+                                       }).ToList();
                         List<UserActivityTags> AddUserActivityTags = new List<UserActivityTags>();
-                        await prodTags.ForEachAsync(e => {
+                        prodTags.ForEach(e => {
                             double daysSinceLastInteraction = 0;
                             var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
                             if (last != null) {
                                 daysSinceLastInteraction = (DateTime.Now - last.CreateTime).TotalDays;
                                 double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
-                                e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, remote.TimeOnPage));
+                                e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, TimeOnPage));
                             }
                             var item = db.UserActivityTags.Where(u => u.FK_RemoteId == e.FK_RemoteId && u.FK_TId == e.FK_TId).FirstOrDefault();
                             if (item != null) { 
@@ -277,7 +297,7 @@ namespace EtheriT.Coker.Application.Remote
                         });
                         db.UserActivityTags.AddRange(AddUserActivityTags);
                         db.SaveChanges();
-                    }*/
+                    }
                 }
             }
             

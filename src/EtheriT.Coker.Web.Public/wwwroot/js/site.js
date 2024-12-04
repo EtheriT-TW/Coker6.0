@@ -200,24 +200,24 @@ function ready() {
         sessionStorage.setItem('pageLoadTime', Date.now());
     }
     //監測使用者是否離開畫面
+    const sentTrackTime = function () {
+        if (!sessionStorage.isNullOrEmpty("PageKey")) {
+            // 將停留時間發送到伺服器
+            let timeSpent = Date.now() - parseInt(sessionStorage.getItem('pageLoadTime'));
+            const body = { PageKey: sessionStorage.getItem("PageKey"), TimeSpan: timeSpent };
+            const headers = { type: 'application/json' };
+            const blob = new Blob([JSON.stringify(body)], headers);
+            navigator.sendBeacon("/api/UserStatistic/trackTime", blob);
+        }
+    }
     window.addEventListener("beforeunload", function () {
-        // 將停留時間發送到伺服器
-        let timeSpent = Date.now() - parseInt(sessionStorage.getItem('pageLoadTime'));
-        const body = {timeSpan: timeSpent};
-        const headers = { type: 'application/json'};
-        const blob = new Blob([JSON.stringify(body)], headers);
-        navigator.sendBeacon("/api/UserStatistic/trackTime",JSON.stringify({ timeSpan: timeSpent }));
+        sentTrackTime();
     });
 
     // 當用戶切換標籤或最小化時，使用 visibilitychange 事件來處理
     document.addEventListener("visibilitychange", function () {
          if (document.hidden) {
-            // 計算當前停留時間，將其存儲到本地
-            let timeSpent = Date.now() - parseInt(sessionStorage.getItem('pageLoadTime'));
-            const body = {timeSpan: timeSpent};
-            const headers = { type: 'application/json'};
-            const blob = new Blob([JSON.stringify(body)], headers);
-            navigator.sendBeacon("/api/UserStatistic/trackTime",blob);
+             sentTrackTime();
         } else {
             // 重新加載頁面時，重設加載時間
             sessionStorage.setItem('pageLoadTime', Date.now());

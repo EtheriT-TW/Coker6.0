@@ -187,7 +187,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData = PageData;
                         model.PageData.PageView = "Article";
                         model.PageData.LayoutType = defaultData.Layout_Type;
-                        model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+                        model.PageData.holdPage = HoldPageNameEnum.Article;
                         if (key == "article")
                         {
                             model.PageData.VisibleHeader = true;
@@ -270,7 +270,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData = TechCertPageData;
                         model.PageData.PageView = "Techcert";
                         model.PageData.LayoutType = defaultData.Layout_Type;
-                        model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.TechCert;
+                        model.PageData.holdPage = HoldPageNameEnum.TechCert;
                         if (key.ToLower() == "techvert")
                         {
                             model.PageData.VisibleHeader = true;
@@ -437,7 +437,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ViewBag.LoginEnable = false;
             }
 
-            await RemoteAppService.insertRemote(remoteInputDto);
+            var remote = await RemoteAppService.insertRemote(remoteInputDto);
+            if(remote!=null && remote.Success) ViewBag.PageKey = remote.Message;
+
             ViewData["SideName"] = model.PageData!.SiteName;
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;

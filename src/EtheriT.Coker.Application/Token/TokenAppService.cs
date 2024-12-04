@@ -241,6 +241,10 @@ namespace EtheriT.Coker.Application.Token
             }
             return UUID;
         }
+        public Guid GetUUID(Guid oldUUID) {
+            var data = db.MappingOldNewUUID.Where(e => e.UserUUID == oldUUID || e.TempUUID == oldUUID).Select(e => e.UserUUID).FirstOrDefault();
+            return data;
+        }
         public async Task<List<Guid>> GetAllUUID(Guid UUID)
         {
             var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();

@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241204060922_Alter_Table_UserTagStatistic_LastModificationTime")]
+    partial class Alter_Table_UserTagStatistic_LastModificationTime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4726,14 +4728,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("LastActivityTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getdate()");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("LastModificationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getdate()");
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("TagId")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("TotalTimes")
                         .HasColumnType("int");
@@ -4746,7 +4747,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_TagId");
+                    b.HasIndex("TagId");
 
                     b.ToTable("UserTagStatistics");
                 });
@@ -5831,7 +5832,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Tag", "Tag")
                         .WithMany("UserTagStatistics")
-                        .HasForeignKey("FK_TagId")
+                        .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

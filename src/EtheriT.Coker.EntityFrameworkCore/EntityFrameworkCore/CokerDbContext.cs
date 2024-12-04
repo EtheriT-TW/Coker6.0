@@ -120,6 +120,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(e => e.CreateTime).HasDefaultValueSql("getdate()");
                 o.HasOne(e => e.Remote).WithMany(e => e.UserActivityTags).HasForeignKey(f => f.FK_RemoteId);
             });
+            modelBuilder.Entity<UserTagStatistic>(o =>
+            {
+                o.Property(e => e.LastModificationTime).HasDefaultValueSql("getdate()");
+                o.Property(e => e.LastActivityTime).HasDefaultValueSql("getdate()");
+                o.HasOne(e => e.Tag).WithMany(e => e.UserTagStatistics).HasForeignKey(f => f.FK_TagId);
+            });
             modelBuilder.Entity<UserGrouping>(o =>
             {
                 o.HasQueryFilter(e => !e.IsDeleted);

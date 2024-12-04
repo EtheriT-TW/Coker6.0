@@ -17,7 +17,9 @@ namespace EtheriT.Coker.Application.Token
         public Task<ResponseMessageDto> AgreePrivacy();
         public Task<TokenResponseDto> RefreshToken(Guid? id);
         public Task<Guid> GetUUID();
-		public Task<List<Guid>> GetAllUUID(Guid UUID);
+        public Guid GetUUID(Guid oldUUID);
+
+        public Task<List<Guid>> GetAllUUID(Guid UUID);
 		public Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null);
     }
 }

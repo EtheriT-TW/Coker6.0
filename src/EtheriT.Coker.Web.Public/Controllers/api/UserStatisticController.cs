@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Application.Shared.Remote;
+﻿using EtheriT.Coker.Application.Shared.Dto.UserHabits;
+using EtheriT.Coker.Application.Shared.Remote;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -19,10 +20,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                 var body = await reader.ReadToEndAsync();  // 讀取原始 JSON 字串
 
                 // 使用 System.Text.Json 或 Newtonsoft.Json 解析資料
-                var json = JsonSerializer.Deserialize<Dictionary<string, int>>(body);
-                if (json != null && json.ContainsKey("timeSpan")) {
-                    int timeSpan = json["timeSpan"];
-                    await remoteAppService.UpdateRemoteTime(timeSpan);
+                var json = JsonSerializer.Deserialize<SetTrackTimeDto>(body);
+                if (json != null) {
+                    await remoteAppService.UpdateRemoteTime(json);
                 }
             }
         }

@@ -14,7 +14,8 @@ namespace EtheriT.Coker.Core.Models
         public long FK_TagId { get; set; }
         public int TotalTimes { get; set; }
         public DateTime LastActivityTime { get; set; }
-        public float Weight { get; set; }
+        public DateTime LastModificationTime { get; set; }
+        public double Weight { get; set; }
         public Tag Tag { get; set; }
     }
 }

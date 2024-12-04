@@ -314,12 +314,10 @@ function PageReady() {
 
     $(".btn_backshop").each(function () {
         var $this = $(this);
-        console.log($this.attr("href"))
         if ($this.attr("href") == "") $this.attr("title", "繼續購物：返回上一頁");
     })
     $(".btn_backshop").on("click", function (event) {
         var $this = $(this);
-        console.log($this.attr("href"))
         if ($this.attr("href") == "") {
             history.back();
             return false;
@@ -1056,7 +1054,9 @@ function OrderHeaderAdd() {
                                 switch (paymenttype) {
                                     case "LinePay":
                                     case "PCHomePay":
+                                        Coker.sweet.loading();
                                         Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
+                                            Swal.close();
                                             if (result.success) {
                                                 localStorage.setItem("lastSaveTime", new Date().toISOString())
                                                 localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
@@ -1287,9 +1287,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         });
                         break;
                     case "imagePath":
-                        console.log("data[key]", data[key])
                         data[key] = data[key].replace(`/${OrgName}/`, '/');
-                        console.log("data[key]", data[key])
                         $this.attr({
                             src: data[key],
                             alt: data['title']

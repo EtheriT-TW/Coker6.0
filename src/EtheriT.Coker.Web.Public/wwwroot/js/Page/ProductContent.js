@@ -214,7 +214,6 @@ function PageDefaultSet(result) {
             minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
             obj = {}
             var nostock = "";
-            console.log(data)
             if (data.stock <= 0 && CanShop) {
                 nostock = 'disabled="disabled"'
             } else {
@@ -226,6 +225,8 @@ function PageDefaultSet(result) {
                     item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
                     item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
                     s1_list.push(data.fK_S1id);
+                } else {
+                    if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
                 }
             } else {
                 if (!s1 >= 0) {
@@ -274,7 +275,6 @@ function PageDefaultSet(result) {
         var price = result.stocks[0].prices[0].price;
         $pro_discount.text(price.toLocaleString('en-US'));
     }
-    console.log(result.stocks[0].stock)
     if (result.stocks.length > 0) {
         $input_quantity.attr({
             min: 0,
@@ -429,11 +429,11 @@ function SpecRadio() {
                     temp_list.push(item.s2id)
                 }
             })
-            if (CanShop) $self_s.find("input").attr("disabled", "disabled");
+            $self_s.find("input").attr("disabled", "disabled");
             var radioclosenum = $self_s.find("input").length;
             $self_s.find("input").each(function () {
                 $radio = $(this)
-                if (temp_list.indexOf(parseInt($radio.val())) > -1 && price_list.find(e => e.s1id == s1 && e.s2id == $radio.val()).stock > 0) {
+                if (temp_list.indexOf(parseInt($radio.val())) > -1 && (price_list.find(e => e.s1id == s1 && e.s2id == $radio.val()).stock > 0 || !CanShop)) {
                     $radio.removeAttr("disabled");
                     radioclosenum -= 1;
                 }
@@ -498,7 +498,6 @@ function SpecRadio() {
 
     if (s2 == null) s2 = 0
     var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
-    //console.log(this_price_list)
     if (this_price_list.stock <= 0) {
         if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
     }

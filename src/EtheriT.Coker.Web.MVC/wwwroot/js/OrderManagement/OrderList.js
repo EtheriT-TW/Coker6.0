@@ -230,9 +230,7 @@ function HashDataEdit() {
                 if (result.length > 0) {
                     var order_header = result[0].orderHeader;
                     //keyId = order_header.id;
-                    console.log("order_header", order_header);
                     HeaderDataInsert(order_header)
-                    thirdparty = order_header.thirdParties;
 
                     var order_details = result[0].orderDetails;
                     $.each(order_details, function (index, data) {
@@ -274,6 +272,7 @@ function HeaderDataInsert(data) {
 
 }
 function HeaderDataSet(result) {
+    thirdparty = result.thirdParties;
     if (result.payment.indexOf("-") > 0) {
         payment = result.payment.substring(0, result.payment.indexOf("-"));
     } else {

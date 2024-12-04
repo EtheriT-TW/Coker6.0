@@ -818,7 +818,7 @@ namespace EtheriT.Coker.Application.Order
                         var order_details = await db.Order_Details.Where(e => e.FK_OId == order_header.Id).ToListAsync();
                         foreach (var order_detail in order_details)
                         {
-                            var shoppingCart = await db.ShoppingCarts.Where(e => e.Id == order_detail.FK_SCId && e.Quantity > 0 && e.IsOrder).FirstOrDefaultAsync();
+                            var shoppingCart = await db.ShoppingCarts.Where(e => e.Id == order_detail.FK_SCId && e.Quantity > 0 && e.Price > 0 && e.IsOrder).FirstOrDefaultAsync();
                             if (shoppingCart != null)
                             {
                                 temp_OrderDetails.Add(await shoppingCartAppService.GetDropOne(shoppingCart.Id, true));

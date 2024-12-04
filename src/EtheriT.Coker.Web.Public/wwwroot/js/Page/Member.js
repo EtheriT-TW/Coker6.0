@@ -497,7 +497,7 @@ function OrderRepay(datas) {
         temp_detail['scid'] = detail.scId;
         temp_detail['psid'] = detail.prodStockId;
         temp_detail['Quantity'] = parseInt(detail.quantity);
-        temp_detail['Price'] = parseInt(detail.price.replaceAll(",", ""));
+        temp_detail['Price'] = detail.price;
         details.push(temp_detail);
     });
     data['ohid'] = datas.orderHeader.id;
@@ -682,13 +682,13 @@ function MemberDataInsert(frame, data) {
                     break;
                 case "price":
                     switch (typeof (data[key])) {
-                        case "string":
-                            $self.text(data[key]);
-                            break;
                         case "object":
                             var prices = data[key];
                             if (prices.length > 1 && prices[0] != prices[prices.length - 1]) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`)
                             else $self.text(`$${prices[0].toLocaleString()}`)
+                            break;
+                        default:
+                            $self.text(data[key].toLocaleString());
                             break;
                     }
                     break;
@@ -705,20 +705,26 @@ function MemberDataInsert(frame, data) {
                     $self.text(data[key]);
                     break;
                 case "oldPrice":
+                    if (data[key] != 0 && data[key] != data['price']) {
+                        $self.removeClass("d-none")
+                        $self.text(data[key].toLocaleString());
+                        $self.siblings().addClass("red_text");
+                    }
+                    break;
                 case "oldQuantity":
-                    if (data[key] != null) {
+                    if (data[key] != 0 && data[key] != data['quantity']) {
                         $self.removeClass("d-none")
                         $self.text(data[key]);
                         $self.siblings().addClass("red_text");
                     }
                     break;
                 case "subtotal_old":
-                    var price = data['oldPrice'] != null ? parseInt(data['oldPrice'].replaceAll(",", "")) : parseInt(data['price'].replaceAll(",", ""));
-                    var quantity = data['oldQuantity'] != null ? parseInt(data['oldQuantity']) : parseInt(data['quantity']);
+                    var price = data['oldPrice'] != 0 ? data['oldPrice'] : data['price'];
+                    var quantity = data['oldQuantity'] != 0 ? data['oldQuantity'] : data['quantity'];
                     $self.text((price * quantity).toLocaleString());
                     break;
                 case "subtotal_new":
-                    var sbutotal = parseInt(data['price'].replaceAll(",", "")) * parseInt(data['quantity']);
+                    var sbutotal = data['price'] * data['quantity'];
                     $self.text(sbutotal.toLocaleString());
                     break;
                 default:

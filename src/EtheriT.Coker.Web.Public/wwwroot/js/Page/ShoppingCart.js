@@ -748,6 +748,10 @@ function CartDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
         Coker.sweet.success(success, null, true);
+        var index = shopping_cart_data.findIndex(e => e.Id == id);
+        if (index !== -1) {
+            shopping_cart_data.splice(index, 1);
+        }
         CartDropReset(id, 0)
         TotalCount();
         if (parseInt($("#Car_Badge").text()) == 0) {

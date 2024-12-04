@@ -33,6 +33,7 @@ using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.CodeAnalysis.CSharp;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -88,6 +89,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long userId = await loginUserData.GetUserId();
+                var stock_change = false;
 
                 if (dto.Id == 0)
                 {
@@ -106,6 +108,44 @@ namespace EtheriT.Coker.Application.Product
                     var db_p = db.Prods.Where(e => e.Id == dto.Id).FirstOrDefault();
                     if (db_p != null)
                     {
+                        var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == db_p.Id).ToListAsync();
+                        var stockids = stocks.Select(e => e.Id).ToList();
+                        var scs = await db.ShoppingCarts.Where(e => stockids.Contains(e.FK_PSid) && !e.IsOrder).OrderByDescending(e => e.CreationTime).ToListAsync();
+                        if (dto.status != (ProdStatusEnum)db_p.Status && dto.status == ProdStatusEnum.售完)
+                        {
+                            foreach (var sc in scs)
+                            {
+                                var index = stocks.FindIndex(e => e.Id == sc.FK_PSid);
+                                var dtoindex = dto.Stocks.FindIndex(e => e.Id == stocks[index].Id);
+                                stocks[index].Stock += sc.Quantity;
+                                dto.Stocks[dtoindex].OldStock += sc.Quantity;
+                                sc.Quantity = 0;
+                                stock_change = true;
+                            }
+                        }
+                        else if (dto.status != (ProdStatusEnum)db_p.Status && (ProdStatusEnum)db_p.Status == ProdStatusEnum.售完)
+                        {
+                            foreach (var sc in scs)
+                            {
+                                var index = stocks.FindIndex(e => e.Id == sc.FK_PSid);
+                                var dtoindex = dto.Stocks.FindIndex(e => e.Id == stocks[index].Id);
+                                if (stocks[index].Stock >= sc.OldQuantity)
+                                {
+                                    sc.Quantity = sc.OldQuantity;
+                                    stocks[index].Stock -= sc.Quantity;
+                                    dto.Stocks[dtoindex].OldStock -= sc.Quantity;
+                                    stock_change = true;
+                                }
+                                else
+                                {
+                                    sc.Quantity = (int?)stocks[index].Stock ?? 0;
+                                    dto.Stocks[dtoindex].OldStock -= stocks[index].Stock;
+                                    stocks[index].Stock = 0;
+                                    stock_change = true;
+                                }
+                            }
+                        }
+                        db.SaveChanges();
                         mapper.Map(dto, db_p);
                         await loginUserData.SaveChanges(db_p);
                     }
@@ -146,6 +186,7 @@ namespace EtheriT.Coker.Application.Product
                 }
 
                 output.Success = tag_response.Success && techcert_response.Success && stock_response.Success;
+                output.Error = stock_change ? "" : stock_response.Message == "庫存變動" ? stock_response.Message : "";
                 output.Message = asoid.ToString();
             }
             catch (Exception e)
@@ -198,11 +239,64 @@ namespace EtheriT.Coker.Application.Product
                     {
                         var db_ps = await db.Prod_Stocks.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
 
+                        if (db_ps.Stock != item.OldStock)
+                        {
+                            output.Message = "庫存變動";
+                            item.Stock -= item.OldStock - db_ps.Stock;
+                        }
+
                         if (db_ps != null)
                         {
+                            var prod = await db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefaultAsync();
+                            var scs = await db.ShoppingCarts.Where(e => e.FK_PSid == db_ps.Id && !e.IsOrder).ToListAsync();
+                            var total_stock = 0;
+                            foreach (var sc in scs) total_stock += sc.Quantity;
+                            item.Stock -= total_stock;
+
+                            if (prod.Status != (int)ProdStatusEnum.售完)
+                            {
+                                if (item.Stock > 0)
+                                {
+                                    scs = scs.Where(e => e.OldQuantity > e.Quantity).OrderByDescending(e => e.CreationTime).ToList();
+                                    foreach (var sc in scs)
+                                    {
+                                        if (item.Stock >= (sc.OldQuantity - sc.Quantity))
+                                        {
+                                            item.Stock -= (sc.OldQuantity - sc.Quantity);
+                                            sc.Quantity = sc.OldQuantity;
+                                        }
+                                        else
+                                        {
+                                            sc.Quantity += (sc.OldQuantity - sc.Quantity) - (int)item.Stock;
+                                            item.Stock = 0;
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (item.Stock < 0)
+                                {
+                                    item.Stock = Math.Abs((int)item.Stock);
+                                    scs = scs.Where(e => e.Quantity > 0).OrderBy(e => e.CreationTime).ToList();
+                                    foreach (var sc in scs)
+                                    {
+                                        if (sc.Quantity - item.Stock >= 0)
+                                        {
+                                            sc.Quantity -= (int)item.Stock;
+                                            item.Stock = 0;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            item.Stock -= sc.Quantity;
+                                            sc.Quantity = 0;
+                                        }
+                                    }
+                                }
+                            }
+                            db_ps.Stock = item.Stock;
+
                             db_ps.FK_S1id = item.FK_S1id;
                             db_ps.FK_S2id = item.FK_S2id;
-                            db_ps.Stock = item.Stock;
                             db_ps.Min_Qty = item.Min_Qty;
                             db_ps.Alert_Qty = item.Alert_Qty;
                             db_ps.Ser_No = item.Ser_No;
@@ -439,12 +533,20 @@ namespace EtheriT.Coker.Application.Product
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 
+
                 var db_sp = await db.Prod_Specs.Where(e => !e.IsDeleted).ToListAsync();
 
                 if (db_sp.Count > 0)
                 {
                     foreach (var item in output)
                     {
+                        var scs = await db.ShoppingCarts.Where(e => e.FK_PSid == item.Id && !e.IsOrder).ToListAsync();
+                        var order_quantity = 0;
+                        foreach (var sc in scs)
+                        {
+                            order_quantity += sc.Quantity;
+                        }
+                        item.OrderStock = order_quantity;
                         item.FK_ST1id = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).FK_Tid : 0;
                         item.S1_Title = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).Title : "";
                         item.FK_ST2id = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).FK_Tid : 0;
@@ -1641,8 +1743,8 @@ namespace EtheriT.Coker.Application.Product
                     continue;
                 }
                 item.Id = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo).Id;
-                var tag = nowTags.FindAll(e => 
-                    !string.IsNullOrEmpty(e.Title) && 
+                var tag = nowTags.FindAll(e =>
+                    !string.IsNullOrEmpty(e.Title) &&
                     new List<string?> { item.Tag1, item.Tag2, item.Tag3, item.Tag4, item.Tag5, item.Tag6 }.Contains(e.Title)
                 );
                 if (tag != null)

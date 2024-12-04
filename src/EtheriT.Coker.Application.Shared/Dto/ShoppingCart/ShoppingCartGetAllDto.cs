@@ -14,5 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ShoppingCart
         public double? OldPrice { get; set; }
         public string? ImagePath { get; set; }
         public int Quantity { get; set; }
+        public int OldQuantity { get; set; }
+        public int? Stock { get; set; }
     }
 }

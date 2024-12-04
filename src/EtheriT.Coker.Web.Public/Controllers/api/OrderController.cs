@@ -27,6 +27,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpPost]
+        public async Task<ResponseMessageDto> CheckStock(List<OrderDetailAddDto> dto)
+        {
+            return await orderAppService.CheckStock(dto);
+        }
+        [HttpPost]
         public async Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto)
         {
             return await orderAppService.AddHeader(dto);
@@ -103,6 +108,16 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             if (response.Message == "") response.Message = "支付方式不存在";
             return response;
         }
+        [HttpGet]
 
+        public async Task<ResponseMessageDto> PaySuccessMailSend(long ohid, DateTime date)
+        {
+            return await orderAppService.PaySuccessMailSend(ohid, date);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date)
+        {
+            return await orderAppService.PayFailMailSend(ohid, date);
+        }
     }
 }

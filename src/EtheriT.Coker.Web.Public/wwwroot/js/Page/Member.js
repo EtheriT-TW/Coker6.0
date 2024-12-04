@@ -409,7 +409,7 @@ function HistoryTemplateDataInsert(Datas) {
                                 $frame.find(".oh_freight").text(freight.toLocaleString());
                                 $frame.find(".oh_total").text((new_subtotal + freight).toLocaleString());
 
-                                TemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails)
+                                MemberTemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails)
 
                                 if (new_subtotal == 0) {
                                     freight = 0;
@@ -458,7 +458,9 @@ function HistoryTemplateDataInsert(Datas) {
                         var ohidstr = `000000000${result.message}`.substring(result.message.length);
                         window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
                     } else {
-                        Coker.sweet.error("錯誤", result.message)
+                        if (result.message == "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。") {
+                            Coker.sweet.error("錯誤", "商品庫存不足")
+                        }
                     }
                 });
             })
@@ -468,6 +470,7 @@ function HistoryTemplateDataInsert(Datas) {
                 var list_frame = $($("#Template_Order_Details_List").html()).clone();
                 list_frame.find("a").attr("href", `/${OrgName}/Member/product/${detail.pId}`);
                 list_frame.find("a").attr("title", `連結至：${detail.title}`);
+                detail.imagePath = detail.imagePath.replaceAll(`/${OrgName}/`, `/`)
                 list_frame.find("img").attr("src", detail.imagePath);
                 list_frame.find("img").attr("alt", `${detail.title}的主要圖片`);
                 list_frame.find(".title").text(detail.title);
@@ -494,7 +497,7 @@ function OrderRepay(datas) {
         temp_detail['scid'] = detail.scId;
         temp_detail['psid'] = detail.prodStockId;
         temp_detail['Quantity'] = parseInt(detail.quantity);
-        temp_detail['Price'] = parseInt(detail.price.replaceAll(",", ""));
+        temp_detail['Price'] = detail.price;
         details.push(temp_detail);
     });
     data['ohid'] = datas.orderHeader.id;
@@ -525,7 +528,7 @@ function SetFavoritesPage(number) {
                 ContentPageChage($("#favorite-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#favorite-tab-pane .btn_switchViewType").hasClass("d-none")) $("#favorite-tab-pane .btn_switchViewType").removeClass("d-none")
-            TemplateDataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
+            MemberTemplateDataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
         } else if (number != 1) {
             window.location.hash = "#favorites-1";
         } else {
@@ -543,7 +546,7 @@ function SetBrowsingHistoryPage(number) {
                 ContentPageChage($("#history-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#history-tab-pane .btn_switchViewType").hasClass("d-none")) $("#history-tab-pane .btn_switchViewType").removeClass("d-none")
-            TemplateDataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data)
+            MemberTemplateDataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data)
         } else if (number != 1) {
             window.location.hash = "#browsing-1";
         } else {
@@ -650,17 +653,17 @@ function ContentPageChage($self, page, page_total) {
         });
     }
 }
-function TemplateDataInsert($content, $frame, datas) {
+function MemberTemplateDataInsert($content, $frame, datas) {
     $content.empty();
     $.each(datas, function (index, data) {
         var frame = $($frame.html()).clone();
-        frame = DataInsert(frame, data);
+        frame = MemberDataInsert(frame, data);
         if (frame.find(".btn_favorite").length > 0) FavoritesButtonInit(frame);
         if (frame.find(".shareBlock").length > 0) ShareButtonInit(frame.find(".shareBlock"));
         $content.append(frame);
     })
 }
-function DataInsert(frame, data) {
+function MemberDataInsert(frame, data) {
     frame.data("Pid", data.pId);
     frame.find("*").each(function () {
         var $self = $(this);
@@ -673,18 +676,19 @@ function DataInsert(frame, data) {
                     break;
                 case "image":
                 case "imagePath":
+                    data[key] = data[key].replaceAll(`/${OrgName}/`, `/`);
                     $self.attr("src", data[key]);
                     $self.attr("alt", `${data['title']}的主要照片`);
                     break;
                 case "price":
                     switch (typeof (data[key])) {
-                        case "string":
-                            $self.text(data[key]);
-                            break;
                         case "object":
                             var prices = data[key];
                             if (prices.length > 1 && prices[0] != prices[prices.length - 1]) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`)
                             else $self.text(`$${prices[0].toLocaleString()}`)
+                            break;
+                        default:
+                            $self.text(data[key].toLocaleString());
                             break;
                     }
                     break;
@@ -701,20 +705,26 @@ function DataInsert(frame, data) {
                     $self.text(data[key]);
                     break;
                 case "oldPrice":
+                    if (data[key] != 0 && data[key] != data['price']) {
+                        $self.removeClass("d-none")
+                        $self.text(data[key].toLocaleString());
+                        $self.siblings().addClass("red_text");
+                    }
+                    break;
                 case "oldQuantity":
-                    if (data[key] != null) {
+                    if (data[key] != 0 && data[key] != data['quantity']) {
                         $self.removeClass("d-none")
                         $self.text(data[key]);
                         $self.siblings().addClass("red_text");
                     }
                     break;
                 case "subtotal_old":
-                    var price = data['oldPrice'] != null ? parseInt(data['oldPrice'].replaceAll(",", "")) : parseInt(data['price'].replaceAll(",", ""));
-                    var quantity = data['oldQuantity'] != null ? parseInt(data['oldQuantity']) : parseInt(data['quantity']);
+                    var price = data['oldPrice'] != 0 ? data['oldPrice'] : data['price'];
+                    var quantity = data['oldQuantity'] != 0 ? data['oldQuantity'] : data['quantity'];
                     $self.text((price * quantity).toLocaleString());
                     break;
                 case "subtotal_new":
-                    var sbutotal = parseInt(data['price'].replaceAll(",", "")) * parseInt(data['quantity']);
+                    var sbutotal = data['price'] * data['quantity'];
                     $self.text(sbutotal.toLocaleString());
                     break;
                 default:

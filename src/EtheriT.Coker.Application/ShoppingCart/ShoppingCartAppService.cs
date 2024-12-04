@@ -7,10 +7,8 @@ using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Org.BouncyCastle.Asn1.Ess;
 
 namespace EtheriT.Coker.Application.ShoppingCart
 {
@@ -41,14 +39,28 @@ namespace EtheriT.Coker.Application.ShoppingCart
             try
             {
                 var userid = await db.FrontUsers.Where(e => e.UUID == UserUUID).Select(e => e.FK_User).FirstOrDefaultAsync();
+                var oldsc = await db.ShoppingCarts.Where(e => e.UUID == TempUUID && e.IsOrder).ToListAsync();
                 var tempsc = await db.ShoppingCarts.Where(e => e.UUID == TempUUID && !e.IsOrder).ToListAsync();
                 var usersc = await db.ShoppingCarts.Where(e => e.UUID == UserUUID && !e.IsOrder).ToListAsync();
+                var timenow = DateTime.Now;
+                if (oldsc.Any())
+                {
+                    for (var i = 0; i < oldsc.Count; i++)
+                    {
+                        oldsc[i].UUID = UserUUID;
+                        oldsc[i].FK_Uid = userid ?? 0;
+                        oldsc[i].LastModifierUserId = userid ?? 0;
+                        oldsc[i].LastModificationTime = timenow;
+                    }
+                }
                 if (tempsc.Any())
                 {
                     for (var i = 0; i < tempsc.Count; i++)
                     {
                         tempsc[i].UUID = UserUUID;
                         tempsc[i].FK_Uid = userid ?? 0;
+                        tempsc[i].LastModifierUserId = userid ?? 0;
+                        tempsc[i].LastModificationTime = timenow;
                     }
                     if (usersc.Any())
                     {
@@ -57,8 +69,10 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             if (usersc.Find(e => e.FK_PSid == tempsc[i].FK_PSid) != null)
                             {
                                 usersc[usersc.FindIndex(e => e.FK_PSid == tempsc[i].FK_PSid)].Quantity += tempsc[i].Quantity;
+                                usersc[i].LastModifierUserId = userid ?? 0;
+                                usersc[i].LastModificationTime = timenow;
                                 tempsc[i].IsDeleted = true;
-                                tempsc[i].DeletionTime = DateTime.Now;
+                                tempsc[i].DeletionTime = timenow;
                             }
                         }
                     }
@@ -87,21 +101,30 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     var pro_stock = await db.Prod_Stocks.Where(e => dto.FK_PSid != null ? e.Id == dto.FK_PSid : e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id).FirstOrDefaultAsync();
                     if (pro_stock != null)
                     {
-
-                        if (pro_stock.Stock >= dto.Quantity)
+                        if (pro_stock.Stock > 0)
                         {
                             Core.Models.ShoppingCart? sc = new Core.Models.ShoppingCart();
 
                             if (dto.Id != null) sc = await db.ShoppingCarts.Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
-                            else sc = await db.ShoppingCarts.Where(e => e.UUID == UUID && e.FK_PSid == pro_stock.Id).FirstOrDefaultAsync();
+                            else sc = await db.ShoppingCarts.Where(e => e.UUID == UUID && e.FK_PSid == pro_stock.Id && !e.IsOrder).FirstOrDefaultAsync();
 
                             if (sc == null)
                             {
                                 sc = mapper.Map<Core.Models.ShoppingCart>(pro_stock);
                                 sc.Id = 0;
                                 sc.Price = 0;
-                                sc.Quantity = dto.Quantity;
-                                sc.OldQuantity = dto.Quantity;
+                                if (pro_stock.Stock >= dto.Quantity)
+                                {
+                                    sc.Quantity = dto.Quantity;
+                                    sc.OldQuantity = dto.Quantity;
+                                    pro_stock.Stock -= dto.Quantity;
+                                }
+                                else
+                                {
+                                    sc.Quantity = (int)pro_stock.Stock;
+                                    sc.OldQuantity = (int)pro_stock.Stock;
+                                    pro_stock.Stock = 0;
+                                }
                                 sc.FK_Tid = (Guid)token;
                                 sc.FK_Uid = userid;
                                 sc.UUID = UUID;
@@ -116,8 +139,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                     Db_Name = "ShoppingCart"
                                 };
 
-                                pro_stock.Stock -= dto.Quantity;
-
                                 db.ShoppingCarts.Add(sc);
                                 db.SaveChanges();
                                 response.Message = "N" + sc.Id.ToString();
@@ -126,8 +147,18 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             {
                                 if (sc != null)
                                 {
-                                    sc.Quantity += dto.Quantity;
-                                    sc.OldQuantity += sc.Quantity;
+                                    if (pro_stock.Stock >= dto.Quantity)
+                                    {
+                                        sc.Quantity += dto.Quantity;
+                                        sc.OldQuantity += sc.Quantity;
+                                        pro_stock.Stock -= dto.Quantity;
+                                    }
+                                    else
+                                    {
+                                        sc.Quantity += (int)pro_stock.Stock;
+                                        sc.OldQuantity += (int)pro_stock.Stock;
+                                        pro_stock.Stock = 0;
+                                    }
                                     sc.LastModificationTime = DateTime.Now;
                                     sc.LastModifierUserId = userid;
                                     pro_stock.Stock -= dto.Quantity;
@@ -139,7 +170,6 @@ namespace EtheriT.Coker.Application.ShoppingCart
                             }
                             response.Success = true;
                         }
-                        else throw new Exception("庫存不足");
                     }
                     else throw new Exception("查無商品規格");
                 }
@@ -147,16 +177,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             catch (Exception ex)
             {
-                if (ex.Message == "庫存不足")
-                {
-                    response.Error = "商品庫存不足";
-                    response.Message = "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。";
-                }
-                else
-                {
-                    response.Error = "Erro";
-                    response.Message = ex.Message;
-                }
+                response.Error = "Erro";
+                response.Message = ex.Message;
             }
             return response;
         }
@@ -165,7 +187,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var sc = db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefault();
+                var sc = await db.ShoppingCarts.Where(e => e.Id == dto.Id && !e.IsOrder).FirstOrDefaultAsync();
 
                 if (sc != null)
                 {
@@ -173,7 +195,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     if (pro_stock != null)
                     {
                         var quantity = dto.Quantity - sc.Quantity;
-                        if (quantity > 0 && quantity > pro_stock.Stock) throw new Exception("庫存不足");
+                        if (quantity > pro_stock.Stock) throw new Exception("庫存不足");
                         pro_stock.Stock -= quantity;
                         sc.Quantity = dto.Quantity;
                         sc.OldQuantity = dto.Quantity;
@@ -202,171 +224,73 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
             return response;
         }
-        public async Task<List<ShoppingCartGetAllDto>> GetAll()
+        public async Task<List<ShoppingCartDisplayDto>> GetAll()
         {
-            List<ShoppingCartGetAllDto> output = new List<ShoppingCartGetAllDto>();
+            List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
             try
             {
                 Guid UUID = await tokenAppService.GetUUID();
-                var Token = await tokenAppService.CheckToken(null);
-
-                var userid = new List<Guid>();
-                if (Token.IsLogin)
+                var scs = await db.ShoppingCarts.Where(e => e.UUID == UUID && !e.IsOrder).ToListAsync();
+                if (scs.Any())
                 {
-                    var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID).ToListAsync();
-                    userid.Add(UUID);
-                    if (uuids.Count > 0)
-                    {
-                        foreach (var item in uuids)
-                        {
-                            if (item.TempUUID != Guid.Empty) userid.Add(item.TempUUID);
-                        }
-                    }
-                }
-
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-
-                output = await (from sc in db.ShoppingCarts
-                                where userid.Count == 0 ? sc.FK_Tid == Token.RefreshToken : userid.Contains(sc.UUID)
-                                where !sc.IsOrder
-                                from ps in db.Prod_Stocks
-                                where ps.Id == sc.FK_PSid
-                                from pp in db.Prod_Prices
-                                where pp.FK_PSId == ps.Id && pp.FK_RId == 1
-                                from p in db.Prods
-                                where p.FK_WebsiteId == WebsiteId && p.Id == ps.FK_Pid
-                                select new ShoppingCartGetAllDto
-                                {
-                                    SCId = sc.Id,
-                                    PSId = ps.Id,
-                                    PId = p.Id,
-                                    Title = p.Title,
-                                    S1Title = ps.FK_S1id.ToString(),
-                                    S2Title = ps.FK_S2id.ToString(),
-                                    Description = p.Description,
-                                    Price = pp.Price ?? 0,
-                                    OldPrice = sc.Price,
-                                    Quantity = sc.Quantity,
-                                    ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                          .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
-                                          .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
-                                          .Where(e => e.Sid == p.Id && e.type == (int)FileBindTypeEnum.產品)
-                                          .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                                  select new DirectoryReleInfoDto
-                                                  {
-                                                      Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
-                                                  }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-                                }).ToListAsync();
-
-                var token = await tokenAppService.CheckToken(null);
-                long role = 0;
-                if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-
-                if (output != null)
-                {
-                    var db_sp = db.Prod_Specs.ToList();
-                    foreach (var item in output)
-                    {
-                        if (role > 1)
-                        {
-                            var price = await db.Prod_Prices.Where(e => e.FK_RId == role && e.FK_PSId == item.PSId).Select(e => e.Price).FirstOrDefaultAsync();
-                            if (price != null && price != 0) item.Price = (double)price;
-                        }
-                        item.S1Title = int.Parse(item.S1Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S1Title))?.Title;
-                        item.S2Title = int.Parse(item.S2Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(item.S2Title))?.Title;
-                    }
+                    var scids = scs.Select(e => e.Id).ToList();
+                    output = await GetDisplay(scids);
                 }
                 else throw new Exception("查無購物車資料");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"ShoppingCart=>GetDropOne回傳資料：{ex.Message}");
             }
             return output;
         }
-        public async Task<ShoppingCartGetDrop> GetDropOne(long id, bool isorder)
+        public async Task<ShoppingCartDisplayDto> GetDropOne(long id, bool isorder)
         {
+            ShoppingCartDisplayDto output = new ShoppingCartDisplayDto();
             try
             {
-                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-
-                var db_sc = db.ShoppingCarts.Where(e => e.Id == id && e.IsOrder == isorder).FirstOrDefault();
-                var db_ps = db.Prod_Stocks.Where(e => e.Id == db_sc.FK_PSid).FirstOrDefault();
-                var db_prod = db.Prods.Where(e => e.FK_WebsiteId == WebsiteId && e.Id == db_ps.FK_Pid).FirstOrDefault();
-                var db_price = db.Prod_Prices.Where(e => e.FK_PSId == db_ps.Id).ToList();
-                if (db_sc != null)
+                var shoppingcart = await db.ShoppingCarts.Where(e => e.Id == id && e.IsOrder == isorder).FirstOrDefaultAsync();
+                if (shoppingcart != null)
                 {
-                    var checkToken = await tokenAppService.CheckToken(null);
-                    if (checkToken.IsLogin)
+                    var temp_output = await GetDisplay(new List<long> { shoppingcart.Id });
+                    if (temp_output.Any())
                     {
-                        Guid UUID = await tokenAppService.GetUUID();
-                        var role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
-                        role = role == 0 ? 1 : role;
-                        var temp_price = new List<Prod_Price>();
-                        foreach (var price in db_price)
-                        {
-                            if (price.FK_RId == role) temp_price.Add(price);
-                        }
-                        if (temp_price.Count() > 0) db_price = temp_price;
+                        output = temp_output[0];
                     }
-
-                    ShoppingCartGetDrop output = new ShoppingCartGetDrop()
-                    {
-                        SCId = db_sc.Id,
-                        PId = db_prod.Id,
-                        Title = db_prod.Title,
-                        S1Title = db_ps.FK_S1id.ToString(),
-                        S2Title = db_ps.FK_S2id.ToString(),
-                        Quantity = db_sc.Quantity,
-                        Price = db_sc.Price > 0 ? db_sc.Price : db_price == null ? 0 : db_price[0].Price ?? 0,
-                        ImagePath = ((from f in db.FileBinds.Include(e => e.fileUpload)
-                                                  .Where(e => e.fileUpload != null && e.fileUpload.FK_WebsiteId == WebsiteId)
-                                                  .Where(e => e.fileUpload != null && !e.IsDeleted && !e.fileUpload.IsDeleted)
-                                                  .Where(e => e.Sid == db_prod.Id && e.type == (int)FileBindTypeEnum.產品)
-                                                  .OrderBy(e => e.SerNo).ThenBy(e => e.CreationTime)
-                                      select new DirectoryReleInfoDto
-                                      {
-                                          Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
-                                      }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link
-                    };
-
-                    var db_sp = await db.Prod_Specs.ToListAsync();
-
-                    output.S1Title = int.Parse(output.S1Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(output.S1Title))?.Title;
-                    output.S2Title = int.Parse(output.S2Title) == 0 ? "" : db_sp.Find(e => e.Id == int.Parse(output.S2Title))?.Title;
-
-                    return output;
+                    else throw new Exception("查無購物車資料");
                 }
                 else throw new Exception("查無購物車資料");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"ShoppingCart=>GetDropOne回傳資料：{ex.Message}");
             }
-
-            return null;
+            return output;
         }
-        // 改寫部分 後續會將舊程式碼移除
         public async Task<List<ShoppingCartDisplayDto>> GetDisplay(List<long> scids)
         {
             List<ShoppingCartDisplayDto> output = new List<ShoppingCartDisplayDto>();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
-            var token = await tokenAppService.CheckToken(null);
+            var Token = await tokenAppService.CheckToken(null);
             Guid UUID = await tokenAppService.GetUUID();
             long roleid = 1;
-            if (token != null && token.IsLogin)
-            {
-                var temp_roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.Id).FirstOrDefaultAsync();
-                if (temp_roleid != 0) roleid = temp_roleid;
-            }
-
             try
             {
+                if (Token != null && Token.IsLogin)
+                {
+                    var temp_roleid = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.Id).FirstOrDefaultAsync();
+                    if (temp_roleid != 0) roleid = temp_roleid;
+                }
+
                 var shoppingCarts = await db.ShoppingCarts.Include(e => e.Prod_Stock).ThenInclude(e => e.Prod).Where(e => scids.Contains(e.Id)).ToListAsync();
 
                 foreach (var shoppingCart in shoppingCarts)
                 {
                     var temp_output = mapper.Map<ShoppingCartDisplayDto>(shoppingCart);
+
+                    temp_output.Stock = shoppingCart.Prod_Stock?.Stock ?? 0;
 
                     temp_output.Title = shoppingCart.Prod_Stock?.Prod?.Title ?? "";
 
@@ -380,6 +304,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                            orderby fb.CreationTime
                                            select fu.DownloadFileName).FirstOrDefaultAsync();
                     temp_output.ImagePath = imagepath?.ToString() ?? "";
+                    if (temp_output.ImagePath != "") temp_output.ImagePath = $"{temp_output.ImagePath}";
 
                     var db_sp = await db.Prod_Specs.ToListAsync();
                     if (db_sp.Any())
@@ -387,33 +312,22 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         temp_output.S1Title = shoppingCart.FK_S1id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S1id)?.Title ?? "" : "";
                         temp_output.S2Title = shoppingCart.FK_S2id != null ? db_sp.Find(e => e.Id == shoppingCart.FK_S2id)?.Title ?? "" : "";
                     }
+
                     var psid = shoppingCart.Prod_Stock?.Id;
                     var db_price = await db.Prod_Prices.Where(e => e.FK_PSId == psid).ToListAsync();
                     if (db_price.Any())
                     {
-                        if (roleid == 1)
-                        {
-                            var temp_price = db_price[0]?.Price?.ToString();
-                            temp_output.DynamicPrice = temp_price ?? "0";
-                        }
+                        if (roleid == 1) temp_output.DynamicPrice = (int)(db_price[0]?.Price);
                         else
                         {
-                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price?.ToString();
-                            if (temp_price == null)
-                            {
-                                temp_price = db_price[0]?.Price?.ToString();
-                                temp_output.DynamicPrice = temp_price ?? "0";
-                            }
-                            else temp_output.DynamicPrice = temp_price;
+                            var temp_price = db_price.Find(e => e.FK_RId == roleid)?.Price;
+                            if (temp_price == null) temp_output.DynamicPrice = (int)(db_price[0]?.Price ?? 0);
+                            else temp_output.DynamicPrice = (int)(temp_price ?? 0);
                         }
                     }
 
-                    if (temp_output.Price == "") temp_output.Price = temp_output.DynamicPrice;
-                    var subtotal = int.Parse(temp_output.Price) * int.Parse(temp_output.Quantity);
-
-                    temp_output.Price = int.Parse(temp_output.Price).ToString("#,##0");
-                    temp_output.Subtotal = subtotal.ToString("#,##0");
-                    temp_output.Bonus = (shoppingCart.Bonus ?? 0).ToString("#,##0");
+                    if (temp_output.Price == 0) temp_output.Price = temp_output.DynamicPrice;
+                    temp_output.Subtotal = temp_output.Price * temp_output.Quantity;
 
                     temp_output.Describe = shoppingCart.Prod_Stock?.Prod?.Description ?? "";
 
@@ -438,13 +352,9 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 var oldscs = await db.ShoppingCarts.Include(e => e.Prod_Stock).ThenInclude(e => e.Prod).Where(e => scids.Contains(e.Id)).ToListAsync();
                 if (oldscs.Any())
                 {
-                    var tags = await (from ta in db.Tag_Associates
-                                      join t in db.Tags on ta.FK_TId equals t.Id
-                                      where t.Title == "售完" && t.FK_WebsiteId == WebsiteId && ta.Type == TagAssociateTypeEnum.商品
-                                      select ta).ToListAsync();
                     foreach (var oldsc in oldscs)
                     {
-                        if (!tags.Any() || (tags.Any() && tags.Find(e => e.FK_AId == oldsc.Prod_Stock.Prod.Id) == null))
+                        if (oldsc.Prod_Stock.Prod.Status != (int)ProdStatusEnum.售完)
                         {
                             if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && oldsc.Prod_Stock.Stock > 0)
                             {

@@ -14,6 +14,8 @@ var $invoice_recipient, $invoice_title, $invoice_uniformid, $invoice_address_cit
 var $ship_method, $pay_method;
 
 var order_header_data = {}, user_data = {}, order_data = {}, recipient_data = {}, invoice_data = {}, prod_data = {};
+var shopping_cart_data = [];
+var hasProds = false;
 
 var islogin = false;
 
@@ -81,6 +83,18 @@ function PageReady() {
                 type: "POST",
             });
         },
+        CheckStock: function (data) {
+            return $.ajax({
+                url: "/api/Order/CheckStock",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         Reorder: function (ohid) {
             return $.ajax({
                 url: "/api/Order/Reorder/",
@@ -137,8 +151,13 @@ function PageReady() {
     });
 
     buy_step_swiper.on('slideChange', function () {
-        //console.log("changeSlide", buy_step_swiper.activeIndex);
         switch (buy_step_swiper.activeIndex) {
+            case 1:
+                if (!hasProds) {
+                    Coker.sweet.error("錯誤", "無可購買商品。", null, false);
+                    buy_step_swiper.slideTo(0);
+                }
+                break;
             case 2:
                 RadioPayment();
                 if (ShippingForms.find("input").length == 0) {
@@ -192,7 +211,6 @@ function PageReady() {
     Coker.Token.CheckToken().done(function (checkresult) {
         islogin = checkresult.isLogin;
         Coker.User.GetUser().done(function (result) {
-            //console.log(result.data);
             if (result.success) {
                 var data_insert = true;
                 user_data['orderer'] = result.data.name;
@@ -221,7 +239,7 @@ function PageReady() {
 
                 order_data = user_data;
                 order_data.ordererAddress = user_data['address'];
-                DataInsert(order_data, $("#OrdererForm .default_data"));
+                ShoppingCartDataInsert(order_data, $("#OrdererForm .default_data"));
                 RecipientSameOrderer();
 
                 co.Zipcode.setData({
@@ -296,12 +314,10 @@ function PageReady() {
 
     $(".btn_backshop").each(function () {
         var $this = $(this);
-        console.log($this.attr("href"))
         if ($this.attr("href") == "") $this.attr("title", "繼續購物：返回上一頁");
     })
     $(".btn_backshop").on("click", function (event) {
         var $this = $(this);
-        console.log($this.attr("href"))
         if ($this.attr("href") == "") {
             history.back();
             return false;
@@ -324,6 +340,7 @@ function GetOrderPage() {
             if (results.length > 0) {
                 var result = results[0];
                 $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
+                $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${result.orderHeader.creationTime}`);
                 switch (result.orderHeader.stateStr) {
                     case "待確認":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
@@ -384,7 +401,7 @@ function GetOrderPage() {
 function SuccessPageDataInsert(data) {
     var header = data.orderHeader;
     var details = data.orderDetails;
-    DataInsert(header, $("#Step4 .card-body"))
+    ShoppingCartDataInsert(header, $("#Step4 .card-body"))
     TemplateDataInsert($("#Purchase"), $("#CollapsePurchase"), $("#Template_Purchase_Details"), details)
 }
 /* 元素初始化 */
@@ -454,7 +471,7 @@ function CardDataGet() {
 function CartInit(result) {
     $("#Step1 > .card-body").removeClass("d-none");
     for (var i = 0; i < result.length; i++) {
-        CartAdd(result[i])
+        CartListAdd(result[i])
     }
     $("#Purchase_Null").addClass("d-none");
     buy_step_swiper.enable();
@@ -517,153 +534,193 @@ function PaymentHideShow() {
         }
     }
 }
-function CartAdd(result) {
-    if (typeof (result.pId) == "undefined") result.pId = result.prodId;
-    var item_list_ul = $("#Step1 > .card-body > .purchase_list");
-    var item = $($("#Template_Cart_Details").html()).clone();
-    var item_link = item.find(".pro_link"),
-        item_image = item.find(".pro_image"),
-        item_name = item.find(".pro_name"),
-        item_specification = item.find(".pro_specification"),
-        item_unit = item.find(".pro_unit"),
-        item_quantity = item.find(".pro_quantity"),
-        item_total = item.find(".pro_subtotal"),
-        item_btn_count_plus = item.find(".btn_count_plus"),
-        item_btn_count_minus = item.find(".btn_count_minus"),
-        item_btn_remove_pro = item.find(".btn_remove_pro");
-    if (parseInt(result.quantity) == 0) {
-        item_image.attr("src", result.imagePath);
-        item_image.attr("alt", `${result.title}的圖片`);
-        item_name.text(result.title);
-        item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
-        item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
-        item.find(".nostock").removeClass("d-none");
-        item.find(".content").addClass("d-none");
-        item.find(".btn_side_icon").addClass("d-none");
-        item_total.data("subtotal", 0)
-    } else {
-        item.data("scid", result.scId);
-        if (typeof (result.pId) == "undefined") item_link.attr("href", `/${OrgName}/Home/product/` + result.prodId);
-        else item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
-        item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
-        item_image.attr("src", result.imagePath);
-        item_image.attr("alt", `${result.title}的圖片`);
-        item_name.text(result.title);
-        item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
-        item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
-        if ($.isNumeric(result.price)) {
-            item_unit.text((parseInt(result.price)).toLocaleString('en-US'))
+function CartListAdd(data) {
+
+    if (data.quantity > 0) {
+        if (shopping_cart_data.find(e => e.Id == data.scId) != null) {
+            data.price = shopping_cart_data.find(e => e.Id == data.scId).Price;
         } else {
-            item_unit.text(result.price)
-        }
-        if (parseInt(result.oldPrice) > 0) {
-            item.find(".pro_old_unit").removeClass("d-none");
-            if ($.isNumeric(result.price)) {
-                item.find(".pro_old_unit").text((parseInt(result.oldPrice)).toLocaleString('en-US'))
-            } else {
-                item.find(".pro_old_unit").text(result.oldPrice)
-            }
-            item_unit.addClass("red_text")
-        }
-        item_quantity.val(result.quantity);
-        item_total.data("subtotal", result.price * result.quantity)
-        item_total.text(item_total.data("subtotal").toLocaleString('en-US'))
-
-        item_btn_remove_pro.on("click", function () {
-            var $self = $(this).parents("li").first();
-            Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-                CartDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
-            });
-        });
-        item_btn_count_plus.on("click", function () {
-            var $self_bro = $(this).siblings(".pro_quantity");
-            $self_bro.val(parseInt($self_bro.val()) + 1)
-            CartQuantityUpdate(item_total, result.price, item.data("scid"), $self_bro.val());
-        });
-        item_btn_count_minus.on("click", function () {
-            var $self_bro = $(this).siblings(".pro_quantity");
-            if ($self_bro.val() > 1) {
-                $self_bro.val(parseInt($self_bro.val()) - 1)
-                CartQuantityUpdate(item_total, result.price, item.data("scid"), $self_bro.val());
-            }
-        });
-        item_quantity.on("change", function () {
-            var $self = $(this);
-            if ($self.val() < 1) { $self.val(1); }
-            CartQuantityUpdate(item_total, result.price, item.data("scid"), $self.val());
-        });
-
-        if (item.find(".btn_move_to_favorites").length > 0) {
-            if (islogin) {
-                var $btn_favorites = item.find(".btn_move_to_favorites");
-                $btn_favorites.parent("span").removeClass("d-none");
-
-                Coker.Favorites.Check(result.pId).done(function (check) {
-                    if (check.success) {
-                        $btn_favorites.data("Fid", check.message);
-                        $btn_favorites.find("i").addClass("fa-solid")
-                        $btn_favorites.find("i").removeClass("fa-regular")
-                    }
-                });
-
-                $btn_favorites.on("click", function () {
-                    var $self = $(this).find("i");
-                    if ($self.hasClass("fa-regular")) {
-                        Coker.Favorites.Add(result.pId).done(function (favorites) {
-                            if (favorites.success) {
-                                $btn_favorites.data("Fid", favorites.message);
-                                $self.addClass("fa-solid")
-                                $self.removeClass("fa-regular")
-                                Coker.sweet.success("成功將商品加入收藏", null, true);
-                            } else {
-                                console.log(favorites.message)
-                            }
-                        });
-                    } else {
-                        if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
-                            Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (favorites) {
-                                if (favorites.success) {
-                                    $btn_favorites.data("Fid", "");
-                                    $self.addClass("fa-regular")
-                                    $self.removeClass("fa-solid")
-                                    Coker.sweet.success("已將商品從收藏中移除", null, true);
-                                } else {
-                                    console.log(favorites.message)
-                                }
-                            });
-                        }
-                    }
-                })
-            }
+            var obj = {};
+            obj['Id'] = data.scId;
+            obj['Price'] = data.price;
+            obj['Quantity'] = data.quantity;
+            shopping_cart_data.push(obj);
+            hasProds = true;
         }
     }
 
-    item_list_ul.append(item);
+    var max_quantity = data.quantity + data.stock;
+
+    var item_list_ul = $("#Step1 > .card-body > .purchase_list");
+    var $template = $($("#Template_Cart_Details").html()).clone();
+    $template.data("scId", data.scId);
+
+    $template = CartListInsert($template, data);
+    $template.find(".btn_remove_pro").on("click", function () {
+        var $self = $(this).parents("li").first();
+        Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
+            CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤")
+        });
+    });
+    $template.find(".btn_count_plus").on("click", function () {
+        var $self_bro = $(this).siblings(".pro_quantity");
+        if ($self_bro.val() < max_quantity) {
+            $self_bro.val(parseInt($self_bro.val()) + 1)
+            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self_bro.val());
+        }
+    });
+    $template.find(".btn_count_minus").on("click", function () {
+        var $self_bro = $(this).siblings(".pro_quantity");
+        if ($self_bro.val() > 1) {
+            $self_bro.val(parseInt($self_bro.val()) - 1)
+            CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self_bro.val());
+        }
+    });
+    $template.find(".pro_quantity").on("change", function () {
+        var $self = $(this);
+        if ($self.val() < 1) $self.val(1);
+        if ($self.val() > max_quantity) $self.val(max_quantity)
+        CartQuantityUpdate($template.find(".pro_subtotal"), data.price, $template.data("scId"), $self.val());
+    });
+
+    if ($template.find(".btn_move_to_favorites").length > 0) {
+        if (islogin) {
+            var $btn_favorites = $template.find(".btn_move_to_favorites");
+            $btn_favorites.parent("span").removeClass("d-none");
+
+            Coker.Favorites.Check(data.pId).done(function (check) {
+                if (check.success) {
+                    $btn_favorites.data("Fid", check.message);
+                    $btn_favorites.find("i").addClass("fa-solid")
+                    $btn_favorites.find("i").removeClass("fa-regular")
+                }
+            });
+
+            $btn_favorites.on("click", function () {
+                var $self = $(this).find("i");
+                if ($self.hasClass("fa-regular")) {
+                    Coker.Favorites.Add(data.pId).done(function (favorites) {
+                        if (favorites.success) {
+                            $btn_favorites.data("Fid", favorites.message);
+                            $self.addClass("fa-solid")
+                            $self.removeClass("fa-regular")
+                            Coker.sweet.success("成功將商品加入收藏", null, true);
+                        } else {
+                            Coker.sweet.error("商品加入收藏發生錯誤", favorites.message, null, true);
+                        }
+                    });
+                } else {
+                    if (typeof ($btn_favorites.data("Fid")) != "undefined" && typeof ($btn_favorites.data("Fid")) != "") {
+                        Coker.Favorites.Delete($btn_favorites.data("Fid")).done(function (favorites) {
+                            if (favorites.success) {
+                                $btn_favorites.data("Fid", "");
+                                $self.addClass("fa-regular")
+                                $self.removeClass("fa-solid")
+                                Coker.sweet.success("已將商品從收藏中移除", null, true);
+                            } else {
+                                Coker.sweet.error("商品移除收藏發生錯誤", favorites.message, null, true);
+                            }
+                        });
+                    }
+                }
+            })
+        }
+    }
+
+    item_list_ul.append($template);
+}
+function CartListInsert($frame, data) {
+    $frame.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "link":
+                    $self.attr({
+                        href: `/${OrgName}/home/product/${data['pId']}`,
+                        title: `連結至：${data['title']}(另開新視窗)`
+                    });
+                    break;
+                case "spec":
+                    $self.append(data['s1Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s1Title']}</span>`)
+                    $self.append(data['s2Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s2Title']}</span>`)
+                    break;
+                case "imagePath":
+                    data[key] = data[key].replaceAll(`/${OrgName}/`, '/');
+                    $self.attr({
+                        src: data[key],
+                        alt: `${data['title']}的圖片`
+                    });
+                    break;
+                case "oldQuantity":
+                    if (data[key] != data['quantity']) $self.removeClass("d-none");
+                    $self.text(data[key]);
+                    break;
+                case "oldPrice":
+                    if (data[key] != data['price'] && data[key] > 0) {
+                        $self.removeClass("d-none");
+                        $self.text(data[key]);
+                        $self.siblings("div[data-key='price']").addClass("red_text");
+                    }
+                    break;
+                case "subtotal":
+                    $self.text(data['price'] * data['quantity']);
+                    $self.data("subtotal", data['price'] * data['quantity'])
+                    CartQuantityUpdate($self, data['price'], $frame.data("scId"), data['quantity']);
+                    break;
+                case "quantity":
+                    $self.val(data[key]);
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+
+            if (data['quantity'] == 0) {
+                $frame.find(".nostock").removeClass("d-none");
+                $frame.find(".content").addClass("d-none");
+                $frame.find(".btn_side_icon").addClass("d-none");
+            }
+
+            var type = $self.data("type");
+            switch (type) {
+                case "price":
+                    $self.text(parseInt($self.text()).toLocaleString())
+                    break;
+            };
+        }
+    });
+    return $frame;
 }
 function CartQuantityUpdate(self, price, scid, quantity) {
-    Product.Update.Cart({
-        Id: scid,
-        Quantity: quantity,
-    }).done(function (result) {
-        if (result.success) {
-            Product.GetOne.Cart(result.message).done(function (result) {
-                self.data("subtotal", price * quantity)
-                self.text(self.data("subtotal").toLocaleString('en-US'))
-                TotalCount();
-                CartDropReset(scid, quantity)
-            });
-        } else {
-            if (result.error == "商品庫存不足") {
-                Coker.sweet.error(result.error, result.message, function () {
-                    location.reload(true);
-                }, false);
+    if (quantity > 0) {
+        Product.Update.Cart({
+            Id: scid,
+            Quantity: quantity,
+        }).done(function (result) {
+            if (result.success) {
+                Product.GetOne.Cart(result.message).done(function (result) {
+                    shopping_cart_data.find(e => e.Id == result.scId).Price = price;
+                    shopping_cart_data.find(e => e.Id == result.scId).Quantity = quantity;
+                    self.data("subtotal", price * quantity)
+                    self.text((price * quantity).toLocaleString())
+                    TotalCount();
+                    CartDropReset(scid, quantity)
+
+                });
             } else {
-                Coker.sweet.error("商品更改數量發生錯誤", result.message, null, true);
+                if (result.error == "商品庫存不足") {
+                    Coker.sweet.error(result.error, result.message, function () {
+                        location.reload(true);
+                    }, false);
+                } else {
+                    Coker.sweet.error("商品更改數量發生錯誤", result.message, null, true);
+                }
             }
-        }
-    }).fail(function () {
-        Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
-    });
+        }).fail(function () {
+            Coker.sweet.error("錯誤", "商品數量修改發生錯誤", null, true);
+        });
+    }
 }
 function TotalCount() {
     subtotal = 0;
@@ -691,6 +748,10 @@ function CartDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
         Coker.sweet.success(success, null, true);
+        var index = shopping_cart_data.findIndex(e => e.Id == id);
+        if (index !== -1) {
+            shopping_cart_data.splice(index, 1);
+        }
         CartDropReset(id, 0)
         TotalCount();
         if (parseInt($("#Car_Badge").text()) == 0) {
@@ -894,143 +955,156 @@ function DeleteRecipient() {
     $this_parent.remove();
 }
 function OrderHeaderAdd() {
-    var checksuccess = true;
 
-    if (OrdererOpen) {
-        order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
-        order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
+    Coker.Order.CheckStock(shopping_cart_data).done(function (result) {
+        if (result.success) {
+            var checksuccess = true;
 
-        if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
-            Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
-            checksuccess = false;
-        } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
-            order_data.ordererTelephone = null;
-        } else {
-            order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
-        }
-    }
-    else {
-        if (user_data == null) {
-            checksuccess = false;
-            Coker.sweet.error("資料填寫錯誤", "請確實填寫訂購人資訊。", null, false);
-            OrdererEdit();
-        } else {
-            order_data = user_data;
-            order_data.ordererAddress = user_data['address'];
-        }
-    }
+            if (OrdererOpen) {
+                order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
+                order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
 
-    for (var key in order_data) {
-        if (key.startsWith("orderer") > 0) order_header_data[key] = order_data[key]
-    }
-
-    switch ($(`[name="RecipientRadio"]:checked`).val()) {
-        case "order":
-            RecipientSameOrderer();
-            break;
-        case "edit":
-            recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
-            recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
-
-            if (recipient_data.zone == "" ^ recipient_data.recipientTelephone == "") {
-                Coker.sweet.error("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
-                checksuccess = false;
-            } else if (recipient_data.zone == "" && recipient_data.recipientTelephone == "") {
-                recipient_data.recipientTelephone = null;
-            } else {
-                recipient_data.recipientTelephone = `${recipient_data.zone}-${recipient_data.recipientTelephone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
+                if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
+                    Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+                    checksuccess = false;
+                } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
+                    order_data.ordererTelephone = null;
+                } else {
+                    order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
+                }
             }
-            break;
-    }
+            else {
+                if (user_data == null) {
+                    checksuccess = false;
+                    Coker.sweet.error("資料填寫錯誤", "請確實填寫訂購人資訊。", null, false);
+                    OrdererEdit();
+                } else {
+                    order_data = user_data;
+                    order_data.ordererAddress = user_data['address'];
+                }
+            }
 
-    for (var key in recipient_data) {
-        if (key.startsWith("recipient") > 0) order_header_data[key] = recipient_data[key]
-    }
-    if (typeof (recipient_data['remark']) == "undefined" || recipient_data['remark'] == "") {
-        order_header_data['remark'] = "無";
-    } else {
-        order_header_data['remark'] = recipient_data['remark']
-    }
+            for (var key in order_data) {
+                if (key.startsWith("orderer") > 0) order_header_data[key] = order_data[key]
+            }
 
-    switch ($(`[name="InvoiceRadio"]:checked`).val()) {
-        case "order":
-            invoice_data['invoiceRecipient'] = 1;
-            invoice_data['invoiceAddress'] = order_data['ordererAddress'];
-            break;
-        case "recipient":
-            invoice_data['invoiceRecipient'] = 2;
-            invoice_data['invoiceAddress'] = recipient_data['recipientAddress'];
-            break;
-        case "company":
-            invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
-            invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
-            invoice_data['invoiceRecipient'] = 3;
-            order_header_data.uniformId = invoice_data.uniformId;
-            break;
-    }
-    for (var key in invoice_data) {
-        if (key.startsWith("invoice") > 0) order_header_data[key] = invoice_data[key]
-    }
+            switch ($(`[name="RecipientRadio"]:checked`).val()) {
+                case "order":
+                    RecipientSameOrderer();
+                    break;
+                case "edit":
+                    recipient_data = co.Form.getJson($("#Form_Recipient").attr("id"));
+                    recipient_data.recipientAddress = `${recipient_data.county} ${recipient_data.district} ${recipient_data.recipientAddress}`;
 
-    order_header_data.shipping = $(`[name="RadioShipping"]:checked`).val();
-    order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
-    order_header_data.state = 1;
-    order_header_data.subtotal = subtotal;
-    order_header_data.discount = 0;
-    order_header_data.bonus = 0;
-    order_header_data.couponId = 0;
-    order_header_data.freight = freight == "" ? 0 : freight;
-    order_header_data.Service_Charge = 0;
+                    if (recipient_data.zone == "" ^ recipient_data.recipientTelephone == "") {
+                        Coker.sweet.error("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+                        checksuccess = false;
+                    } else if (recipient_data.zone == "" && recipient_data.recipientTelephone == "") {
+                        recipient_data.recipientTelephone = null;
+                    } else {
+                        recipient_data.recipientTelephone = `${recipient_data.zone}-${recipient_data.recipientTelephone}` + (recipient_data.ext == "" ? "" : `-${recipient_data.ext}`);
+                    }
+                    break;
+            }
 
-    if (checksuccess) {
-        Coker.sweet.loading();
-        Coker.Order.AddHeader(order_header_data).done(function (result) {
-            if (result.success) {
-                Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
-                    OrderSuccess(result);
-                    setTimeout(function () {
-                        isCheckout = true;
-                        var paymenttype = result.message.split(",")[0];
-                        switch (paymenttype) {
-                            case "LinePay":
-                            case "PCHomePay":
-                                Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
-                                    if (result.success) {
-                                        localStorage.setItem("lastSaveTime", new Date().toISOString())
-                                        localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
-                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入付款流程。");
+            for (var key in recipient_data) {
+                if (key.startsWith("recipient") > 0) order_header_data[key] = recipient_data[key]
+            }
+            if (typeof (recipient_data['remark']) == "undefined" || recipient_data['remark'] == "") {
+                order_header_data['remark'] = "無";
+            } else {
+                order_header_data['remark'] = recipient_data['remark']
+            }
+
+            switch ($(`[name="InvoiceRadio"]:checked`).val()) {
+                case "order":
+                    invoice_data['invoiceRecipient'] = 1;
+                    invoice_data['invoiceAddress'] = order_data['ordererAddress'];
+                    break;
+                case "recipient":
+                    invoice_data['invoiceRecipient'] = 2;
+                    invoice_data['invoiceAddress'] = recipient_data['recipientAddress'];
+                    break;
+                case "company":
+                    invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
+                    invoice_data.invoiceAddress = `${invoice_data.county} ${invoice_data.district} ${invoice_data.invoiceAddress}`;
+                    invoice_data['invoiceRecipient'] = 3;
+                    order_header_data.uniformId = invoice_data.uniformId;
+                    break;
+            }
+            for (var key in invoice_data) {
+                if (key.startsWith("invoice") > 0) order_header_data[key] = invoice_data[key]
+            }
+
+            order_header_data.shipping = $(`[name="RadioShipping"]:checked`).val();
+            order_header_data.payment = $(`[name="RadioPayment"]:checked`).val();
+            order_header_data.state = 1;
+            order_header_data.subtotal = subtotal;
+            order_header_data.discount = 0;
+            order_header_data.bonus = 0;
+            order_header_data.couponId = 0;
+            order_header_data.freight = freight == "" ? 0 : freight;
+            order_header_data.Service_Charge = 0;
+            order_header_data.OrderDetails = shopping_cart_data;
+
+            if (checksuccess) {
+                Coker.sweet.loading();
+                Coker.Order.AddHeader(order_header_data).done(function (result) {
+                    if (result.success) {
+                        Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
+                            OrderSuccess(result);
+                            setTimeout(function () {
+                                isCheckout = true;
+                                var paymenttype = result.message.split(",")[0];
+                                switch (paymenttype) {
+                                    case "LinePay":
+                                    case "PCHomePay":
+                                        Coker.sweet.loading();
+                                        Coker.ThirdParty.Request(result.message.split(",")[1], paymenttype).done(function (result) {
+                                            Swal.close();
+                                            if (result.success) {
+                                                localStorage.setItem("lastSaveTime", new Date().toISOString())
+                                                localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+                                                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，即將進入付款流程。");
+                                                setTimeout(function () {
+                                                    buy_step_swiper.slideNext();
+                                                    buy_step_swiper.disable();
+                                                }, 300);
+                                                window.open(result.message, "_blank");
+                                            } else {
+                                                $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
+                                                setTimeout(function () {
+                                                    buy_step_swiper.slideNext();
+                                                    buy_step_swiper.disable();
+                                                }, 300);
+                                            }
+                                        });
+                                        break;
+                                    case "Default":
                                         setTimeout(function () {
                                             buy_step_swiper.slideNext();
                                             buy_step_swiper.disable();
                                         }, 300);
-                                        window.open(result.message, "_blank");
-                                    } else {
-                                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("付款流程發生未知錯誤，請稍後重新嘗試，或直接聯繫客服人員。");
-                                        setTimeout(function () {
-                                            buy_step_swiper.slideNext();
-                                            buy_step_swiper.disable();
-                                        }, 300);
-                                    }
-                                });
-                                break;
-                            case "Default":
-                                setTimeout(function () {
-                                    buy_step_swiper.slideNext();
-                                    buy_step_swiper.disable();
-                                }, 300);
-                                break;
-                        }
-                    }, 300);
-                })
-            } else {
-                console.log(result);
-                Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+                                        break;
+                                }
+                            }, 300);
+                        })
+                    } else {
+                        console.log(result);
+                        Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+                    }
+                }).fail(function (result) {
+                    console.log(result);
+                    Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
+                });
             }
-        }).fail(function (result) {
-            console.log(result);
-            Coker.sweet.error("錯誤", "訂購商品發生未知錯誤", null, true);
-        });
-    }
+        } else {
+            Coker.sweet.error("錯誤", result.message, null, false);
+            $("#Step1 > .card-body > .purchase_list > li").remove();
+            CardDataGet();
+            buy_step_swiper.slideTo(0);
+        }
+    });
 }
 function OrderSuccess(result) {
     var message = result.message.split(",")
@@ -1038,7 +1112,8 @@ function OrderSuccess(result) {
 
     CartClear();
 
-    $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substr(order_header_id.length));
+    $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substring(order_header_id.length));
+    $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${message[4]}`);
 
     $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
 
@@ -1070,23 +1145,23 @@ function OrderSuccess(result) {
 
     $(".storememo").empty();
 
-    DataInsert(order_data, $("#Step4 .orderer_data"));
+    ShoppingCartDataInsert(order_data, $("#Step4 .orderer_data"));
     //HiddenCode($("#Step4 .orderer_data"))
-    DataInsert(recipient_data, $("#Step4 .recipient_data"));
+    ShoppingCartDataInsert(recipient_data, $("#Step4 .recipient_data"));
     //HiddenCode($("#Step4 .recipient_data"))
     switch (invoice_data.invoiceRecipient) {
         case 1:
-            DataInsert(order_data, $("#Step4 .invoice_data .orderer"));
+            ShoppingCartDataInsert(order_data, $("#Step4 .invoice_data .orderer"));
             //HiddenCode($("#Step4 .invoice_data .orderer"))
             $("#Step4 .invoice_data .orderer").removeClass("d-none");
             break;
         case 2:
-            DataInsert(recipient_data, $("#Step4 .invoice_data .recipient"));
+            ShoppingCartDataInsert(recipient_data, $("#Step4 .invoice_data .recipient"));
             //HiddenCode($("#Step4 .invoice_data .recipient"))
             $("#Step4 .invoice_data .recipient").removeClass("d-none");
             break;
         case 3:
-            DataInsert(invoice_data, $("#Step4 .invoice_data .company"));
+            ShoppingCartDataInsert(invoice_data, $("#Step4 .invoice_data .company"));
             //HiddenCode($("#Step4 .invoice_data .company"))
             $("#Step4 .invoice_data .company").removeClass("d-none");
             break;
@@ -1137,8 +1212,6 @@ function PurchaseAdd(result, item_list_ul) {
 
     item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
     item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
-    console.log("result.imagePath", result.imagePath)
-    console.log("result.imagePath", result.imagePath.replace(`upload/${OrgName}/`, "upload/"))
     item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
     item_name.text(result.title);
     item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -1180,7 +1253,7 @@ function HiddenCode($self) {
         }
     });
 }
-function DataInsert(data, $self) {
+function ShoppingCartDataInsert(data, $self) {
     if (typeof (data.invoiceRecipient) != "undefined") {
         switch (parseInt(data.invoiceRecipient)) {
             case 1:
@@ -1199,7 +1272,7 @@ function DataInsert(data, $self) {
         var key = $this.data("key");
         if (typeof ($this.data("key")) != "undefined") {
             if ($this.hasClass("price")) {
-                $this.text(data[key].replace('$', ''));
+                $this.text(data[key].toLocaleString());
             }
             else $this.text(data[key]);
         }
@@ -1220,9 +1293,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         });
                         break;
                     case "imagePath":
-                        console.log("data[key]", data[key])
                         data[key] = data[key].replace(`/${OrgName}/`, '/');
-                        console.log("data[key]", data[key])
                         $this.attr({
                             src: data[key],
                             alt: data['title']
@@ -1234,7 +1305,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas) {
                         break;
                     default:
                         if ($this.hasClass("price") && !$this.hasClass("pro_unit")) {
-                            $this.text(data[key].replace('$', ''));
+                            $this.text(data[key].toLocaleString());
                         }
                         else $this.text(data[key]);
                         break;

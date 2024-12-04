@@ -211,7 +211,7 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<ShoppingCartDisplayDto, OrderDetailDisplayDto>()
                  .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))
-                 .ForMember(e => e.ProdStockId, option => option.MapFrom(c => c.FK_PSId))
+                 .ForMember(e => e.ProdStockId, option => option.MapFrom(c => c.PSId))
                 .ReverseMap();
             CreateMap<ShoppingCartGetAllDto, OrderDetailDisplayDto>()
                  .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))
@@ -227,7 +227,7 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()
                  .ForMember(e => e.SCId, option => option.MapFrom(c => c.Id))
-                 .ForMember(e => e.FK_PSId, option => option.MapFrom(c => c.FK_PSid))
+                 .ForMember(e => e.PSId, option => option.MapFrom(c => c.FK_PSid))
                 .ReverseMap();
 
             //Tags

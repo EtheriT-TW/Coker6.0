@@ -90,7 +90,6 @@
         }
     });*/
 }
-
 function moveHiUserToMenu() {
     const hiUser = document.getElementById('HiUser');
     const login = document.querySelector('.login');
@@ -126,7 +125,6 @@ function moveHiUserToMenu() {
         }
     }
 }
-
 function MenuLiSize() {
     if ($(window).width() > 768) {
         $(".subtitle").removeClass("w-100")
@@ -155,7 +153,6 @@ function MenuLiSize() {
             $item.parents(".collapse").addClass("show");
     });
 }
-
 function CartDropInit() {
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
@@ -165,39 +162,18 @@ function CartDropInit() {
         }
     })
 }
-
 function CartDropAdd(result) {
-    var item = $($("#Template_Car_Dropdown").html()).clone();
-    var item_link = item.find(".pro_link"),
-        item_image = item.find(".pro_image"),
-        item_name = item.find(".pro_name"),
-        item_spec = item.find(".pro_spec"),
-        item_unit = item.find(".pro_unit"),
-        item_quantity = item.find(".pro_quantity"),
-        item_btn_delete = item.find(".btn_cart_delete");
-
-    item.data("scid", result.scId);
-    item_link.attr("href", `/${OrgName}/home/product/${result.pId}`);
-    item_image.attr("src", result.imagePath);
-    item_name.text(result.title);
-    item_spec.append(result.s1Title == "" ? "" : `<span class="border px-1 me-1">${result.s1Title}</span>`)
-    item_spec.append(result.s2Title == "" ? "" : `<span class="border px-1">${result.s2Title}</span>`)
-    if ($.isNumeric(result.price)) {
-        item_unit.text((parseInt(result.price)).toLocaleString('en-US'))
-    } else {
-        item_unit.text(result.price)
-    }
-    item_quantity.text(result.quantity);
-    item_btn_delete.on("click", function () {
+    var $template = $($("#Template_Car_Dropdown").html()).clone();
+    $template = HeaderDataInsert($template, result)
+    $template.data("scid", result.scId);
+    $template.find(".btn_cart_delete").on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
             CartDropDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
         });
     });
 
-    var item_list_ul = $("#Car_Dropdown > ul");
-
-    item_list_ul.append(item);
+    $("#Car_Dropdown > ul").append($template);
 
     var car_num = $("#Car_Badge").text() == "" ? 1 : parseInt($("#Car_Badge").text()) + 1;
     $("#Car_Badge").text(car_num.toString());
@@ -207,7 +183,6 @@ function CartDropAdd(result) {
         $("#Car_Dropdown > .btn_car_buy").removeAttr("disabled");
     }
 }
-
 function CartDropUpdate(result) {
     var $car_drop_li = $("#Car_Dropdown > ul > li");
     $car_drop_li.each(function () {
@@ -217,7 +192,6 @@ function CartDropUpdate(result) {
         }
     });
 }
-
 function CartDropReset(scid, quantity) {
     $("#Car_Dropdown > ul > li").each(function () {
         if ($(this).data("scid") == scid) {
@@ -230,7 +204,6 @@ function CartDropReset(scid, quantity) {
         }
     });
 }
-
 function CartDropDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
@@ -245,10 +218,50 @@ function CartDropDelete(self, id, success, error) {
         Coker.sweet.error("錯誤", error, null, true);
     })
 }
-
 function CartClear() {
     $("#Car_Dropdown > ul > li").remove();
     $("#Car_Badge").text("");
     $("#Car_Dropdown_Null").removeClass("d-none");
     $("#Car_Dropdown > .btn_car_buy").attr("disabled", "");
+}
+function HeaderDataInsert($frame, data) {
+    $frame.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "link":
+                    $self.attr({
+                        href: `/${OrgName}/home/product/${data['pId']}`,
+                        title: `連結至：${data['title']}`
+                    });
+                    break;
+                case "spec":
+                    $self.append(data['s1Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s1Title']}</span>`)
+                    $self.append(data['s2Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s2Title']}</span>`)
+                    break;
+                case "imagePath":
+                    data[key] = data[key].replaceAll(`/${OrgName}/`, '/');
+                    $self.attr({
+                        src: data[key],
+                        alt: `${data['title']}的圖片`
+                    });
+                    break;
+                case "oldQuantity":
+                    if (data[key] != data['quantity']) $self.removeClass("d-none");
+                    $self.text(data[key]);
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+            var type = $self.data("type");
+            switch (type) {
+                case "price":
+                    $self.text(parseInt($self.text()).toLocaleString())
+                    break;
+            };
+        }
+    });
+    return $frame;
 }

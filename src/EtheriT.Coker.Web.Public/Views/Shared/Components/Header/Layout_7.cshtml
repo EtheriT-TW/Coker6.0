@@ -216,14 +216,15 @@
 						<template id="Template_Car_Dropdown">
 							<li class="border-bottom me-4" data-scid="">
 								<figure class="position-relative mb-0">
-									<a class="pro_link d-flex" href="" title="連結至：商品">
-										<img class="pro_image" src="" alt="商品" />
+									<a data-key="link" class="pro_link d-flex" href="" title="" target="_blank">
+										<img data-key="imagePath" class="pro_image me-2" src="" alt="" />
 										<figcaption class="overflow-hidden">
-											<div class="pro_name h-auto"></div>
-											<div class="pro_spec h-auto my-1"></div>
+											<div data-key="title" class="pro_name h-auto"></div>
+											<div data-key="spec" class="pro_spec h-auto my-1"></div>
 											<div class="number d-flex">
-												<div class="pro_unit price fw-bold"></div>
-												<div class="pro_quantity fw-bold"></div>
+												<div data-key="price" data-type="price" class="pro_unit price fw-bold"></div>
+												<div data-key="oldQuantity" data-type="quantity" class="pro_oldquantity fw-bold text-decoration-line-through d-none"></div>
+												<div data-key="quantity" data-type="quantity" class="pro_quantity fw-bold"></div>
 											</div>
 										</figcaption>
 									</a>

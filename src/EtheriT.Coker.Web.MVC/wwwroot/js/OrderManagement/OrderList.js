@@ -22,7 +22,7 @@ function PageReady() {
         const status = $(".status_select > option:selected").text();
         var newstate = parseInt($(".status_select > option:selected").val());
         if (newstate != oristate && (payment == "LINEPay" || payment == "支付連")) {
-            if (([1, 5, 6].includes(newstate) || oristate == 6)) {
+            if (([1, 5, 6].includes(newstate) || (thirdparty == 3 && oristate == 1) || oristate == 6)) {
                 co.sweet.error("訂單狀態錯誤", `不可將狀態變更為【${status}】`);
             } else updateOrder();
         } else updateOrder();
@@ -39,6 +39,7 @@ function PageReady() {
                 $(".confirm").addClass("d-none");
                 $order_status.val(2);
                 oristate = 4;
+                OrderStateChange(oristate)
                 co.sweet.success("付款程序已完成", function () {
                     updateOrder();
                     console.log(result.message);
@@ -56,6 +57,7 @@ function PageReady() {
                     $(".confirm").addClass("d-none");
                     $order_status.val(4);
                     oristate = 4;
+                    OrderStateChange(oristate)
                     co.sweet.success("已取消付款授權", function () {
                         updateOrder();
                         console.log(result.message);
@@ -75,6 +77,7 @@ function PageReady() {
                     $(".btn_recheck").addClass("d-none");
                     $order_status.val(state);
                     oristate = state;
+                    OrderStateChange(oristate)
                     co.sweet.success(`訂單狀態變更為【${$order_status.find("option:selected").text()}】`, function () {
                         updateOrder();
                         console.log(result.message.split(",")[1]);
@@ -96,8 +99,8 @@ function PageReady() {
                     $(".btn_refund").addClass("d-none");
                     $order_status.val(4);
                     oristate = 4;
+                    OrderStateChange(oristate)
                     updateOrder();
-                    console.log(result.message);
                 } else {
                     co.sweet.error(result.error, result.message, null, false);
                 }
@@ -230,9 +233,7 @@ function HashDataEdit() {
                 if (result.length > 0) {
                     var order_header = result[0].orderHeader;
                     //keyId = order_header.id;
-                    console.log("order_header", order_header);
                     HeaderDataInsert(order_header)
-                    thirdparty = order_header.thirdParties;
 
                     var order_details = result[0].orderDetails;
                     $.each(order_details, function (index, data) {
@@ -274,6 +275,7 @@ function HeaderDataInsert(data) {
 
 }
 function HeaderDataSet(result) {
+    thirdparty = result.thirdParties;
     if (result.payment.indexOf("-") > 0) {
         payment = result.payment.substring(0, result.payment.indexOf("-"));
     } else {
@@ -296,26 +298,7 @@ function HeaderDataSet(result) {
 
     if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock) $(".btn_refund").removeClass("d-none");
-    else {
-        switch (oristate) {
-            case 1:
-                if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
-                break;
-            case 5:
-                if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
-                break;
-            case 6:
-                switch (payment) {
-                    case "LINEPay":
-                        $(".confirm").removeClass("d-none");
-                        break;
-                    case "支付連":
-                        $(".btn_recheck").removeClass("d-none");
-                        break;
-                }
-                break;
-        }
-    }
+    else OrderStateChange(oristate)
 
     $order_notes.text(result.remark)
 
@@ -436,5 +419,32 @@ function OrderDataCollapse() {
         $OrderDetails.addClass("col-12");
         $OrderData.addClass("offcanvas offcanvas-end visible");
         $OrderData.removeClass("col-3");
+    }
+}
+function OrderStateChange(state) {
+
+    $(".confirm").addClass("d-none");
+    $(".btn_recheck").addClass("d-none");
+    $(".btn_refund").addClass("d-none");
+    $(".btn_checkrefund").addClass("d-none");
+    $(".btn_failReason").addClass("d-none");
+
+    switch (parseInt(state)) {
+        case 1:
+            if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
+            break;
+        case 5:
+            if (thirdparty != 1) $(".btn_failReason").removeClass("d-none");
+            break;
+        case 6:
+            switch (payment) {
+                case "LINEPay":
+                    $(".confirm").removeClass("d-none");
+                    break;
+                case "支付連":
+                    $(".btn_recheck").removeClass("d-none");
+                    break;
+            }
+            break;
     }
 }

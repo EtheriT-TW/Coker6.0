@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Order;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
@@ -80,6 +81,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await orderAppService.GetMemberOrder(UUID);
         }
+        [HttpGet]
 
+        public async Task<ResponseMessageDto> PaySuccessMailSend(long ohid, DateTime date)
+        {
+            return await orderAppService.PaySuccessMailSend(ohid, date);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date)
+        {
+            return await orderAppService.PayFailMailSend(ohid, date);
+        }
     }
 }

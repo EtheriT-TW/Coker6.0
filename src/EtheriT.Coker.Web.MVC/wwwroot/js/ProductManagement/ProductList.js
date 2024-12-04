@@ -546,7 +546,6 @@ function SpecPriceSave() {
 }
 
 function SpecAdd(result) {
-
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
     var item_topline = item.find(".topline"),
@@ -626,9 +625,11 @@ function SpecAdd(result) {
     }
     if (result != null) {
         item.data("psid", result.id);
+        item.data("oldstock", result.stock);
     } else {
         temp_psid += 1;
         item.data("temppsid", temp_psid);
+        item.data("oldstock", null);
     }
 
     var index = modal_price_list.findIndex(mitem => mitem["FK_PSId"] == item.data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.data("temppsid")))
@@ -641,7 +642,7 @@ function SpecAdd(result) {
     }
     item_subItemNo.val(result != null ? result.subItemNo : "")
     item_min.val(result != null ? result.min_Qty : "");
-    item_stock.val(result != null ? result.stock : "");
+    item_stock.val(result != null ? result.stock + result.orderStock : "");
     item_alert.val("");
     item_alert.val(result != null ? result.alert_Qty : "");
     item_collapse.attr("id", "CollapseDetail" + spec_num);
@@ -962,6 +963,7 @@ function AddUp(success_text, error_text, target) {
         obj["Alert_Qty"] = $self.find(".input_alert_number").val();
         obj["Min_Qty"] = $self.find(".input_min_number").val();
         obj["Ser_No"] = temp_serno;
+        obj['OldStock'] = $self.data("oldstock");
         temp_serno++;
 
         var price_list = [];
@@ -1014,7 +1016,6 @@ function AddUp(success_text, error_text, target) {
                                 data.push(file);
                             }
                         })
-
                         switch (data[0]["Type"]) {
                             case 1:
                                 if (typeof (data[0]["File"]) == "string") {

@@ -205,7 +205,7 @@ namespace EtheriT.Coker.Application.Order
                                 }
                                 else
                                 {
-                                    output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日";
+                                    output.Message = $"Default,{oh.Id},{oh.CreationTime.Year}年,{oh.CreationTime.Month}月{oh.CreationTime.Day + 1}日,{oh.CreationTime.ToString("yyyy-MM-dd HH:mm")}";
                                 }
                                 break;
                         }
@@ -1028,8 +1028,12 @@ namespace EtheriT.Coker.Application.Order
                     {
                         PaymentTable = $"<tbody>" +
                                                         $"<tr>" +
-                                                        $"<td class='text-start text-red'>您選擇的付款方式為ATM轉帳方式，目前尚未付款完成，請您於繳費期限內完成，繳費完成後請主動與公司客服聯絡。若逾期未付清款項將自動取消本訂單，謝謝。</td>" +
+                                                        $"<td colspan='2' class='text-start text-red'>您選擇的付款方式為ATM轉帳方式，目前尚未付款完成，請您於繳費期限內完成，繳費完成後請主動與公司客服聯絡。若逾期未付清款項將自動取消本訂單，謝謝。</td>" +
                                                         $"</tr>" +
+                                                         $"<tr>" +
+                                                         $"<td scope='row' class='text-end text-red'>繳費期限</td>" +
+                                                         $"<td class='text-start text-red'>{order_header.CreationTime.AddDays(1).ToString("yyyy/MM/dd")}</td>" +
+                                                         $"</tr>" +
                                                         $"</tbody>";
                         foreach (var data in ThirdParty)
                         {
@@ -1072,6 +1076,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"</ul>" +
                                              $"<hr/>" +
                                              $"<h2><span class='text-red'>訂單編號：</span>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</h2>" +
+                                             $"<div class=''>下單時間：{order_header.CreationTime.ToString("yyyy/MM/dd HH:mm")}</div>" +
                                              $"<table>" +
                                              $"<thead>" +
                                              $"<tr><th scope='col' colspan='4' class='text-start'>訂購人：{order_header.Orderer.Substring(0, 1) + "*****"} {OrdererSex}</th></tr>" +
@@ -1157,7 +1162,7 @@ namespace EtheriT.Coker.Application.Order
                                              $"<br/>" +
                                              $"<table>" +
                                              $"<thead>" +
-                                             $"<tr><th scope='col' class='text-start'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType}</span></th></tr>" +
+                                             $"<tr><th colspan='2'  scope='col' class='text-start'>付款方式：<span class='text-red ms-1 text-size1_5'>{PaymentType}</span></th></tr>" +
                                              $"</thead>" +
                                              PaymentTable +
                                              $"</table>" +
@@ -1171,10 +1176,6 @@ namespace EtheriT.Coker.Application.Order
                                              $"<tr>" +
                                              $"<td scope='row' class='text-end'>應繳金額</td>" +
                                              $"<td class='text-start'>{order_header.Subtotal.ToString("$#,##0")}</td>" +
-                                             $"</tr>" +
-                                             $"<tr>" +
-                                             $"<td scope='row' class='text-end text-red'>繳費期限</td>" +
-                                             $"<td class='text-start text-red'>{order_header.CreationTime.AddDays(1).ToString("yyyy/MM/dd")}</td>" +
                                              $"</tr>" +
                                              $"</tbody>" +
                                              $"</table>" +

@@ -340,6 +340,7 @@ function GetOrderPage() {
             if (results.length > 0) {
                 var result = results[0];
                 $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
+                $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${result.orderHeader.creationTime}`);
                 switch (result.orderHeader.stateStr) {
                     case "待確認":
                         $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
@@ -1107,7 +1108,8 @@ function OrderSuccess(result) {
 
     CartClear();
 
-    $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substr(order_header_id.length));
+    $("#Step4 > .card-header > .order_number").text(("000000000" + order_header_id).substring(order_header_id.length));
+    $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${message[4]}`);
 
     $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
 

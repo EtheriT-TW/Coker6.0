@@ -1288,11 +1288,9 @@ namespace EtheriT.Coker.Application.Order
                     {
                         case 1:
                             Payment = "ATM轉帳";
+                            ThirdParty_Content = $"<div>感謝您使用<span class='text-bold' style='margin: 0px 5px;'>{Payment}</span>方式進行付款</div>";
                             break;
                         case 2:
-                            ThirdParty_Content = $"<div>感謝您使用{ThirdParty?.Title ?? ""}平台進行付款</div>";
-                            break;
-                        case 3:
                             if (PaymentType?.Code == "PchomePayCARD")
                             {
                                 Payment = "信用卡一次付清(信用卡)";
@@ -1301,13 +1299,16 @@ namespace EtheriT.Coker.Application.Order
                             {
                                 Payment += "(信用卡)";
                             }
-                            ThirdParty_Content = $"<div>感謝您使用{ThirdParty?.Title ?? ""}平台進行付款</div>";
+                            ThirdParty_Content = $"<div>感謝您使用<span class='text-bold' style='margin: 0px 5px;'>{ThirdParty?.Title ?? ""}</span>平台進行付款</div>";
+                            break;
+                        case 3:
+                            ThirdParty_Content = $"<div>感謝您使用<span class='text-bold' style='margin: 0px 5px;'>{ThirdParty?.Title.Replace(" ", "") ?? ""}</span>平台進行付款</div>";
                             break;
                     }
 
                     var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
                                                             <br/>
-                                                             <div>您於【{Website?.Title ?? ""}】進行了{Payment}交易，以下為您的付款完成資訊</div>
+                                                             <div>您於【{Website?.Title ?? ""}】進行了{Payment}交易，以下為您的付款完成資訊：</div>
                                                             <br/>
                                                             <table>
                                                                 <tbody>
@@ -1316,7 +1317,7 @@ namespace EtheriT.Coker.Application.Order
                                                                         <td>{("000000000" + order_header.Id).Substring((order_header.Id.ToString()).Length)}</td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{ThirdParty?.Title ?? ""}交易序號</td>
+                                                                        <td scope='row' class='text-bold' style='text-align: center; background-color: #F2F2F2;'>{ThirdParty?.Title.Replace(" ", "") ?? ""}交易序號</td>
                                                                         <td>{order_header.TransactionId}</td>
                                                                     </tr>
                                                                     <tr>
@@ -1339,9 +1340,9 @@ namespace EtheriT.Coker.Application.Order
                                                             </table>
                                                             <br/>
                                                              {ThirdParty_Content}
-                                                             <div class='text-red'>貼心提醒：若欲詢問如商品資訊、商品出貨進度或退貨退款問題，請您與原訂購商店/網站聯繫。</div>
+                                                             <div class='text-bold text-red'>貼心提醒：若欲詢問如商品資訊、商品出貨進度或退貨退款問題，請您與原訂購商店/網站聯繫。</div>
                                                             <br/>
-                                                             <div class='text-red'>以上為您實際付款資訊，若您接獲自稱商店通知交易有「信用卡誤設分期付款」或「連續扣款」或「中獎通知」或「需加入LINE等社群帳號要求核對資料」等問題，皆為詐騙手法，請小心勿受騙上當，以免被有心詐騙者利用。</div>
+                                                             <div class='text-bold text-red'>以上為您實際付款資訊，若您接獲自稱商店通知交易有「信用卡誤設分期付款」或「連續扣款」或「中獎通知」或「需加入LINE等社群帳號要求核對資料」等問題，皆為詐騙手法，請小心勿受騙上當，以免被有心詐騙者利用。</div>
                                                             <br/>
                                                              <hr/>
                                                              <div class='text-bold text-red'>提醒您：此封『付款完成通知』為系統發出，請勿直接回覆。</div>
@@ -1351,7 +1352,7 @@ namespace EtheriT.Coker.Application.Order
                                                         </div>";
                     var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
 
-                    if (ThirdParty?.Id == 3 && (PaymentType?.Code == "PchomePayCARD" || (PaymentType?.Code?.StartsWith("PchomePayInstallment") ?? false))) Payment = "信用卡付款";
+                    if (ThirdParty?.Id == 2 && (PaymentType?.Code == "PchomePayCARD" || (PaymentType?.Code?.StartsWith("PchomePayInstallment") ?? false))) Payment = "信用卡付款";
 
                     var sedResult = await mailAppService.sendMail(new SenderDto
                     {

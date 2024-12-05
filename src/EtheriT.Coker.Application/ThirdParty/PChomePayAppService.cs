@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
+using Microsoft.AspNetCore.Http;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -134,50 +135,73 @@ namespace EtheriT.Coker.Application.ThirdParty
         }
         public async Task<string> PChomePayNotify(PChomePayNotifyDto dto)
         {
-            if (dto.notify_type == "refund_success")
+            try
             {
-                Console.WriteLine($"-------------訊息查看-------------");
-                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
-                return "success";
-            }
-            else
-            {
-                JObject jsonMessage = JObject.Parse(dto.notify_message);
-
-                if (jsonMessage.ContainsKey("order_id"))
+                if (dto.notify_type == "refund_success")
                 {
-                    long orderId = jsonMessage["order_id"] != null && !string.IsNullOrEmpty(jsonMessage["order_id"].ToString()) ? long.Parse(jsonMessage["order_id"].ToString()) : 0;
-                    var ohdata = await db.Order_Headers.Where(e => e.Id == orderId).FirstOrDefaultAsync();
-                    if (ohdata != null)
+                    Console.WriteLine($"-------------訊息查看-------------");
+                    Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{dto.notify_message}");
+                    return "success";
+                }
+                else
+                {
+                    JObject jsonMessage = JObject.Parse(dto.notify_message);
+
+                    if (jsonMessage.ContainsKey("order_id"))
                     {
-                        switch (jsonMessage["status"]?.ToString())
+                        string orderId = jsonMessage["order_id"] != null && !string.IsNullOrEmpty(jsonMessage["order_id"].ToString()) ? jsonMessage["order_id"].ToString() : "0";
+                        var ohdata = await db.Order_Headers.Where(e => e.TransactionId == orderId).FirstOrDefaultAsync();
+                        if (ohdata != null)
                         {
-                            case "S":
-                                ohdata.State = OrderStatusEnum.已付款;
-                                break;
-                            case "W":
-                                ohdata.State = OrderStatusEnum.待付款;
-                                break;
-                            case "F":
-                                ohdata.State = OrderStatusEnum.付款失敗;
-                                break;
+                            switch (jsonMessage["status"]?.ToString())
+                            {
+                                case "S":
+                                    if(ohdata.State != OrderStatusEnum.已付款)
+                                    {
+                                        ohdata.State = OrderStatusEnum.已付款;
+                                        DateTime paydate = jsonMessage["pay_date"] == null ? DateTime.Now : DateTime.ParseExact(jsonMessage["pay_date"].ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+                                        var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                                case "W":
+                                    if (ohdata.State != OrderStatusEnum.待付款)
+                                    {
+                                        ohdata.State = OrderStatusEnum.待付款;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                                case "F":
+                                    if (ohdata.State != OrderStatusEnum.付款失敗)
+                                    {
+                                        ohdata.State = OrderStatusEnum.付款失敗;
+                                        db.SaveChanges();
+                                    }
+                                    break;
+                            }
+                            return "success";
                         }
-                        db.SaveChanges();
-                        return "success";
+                        else
+                        {
+                            Console.WriteLine($"-------------訊息查看-------------");
+                            Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order不存在");
+                            return "fail";
+                        }
                     }
                     else
                     {
                         Console.WriteLine($"-------------訊息查看-------------");
-                        Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order不存在");
+                        Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order_id不存在");
+                        return "fail";
                     }
                 }
-                else
-                {
-                    Console.WriteLine($"-------------訊息查看-------------");
-                    Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：order_id不存在");
-                }
             }
-            return "fail";
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------訊息查看-------------");
+                Console.WriteLine($"PChomePay=>PChomePayNotify回傳資料：{ex.Message}");
+                return "fail";
+            }
         }
         public async Task<ResponseMessageDto> PChomePayCheckPaymentStatus(long ohid)
         {
@@ -216,6 +240,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
+                                        DateTime paydate = PChomePayState.pay_date == null ? DateTime.Now : DateTime.ParseExact(PChomePayState.pay_date.ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+                                        var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
                                         message = "交易已完成";
                                     }
                                     break;

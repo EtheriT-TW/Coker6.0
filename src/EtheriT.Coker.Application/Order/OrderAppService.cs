@@ -1307,7 +1307,7 @@ namespace EtheriT.Coker.Application.Order
 
                     var mailhtml = $@"<div class='text-size1'><h2 class='text-red'>親愛的會員，您好！</h2>
                                                             <br/>
-                                                             <div>您於【{Website?.Title ?? ""}】進行了{Payment}交易，以下為您的付款完成資訊</div>
+                                                             <div>您於【{Website?.Title ?? ""}】進行了{Payment}交易，以下為您的付款完成資訊：</div>
                                                             <br/>
                                                             <table>
                                                                 <tbody>
@@ -1339,9 +1339,9 @@ namespace EtheriT.Coker.Application.Order
                                                             </table>
                                                             <br/>
                                                              {ThirdParty_Content}
-                                                             <div class='text-red'>貼心提醒：若欲詢問如商品資訊、商品出貨進度或退貨退款問題，請您與原訂購商店/網站聯繫。</div>
+                                                             <div class='text-bold text-red'>貼心提醒：若欲詢問如商品資訊、商品出貨進度或退貨退款問題，請您與原訂購商店/網站聯繫。</div>
                                                             <br/>
-                                                             <div class='text-red'>以上為您實際付款資訊，若您接獲自稱商店通知交易有「信用卡誤設分期付款」或「連續扣款」或「中獎通知」或「需加入LINE等社群帳號要求核對資料」等問題，皆為詐騙手法，請小心勿受騙上當，以免被有心詐騙者利用。</div>
+                                                             <div class='text-bold text-red'>以上為您實際付款資訊，若您接獲自稱商店通知交易有「信用卡誤設分期付款」或「連續扣款」或「中獎通知」或「需加入LINE等社群帳號要求核對資料」等問題，皆為詐騙手法，請小心勿受騙上當，以免被有心詐騙者利用。</div>
                                                             <br/>
                                                              <hr/>
                                                              <div class='text-bold text-red'>提醒您：此封『付款完成通知』為系統發出，請勿直接回覆。</div>

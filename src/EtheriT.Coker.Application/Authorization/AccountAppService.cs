@@ -512,6 +512,7 @@ namespace EtheriT.Coker.Application.Authorization
                         newuser = user;
                     }
                     frontuser.FK_User = user.Id;
+                    frontuser.Level = dto.RoleId;
                     db.FrontUsers.Add(frontuser);
                     await loginUserData.SaveChanges(frontuser);
                     userid = frontuser.Id;

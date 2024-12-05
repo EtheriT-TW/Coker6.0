@@ -33,6 +33,7 @@ using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MailKit.Search;
+using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -44,6 +45,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IMapper mapper;
         private readonly IArticleAppService articleAppService;
         private readonly IProductAppService productAppService;
+        private readonly ITokenAppService tokenAppService;
         private readonly IWebMenuApplication webMenuApplicationService;
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IFileUploadAppService fileUploadAppService;
@@ -61,6 +63,7 @@ namespace EtheriT.Coker.Application.Directory
             IPermissionsAppService permissionsAppService,
             IFileUploadAppService fileUploadAppService,
             ICustSearchAppService custSearchAppService,
+            ITokenAppService tokenAppService,
             IConfiguration configuration
         )
         {
@@ -75,6 +78,7 @@ namespace EtheriT.Coker.Application.Directory
             this.permissionsAppService = permissionsAppService;
             this.fileUploadAppService = fileUploadAppService;
             this.custSearchAppService = custSearchAppService;
+            this.tokenAppService = tokenAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -661,9 +665,50 @@ namespace EtheriT.Coker.Application.Directory
                 );
             output.TotalCount = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
-            var dataMargin = prods.OrderBy(e => e.Ser_No)
-                       .ThenByDescending(e => e.Id)
-                       .Skip(skip).Take(shownum);
+            var UUID = await tokenAppService.GetUUID();
+
+            // 取得當前使用者的分群資訊
+            var Groping = db.UserGroupingDetails.Include(e => e.userGrouping)
+                .Where(ugd => ugd.UUID == UUID).FirstOrDefault();
+            var groupTags = Groping != null ? 
+                    db.Tag_Associates.Where(e => e.FK_AId == Groping.FK_GropingId && e.Type == TagAssociateTypeEnum.使用者分群).Select(e => e.FK_TId).ToList():
+                    new List<long>();
+
+            // 查詢個人標籤（若無分群）
+            var personalTags = db.UserTagStatistics
+                .AsNoTracking()
+                .Where(ut => ut.UUID == UUID) // 根據 UUID 查詢使用者標籤
+                .OrderByDescending(ut => ut.Weight) // 按權重排序
+                .Take(5) // 取權重最高的前 5 個標籤
+                .Select(ut => ut.FK_TagId)
+                .ToList();
+
+            var relevantTags = groupTags.Any() ? groupTags : personalTags;
+            relevantTags = relevantTags ?? new List<long>();
+
+            var tagAssociations = db.Tag_Associates
+                .AsNoTracking()
+                .Where(ta => ta.Type == TagAssociateTypeEnum.商品); // 篩選商品類型的標籤
+
+            // 最終查詢
+            var dataMargin = prods
+                .Select(p => new
+                {
+                    Prod = p,
+                    MatchingTags = tagAssociations
+                        .Where(ta => ta.FK_AId == p.Id && relevantTags.Contains(ta.FK_TId)) // 只選擇符合的標籤
+                        .Select(ta => ta.FK_TId)
+                        .ToList()
+                })
+                .OrderByDescending(p => p.MatchingTags.Count) // 按符合標籤數量排序
+                .ThenBy(p => p.Prod.Ser_No) // 次要排序
+                .ThenBy(p => p.Prod.ItemNo)
+                .ThenByDescending(p => p.Prod.Id) // 再次排序
+                .Skip(skip)
+                .Take(shownum)
+                .Select(p => p.Prod); // 最終只返回商品
+
+
             var list = await (from p in dataMargin
                               select new DirectoryReleInfoDto
                               {

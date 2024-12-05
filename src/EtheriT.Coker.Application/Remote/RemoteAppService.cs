@@ -272,28 +272,45 @@ namespace EtheriT.Coker.Application.Remote
                     remote.State = RemoteStateEnum.未處理;
                     remote.UUID = UUID;
                     db.SaveChanges();
-                    if (!remote.FK_ProdId.IsNullOrEmpty()) {
-                        double TimeOnPage = remote.TimeOnPage / 60.0;
-                        var prodTags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
-                                       select new UserActivityTags
-                                       {
-                                           FK_TId = t.FK_TId,
-                                           FK_RemoteId = id,
-                                           Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
-                                       }).ToList();
+
+                    List<UserActivityTags>? tags = new List<UserActivityTags>();
+                    double TimeOnPage = remote.TimeOnPage / 60.0;
+                    if (!remote.FK_ProdId.IsNullOrEmpty())
+                    {
+                        tags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ProdId && e.Type == TagAssociateTypeEnum.商品)
+                                select new UserActivityTags
+                                {
+                                    FK_TId = t.FK_TId,
+                                    FK_RemoteId = id,
+                                    Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
+                                }).ToList();
+                    }
+                    else if (!remote.FK_ArticleId.IsNullOrEmpty()) {
+                        tags = (from t in db.Tag_Associates.Where(e => e.FK_AId == remote.FK_ArticleId && e.Type == TagAssociateTypeEnum.文章)
+                                select new UserActivityTags
+                                {
+                                    FK_TId = t.FK_TId,
+                                    FK_RemoteId = id,
+                                    Weight = (float)(0.5 * Math.Pow(1 + 0.1, TimeOnPage))
+                                }).ToList();
+                    }
+                    if (tags.Any()) {
                         List<UserActivityTags> AddUserActivityTags = new List<UserActivityTags>();
-                        prodTags.ForEach(e => {
+                        tags.ForEach(e => {
                             double daysSinceLastInteraction = 0;
                             var last = db.UserActivityTags.Include(u => u.Remote).Where(u => u.FK_TId == e.FK_TId && u.Remote.UUID == UUID).OrderByDescending(u => u.CreateTime).FirstOrDefault();
-                            if (last != null) {
+                            if (last != null)
+                            {
                                 daysSinceLastInteraction = (DateTime.Now - last.CreateTime).TotalDays;
                                 double timeDecayFactor = Math.Exp(-0.1 * daysSinceLastInteraction);
                                 e.Weight = (float)(0.5 * Math.Pow(1 + timeDecayFactor, TimeOnPage));
                             }
                             var item = db.UserActivityTags.Where(u => u.FK_RemoteId == e.FK_RemoteId && u.FK_TId == e.FK_TId).FirstOrDefault();
-                            if (item != null) { 
+                            if (item != null)
+                            {
                                 item.Weight = e.Weight;
-                            }else AddUserActivityTags.Add(e);
+                            }
+                            else AddUserActivityTags.Add(e);
                         });
                         db.UserActivityTags.AddRange(AddUserActivityTags);
                         db.SaveChanges();

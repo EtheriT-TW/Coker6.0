@@ -48,7 +48,11 @@
 					c.AddFor(e => e.Address).Caption("地址");
 					c.AddFor(e => e.Email).Caption("Email");
 					c.AddFor(e => e.Total).Caption("訂購總金額");
-					c.AddFor(e => e.Level).Caption("會員等級");
+					c.AddFor(e => e.Level).Caption("會員等級").Lookup(lookup =>
+							lookup.DataSource("getMemberLevel")
+								.ValueExpr("id")
+								.DisplayExpr("name")
+					);
 					c.AddFor(e => e.CreationTime).Caption("註冊日期");
 					c.Add()
 					.Type(GridCommandColumnType.Buttons)

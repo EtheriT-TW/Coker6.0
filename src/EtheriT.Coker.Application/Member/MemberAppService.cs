@@ -88,6 +88,7 @@ namespace EtheriT.Coker.Application.Member
 
                 if (result != null)
                 {
+                    var roleId = db.Roles.Where(e => e.FK_WebsiteId == websideId && e.Type == RoleTypeEnum.前台).FirstOrDefault()?.Id;
                     var dataQuery = from e in result
                                     select new MemberGetAllListDto
                                     {
@@ -110,7 +111,8 @@ namespace EtheriT.Coker.Application.Member
                                                 )
                                             select order
                                         ).Sum(e => e.Payment),
-                                        Level = e.Level,
+                                        Level = e.Level == null? roleId : e.Level
+                                        ,
                                         CreationTime = e.CreationTime,
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
@@ -277,6 +279,7 @@ namespace EtheriT.Coker.Application.Member
                     if (dto.RoleId != null && role != null && role.RoleId != dto.RoleId)
                     {
                         role.RoleId = (long)dto.RoleId;
+                        result.Level = role.RoleId;
                         await loginUserData.SaveChanges(role);
                     }
 

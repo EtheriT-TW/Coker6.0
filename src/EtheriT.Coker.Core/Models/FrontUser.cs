@@ -19,7 +19,7 @@ namespace EtheriT.Coker.Core.Models
         public string? TelPhone { get; set; }
         public int Status { get; set; }
         public DateTime? OpenDate { get; set; }
-        public int? Level { get; set; }
+        public long? Level { get; set; }
 		[StringLength(250)]
 		public string? Address { get; set; }
         public int? Sex { get; set; }

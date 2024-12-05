@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Core.Models
         public string Description { get; set; } = string.Empty;
         public long FK_WebsiteId {  get; set; }
         public bool Enable {  get; set; }
+        public List<UserGroupingDetail> UserGroupingDetails { get; set; } = new List<UserGroupingDetail>();
     }
 }

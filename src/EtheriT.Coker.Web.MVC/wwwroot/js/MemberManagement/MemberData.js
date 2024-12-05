@@ -137,6 +137,21 @@ function hashChange(e) {
         console.log("HashChange錯誤")
     }
 }
+function getMemberLevel(e) {
+    return {
+        store: DevExpress.data.AspNet.createStore({
+            key: "id",
+            loadUrl: '/api/Member/GetAllRole',
+        }),
+        onBeforeSend: function (method, options) {
+            options.headers = {
+                Authorization: 'Bearer ' + $.cookie("token"),
+                Secret: $.cookie("secret")
+            };
+        },
+    };
+}
+
 function HashDataEdit() {
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {

@@ -84,6 +84,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<UserGrouping> UserGroupings { get; set; }
         public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
         public DbSet<UserActivityTags> UserActivityTags { get; set; }
+        public DbSet<UserGroupingDetail> UserGroupingDetails { get; set; }
+        
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -129,6 +131,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<UserGrouping>(o =>
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<UserGroupingDetail>(o =>
+            {
+                o.HasKey(ugd => new { ugd.UUID, ugd.FK_GropingId });
+                o.HasOne(e => e.userGrouping).WithMany(e => e.UserGroupingDetails).HasForeignKey(f => f.FK_GropingId);
             });
             modelBuilder.Entity<Website>(o =>
             {
@@ -476,6 +483,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
                 o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
+                o.HasIndex(f => f.State);
                 o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
             });
             modelBuilder.Entity<NotFoundImage>(o =>

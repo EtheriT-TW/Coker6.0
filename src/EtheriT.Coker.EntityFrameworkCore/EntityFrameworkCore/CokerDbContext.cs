@@ -292,7 +292,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(u => u.Title);
                 o.Property(p => p.Visible).HasDefaultValue(true);
                 o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
-                o.Property(p => p.Status).HasDefaultValue(0);
+                o.Property(p => p.Status).HasDefaultValue(ProdStatusEnum.一般);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
 

@@ -1,9 +1,8 @@
 ﻿var new_pass_show = false, check_pass_show = false, isMailLock = false, BasicInfoFilled = false, LoginMailFilled = false, PassIsCheck = true
 var BasicInfoForm, LoginMailForm
-var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $NewPassFeedBack
+var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck, $NewPassFeedBack, $Tags
 var $member_number, $name, $sex, $status, $level, $email_basic, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck
 var member_list, keyId
-
 function PageReady() {
     ManagementDataCollapse();
 
@@ -83,6 +82,7 @@ function ElementInit() {
     $btn_checkpass_lock = $(".btn_checkpass_lock")
     $NewPassFeedBack = $("#NewPassFeedBack");
     $CheckPassFeedBack = $("#CheckPassFeedBack");
+    $Tags = $("#UserTagStatistics .tags>ul")
 
     $member_number = $(".member_number")
     $name = $("#InputName");
@@ -203,6 +203,13 @@ function FormDataSet(result) {
             addr: result.address
         });
     }
+    $Tags.empty();
+    if (result.tags.length > 0) {
+        $Tags.removeClass("d-none");
+        $(result.tags).each(function () {
+            $Tags.append($("<li>").text(this));
+        });
+    } else $Tags.addClass("d-none");
     $email_login.val(result.email);
     $("#MemberLevel ").val(result.roleId == null ? 1 : result.roleId);
     Coker.Member.GetHistoryOrder(result.uuid).done(function (result) {

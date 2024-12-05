@@ -87,3 +87,16 @@
         border-left-color: transparent;
         bottom: -2rem;
     }
+#UserTagStatistics .tags > ul {
+    list-style: none;
+    display: flex;
+    background-color: #eee;
+    padding:0.5rem;
+    width:100%;
+}
+    #UserTagStatistics .tags > ul > li {
+        padding:5px;
+        border:#999 solid 1px;
+        border-radius:3px;
+        margin:0.5rem;
+    }

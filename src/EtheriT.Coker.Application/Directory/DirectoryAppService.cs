@@ -258,7 +258,7 @@ namespace EtheriT.Coker.Application.Directory
             output.TotalCount = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
             var dataMargin = prods
-                       .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                       .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                        .ThenByDescending(e => e.Id)
                        .Skip(skip).Take(shownum);
             var list = await (from p in dataMargin
@@ -700,7 +700,8 @@ namespace EtheriT.Coker.Application.Directory
                         .Select(ta => ta.FK_TId)
                         .ToList()
                 })
-                .OrderByDescending(p => p.MatchingTags.Count) // 按符合標籤數量排序
+                .OrderBy(e => e.Prod.Status == ProdStatusEnum.售完)
+                .ThenByDescending(p => p.MatchingTags.Count) // 按符合標籤數量排序
                 .ThenBy(p => p.Prod.Ser_No) // 次要排序
                 .ThenBy(p => p.Prod.ItemNo)
                 .ThenByDescending(p => p.Prod.Id) // 再次排序
@@ -722,7 +723,7 @@ namespace EtheriT.Coker.Application.Directory
                                   Description = p.Description,
                                   MainImage = p.Html,
                                   Status = p.Status,
-                                  StatusName = ((ProdStatusEnum)p.Status).ToString(),
+                                  StatusName = p.Status.ToString(),
                                   tags = (from t in db.Tags.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID)
                                           join m in db.Tag_Associates.Where(e => !e.IsDeleted) on t.Id equals m.FK_TId
                                           where m.FK_AId == p.Id && m.Type == TagAssociateTypeEnum.商品
@@ -840,7 +841,7 @@ namespace EtheriT.Coker.Application.Directory
                                     .Where(e => e.Visible)
                                     .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                     .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime))
-                                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                                     .Select(e => e.Id).ToList();
                             }
                             break;

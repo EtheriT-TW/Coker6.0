@@ -253,7 +253,7 @@ namespace EtheriT.Coker.Application.Product
                             foreach (var sc in scs) total_stock += sc.Quantity;
                             item.Stock -= total_stock;
 
-                            if (prod.Status != (int)ProdStatusEnum.售完)
+                            if (prod.Status != ProdStatusEnum.售完)
                             {
                                 if (item.Stock > 0)
                                 {
@@ -606,8 +606,8 @@ namespace EtheriT.Coker.Application.Product
                         Description = db_p.Description,
                         Html = db_p.Html ?? "",
                         ItemNo = db_p.ItemNo,
-                        Status = db_p.Status,
-                        StatusName = ((ProdStatusEnum)db_p.Status).ToString(),
+                        Status = (int) db_p.Status,
+                        StatusName = db_p.Status.ToString(),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
                         Stocks = new List<ProductStockDto>(),
@@ -723,7 +723,7 @@ namespace EtheriT.Coker.Application.Product
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
                 var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
-                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                     .ToListAsync();
                 if (result != null)
                 {
@@ -1912,7 +1912,7 @@ namespace EtheriT.Coker.Application.Product
                         ProdStatusEnum statusType;
                         if (Enum.TryParse(item.Status, out statusType))
                         {
-                            prod.Status = (int)statusType;
+                            prod.Status = statusType;
                         }
                         else prod.Status = 0;
                     }
@@ -1961,7 +1961,7 @@ namespace EtheriT.Coker.Application.Product
                         ProdStatusEnum statusType;
                         if (Enum.TryParse(item.Status, out statusType))
                         {
-                            prod.Status = (int)statusType;
+                            prod.Status = statusType;
                         }
                         else prod.Status = 0;
                     }

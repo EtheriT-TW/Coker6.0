@@ -354,7 +354,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     foreach (var oldsc in oldscs)
                     {
-                        if (oldsc.Prod_Stock.Prod.Status != (int)ProdStatusEnum.售完)
+                        if (oldsc.Prod_Stock.Prod.Status != ProdStatusEnum.售完)
                         {
                             if (!oldsc.Prod_Stock.Prod.RemovedFromShelves && oldsc.Prod_Stock.Stock > 0)
                             {

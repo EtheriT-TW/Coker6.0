@@ -53,7 +53,8 @@ function initElemntAndLoadDir($dir, page) {
     var temp_siblings = $self.find(".templatecontent").siblings();
     if (temp_siblings.length > 0) {
         for (i = 0; i < temp_siblings.length; i++) {
-            temp_siblings[i].remove();
+            console.log($(temp_siblings[i]).hasClass("templatecontent-tag"));
+            if (!$(temp_siblings[i]).hasClass("templatecontent-tag")) temp_siblings[i].remove();
         }
     }
     const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;

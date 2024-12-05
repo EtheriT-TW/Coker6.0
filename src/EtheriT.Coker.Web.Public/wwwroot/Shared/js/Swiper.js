@@ -87,7 +87,7 @@ function SwiperInit(obj) {
             const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1 : $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");
-            
+
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -133,7 +133,7 @@ function SwiperInit(obj) {
                                     video.pause();
                                     video.currentTime = 0;
                                     video.play();
-                                } 
+                                }
                                 if (html !== undefined && html !== null) {
                                     reset($(this), html);
                                 }
@@ -206,7 +206,7 @@ function SwiperInit(obj) {
                         nextEl: "#" + $self.attr("id") + " .swiper_button_next",
                         prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                     },
-                    
+
                 } : {});
             if (!canNext) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
@@ -280,7 +280,9 @@ function SwiperInit(obj) {
                 loop: true
             } : {});
             if (!canNext && length > 0) {
-                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").addClass("d-none");
+            } else {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").removeClass("d-none");
             }
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
@@ -476,7 +478,7 @@ function SwiperInit(obj) {
             loop: false, //改為false阻止點選最後一張圖連跳太多張
             freeMode: true,
             watchSlidesProgress: true,
-            
+
         });
         const pictureSwiper = new Swiper("#pictureSwiper", {
             centeredSlides: true,

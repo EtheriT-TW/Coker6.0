@@ -240,6 +240,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     if (ohdata.State == OrderStatusEnum.待確認 || ohdata.State == OrderStatusEnum.待付款)
                                     {
                                         ohdata.State = OrderStatusEnum.已付款;
+                                        DateTime paydate = PChomePayState.pay_date == null ? DateTime.Now : DateTime.ParseExact(PChomePayState.pay_date.ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+                                        var send_mail = await orderAppService.PaySuccessMailSend(ohdata.Id, paydate);
                                         message = "交易已完成";
                                     }
                                     break;

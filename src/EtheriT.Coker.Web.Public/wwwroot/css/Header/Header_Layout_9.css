@@ -273,7 +273,7 @@
         /* Mega Menu Content */
         #Offcanvas_Mega_Menu > ul > .title > .content {
             visibility: hidden;
-            background-color: #255eb7;
+            background-color: #fff;
             opacity: 0.9;
             padding: 1rem 0;
             cursor: default;
@@ -281,6 +281,10 @@
             top: 100%;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         }
+
+            #Offcanvas_Mega_Menu > ul > .title > .content span {
+                color: black;
+            }
 
             #Offcanvas_Mega_Menu > ul > .title > .content li {
                 width: 30%;
@@ -302,7 +306,7 @@
                         }
 
                     #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
-                        background: #0b4298;
+                        background: #ffe9c1;
                         margin-left: 0;
                     }
 

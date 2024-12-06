@@ -320,12 +320,15 @@
                                                         <input type="radio" name="label" checked="checked">
                                                         <label class="d-flex mb-3 border p-2 border-dark rounded position-relative isScroll">
                                                             <img class="me-2 update-img isPointer" src="" alt="" />
+                                                            <span class="material-symbols-outlined mx-3 d-none yt-video">slow_motion_video</span>
                                                             <div class="align-self-center">
                                                                 <div class="img_alt d-none"></div>
                                                                 <p class="setting d-none h3">正在編輯</>
                                                                 <div class="a_href d-none"></div>
                                                                 <div class="a_title d-none"></div>
                                                                 <div class="a_target d-none"></div>
+                                                                <div class="yt_src d-none"></div>
+                                                                <div class="yt_title d-none"></div>
                                                                 <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
                                                                 <div class="eyes">
@@ -347,6 +350,7 @@
                                                 </template>
                                                 </div>
                                                 <button id="add" type="button" class="btn-add-column">新增一欄</button>
+                                                <button id="addYT" type="button" class="btn-add-YT">新增影片</button>
                                                 <div class="w-50 ps-3 set-caption">
                                                   <h5>相關設定</h5>
                                                   <form id="EditContentForm">
@@ -363,6 +367,10 @@
                                                       <input class="form-check-input ms-4" type="checkbox" value="" id="CheckOpenWindow">
                                                       <label class="form-check-label ms-3 ps-4" for="CheckOpenWindow">另開新視窗</label>
                                                       <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
+                                                    </div>
+                                                    <div id="YT-link" class="mb-4 d-none">
+                                                      <label for="ytSrc" class="form-label">Youtube影片</label>
+                                                      <input type="text" class="form-control" id="ytSrc" placeholder="影片網址" />
                                                     </div>
                                                     <div id="img-hidden" class="ms-3">
                                                         <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
@@ -392,6 +400,7 @@
                                         "alt": $self.find("img").attr("alt"),
                                         "a_tag": $self.find("a").length > 0 ? true : false,
                                         "target": $self.find("a").attr("target"),
+                                        "yt_src": $self.find("iframe").attr("src"),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
                                         "visible": $self.hasClass("backstageType")
@@ -410,6 +419,7 @@
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
+                                const yt_src = $('#ytSrc').val() ? "https://www.youtube.com/embed/" +$('#ytSrc').val().split('=')[1] : "";
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,
@@ -418,6 +428,7 @@
                                     href: link,
                                     title: title,
                                     target: target,
+                                    yt_src: yt_src,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -435,6 +446,7 @@
                                 $li.find('.a_href').html(link);//更新連結
                                 $li.find('.a_title').html(title);//更新連結名稱
                                 $li.find('.a_target').html(target);//是否另開連結
+                                $li.find('.yt_src').html(yt_src);//更新YT連結
                                 $li.find('.a_visible').html(visible);//是否隱藏
                             });
                             const newLi = function (index, data) {
@@ -443,10 +455,12 @@
                                     alt: "",
                                     href: $selected.find("a").attr("href") === "#SwiperModal" ? "#SwiperModal" : "",
                                     title: "",
+                                    yt_src: "",
                                     synopsis_title: "",
                                     synopsis_caption: "",
                                     visible: false,
-                                    a_tag: true
+                                    a_tag: true,
+                                    img_update: true
                                 }, data);
                                 var content = $($("#TemplateSwiperList").html());
                                 content.data(o);
@@ -455,6 +469,7 @@
                                 content.find("img").attr({ "src": o.src, "alt": o.alt });
                                 content.find(".img_alt").text(o.alt);
                                 content.find(".a_href").text(o.href);
+                                content.find(".yt_src").text(o.yt_src);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
                                 if (data.visible) {
                                     content.find(".eyes > span:first-child").addClass("d-none");
@@ -463,6 +478,13 @@
                                     content.find(".eyes > span:first-child").removeClass("d-none");
                                     content.find(".eyes > span:last-child").addClass("d-none");
                                 }
+                                if (!data.a_tag) {
+                                    content.find('.update-img').remove();
+                                    content.find('.yt-video').removeClass("d-none");
+                                }
+                                /*if (!data.img_update) {
+                                    content.find(".update-img").removeClass("update-img");
+                                }*/
                                 content.data("order", index);
                                 content.find("label").on("click", function () {
                                     $("#EditContentForm input:focus").trigger("change");
@@ -472,9 +494,16 @@
                                     const $setTitle = $caption.find('#slideTitle');
                                     const $setContent = $caption.find('#slideAlt');
                                     const $setLink = $caption.find('#slideHref');
-                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link")];
-                                    $caption.find('*:not(.a_target)').removeClass('d-none');
-                                    if ($li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
+                                    const $setYtSrc = $caption.find('#ytSrc');
+                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link")];
+                                    $caption.find('*:not(.a_target, #YT-link)').removeClass('d-none');
+                                    if (!$li.data("a_tag")) {
+                                        $formSetting[3].removeClass("d-none");
+                                        $formSetting[0].addClass("d-none");
+                                    } else {
+                                        $formSetting[3].addClass("d-none");
+                                    }
+                                    if ($li.data("yt_src") || $li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
                                         $formSetting[2].addClass('d-none');
                                     }
                                     if (!$li.data("synopsis_caption")) {
@@ -493,6 +522,7 @@
                                     //$setTitle.val($li.data().synopsis_title); //文章標題
                                     $setContent.val($li.data().synopsis_caption); //內文
                                     $setLink.val($li.data().href); //連結
+                                    $setYtSrc.val($li.data().yt_src);//youtube
                                 });
 
                                 content.find(".update-img").on("click", function () {
@@ -536,6 +566,10 @@
                                 newLi($("#SwiperList>li").length, {});
                             });
 
+                            $("#SwiperModal .btn-add-YT").off("click").on("click", function () {
+                                newLi($("#SwiperList>li").length, { a_tag: false, img_update: false });
+                            });
+
                             $("#SwiperModal .sava").off("click").on("click", function () {
                                 const $s = $selected.clone();
                                 const $slides = $s.find(".swiper .swiper-wrapper>.swiper-slide").clone();
@@ -543,9 +577,10 @@
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find("img").attr("src");
-                                    const newTitle = $(element).data("alt");
+                                    const newTitle = $(element).data("alt") ? $(element).data("alt") : $(element).data("yt_title");
                                     const newLink = $(element).data("href");
                                     const newTarget = $(element).data("target");
+                                    const newYT = $(element).data("yt_src");
                                     const isVisible = $(element).data("visible");
                                     const newCaption = $(element).data("synopsis_caption");
                                     // 更新slides中的圖片
@@ -553,13 +588,28 @@
                                     let $new_slide = $slides[order];
                                     const existingTitle = $($new_slide).find('h2').text().trim();
                                     if ($new_slide) {
-                                        $($new_slide).find('img').attr('src', newImgSrc);
-                                        $($new_slide).find('img').attr('alt', newTitle);
-                                        if (newLink) {
-                                            $($new_slide).find('a').attr('href', newLink);
+                                        if (newYT != "" && newYT != undefined) {
+                                            if (!$($new_slide).find('.synopsis_title').length) {
+                                                $($new_slide).empty();
+                                            }
+                                            const $iframe = $("<iframe>", {
+                                                src: newYT,
+                                                width: "100%",
+                                                height: "500",
+                                                frameborder: "0",
+                                                allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                                                allowfullscreen: true
+                                            });
+                                            $($new_slide).append($iframe);
+                                        } else {
+                                            $($new_slide).find('img').attr('src', newImgSrc);
+                                            $($new_slide).find('img').attr('alt', newTitle);
+                                            if (newLink) {
+                                                $($new_slide).find('a').attr('href', newLink);
+                                            }
+                                            $($new_slide).find('a').attr('title', newTitle);
+                                            $($new_slide).find('a').attr('target', newTarget);
                                         }
-                                        $($new_slide).find('a').attr('title', newTitle);
-                                        $($new_slide).find('a').attr('target', newTarget);
                                         $($new_slide).find('.synopsis_title').text(newTitle);
                                         $($new_slide).find('.synopsis_caption').text(newCaption);
                                         if (isVisible) {
@@ -575,19 +625,48 @@
                                         const have_template = $selected.find(".template_slide>.swiper-slide")[0];
                                         if (have_template) {
                                             $new_slide = $($selected.find(".template_slide>.swiper-slide")[0].toHTML());
-                                            $new_slide.find('a').attr('target', newTarget);
-                                            $new_slide.find('.synopsis_title').text(newTitle);
-                                            $new_slide.find('.synopsis_caption').text(newCaption);
+                                            if (newYT != "" && newYT != undefined) {
+                                                $new_slide.find("a, img").remove();
+                                                const $iframe = $("<iframe>", {
+                                                    src: newYT,
+                                                    width: "100%",
+                                                    height: "500",
+                                                    frameborder: "0",
+                                                    allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                                                    allowfullscreen: true
+                                                });
+                                                $($new_slide).append($iframe);
+                                            } else {
+                                                $new_slide.find('img').attr('src', newImgSrc);
+                                                $new_slide.find('img').attr('alt', newTitle);
+                                                $new_slide.find('a').attr('target', newTarget);
+                                                $new_slide.find('.synopsis_title').text(newTitle);
+                                                $new_slide.find('.synopsis_caption').text(newCaption);
+                                            }
                                         } else {
                                             $new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
                                             $new_slide = $($new_slide);
-                                            $new_slide.find('img').attr('src', newImgSrc);
-                                            $new_slide.find('img').attr('alt', newTitle);
-                                            if (newLink) {
-                                                $new_slide.find('a').attr('href', newLink);
+                                            if (newYT != "" && newYT != undefined) {
+                                                $new_slide.find("a, img").remove();
+                                                const $iframe = $("<iframe>", {
+                                                    src: newYT,
+                                                    title: newTitle,
+                                                    width: "100%",
+                                                    height: "500",
+                                                    frameborder: "0",
+                                                    allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                                                    allowfullscreen: true
+                                                });
+                                                $($new_slide).append($iframe);
+                                            } else {
+                                                $new_slide.find('img').attr('src', newImgSrc);
+                                                $new_slide.find('img').attr('alt', newTitle);
+                                                if (newLink) {
+                                                    $new_slide.find('a').attr('href', newLink);
+                                                }
+                                                $new_slide.find('a').attr('title', newTitle);
+                                                $new_slide.find('a').attr('target', newTarget);
                                             }
-                                            $new_slide.find('a').attr('title', newTitle);
-                                            $new_slide.find('a').attr('target', newTarget);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         }

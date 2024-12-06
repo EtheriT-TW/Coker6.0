@@ -2,6 +2,14 @@
     padding-top: 0 !important;
 }
 
+#Car_Dropdown .pro_name {
+    font-size: .9rem;
+}
+
+#Car_Dropdown .pro_spec, .number {
+    font-size: .8rem;
+}
+
 .no-arrow::after {
     content: none !important;
     background-image: none !important;

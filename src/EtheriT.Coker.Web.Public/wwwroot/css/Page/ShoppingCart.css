@@ -8,6 +8,10 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
 
+.pro_name {
+    font-size:1.2rem;
+}
+
 input[type="number"] {
     -moz-appearance: textfield;
 }

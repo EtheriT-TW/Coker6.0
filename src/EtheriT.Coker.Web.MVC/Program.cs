@@ -157,7 +157,10 @@ builder.Services.AddAntiforgery(options =>
 
 // 添加 Hangfire 服務，並配置使用 SQL Server 存儲
 builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(configuration.GetConnectionString("Default"))
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_110)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(configuration.GetConnectionString("Default"))
 );
 // 註冊 Hangfire 跟蹤服務
 builder.Services.AddHangfireServer();

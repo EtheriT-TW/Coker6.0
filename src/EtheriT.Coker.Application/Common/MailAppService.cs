@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -15,34 +17,69 @@ namespace EtheriT.Coker.Application.Common
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly StringHandler stringHandler;
+        private readonly IStoreSetAppService storeSetAppService;
+        private readonly SMTPDto sMTPDto;
         public MailAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
-            StringHandler stringHandler
+            StringHandler stringHandler,
+            IStoreSetAppService storeSetAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.stringHandler = stringHandler;
-        }
-        public async Task<SenderDto> getDefaultDto() {
-            SenderDto dto = new SenderDto();
-
-            return dto;
+            this.storeSetAppService = storeSetAppService;
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto)
         {
             var webSiteName = string.IsNullOrEmpty(dto.Sender.Name) ? await loginUserData.GetWebsiteName() : dto.Sender.Name;
-
+            dto.SMTP = await SetSMTP();
             return await sendMail(dto, webSiteName);
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, long siteId)
         {
             var webSiteName = await loginUserData.GetWebsiteOrgName(siteId);
-
+            dto.SMTP = await SetSMTP(siteId);
             return await sendMail(dto, webSiteName);
+        }
+
+        private async Task<SMTPDto> SetSMTP(long siteId=0)
+        {
+            var smtp = new SMTPDto();
+            if(siteId == 0 ) siteId = await loginUserData.GetWebsiteId();
+            var data = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 3, SiteId = siteId });
+            if (data != null && data.Success && data.storeSetDetails!= null && data.storeSetDetails.Any()) {
+                var SMTPPath = data.storeSetDetails.Find(e => e.key == "SMTPPath");
+                if(SMTPPath != null && SMTPPath.value!=null && SMTPPath.value.Any() && !string.IsNullOrEmpty(SMTPPath.value[0]))
+                    smtp.Url = SMTPPath.value[0];
+
+                var SMTPPort = data.storeSetDetails.Find(e => e.key == "SMTPPort");
+                if (SMTPPort != null && SMTPPort.value != null && SMTPPort.value.Any() && !string.IsNullOrEmpty(SMTPPort.value[0]))
+                    smtp.Url = SMTPPort.value[0];
+
+                var SMTPAccount = data.storeSetDetails.Find(e => e.key == "SMTPAccount");
+                if (SMTPAccount != null && SMTPAccount.value != null && SMTPAccount.value.Any() && !string.IsNullOrEmpty(SMTPAccount.value[0]))
+                    smtp.Url = SMTPAccount.value[0];
+
+                var SMTPPassword = data.storeSetDetails.Find(e => e.key == "SMTPPassword");
+                if (SMTPPassword != null && SMTPPassword.value != null && SMTPPassword.value.Any() && !string.IsNullOrEmpty(SMTPPassword.value[0]))
+                    smtp.Url = SMTPPassword.value[0];
+                switch (smtp.Port) {
+                    case 587:
+                        smtp.UseSSL = (int)SecureSocketOptions.StartTls;
+                        break;
+                    case 465:
+                        smtp.UseSSL = (int)SecureSocketOptions.SslOnConnect;
+                        break;
+                    case 25:
+                        smtp.UseSSL = (int)SecureSocketOptions.None;
+                        break;
+                }
+            }
+            return smtp;
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, string? webSiteName)
         {
@@ -119,7 +156,7 @@ namespace EtheriT.Coker.Application.Common
                 {
                     //client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
                     // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
-                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL? SecureSocketOptions.SslOnConnect : SecureSocketOptions.None);
+                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, (SecureSocketOptions)dto.SMTP.UseSSL);
 
                     // 如果需要的話，驗證一下
                     if (dto.SMTP.UserName != null)

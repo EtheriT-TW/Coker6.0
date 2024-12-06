@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -15,7 +16,7 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(150)]
         public string name { get; set; }
         public string? memo { get; set; }
-        public int? type { get; set; }
+        public SeoSetDataTypeEnum type { get; set; }
         public long FK_StoreSetGroupId { get; set; }
         public int? maxlength { get; set; }
         public string? pattern { get; set; }

@@ -370,7 +370,7 @@ app.Use(async (context, next) =>
         $"style-src 'self' 'nonce-{nonce}' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; " +
         $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
         $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
-        $"frame-src 'self' *.ezsale.tw *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net;" +
+        $"frame-src 'self' *.ezsale.tw *.google.com *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net;" +
         $"connect-src 'self' *.google.com *.google-analytics.com;" +
         $"frame-ancestors 'self' *.ezsale.tw;";
     //cache 限制設定

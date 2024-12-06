@@ -262,7 +262,7 @@ namespace EtheriT.Coker.Application.Remote
         public async Task UpdateRemoteTime(SetTrackTimeDto dto) {
             Guid UUID = await tokenAppService.GetUUID();
             long id = memoryCache.Get<long>($"RemoteId-{dto.PageKey}-{UUID}");
-            int maxspan = 5 * 60 * 1000;
+            int maxspan = 5 * 60;
             if (id != 0) {
                 var remote = await db.Remotes.Where(e => e.Id == id).FirstOrDefaultAsync();
                 if (remote != null) {

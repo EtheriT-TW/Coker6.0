@@ -366,6 +366,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="AuditLogs",
                                 Action="Index",
                                 Icon="psychology"
+                            },
+                            new JobMenu{
+                                PageName="SMTP",
+                                Title="SMTPServer",
+                                Controller="StoreSettings",
+                                Action="SMTPSettings",
+                                Icon="forward_to_inbox"
                             }
                         }
                     },new JobMenu{

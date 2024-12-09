@@ -330,7 +330,7 @@ function SwiperInit(obj) {
     $(".four_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
-            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", Math.random().toString(36).substring(2, 9) + Date.now())
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {

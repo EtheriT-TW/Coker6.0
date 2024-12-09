@@ -60,11 +60,12 @@ function SwiperInit(obj) {
             $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled", false);
-
-            setTimeout(function () {
-                swiper.slideTo(0);
-            }, 100);
-            if (swiper.slides.length > 1) swiper.slideTo(1);
+            if (typeof (swiper.slide) != "undefined") {
+                setTimeout(function () {
+                    swiper.slideTo(0);
+                }, 100);
+                if (swiper.slides.length > 1) swiper.slideTo(1);
+            }
             $(window).off('resize.swiper').on('resize.swiper', checkSlides);
             $(window).trigger("resize.swiper");
         }
@@ -329,6 +330,7 @@ function SwiperInit(obj) {
     $(".four_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", Math.random().toString(36).substring(2, 9) + Date.now())
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -458,6 +460,8 @@ function SwiperInit(obj) {
     });
 
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
+        const $header_text = $("#SwiperModal .modal-header .imgalt");
+        $header_text.text("");
         const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
             spaceBetween: 10,
             breakpoints: {
@@ -494,27 +498,35 @@ function SwiperInit(obj) {
                 swiper: pictureSwiperThumbs,
             }
         });
+
         $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
             const $self = $(this).parents(".picture-category");
             const index = $(".picture-category a").index(this);// > $(".picture-category a").length - 2 ? $(".picture-category a").length - $(".picture-category a").index(this) - 1 : $(".picture-category a").index(this) - 1;
             const $images = [];
             $self.find(".templatecontent img").each(function () {
-                $images.push($(this).attr("src"));
+                var obj = {};
+                obj['src'] = $(this).attr("src");
+                obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
+                $images.push(obj);
             });
             pictureSwiper.removeAllSlides();
             pictureSwiperThumbs.removeAllSlides();
+            $header_text.text($images[0]['alt']);
             if ($images.length == 1) {
-                const newSlide = `<div class="swiper-slide"><img src="${$images[0]}" alt=" " /></div>`;
-
+                const newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
                 pictureSwiper.appendSlide(newSlide);
             } else {
                 for (let i = 0; i < $images.length; i++) {
-                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
-
+                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                     pictureSwiper.appendSlide(newSlide);
-                    pictureSwiperThumbs.appendSlide(newSlide);
+                    const newSlideThumbs = `<div class="swiper-slide align-content-center mx-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                    pictureSwiperThumbs.appendSlide(newSlideThumbs);
                 }
             }
+            pictureSwiper.on('slideChange', function () {
+                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                $header_text.text(activeSlide.find("img").attr("alt"));
+            });
             pictureSwiper.slideTo(index, 0);
             pictureSwiperThumbs.slideTo(index, 0);
             $('#SwiperModal').modal('show');

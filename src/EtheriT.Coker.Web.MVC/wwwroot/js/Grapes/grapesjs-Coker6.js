@@ -865,7 +865,8 @@
                                     $("#PopupDirectory .cancel").on("click", function () {
                                         PopupDirectory.hide();
                                     });
-                                    $("#PopupDirectory .Sure").on("click", function () {
+                                    $("#PopupDirectory .Sure").on("click", function (component) {
+                                        var oldlist = editor.getSelected().getAttributes()["data-dirid"];
                                         editor.getSelected().set("attributes", {
                                             "data-dirid": data.map(function (item) {
                                                 return item['Id'];
@@ -875,7 +876,10 @@
                                             })
                                         });
                                         PopupDirectory.hide();
-                                        $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                                        var newlist = editor.getSelected().getAttributes()["data-dirid"].toString();
+                                        if (oldlist != newlist) {
+                                            $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                                        }
                                     });
                                 }, 200);
                             }
@@ -906,6 +910,16 @@
                         fWindow.$(`#${component.getId()}`).data({
                             "prevdirid": attr["data-prevdirid"],
                             "maxlen": attr["data-maxlen"]
+                        });
+                        fWindow.DirectoryGetDataInit();
+                    }, 200);
+                });
+                self.on(`change:attributes:data-dirid`, component => {
+                    setTimeout(() => {
+                        const fWindow = $(".gjs-frame")[0].contentWindow;
+                        let attr = component.getAttributes();
+                        fWindow.$(`#${component.getId()}`).data({
+                            "dirid": attr["data-dirid"].toString(),
                         });
                         fWindow.DirectoryGetDataInit();
                     }, 200);

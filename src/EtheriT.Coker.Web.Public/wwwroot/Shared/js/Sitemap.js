@@ -42,7 +42,7 @@ function CreateSitemap(result) {
                 var second = $($("#Hierarchical_Second_Item").html()).clone();
                 var second_item = second.find(".second");
                 second_item.attr("href", sec_data.routerName);
-                second_item.attr("alt", sec_data.text);
+                second_item.attr("title", sec_data.text);
 
                 if (sec_data.children != null) {
                     second_item.removeClass("ps-4 ps-sm-3");

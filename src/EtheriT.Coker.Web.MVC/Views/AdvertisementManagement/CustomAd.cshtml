@@ -184,8 +184,16 @@
                         {
                             c.AddFor(e => e.Id).Caption("編號").Width(90);
                             c.AddFor(e => e.Title).Caption("標題");
-                            c.AddFor(e => e.ExposureTimes).Caption("曝光次數").Width(90);
-                            c.AddFor(e => e.ClickTimes).Caption("點擊次數").Width(90);
+                                c.AddFor(e => e.ExposureTimes).Caption("曝光次數").Width(90).CellTemplate(
+                                @<text>
+                                <%- value ? value.toLocaleString() : '0' %>
+                            </text>
+                                );
+                                c.AddFor(e => e.ClickTimes).Caption("點擊次數").Width(90).CellTemplate(
+                        @<text>
+                        <%- value ? value.toLocaleString() : '0' %>
+                    </text>
+                        );
                             c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(true);
                             c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(true);
                             c.AddFor(e => e.SerNo).Caption("排序").Width(90);

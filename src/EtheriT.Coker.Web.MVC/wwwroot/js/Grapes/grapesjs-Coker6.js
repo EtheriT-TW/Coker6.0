@@ -119,7 +119,6 @@
         }
 
     });
-
     /*連結 */
     editor.DomComponents.addType('連結', {
         isComponent: el => el.tagName == 'A',
@@ -419,7 +418,7 @@
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
-                                const yt_src = $('#ytSrc').val() ? "https://www.youtube.com/embed/" +$('#ytSrc').val().split('=')[1] : "";
+                                const yt_src = $('#ytSrc').val() ? "https://www.youtube.com/embed/" + $('#ytSrc').val().split('=')[1] : "";
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,

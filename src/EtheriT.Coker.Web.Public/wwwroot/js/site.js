@@ -231,8 +231,8 @@ function ready() {
 
     // 當用戶切換標籤或最小化時，使用 visibilitychange 事件來處理
     document.addEventListener("visibilitychange", function () {
-         if (document.hidden) {
-             sentTrackTime();
+        if (document.hidden) {
+            sentTrackTime();
         } else {
             // 重新加載頁面時，重設加載時間
             sessionStorage.setItem('pageLoadTime', Date.now());
@@ -461,9 +461,11 @@ function ready() {
                     Coker.sweet.loading();
                     co.User.AccountOpening(insertdata["openid"]).done(result => {
                         if (result.success) {
-                            Coker.sweet.success("帳號成功開通，按下確定後即為您跳轉頁面！", function () {
-                                window.location.href = $(location).attr('origin');
-                            }, false);
+                            Coker.sweet.custom("success", "", "會員帳號成功開通", "填寫會員資料", function () {
+                                window.location.href = `/${OrgName}/Member`;
+                            }, "下次再說", function () {
+                                location.reload();
+                            })
                         } else {
                             if (result.message == "ReSendOrNot") {
                                 var data = {};
@@ -1138,6 +1140,26 @@ var Coker = {
             }).then((result) => {
             });
         },
+        custom: function (icon, title, text, confirmtext, confirmaction, canceltext, canceltextaction) {
+            if (confirmtext == null && canceltext == null) { closetime = Coker.timeout.time }
+            Swal.fire({
+                icon: icon,
+                title: title,
+                text: text,
+                showConfirmButton: confirmtext == null ? false : true,
+                showCancelButton: canceltext == null ? false : true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: confirmtext,
+                cancelButtonText: canceltext,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (confirmaction) === "function" && confirmaction();
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    typeof (canceltextaction) === "function" && canceltextaction();
+                }
+            });
+        },
         success: function (text, action, autoclose) {
             var closetime = false;
             if (autoclose) { closetime = Coker.timeout.time }
@@ -1154,7 +1176,7 @@ var Coker = {
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
-                }
+                } 
             })
         },
         error: function (title, text, action, autoclose) {

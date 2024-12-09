@@ -1066,7 +1066,7 @@ namespace EtheriT.Coker.Application.Directory
                                         Visible = e.Visible,
                                         Items = "",
                                         FK_Mid = e.FK_Mid,
-                                        SortBy = e.SortBy == (int)SortByEnum.隨機 ? "隨機排序" : e.SortBy == (int)SortByEnum.人氣值 ? "人氣值排序" : "預設排序",
+                                        SortBy = $"{(SortByEnum)e.SortBy}排序",
                                     };
                     var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
                     if (output != null)
@@ -1328,6 +1328,47 @@ namespace EtheriT.Coker.Application.Directory
                                 break;
                             case 2:
                                 output = output.OrderByDescending(o => (double)o.Clicks / (double)o.Exposure).ToList();
+                                break;
+                            case 3:
+                                var UUID = await tokenAppService.GetUUID();
+
+                                // 取得當前使用者的分群資訊
+                                var Groping = db.UserGroupingDetails.Include(e => e.userGrouping)
+                                    .Where(ugd => ugd.UUID == UUID).FirstOrDefault();
+                                var groupTags = Groping != null ?
+                                        db.Tag_Associates.Where(e => e.FK_AId == Groping.FK_GropingId && e.Type == TagAssociateTypeEnum.使用者分群).Select(e => e.FK_TId).ToList() :
+                                        new List<long>();
+
+                                // 查詢個人標籤（若無分群）
+                                var personalTags = db.UserTagStatistics
+                                    .AsNoTracking()
+                                    .Where(ut => ut.UUID == UUID) // 根據 UUID 查詢使用者標籤
+                                    .OrderByDescending(ut => ut.Weight) // 按權重排序
+                                    .Take(5) // 取權重最高的前 5 個標籤
+                                    .Select(ut => ut.FK_TagId)
+                                    .ToList();
+
+                                var relevantTags = groupTags.Any() ? groupTags : personalTags;
+                                relevantTags = relevantTags ?? new List<long>();
+
+                                var tagAssociations = db.Tag_Associates
+                                    .AsNoTracking()
+                                    .Where(ta => ta.Type == TagAssociateTypeEnum.商品); // 篩選商品類型的標籤
+
+                                // 最終查詢
+                                output = output
+                                    .Select(p => new
+                                    {
+                                        Ads = p,
+                                        MatchingTags = tagAssociations
+                                            .Where(ta => ta.FK_AId == p.Id && relevantTags.Contains(ta.FK_TId)) // 只選擇符合的標籤
+                                            .Select(ta => ta.FK_TId)
+                                            .ToList()
+                                    })
+                                    .OrderByDescending(p => p.MatchingTags.Count) // 按符合標籤數量排序
+                                    .ThenBy(p => p.Ads.SerNO) // 次要排序
+                                    .ThenByDescending(p => p.Ads.Id) // 再次排序
+                                    .Select(p => p.Ads).ToList(); // 最終只返回廣告
                                 break;
                         }
                         for (var i = 0; i < output.Count; i++)

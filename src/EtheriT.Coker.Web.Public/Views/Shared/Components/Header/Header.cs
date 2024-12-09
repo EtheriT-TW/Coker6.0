@@ -192,6 +192,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     {
                         Title = website_data[0].Title,
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
+                        HomeLink = $"/{website_data[0].OrgName}/home",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                     };
                     webmenus_data.ForEach(data_f =>

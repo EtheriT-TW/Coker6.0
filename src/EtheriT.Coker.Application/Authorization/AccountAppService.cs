@@ -494,6 +494,10 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (frontuser == null)
                 {
+
+                    var sameuuid = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync() != null;
+                    if (sameuuid) UUID = Guid.NewGuid();
+
                     frontuser = mapper.Map<FrontUser>(dto);
                     frontuser.Password = passwordHasher.HashPassword(dto.Password);
                     frontuser.UUID = UUID;

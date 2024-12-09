@@ -363,7 +363,7 @@ function HistoryTemplateDataInsert(Datas) {
         var order_details = data.orderDetails;
         var frame = $($("#Template_Order_List").html()).clone();
         frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
-        frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
+        frame.find(".date").text(((order_header.creationTime).substr(0, 16).replaceAll("-", "/")));
         frame.find(".amount").text((order_header.total).toLocaleString());
         frame.find(".payment").text(order_header.payment);
 

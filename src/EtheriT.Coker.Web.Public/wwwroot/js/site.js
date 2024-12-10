@@ -1282,8 +1282,9 @@ var Coker = {
             });
             $e.find(".btn_sear").on("click", function () {
                 if ($t.val() == "") {
-                    co.sweet.error("錯誤", "請輸入搜尋文字", null, false);
-                    $t2.focus();
+                    co.sweet.error("錯誤", "請輸入搜尋文字", function () {
+                        setTimeout(function () { $t2.trigger("focus"); },300);
+                    }, false);
                 } else {
                     window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
                 }

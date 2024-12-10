@@ -25,6 +25,7 @@ function HeaderInit() {
 
     /* ThreeSwiper */
     var threeSwiper = new Swiper(".threeSwiper", {
+        a11y: true,
         slidesPerView: 1,
         loop: true,
         allowTouchMove: true,
@@ -46,6 +47,7 @@ function HeaderInit() {
 
     /*Planning Swiper */
     var planningSwiper = new Swiper(".planningSwiper", {
+        a11y: true,
         loop: true,
         slidesPerView: 1,
         breakpoints: {
@@ -65,6 +67,7 @@ function HeaderInit() {
     });
 
     var planningThumbsSwiper = new Swiper(".planningThumbsSwiper", {
+        a11y: true,
         allowTouchMove: true,
         direction: "vertical",
         effect: "coverflow",
@@ -93,6 +96,7 @@ function HeaderInit() {
 
     /*Outcome Swiper */
     var outcomeswiper = new Swiper(".outcomeSwiper", {
+        a11y: true,
         slidesPerView: 2,
         grid: {
             rows: 2,

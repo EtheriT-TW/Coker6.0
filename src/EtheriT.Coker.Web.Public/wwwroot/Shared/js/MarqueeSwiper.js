@@ -32,6 +32,7 @@
         });
     });
     var marqueeSwiper = new Swiper(".marqueeSwiper", {
+        a11y: true,
         direction: "vertical",
         allowTouchMove: false,
         keyboard: {

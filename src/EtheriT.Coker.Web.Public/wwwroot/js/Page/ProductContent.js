@@ -339,6 +339,7 @@ function PageDefaultSet(result) {
     }
     if (result.img_Small.length > 1) {
         preview_swiper = new Swiper(".PreviewSwiper", {
+            a11y: true,
             slidesPerView: 4,
             loop: false,
             spaceBetween: 10,
@@ -361,6 +362,7 @@ function PageDefaultSet(result) {
         });
 
         product_swiper = new Swiper(".ProductSwiper", {
+            a11y: true,
             spaceBetween: 15,
             loop: true,
             navigation: {

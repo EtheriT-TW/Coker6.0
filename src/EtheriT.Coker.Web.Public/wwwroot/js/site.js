@@ -66,6 +66,7 @@ function ready() {
         else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html(ele.textContent || ele.innerText);
         else $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
+        if ($conten.find("#CustMain").length > 0) $("#jumpToCenter").attr("href", "#CustMain");
         $conten.removeClass("d-none");
     }
     if ($PostCSS.length > 0) {
@@ -136,7 +137,14 @@ function ready() {
     });
     $(".accesskey[href]").on("click", function (e) {
         const $self = $(this);
-        $($self.attr("href")).goTo();
+        const $target = $($self.attr("href"));
+        if ($target.length > 0) {
+            $target.goTo();
+            $target.attr('tabindex', '-1').trigger("focus");
+            $target.on('blur', function () {
+                $target.removeAttr('tabindex'); // 移除 tabindex
+            });
+        }
         return false;
     });
     $("#videoModal").on("hidden.bs.modal", function () {

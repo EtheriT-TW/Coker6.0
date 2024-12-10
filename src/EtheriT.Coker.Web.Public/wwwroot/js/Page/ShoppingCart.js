@@ -126,6 +126,7 @@ function PageReady() {
 
     /* Buy Swiper */
     buy_step_swiper = new Swiper("#BuyStepSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         autoHeight: true,

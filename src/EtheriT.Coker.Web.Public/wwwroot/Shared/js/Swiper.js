@@ -5,11 +5,35 @@
  ***************/
 function SwiperInit(obj) {
     var config = {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         keyboard: {
             enabled: true,
         },
+        on: {
+            init: function () {
+                this.isLoopActive = this.params.loop;
+            },
+            slideChange: function () {
+                const swiper = this;
+                if (swiper.params.loop) {
+                    const $swiper = $(swiper.el);
+                    const $sliders = $swiper.find(".swiper-slide");
+                    const totalLength = swiper.slides.length;
+                    const activeIndex = swiper.activeIndex;
+                    const $focusedSlide = $swiper.find(":focus").parents(".swiper-slide");
+                    const focusIndex = $sliders.index($focusedSlide);
+                    if (typeof (focusIndex) != "undefined" && swiper.isLoopActive) {
+                        swiper.isLoopActive = false;
+                        swiper.loopDestroy();
+                    } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive){
+                        swiper.isLoopActive = true;
+                        swiper.loopCreate();
+                    }
+                }
+            }
+        }
     };
     $.fn.extend({
         swiperBindEven: function (swiper, canNext) {
@@ -49,6 +73,7 @@ function SwiperInit(obj) {
                 var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
                 var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
                 var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+                
                 if ($(activeSlide).find("video").length > 0) {
                     return;
                 }
@@ -56,7 +81,11 @@ function SwiperInit(obj) {
             }
             thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
-            $(this).find("a").on("focus", stop);
+            $(this).find("a").on("focus", function () {
+                const activeIndex = $(swiper.el).find(":focus").parents(".swiper-slide").attr("aria-label").split(" / ")[0];
+                swiper.slideTo(activeIndex-1, 300);
+                stop();
+            });
             $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled", false);

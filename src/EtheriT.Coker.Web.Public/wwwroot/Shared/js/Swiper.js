@@ -13,6 +13,20 @@ function SwiperInit(obj) {
         },
         on: {
             init: function () {
+                const setShow = function (event) {
+                    event.preventDefault()
+                    $(this).parents(".swiper-slide").find(".outside-item").addClass("show");
+                }
+                const hideShow = function (event) {
+                    event.preventDefault()
+                    $(this).parents(".swiper-slide").find(".outside-item").removeClass("show");
+                }
+                $(this.el).find(".hover-outside").on("click", setShow);
+                $(this.el).find(".hover-outside").on("mouseover", setShow);
+                $(this.el).find(".outside-item").on("mouseover", setShow);
+                $(this.el).find(".hover-outside").on("mouseout", hideShow);
+                $(this.el).find(".outside-item").on("mouseout", hideShow);
+                $("body").off("click.disableoutsideItem").on("click.disableoutsideItem", hideShow)
                 this.isLoopActive = this.params.loop;
             },
             slideChange: function () {

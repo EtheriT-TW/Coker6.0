@@ -18,7 +18,6 @@ function SwiperInit(obj) {
                     $(this).parents(".swiper-slide").find(".outside-item").addClass("show");
                 }
                 const hideShow = function (event) {
-                    event.preventDefault()
                     $(this).parents(".swiper-slide").find(".outside-item").removeClass("show");
                 }
                 $(this.el).find(".hover-outside").on("click", setShow);

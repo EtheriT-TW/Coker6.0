@@ -161,10 +161,10 @@ function PageReady() {
                 break;
             case 2:
                 RadioPayment();
-                if (ShippingForms.find("input").length == 0) {
+                if (ShippingForms.find(".noshipping").length > 0) {
                     Coker.sweet.error("錯誤", "店家尚未設置運費方式，無法繼續", null, false);
                     buy_step_swiper.slideTo(1);
-                } else if (PaymentForms.find("input").length == 0) {
+                } else if (PaymentForms.find(".nopayment").length > 0) {
                     Coker.sweet.error("錯誤", "店家尚未設置付款方式，無法繼續", null, false);
                     buy_step_swiper.slideTo(1);
                 } else {
@@ -488,17 +488,19 @@ function CartInit(result) {
     PaymentForms.children("div").each(function () {
         var $this = $(this);
         var $this_in = $this.find("input");
-        var code = $this_in.attr("id").replaceAll("radio_payment_", "");
-        if (code.toLowerCase().startsWith("pchome")) {
-            if (code.startsWith("PchomePayInstallment")) {
-                code = "CARD";
-                $this.attr("data-paycode", code);
-            } else if (code.startsWith("PchomePay")) {
-                code = code.replaceAll("PchomePay", "");
-                $this.attr("data-paycode", code);
-            } else if (code.startsWith("PCHome")) {
-                code = code.replaceAll("PCHome", "");
-                $this.attr("data-paycode", code);
+        if ($this_in.length > 0) {
+            var code = $this_in.attr("id").replaceAll("radio_payment_", "");
+            if (code.toLowerCase().startsWith("pchome")) {
+                if (code.startsWith("PchomePayInstallment")) {
+                    code = "CARD";
+                    $this.attr("data-paycode", code);
+                } else if (code.startsWith("PchomePay")) {
+                    code = code.replaceAll("PchomePay", "");
+                    $this.attr("data-paycode", code);
+                } else if (code.startsWith("PCHome")) {
+                    code = code.replaceAll("PCHome", "");
+                    $this.attr("data-paycode", code);
+                }
             }
         }
     })

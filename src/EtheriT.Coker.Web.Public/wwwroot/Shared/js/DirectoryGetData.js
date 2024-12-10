@@ -48,12 +48,10 @@ var Advertise = {
 }
 
 function initElemntAndLoadDir($dir, page) {
-    //console.log("InitLoad")
     const $self = $dir || $(".catalog_frame").first();
     var temp_siblings = $self.find(".templatecontent").siblings();
     if (temp_siblings.length > 0) {
         for (i = 0; i < temp_siblings.length; i++) {
-            console.log($(temp_siblings[i]).hasClass("templatecontent-tag"));
             if (!$(temp_siblings[i]).hasClass("templatecontent-tag")) temp_siblings[i].remove();
         }
     }
@@ -70,29 +68,30 @@ function initElemntAndLoadDir($dir, page) {
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage == "") page = "1";
         else page = hashPage;
-        const option = {
-            Ids: dirid,
-            SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
-            Page: page,
-            ShowNum: shownum,
-            MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
-            Filters: $self.data("filtered"),
-            directoryType: $self.data("directoryTypeChecked"),
-            target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target"),
-            FindNearest: FindNearest,
-            Longitude: Longitude,
-            Latitude: Latitude,
+        if (!(dirid.length == 1 && dirid[0] == "")) {
+            const option = {
+                Ids: dirid,
+                SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
+                Page: page,
+                ShowNum: shownum,
+                MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
+                Filters: $self.data("filtered"),
+                directoryType: $self.data("directoryTypeChecked"),
+                target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target"),
+                FindNearest: FindNearest,
+                Longitude: Longitude,
+                Latitude: Latitude,
+            }
+            $self.find(".catalog>.template").remove();
+            DirectoryDataGet($self, option);
+
+            $self.off("filter").on("filter", function () {
+                $self.removeData("page");
+                initElemntAndLoadDir($dir, page);
+            });
+            $self.data("page", page)
         }
-        $self.find(".catalog>.template").remove();
-        DirectoryDataGet($self, option);
-
-        $self.off("filter").on("filter", function () {
-            $self.removeData("page");
-            initElemntAndLoadDir($dir, page);
-        });
-        $self.data("page", page)
     }
-
 }
 function DirectoryGetDataInit() {
     const dirLength = $(".catalog_frame").length;

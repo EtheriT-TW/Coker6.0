@@ -359,7 +359,7 @@ function SwiperInit(obj) {
     $(".four_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
-            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", Math.random().toString(36).substring(2, 9) + Date.now())
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -489,77 +489,81 @@ function SwiperInit(obj) {
     });
 
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
-        const $header_text = $("#SwiperModal .modal-header .imgalt");
-        $header_text.text("");
-        const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
-            spaceBetween: 10,
-            breakpoints: {
-                375: {
-                    slidesPerView: 2,
-                },
-                576: {
-                    slidesPerView: 3,
-                },
-                769: {
-                    slidesPerView: 4,
-                },
-                1024: {
-                    slidesPerView: 6, //modal顯示縮圖的數量
+        if (!!!$(this).data("isinit")) {
+            const $header_text = $("#SwiperModal .modal-header .imgalt");
+            $header_text.text("");
+            const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
+                spaceBetween: 10,
+                breakpoints: {
+                    375: {
+                        slidesPerView: 2,
+                    },
+                    576: {
+                        slidesPerView: 3,
+                    },
+                    769: {
+                        slidesPerView: 4,
+                    },
+                    1024: {
+                        slidesPerView: 6, //modal顯示縮圖的數量
 
-                }
-            },
-            loop: false, //改為false阻止點選最後一張圖連跳太多張
-            freeMode: true,
-            watchSlidesProgress: true,
+                    }
+                },
+                loop: false, //改為false阻止點選最後一張圖連跳太多張
+                freeMode: true,
+                watchSlidesProgress: true,
 
-        });
-        const pictureSwiper = new Swiper("#pictureSwiper", {
-            centeredSlides: true,
-            spaceBetween: 10,
-            navigation: {
-                nextEl: "#pictureSwiper .swiper-button-next",
-                prevEl: "#pictureSwiper .swiper-button-prev",
-            },
-            pagination: {
-                el: "#pictureSwiper .swiper-pagination",
-            },
-            thumbs: {
-                swiper: pictureSwiperThumbs,
-            }
-        });
-
-        $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
-            const $self = $(this).parents(".picture-category");
-            const index = $(".picture-category a").index(this);// > $(".picture-category a").length - 2 ? $(".picture-category a").length - $(".picture-category a").index(this) - 1 : $(".picture-category a").index(this) - 1;
-            const $images = [];
-            $self.find(".templatecontent img").each(function () {
-                var obj = {};
-                obj['src'] = $(this).attr("src");
-                obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
-                $images.push(obj);
             });
-            pictureSwiper.removeAllSlides();
-            pictureSwiperThumbs.removeAllSlides();
-            $header_text.text($images[0]['alt']);
-            if ($images.length == 1) {
-                const newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
-                pictureSwiper.appendSlide(newSlide);
-            } else {
-                for (let i = 0; i < $images.length; i++) {
-                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+            const pictureSwiper = new Swiper("#pictureSwiper", {
+                centeredSlides: true,
+                spaceBetween: 10,
+                loop: false,
+                navigation: {
+                    nextEl: "#pictureSwiper .swiper-button-next",
+                    prevEl: "#pictureSwiper .swiper-button-prev",
+                },
+                pagination: {
+                    el: "#pictureSwiper .swiper-pagination",
+                },
+                thumbs: {
+                    swiper: pictureSwiperThumbs,
+                }
+            });
+
+            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
+                const $self = $(this).parents(".picture-category");
+                const index = $(".picture-category a").index(this);// > $(".picture-category a").length - 2 ? $(".picture-category a").length - $(".picture-category a").index(this) - 1 : $(".picture-category a").index(this) - 1;
+                const $images = [];
+                $self.find(".templatecontent img").each(function () {
+                    var obj = {};
+                    obj['src'] = $(this).attr("src");
+                    obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
+                    $images.push(obj);
+                });
+                pictureSwiper.removeAllSlides();
+                pictureSwiperThumbs.removeAllSlides();
+                $header_text.text($images[0]['alt']);
+                if ($images.length == 1) {
+                    const newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
                     pictureSwiper.appendSlide(newSlide);
-                    const newSlideThumbs = `<div class="swiper-slide align-content-center mx-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
-                    pictureSwiperThumbs.appendSlide(newSlideThumbs);
+                } else {
+                    for (let i = 0; i < $images.length; i++) {
+                        const newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        pictureSwiper.appendSlide(newSlide);
+                        const newSlideThumbs = `<div class="swiper-slide align-content-center mx-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        pictureSwiperThumbs.appendSlide(newSlideThumbs);
+                    }
                 }
-            }
-            pictureSwiper.on('slideChange', function () {
-                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
-                $header_text.text(activeSlide.find("img").attr("alt"));
+                pictureSwiper.on('slideChange', function () {
+                    var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                    $header_text.text(activeSlide.find("img").attr("alt"));
+                });
+                pictureSwiper.slideTo(index, 0);
+                pictureSwiperThumbs.slideTo(index, 0);
+                $('#SwiperModal').modal('show');
+                return false;
             });
-            pictureSwiper.slideTo(index, 0);
-            pictureSwiperThumbs.slideTo(index, 0);
-            $('#SwiperModal').modal('show');
-            return false;
-        });
+            $(this).data("isinit", true);
+        }
     }
 }

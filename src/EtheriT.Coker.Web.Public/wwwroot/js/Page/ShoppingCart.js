@@ -231,7 +231,7 @@ function PageReady() {
                 user_data['ordererEmail'] = result.data.email;
 
                 if (result.data.cellPhone == null) data_insert = false;
-                user_data['ordererCellphone'] = result.data.cellPhone;
+                user_data['ordererCellPhone'] = result.data.cellPhone;
 
                 if (result.data.telPhone != null) {
                     user_data['zone'] = (result.data.telPhone).split('-')[0];
@@ -1096,17 +1096,16 @@ function OrderHeaderAdd() {
             order_header_data.Service_Charge = 0;
             order_header_data.OrderDetails = shopping_cart_data;
 
-            var memberUpdateFailMessage = "";
-
-            if ($(".memberUpdate").length > 0 ? $("#MemberUpdate").is(":checked") : false) {
-                Coker.Order.FrontUserUpdate(order_header_data).done(function (result) {
-                    if (!result.success) {
-                        memberUpdateFailMessage = `<br/>${result.message}`;
-                    }
-                });
-            }
-
             if (checksuccess) {
+                var memberUpdateFailMessage = "";
+                if ($(".memberUpdate").length > 0 ? $("#MemberUpdate").is(":checked") : false) {
+                    Coker.Order.FrontUserUpdate(order_header_data).done(function (result) {
+                        if (!result.success) {
+                            memberUpdateFailMessage = `<br/>${result.message}`;
+                        }
+                    });
+                }
+
                 Coker.sweet.loading();
                 Coker.Order.AddHeader(order_header_data).done(function (result) {
                     if (result.success) {

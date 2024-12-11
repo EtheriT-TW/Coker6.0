@@ -36,6 +36,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             return await orderAppService.AddHeader(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto)
+        {
+            return await orderAppService.FrontUserUpdate(dto);
+        }
 
         [HttpGet]
         public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)

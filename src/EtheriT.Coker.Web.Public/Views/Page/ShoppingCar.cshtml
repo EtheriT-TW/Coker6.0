@@ -142,7 +142,7 @@
                                     <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
                                     <div class="pro_detail d-lg-none d-flex flex-wrap">
                                         <div data-key="spec" class="pro_specification pe-3"></div>
-                                        </div>
+                                    </div>
                                     <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
                                 </div>
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
@@ -340,6 +340,7 @@
                                 <i class="fa-regular fa-pen-to-square"></i>
                                 <span class="d-none">編輯</span>
                             </button>
+                            <button class="btn_inituser border-0 ms-auto opacity-75 text-decoration-underline">恢復預設資料</button>
                         </div>
 
                         <div class="default_data">
@@ -413,6 +414,13 @@
                                     <label class="px-4 required" for="OrdererInputAddress">地址</label>
                                 </div>
                             </div>
+                            @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && ViewBag.isLogin)
+                            {
+                                <div class="form-check memberUpdate">
+                                    <input id="MemberUpdate" class="form-check-input" type="checkbox">
+                                    <label class="form-check-label" for="MemberUpdate">同時更新會員資料<span class="ps-2 text-danger">*Email為登入帳號，不會回存</span></label>
+                                </div>
+                            }
                         </form>
                     </div>
 
@@ -608,7 +616,7 @@
                         <div data-key="" class="order_time pe-5 text-end">訂單成立時間：</div>
                         @if (!ViewBag.isLogin)
                         {
-                                <div class="buyagain_text fs-5 text-center d-none">請主動聯繫客服人員，或<span class="px-1 text-decoration-underline">點擊此處</span>重新下訂。</div>
+                            <div class="buyagain_text fs-5 text-center d-none">請主動聯繫客服人員，或<span class="px-1 text-decoration-underline">點擊此處</span>重新下訂。</div>
                         }
 
                         <ul id="Purchase" class="purchase_list px-5 mb-0"></ul>

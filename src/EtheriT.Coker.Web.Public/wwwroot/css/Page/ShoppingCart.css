@@ -9,7 +9,7 @@ input::-webkit-inner-spin-button {
 }
 
 .pro_name {
-    font-size:1.2rem;
+    font-size: 1.2rem;
 }
 
 input[type="number"] {
@@ -21,16 +21,18 @@ input[type="number"] {
     justify-content: center;
     align-items: center;
 }
+
 #Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_plus {
     display: flex;
     justify-content: center;
     align-items: center;
 }
+
 #Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > #quantityInput1 {
     border-radius: 0;
 }
-    /* Required Sign */
-    .required_front::before {
+/* Required Sign */
+.required_front::before {
     color: var(--red-text);
     content: '*';
 }
@@ -398,6 +400,10 @@ body > .popover.bs-popover-auto.fade {
     content: '\00d7';
 }
 
+#Form_Orderer .memberUpdate {
+    width: fit-content;
+}
+
 /*RWD*/
 @media (max-width: 1366px) {
 }
@@ -414,11 +420,11 @@ body > .popover.bs-popover-auto.fade {
 
 @media only screen and (max-width: 768px) {
     #Step4 .col-sm-2 {
-        width:unset;
+        width: unset;
     }
 
     #Step4 .pruchase_content {
-        padding:.5rem;
+        padding: .5rem;
     }
 
     div.e-mail, div.cell-phone {
@@ -426,15 +432,15 @@ body > .popover.bs-popover-auto.fade {
     }
 
     div.tel-phone {
-        flex:auto;
+        flex: auto;
     }
 
     div.tel-area {
-        width:30%;
+        width: 30%;
     }
 
     #OrdererForm > .default_data > div > div:nth-child(1) {
-        width:auto;
+        width: auto;
     }
 }
 
@@ -483,10 +489,10 @@ body > .popover.bs-popover-auto.fade {
     }
 
     input#OrdererInputTelPhoneArea {
-        padding-top:0rem;
+        padding-top: 0rem;
     }
 
     .form-floating > label {
-        font-size:14px;
+        font-size: 14px;
     }
 }

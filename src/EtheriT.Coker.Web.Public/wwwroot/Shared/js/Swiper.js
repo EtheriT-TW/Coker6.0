@@ -44,7 +44,7 @@ function SwiperInit(obj) {
                     if (typeof (focusIndex) != "undefined" && swiper.isLoopActive) {
                         swiper.isLoopActive = false;
                         swiper.loopDestroy();
-                    } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive){
+                    } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive) {
                         swiper.isLoopActive = true;
                         swiper.loopCreate();
                     }
@@ -90,7 +90,7 @@ function SwiperInit(obj) {
                 var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
                 var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
                 var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
-                
+
                 if ($(activeSlide).find("video").length > 0) {
                     return;
                 }
@@ -100,7 +100,7 @@ function SwiperInit(obj) {
             $(this).off("mouseover").on("mouseover", stop);
             $(this).find("a").on("focus", function () {
                 const activeIndex = $(swiper.el).find(":focus").parents(".swiper-slide").attr("aria-label").split(" / ")[0];
-                swiper.slideTo(activeIndex-1, 300);
+                swiper.slideTo(activeIndex - 1, 300);
                 stop();
             });
             $(this).off("mouseout").on("mouseout", start);
@@ -521,15 +521,14 @@ function SwiperInit(obj) {
 
                     }
                 },
-                loop: false, //改為false阻止點選最後一張圖連跳太多張
                 freeMode: true,
                 watchSlidesProgress: true,
-
             });
-            const pictureSwiper = new Swiper("#pictureSwiper", {
+
+            var pictureSwiper = new Swiper("#pictureSwiper", {
                 centeredSlides: true,
                 spaceBetween: 10,
-                loop: false,
+                loop: true,
                 navigation: {
                     nextEl: "#pictureSwiper .swiper-button-next",
                     prevEl: "#pictureSwiper .swiper-button-prev",
@@ -539,6 +538,11 @@ function SwiperInit(obj) {
                 },
                 thumbs: {
                     swiper: pictureSwiperThumbs,
+                },
+                loop: true,
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
                 }
             });
 
@@ -562,7 +566,7 @@ function SwiperInit(obj) {
                     for (let i = 0; i < $images.length; i++) {
                         const newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiper.appendSlide(newSlide);
-                        const newSlideThumbs = `<div class="swiper-slide align-content-center mx-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        const newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
                 }

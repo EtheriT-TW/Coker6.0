@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Shared.Order
     {
         public Task<ResponseMessageDto> CheckStock(List<OrderDetailAddDto> dto);
         public Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto);
+        public Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
         public Task<OrderHeaderGetOneDto> GetHeaderOne(long id);
         public Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id);

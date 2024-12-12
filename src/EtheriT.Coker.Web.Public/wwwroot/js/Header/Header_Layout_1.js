@@ -248,6 +248,7 @@ function HeaderDataInsert($frame, data) {
                     });
                     break;
                 case "oldQuantity":
+                    // Layout 已拿掉
                     if (data[key] != data['quantity']) $self.removeClass("d-none");
                     $self.text(data[key]);
                     break;

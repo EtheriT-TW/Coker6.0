@@ -341,13 +341,13 @@ function HeaderDataSet(result) {
                     if (result[key] != null) {
                         if ($self.parent("div").hasClass("d-none")) $self.parent("div").removeClass("d-none");
                         $self.text(result[key]);
-                    }
+                    } else $self.parent("div").addClass("d-none");
                     break;
                 case "uniformId":
                     if (result[key] != null) {
                         if ($self.parent("div").hasClass("d-none")) $self.parent("div").removeClass("d-none");
                         $self.text(result[key]);
-                    }
+                    } else $self.parent("div").addClass("d-none");
                     break;
                 case "invoiceAddress":
                     $self.text(result[key].replaceAll(" ", ""));
@@ -379,7 +379,7 @@ function DataInsert(data, frame) {
                     $this.text(spec);
                     break;
                 default:
-                    $this.text(data[key]);
+                    if ($this.data("key") != "invoiceRecipient") $this.text(data[key]);
                     break;
             }
         }

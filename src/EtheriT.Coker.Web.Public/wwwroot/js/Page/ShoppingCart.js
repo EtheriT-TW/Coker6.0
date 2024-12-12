@@ -33,6 +33,18 @@ function PageReady() {
                 dataType: "json"
             });
         },
+        FrontUserUpdate: function (data) {
+            return $.ajax({
+                url: "/api/Order/FrontUserUpdate",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         GetHeader: function (id) {
             return $.ajax({
                 url: "/api/Order/GetHeaderOne/",
@@ -180,8 +192,8 @@ function PageReady() {
                         RecipientFilled = FormCheck(RecipientForms);
                         InvoiceFilled = FormCheck(InvoiceForms);
                         if (!OrdererFilled) {
-                            $("#OrdererForm>form").removeClass('was-validated')
-                            OrdererEdit();
+                            if (OrdererOpen) $("#OrdererForm>form").removeClass('was-validated')
+                            OrdererEdit(true);
                             $("#radio_recipient_order").trigger("change");
                             $("#radio_bill_orderer").trigger("change");
                         }
@@ -219,22 +231,31 @@ function PageReady() {
                 user_data['ordererEmail'] = result.data.email;
 
                 if (result.data.cellPhone == null) data_insert = false;
-                else user_data['ordererCellphone'] = result.data.cellPhone;
+                user_data['ordererCellPhone'] = result.data.cellPhone;
 
                 if (result.data.telPhone != null) {
                     user_data['zone'] = (result.data.telPhone).split('-')[0];
                     user_data['ordererTelephone'] = (result.data.telPhone).split('-')[1];
                     user_data['ext'] = (result.data.telPhone).split('-')[2];
+                } else {
+                    user_data['zone'] = null;
+                    user_data['ordererTelephone'] = null;
+                    user_data['ext'] = null;
                 }
 
                 if (result.data.address != null) {
                     user_data['county'] = (result.data.address).split(' ')[0];
                     user_data['district'] = (result.data.address).split(' ')[1];
                     user_data['ordererAddress'] = (result.data.address).split(' ')[2];
-                    user_data['address'] = result.data.address;
-                } else data_insert = false;
+                } else {
+                    data_insert = false;
+                    user_data['county'] = null;
+                    user_data['district'] = null;
+                    user_data['ordererAddress'] = null;
+                }
+                user_data['address'] = result.data.address;
 
-                if (!data_insert) $(".btn_edit_data").on("click");
+                if (!data_insert) OrdererEdit(true);
 
                 co.Form.insertData(user_data, "#Form_Orderer");
 
@@ -247,8 +268,7 @@ function PageReady() {
                     el: $("#Orderer_TWzipcode"),
                     addr: order_data.ordererAddress
                 });
-            }
-            else user_data = null;
+            } else user_data = null;
         });
     });
 
@@ -304,7 +324,9 @@ function PageReady() {
         buy_step_swiper.slidePrev();
     });
 
-    $(".btn_edit_data").on("click", OrdererEdit);
+    $(".btn_edit_data").on("click", function () {
+        OrdererEdit(null)
+    });
     $(".btn_delete_recipient").on("click", DeleteRecipient);
 
     /* Radio Button */
@@ -324,6 +346,31 @@ function PageReady() {
             return false;
         }
     });
+
+
+    $(".btn_inituser").on("click", function () {
+        if (user_data == null) {
+            co.Form.clear("Form_Orderer");
+            $('#Form_Orderer .gender input[type="radio"]').prop('checked', false);
+            co.Zipcode.setData({
+                el: $("#Orderer_TWzipcode"),
+                addr: "縣市"
+            });
+        } else {
+            $('#Form_Orderer .gender input[type="radio"]').prop('checked', false);
+            var address = user_data.ordererAddress;
+            if (address.indexOf(" ") > 0) {
+                if (address.split(' ').length >= 3) user_data.ordererAddress = address.split(' ')[2];
+                else user_data.ordererAddress = "";
+            }
+            co.Form.insertData(user_data, "#Form_Orderer");
+            user_data.ordererAddress = address;
+            co.Zipcode.setData({
+                el: $("#Orderer_TWzipcode"),
+                addr: user_data.address
+            });
+        }
+    })
 }
 function hashChange(e) {
     if (!!e) {
@@ -801,9 +848,8 @@ function RadioPayment() {
     buy_step_swiper.update();
 }
 function Step3Monitor() {
-    if (OrdererOpen) {
-        OrdererFilled = FormCheck(OrdererForms)
-    };
+
+    OrdererFilled = FormCheck(OrdererForms)
 
     if (RecipientOpen) {
         RecipientFilled = FormCheck(RecipientForms);
@@ -827,6 +873,7 @@ function Step3Monitor() {
     }
 
     if (!OrdererFilled) {
+        if (!OrdererOpen) OrdererEdit(true);
         Coker.sweet.error("請確實填寫訂購人資料！", null, true);
     } else if (!RecipientFilled) {
         Coker.sweet.error("請確實填寫收件人資料！", null, true);
@@ -840,15 +887,26 @@ function Step3Monitor() {
 
     buy_step_swiper.update();
 }
-function OrdererEdit() {
-    if (OrdererOpen) {
-        order_data = {};
-        order_data = user_data;
+function OrdererEdit(isopen) {
+    if (isopen == null) {
+        isopen = !OrdererOpen;
+        OrdererEdit(isopen)
     }
-    $("#OrdererForm > .default_data").toggleClass("d-none");
-    $("#OrdererForm > form").toggleClass("d-none");
-    OrdererOpen = !OrdererOpen;
-    OrdererFilled = !OrdererOpen;
+
+    if (!OrdererOpen && isopen) {
+        $("#OrdererForm > .default_data").addClass("d-none");
+        $("#OrdererForm > form").removeClass("d-none");
+        OrdererOpen = true;
+        OrdererFilled = false;
+    } else if (OrdererOpen && !isopen) {
+        var data = co.Form.getJson($("#Form_Orderer").attr("id"), $("#OrdererForm .default_data"));
+        data.ordererAddress = `${data.county}${data.district}${data.ordererAddress}`;
+        ShoppingCartDataInsert(data, $("#OrdererForm .default_data"));
+        $("#OrdererForm > .default_data").removeClass("d-none");
+        $("#OrdererForm > form").addClass("d-none");
+        OrdererOpen = false;
+        OrdererFilled = true;
+    }
     buy_step_swiper.update();
 }
 function RecipientRadio() {
@@ -963,28 +1021,16 @@ function OrderHeaderAdd() {
         if (result.success) {
             var checksuccess = true;
 
-            if (OrdererOpen) {
-                order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
-                order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
+            order_data = co.Form.getJson($("#Form_Orderer").attr("id"));
+            order_data.ordererAddress = `${order_data.county} ${order_data.district} ${order_data.ordererAddress}`;
 
-                if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
-                    Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
-                    checksuccess = false;
-                } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
-                    order_data.ordererTelephone = null;
-                } else {
-                    order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
-                }
-            }
-            else {
-                if (user_data == null) {
-                    checksuccess = false;
-                    Coker.sweet.error("資料填寫錯誤", "請確實填寫訂購人資訊。", null, false);
-                    OrdererEdit();
-                } else {
-                    order_data = user_data;
-                    order_data.ordererAddress = user_data['address'];
-                }
+            if (order_data.zone == "" ^ order_data.ordererTelephone == "") {
+                Coker.sweet.error("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null, false);
+                checksuccess = false;
+            } else if (order_data.zone == "" && order_data.ordererTelephone == "") {
+                order_data.ordererTelephone = null;
+            } else {
+                order_data.ordererTelephone = `${order_data.zone}-${order_data.ordererTelephone}` + (order_data.ext == "" ? "" : `-${order_data.ext}`);
             }
 
             for (var key in order_data) {
@@ -1051,10 +1097,19 @@ function OrderHeaderAdd() {
             order_header_data.OrderDetails = shopping_cart_data;
 
             if (checksuccess) {
+                var memberUpdateFailMessage = "";
+                if ($(".memberUpdate").length > 0 ? $("#MemberUpdate").is(":checked") : false) {
+                    Coker.Order.FrontUserUpdate(order_header_data).done(function (result) {
+                        if (!result.success) {
+                            memberUpdateFailMessage = `<br/>${result.message}`;
+                        }
+                    });
+                }
+
                 Coker.sweet.loading();
                 Coker.Order.AddHeader(order_header_data).done(function (result) {
                     if (result.success) {
-                        Coker.sweet.success("謝謝您的訂購！<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", function () {
+                        Coker.sweet.success(`謝謝您的訂購！${memberUpdateFailMessage}<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！`, function () {
                             OrderSuccess(result);
                             setTimeout(function () {
                                 isCheckout = true;
@@ -1257,6 +1312,7 @@ function HiddenCode($self) {
     });
 }
 function ShoppingCartDataInsert(data, $self) {
+    ShoppingCartDataClear($self);
     if (typeof (data.invoiceRecipient) != "undefined") {
         switch (parseInt(data.invoiceRecipient)) {
             case 1:
@@ -1278,6 +1334,15 @@ function ShoppingCartDataInsert(data, $self) {
                 $this.text(data[key].toLocaleString());
             }
             else $this.text(data[key]);
+        }
+    });
+}
+function ShoppingCartDataClear($self) {
+    $self.find("*").each(function () {
+        var $this = $(this);
+        var key = $this.data("key");
+        if (typeof ($this.data("key")) != "undefined") {
+            $this.text("");
         }
     });
 }
@@ -1343,11 +1408,12 @@ function AutoSwapInput() {
 }
 /* 地址選單初始化 */
 function TWZipCodeInit() {
-    $Orderer_TWzipcode.twzipcode({
-        'zipcodeIntoDistrict': true,
-        'countySel': '高雄市',
-        'districtSel': '前鎮區'
-    });
+    //$Orderer_TWzipcode.twzipcode({
+    //    'zipcodeIntoDistrict': true,
+    //    'countySel': '高雄市',
+    //    'districtSel': '前鎮區'
+    //});
+    $Orderer_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
     $Recipient_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
     $Invoice_TWzipcode.twzipcode({ 'zipcodeIntoDistrict': true });
 
@@ -1375,7 +1441,6 @@ function TWZipCodeInit() {
     var $district_first_option = $district.children('select').children('option').first();
     $district_first_option.text("請選擇鄉鎮");
     $district_first_option.attr('disabled', 'disabled');
-
 
     $county = $Recipient_TWzipcode.children('.county');
     $district = $Recipient_TWzipcode.children('.district');

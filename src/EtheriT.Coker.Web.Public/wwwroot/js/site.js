@@ -251,24 +251,24 @@ function ready() {
     const enterAdModalEl = $('#EnterAdModal')
     var enteradid = enterAdModalEl.data("enteradid")
 
-    var temp_idlist = localStorage.getItem(`AgreePrivacy`) == null ? [] : localStorage.getItem("EnterAd_Show") == null ? [] : localStorage.getItem("EnterAd_Show").split(",");
-    if ($('#EnterAdModal').length > 0 && (localStorage.getItem("EnterAd_Show") == null || $.inArray(enteradid.toString(), temp_idlist) < 0)) {
-        var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
-        enterAdModal.show();
-        enterAdModalEl.on('hidden.bs.modal', event => {
-            temp_idlist.push(enteradid);
-            localStorage.setItem("EnterAd_Show", temp_idlist);
-        })
+    if ($('#EnterAdModal').length > 0) {
         var adid = $("#EnterAdModal .modal-content").data("aid");
-        if (adid != "undefined") {
-            Advertise.ActivityExposure(adid).done(function (result) {
-                //console.log(result)
+        if ((localStorage.getItem("EnterAd_Show") == null || localStorage.getItem(`AgreePrivacy`) == null) || localStorage.getItem("EnterAd_Show") != adid) {
+            var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
+            enterAdModal.show();
+            enterAdModalEl.on('hidden.bs.modal', event => {
+                localStorage.setItem("EnterAd_Show", adid);
             })
-            $("#EnterAdModal img").on("click", function () {
-                Advertise.ActivityClick(adid).done(function (result) {
+            if (adid != "undefined") {
+                Advertise.ActivityExposure(adid).done(function (result) {
                     //console.log(result)
                 })
-            });
+                $("#EnterAdModal img").on("click", function () {
+                    Advertise.ActivityClick(adid).done(function (result) {
+                        //console.log(result)
+                    })
+                });
+            }
         }
     }
 
@@ -444,7 +444,7 @@ function ready() {
         })
     })
 
-    $(".btn_cookie_accept").on("click", cookie_accept);
+    $(".btn_cookie_accept").on("click", function () { cookie_accept(true) });
     $(".btn_cookie_reject").on("click", cookie_reject);
 
     $("#Collapse_Button").on("click", function () {
@@ -570,15 +570,21 @@ function scrollFunction() {
         $("#btn_gotop").css('display', 'none');
     }
 }
-function cookie_accept() {
-    Coker.Token.AgreePrivacy().done(function (result) {
-        if (result.success) {
-            localStorage.setItem(`AgreePrivacy`, "True");
-            if ($("#Cookie").hasClass("show")) $("#Cookie").removeClass("show")
-        } else {
-            console.log(result)
-        }
-    });
+function cookie_accept(isnew) {
+    if (isnew) {
+        Coker.Token.AgreePrivacy().done(function (result) {
+            if (result.success) {
+                localStorage.setItem(`AgreePrivacy`, true);
+                localStorage.setItem("AgreeTime", result.message);
+                $("#Cookie").removeClass("show");
+            } else {
+                console.log("AgreePrivacy Fail", result)
+            }
+        });
+    } else {
+        localStorage.setItem(`AgreePrivacy`, true);
+        $("#Cookie").removeClass("show");
+    }
 }
 function cookie_reject() {
     if ($("#Cookie").hasClass("show")) $("#Cookie").removeClass("show")
@@ -618,8 +624,26 @@ function CheckToken() {
                     }
                 }
             }
-            if (result.agreePrivacy) cookie_accept();
-            else if (!$("#Cookie").hasClass("show")) $("#Cookie").addClass("show")
+            console.log("localStorage", localStorage)
+            if (result.agreePrivacy) cookie_accept(false);
+            else {
+                if (localStorage.getItem('AgreeTime') != null) {
+                    var agreeSaveTime = new Date(localStorage.getItem('AgreeTime'));
+                    var oneYearAgo = new Date();
+                    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                    if (agreeSaveTime > oneYearAgo) {
+                        localStorage.setItem(`AgreePrivacy`, true);
+                        $("#Cookie").removeClass("show")
+                    } else {
+                        localStorage.removeItem("AgreePrivacy")
+                        localStorage.removeItem("AgreeTime")
+                        $("#Cookie").addClass("show")
+                    }
+                } else {
+                    localStorage.removeItem("AgreePrivacy")
+                    $("#Cookie").addClass("show")
+                }
+            }
         }
     })
 }
@@ -1032,19 +1056,23 @@ var Coker = {
         },
     },
     Form: {
-        getJson: function (id, isArrayType) {
-            let form = document.getElementById(id);
-            let formFields = new FormData(form);
-            let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
-            let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
-                const val = formFields.getAll(key)
-                return [key, (isArray || val.length > 1) ? val : val.pop()]
-            }));
-            return formDataObject;
+        set: function (id, method) {
+            const form = document.getElementById(id);
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                let check = form.checkValidity();
+                if (check) {
+                    method();
+                }
+                form.classList.add('was-validated');
+            }, false);
         },
         insertData: function (obj, $self) {
             if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
-            else if (typeof ($self) == "string") $self = $($self);
+            else if (typeof ($self) == "string") {
+                $self = /^#/.test($self) ? $($self) : $(`#${$self}`);
+            }
             const formTypeSet = (type, $e, value) => {
                 switch (type) {
                     case "zipcode":
@@ -1133,6 +1161,94 @@ var Coker = {
                 }// else console.log(key);
             }
         },
+        getJson: function (id, isArrayType) {
+            let form = document.getElementById(id);
+            let formFields = new FormData(form);
+            let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+            let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
+                const val = formFields.getAll(key)
+                return [key, (isArray || val.length > 1) ? val : val.pop()]
+            }));
+            let exItems = $(`#${id}`).find(`div[name]`);
+            exItems.each(function () {
+                const $e = $(this);
+                switch ($e.data("form-type")) {
+                    case "zipcode":
+                        formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
+                        break;
+                    case "tags":
+                        console.log($e.find(".InputTag"));
+                        formDataObject[$e.attr("name")] = $e.find(".InputTag").data("tagList");
+                        break;
+                }
+            });
+            if (formDataObject.startEndDate) {
+                const d = formDataObject.startEndDate.split("~");
+                formDataObject.StartTime = d[0].trim();
+                if (d.length > 1) formDataObject.EndTime = d[1].trim();
+            }
+            return formDataObject;
+        },
+        getJsonByFieldset: function (id, isArrayType) {
+            const fieldset = document.getElementById(id);
+            const isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+            const elements = fieldset.querySelectorAll('input, select, textarea');
+            const fieldsetData = {};
+            elements.forEach(element => {
+                switch (element.type) {
+                    case "checkbox":
+                        if (!fieldsetData[element.name]) {
+                            fieldsetData[element.name] = [];
+                        }
+                        if (element.checked) {
+                            fieldsetData[element.name].push(element.value);
+                        }
+                        break;
+                    case "select-multiple":
+                        fieldsetData[element.name] = Array.from(element.selectedOptions).map(option => option.value);
+                        break;
+                    default:
+                        fieldsetData[element.name] = element.value;
+                        break;
+                }
+            });
+            return fieldsetData;
+        },
+        init: function (id, fun) {
+            const form = document.getElementById(id);
+            form.addEventListener('submit', event => {
+                $(form).find(".customValidity").get(0).setCustomValidity("");
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    fun && fun(id);
+                }
+                form.classList.add('was-validated');
+            }, false)
+        }, clear: function (id) {
+            const form = document.getElementById(id);
+            const $items = $(`[data-form-type]`);
+            _c.Form.insertData(_c.Form.getJson(id), `#${id}`);
+            $items.each(function (i, e) {
+                const $e = $(e);
+                switch ($e.data("form-type")) {
+                    case "images":
+                        if (!!!$e.data("init")) {
+                            $e.ImageUploadModalClear();
+                            $e.data("init", true)
+                        } else $e.ImageUploadModalClear();
+                        break;
+                    case "date":
+                        $e.data('daterangepicker').setStartDate(_c.Date.GetDateTimeStr(Date.now()));
+                        $e.data('daterangepicker').setEndDate(null);
+                        break;
+                }
+            });
+            form.reset();
+            if ($(form).find("[name='id']").length > 0) $(form).find("[name='id']").val(0);
+        }
     },
     sweet: {
         loading: function () {
@@ -1184,7 +1300,7 @@ var Coker = {
             }).then((result) => {
                 if (result.isConfirmed) {
                     typeof (action) === "function" && action();
-                } 
+                }
             })
         },
         error: function (title, text, action, autoclose) {
@@ -1283,7 +1399,7 @@ var Coker = {
             $e.find(".btn_sear").on("click", function () {
                 if ($t.val() == "") {
                     co.sweet.error("錯誤", "請輸入搜尋文字", function () {
-                        setTimeout(function () { $t2.trigger("focus"); },300);
+                        setTimeout(function () { $t2.trigger("focus"); }, 300);
                     }, false);
                 } else {
                     window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;

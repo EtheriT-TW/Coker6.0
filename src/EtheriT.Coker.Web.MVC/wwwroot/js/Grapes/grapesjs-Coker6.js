@@ -562,7 +562,7 @@
                             $("#SwiperList li:first").find("label").trigger("click");
 
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
-                                newLi($("#SwiperList>li").length, {});
+                                newLi($("#SwiperList>li").length, { a_tag: true, img_update: true });
                             });
 
                             $("#SwiperModal .btn-add-YT").off("click").on("click", function () {

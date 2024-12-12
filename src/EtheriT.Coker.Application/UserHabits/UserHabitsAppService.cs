@@ -135,5 +135,26 @@ namespace EtheriT.Coker.Application.UserHabits
             }
             return response;
         }
+        public async Task<ResponseMessageDto> DeleteUserGroup(long id)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                UserGrouping? group = await db.UserGroupings.Where(e => e.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
+                if (group != null)
+                {
+                    group.IsDeleted = true;
+                    await loginUserData.SaveChanges(group);
+                }
+                else throw new Exception("資料不存在");
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
     }
 }

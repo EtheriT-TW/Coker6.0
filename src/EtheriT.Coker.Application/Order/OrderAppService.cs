@@ -24,6 +24,9 @@ using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Web.Core.Models;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.Drawing;
+using Microsoft.Extensions.Logging;
+using EtheriT.Coker.Application.Authorization;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -33,6 +36,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly LoginUserData loginUserData;
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IAccountAppService accountAppService;
         private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
@@ -41,6 +45,7 @@ namespace EtheriT.Coker.Application.Order
             LoginUserData loginUserData,
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
+            IAccountAppService accountAppService,
             MailAppService mailAppService,
             IConfiguration configuration,
             IMapper mapper
@@ -50,6 +55,7 @@ namespace EtheriT.Coker.Application.Order
             this.loginUserData = loginUserData;
             this.tokenAppService = tokenAppService;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.accountAppService = accountAppService;
             this.mailAppService = mailAppService;
             this.configuration = configuration;
             this.mapper = mapper;
@@ -133,21 +139,6 @@ namespace EtheriT.Coker.Application.Order
                     db.Order_Headers.Add(oh);
                     db.SaveChanges();
 
-                    if (Token.IsLogin)
-                    {
-                        var font_user = await db.FrontUsers.Where(e => e.UUID == UUID && e.Name == oh.Orderer && e.Email == oh.OrdererEmail).FirstOrDefaultAsync();
-                        if (font_user != null)
-                        {
-                            if (font_user.CellPhone == null || font_user.CellPhone == "") font_user.CellPhone = oh.OrdererCellPhone;
-                            if (font_user.TelPhone == null || font_user.TelPhone == "") font_user.TelPhone = oh.OrdererTelephone;
-                            if (font_user.Address == null || font_user.Address == "") font_user.Address = oh.OrdererAddress;
-                            if (font_user.Sex == null) font_user.Sex = oh.OrdererSex;
-                            font_user.LastModifierUserId = font_user.FK_User;
-                            font_user.LastModificationTime = datetime_now;
-                            db.SaveChanges();
-                        }
-                    }
-
                     List<Core.Models.Order_Details> ods = new List<Core.Models.Order_Details>();
                     List<long> scids = new List<long>();
                     foreach (var data in dto.OrderDetails)
@@ -222,6 +213,29 @@ namespace EtheriT.Coker.Application.Order
             }
 
             return output;
+        }
+        public async Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            Guid UUID = await tokenAppService.GetUUID();
+
+            try
+            {
+                var font_user = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
+                if (font_user != null)
+                {
+                    var userdata = mapper.Map<FrontEditUserDto>(dto);
+                    userdata.Email = null;
+                    response = await accountAppService.FrontUserEdit(userdata);
+                }
+                else throw new Exception("查無會員資料，無法儲存");
+            }
+            catch (Exception ex)
+            {
+                response.Error = "Error";
+                response.Message = ex.Message;
+            }
+            return response;
         }
         public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)
         {

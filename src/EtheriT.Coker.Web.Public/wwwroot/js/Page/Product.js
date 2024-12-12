@@ -8,6 +8,7 @@ function PageReady() {
     PageDataSet();
 
     guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -29,6 +30,7 @@ function PageReady() {
     });
 
     var hot_products_swiper = new Swiper("#HotProductsSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -50,6 +52,7 @@ function PageReady() {
     });
 
     var related_products_swiper = new Swiper("#RelatedProductsSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -71,6 +74,7 @@ function PageReady() {
     });
 
     var ads_swiper = new Swiper("#AdsSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -316,6 +320,7 @@ function GuessLikeTypeChange() {
         $frame_btn.removeClass("d-none")
 
         guess_you_like_swiper = new Swiper("#GuessYouLikeSwiper > .swiper", {
+            a11y: true,
             slidesPerView: 1,
             spaceBetween: 15,
             loop: true,

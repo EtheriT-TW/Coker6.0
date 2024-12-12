@@ -339,6 +339,7 @@ function PageDefaultSet(result) {
     }
     if (result.img_Small.length > 1) {
         preview_swiper = new Swiper(".PreviewSwiper", {
+            a11y: true,
             slidesPerView: 4,
             loop: false,
             spaceBetween: 10,
@@ -361,6 +362,7 @@ function PageDefaultSet(result) {
         });
 
         product_swiper = new Swiper(".ProductSwiper", {
+            a11y: true,
             spaceBetween: 15,
             loop: true,
             navigation: {
@@ -508,7 +510,7 @@ function SpecRadio() {
 
 }
 function AddToCart() {
-    if (!localStorage.getItem("AgreePrivacy")) {
+    if (localStorage.getItem('AgreePrivacy') == null) {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
         if (s1 != null && s2 != null && $input_quantity.val() != 0) {

@@ -217,6 +217,7 @@ namespace EtheriT.Coker.Application.Token
                         }
                         db.SaveChanges();
                         response.Success = true;
+                        response.Message = token.PrivacyAgreeTime?.ToString("yyyy-MM-ddTHH:mm:ss") ?? null;
                     }
                 }
             }
@@ -241,9 +242,10 @@ namespace EtheriT.Coker.Application.Token
             }
             return UUID;
         }
-        public Guid GetUUID(Guid oldUUID) {
+        public Guid GetUUID(Guid oldUUID)
+        {
             var data = db.MappingOldNewUUID.Where(e => e.UserUUID == oldUUID || e.TempUUID == oldUUID).Select(e => e.UserUUID).FirstOrDefault();
-            return data == Guid.Empty? oldUUID: data;
+            return data == Guid.Empty ? oldUUID : data;
         }
         public async Task<List<Guid>> GetAllUUID(Guid UUID)
         {

@@ -95,7 +95,7 @@
 }
 
 #pictureSwiper {
-    height: 82.5%;
+    height: 87.5%;
 }
 
     #pictureSwiper > .swiper-wrapper > .swiper-slide {
@@ -130,7 +130,7 @@
     }
 
 #pictureSwiperThumbs {
-    height: 17.5%;
+    height: 12.5%;
 }
 
     #pictureSwiperThumbs .swiper-slide {

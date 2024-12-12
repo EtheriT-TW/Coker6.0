@@ -5,11 +5,52 @@
  ***************/
 function SwiperInit(obj) {
     var config = {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         keyboard: {
             enabled: true,
         },
+        lazy: {
+            loadPrevNext: true,
+        },
+        on: {
+            init: function () {
+                const swiper = this;
+                const setShow = function (event) {
+                    event.preventDefault()
+                    $(this).parents(".swiper-slide").find(".outside-item").addClass("show");
+                }
+                const hideShow = function (event) {
+                    $(this).parents(".swiper-slide").find(".outside-item").removeClass("show");
+                }
+                $(this.el).find(".hover-outside").on("click", setShow);
+                $(this.el).find(".hover-outside").on("mouseover", setShow);
+                $(this.el).find(".outside-item").on("mouseover", setShow);
+                $(this.el).find(".hover-outside").on("mouseout", hideShow);
+                $(this.el).find(".outside-item").on("mouseout", hideShow);
+                $("body").off("click.disableoutsideItem").on("click.disableoutsideItem", hideShow)
+                this.isLoopActive = this.params.loop;
+            },
+            slideChange: function () {
+                const swiper = this;
+                if (swiper.params.loop) {
+                    const $swiper = $(swiper.el);
+                    const $sliders = $swiper.find(".swiper-slide");
+                    const totalLength = swiper.slides.length;
+                    const activeIndex = swiper.activeIndex;
+                    const $focusedSlide = $swiper.find(":focus").parents(".swiper-slide");
+                    const focusIndex = $sliders.index($focusedSlide);
+                    if (typeof (focusIndex) != "undefined" && swiper.isLoopActive) {
+                        swiper.isLoopActive = false;
+                        swiper.loopDestroy();
+                    } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive) {
+                        swiper.isLoopActive = true;
+                        swiper.loopCreate();
+                    }
+                }
+            }
+        }
     };
     $.fn.extend({
         swiperBindEven: function (swiper, canNext) {
@@ -49,6 +90,7 @@ function SwiperInit(obj) {
                 var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
                 var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
                 var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+
                 if ($(activeSlide).find("video").length > 0) {
                     return;
                 }
@@ -56,18 +98,17 @@ function SwiperInit(obj) {
             }
             thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
-            $(this).find("a").on("focus", stop);
+            $(this).find("a").on("focus", function () {
+                const activeIndex = $(swiper.el).find(":focus").parents(".swiper-slide").attr("aria-label").split(" / ")[0];
+                swiper.slideTo(activeIndex - 1, 300);
+                stop();
+            });
             $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled", false);
-            if (typeof (swiper.slide) != "undefined") {
-                setTimeout(function () {
-                    swiper.slideTo(0);
-                }, 100);
-                if (swiper.slides.length > 1) swiper.slideTo(1);
-            }
             $(window).off('resize.swiper').on('resize.swiper', checkSlides);
             $(window).trigger("resize.swiper");
+            swiper.update(); 
         }
     });
 
@@ -480,15 +521,14 @@ function SwiperInit(obj) {
 
                     }
                 },
-                loop: false, //改為false阻止點選最後一張圖連跳太多張
                 freeMode: true,
                 watchSlidesProgress: true,
-
             });
-            const pictureSwiper = new Swiper("#pictureSwiper", {
+
+            var pictureSwiper = new Swiper("#pictureSwiper", {
                 centeredSlides: true,
                 spaceBetween: 10,
-                loop: false,
+                loop: true,
                 navigation: {
                     nextEl: "#pictureSwiper .swiper-button-next",
                     prevEl: "#pictureSwiper .swiper-button-prev",
@@ -498,6 +538,11 @@ function SwiperInit(obj) {
                 },
                 thumbs: {
                     swiper: pictureSwiperThumbs,
+                },
+                loop: true,
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
                 }
             });
 
@@ -521,7 +566,7 @@ function SwiperInit(obj) {
                     for (let i = 0; i < $images.length; i++) {
                         const newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiper.appendSlide(newSlide);
-                        const newSlideThumbs = `<div class="swiper-slide align-content-center mx-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        const newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
                 }

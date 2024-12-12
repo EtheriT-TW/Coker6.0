@@ -5,6 +5,7 @@
     $(".btn_typography").on("click", Typography);
 
     var related_products_swiper = new Swiper("#RelatedProductsSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -21,6 +22,12 @@
             },
             769: {
                 slidesPerView: 4,
+            }
+        },
+        on: {
+            init: function () {
+                // 初始化時處理無障礙屬性
+                updateAccessibleSlides(this);
             }
         }
     });

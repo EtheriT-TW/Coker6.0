@@ -122,6 +122,7 @@ function deleteButtonClicked(e) {
     Coker.sweet.confirm("刪除資料", "刪除後不可返回", "確定刪除", "取消", function () {
         co.UserHabits.DeleteUserGroup(e.row.key).done(function (result) {
             if (result.success) {
+                co.sweet.success("刪除成功");
                 e.component.refresh();
             }
         });

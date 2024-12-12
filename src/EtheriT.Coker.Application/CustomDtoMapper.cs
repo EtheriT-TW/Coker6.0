@@ -199,6 +199,15 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
 
+            //FrontUser
+            CreateMap<OrderHeaderAddDto, FrontEditUserDto>()
+                .ForMember(e => e.Name, option => option.MapFrom(c => c.Orderer))
+                .ForMember(e => e.Sex, option => option.MapFrom(c => c.OrdererSex))
+                .ForMember(e => e.TelPhone, option => option.MapFrom(c => c.OrdererTelephone))
+                .ForMember(e => e.CellPhone, option => option.MapFrom(c => c.OrdererCellPhone))
+                .ForMember(e => e.Address, option => option.MapFrom(c => c.OrdererAddress))
+                .ReverseMap();
+
             //Order
             CreateMap<OrderHeaderDataDto, Order_Header>()
                 .ForMember(e => e.OrdererCellPhone, option => option.MapFrom(c => c.OrdererCellphone))

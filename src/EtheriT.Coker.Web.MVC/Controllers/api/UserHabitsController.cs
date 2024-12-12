@@ -30,5 +30,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> GetUserGroupOne(long id) { 
             return await userHabitsAppService.GetUserGroupOne(id);
         }
+        [HttpDelete]
+        public async Task<ResponseMessageDto> DeleteUserGroup(long id)
+        {
+            return await userHabitsAppService.DeleteUserGroup(id);
+        }
     }
 }

@@ -11,8 +11,12 @@ function SwiperInit(obj) {
         keyboard: {
             enabled: true,
         },
+        lazy: {
+            loadPrevNext: true,
+        },
         on: {
             init: function () {
+                const swiper = this;
                 const setShow = function (event) {
                     event.preventDefault()
                     $(this).parents(".swiper-slide").find(".outside-item").addClass("show");
@@ -102,14 +106,9 @@ function SwiperInit(obj) {
             $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled", false);
-            if (typeof (swiper.slide) != "undefined") {
-                setTimeout(function () {
-                    swiper.slideTo(0);
-                }, 100);
-                if (swiper.slides.length > 1) swiper.slideTo(1);
-            }
             $(window).off('resize.swiper').on('resize.swiper', checkSlides);
             $(window).trigger("resize.swiper");
+            swiper.update(); 
         }
     });
 

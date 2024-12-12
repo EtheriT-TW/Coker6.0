@@ -15,5 +15,6 @@ namespace EtheriT.Coker.Application.Shared.UserHabits
         public Task<JsonResult> GetUserGroupList(DataSourceLoadOptions loadOptions);
         public Task<ResponseMessageDto> AddUpUserGroup(UserGroupAddUpInputDto dto);
         public Task<ResponseMessageDto> GetUserGroupOne(long id);
+        public Task<ResponseMessageDto> DeleteUserGroup(long id);
     }
 }

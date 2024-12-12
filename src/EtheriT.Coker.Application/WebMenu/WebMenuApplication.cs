@@ -221,7 +221,7 @@ namespace EtheriT.Coker.Application
                             m.OverImgName = data[0].Name;
                         }
                     }
-                    if (m.icon.StartsWith("IconId"))
+                    if ((m.icon??"").StartsWith("IconId"))
                     {
                         var s = m.icon.Split(":");
                         if (s.Length > 1 && !string.IsNullOrEmpty(s[1]))

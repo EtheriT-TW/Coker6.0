@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Webs.Dto;
@@ -358,20 +359,26 @@ namespace EtheriT.Coker.Application
             var routeData = httpContextAccessor.HttpContext.GetRouteData();
 			var Action = routeData.Values["action"]?.ToString();
 			var Controller = routeData.Values["controller"]?.ToString();
+            var WebsiteID = await GetWebsiteId();
 
-			db.AuditLogs.Add(new Core.Models.AuditLog { 
-                ClientIpAddress = GetClientIP(),
-                BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
-                ExecutionTime = DateTime.Now,
-                MethodName= Action,
-                Parameters = Paramater,
-                ServiceName = Controller,
-                ReturnValue= response,
-                UserId = user.Id,
-                ClientName = user.UserName,
-                FK_WebsiteId = await GetWebsiteId()
-            });
-            db.SaveChanges();
+            if (!WebsiteID.IsNullOrEmpty())
+            {
+                db.AuditLogs.Add(new Core.Models.AuditLog
+                {
+                    ClientIpAddress = GetClientIP(),
+                    BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
+                    ExecutionTime = DateTime.Now,
+                    MethodName = Action,
+                    Parameters = Paramater,
+                    ServiceName = Controller,
+                    ReturnValue = response,
+                    UserId = user.Id,
+                    ClientName = user.UserName,
+                    FK_WebsiteId = await GetWebsiteId()
+                });
+                db.SaveChanges();
+            }
+            else throw new Exception("記錄錯誤");
         }
         public async Task SetLogs(long? UsetId,long? WebsiteId, string Paramater, string response)
         {

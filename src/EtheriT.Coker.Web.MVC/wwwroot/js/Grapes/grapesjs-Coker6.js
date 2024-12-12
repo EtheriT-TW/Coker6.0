@@ -1054,7 +1054,7 @@
             const html = co.Data.HtmlDecode(this.html);
             const elementHtmlCss = `${html}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
-            let iconText = this.icon.replace("material-symbols-outlined", "").trim();
+            let iconText = (this.icon||"").replace("material-symbols-outlined", "").trim();
             let media = "";
             if (/^fa/.test(this.icon)) {
                 media = `<i class="${this.icon} fa-5x"></i>`;

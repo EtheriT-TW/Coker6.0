@@ -217,6 +217,7 @@ namespace EtheriT.Coker.Application.Token
                         }
                         db.SaveChanges();
                         response.Success = true;
+                        response.Message = token.PrivacyAgreeTime.ToString();
                     }
                 }
             }

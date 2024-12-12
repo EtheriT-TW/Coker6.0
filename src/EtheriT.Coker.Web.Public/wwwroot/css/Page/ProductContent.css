@@ -66,6 +66,11 @@ i.fa-chevron-right {
     cursor: zoom-in !important;
 }
 
+    #Pro_Image .cloudimage-360-inner-box .cloudimage-360-icons-container {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
 #Pro_Youtube {
     height: 75vh;
 }

@@ -587,7 +587,7 @@ function cookie_accept(isnew) {
     }
 }
 function cookie_reject() {
-    if ($("#Cookie").hasClass("show")) $("#Cookie").removeClass("show")
+    $("#Cookie").removeClass("show")
 }
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {

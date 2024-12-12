@@ -313,7 +313,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 default:
                     break;
             }
-            if (defaultData.Layout_Type == 1)
+            if (defaultData.Layout_Type == 1 && siteId == 2)
             {
                 headerViewModel.LogoImageUrl = "/upload/logo.svg";
             }

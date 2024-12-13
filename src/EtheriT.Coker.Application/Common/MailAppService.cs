@@ -108,7 +108,7 @@ namespace EtheriT.Coker.Application.Common
             // 密件副本
             foreach (var item in dto.Bcc)
             {
-                message.Bcc.Add(new MailboxAddress(item.Name, item.Email));
+                message.Bcc.Add(new MailboxAddress($"{webSiteName}-{item.Name}", item.Email));
             }
 
             // 設定郵件標題

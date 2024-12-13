@@ -27,6 +27,7 @@ using System.Drawing;
 using Microsoft.Extensions.Logging;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.StoreSet;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -37,6 +38,7 @@ namespace EtheriT.Coker.Application.Order
         private readonly ITokenAppService tokenAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly IAccountAppService accountAppService;
+        private readonly IStoreSetAppService storeSetAppService;
         private readonly MailAppService mailAppService;
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
@@ -46,6 +48,7 @@ namespace EtheriT.Coker.Application.Order
             ITokenAppService tokenAppService,
             IShoppingCartAppService shoppingCartAppService,
             IAccountAppService accountAppService,
+            IStoreSetAppService storeSetAppService,
             MailAppService mailAppService,
             IConfiguration configuration,
             IMapper mapper
@@ -56,6 +59,7 @@ namespace EtheriT.Coker.Application.Order
             this.tokenAppService = tokenAppService;
             this.shoppingCartAppService = shoppingCartAppService;
             this.accountAppService = accountAppService;
+            this.storeSetAppService = storeSetAppService;
             this.mailAppService = mailAppService;
             this.configuration = configuration;
             this.mapper = mapper;
@@ -1204,7 +1208,21 @@ namespace EtheriT.Coker.Application.Order
                                              $"</div>";
                     var mailcss = "*{ font-family: sans-serif; } .text-size1{ font-size: 1rem; } .text-size1_25{ font-size: 1.25rem; } .text-size1_5{ font-size: 1.5rem; } .text-bold {  font-weight: bold; } .text-red {  color: red; } .text-start{ text-align: start; } .text-end{ text-align: end; } .ms-1{ margin-left: 1rem; } thead{ background-color: #F2F2F2; } table { border-collapse: collapse; border: 2px solid #8c8c8c; letter-spacing: 1px; width: 600px; margin: 1rem 0 1rem 0; } th,td { border: 1px solid #a0a0a0; padding: 8px 10px; }";
 
-                    var sedResult = await mailAppService.sendMail(new SenderDto
+                    MailUserDataDto cc = new MailUserDataDto { Name = "客服信箱" };
+                    var conpny = await (from c in db.MappingCompanyAndWebsites.Include(e => e.Company).Where(e => e.FK_WebsiteId == WebsiteID)
+                                 select c.Company).FirstOrDefaultAsync();
+                    if (conpny != null)
+                    {
+                        cc.Email = conpny.Email;
+                    }
+                    else
+                    {
+                        var smtp = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput { SiteId = WebsiteID, key = "SMTPAccount" });
+                        if (smtp != null && smtp.Success && smtp.detailItem != null && smtp.detailItem.value != null && smtp.detailItem.value.Count > 0) {
+                            cc.Email = smtp.detailItem.value[0];
+                        }
+                    }
+                    var sendDto = new SenderDto
                     {
                         Recipients = new List<MailUserDataDto>(){
                                         new MailUserDataDto()
@@ -1216,7 +1234,10 @@ namespace EtheriT.Coker.Application.Order
                         Subject = $"訂購通知【{Website.Title}】",
                         Body = mailhtml,
                         Css = mailcss,
-                    }, WebsiteID);
+                    };
+                    if (!string.IsNullOrEmpty(cc.Email)) sendDto.Bcc.Add(cc);
+
+                    var sedResult = await mailAppService.sendMail(sendDto, WebsiteID);
 
                     response = sedResult;
                 }

@@ -4,6 +4,10 @@
     background-color: #fffeea;
 }
 
+.icon-search-bg {
+    margin-left:1rem;
+}
+
 .cookie.show {
     display: flex;
 }
@@ -427,7 +431,7 @@
     }
 
     .offcanvas-title {
-        margin-top: -5px;
+        margin-top: -12px;
         margin-left: 80px;
     }
 
@@ -801,10 +805,6 @@
 @media (max-width: 440px) {
     .subtitle > .subtitle_title {
         font-weight: 400;
-    }
-
-    .offcanvas-title {
-        margin-top: unset;
     }
 
     .offcanvas-header {

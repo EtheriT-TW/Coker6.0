@@ -690,6 +690,12 @@
 }
 
 @media (max-width: 1000px) {
+    #Offcanvas_Mega_Menu > ul > .title > .content {
+        background-color: #C7CE38 !important;
+    }
+        #Offcanvas_Mega_Menu > ul > .title > .content span {
+            color: #ffffff !important;
+        }
     #Mega_Menu .w50 {
         display: none !important;
     }

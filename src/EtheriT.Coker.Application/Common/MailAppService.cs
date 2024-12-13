@@ -91,6 +91,8 @@ namespace EtheriT.Coker.Application.Common
             // 建立郵件
             var message = new MimeMessage();
             // 添加寄件者
+            if (!string.IsNullOrEmpty(dto.SMTP.Password) && !string.IsNullOrEmpty(dto.SMTP.UserName)) 
+                dto.Sender.Email = dto.SMTP.UserName;
             message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
 
             // 添加收件者
@@ -106,7 +108,7 @@ namespace EtheriT.Coker.Application.Common
             // 密件副本
             foreach (var item in dto.Bcc)
             {
-                message.Bcc.Add(new MailboxAddress(item.Name, item.Email));
+                message.Bcc.Add(new MailboxAddress($"{webSiteName}-{item.Name}", item.Email));
             }
 
             // 設定郵件標題

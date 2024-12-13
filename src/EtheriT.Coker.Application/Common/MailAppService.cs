@@ -91,6 +91,8 @@ namespace EtheriT.Coker.Application.Common
             // 建立郵件
             var message = new MimeMessage();
             // 添加寄件者
+            if (!string.IsNullOrEmpty(dto.SMTP.Password) && !string.IsNullOrEmpty(dto.SMTP.UserName)) 
+                dto.Sender.Email = dto.SMTP.UserName;
             message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
 
             // 添加收件者

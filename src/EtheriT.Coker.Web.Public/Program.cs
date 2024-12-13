@@ -356,34 +356,8 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseHsts();
 app.UseHttpsRedirection();
+app.UseMiddleware<ContentSecurityPolicyMiddleware>();
 
-app.Use(async (context, next) =>
-{
-    Console.WriteLine("Request path: " + context.Request.Path);
-    var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-    // 將 nonce 存入 HttpContext.Items
-    context.Items["CSPNonce"] = nonce;
-    // 添加 CSP(內容限制) header
-    // google 翻譯 script-src、style-src要加上 'unsafe-inline' 目前還找不到解決方案 
-    context.Response.Headers["Content-Security-Policy"] =
-        $"default-src 'self';" +
-        $"script-src 'self' 'nonce-{nonce}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com; " +
-        $"style-src 'self' 'nonce-{nonce}' *.googleapis.com  *.google.com *.gstatic.com cdnjs.cloudflare.com cdn.ckeditor.com; " +
-        $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
-        $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
-        $"frame-src 'self' *.ezsale.tw *.google.com *.youtube.com *.youtube-nocookie.com *.facebook.com *.instagram.com *.googletagmanager.com *.doubleclick.net;" +
-        $"connect-src 'self' *.google.com *.google-analytics.com *.googleapis.com;" +
-        $"frame-ancestors 'self' *.ezsale.tw;";
-    //cache 限制設定
-    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
-    //Pragma 為http 1.0以下使用，以上已被 Cache-Control取代
-    context.Response.Headers["Pragma"] = "no-cache";
-    context.Response.Headers["Expires"] = "0";
-    //防止瀏覽器進行 MIME 嗅探
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-
-    await next();
-});
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

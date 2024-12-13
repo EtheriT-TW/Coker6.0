@@ -445,7 +445,7 @@
     }
 
     #Offcanvas_Mega_Menu {
-        background-color: rgb(101 169 239 / 95%);
+        background-color: #C7CE38;
         width: 85% !important;
     }
 
@@ -809,6 +809,7 @@
 
     .offcanvas-header {
         padding: 1.6rem !important;
+        padding-left:3rem !important;
     }
 
     .home, .page {

@@ -123,6 +123,7 @@ function SwiperInit(obj) {
                     $video.prop('playsinline', true);
                 }
             });
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             if ($(Id).find(".swiper-slide").length == 1 && $template.length > 0) return false;
@@ -210,6 +211,7 @@ function SwiperInit(obj) {
         const index = $self.index(this);
         $self.find(".six_thumbs > .swiper-wrapper").empty();
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
@@ -286,6 +288,7 @@ function SwiperInit(obj) {
     $(".two_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper"
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
@@ -335,6 +338,7 @@ function SwiperInit(obj) {
     $(".three_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -409,6 +413,7 @@ function SwiperInit(obj) {
     $(".five_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -456,6 +461,7 @@ function SwiperInit(obj) {
     $(".six_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {

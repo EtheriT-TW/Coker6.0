@@ -1,4 +1,7 @@
 ﻿
+.price.notshow::before {
+    content: '';
+}
 
 .text-border {
     border-left: #888888 solid .5rem;
@@ -487,7 +490,7 @@
         background: #fff;
         z-index: 3;
         height: 310px;
-        width:100%;
+        width: 100%;
     }
 
         .e-info .about .describe:hover {

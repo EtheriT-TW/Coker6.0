@@ -606,7 +606,7 @@ namespace EtheriT.Coker.Application.Product
                         Description = db_p.Description,
                         Html = db_p.Html ?? "",
                         ItemNo = db_p.ItemNo,
-                        Status = (int) db_p.Status,
+                        Status = (int)db_p.Status,
                         StatusName = db_p.Status.ToString(),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
@@ -774,7 +774,6 @@ namespace EtheriT.Coker.Application.Product
                         double max = p.Max(e => e.Price) ?? 0;
                         if (min == max) data.Price = $"{max}";
                         else data.Price = $"{min} ~ {max}";
-
                     }
                 }
 
@@ -1172,31 +1171,43 @@ namespace EtheriT.Coker.Application.Product
                                                        {
                                                            Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
                                                        }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                             Price = new List<double>(),
+                                             Price = null,
                                              ItemNo = prod.ItemNo,
                                          }).ToList();
 
                     output.Page_Total = (int)Math.Ceiling(prod_log_data.Count / 8.0);
                     prod_log_data = prod_log_data.Skip((page - 1) * 8).Take(8).ToList();
 
-                    for (var i = 0; i < prod_log_data.Count; i++)
+                    var sotreset = await (from sd in db.StoreSetDetail
+                                          join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                                          where sd.FK_WebsiteId == WebsiteId
+                                          where ss.key == "storeBuyState"
+                                          select sd.value).FirstOrDefaultAsync();
+
+                    var showprice = !(sotreset == "noPayNoShow");
+
+                    if (showprice)
                     {
-                        var prod_prices = await (from prod_stock in db.Prod_Stocks
-                                                 join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                 where prod_stock.FK_Pid == prod_log_data[i].PId
-                                                 where prod_price.Price > 0
-                                                 orderby prod_price descending
-                                                 select prod_price).ToListAsync();
-                        if (prod_prices.Count > 1)
+                        for (var i = 0; i < prod_log_data.Count; i++)
                         {
-                            prod_log_data[i].Price.Add((double)prod_prices[0].Price);
-                            prod_log_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            prod_log_data[i].Price = new List<double>();
+                            var prod_prices = await (from prod_stock in db.Prod_Stocks
+                                                     join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
+                                                     where prod_stock.FK_Pid == prod_log_data[i].PId
+                                                     where prod_price.Price > 0
+                                                     orderby prod_price descending
+                                                     select prod_price).ToListAsync();
+                            if (prod_prices.Count > 1)
+                            {
+                                prod_log_data[i].Price.Add((double)prod_prices[0].Price);
+                                prod_log_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            }
+                            else if (prod_prices.Count == 1)
+                            {
+                                prod_log_data[i].Price.Add((double)prod_prices[0].Price);
+                            }
+                            else prod_log_data[i].Price.Add(0);
                         }
-                        else if (prod_prices.Count == 1)
-                        {
-                            prod_log_data[i].Price.Add((double)prod_prices[0].Price);
-                        }
-                        else prod_log_data[i].Price.Add(0);
                     }
 
                     output.Data = prod_log_data;

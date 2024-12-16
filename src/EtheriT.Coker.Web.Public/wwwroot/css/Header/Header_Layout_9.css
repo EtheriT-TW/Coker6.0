@@ -4,6 +4,10 @@
     background-color: #fffeea;
 }
 
+#Offcanvas_Mega_Menu > .navbar-nav > .metaMenu:hover > .font {
+    background: #529E58;
+}
+
 .icon-search-bg {
     margin-left:1rem;
 }

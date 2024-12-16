@@ -357,7 +357,7 @@ footer {
     }
     .paging_frame {
         width: 30%;
-        height: 25%;
+        height: 45%;
     }
 }
 
@@ -438,6 +438,20 @@ footer {
         }
         .abreast > ul > li {
             width: calc(50vw - 1rem);
+        }
+    }
+
+    @media (max-width:520px) {
+        .abreast .paging_frame:not(:last-child) {
+            width: 30%;
+            height: 45%;
+        }
+        #FootContainer > #Footer_Menu > .paging_frame:nth-child(5) {
+            position:absolute;
+            top:35%;
+        }
+        #Footer_Menu {
+            height: 400px !important;
         }
     }
 

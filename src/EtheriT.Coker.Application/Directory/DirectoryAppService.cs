@@ -346,9 +346,9 @@ namespace EtheriT.Coker.Application.Directory
                                 (e.Title ?? "").Contains(dto.SearchText ?? "") ||
                                 (e.Description ?? "").Contains(dto.SearchText ?? "") ||
                                 (e.Html ?? "").Contains(dto.SearchText ?? "") ||
-								db.Tag_Associates.Include(ta => ta.Tag)
-                                    .Where(ta => !ta.IsDeleted && ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == e.Id && ta.Tag!=null && ta.Tag.Title == dto.SearchText).Any()
-							);
+                                db.Tag_Associates.Include(ta => ta.Tag)
+                                    .Where(ta => !ta.IsDeleted && ta.Type == TagAssociateTypeEnum.文章 && ta.FK_AId == e.Id && ta.Tag != null && ta.Tag.Title == dto.SearchText).Any()
+                            );
             int skip = (page - 1) * shownum - 1;
             if (skip < 0) skip = 0;
             //Regex.Replace(m.Html, @"<(.|\n)*?>", "")
@@ -458,7 +458,8 @@ namespace EtheriT.Coker.Application.Directory
                         .ThenByDescending(e => e.Id)
                         .Skip(skip).Take(shownum);
 
-                    var list = await Task.WhenAll(dataMargin.Select(async e => {
+                    var list = await Task.WhenAll(dataMargin.Select(async e =>
+                    {
                         List<FileGetImgDto> imagedata = new List<FileGetImgDto>();
                         if (e.type == DirectoryTypeEnum.文章)
                         {
@@ -670,8 +671,8 @@ namespace EtheriT.Coker.Application.Directory
             // 取得當前使用者的分群資訊
             var Groping = db.UserGroupingDetails.Include(e => e.userGrouping)
                 .Where(ugd => ugd.UUID == UUID).FirstOrDefault();
-            var groupTags = Groping != null ? 
-                    db.Tag_Associates.Where(e => e.FK_AId == Groping.FK_GropingId && e.Type == TagAssociateTypeEnum.使用者分群).Select(e => e.FK_TId).ToList():
+            var groupTags = Groping != null ?
+                    db.Tag_Associates.Where(e => e.FK_AId == Groping.FK_GropingId && e.Type == TagAssociateTypeEnum.使用者分群).Select(e => e.FK_TId).ToList() :
                     new List<long>();
 
             // 查詢個人標籤（若無分群）
@@ -748,11 +749,21 @@ namespace EtheriT.Coker.Application.Directory
                 else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
 
                 var s = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).Select(e => e.Id).ToListAsync();
-                var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
-                double min = p.Min(e => e.Price) ?? 0;
-                double max = p.Max(e => e.Price) ?? 0;
-                if (min == max) data.Price = $"{max}";
-                else data.Price = $"{min} ~ {max}";
+                var sotreset = await (from sd in db.StoreSetDetail
+                                      join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                                      where sd.FK_WebsiteId == WebsiteID
+                                      where ss.key == "storeBuyState"
+                                      select sd.value).FirstOrDefaultAsync();
+
+                var showprice = !(sotreset == "noPayNoShow");
+                if (showprice)
+                {
+                    var p = await db.Prod_Prices.Where(x => s.Contains(x.FK_PSId)).Where(e => !e.IsDeleted).ToListAsync();
+                    double min = p.Min(e => e.Price) ?? 0;
+                    double max = p.Max(e => e.Price) ?? 0;
+                    if (min == max) data.Price = $"{max}";
+                    else data.Price = $"{min} ~ {max}";
+                }
             }
             output.ReleInfos = list;
             return output;
@@ -944,6 +955,22 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                         default:
                             break;
+                    }
+
+                    var sotreset = await (from sd in db.StoreSetDetail
+                                          join s in db.StoreSet on sd.FK_StoreSetId equals s.Id
+                                          where sd.FK_WebsiteId == WebsiteID
+                                          where s.key == "storeBuyState"
+                                          select sd.value).FirstOrDefaultAsync();
+
+                    var showprice = !(sotreset == "noPayNoShow");
+
+                    if (!showprice)
+                    {
+                        for (var i = 0; i < output.ReleInfos.Count; i++)
+                        {
+                            output.ReleInfos[i].Price = null;
+                        }
                     }
                 }
             }

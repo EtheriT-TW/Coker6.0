@@ -432,37 +432,39 @@ function DirectoryDataInsert($item, result) {
             }
             content.find(".normal-price").text(convert_price(data.price));
             content.find(".price-grid").text(convert_price(data.price));
-            if (data.itemNo != null && data.itemNo != "") content.find(".itemNo").text(data.itemNo);
-            else content.find(".itemNo").remove();
-
-            $tags = content.find(".tags");
-            $tags.empty();
-            data.tags.slice(0, 2).forEach((tag) => {
-                let badge = $(temp_tag).clone();
-                badge.text(tag.tag_Name.slice(0, 4));
-                $tags.append(badge);
-            });
-            data.tags.slice(2).forEach((tag) => {
-                let badge = $(temp_tag).clone();
-                badge.text(tag.tag_Name.slice(0, 4));
-                badge.addClass("more-tag d-none");
-                $tags.append(badge);
-            });
-            if (data.tags.length > 2) {
-                let badge = $(temp_tag).clone();
-                badge.text("...");
-                badge.addClass("less-tag");
-                $tags.append(badge);
-            }
-            $tags.children().each(function () {
-                $(this).on("click", function () {
-                    location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
-                    return false;
-                })
-            });
         } else {
-            content.find(".itemNo,.price").remove();
+            content.find(".price").addClass("notshow");
+            content.find(".price").text("");
         }
+
+        if (data.itemNo != null && data.itemNo != "") content.find(".itemNo").text(data.itemNo);
+        else content.find(".itemNo").remove();
+
+        $tags = content.find(".tags");
+        $tags.empty();
+        data.tags.slice(0, 2).forEach((tag) => {
+            let badge = $(temp_tag).clone();
+            badge.text(tag.tag_Name.slice(0, 4));
+            $tags.append(badge);
+        });
+        data.tags.slice(2).forEach((tag) => {
+            let badge = $(temp_tag).clone();
+            badge.text(tag.tag_Name.slice(0, 4));
+            badge.addClass("more-tag d-none");
+            $tags.append(badge);
+        });
+        if (data.tags.length > 2) {
+            let badge = $(temp_tag).clone();
+            badge.text("...");
+            badge.addClass("less-tag");
+            $tags.append(badge);
+        }
+        $tags.children().each(function () {
+            $(this).on("click", function () {
+                location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
+                return false;
+            })
+        });
         // Clear content of shareBlock and re-init
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons
         content.find(".shareBlock").data("init", false);

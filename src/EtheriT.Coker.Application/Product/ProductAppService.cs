@@ -606,7 +606,7 @@ namespace EtheriT.Coker.Application.Product
                         Description = db_p.Description,
                         Html = db_p.Html ?? "",
                         ItemNo = db_p.ItemNo,
-                        Status = (int) db_p.Status,
+                        Status = (int)db_p.Status,
                         StatusName = db_p.Status.ToString(),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
@@ -774,7 +774,6 @@ namespace EtheriT.Coker.Application.Product
                         double max = p.Max(e => e.Price) ?? 0;
                         if (min == max) data.Price = $"{max}";
                         else data.Price = $"{min} ~ {max}";
-
                     }
                 }
 

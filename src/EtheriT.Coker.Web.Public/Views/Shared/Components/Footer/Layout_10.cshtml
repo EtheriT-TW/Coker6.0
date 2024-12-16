@@ -1,0 +1,61 @@
+﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
+@using EtheriT.Coker.Application.Shared.i18n;
+@model FooterViewModel
+<link rel="stylesheet" href="~/css/Footer/Footer_Layout_10.min.css" asp-append-version="true" />
+@{
+	switch (ViewData["Locale"] == null ? "" : ViewData["Locale"].ToString())
+	{
+		case "en":
+			<link rel="stylesheet" href="~/css/Footer/Footer_Layout_10.en.min.css" asp-append-version="true" />
+			break;
+	}
+}
+<script src="~/js/Footer/Footer_Layout_1.min.js" asp-append-version="true"></script>
+@if (Model.footerViewModels != null && Model.footerViewModels.Count > 0)
+{
+	<div id="FootContainer" class="container listMenu d-flex justify-content-center align-items-center">
+		<div id="Footer_Menu" class="abreast row w-100 flex-column">
+			@foreach (var menu in Model.footerViewModels)
+			{
+				<div class="paging_frame">
+					<p>@menu.Title</p>
+					<div class="abreast">
+						<ul>
+							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+							{
+								<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
+							}
+						</ul>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+}
+<div id="link-block" class="d-flex align-items-center justify-content-center">
+	<div class="main-block d-flex px-2">
+		<img class="title-img" src="\upload\htmlConten\title_img.png" />
+		<a id="app-store" class="store-link align-content-center" href="https://reurl.cc/aZVOV7" title="連結至:AppStore(另開新視窗)">
+			<img src="\upload\htmlConten\app_store.png" />
+		</a>
+		<a id="google-play" class="store-link align-content-center" href="https://reurl.cc/xp75K4" title="連結至:GooglePlay(另開新視窗)">
+			<img src="\upload\htmlConten\google_play.png" />
+		</a>
+	</div>
+	<div class="other-link">
+		<a id="Line-link" href="https://line.me/R/ti/p/%40lgz8989y" title="連結至:Line(另開新視窗)">
+			<img src="\upload\htmlConten\Line.png" />
+		</a>
+	</div>
+</div>
+<div class="d-flex align-items-center flex-column footer-bg">
+	<img src="\upload\htmlConten\footer_logo.png" class="footer-img" />
+	<h5 class="my-1">@Model.Title</h5>
+	<div id="" class="abreast my-1 d-flex justify-content-center align-items-center">
+		@for (int i = 0; i < Model.Content.Count; i++)
+		{
+			<p>@Html.Raw(Model.Content[i])</p>
+		}
+	</div>
+</div>
+<div id="copyright">@Model.Copyright</div>

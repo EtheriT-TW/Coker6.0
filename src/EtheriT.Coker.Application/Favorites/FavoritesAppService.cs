@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
+using EtheriT.Coker.Core.Models;
 
 namespace EtheriT.Coker.Application.Favorites
 {
@@ -107,31 +108,44 @@ namespace EtheriT.Coker.Application.Favorites
                                                         {
                                                             Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
                                                         }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                              Price = new List<double>() { },
+                                              Price = null,
                                               ItemNo = prod.ItemNo,
                                           }).ToList();
                     output.Page_Total = (int)Math.Ceiling(favorites_data.Count / 8.0);
                     favorites_data = favorites_data.Skip((page - 1) * 8).Take(8).ToList();
 
-                    for (var i = 0; i < favorites_data.Count; i++)
+                    var sotreset = await (from sd in db.StoreSetDetail
+                                          join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                                          where sd.FK_WebsiteId == WebsiteId
+                                          where ss.key == "storeBuyState"
+                                          select sd.value).FirstOrDefaultAsync();
+
+                    var showprice = !(sotreset == "noPayNoShow");
+
+                    if (showprice)
                     {
-                        var prod_prices = await (from prod_stock in db.Prod_Stocks
-                                                 join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                 where prod_stock.FK_Pid == favorites_data[i].PId
-                                                 where prod_price.Price > 0
-                                                 orderby prod_price descending
-                                                 select prod_price).ToListAsync();
-                        if (prod_prices.Count > 1)
+                        for (var i = 0; i < favorites_data.Count; i++)
                         {
-                            favorites_data[i].Price.Add((double)prod_prices[0].Price);
-                            favorites_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            favorites_data[i].Price = new List<double>() { };
+                            var prod_prices = await (from prod_stock in db.Prod_Stocks
+                                                     join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
+                                                     where prod_stock.FK_Pid == favorites_data[i].PId
+                                                     where prod_price.Price > 0
+                                                     orderby prod_price descending
+                                                     select prod_price).ToListAsync();
+                            if (prod_prices.Count > 1)
+                            {
+                                favorites_data[i].Price.Add((double)prod_prices[0].Price);
+                                favorites_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            }
+                            else if (prod_prices.Count == 1)
+                            {
+                                favorites_data[i].Price.Add((double)prod_prices[0].Price);
+                            }
+                            else favorites_data[i].Price.Add(0);
                         }
-                        else if (prod_prices.Count == 1)
-                        {
-                            favorites_data[i].Price.Add((double)prod_prices[0].Price);
-                        }
-                        else favorites_data[i].Price.Add(0);
                     }
+
                     output.Data = favorites_data;
                     output.Success = true;
                 }

@@ -538,6 +538,13 @@ function ready() {
     string = $.trim(string);
     //console.log(string)
     $("#TermsModal .modal-body .content").html(string)
+
+    if ($(".instagram-media").length > 0) {
+        var ig_script = document.createElement('script');
+        ig_script.src = "//www.instagram.com/embed.js";
+        ig_script.async = true;
+        document.head.appendChild(ig_script);
+    }
 }
 
 function SiteElementInit() {

@@ -6,37 +6,6 @@
     transition: background-color 0s;
 }
 
-.hide-menu {
-    position: absolute !important;
-}
-
-.hide-menu .nav-item img {
-    display:none !important;
-}
-
-    .hide-menu #Offcanvas_Mega_Menu > ul > .title > a > img + span {
-        display: unset !important;
-    }
-    .hide-menu span {
-        color: white !important;
-        text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
-    }
-    .hide-menu .bg-secondary {
-        background-color: #9e9e9e !important;
-    }
-
-    .hide-menu #Mega_Menu {
-        transition: background-color 0s;
-        background-color: hsla(0,0%,0%,.075) !important;
-    }
-
-nav.hide-menu:hover #Mega_Menu {
-    transition: .75s all;
-    --bs-bg-opacity: 1;
-    background-color: rgba(var(--bs-white-rgb), var(--bs-bg-opacity)) !important;
-}
-
-
 #Car_Dropdown .pro_name {
     font-size: .9rem;
 }
@@ -336,6 +305,52 @@ nav.hide-menu:hover #Mega_Menu {
                     }
 /*RWD*/
 @media (min-width: 992px) {
+    .hide-menu {
+        position: absolute !important;
+    }
+
+        .hide-menu .nav-item img {
+            display: none !important;
+        }
+
+        .hide-menu span {
+            text-shadow: 2px 2px 2px #000 !important;
+        }
+
+    nav.hide-menu.shadow {
+        box-shadow: unset !important;
+    }
+
+    nav.hide-menu #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+        height: 60px !important;
+        display: unset !important;
+    }
+
+    .hide-menu #Offcanvas_Mega_Menu > ul > .title > .text-black {
+        height: 60px;
+        align-content: center;
+    }
+
+    .hide-menu span {
+        color: white !important;
+        text-shadow: 2px 2px 2px #000;
+    }
+
+    .hide-menu .bg-secondary {
+        background-color: #9e9e9e !important;
+    }
+
+    .hide-menu #Mega_Menu {
+        padding: 0 3rem;
+        transition: background-color 0s;
+        background-color: hsla(0,0%,0%,0%) !important;
+    }
+
+    nav.hide-menu:hover #Mega_Menu {
+        transition: .75s all;
+        --bs-bg-opacity: 1;
+        background-color: rgba(var(--bs-white-rgb), var(--bs-bg-opacity)) !important;
+    }
     #Mega_Menu .mega_menu_canvas, .mega_menu_canvas .dropdown {
         position: initial;
     }

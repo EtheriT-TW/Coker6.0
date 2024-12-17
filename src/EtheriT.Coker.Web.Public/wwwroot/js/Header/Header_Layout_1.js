@@ -22,14 +22,12 @@
         function hoverOff() {
             $('nav').off('mouseleave');
             $('nav').off('mouseover');
-        }   
+        }
         function hoverOn() {
             $('nav').on('mouseover', () => {
-                console.log('Mouse entered the element');
                 $('nav').addClass('show-menu').removeClass('hide-menu');
             });
             $('nav').on('mouseleave', () => {
-                console.log('Mouse entered the element');
                 $('nav').addClass('hide-menu').removeClass('show-menu');
             });
         }
@@ -46,7 +44,6 @@
 
                 // 檢查當前滾動位置是否在這個區塊範圍內
                 if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                    console.log(`Current section: ${showNav.id}`);
                     $('nav').removeClass('show-menu').addClass('hide-menu');
                     hoverOn();
                 } else {

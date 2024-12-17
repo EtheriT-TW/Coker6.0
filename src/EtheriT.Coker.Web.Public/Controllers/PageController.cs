@@ -444,7 +444,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
             ViewData["Layout"] = model.layout;
-            ViewData["PageTagNameName"] = $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
+            ViewData["PageTagNameName"] = key == "home" ? model.PageData.SiteName : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
             ViewData["Description"] = model.PageData.Description;
             ViewData["GA4"] = model.storeSet.GA4;
             ViewData["GTM"] = model.storeSet.GTM;

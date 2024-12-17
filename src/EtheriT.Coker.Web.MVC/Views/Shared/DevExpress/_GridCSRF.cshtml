@@ -2,7 +2,7 @@
 <script>
      function onBeforeSend(method, ajaxOptions) {
         var token = $(`input[name="AntiforgeryField"]`).val();
-        console.log(token);
+        //console.log(token);
         if (token) {
             ajaxOptions.headers = { "x-xsrf-token": token };
         }

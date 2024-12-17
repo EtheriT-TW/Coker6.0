@@ -893,10 +893,12 @@ function UploadListAdd(result, $target) {
         } else if (typeof ($self.data("tempid")) != "undefined") {
             var tempid = $self.data("tempid");
             var index = total_files.findIndex(item => item["TempId"] == tempid);
-            total_files.splice(index, 1);
-            total_files.forEach(file => {
-                file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
-            })
+            if (index >= 0) {
+                total_files.splice(index, 1);
+                total_files.forEach(file => {
+                    file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
+                })
+            }
         }
         UploadPreviewFrameClear($target);
         $self.remove();
@@ -1016,87 +1018,110 @@ function AddUp(success_text, error_text, target) {
                                 data.push(file);
                             }
                         })
-                        switch (data[0]["Type"]) {
-                            case 1:
-                                if (typeof (data[0]["File"]) == "string") {
-                                    co.File.fileSortChange({
-                                        Id: data[0]["Id"],
-                                        Sid: pid,
-                                        SerNo: $self.find(".ser_no").val(),
-                                    });
-                                } else {
-                                    var formData = new FormData();
-                                    formData.append("type", 1);
-                                    formData.append("sid", pid);
-                                    formData.append("serno", $self.find(".ser_no").val());
-                                    data.forEach(item => {
-                                        for (var i = 0; i < item["File"].length; i++) {
-                                            formData.append("files", item["File"][i]);
-                                        }
-                                        co.File.Upload(formData);
-                                        formData.delete('files');
-                                    })
-                                }
-                                break;
-                            /* ********** *****************
-                          360 上傳資料庫，須重打
-                           ***************************/
-                            case 2:
-                                var formData = new FormData();
-                                formData.append("type", 1);
-                                formData.append("sid", pid);
-                                formData.append("serno", $self.find(".ser_no").val());
-                                for (var i = 0; i < data.length; i += 3) {
-                                    for (var j = i; j < i + 3; j++) {
-                                        formData.append('files', data[j]);
+                        if (data.length > 1) {
+                            switch (data[0]["Type"]) {
+                                case 1:
+                                    if (typeof (data[0]["File"]) == "string") {
+                                        co.File.fileSortChange({
+                                            Id: data[0]["Id"],
+                                            Sid: pid,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        });
+                                    } else {
+                                        var formData = new FormData();
+                                        formData.append("type", 1);
+                                        formData.append("sid", pid);
+                                        formData.append("serno", $self.find(".ser_no").val());
+                                        data.forEach(item => {
+                                            for (var i = 0; i < item["File"].length; i++) {
+                                                formData.append("files", item["File"][i]);
+                                            }
+                                            co.File.Upload(formData).done(function (result) {
+                                                if (result.success) {
+                                                    for (let n = 0; n < data.length; n++) {
+                                                        data[n].Id = result.files[n].id;
+                                                        data[n].File = result.files[n].path;
+                                                    }
+                                                }
+                                            });
+                                            formData.delete('files');
+                                        })
                                     }
-                                    formData.delete('files');
-                                }
-                                break;
-                            /* ********** *****************
-                               影片上傳資料庫，不確定錯誤是否在這
-                                ***************************/
-                            case 3:
-                                if (typeof (data[0]["File"]) == "string") {
-                                    co.File.fileSortChange({
-                                        Id: data[0]["Id"],
-                                        sid: pid,
-                                        SerNo: $self.find(".ser_no").val(),
-                                    });
-                                } else {
+                                    break;
+                                /* ********** *****************
+                              360 上傳資料庫，須重打
+                               ***************************/
+                                case 2:
                                     var formData = new FormData();
-                                    formData.append("files", data[0]["File"]);
                                     formData.append("type", 1);
                                     formData.append("sid", pid);
                                     formData.append("serno", $self.find(".ser_no").val());
-                                    co.File.Upload(formData);
-                                }
-                                break;
-                            case 4:
-                                var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
-                                co.File.UploadYTLink({
-                                    Id: Id,
-                                    File: data[0]["File"] + "",
-                                    SId: pid,
-                                    Type: 1,
-                                    SerNo: $self.find(".ser_no").val(),
-                                });
-                                break;
-                            case 5:
-                                if (typeof (data[0]["File"]) == "string") {
-                                    co.File.fileSortChange({
-                                        Id: data[0]["Id"],
-                                        sid: pid,
+                                    for (var i = 0; i < data.length; i += 3) {
+                                        for (var j = i; j < i + 3; j++) {
+                                            formData.append('files', data[j]);
+                                        }
+                                        formData.delete('files');
+                                    }
+                                    break;
+                                /* ********** *****************
+                                   影片上傳資料庫，不確定錯誤是否在這
+                                    ***************************/
+                                case 3:
+                                    if (typeof (data[0]["File"]) == "string") {
+                                        co.File.fileSortChange({
+                                            Id: data[0]["Id"],
+                                            sid: pid,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        });
+                                    } else {
+                                        var formData = new FormData();
+                                        formData.append("files", data[0]["File"]);
+                                        formData.append("type", 1);
+                                        formData.append("sid", pid);
+                                        formData.append("serno", $self.find(".ser_no").val());
+                                        co.File.Upload(formData).done(function (result) {
+                                            if (result.success) {
+                                                data[0].Id = result.files[0].id;
+                                                data[0].File = result.files[0].path;
+                                            }
+                                        });
+                                    }
+                                    break;
+                                case 4:
+                                    var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
+                                    co.File.UploadYTLink({
+                                        Id: Id,
+                                        File: data[0]["File"] + "",
+                                        SId: pid,
+                                        Type: 1,
                                         SerNo: $self.find(".ser_no").val(),
+                                    }).done(function (result) {
+                                        if (result.success) {
+                                            data[0].Id = result.files[0].id;
+                                        }
                                     });
-                                } else {
-                                    var formData = new FormData();
-                                    formData.append("files", data[0]["File"]);
-                                    formData.append("type", 8);
-                                    formData.append("sid", pid);
-                                    formData.append("serno", $self.find(".ser_no").val());
-                                    co.File.Upload(formData);
-                                }
+                                    break;
+                                case 5:
+                                    if (typeof (data[0]["File"]) == "string") {
+                                        co.File.fileSortChange({
+                                            Id: data[0]["Id"],
+                                            sid: pid,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        });
+                                    } else {
+                                        var formData = new FormData();
+                                        formData.append("files", data[0]["File"]);
+                                        formData.append("type", 8);
+                                        formData.append("sid", pid);
+                                        formData.append("serno", $self.find(".ser_no").val());
+                                        co.File.Upload(formData).done(function (result) {
+                                            if (result.success) {
+                                                data[0].Id = result.files[0].id;
+                                                data[0].File = result.files[0].path;
+                                            }
+                                        });
+                                    }
+                            }
                         }
                     }
                 })
@@ -1166,6 +1191,16 @@ function AddUp(success_text, error_text, target) {
             co.Product.Delete.Stock(item);
         })
     }
+}
+
+function setTotalFile(obj) {
+    total_files.forEach((index,item) => {
+        obj.data.forEach((index2, item2) => {
+            if (typeof (item.TempId) != "") {
+
+            }
+        });
+    });
 }
 
 function MoveToContent() {

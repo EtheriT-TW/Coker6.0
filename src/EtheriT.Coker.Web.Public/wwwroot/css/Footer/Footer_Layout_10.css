@@ -11,21 +11,18 @@ footer {
     flex-wrap: wrap;
 }
 
-    footer > #FootContainer {
-        width:65%;
-    }
-
-footer > .footer-bg {
-    flex: 1 1 auto;
-    width:50%;
+.abreast .label, .abreast a {
+    font-size: 1.1rem;
 }
 
-footer > div:not(#copyright) {
-    flex:1;
+#FootContainer {
+    margin-right: 0;
+    margin-left: 5rem;
+    width: 33%;
 }
 
 #link-block * {
-    height:10rem;
+    height: 10rem;
 }
 
 .main-block {
@@ -54,6 +51,10 @@ footer > div:not(#copyright) {
 .label {
     min-width: 100px; /* 根據需要設置固定寬度，讓冒號對齊 */
     font-weight: bold;
+}
+
+.abreast > .contact-info > .info-row > p > .value > a.tel {
+    font-size: 2rem;
 }
 
 .value {
@@ -88,19 +89,19 @@ footer > div:not(#copyright) {
 }
 
 .abreast {
-    color: #515151;
+    font-family: Arial, sans-serif;
+    color: #7C5A57;
 }
 
     .abreast:not(#Footer_Menu) {
         padding-left: 3.5rem;
         line-height: 30px;
-        font-size:12px;
     }
 
-.tel {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
+    .tel {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
 
 /* Footer Collapse */
 #Collapse_Button {
@@ -177,7 +178,7 @@ footer > div:not(#copyright) {
         justify-content: space-between;
     }
 
-    .paging_frame > p {
+    .paging_frame > a > p {
         padding: 0 5px;
         font-size: 1.1rem;
         color: #7C5A57;
@@ -351,10 +352,10 @@ footer {
     height:auto;
 }
 .footer-bg {
+    margin-left:2rem;
     margin-top: 3rem;
     align-items: flex-start !important;
     background: #000;
-    width: 100%;
     background: url('/upload/htmlConten/footer_img.jpg')
 }
 #Collapse_Button {
@@ -386,12 +387,12 @@ footer {
         width:100%!important;
     }
     .paging_frame {
-        width: 30%;
+        width: 50%;
         height: 25%;
     }
 }
 
-@media (max-width:1200px) {
+@media (max-width:1400px) {
     #Footer_Menu {
         margin-left:0;
     }

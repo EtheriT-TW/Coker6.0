@@ -66,6 +66,12 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         case 7:
                             headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
                             break;
+                        case 10:
+							for(int i = 1;i <= 5;i++)
+                            {
+								headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner"+i+".jpg"});
+							}
+							break;
                     }
 
                     if (marquee.Count > 0)

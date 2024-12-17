@@ -251,3 +251,53 @@
 		</div> -->
 	</div>
 </nav>
+<div id="banner" class="vh-75">
+	<div class="one_swiper edit_lock">
+		<div class="swiper d-flex swiper-initialized swiper-horizontal swiper-pointer-events swiper-backface-hidden">
+			<div class="swiper-wrapper align-self-center">
+				<div class="swiper-slide image_link_slide d-flex align-self-center">
+					<iframe width="560" height="315" src="https://www.youtube.com/embed/dEpijWLjV18?si=9rzAOx13JqU-8-UK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+				</div>
+				@foreach (var imageSrc in Model.Bannners)
+				{
+					<div class="swiper-slide image_link_slide d-flex align-self-center">
+						<a class="w-100"><img src="@imageSrc.DisktopImage" class="w-100" /></a>
+					</div>
+				}
+			</div>
+			<div tabindex="-1" role="button" aria-label="Previous slide" aria-controls="iw0z" aria-disabled="true" class="swiper_button_prev start-0 position-absolute top-50 translate-middle-y swiper-button-disabled">
+				<button class="align-items-center bg-dark bg-opacity-25 border-0 d-flex justify-content-center rounded-circle swiper_btn_circle_small text-opacity-75 text-white"><span class="material-symbols-outlined">navigate_before</span></button>
+			</div>
+			<div tabindex="0" role="button" aria-label="Next slide" aria-controls="iw0z" aria-disabled="false" class="swiper_button_next end-0 position-absolute top-50 translate-middle-y">
+				<button class="align-items-center bg-dark bg-opacity-25 border-0 d-flex justify-content-center rounded-circle swiper_btn_circle_small text-opacity-75 text-white"><span id="izqng-2-2-2" draggable="true" class="material-symbols-outlined">navigate_next</span></button>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="swiper-light" class="headernews m-auto d-block position-relative mb-3">
+	<img class="d-md-flex d-none m-auto d-block" src="@imgurl/marqueeblockbig.png" alt="Header Marquee Background" />
+	<img class="d-md-none m-auto d-block" src="@imgurl/marqueeblocksmall.png" alt="Header Marquee Background" />
+	<div class="content position-absolute row align-items-center w-100">
+		<div class="text overflow-hidden text-white p-0 col">
+			<div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
+				<div class="swiper-wrapper">
+					@foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
+					{
+						var target = marquee.target == true ? "_blank" : "_self";
+						var title = marquee.target == true ? $"連結至：{marquee.title}(另開視窗)" : $"連結至：{marquee.title}";
+						var link = marquee.link;
+						if (string.IsNullOrEmpty(link))
+						{
+							<div class="swiper-slide"><div class="overflow-hidden text" data-bs-toggle="tooltip" title="@marquee.title">@marquee.title <span class="sr-only">(current)</span></div></div>
+						}
+						else
+						{
+							<div class="swiper-slide"><a class="overflow-hidden text" data-bs-toggle="tooltip" title="@title" href="@link" target="@target">@marquee.title <span class="sr-only">(current)</span></a></div>
+						}
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+

@@ -320,8 +320,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							{
 								Title = "",
 								footerViewModels = new List<FooterViewModel> {
-									new FooterViewModel { Title = "最新消息", Link = "news", footerViewModels = new List<FooterViewModel> {
-										}
+									new FooterViewModel { Title = "最新消息", Link = "/asnet/news"
 									},
 									new FooterViewModel { Title = "醫藥資訊", Link = "Medicalinfo", footerViewModels = new List<FooterViewModel> {
 										}

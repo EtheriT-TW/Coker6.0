@@ -1,6 +1,7 @@
 ﻿.bg-color {
     position: relative;
     z-index: 1;
+    background-color:#FFF;
 }
 
 .icon-search-bg {

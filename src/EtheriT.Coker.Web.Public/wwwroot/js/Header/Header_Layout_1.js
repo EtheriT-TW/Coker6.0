@@ -17,6 +17,46 @@
         }, 500);*/
     }
 
+    const showNav = document.querySelectorAll('.full-banner');
+    if (showNav.length) {
+        function hoverOff() {
+            $('nav').off('mouseleave');
+            $('nav').off('mouseover');
+        }   
+        function hoverOn() {
+            $('nav').on('mouseover', () => {
+                console.log('Mouse entered the element');
+                $('nav').addClass('show-menu').removeClass('hide-menu');
+            });
+            $('nav').on('mouseleave', () => {
+                console.log('Mouse entered the element');
+                $('nav').addClass('hide-menu').removeClass('show-menu');
+            });
+        }
+        if ($('nav').hasClass('position-fixed')) {
+            $('nav').addClass('hide-menu');
+            hoverOn();
+        }
+        window.addEventListener('scroll', () => {
+            let scrollPosition = window.scrollY;
+            showNav.forEach(showNav => {
+                // 使用 getBoundingClientRect 獲取區塊的位置
+                const sectionTop = showNav.getBoundingClientRect().top + window.scrollY;
+                const sectionHeight = showNav.offsetHeight;
+
+                // 檢查當前滾動位置是否在這個區塊範圍內
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    console.log(`Current section: ${showNav.id}`);
+                    $('nav').removeClass('show-menu').addClass('hide-menu');
+                    hoverOn();
+                } else {
+                    $('nav').addClass('show-menu').removeClass('hide-menu');
+                    hoverOff();
+                }
+            });
+        })
+    }
+
     var mega_menu_height = $("#Mega_Menu").css("height");
     $("body").css("padding-top", mega_menu_height);
 

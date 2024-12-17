@@ -2,6 +2,41 @@
     padding-top: 0 !important;
 }
 
+#Mega_Menu {
+    transition: background-color 0s;
+}
+
+.hide-menu {
+    position: absolute !important;
+}
+
+.hide-menu .nav-item img {
+    display:none !important;
+}
+
+    .hide-menu #Offcanvas_Mega_Menu > ul > .title > a > img + span {
+        display: unset !important;
+    }
+    .hide-menu span {
+        color: white !important;
+        text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+    }
+    .hide-menu .bg-secondary {
+        background-color: #9e9e9e !important;
+    }
+
+    .hide-menu #Mega_Menu {
+        transition: background-color 0s;
+        background-color: hsla(0,0%,0%,.075) !important;
+    }
+
+nav.hide-menu:hover #Mega_Menu {
+    transition: .75s all;
+    --bs-bg-opacity: 1;
+    background-color: rgba(var(--bs-white-rgb), var(--bs-bg-opacity)) !important;
+}
+
+
 #Car_Dropdown .pro_name {
     font-size: .9rem;
 }

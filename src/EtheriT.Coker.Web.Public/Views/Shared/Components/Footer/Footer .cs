@@ -355,7 +355,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 	"										 </div>",
 	"										 <div class='info-row'>",
 	"												 <span class='label'>篩檢地點：</span>",
-	"													<span class='value'><a href='https://goo.gl/maps/eoGMYGKvxetaReKX8'>高雄市左營區大中一路386號<br>醫療大樓10樓(感染症諮詢篩檢中心)</a></span>",
+	"													<span class='value'><a href='https://maps.app.goo.gl/C2mZJDm7atAJ4kA86' target=\"_blank\">高雄市左營區大中一路386號<br>醫療大樓10樓(感染症諮詢篩檢中心)</a></span>",
 											"</div>",
 										"</div>",
 									"</div>"

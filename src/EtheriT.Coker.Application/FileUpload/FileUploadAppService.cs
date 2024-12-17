@@ -87,6 +87,7 @@ namespace EtheriT.Coker.Application
                 List<FileItemDto> filds = await SaveFile(files, type, serno, page, sid);
                 response.Files = filds.FindAll(e => e.Id != 0 && e.Id != null);
                 response.ErrorFiles = filds.FindAll(e => e.Id == 0 || e.Id == null).Select(e => e.Name).ToList();
+                if (response.ErrorFiles.Count == 0) response.Success = true;
             }
             catch
             {

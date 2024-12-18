@@ -24,7 +24,7 @@ function MenuItemResize() {
 
 function toggleFooterMenu() {
     var footerMenu = document.getElementById('Footer_Menu');
-    if (footerMenu.length > 0) {
+    if (footerMenu != null) {
         if (footerMenu.style.height === '0px' || footerMenu.style.height === '') {
             footerMenu.style.height = `${footerMenu.scrollHeight}px`;
         } else {

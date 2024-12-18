@@ -76,7 +76,7 @@
                     return false;
                 }
             }
-            if (isValidCss()) {
+            //if (isValidCss()) {
                 $.ajax({
                     url: "/api/Website/SettingCss",
                     type: "POST",
@@ -87,7 +87,7 @@
                 }).done(function (result) {
                     _dfr.resolve(result);
                 });
-            } else _dfr.resolve({ success: false, error: error });
+            //} else _dfr.resolve({ success: false, error: error });
             return _dfr.promise();
         }
     }

@@ -247,6 +247,16 @@
       "input": [
         "node_modules/grapesjs-table/dist/*"
       ]
+    },
+    {
+      "outputFolder": "lib/ace-builds",
+      "input": [
+        "node_modules/ace-builds/src-min-noconflict/ace.js",
+        "node_modules/ace-builds/src-min-noconflict/theme-monokai.js",
+        "node_modules/ace-builds/src-min-noconflict/mode-css.js",
+        "node_modules/ace-builds/src-min-noconflict/worker-css.js",
+        "node_modules/ace-builds/src-min-noconflict/ext-language_tools.js"
+      ]
     }
   ]
 }

@@ -12,12 +12,14 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 404 => "NotFound",
                 _ => "Error"
             };
+            ViewData["Locale"] = "zh-tw";
             return View(viewName);
         }
 
         [Route("Error")]
         public IActionResult HandleError()
         {
+            ViewData["Locale"] = "zh-tw";
             return View("Error");
         }
     }

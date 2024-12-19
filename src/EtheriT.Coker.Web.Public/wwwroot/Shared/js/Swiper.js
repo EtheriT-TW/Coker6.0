@@ -98,7 +98,7 @@ function SwiperInit(obj) {
             }
             thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
-            $(this).find("a").on("focus", function () {
+            $(this).find(".swiper-slide a").on("focus", function () {
                 const activeIndex = $(swiper.el).find(":focus").parents(".swiper-slide").attr("aria-label").split(" / ")[0];
                 swiper.slideTo(activeIndex - 1, 300);
                 stop();

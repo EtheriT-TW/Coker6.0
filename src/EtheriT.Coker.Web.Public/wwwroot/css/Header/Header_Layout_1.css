@@ -1,5 +1,8 @@
 ﻿.home, .page {
-    padding-top: 0 !important;
+    padding-top: 0;
+}
+header .navbar {
+    top:0;
 }
 
 #Mega_Menu {

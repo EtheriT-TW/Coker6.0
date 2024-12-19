@@ -1,5 +1,12 @@
 ﻿function HeaderInit() {
-    if ($('.navbar').hasClass('position-fixed') && $(".full-banner").legnth == 0) {
+    if ($('.navbar').hasClass('position-fixed') && !$(".full-banner").length > 0) {
+        var mega_menu_height = $("nav").css("height");
+        $("#ContainerBody").css("padding-top", mega_menu_height);
+        $(window).resize(function () {
+            var mega_menu_height = $("nav").css("height");
+            $("#ContainerBody").css("padding-top", mega_menu_height);
+            MenuLiSize();
+        });
         var navbarHeight = $('.navbar').outerHeight();
         if (!$('#swiper-light').length) {
             $('#ContainerBody').css('padding-top', navbarHeight);

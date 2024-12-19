@@ -310,11 +310,6 @@
     -ms-transform: translateY(-0.525rem) rotate(45deg);
     transform: translateY(-0.525rem) rotate(45deg);
 }
-/* Mega Menu */
-#Mega_Menu {
-    position: relative;
-    padding: 0 5%;
-}
 
 .mega_menu_canvas .nav-link::after {
     display: none;
@@ -761,6 +756,11 @@
 }
 
 @media (max-width: 1000px) {
+    /* Mega Menu */
+    #Mega_Menu {
+        position: relative;
+        padding: 0 5%;
+    }
     #Offcanvas_Mega_Menu > ul > .title > .content {
         background-color: #EEC4B4 !important;
     }

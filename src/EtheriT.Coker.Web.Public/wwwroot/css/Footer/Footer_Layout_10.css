@@ -84,8 +84,8 @@ footer {
 }
 
 .paging_frame > .abreast {
-    margin-top:0.5rem;
-    line-height:20px !important;
+    margin-top: 0.5rem;
+    line-height: 20px !important;
 }
 
 .abreast {
@@ -98,10 +98,10 @@ footer {
         line-height: 30px;
     }
 
-    .tel {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
+.tel {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
 
 /* Footer Collapse */
 #Collapse_Button {
@@ -145,7 +145,7 @@ footer {
 }
 
 #copyright {
-    height:2.5rem;
+    height: 2.5rem;
     background-color: #D36C6C;
     align-content: center;
     font-size: 14px;
@@ -167,12 +167,12 @@ footer {
     text-align-last: start;
 }
 
-.paging_frame > .abreast {
-    line-height: 0;
-    padding-right: 0;
-    padding-left: 0;
-    width: auto;
-}
+    .paging_frame > .abreast {
+        line-height: 0;
+        padding-right: 0;
+        padding-left: 0;
+        width: auto;
+    }
 
     .paging_frame > div {
         justify-content: space-between;
@@ -184,7 +184,7 @@ footer {
         color: #7C5A57;
     }
 
-    .abreast > ul {
+.abreast > ul {
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
@@ -192,22 +192,21 @@ footer {
     list-style: none;
     margin: 0;
     padding: 0;
-
-    }
+}
 
     .abreast > ul > li {
         padding: 2px 5px;
         width: 150px;
     }
 
-    .abreast > ul > li > a {
-        color:black !important;
-    }
+        .abreast > ul > li > a {
+            color: black !important;
+        }
 
-    /* Footer Bottom */
-    #Footer_Bottom {
-        margin-top: 90px;
-    }
+/* Footer Bottom */
+#Footer_Bottom {
+    margin-top: 90px;
+}
 
 #Logo_Line {
     position: absolute;
@@ -308,7 +307,63 @@ footer {
     }
 }
 
+@media (max-width:1600px) {
+    #FootContainer {
+        margin-left: 0;
+    }
+
+        #FootContainer > #Footer_Menu {
+            margin-left: 0;
+        }
+}
+
+@media (max-width:1400px) {
+    .abreast:not(#Footer_Menu) {
+        padding-left: .5rem;
+    }
+
+    #link-block, .footer-bg {
+        flex: 1;
+    }
+
+    #FootContainer {
+        width: auto;
+    }
+}
+
+@media (max-width:1200px) {
+    #Footer_Menu {
+        margin-top: 0;
+        overflow: unset;
+    }
+
+    .abreast {
+        flex-wrap: nowrap;
+    }
+
+    #Footer_Menu > .paging_frame {
+        height: 15%;
+        width: auto;
+    }
+
+    #FootContainer a {
+        white-space: nowrap;
+    }
+
+    #link-block {
+        justify-content: center;
+    }
+}
+
 @media only screen and (max-width: 992px) {
+    .abreast {
+        flex-wrap: wrap;
+    }
+
+    #FootContainer {
+        align-self: center;
+    }
+
     footer.footer_pack_up {
         flex-direction: column;
     }
@@ -334,10 +389,31 @@ footer {
 }
 
 @media only screen and (max-width: 576px) {
+    footer > #FootContainer.listMenu {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    #link-block {
+        flex-direction: column;
+    }
+
+        #link-block > .main-block {
+            width: 100%;
+            justify-content: center;
+            border-radius:unset;
+        }
+
+    #link-block > .other-link {
+        text-align-last: center;
+        width: 100%;
+        background-color: #07C052;
+    }
 
     #Footer_Menu {
         height: 700px;
     }
+
     #Logo_Bottom::before, #Logo_Bottom::after {
         width: 12.5%;
     }
@@ -347,23 +423,28 @@ footer {
     padding: 0px;
     background: #EEC4B4;
 }
+
 .footer-img {
-    max-width:25rem;
-    height:auto;
+    max-width: 25rem;
+    height: auto;
 }
+
 .footer-bg {
-    margin-left:2rem;
+    margin-left: 2rem;
     margin-top: 3rem;
     align-items: flex-start !important;
     background: #000;
     background: url('/upload/htmlConten/footer_img.jpg')
 }
+
 #Collapse_Button {
     color: #647f6c;
 }
+
 .footer_pack_up {
     /* width:70%;*/
 }
+
 #FootContainer a {
     text-decoration: none;
     color: #fff;
@@ -371,21 +452,25 @@ footer {
 
 @media (min-width: 1200px) {
     #Footer_Menu {
-        font-size:0.95rem;
+        font-size: 0.95rem;
     }
-    .paging_frame{ 
-        width:130px;
-        height:4rem;
-        padding:0;
+
+    .paging_frame {
+        width: 130px;
+        height: 4rem;
+        padding: 0;
     }
+
     .abreast > ul {
-        height:165px;
+        height: 165px;
     }
 }
-@media (min-width: 992px)  {
-    .navbar-expand-lg .offcanvas{
-        width:100%!important;
+
+@media (min-width: 992px) {
+    .navbar-expand-lg .offcanvas {
+        width: 100% !important;
     }
+
     .paging_frame {
         width: 50%;
         height: 25%;
@@ -394,94 +479,102 @@ footer {
 
 @media (max-width:1400px) {
     #Footer_Menu {
-        margin-left:0;
+        margin-left: 0;
     }
 }
 
-    @media only screen and (max-width: 992px) {
-        footer > #FootContainer {
-            width:unset;
-        }
-        .footer-bg {
-            align-self: center;
-        }
-        #copyright {
-            text-align-last: center;
-        }
-        .navbar-expand-lg .offcanvas {
-            width: auto;
-        }
-
-        #Footer_Menu {
-            height: 400px;
-        }
-
-        .paging_frame {
-            margin: 0px;
-            padding: 2rem;
-        }
-        .abreast .paging_frame:not(:last-child) {
-            width: 25%;
-            height: 45%;
-        }
-
-        .abreast .paging_frame:nth-child(:last-child) {
-            width: 100%;
-        }
+@media only screen and (max-width: 992px) {
+    footer > #FootContainer {
+        width: unset;
     }
 
-    @media only screen and (max-width: 768px) {
-        footer > .footer-bg {
-            width:unset;
-        }
-        .footer-bg > * {
-            align-self: center;
-        }
-        .footer-bg {
-            margin-left:0;
-        }
-        #Logo_Bottom::before, #Logo_Bottom::after {
-            width: 25%;
-        }
-
-        .footer_pack_up {
-            width: 100%;
-        }
+    .footer-bg {
+        align-self: center;
     }
 
-    @media only screen and (max-width: 576px) {
+    #copyright {
+        text-align-last: center;
+    }
 
-        #Footer_Menu {
-            height: auto;
-        }
+    .navbar-expand-lg .offcanvas {
+        width: auto;
+    }
 
-        #Logo_Bottom::before, #Logo_Bottom::after {
-            width: 12.5%;
-        }
-        footer {
-            padding-bottom: 1rem;
-        }
+    #Footer_Menu {
+        height: 400px;
+    }
+
+    .paging_frame {
+        margin: 0px;
+        padding: 2rem;
+    }
+
+    .abreast .paging_frame:not(:last-child) {
+        width: 25%;
+        height: 45%;
+    }
+
+    .abreast .paging_frame:nth-child(:last-child) {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    footer > .footer-bg {
+        width: unset;
+    }
+
+    .footer-bg > * {
+        align-self: center;
+    }
+
+    .footer-bg {
+        margin-left: 0;
+    }
+
+    #Logo_Bottom::before, #Logo_Bottom::after {
+        width: 25%;
+    }
+
+    .footer_pack_up {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 576px) {
+
+    #Footer_Menu {
+        height: auto;
+    }
+
+    #Logo_Bottom::before, #Logo_Bottom::after {
+        width: 12.5%;
+    }
+
+    footer {
+        padding-bottom: 1rem;
+    }
+
         footer p {
             margin-bottom: 0.25rem;
         }
-        .paging_frame{
-            padding:1rem;
-        }
-        .abreast > ul > li {
-            width: calc(50vw - 1rem);
-        }
+
+    .paging_frame {
+        padding: 1rem;
     }
 
-    @media (max-width:480px) {
-        .paging_frame {
-            width:50%;
-        }
-        .abreast .paging_frame:not(:last-child) {
-            width: 50%;
-            height: 27%;
-        }
-        #FootContainer > #Footer_Menu > .paging_frame:nth-child(5) {
-            position: relative;
-            transform: translate(100%, 10%);
-        }
+    .abreast > ul > li {
+        width: calc(50vw - 1rem);
     }
+}
+
+@media (max-width:480px) {
+    .paging_frame {
+        width: 50%;
+    }
+
+    .abreast .paging_frame:not(:last-child) {
+        width: 50%;
+        height: 27%;
+    }
+}

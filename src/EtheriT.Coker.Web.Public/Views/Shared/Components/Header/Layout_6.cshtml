@@ -22,7 +22,10 @@
                         menu
                     </span>
                 </a>
-                <a class="navbar-brand p-0 m-0 order-1" href="@Model.HomeLink" title="連結至:首頁"><img class="logoimg" src="@Model.LogoImageUrl" alt="Logo 圖"></a>
+                <a class="navbar-brand p-0 m-0 order-1" href="@Model.HomeLink" title="連結至:首頁">
+                    <img class="logoimg" src="@Model.LogoImageUrl" alt=" ">
+                    <h1 class="sr-only">@Model.Title</h1>
+                </a>
                 <div class="collapse navbar-collapse order-lg-2 order-3" id="headermenu">
                     <ul class="navbar-nav">
                         @if (Model.Sitemap_Link != null)

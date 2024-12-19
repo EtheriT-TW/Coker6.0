@@ -1,4 +1,11 @@
-﻿#Mega_Menu {
+﻿.home, .page {
+    padding-top: 0;
+}
+header .navbar {
+    top:0;
+}
+
+#Mega_Menu {
     transition: background-color 0s;
 }
 

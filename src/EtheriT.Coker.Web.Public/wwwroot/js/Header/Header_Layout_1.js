@@ -1,5 +1,5 @@
 ﻿function HeaderInit() {
-    if ($('.navbar').hasClass('position-fixed')) {
+    if ($('.navbar').hasClass('position-fixed') && $(".full-banner").legnth == 0) {
         var navbarHeight = $('.navbar').outerHeight();
         if (!$('#swiper-light').length) {
             $('#ContainerBody').css('padding-top', navbarHeight);
@@ -53,12 +53,6 @@
             });
         })
     }
-
-    $(window).resize(function () {
-        var mega_menu_height = $("nav").css("height");
-        $("body").css("padding-top", mega_menu_height);
-        MenuLiSize();
-    });
 
     MenuLiSize();
 

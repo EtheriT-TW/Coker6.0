@@ -108,7 +108,7 @@ function SwiperInit(obj) {
             $(this).find("button").prop("disabled", false);
             $(window).off('resize.swiper').on('resize.swiper', checkSlides);
             $(window).trigger("resize.swiper");
-            swiper.update(); 
+            swiper.update();
         }
     });
 
@@ -531,7 +531,7 @@ function SwiperInit(obj) {
                 watchSlidesProgress: true,
             });
 
-            var pictureSwiper = new Swiper("#pictureSwiper", {
+            const pictureSwiper = new Swiper("#pictureSwiper", {
                 centeredSlides: true,
                 spaceBetween: 10,
                 loop: true,
@@ -545,41 +545,41 @@ function SwiperInit(obj) {
                 thumbs: {
                     swiper: pictureSwiperThumbs,
                 },
-                loop: true,
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
                 }
             });
 
+            pictureSwiper.on('slideChange', function () {
+                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                $header_text.text(activeSlide.find("img").attr("alt"));
+            });
+
             $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
-                const $self = $(this).parents(".picture-category");
-                const index = $(".picture-category a").index(this);// > $(".picture-category a").length - 2 ? $(".picture-category a").length - $(".picture-category a").index(this) - 1 : $(".picture-category a").index(this) - 1;
-                const $images = [];
+                pictureSwiper.removeAllSlides();
+                pictureSwiperThumbs.removeAllSlides();
+                var $self = $(this).parents(".picture-category");
+                var index = $self.find("a").index(this);
+                var $images = [];
                 $self.find(".templatecontent img").each(function () {
                     var obj = {};
                     obj['src'] = $(this).attr("src");
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
                     $images.push(obj);
                 });
-                pictureSwiper.removeAllSlides();
-                pictureSwiperThumbs.removeAllSlides();
-                $header_text.text($images[0]['alt']);
+                $header_text.text($images[index]['alt']);
                 if ($images.length == 1) {
-                    const newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
+                    var newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
                     pictureSwiper.appendSlide(newSlide);
                 } else {
                     for (let i = 0; i < $images.length; i++) {
-                        const newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        var newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiper.appendSlide(newSlide);
-                        const newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img class="" src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        var newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
                 }
-                pictureSwiper.on('slideChange', function () {
-                    var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
-                    $header_text.text(activeSlide.find("img").attr("alt"));
-                });
                 pictureSwiper.slideTo(index, 0);
                 pictureSwiperThumbs.slideTo(index, 0);
                 $('#SwiperModal').modal('show');

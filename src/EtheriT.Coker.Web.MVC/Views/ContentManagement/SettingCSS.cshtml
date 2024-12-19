@@ -7,7 +7,10 @@
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
 
-
+<script src="~/lib/ace-builds/ace.js" asp-append-version="true"></script>
+<script src="~/lib/ace-builds/theme-monokai.js" asp-append-version="true"></script>
+<script src="~/lib/ace-builds/mode-css.js" asp-append-version="true"></script>
+<script src="~/lib/ace-builds/ext-language_tools.js" asp-append-version="true"></script>
 <script src="~/js/ContentManagement/SettingCss.min.js" asp-append-version="true"></script>
 
 <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
@@ -22,10 +25,7 @@
             <div class="card border-0 w-100">
                 <div class="card-body">
                     <form id="SettingCss" name="SettingCss" class="needs-validation" novalidate>
-                        <div class="form-floating mb-3">
-                            <textarea id="InputWebsiteCss" name="Css" class="form-control col vh-100" type="text" placeholder="自訂CSS"></textarea>
-                            <label class="required" for="InputWebsiteCss">版型CSS編輯器</label>
-                        </div>
+                        <div id="InputWebsiteCss" class="col vh-100" type="text" placeholder="自訂CSS"></div>
                     </form>
                 </div>
             </div>

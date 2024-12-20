@@ -805,7 +805,7 @@
         max-width: 90vw;
     }
     .marqueeSwiper {
-        padding-left:0;
+        padding-left:.2rem;
     }
 }
 
@@ -850,6 +850,10 @@
 }
 
 @media only screen and (max-width: 576px) {
+    #banner img {
+        height: 12rem;
+        object-fit: cover;
+    }
     .headernews .content {
         padding-left: 3rem !important;
     }

@@ -332,10 +332,6 @@ footer {
 }
 
 @media (max-width:1200px) {
-    #Footer_Menu {
-        margin-top: 0;
-        overflow: unset;
-    }
 
     .abreast {
         flex-wrap: nowrap;
@@ -356,6 +352,11 @@ footer {
 }
 
 @media only screen and (max-width: 992px) {
+
+    #Footer_Menu {
+        margin-top: 0;
+        overflow: unset;
+    }
     .abreast {
         flex-wrap: wrap;
     }

@@ -1321,16 +1321,25 @@ namespace EtheriT.Coker.Application.Directory
                 var DataIds = new List<long>();
                 if (db_d != null)
                 {
-                    var d_tags = await db.Tag_Associates.Include(e => e.Tag)
-                        .Where(e => dto.Ids.Contains(e.FK_AId))
-                        .Where(e => !e.IsDeleted)
-                        .Where(e => e.Type == TagAssociateTypeEnum.目錄)
-                        .Where(e => e.Tag.FK_WebsiteId == websiteid)
-                        .ToListAsync();
-
-                    if (d_tags != null)
+                    var adids = new List<long>();
+                    foreach (var id in dto.Ids)
                     {
-                        var adids = await GetReleAdId(d_tags.Select(e => e.FK_TId).ToList());
+                        var d_tags = await db.Tag_Associates.Include(e => e.Tag)
+                            .Where(e => id == e.FK_AId)
+                            .Where(e => !e.IsDeleted)
+                            .Where(e => e.Type == TagAssociateTypeEnum.目錄)
+                            .Where(e => e.Tag.FK_WebsiteId == websiteid)
+                            .ToListAsync();
+                        if (d_tags != null)
+                        {
+                            var tempadids = await GetReleAdId(d_tags.Select(e => e.FK_TId).ToList());
+                            adids.AddRange(tempadids);
+                        }
+                    }
+
+                    if (adids.Any())
+                    {
+                        adids = adids.Distinct().ToList();
                         var adresult = db.Advertise;
                         output = await (from e in adresult
                                         where adids.Contains(e.Id)

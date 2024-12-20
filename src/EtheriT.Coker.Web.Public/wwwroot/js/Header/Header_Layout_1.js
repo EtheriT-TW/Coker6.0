@@ -1,4 +1,10 @@
 ﻿function HeaderInit() {
+    console.log($("#btnMenu.change-color").length);
+    if ($("#btnMenu.change-color").length) {
+        $('#btnMenu').on('click', function () {
+            $(this).find('#menuIcon').toggleClass('text-white');
+        });
+    }
     if ($('.navbar').hasClass('position-fixed') && !$(".full-banner").length > 0) {
         var mega_menu_height = $("nav").css("height");
         $("#ContainerBody").css("padding-top", mega_menu_height);

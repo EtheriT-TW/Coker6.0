@@ -1590,7 +1590,7 @@
 
 @media only screen and (max-width: 576px) {
     .type_change_frame > .catalog .title {
-        font-size: 0.8rem !important;
+        font-size: 1.2rem !important;
         line-height: 1rem;
         max-height: 2rem;
     }

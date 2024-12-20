@@ -132,6 +132,7 @@ function PageReady() {
         $(".ad_preview > .youtube").removeClass("d-none");
         var ytlink = $(".btn_preview").prev().val();
         var file = ytlink.substr(ytlink.indexOf("v=") + 2);
+        if (file.indexOf("&") > 0) file = file.substring(0, file.indexOf("&"));
         $ad_type.data("file", file);
         var videostring = "https://www.youtube-nocookie.com/embed/" + file;
         $(".ad_preview > .youtube > iframe").attr("src", videostring);
@@ -346,6 +347,7 @@ function AddUpAdvertise(success_text, error_text) {
                 case 3:
                     var ytlink = $(".btn_preview").prev().val();
                     var file = ytlink.substr(ytlink.indexOf("v=") + 2);
+                    if (file.indexOf("&") > 0) file = file.substring(0, file.indexOf("&"));
                     $ad_type.data("file", file);
                     if (typeof (result.message) != "undefined") {
                         co.File.UploadYTLink({

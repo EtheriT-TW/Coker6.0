@@ -442,6 +442,7 @@ function DirectoryDataInsert($item, result) {
 
         $tags = content.find(".tags");
         $tags.empty();
+        if (data.tags == null) data.tags = [];
         data.tags.slice(0, 2).forEach((tag) => {
             let badge = $(temp_tag).clone();
             badge.text(tag.tag_Name.slice(0, 4));

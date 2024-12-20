@@ -918,10 +918,12 @@
                     setTimeout(() => {
                         const fWindow = $(".gjs-frame")[0].contentWindow;
                         let attr = component.getAttributes();
-                        fWindow.$(`#${component.getId()}`).data({
-                            "dirid": typeof (attr["data-dirid"]) == "undefined" ? "" : attr["data-dirid"].toString(),
-                        });
-                        fWindow.DirectoryGetDataInit();
+                        if (typeof (attr["data-dirid"]) != "undefined") {
+                            fWindow.$(`#${component.getId()}`).data({
+                                "dirid": attr["data-dirid"].toString(),
+                            });
+                            fWindow.DirectoryGetDataInit();
+                        }
                     }, 200);
                 });
             }

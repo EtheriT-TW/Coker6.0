@@ -46,7 +46,8 @@
             const $self = $(e);
             if ($self.find("select").length == 0 || $self.find("select").children().length == 1) {
                 const $list = $self.find("a");
-                const $select = $("<select>");
+                const $select = $("<select id='jampSelect'>");
+                const $label = $("<label for='jampSelect' class='d-none'>").text("前往：");
                 $self.find("select").remove();
                 if ($self.find('a[href^="#"]').length > 0) {
                     $select.append($("<option>").val("").text("請選擇將前往的標籤"))
@@ -72,7 +73,7 @@
                         });
                     }
                 });
-                $self.append($select);
+                $self.append($label).append($select);
             }
             if ($(window).width() > 576) {
                 $self.children().first().removeClass("d-none");

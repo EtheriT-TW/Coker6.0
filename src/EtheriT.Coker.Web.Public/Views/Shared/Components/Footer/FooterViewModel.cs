@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
         public string? Accessibility_Link { get; set; }
         public string? Accessibility_Badge { get; set; }
         public string? Logo_Image { get; set; }
+        public string? LINE_Link { get; set; }
         public string? Facebook_Link { get; set; }
         public string? IG_Link { get; set; }
         public string? YoutubeChannel_Link { get; set; }

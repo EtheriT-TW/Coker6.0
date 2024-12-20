@@ -294,7 +294,7 @@
     });
     //輪播
     editor.DomComponents.addType('輪播', {
-        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
+        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper') || el.classList?.contains('three_two_grid_swiper'),
         model: {
             defaults: {
                 traits: [
@@ -918,10 +918,12 @@
                     setTimeout(() => {
                         const fWindow = $(".gjs-frame")[0].contentWindow;
                         let attr = component.getAttributes();
-                        fWindow.$(`#${component.getId()}`).data({
-                            "dirid": typeof (attr["data-dirid"]) == "undefined" ? "" : attr["data-dirid"].toString(),
-                        });
-                        fWindow.DirectoryGetDataInit();
+                        if (typeof (attr["data-dirid"]) != "undefined") {
+                            fWindow.$(`#${component.getId()}`).data({
+                                "dirid": attr["data-dirid"].toString(),
+                            });
+                            fWindow.DirectoryGetDataInit();
+                        }
                     }, 200);
                 });
             }
@@ -1369,7 +1371,7 @@
                 }
                 setTimeout(timmer, 100);
             }
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) {
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1) {
             var cont = iframe.document.getElementsByClassName("swiper").length;
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("swiper").length != cont) iframe.SwiperInit({ autoplay: false });
@@ -1416,7 +1418,7 @@
         else if (classList.indexOf("swiper-slide") > -1) {
             var swiper = obj.target.parent().parent().getEl().swiper;
             swiper.update();
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) iframe.SwiperInit({ autoplay: false });
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1) iframe.SwiperInit({ autoplay: false });
     });
 
     /*editor.on('selector:add', selector => {

@@ -74,6 +74,7 @@
                 target: item.target
             };
         });
+        if (typeof (marqueeContainer) == "undefined") return;
         marqueeContainer.innerHTML = '';
 
         marqueeModels.forEach(marquee => {

@@ -409,7 +409,6 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-
     $(".five_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
@@ -505,7 +504,6 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
         if (!!!$(this).data("isinit")) {
             const $header_text = $("#SwiperModal .modal-header .imgalt");
@@ -588,4 +586,52 @@ function SwiperInit(obj) {
             $(this).data("isinit", true);
         }
     }
+
+    $(".three_two_grid_swiper").prop("draggable", true).each(function () {
+        var $self = $(this);
+        if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
+            var Id = "#" + $self.attr("id") + " > .swiper"
+            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
+            const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
+            const canNext = length > 6;
+            var autoplay = obj.autoplay ? canNext : false;
+            var selfConfig = Object.assign({}, config, {
+                pagination: {
+                    el: "#" + $self.attr("id") + " .swiper-pagination",
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
+                slidesPerView: 3,
+                breakpoints: {
+                    375: { slidesPerView: 1 },
+                    576: { slidesPerView: 2 },
+                    992: { slidesPerView: 3 },
+                },
+                grid: {
+                    rows: 2,
+                    fill: 'row'
+                },
+                spaceBetween: 30,
+            }, autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: canNext
+            } : {});
+            if (!canNext && length > 0) {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").addClass("d-none");
+            } else {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").removeClass("d-none");
+            }
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            autoplay && $self.swiperBindEven(swiper);
+            $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
+        }
+    });
 }

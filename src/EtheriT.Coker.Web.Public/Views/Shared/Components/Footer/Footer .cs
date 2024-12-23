@@ -333,7 +333,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 											new FooterViewModel { Title = "Mail聯繫", Link = "/unitedtw/mail" },
 										}
 									},
-									new FooterViewModel { Title = "相關連結", Link = "other", footerViewModels = new List<FooterViewModel> {
+									new FooterViewModel { Title = "相關連結", Link = "/unitedtw/other", footerViewModels = new List<FooterViewModel> {
 										}
 									}
 								},
@@ -386,10 +386,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 									new FooterViewModel { Title = "視訊篩檢服務", Link = "VideoServices", footerViewModels = new List<FooterViewModel> {
 										}
 									},
-									new FooterViewModel { Title = "Facebook", Link = "other", footerViewModels = new List<FooterViewModel> {
-										}
-									},
-									new FooterViewModel { Title = "相關連結", Link = "other", footerViewModels = new List<FooterViewModel> {
+									new FooterViewModel { Title = "Facebook", Link = "https://www.facebook.com/vghksasnet", footerViewModels = new List<FooterViewModel> {
 										}
 									},
 									new FooterViewModel { Title = "網站地圖", Link = "website", footerViewModels = new List<FooterViewModel> {

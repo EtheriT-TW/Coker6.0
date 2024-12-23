@@ -143,11 +143,11 @@ footer > .footer-bg {
         justify-content: space-between;
     }
 
-    .paging_frame > p {
+    .paging_frame > p, #Footer_Menu > .paging_frame > a {
         padding: 0 5px;
         font-weight: bold;
         font-size: 1.1rem;
-        color:black;
+        color: black;
     }
 
     .abreast > ul {

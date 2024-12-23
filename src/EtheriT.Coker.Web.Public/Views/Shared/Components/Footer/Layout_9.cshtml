@@ -18,7 +18,12 @@
 			@foreach (var menu in Model.footerViewModels)
 			{
 				<div class="paging_frame">
-					<p>@menu.Title</p>
+					@if(menu.Title=="相關連結")
+					{
+						<a href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a>
+					} else {
+						<p>@menu.Title</p>
+					}
 					<div class="abreast">
 						<ul>
 							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())

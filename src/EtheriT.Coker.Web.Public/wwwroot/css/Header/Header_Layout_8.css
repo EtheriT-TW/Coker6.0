@@ -17,6 +17,7 @@ header {
 
 #ContainerBody {
     background: url(/upload/background.jpg) center top;
+    padding-top:0 !important;
 }
 
 #header-title-phone {

@@ -382,8 +382,14 @@ function DirectoryDataInsert($item, result) {
         content.find(".subtitle").text(data.subtitle);
         content.find(".description").html(data.description);
         //符合無障礙規範，若a裡有圖片或文字則alt為空
-        if (content.find("img").length && content.find("h3,h4,h5,h6,span,p").length) {
-            content.find("img").imgCheck().attr("alt", " ");
+        if (content.is('a')) {
+            if (content.find("img").length && content.find("h3,h4,h5,h6,span,p").length) {
+                content.find("img").imgCheck().attr("alt", " ");
+            }
+        } else { 
+            if (content.find("a img").length && content.find('a').find("h3,h4,h5,h6,span,p").length) {
+                content.find("img").imgCheck().attr("alt", " ");
+            }
         }
         if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
         else content.find(".location").text(data.location);

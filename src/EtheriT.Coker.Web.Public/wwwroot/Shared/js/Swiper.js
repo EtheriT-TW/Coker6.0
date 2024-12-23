@@ -596,7 +596,21 @@ function SwiperInit(obj) {
             const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
             const canNext = length > 6;
             var autoplay = obj.autoplay ? canNext : false;
-            var selfConfig = Object.assign({}, config, {
+            const selfConfig = Object.assign({}, config, {
+                breakpoints: {
+                    375: {
+                        slidesPerView: 1,
+                        grid: { rows: 1, fill: "row" },
+                    },
+                    576: {
+                        slidesPerView: 2,
+                        grid: { rows: 1, fill: "row" },
+                    },
+                    992: {
+                        slidesPerView: 3,
+                        grid: { rows: 2, fill: "column" },
+                    },
+                },
                 pagination: {
                     el: "#" + $self.attr("id") + " .swiper-pagination",
                     clickable: true,
@@ -605,23 +619,12 @@ function SwiperInit(obj) {
                     nextEl: "#" + $self.attr("id") + " .swiper_button_next",
                     prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
                 },
-                slidesPerView: 3,
-                breakpoints: {
-                    375: { slidesPerView: 1 },
-                    576: { slidesPerView: 2 },
-                    992: { slidesPerView: 3 },
-                },
-                grid: {
-                    rows: 2,
-                    fill: 'row'
-                },
-                spaceBetween: 30,
-            }, autoplay ? {
+            }, obj.autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
                 },
-                loop: canNext
+                loop: true
             } : {});
             if (!canNext && length > 0) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").addClass("d-none");

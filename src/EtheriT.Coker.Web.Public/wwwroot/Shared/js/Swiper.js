@@ -586,7 +586,6 @@ function SwiperInit(obj) {
             $(this).data("isinit", true);
         }
     }
-
     $(".three_two_grid_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {

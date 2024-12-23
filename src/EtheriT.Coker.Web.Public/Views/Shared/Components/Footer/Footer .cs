@@ -140,7 +140,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     }
                                 },
                                 Logo_Image = "/upload/logo.png",
-                                LINE_Link = "",
+                                LINE_Link = "https://lin.ee/s5Dt4hA",
                                 Facebook_Link = "https://www.facebook.com/defoodec",
                                 IG_Link = "https://www.instagram.com/luway2024/",
                                 YoutubeChannel_Link = "https://www.youtube.com/@nickgodes",
@@ -453,10 +453,8 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 							footerMessage = "<div class=\"d-flex\" id=\"footrow\">" +
 												 "<div class=\"span6\" id=\"footword\">" +
 													"<div class=\"wordfoot\">83163 高雄市大寮區濃公路79號</div>" +
-													"<div class=\"wordfoot wordleft\">電話：(07)7884882-4</div>" +
-													"<div class=\"wordfoot\">傳真：(07)788-4885-6</div>" +
+													"<div class=\"wordfoot wordleft\">電話：(07)7884882-4 &nbsp;&nbsp;傳真：(07)788-4885-6</div>" +
 													"<div class=\"wordfoot\">No.79, Nonggong Rd., Daliao Dist., Kaohsiung City 831, Taiwan (R.O.C.)</div>" +
-													"<div class=\"wordfoot wordleft\">TEL：<a href=\"tel:886-77884882\">886-7-788-4882~4</a> &nbsp;&nbsp;FAX：886-7-788-4885~6</div>" +
 												 "</div>" +
 											 "</div>";
 							break;

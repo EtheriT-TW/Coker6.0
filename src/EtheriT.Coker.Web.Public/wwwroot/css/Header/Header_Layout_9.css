@@ -263,6 +263,7 @@
     }
 
     #Offcanvas_Mega_Menu > ul > .title {
+        position:relative;
         cursor: pointer;
     }
 
@@ -291,6 +292,7 @@
             cursor: default;
             position: absolute;
             top: 100%;
+            left:50%;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         }
 
@@ -307,9 +309,9 @@
                     width: 100%;
                 }
 
-                    #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
+                    /*#Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
                         padding-left: 20px;
-                    }
+                    }*/
 
                         #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover::before {
                             content: "➤";
@@ -319,7 +321,7 @@
 
                     #Offcanvas_Mega_Menu > ul > .title > .content li > a:hover {
                         background: #ffe9c1;
-                        margin-left: 0;
+                        /*margin-left: 0;*/
                     }
 
 .subtitle > .subtitle_title {
@@ -353,6 +355,7 @@
 
 .metaMenu .collapse_menus > ul {
     display: flex;
+    flex-direction:column;
     flex-wrap: wrap;
     width: 1300px;
     max-width: 100%;

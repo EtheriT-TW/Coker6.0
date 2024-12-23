@@ -81,7 +81,7 @@ function ready() {
     $(".backstageType").remove();
     if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0 || $(".advertise_directory").length > 0) DirectoryGetDataInit();
     //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
-    if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper").length > 0) SwiperInit({ autoplay: true });
+    if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper,.vertical_swiper_thumbs").length > 0) SwiperInit({ autoplay: true });
     if ($(".marqueeSwiper").length > 0) MarqueeSwiper(SiteId);
     if ($(".masonry").length > 0 || $(".YTmodal_frame").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();

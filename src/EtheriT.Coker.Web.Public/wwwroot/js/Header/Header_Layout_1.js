@@ -1,5 +1,4 @@
 ﻿function HeaderInit() {
-    console.log($("#btnMenu.change-color").length);
     if ($("#btnMenu.change-color").length) {
         $('#btnMenu').on('click', function () {
             $(this).find('#menuIcon').toggleClass('text-white');

@@ -586,7 +586,6 @@ function SwiperInit(obj) {
             $(this).data("isinit", true);
         }
     }
-
     $(".three_two_grid_swiper").prop("draggable", true).each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
@@ -631,6 +630,43 @@ function SwiperInit(obj) {
             } else {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").removeClass("d-none");
             }
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            autoplay && $self.swiperBindEven(swiper);
+            $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
+        }
+    });
+
+    $(".vertical_swiper_thumbs").prop("draggable", true).each(function () {
+        var $self = $(this);
+        if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
+            var Id = "#" + $self.attr("id") + " > .swiper"
+            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
+            const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
+            const canNext = length > 6;
+            var autoplay = obj.autoplay ? canNext : false;
+            const selfConfig = Object.assign({}, config, {
+                slidesPerView: 1,
+                direction: "horizontal",
+                allowTouchMove: true,
+                breakpoints: {
+                    768: {
+                        direction: "vertical",
+                        allowTouchMove: false,
+                    },
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
+            }, obj.autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             autoplay && $self.swiperBindEven(swiper);

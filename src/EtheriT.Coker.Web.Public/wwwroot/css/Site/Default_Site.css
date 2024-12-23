@@ -61,6 +61,10 @@ body > .skiptranslate {
     color: transparent !important;
 }
 
+#google_translate_element .skiptranslate {
+    padding-top: 18px;
+}
+
 .goog-te-banner-frame.skiptranslate {
     display: none !important;
 }

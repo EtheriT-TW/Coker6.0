@@ -71,6 +71,7 @@
     
     if (tel == "") {
         $(parenttel).addClass("d-none");
+        tel = "no";
     } else {
         $(parenttel).find("a").attr({ href: `tel:${tel}`, title: `播打電話：${tel}`, target: "_blank" });
         $(parenttel).removeClass("d-none");

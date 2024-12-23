@@ -383,6 +383,7 @@ upload/**/*.*
 **/package-lock.json
 *.lock
 *.bak
+db/*.*
 
 NuGet.config
 /src/EtheriT.Coker.Web.MVC/appsettings2.json

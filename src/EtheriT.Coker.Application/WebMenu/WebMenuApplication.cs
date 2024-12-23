@@ -454,7 +454,7 @@ namespace EtheriT.Coker.Application
                 output.Add(new GetMenuBreadDto
                 {
                     Title = result.Title,
-                    Link = string.IsNullOrEmpty(result.RouterName)? result.LinkUrl! : string.IsNullOrEmpty(result.Html)?"": $"{orgName}/{result.RouterName}",
+                    Link = string.IsNullOrEmpty(result.RouterName)? result.LinkUrl! : string.IsNullOrEmpty(result.Html)?"": $"/{orgName}/{result.RouterName}",
                 });
             }
 

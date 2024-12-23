@@ -299,6 +299,7 @@ var grapesInit = function (options) {
                             case "five_swiper":
                             case "six_swiper":
                             case "three_two_grid_swiper":
+                            case "vertical_swiper_thumbs":
                                 setConfig(0, s);
                                 checkClass[0].parameter.autoplay = false;
                                 break;

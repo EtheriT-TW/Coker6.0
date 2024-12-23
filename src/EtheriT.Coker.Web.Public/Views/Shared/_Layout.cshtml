@@ -26,6 +26,12 @@
         case "Product":
             <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/product/{ViewData["Id"]}")" />
             break;
+        case "Techcert":
+            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/techcert/{ViewData["Id"]}")" />
+            break;
+        default:
+            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}{ViewData["CurrentUrl"]}")" />
+            break;
     }
     @await Component.InvokeAsync(nameof(LayoutType))
 

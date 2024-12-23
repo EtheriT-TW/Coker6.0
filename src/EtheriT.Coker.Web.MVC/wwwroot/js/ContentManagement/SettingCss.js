@@ -238,7 +238,7 @@ window.PageReady = function () {
     co.Form.set(formId, function () {
         co.sweet.confirm("是否確認儲存?", "即將將您設定的css發佈在前台所有網站上!", "確認", "取消", function () {
             var Errors = editor.getSession().getAnnotations();
-            const firstErrorIndex = annotations.findIndex(ann => ann.type === "error");
+            const firstErrorIndex = Errors.findIndex(ann => ann.type === "error");
             if (firstErrorIndex !== -1) co.sweet.error("失敗", co.sweet.TitleHilight(`字串包含不支援或無效的規則 {0}`, Errors[firstErrorIndex].text));
             else {
                 co.WebSite.SettingCss(editor.getValue()).done(function (result) {

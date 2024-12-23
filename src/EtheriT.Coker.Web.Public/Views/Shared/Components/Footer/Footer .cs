@@ -140,7 +140,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                     }
                                 },
                                 Logo_Image = "/upload/logo.png",
-                                LINE_Link = "",
+                                LINE_Link = "https://lin.ee/s5Dt4hA",
                                 Facebook_Link = "https://www.facebook.com/defoodec",
                                 IG_Link = "https://www.instagram.com/luway2024/",
                                 YoutubeChannel_Link = "https://www.youtube.com/@nickgodes",

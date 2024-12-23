@@ -11,6 +11,9 @@
     const local = @Html.Raw(L.getAllJsonString());
 </script>
 @Html.AntiForgeryToken()
+<div id="PostCSS" class="d-none">
+    @HttpUtility.HtmlEncode(Model.PageData.Css)
+</div>
 <div class="top_title_1 p-3">
     <nav class="bread d-none d-md-block container">
         <ol class="list-unstyled d-flex my-0">

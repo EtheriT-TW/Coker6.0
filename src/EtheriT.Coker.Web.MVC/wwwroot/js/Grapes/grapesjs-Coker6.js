@@ -327,7 +327,7 @@
                                                                 <div class="a_title d-none"></div>
                                                                 <div class="a_target d-none"></div>
                                                                 <div class="yt_src d-none"></div>
-                                                                <div class="yt_title d-none"></div>
+                                                                <div class="video_title d-none"></div>
                                                                 <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
                                                                 <div class="eyes">
@@ -397,9 +397,11 @@
                                         "title": $self.find("a").attr("title"),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
+                                        "img_update": $self.find("img").length > 0 ? true : false,
                                         "a_tag": $self.find("a").length > 0 ? true : false,
                                         "target": $self.find("a").attr("target"),
                                         "yt_src": $self.find("iframe").attr("src"),
+                                        "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
                                         "visible": $self.hasClass("backstageType")
@@ -428,6 +430,7 @@
                                     title: title,
                                     target: target,
                                     yt_src: yt_src,
+                                    video_title : title,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -446,6 +449,7 @@
                                 $li.find('.a_title').html(title);//更新連結名稱
                                 $li.find('.a_target').html(target);//是否另開連結
                                 $li.find('.yt_src').html(yt_src);//更新YT連結
+                                $li.find('.video_title').html(title);//更新影片標題
                                 $li.find('.a_visible').html(visible);//是否隱藏
                             });
                             const newLi = function (index, data) {
@@ -455,6 +459,7 @@
                                     href: $selected.find("a").attr("href") === "#SwiperModal" ? "#SwiperModal" : "",
                                     title: "",
                                     yt_src: "",
+                                    video_title:"",
                                     synopsis_title: "",
                                     synopsis_caption: "",
                                     visible: false,
@@ -477,7 +482,7 @@
                                     content.find(".eyes > span:first-child").removeClass("d-none");
                                     content.find(".eyes > span:last-child").addClass("d-none");
                                 }
-                                if (!data.a_tag) {
+                                if (!data.a_tag && !data.img_update) {
                                     content.find('.update-img').remove();
                                     content.find('.yt-video').removeClass("d-none");
                                 }
@@ -496,9 +501,9 @@
                                     const $setYtSrc = $caption.find('#ytSrc');
                                     const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link")];
                                     $caption.find('*:not(.a_target, #YT-link)').removeClass('d-none');
-                                    if (!$li.data("a_tag")) {
+                                    console.log($li.data("a_tag"));
+                                    if (!$li.data("a_tag") && !$li.data("img_update")) {
                                         $formSetting[3].removeClass("d-none");
-                                        $formSetting[0].addClass("d-none");
                                     } else {
                                         $formSetting[3].addClass("d-none");
                                     }
@@ -576,7 +581,7 @@
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find("img").attr("src");
-                                    const newTitle = $(element).data("alt") ? $(element).data("alt") : $(element).data("yt_title");
+                                    const newTitle = $(element).data("alt") ? $(element).data("alt") : $(element).data("video_title");
                                     const newLink = $(element).data("href");
                                     const newTarget = $(element).data("target");
                                     const newYT = $(element).data("yt_src");
@@ -593,6 +598,7 @@
                                             }
                                             const $iframe = $("<iframe>", {
                                                 src: newYT,
+                                                title: newTitle,
                                                 width: "100%",
                                                 height: "500",
                                                 frameborder: "0",
@@ -628,6 +634,7 @@
                                                 $new_slide.find("a, img").remove();
                                                 const $iframe = $("<iframe>", {
                                                     src: newYT,
+                                                    title: newTitle,
                                                     width: "100%",
                                                     height: "500",
                                                     frameborder: "0",

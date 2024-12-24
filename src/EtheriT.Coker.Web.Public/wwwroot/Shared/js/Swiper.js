@@ -646,36 +646,64 @@ function SwiperInit(obj) {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
-            var Id = "#" + $self.attr("id") + " > .swiper"
+            var Id = "#" + $self.attr("id") + " .swiper"
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
-            const canNext = length > 6;
+            const canNext = length > 3;
             var autoplay = obj.autoplay ? canNext : false;
-            const selfConfig = Object.assign({}, config, {
+            var swiperThumbs = new Swiper(`#${$self.attr("id")} .swiper_thumbs`, {
                 slidesPerView: 1,
                 direction: "horizontal",
                 allowTouchMove: true,
+                loop: true,
                 breakpoints: {
                     768: {
                         direction: "vertical",
                         allowTouchMove: false,
+                        loop: canNext,
                     },
                 },
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                    nextEl: "#" + $self.attr("id") + " .swiper_thumbs .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_thumbs .swiper_button_prev",
+                },
+            });
+            const selfConfig = Object.assign({}, config, {
+                freeMode: true,
+                loop: true,
+                slidesPerView: 1,
+                direction: "horizontal",
+                breakpoints: {
+                    768: {
+                        direction: "vertical",
+                        loop: canNext,
+                        slidesPerView: 3,
+                    },
+                },
+                centeredSlides: true,
+                thumbs: {
+                    swiper: swiperThumbs,
+                },
+                effect: "coverflow",
+                coverflowEffect: {
+                    rotate: 0,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 1,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper .swiper_button_prev",
                 },
             }, obj.autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
-                },
-                loop: true
+                }
             } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             autoplay && $self.swiperBindEven(swiper);
-            $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
 }

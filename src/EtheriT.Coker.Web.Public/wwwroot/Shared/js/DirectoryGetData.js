@@ -294,14 +294,17 @@ function DirectoryDataGet($item, option) {
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");
 
         if ($item.hasClass("swiper") || $item.find(".swiper").length > 0 || $item.hasClass("swiper-wrapper")) {
-            let c;
+            let c,b;
             if ($item.hasClass("swiper")) c = $item;
             else if ($item.find(".swiper").length > 0) c = $item.find(".swiper");
             else c = $item.parents(".swiper");
-            if (typeof ($(c).data("isInit")) != "undefined" && $(c).data("isInit"))
-                c[0].swiper.destroy(true, true);
-            c.parents(`[class*="_swiper"]`).data("isInit", false);
-            SwiperInit({ autoplay: true });
+            b = $(c).parents(`[class*="_swiper"]`);
+            if ($(b).length > 0) {
+                if (typeof ($(b).data("isInit")) != "undefined" && $(b).data("isInit"))
+                    c[0].swiper.destroy(true, true);
+                b.data("isInit", false);
+                SwiperInit({ autoplay: true });
+            }
         }
     })
 }

@@ -5,7 +5,6 @@
  ***************/
 function SwiperInit(obj) {
     var config = {
-        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         keyboard: {
@@ -18,18 +17,24 @@ function SwiperInit(obj) {
             init: function () {
                 const swiper = this;
                 const setShow = function (event) {
-                    event.preventDefault()
-                    $(this).parents(".swiper-slide").find(".outside-item").addClass("show");
+                    event.preventDefault();
+                    $(event.currentTarget).parents(".swiper").find(".outside-item").removeClass("show");
+                    $(event.currentTarget).parents(".swiper-slide").find(".outside-item").addClass("show");
                 }
                 const hideShow = function (event) {
-                    $(this).parents(".swiper-slide").find(".outside-item").removeClass("show");
+                    $(".swiper-slide .outside-item").removeClass("show");
                 }
-                $(this.el).find(".hover-outside").on("click", setShow);
-                $(this.el).find(".hover-outside").on("mouseover", setShow);
-                $(this.el).find(".outside-item").on("mouseover", setShow);
-                $(this.el).find(".hover-outside").on("mouseout", hideShow);
-                $(this.el).find(".outside-item").on("mouseout", hideShow);
-                $("body").off("click.disableoutsideItem").on("click.disableoutsideItem", hideShow)
+                $(this.el).find(".hover-outside").off("click").on("click", setShow);
+                $(this.el).find(".hover-outside").off("mouseover").on("mouseover", setShow);
+                $(this.el).find(".hover-outside").off("keydown").on("keydown", function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') { // 檢查 Enter 或空白鍵
+                        setShow(event);
+                    }
+                });
+                $(this.el).find(".outside-item").off("mouseover").on("mouseover", setShow);
+                $(this.el).find(".hover-outside").off("mouseout").on("mouseout", hideShow);
+                $(this.el).find(".outside-item").off("mouseout").on("mouseout", hideShow);
+                $("body").off("click.disableoutsideItem").off("click.disableoutsideItem").on("click.disableoutsideItem", hideShow)
                 this.isLoopActive = this.params.loop;
             },
             slideChange: function () {
@@ -98,7 +103,7 @@ function SwiperInit(obj) {
             }
             thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
-            $(this).find(".swiper-slide a").on("focus", function () {
+            $(this).find(".swiper-slide a").off("focus").on("focus", function () {
                 const activeIndex = $(swiper.el).find(":focus").parents(".swiper-slide").attr("aria-label").split(" / ")[0];
                 swiper.slideTo(activeIndex - 1, 300);
                 stop();

@@ -661,6 +661,7 @@ function SwiperInit(obj) {
                     768: {
                         direction: "vertical",
                         allowTouchMove: false,
+                        watchSlidesProgress: true,
                         loop: canNext,
                     },
                 },
@@ -674,6 +675,7 @@ function SwiperInit(obj) {
                 loop: true,
                 slidesPerView: 1,
                 direction: "horizontal",
+                spaceBetween: 0,
                 breakpoints: {
                     768: {
                         direction: "vertical",
@@ -682,15 +684,16 @@ function SwiperInit(obj) {
                     },
                 },
                 centeredSlides: true,
-                thumbs: {
-                    swiper: swiperThumbs,
-                },
                 effect: "coverflow",
                 coverflowEffect: {
                     rotate: 0,
                     stretch: 0,
                     depth: 100,
                     modifier: 1,
+                    slideShadows: true, 
+                },
+                thumbs: {
+                    swiper: swiperThumbs,
                 },
                 navigation: {
                     nextEl: "#" + $self.attr("id") + " .swiper .swiper_button_next",

@@ -103,8 +103,9 @@ function SwiperInit(obj) {
             }
             thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
-            $(this).find(".swiper-slide a").off("focus").on("focus", function () {
-                const activeIndex = $(swiper.el).find(":focus").parents(".swiper-slide").attr("aria-label").split(" / ")[0];
+            $(this).find(".swiper-slide a,.swiper-slide").off("focus").on("focus", function () {
+                const $item = $(this).hasClass("swiper-slide") ? $(this) : $(this).parents(".swiper-slide");
+                const activeIndex = $item.attr("aria-label").split(" / ")[0];
                 swiper.slideTo(activeIndex - 1, 300);
                 stop();
             });

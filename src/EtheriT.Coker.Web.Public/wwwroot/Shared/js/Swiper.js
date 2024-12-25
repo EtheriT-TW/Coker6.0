@@ -671,7 +671,6 @@ function SwiperInit(obj) {
                 },
             });
             const selfConfig = Object.assign({}, config, {
-                freeMode: true,
                 loop: true,
                 slidesPerView: 1,
                 direction: "horizontal",
@@ -690,7 +689,7 @@ function SwiperInit(obj) {
                     stretch: 0,
                     depth: 100,
                     modifier: 1,
-                    slideShadows: true, 
+                    slideShadows: true,
                 },
                 thumbs: {
                     swiper: swiperThumbs,
@@ -706,8 +705,20 @@ function SwiperInit(obj) {
                 }
             } : {});
             var swiper = new Swiper(Id, selfConfig);
+            swiper.on('slideChange', function () {
+                var slides = $(swiper.slides);
+                slides.each(function (index, slide) {
+                    if (index < swiper.activeIndex - 1 || index > swiper.activeIndex + 1) {
+                        $(slide).addClass('hidden-slide');
+                    } else {
+                        $(slide).removeClass('hidden-slide');
+                    }
+                });
+            });
             $self.data("isInit", true)
             autoplay && $self.swiperBindEven(swiper);
+            swiper.loopCreate();
+            swiper.update();
         }
     });
 }

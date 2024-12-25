@@ -717,6 +717,7 @@ function SwiperInit(obj) {
             });
             $self.data("isInit", true)
             autoplay && $self.swiperBindEven(swiper);
+            swiper.slideTo(0);
             swiper.loopCreate();
             swiper.update();
         }

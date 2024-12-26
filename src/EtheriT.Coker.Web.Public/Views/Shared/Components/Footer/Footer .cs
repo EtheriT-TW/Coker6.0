@@ -129,15 +129,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
                                             new FooterViewModel { Title = "平面媒體", Link = "/defood/report" },
                                         }
                                     },
-                                    new FooterViewModel { Title = "食品代工", Link = "", footerViewModels = new List<FooterViewModel> {
+                                    new FooterViewModel { Title = "食品代工", Link = "/defood/OEN", footerViewModels = new List<FooterViewModel> {
                                             new FooterViewModel { Title = "廠房設備", Link = "/defood/plantequipment" },
                                             new FooterViewModel { Title = "生產製程", Link = "/defood/prodprocess" }
                                         }
                                     },
-                                    new FooterViewModel { Title = "客戶服務", Link = "", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel { Title = " 聯絡我們", Link = "/defood/contact_us" },
-                                        }
-                                    }
+                                    new FooterViewModel { Title = "銀髮友善", Link = "/defood/Eatender"},
+                                    new FooterViewModel { Title = "客戶服務", Link = "/defood/contact_us"}
                                 },
                                 Logo_Image = "/upload/logo.png",
                                 LINE_Link = "https://lin.ee/s5Dt4hA",

@@ -1007,10 +1007,8 @@ function AddUp(success_text, error_text, target) {
         if (result.success) {
             Coker.sweet.success(success_text, null, true);
             if (total_files.length > 0) {
-
                 $("#ProductForm > .data_upload > ul > li").each(function () {
                     var $self = $(this);
-
                     if (!$self.hasClass("btn_upload_add")) {
                         var data = [];
                         total_files.forEach(file => {
@@ -1018,7 +1016,7 @@ function AddUp(success_text, error_text, target) {
                                 data.push(file);
                             }
                         })
-                        if (data.length > 1) {
+                        if (data.length > 0) {
                             switch (data[0]["Type"]) {
                                 case 1:
                                     if (typeof (data[0]["File"]) == "string") {

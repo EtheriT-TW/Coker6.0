@@ -175,16 +175,64 @@
 
                 this.on('change:attributes:link', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
-                        var link = component.getAttributes()["link"];
-                        if (typeof (link) != "undefined") {
-                            if (link.indexOf("&") > 0) {
-                                link = link.substring(0, link.indexOf("&"));
-                                var yttitle = typeof (component.getAttributes()["yttitle"]) == 'undefined' ? "" : component.getAttributes()["yttitle"];
-                                component.setAttributes({ 'link': link, 'yttitle': yttitle });
+                        var oldlink = component.getAttributes()["link"];
+                        var link = oldlink;
+                        var $self = $(component.getEl());
+
+                        if (link) {
+                            // 處理不同格式的 YouTube 網址
+                            if (link.startsWith('https://www.youtube.com/watch?')) {
+                                link = link.substring("https://www.youtube.com/watch?".length);
+                            } else if (link.startsWith('https://youtu.be/')) {
+                                link = link.substring("https://youtu.be/".length);
+                            } else if (link.startsWith("https://www.youtube.com/shorts/")) {
+                                link = link.substring("https://www.youtube.com/shorts/".length);
+                            } else if (link.startsWith("https://youtube.com/shorts/")) {
+                                link = link.substring("https://youtube.com/shorts/".length);
+                            } else if (link.startsWith('https://www.youtube.com/live/')) {
+                                link = link.substring("https://www.youtube.com/live/".length);
                             }
-                            var vid = link.substring(link.indexOf("v=") + 2)
+
+                            if (link.includes("?si=")) {
+                                var siIndex = link.indexOf("?si=");
+                                var beforeSi = link.substring(0, siIndex);
+                                var ampersandIndex = link.indexOf("&", siIndex);
+                                link = ampersandIndex >= 0 ? beforeSi + link.substring(ampersandIndex) : beforeSi;
+                            }
+
+                            var vid = "";
+                            if (link.includes("v=")) {
+                                var vIndex = link.indexOf("v=") + 2;
+                                var ampersandIndex = link.indexOf("&", vIndex);
+                                vid = ampersandIndex >= 0 ? link.substring(vIndex, ampersandIndex) : link.substring(vIndex);
+                            } else {
+                                var tagindex = link.indexOf("&");
+                                vid = tagindex >= 0 ? link.substring(0, tagindex) : link.substring(vIndex);
+                            }
+
+                            var startTime = 0;
+                            if (link.includes("t=")) {
+                                var tIndex = link.indexOf("t=") + 2;
+                                var tEnd = link.indexOf("&", tIndex);
+                                var timeStr = tEnd >= 0 ? link.substring(tIndex, tEnd) : link.substring(tIndex);
+
+                                if (timeStr.endsWith("s")) {
+                                    startTime = parseInt(timeStr.slice(0, -1), 10);
+                                } else if (timeStr.endsWith("m")) {
+                                    startTime = parseInt(timeStr.slice(0, -1), 10) * 60;
+                                } else if (!isNaN(timeStr)) {
+                                    startTime = parseInt(timeStr, 10);
+                                }
+                            }
+                            link = startTime > 0
+                                ? `https://www.youtube.com/embed/${vid}?start=${startTime}`
+                                : `https://www.youtube.com/embed/${vid}`;
+
+                            if (!oldlink.startsWith("https://www.youtube.com/embed/")) {
+                                component.setAttributes({ 'link': link });
+                            }
+
                             var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
-                            var $self = $(component.getEl());
                             $self.find("img").attr("src", img_link);
                         }
                     }
@@ -202,11 +250,12 @@
         },
         view: {
             onRender() {
-                const el = this.el; // 這裡獲取渲染後的 DOM 元素
+                const el = this.el;
                 var $parent = $(el);
                 var link = $parent.attr("link");
                 if (typeof (link) != "undefined") {
-                    var vid = link.substring(link.indexOf("v=") + 2)
+                    // 因為有舊的內容沒有處理好所以這邊保留原始寫法
+                    var vid = typeof ($parent.attr("vid")) != "undefined" ? $parent.attr("vid") : link.substring(link.indexOf("v=") + 2)
                     var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
                     $parent.find("img").attr("src", img_link)
                     $parent.attr("data-isinit", true);
@@ -475,7 +524,7 @@
                                     href: $selected.find("a").attr("href") === "#SwiperModal" ? "#SwiperModal" : "",
                                     title: "",
                                     yt_src: "",
-                                    video_title:"",
+                                    video_title: "",
                                     synopsis_title: "",
                                     synopsis_caption: "",
                                     visible: false,
@@ -1079,7 +1128,7 @@
             const html = co.Data.HtmlDecode(this.html);
             const elementHtmlCss = `${html}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
-            let iconText = (this.icon||"").replace("material-symbols-outlined", "").trim();
+            let iconText = (this.icon || "").replace("material-symbols-outlined", "").trim();
             let media = "";
             if (/^fa/.test(this.icon)) {
                 media = `<i class="${this.icon} fa-5x"></i>`;
@@ -1394,7 +1443,7 @@
                 }
                 setTimeout(timmer, 100);
             }
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1)  {
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) {
             var cont = iframe.document.getElementsByClassName("swiper").length;
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("swiper").length != cont) iframe.SwiperInit({ autoplay: false });

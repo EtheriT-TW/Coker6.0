@@ -18,20 +18,20 @@
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7194;http://localhost:5194"
     },
-    "EtheriT.Coker.Web.Public.Haoguang": {
+    "EtheriT.Coker.Web.Public.Defood": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Haoguang"
+        "ASPNETCORE_ENVIRONMENT": "Defood"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5195"
     },
-    "EtheriT.Coker.Web.Public.Haoguangen": {
+    "EtheriT.Coker.Web.Public.Museum": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Haoguangen"
+        "ASPNETCORE_ENVIRONMENT": "Museum"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5196"
@@ -53,7 +53,8 @@
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7195;http://localhost:5198"
-    },"EtheriT.Coker.Web.Public.kinglake": {
+    },
+    "EtheriT.Coker.Web.Public.kinglake": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

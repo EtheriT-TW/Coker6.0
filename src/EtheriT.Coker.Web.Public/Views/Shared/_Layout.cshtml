@@ -111,16 +111,53 @@
     }
     @if (ViewData["google.translate"] != null && !string.IsNullOrEmpty(ViewData["google.translate"]!.ToString() ?? ""))
     {
-        <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
         <script nonce="@ViewBag.Nonce">
+            let isGoogleTranslateInitialized = false;
+
             function googleTranslateElementInit() {
-                new google.translate.TranslateElement({
-                    pageLanguage: 'zh-TW', includedLanguages: '@ViewData["google.translate"]', gaTrack: true
-                }, 'google_translate_element');
+                if (isGoogleTranslateInitialized) {
+                    console.log("Google Translate is already initialized.");
+                    return;
+                }
+                try {
+                    if (typeof google !== "undefined" && typeof google.translate !== "undefined" && google.translate.TranslateElement) {
+                        new google.translate.TranslateElement({
+                            pageLanguage: 'zh-TW',
+                            includedLanguages: '@ViewData["google.translate"]',
+                            gaTrack: true
+                        }, 'google_translate_element');
 
-                $('select.goog-te-combo').attr('title', 'translate');
-
+                        $('select.goog-te-combo').attr('title', 'translate');
+                        isGoogleTranslateInitialized = true;
+                    } else {
+                        console.warn("Google Translate API is not ready yet. Retrying...");
+                        setTimeout(googleTranslateElementInit, 1000); // 每秒重試一次
+                    }
+                } catch (error) {
+                    console.error("Failed to initialize Google Translate:", error);
+                }
             }
+
+            // 動態加載 Google Translate 腳本
+            function loadGoogleTranslateScript() {
+                const script = document.createElement("script");
+                script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+                script.async = true;
+                script.defer = true;
+
+                script.onload = () => {
+                    console.log("Google Translate script loaded successfully.");
+                };
+
+                script.onerror = () => {
+                    console.error("Failed to load Google Translate script.");
+                };
+
+                document.head.appendChild(script);
+            }
+
+            // 加載 Google Translate 腳本並初始化
+            loadGoogleTranslateScript();
         </script>
     }
     @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))

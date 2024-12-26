@@ -328,6 +328,8 @@
                                                                 <div class="a_target d-none"></div>
                                                                 <div class="yt_src d-none"></div>
                                                                 <div class="video_title d-none"></div>
+                                                                <div class="start_time d-none"></div>
+                                                                <div class="keep_time d-none"></div>
                                                                 <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
                                                                 <div class="eyes">
@@ -371,6 +373,14 @@
                                                       <label for="ytSrc" class="form-label">Youtube影片</label>
                                                       <input type="text" class="form-control" id="ytSrc" placeholder="影片網址" />
                                                     </div>
+                                                    <div id="start-time" class="mb-4">
+                                                      <label for="startTime" class="form-label">開始時間</label>
+                                                      <input type="text" class="form-control" id="startTime" placeholder="輸入開始時間" />
+                                                    </div>
+                                                    <div id="keep-time" class="mb-4">
+                                                      <label for="keepTime" class="form-label">持續時間</label>
+                                                      <input type="text" class="form-control" id="keepTime" placeholder="輸入持續時間" />
+                                                    </div>
                                                     <div id="img-hidden" class="ms-3">
                                                         <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
                                                         <label class="form-check-label" for="CheckHidden">隱藏</label>
@@ -402,6 +412,8 @@
                                         "target": $self.find("a").attr("target"),
                                         "yt_src": $self.find("iframe").attr("src"),
                                         "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
+                                        /*"start_time": ,
+                                        "keep_time" : ,開始時間、持續時間*/
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
                                         "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
                                         "visible": $self.hasClass("backstageType")
@@ -421,6 +433,8 @@
                                 const link = $('#slideHref').val();
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
                                 const yt_src = $('#ytSrc').val() ? "https://www.youtube.com/embed/" + $('#ytSrc').val().split('=')[1] : "";
+                                /*const start_time = 
+                                const keep_time = */
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,
@@ -430,7 +444,9 @@
                                     title: title,
                                     target: target,
                                     yt_src: yt_src,
-                                    video_title : title,
+                                    video_title: title,
+                                    start_time,
+                                    keep_time,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -575,9 +591,9 @@
                             });
 
                             $("#SwiperModal .sava").off("click").on("click", function () {
-                                const $s = $selected.clone();
-                                const $slides = $s.find(".swiper .swiper-wrapper>.swiper-slide").clone();
-                                const $b = $s.find(".swiper .swiper-wrapper");
+                                const s = selectedComponent.toHTML();
+                                const $slides = $(s).find('.swiper .swiper-wrapper .swiper-slide').clone();
+                                const $b = $(s).find('.swiper .swiper-wrapper');
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find("img").attr("src");
@@ -684,9 +700,9 @@
                                         $b.append($new_slide);
                                     }
                                 });
-                                $s.find(".six_thumbs .swiper-wrapper").empty();
+                                $(s).find(".six_thumbs .swiper-wrapper").empty();
                                 selectedComponent.components([]);
-                                $s.children().each(function () {
+                                $(s).children().each(function () {
                                     selectedComponent.append($(this).prop('outerHTML'));
                                 });
                                 //editor.getSelected().addComponents($s.html());

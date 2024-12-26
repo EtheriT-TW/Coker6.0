@@ -64,22 +64,21 @@ function SwiperInit(obj) {
                 const totalSlides = swiper.slides.length;
                 const slidesPerView = swiper.params.slidesPerView;
                 // 檢查導航元素
-                const nextEl = swiper.navigation.nextEl ? swiper.navigation.nextEl[0] : null;
-                const prevEl = swiper.navigation.prevEl ? swiper.navigation.prevEl[0] : null;
+                const nextEl = swiper.navigation.nextEl ? swiper.navigation.nextEl : null;
+                const prevEl = swiper.navigation.prevEl ? swiper.navigation.prevEl : null;
                 const paginationEl = swiper.pagination.el;
-
                 if (totalSlides <= slidesPerView) {
                     // 停止自動輪播
                     swiper.autoplay.stop();
                     // 隱藏左右箭頭
-                    if (nextEl) swiper.navigation.nextEl.style.display = 'none';
-                    if (prevEl) swiper.navigation.prevEl.style.display = 'none';
-                    if (paginationEl) paginationEl.style.display = 'none';
+                    if (!Array.isArray(nextEl)) nextEl.classList.add("d-none");
+                    if (!Array.isArray(prevEl)) prevEl.classList.add("d-none");
+                    if (!!paginationEl) paginationEl.classList.add("d-none");
                 } else {
                     // 確保箭頭可見
-                    if (nextEl) swiper.navigation.nextEl.style.display = '';
-                    if (prevEl) swiper.navigation.prevEl.style.display = '';
-                    if (paginationEl) paginationEl.style.display = '';
+                    if (!Array.isArray(nextEl)) nextEl.classList.remove("d-none");
+                    if (!Array.isArray(prevEl)) prevEl.classList.remove("d-none");
+                    if (!!paginationEl) paginationEl.classList.remove("d-none");
                 }
             }
             const stop = function () {
@@ -118,7 +117,7 @@ function SwiperInit(obj) {
         }
     });
 
-    $(".one_swiper").prop("draggable", true).each(function () {
+    $(".one_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             $self.find('video').each(function () {
@@ -151,7 +150,6 @@ function SwiperInit(obj) {
                         const slide = this;
                         const totalSlides = this.slides.length;
                         const previousSlideIndex = this.previousIndex;
-                        //const previousSlideIndex = (this.realIndex - 1 + totalSlides) % totalSlides;
                         const $previousSlide = $(this.slides[previousSlideIndex]);
                         const videoAction = $(this.slides[this.activeIndex]).find('video');
                         const videoElement = videoAction.get(0);
@@ -212,7 +210,7 @@ function SwiperInit(obj) {
         }
     });
     //單欄輪播+兩欄縮圖
-    $(".one_swiper_thumbs").prop("draggable", true).each(function () {
+    $(".one_swiper_thumbs").each(function () {
         var $self = $(this);
         const index = $self.index(this);
         $self.find(".six_thumbs > .swiper-wrapper").empty();
@@ -291,7 +289,7 @@ function SwiperInit(obj) {
             }
         }
     });
-    $(".two_swiper").prop("draggable", true).each(function () {
+    $(".two_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
@@ -341,7 +339,7 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".three_swiper").prop("draggable", true).each(function () {
+    $(".three_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
@@ -378,7 +376,7 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".four_swiper").prop("draggable", true).each(function () {
+    $(".four_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
@@ -415,7 +413,7 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".five_swiper").prop("draggable", true).each(function () {
+    $(".five_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
@@ -429,7 +427,6 @@ function SwiperInit(obj) {
                     el: '.swiper-scrollbar',
                     draggable: true,
                 },
-
                 navigation: {
                     nextEl: "#" + $self.attr("id") + " .swiper_button_next",
                     prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
@@ -463,7 +460,7 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".six_swiper").prop("draggable", true).each(function () {
+    $(".six_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
@@ -592,7 +589,7 @@ function SwiperInit(obj) {
             $(this).data("isinit", true);
         }
     }
-    $(".three_two_grid_swiper").prop("draggable", true).each(function () {
+    $(".three_two_grid_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
@@ -643,7 +640,7 @@ function SwiperInit(obj) {
         }
     });
 
-    $(".vertical_swiper_thumbs").prop("draggable", true).each(function () {
+    $(".vertical_swiper_thumbs").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)

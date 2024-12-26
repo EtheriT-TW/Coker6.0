@@ -655,12 +655,10 @@ function SwiperInit(obj) {
             var swiperThumbs = new Swiper(`#${$self.attr("id")} .swiper_thumbs`, {
                 slidesPerView: 1,
                 direction: "horizontal",
-                allowTouchMove: true,
                 loop: true,
                 breakpoints: {
                     768: {
                         direction: "vertical",
-                        allowTouchMove: false,
                         watchSlidesProgress: true,
                         loop: canNext,
                     },

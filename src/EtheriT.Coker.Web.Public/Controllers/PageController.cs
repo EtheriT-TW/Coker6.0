@@ -393,10 +393,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 if (view.IndexOf("Error/") < 0)
                 {
-                    if (!string.IsNullOrEmpty(defaultData.Css) && model.PageData != null)
-                    {
-                        model.PageData.Css = defaultData.Css + model.PageData.Css ?? "";
-                    }
                     if (siteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
@@ -440,7 +436,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var remote = await RemoteAppService.insertRemote(remoteInputDto);
             if(remote!=null && remote.Success) ViewBag.PageKey = remote.Message;
 
-            ViewData["SideName"] = model.PageData!.SiteName;
+			ViewBag.Css = HttpUtility.HtmlEncode((model.PageData!.Css)??"");
+            if (model.ParentData != null)
+				ViewBag.Css += HttpUtility.HtmlEncode(model.ParentData.Css);
+
+			if (!string.IsNullOrEmpty(defaultData.Css))
+				ViewBag.Css += HttpUtility.HtmlEncode(defaultData.Css);
+
+
+			ViewData["SideName"] = model.PageData!.SiteName;
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
             ViewData["Layout"] = model.layout;

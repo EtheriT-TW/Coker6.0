@@ -337,7 +337,7 @@ footer {
         flex-wrap: nowrap;
     }
 
-    #Footer_Menu > .paging_frame {
+    #Footer_Menu .paging_frame {
         height: 15%;
         width: auto;
     }

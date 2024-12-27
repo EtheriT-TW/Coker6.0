@@ -11,21 +11,23 @@
 		<i class="fa-solid fa-chevron-down text-black"></i>
 	</div>
 	<div class=" container listMenu d-flex justify-content-center align-items-center">
-		<div id="Footer_Menu" class="abreast row row-cols-2">
-	@foreach (var menu in Model.footerViewModels)
-	{
-		<div class="paging_frame col">
-			<p>@menu.Title</p>
-			<div class="abreast">
-				<ul>
-					@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
-					{
-						<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
-					}
-				</ul>
+		<div id="Footer_Menu">
+			<div class="FooterMenuList abreast row row-cols-2">
+				@foreach (var menu in Model.footerViewModels)
+				{
+				<div class="paging_frame col">
+					<p>@menu.Title</p>
+					<div class="abreast">
+						<ul>
+							@foreach (var sub_menu in menu.footerViewModels ?? new List<FooterViewModel>())
+							{
+								<li><a href="@sub_menu.Link" class="text-white">@sub_menu.Title</a></li>
+							}
+						</ul>
+					</div>
+				</div>	
+				}
 			</div>
-		</div>	
-	}
 		</div>
 	</div>
 }

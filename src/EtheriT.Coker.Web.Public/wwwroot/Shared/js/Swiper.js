@@ -71,13 +71,13 @@ function SwiperInit(obj) {
                     // 停止自動輪播
                     swiper.autoplay.stop();
                     // 隱藏左右箭頭
-                    if (!Array.isArray(nextEl)) nextEl.classList.add("d-none");
-                    if (!Array.isArray(prevEl)) prevEl.classList.add("d-none");
+                    if (!!nextEl && !Array.isArray(nextEl)) nextEl.classList.add("d-none");
+                    if (!!prevEl && !Array.isArray(prevEl)) prevEl.classList.add("d-none");
                     if (!!paginationEl) paginationEl.classList.add("d-none");
                 } else {
                     // 確保箭頭可見
-                    if (!Array.isArray(nextEl)) nextEl.classList.remove("d-none");
-                    if (!Array.isArray(prevEl)) prevEl.classList.remove("d-none");
+                    if (!!nextEl && !Array.isArray(nextEl)) nextEl.classList.remove("d-none");
+                    if (!!prevEl && !Array.isArray(prevEl)) prevEl.classList.remove("d-none");
                     if (!!paginationEl) paginationEl.classList.remove("d-none");
                 }
             }
@@ -188,7 +188,10 @@ function SwiperInit(obj) {
                         });
                     }
                 },
-
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
                 effect: effect,
                 speed: speed
             }, autoplay ? {
@@ -197,13 +200,7 @@ function SwiperInit(obj) {
                     disableOnInteraction: false,
                 },
                 loop: true
-            } : {},
-                canNext ? {
-                    navigation: {
-                        nextEl: "#" + $self.attr("id") + " .swiper_button_next",
-                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
-                    }
-                } : {});
+            } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             $self.swiperBindEven(swiper);
@@ -239,7 +236,10 @@ function SwiperInit(obj) {
                 }, thumbs: {
                     swiper: swiperThumbs,
                 },
-
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
                 effect: effect,
                 speed: speed
             }, autoplay ? {
@@ -248,14 +248,7 @@ function SwiperInit(obj) {
                     disableOnInteraction: false,
                 },
                 loop: true
-            } : {},
-                canNext ? {
-                    navigation: {
-                        nextEl: "#" + $self.attr("id") + " .swiper_button_next",
-                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
-                    },
-
-                } : {});
+            } : {});
             if (!canNext) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
             }

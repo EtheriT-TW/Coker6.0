@@ -144,7 +144,7 @@ footer > .footer-bg {
         justify-content: space-between;
     }
 
-    .paging_frame > p, #Footer_Menu > .paging_frame > a {
+    .paging_frame > p, #Footer_Menu .paging_frame > a {
         padding: 0 5px;
         font-weight: bold;
         font-size: 1.1rem;
@@ -447,7 +447,7 @@ footer {
             width: 30%;
             height: 45%;
         }
-        #FootContainer > #Footer_Menu > .paging_frame:nth-child(5) {
+        #FootContainer > #Footer_Menu .paging_frame:nth-child(5) {
             position:absolute;
             top:35%;
         }
@@ -464,7 +464,7 @@ footer {
             width: 50%;
             height: 27%;
         }
-        #FootContainer > #Footer_Menu > .paging_frame:nth-child(5) {
+        #FootContainer > #Footer_Menu .paging_frame:nth-child(5) {
             position: relative;
             transform: translate(100%, 10%);
         }

@@ -13,10 +13,6 @@
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
 <script src="~/js/Search/Search.min.js" asp-append-version="true"></script>
 
-<div id="PostCSS" class="d-none">
-    @HttpUtility.HtmlEncode(Model.PageData.Css)
-</div>
-
 @switch (Model.PageData.LayoutType)
 {
     case 2:

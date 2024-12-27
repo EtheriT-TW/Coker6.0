@@ -139,7 +139,23 @@
                         else
                         {
                             <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
-                                @menu.Title
+                                @if (string.IsNullOrEmpty(menu.imageUrl))
+                                {
+                                    @menu.Title
+                                }
+                                else
+                                {
+                                    if (string.IsNullOrEmpty(menu.hoverImageUrl))
+                                    {
+                                        <img src="@menu.imageUrl" alt="@menu.Title" />
+                                        <span class="justify-content-center">@menu.Title</span>
+                                    }
+                                    else
+                                    {
+                                        <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                                        <span>@menu.Title</span>
+                                    }
+                                }
                             </a>
                         }
                     </li>

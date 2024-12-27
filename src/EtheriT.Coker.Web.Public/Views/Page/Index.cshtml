@@ -168,17 +168,8 @@
         <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
     }
 }
-<div id="PostCSS" class="d-none">
-    @HttpUtility.HtmlEncode(Model.PageData.Css)
-    @if (Model.ParentData != null)
-        @HttpUtility.HtmlEncode(Model.ParentData.Css)
 
-
-
-
-    </div>
-
-    @if (Model.ParentData != null)
+@if (Model.ParentData != null)
 {
     <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
 }

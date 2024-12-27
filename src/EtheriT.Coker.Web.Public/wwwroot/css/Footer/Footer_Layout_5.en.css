@@ -21,7 +21,7 @@
         content: "。";
     }
 
-#Footer_Menu > .paging_frame:last-child {
+#Footer_Menu .paging_frame:last-child {
     width:500px;
     max-width:100%;
 }
@@ -49,10 +49,10 @@
     .abreast > ul > li {
         width: 100%;
     }
-    #Footer_Menu > .paging_frame:not(:last-child) {
+    #Footer_Menu .paging_frame:not(:last-child) {
         width:50%;
     }
-    #Footer_Menu > .paging_frame:last-child {
+    #Footer_Menu .paging_frame:last-child {
         width: 100%;
     }
 

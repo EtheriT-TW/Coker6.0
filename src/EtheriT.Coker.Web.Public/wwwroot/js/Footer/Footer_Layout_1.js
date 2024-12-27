@@ -6,9 +6,31 @@ function FooterInit() {
     MenuItemResize();
     toggleFooterMenu();
     $("#Collapse_Button").on("click", toggleFooterMenu);
-    $(window).resize(function () {
+    observeHtmlLangChange(() => {
+        toggleFooterMenu();
+        toggleFooterMenu();
+    });
+    $(window).on("resize",function () {
         MenuItemResize();
     })
+}
+
+function observeHtmlLangChange(callback) {
+    const htmlElement = document.documentElement; // <html> 標籤
+
+    const observer = new MutationObserver((mutationsList) => {
+        for (let mutation of mutationsList) {
+            if (mutation.type === "attributes" && mutation.attributeName === "lang") {
+                callback(); // 執行回調
+                break;
+            }
+        }
+    });
+
+    observer.observe(htmlElement, {
+        attributes: true, // 監聽屬性變化
+        attributeFilter: ["lang"] // 僅監聽 lang 屬性
+    });
 }
 
 function MenuItemResize() {

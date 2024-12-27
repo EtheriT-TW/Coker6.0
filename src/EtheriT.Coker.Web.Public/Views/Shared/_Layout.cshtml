@@ -3,6 +3,7 @@
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
 @using EtheriT.Coker.Application.Shared.i18n;
+@using System.Web;
 @{
     var nonce = ViewContext.HttpContext.Items["CSPNonce"] as string;
     ViewBag.Nonce = nonce;
@@ -54,7 +55,9 @@
             --orgName: @ViewData["OrgName"];
         }
     </style>
-    <style id="frameCss" nonce="@ViewBag.Nonce"></style>
+    <style id="frameCss" nonce="@ViewBag.Nonce">
+        @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
+    </style>
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
     @if (Configuration.GetValue<bool>("RemoteJs:Enabled", false))
     {

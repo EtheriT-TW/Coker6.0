@@ -494,8 +494,8 @@
                                     target: target,
                                     yt_src: yt_src,
                                     video_title: title,
-                                    start_time,
-                                    keep_time,
+                                    start_time: 0,
+                                    keep_time: 0,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -691,6 +691,7 @@
 
                                     } else {
                                         var $selected = editor.getSelected();
+                                        console.log($selected.find('.swiper'));
                                         var swiper = $selected.find(".swiper")[0].getEl().swiper;
                                         const have_template = $selected.find(".template_slide>.swiper-slide")[0];
                                         if (have_template) {
@@ -749,13 +750,16 @@
                                         $b.append($new_slide);
                                     }
                                 });
+                                const wrapper = selectedComponent.find(".swiper:not(.six_thumbs) .swiper-wrapper")[0];
                                 $(s).find(".six_thumbs .swiper-wrapper").empty();
-                                selectedComponent.components([]);
-                                $(s).children().each(function () {
-                                    selectedComponent.append($(this).prop('outerHTML'));
+                                wrapper.components([]);
+                                $b.children().each(function () {
+                                    wrapper.append($(this).prop('outerHTML'));
                                 });
                                 //editor.getSelected().addComponents($s.html());
-                                $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
+                                const $swiper = $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`);
+                                $swiper.data("isInit", false);
+                                typeof ($swiper.find(".swiper")[0].swiper) !== "undefined" && $swiper.find(".swiper")[0].swiper.destroy(true, true);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });
                                 SwiperModal.hide();
                             });

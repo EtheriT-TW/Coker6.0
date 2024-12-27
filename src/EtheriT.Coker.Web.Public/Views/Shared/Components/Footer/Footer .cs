@@ -338,7 +338,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								Content = new List<string>
 								{
 									"<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" class=\"tel\">03-3179599</a><br>" +
-									"<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:03-3179599\">unitedte168@gmail.com</a><br>" +
+									"<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"unitedte168@gmail.com\">unitedte168@gmail.com</a><br>" +
 									"<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\">330桃園市桃園區經國路168號</a><br>" +
 									"<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\"></a></div>"
 								},

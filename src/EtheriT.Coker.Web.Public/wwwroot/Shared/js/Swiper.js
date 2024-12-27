@@ -71,8 +71,8 @@ function SwiperInit(obj) {
                     // 停止自動輪播
                     swiper.autoplay.stop();
                     // 隱藏左右箭頭
-                    if (!Array.isArray(nextEl)) nextEl.classList.add("d-none");
-                    if (!Array.isArray(prevEl)) prevEl.classList.add("d-none");
+                    if (!Array.isArray(nextEl) && nextEl!= null) nextEl.classList.add("d-none");
+                    if (!Array.isArray(prevEl) && nextEl != null) prevEl.classList.add("d-none");
                     if (!!paginationEl) paginationEl.classList.add("d-none");
                 } else {
                     // 確保箭頭可見

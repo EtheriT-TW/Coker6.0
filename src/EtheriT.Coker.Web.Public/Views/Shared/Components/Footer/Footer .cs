@@ -337,9 +337,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								},
 								Content = new List<string>
 								{
-									"<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" class=\"tel\">03-3179599</a><br>" +
-									"<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:unitedte168@gmail.com\">unitedte168@gmail.com</a><br>" +
-									"<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\">330桃園市桃園區經國路168號</a><br>" +
+									"<span><i class=\"fa-solid fa-phone\"></i></span><a href=\"tel:03-3179599\" target=\"_blank\" title=\"撥打電話至:07-3737909(另開新視窗)\" class=\"tel\">03-3179599</a><br>" +
+									"<span><i class=\"fa-solid fa-at\"></i></span>電子郵件：<a href=\"mailto:unitedte168@gmail.com\" target=\"_blank\" title=\"發送電子郵件至:unitedte168@gmail.com(另開新視窗)\">unitedte168@gmail.com</a><br>" +
+									"<span><i class=\"fa-solid fa-house\"></i></span>地址：<a href=\"https://goo.gl/maps/eoGMYGKvxetaReKX8\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">330桃園市桃園區經國路168號</a><br>" +
 									"<div id=\"qrcode\"><a href=\"/unitedtw/home\"><img src=\"/upload/footer_qrcode.png\"></a></div>"
 								},
 								Copyright = "Copyright © 2020 UNITED MEDICAL FOUNDATION TAIWAN. All Rights Reserved"

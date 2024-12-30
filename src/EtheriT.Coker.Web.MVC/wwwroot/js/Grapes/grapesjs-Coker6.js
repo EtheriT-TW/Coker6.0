@@ -422,13 +422,13 @@
                                                       <label for="ytSrc" class="form-label">Youtube影片</label>
                                                       <input type="text" class="form-control" id="ytSrc" placeholder="影片網址" />
                                                     </div>
-                                                    <div id="start-time" class="mb-4">
-                                                      <label for="startTime" class="form-label">開始時間</label>
-                                                      <input type="text" class="form-control" id="startTime" placeholder="輸入開始時間" />
+                                                    <div id="start-time" class="mb-4 d-none">
+                                                      <label for="startTime" class="form-label">開始時間(秒)</label>
+                                                      <input type="text" class="form-control" id="startTime" placeholder="輸入開始時間(秒)" />
                                                     </div>
                                                     <div id="keep-time" class="mb-4">
-                                                      <label for="keepTime" class="form-label">持續時間</label>
-                                                      <input type="text" class="form-control" id="keepTime" placeholder="輸入持續時間" />
+                                                      <label for="keepTime" class="form-label">持續時間(秒)</label>
+                                                      <input type="text" class="form-control" id="keepTime" placeholder="輸入持續時間(秒)" />
                                                     </div>
                                                     <div id="img-hidden" class="ms-3">
                                                         <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
@@ -450,6 +450,7 @@
                             var datas = [];
                             $selected.find(".swiper .swiper-slide").each(function () {
                                 var $self = $(this);
+                                console.log($self.find('*').attr('data-start_time'));
                                 if (!$self.parent().hasClass("template_slide")) {
                                     var obj = {
                                         "href": $self.find("a").attr("href"),
@@ -461,10 +462,10 @@
                                         "target": $self.find("a").attr("target"),
                                         "yt_src": $self.find("iframe").attr("src"),
                                         "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
-                                        /*"start_time": ,
-                                        "keep_time" : ,開始時間、持續時間*/
+                                        "start_time": $self.find('*').attr('data-start_time'),
+                                        "keep_time" : $self.find("img").length ? $self.find("img").data('keep_time') : $self.find("iframe").data('keep_time'),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
-                                        "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
+                                        "synopsis_caption": $self.find('.synopsis_caption').text().trim(), //文章內容
                                         "visible": $self.hasClass("backstageType")
                                     };
                                     datas.push(obj);
@@ -481,9 +482,9 @@
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
-                                const yt_src = $('#ytSrc').val() ? "https://www.youtube.com/embed/" + $('#ytSrc').val().split('=')[1] : "";
-                                /*const start_time = 
-                                const keep_time = */
+                                const yt_src = $('#ytSrc').val() ? $('#ytSrc').val().replace("v=", "embed/") : "";
+                                const start_time = $('#startTime').val() ? $('#startTime').val() : "";
+                                const keep_time =  $('#keepTime').val() ? $('#keepTime').val() : 5;
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,
@@ -494,8 +495,8 @@
                                     target: target,
                                     yt_src: yt_src,
                                     video_title: title,
-                                    start_time: 0,
-                                    keep_time: 0,
+                                    start_time: start_time,
+                                    keep_time: keep_time,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -515,6 +516,8 @@
                                 $li.find('.a_target').html(target);//是否另開連結
                                 $li.find('.yt_src').html(yt_src);//更新YT連結
                                 $li.find('.video_title').html(title);//更新影片標題
+                                $li.find('.start_time').html(start_time);
+                                $li.find('.keep_time').html(keep_time);
                                 $li.find('.a_visible').html(visible);//是否隱藏
                             });
                             const newLi = function (index, data) {
@@ -525,6 +528,8 @@
                                     title: "",
                                     yt_src: "",
                                     video_title: "",
+                                    start_time: 0,
+                                    keep_time: 5,
                                     synopsis_title: "",
                                     synopsis_caption: "",
                                     visible: false,
@@ -539,6 +544,8 @@
                                 content.find(".img_alt").text(o.alt);
                                 content.find(".a_href").text(o.href);
                                 content.find(".yt_src").text(o.yt_src);
+                                content.find(".start_time").text(o.start_time);
+                                content.find(".keep_time").text(o.keep_time);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
                                 if (data.visible) {
                                     content.find(".eyes > span:first-child").addClass("d-none");
@@ -564,13 +571,17 @@
                                     const $setContent = $caption.find('#slideAlt');
                                     const $setLink = $caption.find('#slideHref');
                                     const $setYtSrc = $caption.find('#ytSrc');
-                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link")];
+                                    const $setStartTime = $caption.find('#startTime');
+                                    const $setKeepTime = $caption.find('#keepTime');
+                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link"), $("#start-time")];
                                     $caption.find('*:not(.a_target, #YT-link)').removeClass('d-none');
                                     console.log($li.data("a_tag"));
                                     if (!$li.data("a_tag") && !$li.data("img_update")) {
                                         $formSetting[3].removeClass("d-none");
+                                        $formSetting[4].removeClass("d-none");
                                     } else {
                                         $formSetting[3].addClass("d-none");
+                                        $formSetting[4].addClass("d-none");
                                     }
                                     if ($li.data("yt_src") || $li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
                                         $formSetting[2].addClass('d-none');
@@ -592,6 +603,8 @@
                                     $setContent.val($li.data().synopsis_caption); //內文
                                     $setLink.val($li.data().href); //連結
                                     $setYtSrc.val($li.data().yt_src);//youtube
+                                    $setStartTime.val($li.data().start_time);
+                                    $setKeepTime.val($li.data().keep_time);
                                 });
 
                                 content.find(".update-img").on("click", function () {
@@ -609,7 +622,7 @@
                                                 }
                                                 newName += imgName[i];
                                             }
-                                            $("#slideTitle").val(newName).trigger("change");//消除副檔名
+                                            $(this).closest("li").find('.img_alt').text() ? $("#slideTitle").val : $("#slideTitle").val(newName).trigger("change");//消除副檔名
                                             $imgElement.attr("src", result.id); // 假設 result.id 是圖片的 URL
                                         }
                                         AssetManager.close();
@@ -633,16 +646,30 @@
 
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
                                 newLi($("#SwiperList>li").length, { a_tag: true, img_update: true });
+                                $('#scroll').scrollTop($('#scroll')[0].scrollHeight);
                             });
 
                             $("#SwiperModal .btn-add-YT").off("click").on("click", function () {
                                 newLi($("#SwiperList>li").length, { a_tag: false, img_update: false });
+                                $('#scroll').scrollTop($('#scroll')[0].scrollHeight);
                             });
 
                             $("#SwiperModal .sava").off("click").on("click", function () {
                                 const s = selectedComponent.toHTML();
                                 const $slides = $(s).find('.swiper .swiper-wrapper .swiper-slide').clone();
                                 const $b = $(s).find('.swiper .swiper-wrapper');
+                                const setIframe = function (newYT, startTime, newTitle) {
+                                    return $("<iframe>").attr({
+                                        src: newYT + "start=" + startTime,
+                                        title: newTitle,
+                                        width: "100%",
+                                        height: "500",
+                                        frameborder: "0",
+                                        allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                                        allowfullscreen: true,
+                                        "data-start_time": startTime
+                                    });
+                                }
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find("img").attr("src");
@@ -652,6 +679,8 @@
                                     const newYT = $(element).data("yt_src");
                                     const isVisible = $(element).data("visible");
                                     const newCaption = $(element).data("synopsis_caption");
+                                    const startTime = $(element).data("start_time");
+                                    const keepTime = $(element).data("keep_time");
                                     // 更新slides中的圖片
                                     const order = $(element).data("order");
                                     let $new_slide = $slides[order];
@@ -661,15 +690,7 @@
                                             if (!$($new_slide).find('.synopsis_title').length) {
                                                 $($new_slide).empty();
                                             }
-                                            const $iframe = $("<iframe>", {
-                                                src: newYT,
-                                                title: newTitle,
-                                                width: "100%",
-                                                height: "500",
-                                                frameborder: "0",
-                                                allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-                                                allowfullscreen: true
-                                            });
+                                            const $iframe = setIframe(newYT, startTime, newTitle);
                                             $($new_slide).append($iframe);
                                         } else {
                                             $($new_slide).find('img').attr('src', newImgSrc);
@@ -691,22 +712,13 @@
 
                                     } else {
                                         var $selected = editor.getSelected();
-                                        console.log($selected.find('.swiper'));
                                         var swiper = $selected.find(".swiper")[0].getEl().swiper;
                                         const have_template = $selected.find(".template_slide>.swiper-slide")[0];
                                         if (have_template) {
                                             $new_slide = $($selected.find(".template_slide>.swiper-slide")[0].toHTML());
                                             if (newYT != "" && newYT != undefined) {
                                                 $new_slide.find("a, img").remove();
-                                                const $iframe = $("<iframe>", {
-                                                    src: newYT,
-                                                    title: newTitle,
-                                                    width: "100%",
-                                                    height: "500",
-                                                    frameborder: "0",
-                                                    allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-                                                    allowfullscreen: true
-                                                });
+                                                const $iframe = setIframe(newYT, startTime, newTitle);
                                                 $($new_slide).append($iframe);
                                             } else {
                                                 $new_slide.find('img').attr('src', newImgSrc);
@@ -720,15 +732,7 @@
                                             $new_slide = $($new_slide);
                                             if (newYT != "" && newYT != undefined) {
                                                 $new_slide.find("a, img").remove();
-                                                const $iframe = $("<iframe>", {
-                                                    src: newYT,
-                                                    title: newTitle,
-                                                    width: "100%",
-                                                    height: "500",
-                                                    frameborder: "0",
-                                                    allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
-                                                    allowfullscreen: true
-                                                });
+                                                const $iframe = setIframe(newYT, startTime, newTitle);
                                                 $($new_slide).append($iframe);
                                             } else {
                                                 $new_slide.find('img').attr('src', newImgSrc);
@@ -1185,6 +1189,7 @@
         const name = name_blockId.name;
         const relatedRules = [];
         let elementHTML = $(selected.getEl().outerHTML).removeClass("gjs-selected")[0].outerHTML;
+        console.log(elementHTML);
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `;
@@ -1438,7 +1443,7 @@
             }
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
-            var swiper = editor.getSelected().parent().parent().getEl().swiper;
+            var swiper = editor.getSelected().parent().getEl().swiper;
             if (typeof (swiper) != "undefined") {
                 var cont = iframe.document.getElementsByClassName("swiper-slide").length;
                 const timmer = function () {

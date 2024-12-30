@@ -1188,8 +1188,8 @@
         const blockId = name_blockId.blockId;
         const name = name_blockId.name;
         const relatedRules = [];
-        let elementHTML = $(selected.getEl().outerHTML).removeClass("gjs-selected")[0].outerHTML;
-        console.log(elementHTML);
+        let elementHTML = $(selected.toHTML()).removeClass("gjs-selected")[0].outerHTML;
+        console.log(selected.toHTML());
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `;

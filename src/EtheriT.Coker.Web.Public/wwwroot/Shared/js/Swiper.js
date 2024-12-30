@@ -529,6 +529,7 @@ function SwiperInit(obj) {
                 centeredSlides: true,
                 spaceBetween: 10,
                 loop: true,
+                loopAdditionalSlides: 0,
                 navigation: {
                     nextEl: "#pictureSwiper .swiper-button-next",
                     prevEl: "#pictureSwiper .swiper-button-prev",
@@ -550,9 +551,12 @@ function SwiperInit(obj) {
                 $header_text.text(activeSlide.find("img").attr("alt"));
             });
 
-            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
+            $('#SwiperModal').on('hidden.bs.modal', function () {
                 pictureSwiper.removeAllSlides();
                 pictureSwiperThumbs.removeAllSlides();
+            });
+
+            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
                 var $self = $(this).parents(".picture-category");
                 var index = $self.find("a").index(this);
                 var $images = [];
@@ -574,6 +578,8 @@ function SwiperInit(obj) {
                         pictureSwiperThumbs.appendSlide(newSlideThumbs);
                     }
                 }
+                // slide只有2會出現順序顛倒
+                if ($images.length == 2) index = (index === 0) ? 1 : 0;
                 pictureSwiper.slideTo(index, 0);
                 pictureSwiperThumbs.slideTo(index, 0);
                 $('#SwiperModal').modal('show');

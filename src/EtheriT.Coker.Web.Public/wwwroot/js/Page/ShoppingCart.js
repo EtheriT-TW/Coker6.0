@@ -255,7 +255,10 @@ function PageReady() {
                 }
                 user_data['address'] = result.data.address;
 
-                if (!data_insert) OrdererEdit(true);
+                if (!data_insert) {
+                    OrdererEdit(true);
+                    $('#MemberUpdate').prop('checked', true);
+                }
 
                 co.Form.insertData(user_data, "#Form_Orderer");
 

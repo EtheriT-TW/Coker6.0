@@ -26,8 +26,13 @@ input[type="number"] {
     padding-left: 3rem;
 }
 
+/* TopLine */
+#TopLine .btn_back {
+    color: white;
+}
+
 /* Product List */
-.btn_back {
+#ProductContent .btn_back {
     color: #4E565A;
 }
 
@@ -112,9 +117,11 @@ input[type="number"] {
 #ProductForm > .tag > input {
     padding-left: 4.5rem;
 }
+
 #Spec_Frame > .border {
     padding: 0.5rem;
 }
+
 #Spec_Frame .frame:not(:last-child) {
     border-bottom: #ccc solid 1px;
     padding-bottom: 0.5rem;

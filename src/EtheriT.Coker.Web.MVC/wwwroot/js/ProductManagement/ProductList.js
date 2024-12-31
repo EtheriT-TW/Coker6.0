@@ -341,8 +341,11 @@ function HashDataEdit() {
                 if (hash.includes('-1')) {
                     MoveToCanvas();
                 } else {
-                    SpecAdd(null);
-                    MoveToContent();
+                    co.Spec.GetPickSpecList().done(function (pick_result) {
+                        spec_pick_list = pick_result;
+                        SpecAdd(null);
+                        MoveToContent();
+                    });
                 }
             } else {
                 if (hash.includes('-1')) {
@@ -1192,7 +1195,7 @@ function AddUp(success_text, error_text, target) {
 }
 
 function setTotalFile(obj) {
-    total_files.forEach((index,item) => {
+    total_files.forEach((index, item) => {
         obj.data.forEach((index2, item2) => {
             if (typeof (item.TempId) != "") {
 

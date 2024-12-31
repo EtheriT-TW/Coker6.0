@@ -22,7 +22,10 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
                 string selfInline = $"nonce-{nonce}";
                 context.Items["CSPNonce"] = nonce;
-                if (item != null && !string.IsNullOrEmpty(item.value)) {
+                bool isSitemapRequest = context.Request.Path.HasValue &&
+                        context.Request.Path.Value.ToLowerInvariant().EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase);
+
+                if ((item != null && !string.IsNullOrEmpty(item.value))|| isSitemapRequest) {
                     selfInline = $"unsafe-inline";
                 }
                 

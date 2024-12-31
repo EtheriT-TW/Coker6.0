@@ -44,6 +44,6 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string SiteSearch { get; } = "站內搜尋";
         public static string UnnamedFile { get; } = "未命名檔案";
         public static string ProdEmpty { get; } = "商品已售完";
-
+        public static string ServiceCenter { get; } = "客服中心";
     }
 }

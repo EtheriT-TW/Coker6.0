@@ -139,7 +139,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Website>(o =>
             {
-                o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.Property(w => w.Level).HasDefaultValue(WebsiteLevelEnum.形象).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<Theme>(o =>

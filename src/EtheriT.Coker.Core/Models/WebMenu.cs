@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -36,7 +37,7 @@ namespace EtheriT.Coker.Core.Models
         public string? Css { get; set; }
         [MaxLength]
         public string? PageText {  get; set; }
-        public int PageType { get; set; }
+        public PageTypeEnum PageType { get; set; }
         [StringLength(50)]
         public string RouterName { get; set; }
         public long? FK_TopNodeId { get; set; }

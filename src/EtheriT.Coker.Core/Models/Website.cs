@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
@@ -27,7 +28,7 @@ namespace EtheriT.Coker.Core.Models
 		[StringLength(200)]
 		public string? Contract { get; set; }
 		public string? Css { get; set; }
-		public int Level{ get; set; }
+		public WebsiteLevelEnum Level { get; set; }
         public List<MappingUserAndWebsite> Users { get; set; }
         public List<MappingFrontUserAndWebsite> FrontUsers { get; set; }
         public List<Marquee> Marquees { get; set; }

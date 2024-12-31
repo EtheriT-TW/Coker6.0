@@ -3,7 +3,6 @@
 function ready() {
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
-    const $PostCSS = $("#PostCSS");
     loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;
     otherLoginModal = $("#OtherLoginModal").length > 0 ? new bootstrap.Modal($("#OtherLoginModal")) : null;
     registerModal = $("#RegisterModal").length > 0 ? new bootstrap.Modal($("#RegisterModal")) : null;
@@ -68,14 +67,6 @@ function ready() {
         $conten.find("[draggable]").removeAttr("draggable");
         if ($conten.find("#CustMain").length > 0) $("#jumpToCenter").attr("href", "#CustMain");
         $conten.removeClass("d-none");
-    }
-    if ($PostCSS.length > 0) {
-        const $mainCss = $("#frameCss")
-        let s = Coker.stringManager.ReplaceAndSinge($PostCSS.text());
-        let ele = document.createElement('span');
-        ele.innerHTML = s;
-        $mainCss.text(ele.textContent || ele.innerText);
-        $PostCSS.remove();
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();

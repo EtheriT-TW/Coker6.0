@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -14,5 +15,6 @@ namespace EtheriT.Coker.Application.Search
         public Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions);
         public Task<List<SearchItemDto>> GetSearchList(long sid);
         public Task SaveSearchLog(SaveSearchLogDto dto);
+        public Task<ResponseMessageDto> GetSearchKeyList(long websiteId);
     }
 }

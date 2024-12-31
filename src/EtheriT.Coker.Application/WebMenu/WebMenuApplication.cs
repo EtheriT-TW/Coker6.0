@@ -261,7 +261,7 @@ namespace EtheriT.Coker.Application
                 if (!getDirectoryMenuData) dataQuery = dataQuery.Where(e => e.Visible);
                 if (ShowToMenu)
                 {
-                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType == (int)PageTypeEnum.一般頁面);
+                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType == PageTypeEnum.一般頁面);
                 }
                 var menus = await dataQuery
                             .OrderBy(m => m.SerNO)
@@ -415,7 +415,7 @@ namespace EtheriT.Coker.Application
             var output = new List<GetMenuBreadDto>();
 
             var result = await db.WebMenus.Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefaultAsync();
-            if (result != null && result.PageType != (int)PageTypeEnum.首頁)
+            if (result != null && result.PageType != PageTypeEnum.首頁)
             {
                 var site = await db.Websites.Where(e => e.Id == result.FK_WebsiteId).FirstOrDefaultAsync();
                 if (site != null)
@@ -568,7 +568,14 @@ namespace EtheriT.Coker.Application
             try
             {
                 var side = await db.Websites.Where(e => e.Id == dto.siteId).FirstOrDefaultAsync();
-                var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).Where(e => e.FK_WebsiteId == dto.siteId).Where(e => e.RouterName == dto.key).FirstOrDefaultAsync();
+                var menu = await db.WebMenus.Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).Where(e => e.FK_WebsiteId == dto.siteId)
+                        .Where(e => 
+                            e.RouterName.ToLower() == dto.key.ToLower() || 
+                            (e.PageType == PageTypeEnum.購物車 && dto.key.ToLower() == "shoppingcar") ||
+                            (e.PageType == PageTypeEnum.會員 && dto.key.ToLower() == "member") ||
+                            (e.PageType == PageTypeEnum.搜尋 && dto.key.ToLower() == "search")
+                        )
+                        .FirstOrDefaultAsync();
                 if (side != null)
                 {
                     result.SiteName = side.Title;
@@ -749,7 +756,7 @@ namespace EtheriT.Coker.Application
                     Visible = true,
                     SerNO = 500,
                     Popular = 0,
-                    PageType = 1,
+                    PageType = PageTypeEnum.一般頁面,
                     icon = "empty",
                     PopularVisible = false,
                     LanBar = false,
@@ -769,13 +776,12 @@ namespace EtheriT.Coker.Application
         }
         public async Task<bool> checkHasShoppingCar(long siteId) {
             await CheckDisplayAll(siteId);
-            var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == (int)PageTypeEnum.購物車);
+            var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == PageTypeEnum.購物車);
             return item.Any();
         }
         public async Task<bool> checkHasMember(long siteId) {
-			var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == (int)PageTypeEnum.會員);
+			var item = db.WebMenus.Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId && !e.RemovedFromShelves && e.PageType == PageTypeEnum.會員);
 			return item.Any();
 		}
-
 	}
 }

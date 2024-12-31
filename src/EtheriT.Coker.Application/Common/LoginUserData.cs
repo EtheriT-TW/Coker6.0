@@ -182,6 +182,12 @@ namespace EtheriT.Coker.Application
         public long GetFrontWebsiteId() {
             return configuration.GetValue<long>("WebConfig:SiteId");
         }
+        public List<string> GetFrontChildOrgName()
+        {
+            var list = configuration.GetSection("WebConfig:childSiteOrgName").Get<List<string>>();
+            if (list == null) list = new List<string>();
+            return list;
+        }
         public async Task<string> GetWebsiteName() {
             Guid s = GetSecret();
             string name = "";

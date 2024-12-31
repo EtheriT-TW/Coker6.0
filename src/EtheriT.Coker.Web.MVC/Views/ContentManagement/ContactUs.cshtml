@@ -1,5 +1,6 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Contact
+@using DevExpress.Data
 @{
     ViewData["Title"] = "ContactUs";
 }
@@ -37,8 +38,8 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Id).Caption("編號").Width(90);
-                        c.AddFor(e => e.Name).Caption("位置");
+                        c.AddFor(e => e.Id).SortOrder(SortOrder.Desc).Caption("編號").Width(90);
+                        c.AddFor(e => e.Name).SortOrder(SortOrder.Asc).Caption("位置");
                         c.AddFor(e => e.TargetEmail).Caption("處理信箱");
                         c.AddFor(e => e.CreationTime).Caption("詢問日期");
                         c.Add()

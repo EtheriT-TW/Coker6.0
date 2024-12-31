@@ -118,6 +118,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             }
             var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(siteId, website);
+                siteId = defaultData.Id;
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
@@ -307,8 +308,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     default:
                         if (key.ToLower() == "search")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.PageData.PageView = "Search";
+                            model.PageData.CurrentUrl = "/Search";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
@@ -328,19 +330,20 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         {
                             ViewData["prodCatalog"] = model.storeSet.prodCatalog;
                             ViewData["storeMemo"] = model.storeSet.storeMemo;
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "ShoppingCar";
                         }
                         else if (key.ToLower() == "member")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData.CurrentUrl = "/Member";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "Member";
                         }
                         else if (key.ToLower() == "demosearch")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
@@ -356,7 +359,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         else if (key == "ProductDemo" || key == "Favorites" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "ColumnarSearch")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = key;
                         }

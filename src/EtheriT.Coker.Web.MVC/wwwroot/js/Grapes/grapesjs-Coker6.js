@@ -482,7 +482,7 @@
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
-                                const yt_src = $('#ytSrc').val() ? $('#ytSrc').val().replace("v=", "embed/") : "";
+                                const yt_src = $('#ytSrc').val() ? $('#ytSrc').val().replace("watch?v=", "embed/") : "";
                                 const start_time = $('#startTime').val() ? $('#startTime').val() : "";
                                 const keep_time =  $('#keepTime').val() ? $('#keepTime').val() : 5;
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
@@ -660,7 +660,7 @@
                                 const $b = $(s).find('.swiper .swiper-wrapper');
                                 const setIframe = function (newYT, startTime, newTitle) {
                                     return $("<iframe>").attr({
-                                        src: newYT + "start=" + startTime,
+                                        src: newYT,
                                         title: newTitle,
                                         width: "100%",
                                         height: "500",
@@ -1189,7 +1189,6 @@
         const name = name_blockId.name;
         const relatedRules = [];
         let elementHTML = $(selected.toHTML()).removeClass("gjs-selected")[0].outerHTML;
-        console.log(selected.toHTML());
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `;

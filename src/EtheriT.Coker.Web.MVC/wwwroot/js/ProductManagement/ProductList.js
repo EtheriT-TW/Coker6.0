@@ -149,7 +149,7 @@ function PageReady() {
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回商品列表", "資料將不被保存", "確定", "取消", function () {
-            window.location.hash = "";
+            BackToList(true);
         });
     })
     $(".btn_add").on("click", function () {
@@ -218,7 +218,6 @@ function PageReady() {
         }).then((result) => {
             if (result.isConfirmed) {
                 Array.from(forms).forEach(form => {
-                    console.log(form.checkValidity())
                     if (form.checkValidity()) {
                         if (ISpecRepect()) {
                             if ($removedFromShelves.is(":checked")) {
@@ -399,14 +398,14 @@ function HashDataEdit() {
                                 MoveToContent();
                             });
                         } else {
-                            window.location.hash = ""
+                            BackToList(false);
                         }
                     })
                 }
             }
         }
     } else {
-        BackToList();
+        BackToList(false);
     }
 }
 
@@ -1192,29 +1191,31 @@ function AddUp(success_text, error_text, target) {
                     }
                 });
 
-                if (target == "List") {
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                } else if (target == "Canvas") {
-                    setTimeout(function () {
-                        window.location.hash = `${pid}-1`;
-                    }, 1000);
+                switch (target) {
+                    case "List":
+                        setTimeout(function () {
+                            BackToList(true);
+                        }, 1000);
+                        break;
+                    case "Canvas":
+                        setTimeout(function () {
+                            window.location.hash = `${pid}-1`;
+                        }, 1000);
+                        break;
                 }
-
             } else {
-                if (target == "List") {
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                } else if (target == "Canvas") {
-                    setTimeout(function () {
-                        window.location.hash = `${pid}-1`;
-                    }, 1000);
+                switch (target) {
+                    case "List":
+                        setTimeout(function () {
+                            BackToList(true);
+                        }, 1000);
+                        break;
+                    case "Canvas":
+                        setTimeout(function () {
+                            window.location.hash = `${pid}-1`;
+                        }, 1000);
+                        break;
                 }
-
             }
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
@@ -1258,10 +1259,14 @@ function MoveToCanvas() {
     $("#ProductCanvas").removeClass("d-none");
 }
 
-function BackToList() {
+function BackToList(refresh) {
+    console.log("refresh", refresh)
     $("#TopLine > a").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");
-    window.location.hash = ""
+    if (refresh) {
+        window.location.hash = "";
+        product_list.component.refresh();
+    }
 }

@@ -214,6 +214,18 @@ function PageReady() {
         }
     });
 
+    $('#CollapsePurchase')
+        .on('shown.bs.collapse', function () {
+            buy_step_swiper.update();
+            $("body").css("height", "auto");
+            $(window).trigger("resize");
+        })
+        .on('hidden.bs.collapse', function () {
+            buy_step_swiper.update();
+            $("body").css("height", "auto");
+            $(window).trigger("resize");
+        });
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {

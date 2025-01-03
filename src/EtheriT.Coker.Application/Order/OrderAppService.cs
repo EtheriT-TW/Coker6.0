@@ -698,6 +698,12 @@ namespace EtheriT.Coker.Application.Order
                                     scdata.Price = oddata.Price;
                                     scdata.LastModifierUserId = userid;
                                     scdata.LastModificationTime = DateTime.Now;
+                                    if (scdata.Quantity <= 0)
+                                    {
+                                        scdata.IsDeleted = true;
+                                        scdata.DeletionTime = DateTime.Now;
+                                        scdata.DeleterUserId = scdata.CreatorUserId;
+                                    }
                                 }
                                 else throw new Exception("訂單詳細有誤");
                             }

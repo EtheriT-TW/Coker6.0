@@ -298,6 +298,31 @@
             border-radius: 20%;
         }
 
+/* Button Favorites*/
+.btn_fav {
+    position: absolute;
+    top: 1.75rem;
+    right: 0.5rem;
+    border: 0;
+    background-color: transparent;
+}
+
+    .btn_fav.type5 {
+        top: 0rem;
+        right: calc(1rem - 1.5px);
+    }
+
+    .btn_fav::after {
+        color: #b30b00;
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 400;
+        content: "\f004 ";
+        font-size: 1.25rem;
+    }
+
+    .btn_fav.check::after {
+        font-weight: 900;
+    }
 
 .empty:before {
     content: "查無資料";

@@ -25,7 +25,19 @@
             data: JSON.stringify(data),
             dataType: "json"
         });
-    }
+    },
+    SwitchPage: function (data) {
+        return $.ajax({
+            url: "/api/Directory/SwitchPage",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            headers: {
+                Authorization: 'Bearer ' + localStorage.getItem("token")
+            },
+            data: JSON.stringify(data),
+            dataType: "json"
+        });
+    },
 }
 
 var Advertise = {

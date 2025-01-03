@@ -12,28 +12,22 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Tag;
-using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Article;
-using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.Dto;
 using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Html;
-using System.Linq;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Application.Permissions;
-using System.Collections.Generic;
 using EtheriT.Coker.Application.Shared.Dto.Files;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using MailKit.Search;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 
 namespace EtheriT.Coker.Application.Directory
 {
@@ -51,6 +45,8 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ICustSearchAppService custSearchAppService;
         private readonly StringHandler stringHandler;
+        private readonly IConfiguration configuration;
+        private readonly IHtmlProcessor htmlProcessor;
         public DirectoryAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -64,7 +60,8 @@ namespace EtheriT.Coker.Application.Directory
             IFileUploadAppService fileUploadAppService,
             ICustSearchAppService custSearchAppService,
             ITokenAppService tokenAppService,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IHtmlProcessor htmlProcessor
         )
         {
             this.db = db;
@@ -79,6 +76,8 @@ namespace EtheriT.Coker.Application.Directory
             this.fileUploadAppService = fileUploadAppService;
             this.custSearchAppService = custSearchAppService;
             this.tokenAppService = tokenAppService;
+            this.configuration = configuration;
+            this.htmlProcessor = htmlProcessor;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -917,6 +916,11 @@ namespace EtheriT.Coker.Application.Directory
                                 Ids = DataIds.Skip((page - 1) * shownum).Take(shownum).ToList<long>(),
                                 SiteId = WebsiteID
                             });
+                            foreach (var item in tempproddata)
+                            {
+                                var dirid = string.Join(",", dto.Ids);
+                                item.Link += $"?dirid={dirid}";
+                            }
                             if (tempproddata != null)
                             {
                                 output.ReleInfos = tempproddata;
@@ -934,7 +938,7 @@ namespace EtheriT.Coker.Application.Directory
                                 Target = dto.Target,
                                 FindNearest = dto.FindNearest,
                                 Longitude = dto.Longitude,
-                                Latitude = dto.Latitude
+                                Latitude = dto.Latitude,
                             });
                             if (temparticledata != null)
                             {
@@ -947,6 +951,14 @@ namespace EtheriT.Coker.Application.Directory
                                         {
                                             item.Dirname = corr[dindex].DirectoryName;
                                         }
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var item in temparticledata)
+                                    {
+                                        var dirid = string.Join(",", dto.Ids);
+                                        item.Link += $"?dirid={dirid}";
                                     }
                                 }
                                 output.ReleInfos = temparticledata;
@@ -1448,6 +1460,93 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
             return adlist;
+        }
+        public async Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto)
+        {
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            if (WebsiteID == 0) WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
+            List<KeyValueDto> response = new List<KeyValueDto>();
+            try
+            {
+                if (dto.dirids == null)
+                {
+                    dto.dirids = new List<long>();
+                    var webmenus = await db.WebMenus.Where(e => e.FK_WebsiteId == WebsiteID && e.RouterName == dto.routername).FirstOrDefaultAsync();
+                    if (webmenus != null)
+                    {
+                        var html = stringHandler.HtmlDecode(webmenus.Html);
+                        var CompliantHtmls = htmlProcessor.find(html ?? "", "//*[@data-dirid]");
+
+                        foreach (var compliantHtml in CompliantHtmls)
+                        {
+                            Match match = Regex.Match(html, @"data-dirid=""(\d+)""");
+                            if (match.Success)
+                            {
+                                dto.dirids.Add(long.Parse(match.Groups[1].Value));
+                            }
+                        }
+                    }
+                }
+
+                if (dto.dirids != null)
+                {
+                    var tagids = await (from tag in db.Tags
+                                        join tagas in db.Tag_Associates on tag.Id equals tagas.FK_TId
+                                        where tagas.Type == TagAssociateTypeEnum.目錄
+                                        where dto.dirids.Contains(tagas.FK_AId)
+                                        where tag.FK_WebsiteId == WebsiteID
+                                        orderby tagas.Id
+                                        select tag.Id).ToListAsync();
+                    switch (dto.type)
+                    {
+                        case 1:
+                            break;
+                        case 2:
+                            var articles_tags = await (from a in db.Article
+                                                  join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
+                                                  where a.FK_WebsiteId == WebsiteID
+                                                  where tagas.Type == TagAssociateTypeEnum.文章
+                                                  where tagids.Contains(tagas.FK_TId)
+                                                  select new { a, tagas }).ToListAsync();
+                            var articles = articles_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => x.a).ToList();
+
+                            int index = articles.FindIndex(a => a.Id == dto.id);
+                            if (index > -1)
+                            {
+                                string diridsStr = string.Join(",", dto.dirids);
+                                if (index == 0)
+                                {
+                                    response.Add(new KeyValueDto());
+                                    if (articles.Count > 1)
+                                    {
+                                        var keynext = $"{articles[index + 1].Id}?dirid={diridsStr}";
+                                        response.Add(new KeyValueDto() { Key = keynext, Value = articles[index + 1].Title ?? "" });
+                                    }
+                                }
+                                else if (index == articles.Count - 1)
+                                {
+                                    var keyprev = $"{articles[index - 1].Id}?dirid={diridsStr}";
+                                    response.Add(new KeyValueDto() { Key = keyprev, Value = articles[index - 1].Title ?? "" });
+                                    response.Add(new KeyValueDto());
+                                }
+                                else
+                                {
+                                    var keynext = $"{articles[index + 1].Id}?dirid={diridsStr}";
+                                    var keyprev = $"{articles[index - 1].Id}?dirid={diridsStr}";
+                                    response.Add(new KeyValueDto() { Key = keyprev, Value = articles[index - 1].Title ?? "" });
+                                    response.Add(new KeyValueDto() { Key = keynext, Value = articles[index + 1].Title ?? "" });
+                                }
+                            }
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"-------------錯誤訊息查看-------------");
+                Console.WriteLine($"Directory=>SwitchPage回傳資料：{ex.Message}");
+            }
+            return response;
         }
     }
 }

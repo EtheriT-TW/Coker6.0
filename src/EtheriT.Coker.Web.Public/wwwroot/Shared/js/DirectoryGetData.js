@@ -294,7 +294,7 @@ function DirectoryDataGet($item, option) {
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");
 
         if ($item.hasClass("swiper") || $item.find(".swiper").length > 0 || $item.hasClass("swiper-wrapper")) {
-            let c,b;
+            let c, b;
             if ($item.hasClass("swiper")) c = $item;
             else if ($item.find(".swiper").length > 0) c = $item.find(".swiper");
             else c = $item.parents(".swiper");
@@ -389,7 +389,7 @@ function DirectoryDataInsert($item, result) {
             if (content.find("img").length && content.find("h3,h4,h5,h6,span,p").length) {
                 content.find("img").imgCheck().attr("alt", " ");
             }
-        } else { 
+        } else {
             if (content.find("a img").length && content.find('a').find("h3,h4,h5,h6,span,p").length) {
                 content.find("img").imgCheck().attr("alt", " ");
             }

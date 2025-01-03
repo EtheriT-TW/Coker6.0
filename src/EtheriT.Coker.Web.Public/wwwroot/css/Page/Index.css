@@ -21,6 +21,31 @@
             color: orange;
         }
 
+#SwitchPage {
+    display: none;
+}
+    #SwitchPage a {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+    }
+
+        #SwitchPage a.disabled {
+            pointer-events: none;
+            opacity: 50%;
+        }
+
+    #SwitchPage .btn_prev::before {
+        content: "\f104";
+    }
+
+    #SwitchPage .btn_list::before {
+        content: "\f03a";
+    }
+
+    #SwitchPage .btn_next::after {
+        content: "\f105";
+    }
+
 /* Enter Ad Modal */
 #EnterAdModal > .modal-dialog {
     min-width: fit-content;

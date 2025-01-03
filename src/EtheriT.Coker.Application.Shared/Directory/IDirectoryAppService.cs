@@ -21,5 +21,6 @@ namespace EtheriT.Coker.Application.Shared.Directory
         public Task<JsonResult> GetDirectoryMenusList(long id, DataSourceLoadOptions loadOptions);
         public Task<JsonResult> GetDirectoryAdvertiseList(long id, DataSourceLoadOptions loadOptions);
         public Task<List<AdvertiseDisplayDto>> GetReleAd(DataIdWebsiteIdDto dto);
+        public Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto);
     }
 }

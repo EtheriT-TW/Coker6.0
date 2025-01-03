@@ -1260,7 +1260,6 @@ function MoveToCanvas() {
 }
 
 function BackToList(refresh) {
-    console.log("refresh", refresh)
     $("#TopLine > a").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");

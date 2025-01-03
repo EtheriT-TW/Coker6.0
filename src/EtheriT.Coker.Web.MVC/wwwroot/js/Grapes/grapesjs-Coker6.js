@@ -119,6 +119,23 @@
         }
 
     });
+
+    editor.DomComponents.addType('image', {
+        isComponent: el => el.tagName == 'IMG',
+        model: {
+            defaults: {
+                traits: [
+                    { name: 'alt', type: 'text', label: '圖片名稱(Alt)', placeholder: '請輸入圖片名稱' }
+                ]
+            },
+            init() {
+                this.on('change:alt', function (component) {
+                    //console.log('Alt 設定為: ', component.get('alt'));
+                });
+            }
+        }
+    });
+
     /*連結 */
     editor.DomComponents.addType('連結', {
         isComponent: el => el.tagName == 'A',

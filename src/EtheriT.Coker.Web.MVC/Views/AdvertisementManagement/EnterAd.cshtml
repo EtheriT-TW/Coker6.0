@@ -96,7 +96,7 @@
                 <input name="id" type="hidden" />
                 <div class="d-flex align-self-center justify-content-between mb-3">
                     <div id="ImageUpload" class="d-flex justify-content-center image_upload" data-issinge="false" data-needcompress="false">
-                        @await Component.InvokeAsync(nameof(Modal), new {dispaly = "ImageUploadModal"})
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
                     </div>
                     <input type="checkbox" id="AdFormVisible" class="selectedItem" name="visible" value="true" />
                     <label for="AdFormVisible" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上" class="d-flex align-items-center">
@@ -141,7 +141,7 @@
                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                         <span class="material-symbols-outlined me-1 required_sign">calendar_today</span>調整顯示日期
                     </div>
-                    <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required>
+                    <input id="InputDate" name="startEndDate" data-form-type="date_range" data-start="startTime" data-end="endTime" class="form-control rounded" type="text" aria-label="Input Duration of Product" name="datetimes" pattern="[1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2} ~ [1-9]\d{3}/\d{2}/\d{2} \d{2}:\d{2}" autocomplete="off" required disabled>
                     <div class="checkbox position-absolute end-0 top-50 translate-middle-y z-index-up mr-4">
                         <input id="PermanentCheck" name="permanent" data-form-type="disabled" data-target="InputDate" class="form-check-input" type="checkbox" checked value="true">
                         <label class="form-check-label fs-6 pe-2" for="PermanentCheck">永久顯示</label>

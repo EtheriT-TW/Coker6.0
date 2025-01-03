@@ -362,6 +362,14 @@ namespace EtheriT.Coker.Application.Order
                 foreach (var order_header in order_headers)
                 {
                     var temp_output = mapper.Map<OrderHeaderDisplayDto>(order_header);
+
+                    var userdata = await db.FrontUsers.Where(e => e.UUID == order_header.FK_UUID).FirstOrDefaultAsync();
+                    if (userdata != null)
+                    {
+                        if (order_header.OrdererTelephone == null) order_header.OrdererTelephone = "";
+                        if (userdata.Name == order_header.Orderer && userdata.Sex == order_header.OrdererSex && userdata.Email == order_header.OrdererEmail && userdata.TelPhone == order_header.OrdererTelephone && userdata.CellPhone == order_header.OrdererCellPhone && userdata.Address == order_header.OrdererAddress) temp_output.OrdererId = userdata.Id;
+                    }
+
                     temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
                     temp_output.Discount = (order_header.Discount ?? 0).ToString("#,##0");
                     temp_output.Bonus = (order_header.Bonus ?? 0).ToString("#,##0");
@@ -1210,7 +1218,7 @@ namespace EtheriT.Coker.Application.Order
 
                     MailUserDataDto cc = new MailUserDataDto { Name = "客服信箱" };
                     var conpny = await (from c in db.MappingCompanyAndWebsites.Include(e => e.Company).Where(e => e.FK_WebsiteId == WebsiteID)
-                                 select c.Company).FirstOrDefaultAsync();
+                                        select c.Company).FirstOrDefaultAsync();
                     if (conpny != null)
                     {
                         cc.Email = conpny.Email;
@@ -1218,7 +1226,8 @@ namespace EtheriT.Coker.Application.Order
                     else
                     {
                         var smtp = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput { SiteId = WebsiteID, key = "SMTPAccount" });
-                        if (smtp != null && smtp.Success && smtp.detailItem != null && smtp.detailItem.value != null && smtp.detailItem.value.Count > 0) {
+                        if (smtp != null && smtp.Success && smtp.detailItem != null && smtp.detailItem.value != null && smtp.detailItem.value.Count > 0)
+                        {
                             cc.Email = smtp.detailItem.value[0];
                         }
                     }

@@ -3,6 +3,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
     public class OrderHeaderDisplayDto
     {
+        public long? OrdererId { get; set; }
         public long Id { get; set; }
         public int? OldSubtotal { get; set; }
         public string Subtotal { get; set; }

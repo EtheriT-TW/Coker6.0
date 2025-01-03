@@ -273,7 +273,7 @@ function WebPageChange() {
                 $("#ToolList > li button#profile-tab").addClass("active");
                 if (window.location.hash.indexOf("-") > 0) {
                     var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                    if ($.isNumeric(pagenumber)) SetHistoryOrderPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                    if (!isNaN(Number(pagenumber))) SetHistoryOrderPage(pagenumber);
                     else window.location.hash = "#order-1";
                 } else {
                     window.location.hash = "#order-1";
@@ -286,7 +286,7 @@ function WebPageChange() {
             $("#ToolList > li button#history-tab").addClass("active");
             if (window.location.hash.indexOf("-") > 0) {
                 var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if ($.isNumeric(pagenumber)) SetBrowsingHistoryPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                if (!isNaN(Number(pagenumber))) SetBrowsingHistoryPage(pagenumber);
                 else window.location.hash = "#browsing-1";
             } else {
                 window.location.hash = "#browsing-1";
@@ -296,7 +296,7 @@ function WebPageChange() {
             $("#ToolList > li button#favorite-tab").addClass("active");
             if (window.location.hash.indexOf("-") > 0) {
                 var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if ($.isNumeric(pagenumber)) SetFavoritesPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                if (!isNaN(Number(pagenumber))) SetFavoritesPage(pagenumber);
                 else window.location.hash = "#favorites-1";
             } else {
                 window.location.hash = "#favorites-1";
@@ -522,10 +522,13 @@ function SetFavoritesPage(number) {
     Coker.Favorites.GetDisplay(number).done(function (result) {
         if (result.data.length > 0) {
             if (result.page_Total > 1) {
+                if ($(".page_btn".length > 0)) $(".page_btn").removeClass("d-none");
                 if (!$("#favorite-tab-pane .page_btn").data("init")) {
                     PageButtonInit($("#favorite-tab-pane .page_btn"), result.page_Total, "favorites");
                 }
                 ContentPageChage($("#favorite-tab-pane .page_btn"), number, result.page_Total);
+            } else {
+                if ($(".page_btn".length > 0)) $(".page_btn").addClass("d-none");
             }
             if ($("#favorite-tab-pane .btn_switchViewType").hasClass("d-none")) $("#favorite-tab-pane .btn_switchViewType").removeClass("d-none")
             MemberTemplateDataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
@@ -575,6 +578,7 @@ function PageButtonInit($self, page_total, thishash) {
     }
     $self.data("init", true)
     $self.find(".btn_prev button").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
         var $btn = $(this);
         var page_now = window.location.hash.indexOf('-') < 0 ? 1 : parseInt(window.location.hash.substring(window.location.hash.indexOf('-') + 1));
         if (page_now > 1) page_now -= 1;
@@ -582,6 +586,7 @@ function PageButtonInit($self, page_total, thishash) {
         window.location.hash = `#${thishash}-${page_now}`;
     })
     $self.find(".btn_next button").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
         var $btn = $(this);
         var page_now = window.location.hash.indexOf('-') < 0 ? 1 : parseInt(window.location.hash.substring(window.location.hash.indexOf('-') + 1));
         if (page_now < page_total) page_now += 1;
@@ -589,6 +594,7 @@ function PageButtonInit($self, page_total, thishash) {
         window.location.hash = `#${thishash}-${page_now}`;
     })
     $self.find(".btn_page button").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
         var $btn = $(this);
         ContentPageChage($btn.parent("li").parent("ul"), $btn.data("page"), page_total);
         window.location.hash = `#${thishash}-${$btn.data("page")}`;
@@ -665,6 +671,7 @@ function MemberTemplateDataInsert($content, $frame, datas) {
 }
 function MemberDataInsert(frame, data) {
     frame.data("Pid", data.pId);
+    if (frame.find(".btn_favorite").length > 0 && typeof (data.fId) != undefined) frame.find(".btn_favorite").data("Fid", data.fId);
     frame.find("*").each(function () {
         var $self = $(this);
         if (typeof ($self.data("key")) != "undefined") {
@@ -753,14 +760,16 @@ function ShareButtonInit($ShareBlock) {
 }
 function FavoritesButtonInit(frame) {
     var $btn_favorites = frame.find(".btn_favorite");
-    Coker.Favorites.Check(frame.data("Pid")).done(function (check) {
-        if (check.success) {
-            $btn_favorites.data("Fid", check.message);
-            $btn_favorites.find("i").addClass("fa-solid")
-            $btn_favorites.find("i").removeClass("fa-regular")
-            $btn_favorites.attr("title", "移除收藏")
-        }
-    });
+    if (typeof ($btn_favorites.data("Fid")) == "undefined") {
+        Coker.Favorites.Check(frame.data("Pid")).done(function (check) {
+            if (check.success) {
+                $btn_favorites.data("Fid", check.message);
+                $btn_favorites.find("i").addClass("fa-solid")
+                $btn_favorites.find("i").removeClass("fa-regular")
+                $btn_favorites.attr("title", "移除收藏")
+            }
+        });
+    }
     $btn_favorites.on("click", function () {
         $self = $(this).find("i");
         if ($self.hasClass("fa-regular")) {
@@ -783,12 +792,14 @@ function FavoritesButtonInit(frame) {
                         $self.addClass("fa-regular")
                         $self.removeClass("fa-solid")
                         $btn_favorites.attr("title", "加入收藏");
-                        Coker.sweet.success("已將商品從收藏中移除", null, true);
+                        Coker.sweet.success("已將商品從收藏中移除", function () {
+                            var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                            if (!isNaN(Number(pagenumber))) SetFavoritesPage(pagenumber);
+                        }, false);
                     } else {
                         console.log(result.message)
                     }
                 });
-                console.log("非收藏商品")
             }
         }
     })

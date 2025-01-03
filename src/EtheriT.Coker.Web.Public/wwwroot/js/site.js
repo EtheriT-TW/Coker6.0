@@ -1027,11 +1027,12 @@ var Coker = {
                 data: { Pid: Pid },
             });
         },
-        GetDisplay: function () {
+        GetDisplay: function (page) {
             return $.ajax({
                 url: "/api/Favorites/GetDisplay/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
+                data: { page: page },
             });
         },
         Delete: function (Fid) {

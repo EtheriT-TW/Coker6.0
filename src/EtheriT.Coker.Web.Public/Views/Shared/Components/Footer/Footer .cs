@@ -100,57 +100,57 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 								}
 							};
 							break;
-                        case 13:
-                            footerViewModel = new FooterViewModel
-                            {
-                                footerViewModels = new List<FooterViewModel> {
-                                    new FooterViewModel { Title = "商品分類", Link = "", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel { Title = "銀髮友善 ", Link = "/defood/pro_eatender" },
-                                            new FooterViewModel { Title = "鐵蛋系列", Link = "/defood/pro1" },
-                                            new FooterViewModel { Title = "豆干系列", Link = "/defood/pro2" },
-                                            new FooterViewModel { Title = "滷味系列", Link = "/defood/pro3" },
-                                            new FooterViewModel { Title = "伴手禮盒", Link = "/defood/pro4" },
-                                            new FooterViewModel { Title = "紹興系列", Link = "/defood/pro5" },
-                                            new FooterViewModel { Title = "國境之南系列", Link = "/defood/pro6" },
-                                            new FooterViewModel { Title = "舊攤滷味系列", Link = "/defood/pro7" },
-                                        }
-                                    },
-                                    new FooterViewModel { Title = "關於我們", Link = "", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel { Title = "品牌故事", Link = "/defood/brand" },
-                                            new FooterViewModel { Title = "我們的榮耀", Link = "/defood/honor" },
-                                            new FooterViewModel { Title = "國際認證", Link = "/defood/certification" },
-                                            new FooterViewModel { Title = "市場通路", Link = "/defood/marketing" },
-                                            new FooterViewModel { Title = "人才招募 ", Link = "/defood/recruit" },
-                                        }
-                                    },
-                                    new FooterViewModel { Title = "訊息專區", Link = "", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel { Title = "公告事項", Link = "/defood/news" },
-                                            new FooterViewModel { Title = "媒體影音", Link = "/defood/video" },
-                                            new FooterViewModel { Title = "平面媒體", Link = "/defood/report" },
-                                        }
-                                    },
-                                    new FooterViewModel { Title = "食品代工", Link = "/defood/OEN", footerViewModels = new List<FooterViewModel> {
-                                            new FooterViewModel { Title = "廠房設備", Link = "/defood/plantequipment" },
-                                            new FooterViewModel { Title = "生產製程", Link = "/defood/prodprocess" }
-                                        }
-                                    },
-                                    new FooterViewModel { Title = "銀髮友善", Link = "/defood/Eatender"},
-                                    new FooterViewModel { Title = "客戶服務", Link = "/defood/contact_us"}
-                                },
-                                Logo_Image = "/upload/logo.png",
-                                LINE_Link = "https://lin.ee/s5Dt4hA",
-                                Facebook_Link = "https://www.facebook.com/defoodec",
-                                IG_Link = "https://www.instagram.com/luway2024/",
-                                YoutubeChannel_Link = "https://www.youtube.com/@nickgodes",
-                                Content = new List<string>
-                                {
-                                    "Copyright©",
-                                    "2024 得意中華食品有限公司",
-                                    "版權所有"
-                                }
-                            };
-                            break;
-                        default:
+						case 13:
+							footerViewModel = new FooterViewModel
+							{
+								footerViewModels = new List<FooterViewModel> {
+									new FooterViewModel { Title = "商品分類", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "銀髮友善 ", Link = "/defood/pro_eatender" },
+											new FooterViewModel { Title = "鐵蛋系列", Link = "/defood/pro1" },
+											new FooterViewModel { Title = "豆干系列", Link = "/defood/pro2" },
+											new FooterViewModel { Title = "滷味系列", Link = "/defood/pro3" },
+											new FooterViewModel { Title = "伴手禮盒", Link = "/defood/pro4" },
+											new FooterViewModel { Title = "紹興系列", Link = "/defood/pro5" },
+											new FooterViewModel { Title = "國境之南系列", Link = "/defood/pro6" },
+											new FooterViewModel { Title = "舊攤滷味系列", Link = "/defood/pro7" },
+										}
+									},
+									new FooterViewModel { Title = "關於我們", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "品牌故事", Link = "/defood/brand" },
+											new FooterViewModel { Title = "我們的榮耀", Link = "/defood/honor" },
+											new FooterViewModel { Title = "國際認證", Link = "/defood/certification" },
+											new FooterViewModel { Title = "市場通路", Link = "/defood/marketing" },
+											new FooterViewModel { Title = "人才招募 ", Link = "/defood/recruit" },
+										}
+									},
+									new FooterViewModel { Title = "訊息專區", Link = "", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "公告事項", Link = "/defood/news" },
+											new FooterViewModel { Title = "媒體影音", Link = "/defood/video" },
+											new FooterViewModel { Title = "平面媒體", Link = "/defood/report" },
+										}
+									},
+									new FooterViewModel { Title = "食品代工", Link = "/defood/OEN", footerViewModels = new List<FooterViewModel> {
+											new FooterViewModel { Title = "廠房設備", Link = "/defood/plantequipment" },
+											new FooterViewModel { Title = "生產製程", Link = "/defood/prodprocess" }
+										}
+									},
+									new FooterViewModel { Title = "銀髮友善", Link = "/defood/Eatender"},
+									new FooterViewModel { Title = "客戶服務", Link = "/defood/contact_us"}
+								},
+								Logo_Image = "/upload/logo.png",
+								LINE_Link = "https://lin.ee/s5Dt4hA",
+								Facebook_Link = "https://www.facebook.com/defoodec",
+								IG_Link = "https://www.instagram.com/luway2024/",
+								YoutubeChannel_Link = "https://www.youtube.com/@nickgodes",
+								Content = new List<string>
+								{
+									"Copyright©",
+									"2024 得意中華食品有限公司",
+									"版權所有"
+								}
+							};
+							break;
+						default:
 							footerViewModel = new FooterViewModel();
 							break;
 					}
@@ -452,6 +452,13 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 													"<div class=\"wordfoot\">No.79, Nonggong Rd., Daliao Dist., Kaohsiung City 831, Taiwan (R.O.C.)</div>" +
 												 "</div>" +
 											 "</div>";
+							break;
+						case 11:
+							footerMessage =
+									"<div class=\"d-flex my-2\"><div id=\"tonight-block\"><a id=\"tonight-logo\" href=\"https://www.tonight-motel.com.tw/default1.asp\" title=\"連結至:晶夜官方網站(另開新視窗)\" target=\"_blank\"><img src = \"/upload/footer_image.png\"></a></div>" +
+									"<div id=\"message-block\"><span>興震億建設．震億營造 ALL Rights Reserved</span></br>" +
+									"<span>電話:</span><a href=\"tel:(08)751-7125\" target=\"_blank\" title=\"撥打電話至:(08)751-7125(另開新視窗)\" class=\"tel\">(08)751-7125</a> <span> &nbsp;&nbsp;傳真:(08)751-7135</span><br>" +
+									"<span>地址:</span><a href=\"https://g.co/kgs/D83qX5m\" target=\"_blank\" title=\"連結至:google地圖(另開新視窗)\">屏東縣屏東市清溪里清寧街223號</a></div></div>";
 							break;
 					}
 					footerViewModel = new FooterViewModel

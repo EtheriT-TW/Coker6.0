@@ -16838,6 +16838,12 @@ class ColorPicker {
     const dropdown = this.#dropdown = this.#getDropdownRoot();
     dropdown.setAttribute("aria-orientation", "horizontal");
     dropdown.setAttribute("aria-labelledby", "highlightColorPickerLabel");
+    dropdown.querySelectorAll("button").forEach((el) => {
+        const node = document.createElement("span");
+        node.className = "d-none";
+        node.innerHTML = el.getAttribute("title");
+        el.appendChild(node);
+    });
     return dropdown;
   }
   #getDropdownRoot() {

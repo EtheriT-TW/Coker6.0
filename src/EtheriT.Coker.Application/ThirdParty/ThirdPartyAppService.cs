@@ -1,20 +1,9 @@
-﻿using AutoMapper;
-using EtheriT.Coker.Application.Dto;
+﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
-using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.Intrinsics.Arm;
-using Newtonsoft.Json.Linq;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Core.Models;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Application.Shared.Dto.Freight;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
@@ -26,18 +15,15 @@ namespace EtheriT.Coker.Application.ThirdParty
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        private readonly IMapper mapper;
         private readonly IConfiguration configuration;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
-            IMapper mapper,
             IConfiguration configuration
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
-            this.mapper = mapper;
             this.configuration = configuration;
         }
 
@@ -92,7 +78,6 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
-
         public async Task<ResponseMessageDto> SaveThirdParty(ThirdPartySaveInputDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -204,6 +189,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var output = from pv in db.PaymentTypesValues
                              join pt in db.PaymentTypes on pv.FK_PaymentTypesId equals pt.Id
                              where pv.FK_WebsiteId == WebsiteId && pv.Used
+                             orderby pt.SerNo
                              select new PaymentTypeItemOutputDto
                              {
                                  Id = pt.Id,

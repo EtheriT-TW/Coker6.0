@@ -32,6 +32,8 @@ using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
 using Microsoft.CodeAnalysis.CSharp;
 using EtheriT.Coker.Application.Shared.Dto.Favorites;
+using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace EtheriT.Coker.Application.Product
 {
@@ -87,6 +89,7 @@ namespace EtheriT.Coker.Application.Product
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long userId = await loginUserData.GetUserId();
+                var stock_change = false;
 
                 if (dto.Id == 0)
                 {
@@ -105,6 +108,44 @@ namespace EtheriT.Coker.Application.Product
                     var db_p = db.Prods.Where(e => e.Id == dto.Id).FirstOrDefault();
                     if (db_p != null)
                     {
+                        var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == db_p.Id).ToListAsync();
+                        var stockids = stocks.Select(e => e.Id).ToList();
+                        var scs = await db.ShoppingCarts.Where(e => stockids.Contains(e.FK_PSid) && !e.IsOrder).OrderByDescending(e => e.CreationTime).ToListAsync();
+                        if (dto.status != (ProdStatusEnum)db_p.Status && dto.status == ProdStatusEnum.售完)
+                        {
+                            foreach (var sc in scs)
+                            {
+                                var index = stocks.FindIndex(e => e.Id == sc.FK_PSid);
+                                var dtoindex = dto.Stocks.FindIndex(e => e.Id == stocks[index].Id);
+                                stocks[index].Stock += sc.Quantity;
+                                dto.Stocks[dtoindex].OldStock += sc.Quantity;
+                                sc.Quantity = 0;
+                                stock_change = true;
+                            }
+                        }
+                        else if (dto.status != (ProdStatusEnum)db_p.Status && (ProdStatusEnum)db_p.Status == ProdStatusEnum.售完)
+                        {
+                            foreach (var sc in scs)
+                            {
+                                var index = stocks.FindIndex(e => e.Id == sc.FK_PSid);
+                                var dtoindex = dto.Stocks.FindIndex(e => e.Id == stocks[index].Id);
+                                if (stocks[index].Stock >= sc.OldQuantity)
+                                {
+                                    sc.Quantity = sc.OldQuantity;
+                                    stocks[index].Stock -= sc.Quantity;
+                                    dto.Stocks[dtoindex].OldStock -= sc.Quantity;
+                                    stock_change = true;
+                                }
+                                else
+                                {
+                                    sc.Quantity = (int?)stocks[index].Stock ?? 0;
+                                    dto.Stocks[dtoindex].OldStock -= stocks[index].Stock;
+                                    stocks[index].Stock = 0;
+                                    stock_change = true;
+                                }
+                            }
+                        }
+                        db.SaveChanges();
                         mapper.Map(dto, db_p);
                         await loginUserData.SaveChanges(db_p);
                     }
@@ -120,7 +161,7 @@ namespace EtheriT.Coker.Application.Product
                             Id = data.Id,
                             FK_AId = (long)asoid,
                             FK_TId = data.FK_TId,
-                            Type = (int)TagAssociateTypeEnum.商品,
+                            Type = TagAssociateTypeEnum.商品,
                             IsDeleted = data.IsDeleted
                         });
                     }
@@ -145,6 +186,7 @@ namespace EtheriT.Coker.Application.Product
                 }
 
                 output.Success = tag_response.Success && techcert_response.Success && stock_response.Success;
+                output.Error = stock_change ? "" : stock_response.Message == "庫存變動" ? stock_response.Message : "";
                 output.Message = asoid.ToString();
             }
             catch (Exception e)
@@ -197,11 +239,64 @@ namespace EtheriT.Coker.Application.Product
                     {
                         var db_ps = await db.Prod_Stocks.Where(e => e.Id == item.Id).FirstOrDefaultAsync();
 
+                        if (db_ps.Stock != item.OldStock)
+                        {
+                            output.Message = "庫存變動";
+                            item.Stock -= item.OldStock - db_ps.Stock;
+                        }
+
                         if (db_ps != null)
                         {
+                            var prod = await db.Prods.Where(e => e.Id == db_ps.FK_Pid).FirstOrDefaultAsync();
+                            var scs = await db.ShoppingCarts.Where(e => e.FK_PSid == db_ps.Id && !e.IsOrder).ToListAsync();
+                            var total_stock = 0;
+                            foreach (var sc in scs) total_stock += sc.Quantity;
+                            item.Stock -= total_stock;
+
+                            if (prod.Status != ProdStatusEnum.售完)
+                            {
+                                if (item.Stock > 0)
+                                {
+                                    scs = scs.Where(e => e.OldQuantity > e.Quantity).OrderByDescending(e => e.CreationTime).ToList();
+                                    foreach (var sc in scs)
+                                    {
+                                        if (item.Stock >= (sc.OldQuantity - sc.Quantity))
+                                        {
+                                            item.Stock -= (sc.OldQuantity - sc.Quantity);
+                                            sc.Quantity = sc.OldQuantity;
+                                        }
+                                        else
+                                        {
+                                            sc.Quantity += (sc.OldQuantity - sc.Quantity) - (int)item.Stock;
+                                            item.Stock = 0;
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (item.Stock < 0)
+                                {
+                                    item.Stock = Math.Abs((int)item.Stock);
+                                    scs = scs.Where(e => e.Quantity > 0).OrderBy(e => e.CreationTime).ToList();
+                                    foreach (var sc in scs)
+                                    {
+                                        if (sc.Quantity - item.Stock >= 0)
+                                        {
+                                            sc.Quantity -= (int)item.Stock;
+                                            item.Stock = 0;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            item.Stock -= sc.Quantity;
+                                            sc.Quantity = 0;
+                                        }
+                                    }
+                                }
+                            }
+                            db_ps.Stock = item.Stock;
+
                             db_ps.FK_S1id = item.FK_S1id;
                             db_ps.FK_S2id = item.FK_S2id;
-                            db_ps.Stock = item.Stock;
                             db_ps.Min_Qty = item.Min_Qty;
                             db_ps.Alert_Qty = item.Alert_Qty;
                             db_ps.Ser_No = item.Ser_No;
@@ -372,7 +467,7 @@ namespace EtheriT.Coker.Application.Product
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
                         Fk_Aid = output.Id,
-                        Type = (int)TagAssociateTypeEnum.商品,
+                        Type = TagAssociateTypeEnum.商品,
                     }
                     );
 
@@ -438,12 +533,20 @@ namespace EtheriT.Coker.Application.Product
                                         Prices = new List<ProductPriceDto>(),
                                     }).ToListAsync();
 
+
                 var db_sp = await db.Prod_Specs.Where(e => !e.IsDeleted).ToListAsync();
 
                 if (db_sp.Count > 0)
                 {
                     foreach (var item in output)
                     {
+                        var scs = await db.ShoppingCarts.Where(e => e.FK_PSid == item.Id && !e.IsOrder).ToListAsync();
+                        var order_quantity = 0;
+                        foreach (var sc in scs)
+                        {
+                            order_quantity += sc.Quantity;
+                        }
+                        item.OrderStock = order_quantity;
                         item.FK_ST1id = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).FK_Tid : 0;
                         item.S1_Title = (int)item.FK_S1id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S1id).Title : "";
                         item.FK_ST2id = (int)item.FK_S2id != 0 ? db_sp.Find(spec => spec.Id == item.FK_S2id).FK_Tid : 0;
@@ -487,6 +590,7 @@ namespace EtheriT.Coker.Application.Product
         }
         public async Task<ProdGetMainDisplayDto> GetMainDisplayOne(long Id)
         {
+            ProdGetMainDisplayDto output = new ProdGetMainDisplayDto();
             try
             {
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -494,7 +598,7 @@ namespace EtheriT.Coker.Application.Product
 
                 if (db_p != null)
                 {
-                    ProdGetMainDisplayDto output = new ProdGetMainDisplayDto()
+                    output = new ProdGetMainDisplayDto()
                     {
                         Id = db_p.Id,
                         Title = db_p.Title,
@@ -502,8 +606,8 @@ namespace EtheriT.Coker.Application.Product
                         Description = db_p.Description,
                         Html = db_p.Html ?? "",
                         ItemNo = db_p.ItemNo,
-                        Status = db_p.Status,
-                        StatusName = ((ProdStatusEnum)db_p.Status).ToString(),
+                        Status = (int)db_p.Status,
+                        StatusName = db_p.Status.ToString(),
                         TagDatas = new List<TagGetSelectedDto>(),
                         TechCertDatas = new List<TechCertDisplayDto>(),
                         Stocks = new List<ProductStockDto>(),
@@ -515,7 +619,7 @@ namespace EtheriT.Coker.Application.Product
                     var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                     {
                         Fk_Aid = output.Id,
-                        Type = (int)TagAssociateTypeEnum.商品,
+                        Type = TagAssociateTypeEnum.商品,
                     }
                     );
 
@@ -534,6 +638,24 @@ namespace EtheriT.Coker.Application.Product
                     var stockDatas = await this.GetStockDataAll(output.Id);
                     if (stockDatas != null)
                     {
+                        Guid UUID = await tokenAppService.GetUUID();
+                        var token = await tokenAppService.CheckToken(null);
+                        long role = 0;
+                        if (token != null && token.IsLogin) role = await db.MappingUserAndRoles.Where(e => e.UUID == UUID).Select(e => e.RoleId).FirstOrDefaultAsync();
+                        role = role == 0 ? 1 : role;
+                        foreach (var stock in stockDatas)
+                        {
+                            if (stock.Prices.Count > 1)
+                            {
+                                var temp_prices = stock.Prices;
+                                stock.Prices = new List<ProductPriceDto>();
+                                foreach (var price in temp_prices)
+                                {
+                                    if (price.FK_RId == role) stock.Prices.Add(price);
+                                }
+                                if (stock.Prices.Count == 0) stock.Prices = temp_prices;
+                            }
+                        }
                         output.Stocks = stockDatas;
                     }
 
@@ -583,15 +705,13 @@ namespace EtheriT.Coker.Application.Product
                         FileType = 1,
                         SerNo = 500
                     });
-
-                    return output;
                 }
                 else throw new Exception("查無商品資料");
             }
             catch (Exception e)
             {
-                return null;
             }
+            return output;
         }
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
@@ -603,7 +723,7 @@ namespace EtheriT.Coker.Application.Product
                 var output = new List<DirectoryReleInfoDto>();
                 var productData = new List<ProdGetDataDto>();
                 var result = await db.Prods.Where(e => dto.Ids.Contains(e.Id) && !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
-                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == 5).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
                     .ToListAsync();
                 if (result != null)
                 {
@@ -628,7 +748,7 @@ namespace EtheriT.Coker.Application.Product
                                   tags = (from t in db.Tags.Where(e => e.FK_WebsiteId == WebsiteID)
                                           join a in db.Tag_Associates.Where(e => !e.IsDeleted)
                                                        .Where(e => e.FK_AId == p.Id)
-                                                       .Where(e => e.Type == (int)TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
+                                                       .Where(e => e.Type == TagAssociateTypeEnum.商品) on t.Id equals a.FK_TId
                                           group t by new { t.Id, t.Title } into g
                                           select new TagGetSelectedDto
                                           {
@@ -654,7 +774,6 @@ namespace EtheriT.Coker.Application.Product
                         double max = p.Max(e => e.Price) ?? 0;
                         if (min == max) data.Price = $"{max}";
                         else data.Price = $"{min} ~ {max}";
-
                     }
                 }
 
@@ -716,7 +835,7 @@ namespace EtheriT.Coker.Application.Product
                         }
                     }
 
-                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.商品 && !e.IsDeleted).ToListAsync();
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == TagAssociateTypeEnum.商品 && !e.IsDeleted).ToListAsync();
 
                     if (tagids != null)
                     {
@@ -845,7 +964,7 @@ namespace EtheriT.Coker.Application.Product
 
             try
             {
-                var token = tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
                 Guid UUID = await tokenAppService.GetUUID();
 
                 var prod = db.Prods.Where(e => e.Id == FK_Pid).FirstOrDefault();
@@ -1016,7 +1135,7 @@ namespace EtheriT.Coker.Application.Product
                 var prod_Logs = await (from prod_log in db.Prod_Logs
                                        where prod_log.UUID == UUID
                                        where prod_log.Action == (int)ProdLogActionEnum.點擊
-                                       where (DateTime.Compare(DateTime.Now.AddDays(-30), (DateTime)prod_log.CreationTime) < 0)
+                                       where (DateTime.Compare(DateTime.Now.AddMonths(-3), (DateTime)prod_log.CreationTime) < 0)
                                        orderby prod_log.CreationTime descending
                                        select prod_log.FK_Pid).ToListAsync();
                 List<long> pids = new List<long>();
@@ -1052,31 +1171,43 @@ namespace EtheriT.Coker.Application.Product
                                                        {
                                                            Link = f.fileUpload != null ? f.fileUpload.DownloadFileName ?? "" : ""
                                                        }).FirstOrDefault() ?? new DirectoryReleInfoDto()).Link,
-                                             Price = new List<double>(),
+                                             Price = null,
                                              ItemNo = prod.ItemNo,
                                          }).ToList();
 
                     output.Page_Total = (int)Math.Ceiling(prod_log_data.Count / 8.0);
                     prod_log_data = prod_log_data.Skip((page - 1) * 8).Take(8).ToList();
 
-                    for (var i = 0; i < prod_log_data.Count; i++)
+                    var sotreset = await (from sd in db.StoreSetDetail
+                                          join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                                          where sd.FK_WebsiteId == WebsiteId
+                                          where ss.key == "storeBuyState"
+                                          select sd.value).FirstOrDefaultAsync();
+
+                    var showprice = !(sotreset == "noPayNoShow");
+
+                    if (showprice)
                     {
-                        var prod_prices = await (from prod_stock in db.Prod_Stocks
-                                                 join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
-                                                 where prod_stock.FK_Pid == prod_log_data[i].PId
-                                                 where prod_price.Price > 0
-                                                 orderby prod_price descending
-                                                 select prod_price).ToListAsync();
-                        if (prod_prices.Count > 1)
+                        for (var i = 0; i < prod_log_data.Count; i++)
                         {
-                            prod_log_data[i].Price.Add((double)prod_prices[0].Price);
-                            prod_log_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            prod_log_data[i].Price = new List<double>();
+                            var prod_prices = await (from prod_stock in db.Prod_Stocks
+                                                     join prod_price in db.Prod_Prices on prod_stock.Id equals prod_price.FK_PSId
+                                                     where prod_stock.FK_Pid == prod_log_data[i].PId
+                                                     where prod_price.Price > 0
+                                                     orderby prod_price descending
+                                                     select prod_price).ToListAsync();
+                            if (prod_prices.Count > 1)
+                            {
+                                prod_log_data[i].Price.Add((double)prod_prices[0].Price);
+                                prod_log_data[i].Price.Add((double)prod_prices[prod_prices.Count - 1].Price);
+                            }
+                            else if (prod_prices.Count == 1)
+                            {
+                                prod_log_data[i].Price.Add((double)prod_prices[0].Price);
+                            }
+                            else prod_log_data[i].Price.Add(0);
                         }
-                        else if (prod_prices.Count == 1)
-                        {
-                            prod_log_data[i].Price.Add((double)prod_prices[0].Price);
-                        }
-                        else prod_log_data[i].Price.Add(0);
                     }
 
                     output.Data = prod_log_data;
@@ -1394,7 +1525,7 @@ namespace EtheriT.Coker.Application.Product
                 .Where(e => !string.IsNullOrEmpty(e.Title) && strings.Contains(e.Title)).ToListAsync();
             var TagAssociate = await db.Tag_Associates.Include(t => t.Tag)
                     .Where(e => !e.IsDeleted)
-                    .Where(e => e.Type == (int)TagAssociateTypeEnum.目錄)
+                    .Where(e => e.Type == TagAssociateTypeEnum.目錄)
                     .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID).ToListAsync();
             for (int i = 0; i < menuMap.Count; i++)
             {
@@ -1425,7 +1556,7 @@ namespace EtheriT.Coker.Application.Product
                                 {
                                     FK_AId = dir.Id,
                                     FK_TId = tag.Id.Value,
-                                    Type = (int)TagAssociateTypeEnum.目錄
+                                    Type = TagAssociateTypeEnum.目錄
                                 };
                                 loginUserData.setOptionParameter(associate, UserID);
                                 associates.Add(associate);
@@ -1623,14 +1754,17 @@ namespace EtheriT.Coker.Application.Product
                     continue;
                 }
                 item.Id = allProd.Find(e => e.Title == item.ProdName && e.ItemNo == item.ItemNo).Id;
-                var tag = nowTags.FindAll(e => e.Title == item.Tag1 || e.Title == item.Tag2 || e.Title == item.Tag3 || e.Title == item.Tag4 || e.Title == item.Tag5 || e.Title == item.Tag6);
+                var tag = nowTags.FindAll(e =>
+                    !string.IsNullOrEmpty(e.Title) &&
+                    new List<string?> { item.Tag1, item.Tag2, item.Tag3, item.Tag4, item.Tag5, item.Tag6 }.Contains(e.Title)
+                );
                 if (tag != null)
                 {
                     for (int j = 0; j < tag.Count; j++)
                     {
                         TagAssociates.Add(new TagAssociateDto
                         {
-                            Type = (int)TagAssociateTypeEnum.商品,
+                            Type = TagAssociateTypeEnum.商品,
                             FK_TId = tag[j].Id,
                             FK_AId = item.Id,
                             IsDeleted = false
@@ -1789,7 +1923,7 @@ namespace EtheriT.Coker.Application.Product
                         ProdStatusEnum statusType;
                         if (Enum.TryParse(item.Status, out statusType))
                         {
-                            prod.Status = (int)statusType;
+                            prod.Status = statusType;
                         }
                         else prod.Status = 0;
                     }
@@ -1838,7 +1972,7 @@ namespace EtheriT.Coker.Application.Product
                         ProdStatusEnum statusType;
                         if (Enum.TryParse(item.Status, out statusType))
                         {
-                            prod.Status = (int)statusType;
+                            prod.Status = statusType;
                         }
                         else prod.Status = 0;
                     }

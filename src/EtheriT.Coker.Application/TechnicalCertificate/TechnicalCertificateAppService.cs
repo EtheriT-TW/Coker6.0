@@ -479,7 +479,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "SaveConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

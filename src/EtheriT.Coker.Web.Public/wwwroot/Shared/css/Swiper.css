@@ -1,6 +1,7 @@
 ﻿[class*="_swiper"] {
-    position:relative;
+    position: relative;
 }
+
 .swiper_pagination {
     z-index: 2;
 }
@@ -84,26 +85,62 @@
     color: #3987B2;
     text-decoration: none;
 }
-.swiper a{display:block;}
+
+.swiper a {
+    display: block;
+}
+
+#SwiperModal .modal-header {
+    min-height: 3.25rem;
+}
 
 #pictureSwiper {
-    height: 75%;
+    height: 87.5%;
 }
+
     #pictureSwiper > .swiper-wrapper > .swiper-slide {
         display: flex;
         align-items: center; /* add this will all relevant prefixes */
         justify-content: space-evenly;
     }
-    #pictureSwiper > .swiper-wrapper > .swiper-slide img {
-        max-height:100%;
-        max-width:100%;
+
+        #pictureSwiper > .swiper-wrapper > .swiper-slide img {
+            max-height: 100%;
+            max-width: 100%;
+        }
+
+    #pictureSwiper .swiper-button-next, #SwiperModal .swiper-button-prev {
+        width: 2rem;
+        height: 2rem;
+        background-color: rgba(var(--bs-dark-rgb), var(--bs-bg-opacity));
     }
+
+    #pictureSwiper .swiper-button-prev::after {
+        content: '\e5cb';
+    }
+
+    #pictureSwiper .swiper-button-next::after {
+        content: '\f46a';
+    }
+
+    #pictureSwiper .swiper-button-next::after, #SwiperModal .swiper-button-prev::after {
+        font-family: 'Material Symbols Outlined';
+        color: white;
+        font-size: 24px;
+    }
+
 #pictureSwiperThumbs {
-    height:25%;
+    height: 12.5%;
 }
-    #pictureSwiperThumbs img {
-        max-height:100%;
+
+    #pictureSwiperThumbs .swiper-slide {
+        width: fit-content !important;
     }
+
+        #pictureSwiperThumbs .swiper-slide img {
+            max-height: 100%;
+        }
+
 @media only screen and (max-width: 979px) {
     .one_swiper > .swiper > .swiper-wrapper > .swiper-slide > figure > figcaption > .swiper_title {
         font-size: 1.5rem;

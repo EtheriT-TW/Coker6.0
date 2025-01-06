@@ -11,6 +11,61 @@
         padding: 0.5rem;
     }
 
+.red_text {
+    color: var(--red-number);
+}
+
+.smailWrap {
+    display:none;
+}
+
+#ReOrderAlertModal .orderlist img {
+    height: 5rem;
+}
+
+#ReOrderAlertModal .orderlist .quantity::before {
+    content: '\00d7';
+}
+#ReOrderAlertModal .orderlist .spec {
+    color: var(--gray-text);
+}
+
+#profile-tab-pane {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+}
+
+.isHide, .isWrap {
+    display: none;
+}
+
+.type_grid > .type_change_frame > a {
+    background-color: #eeeeee;
+}
+
+    .type_grid > .type_change_frame > a img {
+        border-radius: .5rem;
+    }
+
+.type_list > .type_change_frame > a {
+    background-color: #eeeeee;
+}
+
+    .type_list > .type_change_frame > a img {
+        border-radius: .5rem;
+    }
+
+#TabContent .content.type_grid figure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+    #TabContent .content.type_grid figure > figcaption {
+        margin-top: auto;
+        padding-bottom: 10px;
+    }
+
 #ToolList {
     display: flex;
     width: 10rem;
@@ -41,11 +96,26 @@
 
     #TabContent > .tab-pane {
         width: 100%;
-        min-height: 100%;
+        min-height: 40rem;
         padding: 1rem;
         overflow: auto;
         background: var(--bs-nav-pills-link-active-bg);
         border-radius: 0.8rem;
+    }
+
+.btn_buyAgain {
+    color: white;
+    background-color: var(--red-main);
+}
+
+    .btn_buyAgain:hover {
+        color: white !important;
+    }
+
+    .btn_buyAgain::after {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        content: "\f217 ";
     }
 
 #ResetEmailModal > .modal-dialog > .modal-content {
@@ -98,12 +168,27 @@
     content: '';
 }
 
-#profile-tab-pane img {
+#profile-tab-pane .type_list img {
     width: 75px;
 }
 
-#history-tab-pane img {
+#profile-tab-pane .spec {
+    color: var(--gray-text);
+}
+
+#profile-tab-pane .quantity::before {
+    content: '\00d7';
+}
+
+#history-tab-pane .type_list img {
     width: 180px;
+}
+
+#favorite-tab-pane .type_list img {
+    width: 180px;
+}
+
+#history-tab-pane img {
     height: 180px;
 }
 
@@ -142,7 +227,6 @@
     }
 
 #TabContent .content img {
-    width: 180px;
     height: auto;
     margin-top: 0.5rem;
 }
@@ -155,6 +239,9 @@
 #TabContent .content .type_change_frame div[data-key='price'] {
     flex-grow: 1;
     align-content: flex-end;
+    word-break: keep-all;
+    white-space: nowrap;
+    overflow-wrap: break-word;
 }
 
 #TabContent .content.type_grid figure figcaption {
@@ -198,6 +285,7 @@
 
     #TabContent .content.type_list figure figcaption {
         padding-top: 1rem;
+        padding-left: 1rem;
     }
 
 #TabContent .content.type_list .type_change_frame div[data-key='description'] {
@@ -262,6 +350,25 @@
 }
 
 @media (max-width:992px) {
+    #TabContent {
+        width: 100%;
+    }
+
+    #main > .container {
+        flex-direction: column !important;
+    }
+
+        #main > .container > #ToolList {
+            width: 100%;
+            min-height: unset;
+            flex-direction: unset !important;
+        }
+
+            #main > .container > #ToolList > li {
+                width: 25%;
+                text-align: center;
+            }
+
     #TabContent .content.type_grid .type_change_frame {
         width: 50% !important;
     }
@@ -285,7 +392,116 @@
 }
 
 @media (max-width:768px) {
+    .collapse > .card-body > div > div:first-child {
+        width:7rem;
+        text-align-last:right;
+    }
+    .collapse > .card-body > .list-group > li:first-child {
+        display: none;
+    }
 
+        .collapse > .card-body > .list-group > li:not(first-child) > a >  div > div:nth-child(2) {
+            width:auto;
+        }
+
+        .quantity {
+            width: auto;
+        }
+
+    #profile-tab-pane > .content .collapse {
+        width: 100%;
+    }
+
+    .isHide, .isWrap {
+        display: unset;
+    }
+
+        .isHide:not(.hideTotal) {
+            width: 45%;
+            text-align-last: end;
+        }
+
+    .hideTotal {
+        flex: 1 1 auto;
+        text-align-last: end;
+        width: auto;
+    }
+
+    .collapse > .card-body > .list-group > li {
+        padding: 0;
+    }
+
+        .collapse > .card-body > .list-group > li > a > div > div:first-child {
+            width: 30%;
+            padding-bottom: .5rem;
+        }
+
+        .collapse > .card-body > .list-group > li > a > div > .title {
+            width: 70%;
+            padding-bottom: .5rem;
+        }
+
+        .collapse > .card-body > .list-group > li > a > div > .price {
+            padding: 0;
+            text-align-last: left;
+        }
+
+        .collapse > .card-body > .list-group > li > a > div > .subtotal {
+            width: auto;
+        }
+
+    .list-group-item > a > div > div:first-child {
+        width: 30%;
+    }
+
+    .header_subtotal, .header_freight, .header_total {
+        white-space: nowrap;
+        padding: 0;
+        text-align: unset !important;
+        width: 5rem;
+    }
+
+    .collapse > .card-body > div {
+        justify-content: end;
+    }
+
+    .collapse > .card-body > div:nth-child(3) {
+        padding-left: 2.2rem;
+    }
+
+    .collapse > .card-body > div:nth-child(4) {
+        padding-left: .9rem;
+    }
+    
+    #profile-tab-pane > .content > div {
+        display: flex;
+        flex-wrap: wrap;
+        line-height: 1.7rem;
+    }
+
+        #profile-tab-pane > .content > div > div:not(.collapse) {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > div > .collapse.show {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            margin-top: 0 !important;
+        }
+
+        #profile-tab-pane > .content > div > div:first-child > div {
+            width: auto;
+            text-align-last: left;
+        }
+
+        #profile-tab-pane > .content > div > div:nth-child(2) > div {
+            width: auto;
+            text-align-last: right !important;
+        }
 
     #favorite-tab-pane {
         padding-right: 12px !important;
@@ -304,49 +520,62 @@
         flex-direction: column;
     }
 
-    #main > .container {
-        flex-direction: column !important;
+    #main > .container > #TabContent {
+        width: unset;
     }
 
-        #main > .container > #ToolList {
-            width: 100%;
-            min-heigth: unset;
-            flex-direction: unset !important;
+        #main > .container > #TabContent > #info-tab-pane {
+            padding: 1rem !important;
         }
 
-            #main > .container > #ToolList > li {
-                width: 25%;
-                text-align: center;
+            #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+                width: 30%;
             }
 
-        #main > .container > #TabContent {
-            width: unset;
-        }
-
-            #main > .container > #TabContent > #info-tab-pane {
-                padding: 1rem !important;
+            #main > .container > #TabContent > #info-tab-pane > div {
+                justify-content: center;
+                flex-direction: row !important;
+                box-sizing: border-box;
             }
-
-                #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
-                    width: 30%;
-                }
-
-                #main > .container > #TabContent > #info-tab-pane > div {
-                    justify-content: center;
-                    flex-direction: row !important;
-                    box-sizing: border-box;
-                }
 }
 
-@media(max-width:576px) {
-    #history-tab-pane .content {
-        padding-right: 12px !important;
-        padding-left: 12px !important;
+@media (max-width:576px) {
+        .collapse > .card-body > .list-group > li:not(first-child) > a > div > div:nth-child(2) {
+        width:70%;
     }
 
-    #favorite-tab-pane .content {
-        padding-right: 12px !important;
-        padding-left: 12px !important;
+    .collapse > .card-body > .list-group > li > a > div > .price {
+        width: auto;
+    }
+
+    #history-tab-pane .type_list img {
+        width: 100%;
+    }
+
+    #favorite-tab-pane .type_list img {
+        width: 100%;
+    }
+
+    #history-tab-pane .type_list {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        justify-content: center;
+    }
+
+    #favorite-tab-pane .type_list {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        justify-content: center;
+    }
+
+    #history-tab-pane .type_grid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    #favorite-tab-pane .type_grid {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
     }
 
     #ToolList > li > button {
@@ -396,7 +625,44 @@
 }
 
 @media (max-width:440px) {
+    .isHide:not(.hideTotal) {
+        width: 50%;
+    }
+    .hideTotal {
+        width:50%;
+        text-align-last:end;
+    }
+    .smailWrap {
+        display: unset;
+    }
+    .collapse > .card-body > div {
+        justify-content: center;
+    }
+        .collapse > .card-body > div {
+        padding: 0 !important;
+    }
+    .hideTotal {
+        padding-left:0;
+    }
     #TabContent .content.type_grid .type_change_frame {
-        width: 100% !important;
+        flex: 0 0 auto;
+    }
+
+    #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child {
+        width: 33%;
+    }
+
+        #main > .container > #TabContent > #info-tab-pane > #UserDataForm > div:nth-child(5) > div:first-child > label {
+            padding-right: 0 !important;
+        }
+}
+
+@media (max-width:400px) {
+    .hideTotal {
+        flex:unset;
+        width: 55%;
+    }
+    .isHide:not(.hideTotal) {
+        width:55%;
     }
 }

@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class WebsiteController : Controller
     {
         private readonly IWebsiteApplication websiteApplication;
@@ -16,23 +17,30 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.websiteApplication = websiteApplication;
         }
         [HttpPost]
-        [Authorize]
         public async Task<ResponseMessageDto> Exchange(WebExchangeDto dto)
         {
             return await websiteApplication.Exchange(dto);
         }
 
         [HttpGet]
-        [Authorize]
         public async Task<ResponseMessageDto> GetPrivacyAndTerms()
         {
             return await websiteApplication.GetPrivacyAndTerms();
         }
         [HttpPost]
-        [Authorize]
         public async Task<ResponseMessageDto> Save(WebsiteEditDto dto)
         {
             return await websiteApplication.Save(dto);
+        }
+        [HttpGet]
+        public async Task<ResponseMessageDto> LoadFrameCss()
+        {
+            return await websiteApplication.LoadFrameCss();
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SettingCss(FrameCssDto dto)
+        {
+            return await websiteApplication.SettingCss(dto);
         }
     }
 }

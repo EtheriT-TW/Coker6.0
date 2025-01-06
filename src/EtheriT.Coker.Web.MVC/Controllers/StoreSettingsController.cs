@@ -29,5 +29,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("FreightSettings");
         }
+        public async Task<IActionResult> SMTPSettings()
+        {
+            var response = await _storeSetAppService.getAll(new List<long> { 3 });
+            response.StoreSetGroupId = 3;
+            ViewData["Title"] = "SMTPServer";
+            return View("~/Views/SystemManagement/SEO.cshtml", response);
+        }
     }
 }

@@ -3,6 +3,7 @@
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.LayoutType
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.SideFloating
 @using EtheriT.Coker.Application.Shared.i18n;
+@using System.Web;
 @{
     var nonce = ViewContext.HttpContext.Items["CSPNonce"] as string;
     ViewBag.Nonce = nonce;
@@ -18,6 +19,7 @@
     <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
     <link rel="stylesheet" href="~/lib/sweetalert2/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon"  asp-append-version="true" />
     @switch (ViewData["PageView"])
     {
         case "Article":
@@ -26,17 +28,23 @@
         case "Product":
             <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/product/{ViewData["Id"]}")" />
             break;
+        case "Techcert":
+            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/techcert/{ViewData["Id"]}")" />
+            break;
+        default:
+            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}{ViewData["CurrentUrl"]}")" />
+            break;
     }
     @await Component.InvokeAsync(nameof(LayoutType))
 
     <meta name="author" content="易碩網際科技股份有限公司" />
     <meta name="copyright" content="易碩網際科技股份有限公司" />
     <meta name="description" content="@Html.Raw(ViewData["Description"])">
-    <meta itemprop="name" content="@Html.Raw(ViewData["PageName"])｜@Html.Raw(ViewData["SideName"])" />
+    <meta itemprop="name" content="@Html.Raw(ViewData["PageTagNameName"])" />
     <meta itemprop="description" content="@Html.Raw(ViewData["Description"])" />
-    <meta name="twitter:title" content="@Html.Raw(ViewData["PageName"])｜@Html.Raw(ViewData["SideName"])" />
+    <meta name="twitter:title" content="@Html.Raw(ViewData["PageTagNameName"])" />
     <meta name="twitter:description" content="@Html.Raw(ViewData["Description"])" />
-    <meta property="og:title" content="@Html.Raw(ViewData["PageName"])｜@Html.Raw(ViewData["SideName"])" />
+    <meta property="og:title" content="@Html.Raw(ViewData["PageTagNameName"])" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="@ViewData["CurrentUrl"]" />
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
@@ -48,13 +56,16 @@
             --orgName: @ViewData["OrgName"];
         }
     </style>
-    <style id="frameCss" nonce="@ViewBag.Nonce"></style>
+    <style id="frameCss" nonce="@ViewBag.Nonce">
+        @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
+    </style>
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
     @if (Configuration.GetValue<bool>("RemoteJs:Enabled", false))
     {
         <script data-consolejs-channel="c54af59e-d006-5fa6-30d5-e2b3f272a9fc" src="https://remotejs.com/agent/agent.js"></script>
     }
     <script nonce="@ViewBag.Nonce">
+        sessionStorage.setItem("PageKey","@ViewBag.PageKey");
         window.CI360 = { notInitOnLoad: true }
         window.onload = function () {
             ready();
@@ -65,14 +76,17 @@
 
         // 覆寫 appendChild 方法
         Element.prototype.appendChild = function (child) {
-            // 檢查是否為 <script> 或 <style> 元素
-            if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE') {
-                // 為元素添加 nonce 屬性
-                child.setAttribute('nonce', nonce);
-            }
+            // child 是否為 undefined
+            if (child) {
+                // 檢查是否為 <script> 或 <style> 元素
+                if (child.tagName && (child.tagName === 'SCRIPT' || child.tagName === 'STYLE')) {
+                    // 為元素添加 nonce 屬性
+                    child.setAttribute('nonce', nonce);
+                }
 
-            // 調用原始的 appendChild 方法
-            return originalAppendChild.call(this, child);
+                // 調用原始的 appendChild 方法
+                return originalAppendChild.call(this, child);
+            }
         };
 
         // 覆寫 insertBefore 方法
@@ -101,16 +115,53 @@
     }
     @if (ViewData["google.translate"] != null && !string.IsNullOrEmpty(ViewData["google.translate"]!.ToString() ?? ""))
     {
-        <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
         <script nonce="@ViewBag.Nonce">
+            let isGoogleTranslateInitialized = false;
+
             function googleTranslateElementInit() {
-                new google.translate.TranslateElement({
-                    pageLanguage: 'zh-TW', includedLanguages: '@ViewData["google.translate"]', gaTrack: true
-                }, 'google_translate_element');
+                if (isGoogleTranslateInitialized) {
+                    console.log("Google Translate is already initialized.");
+                    return;
+                }
+                try {
+                    if (typeof google !== "undefined" && typeof google.translate !== "undefined" && google.translate.TranslateElement) {
+                        new google.translate.TranslateElement({
+                            pageLanguage: 'zh-TW',
+                            includedLanguages: '@ViewData["google.translate"]',
+                            gaTrack: true
+                        }, 'google_translate_element');
 
-                $('select.goog-te-combo').attr('title', 'translate');
-
+                        $('select.goog-te-combo').attr('title', 'translate');
+                        isGoogleTranslateInitialized = true;
+                    } else {
+                        console.warn("Google Translate API is not ready yet. Retrying...");
+                        setTimeout(googleTranslateElementInit, 1000); // 每秒重試一次
+                    }
+                } catch (error) {
+                    console.error("Failed to initialize Google Translate:", error);
+                }
             }
+
+            // 動態加載 Google Translate 腳本
+            function loadGoogleTranslateScript() {
+                const script = document.createElement("script");
+                script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+                script.async = true;
+                script.defer = true;
+
+                script.onload = () => {
+                    console.log("Google Translate script loaded successfully.");
+                };
+
+                script.onerror = () => {
+                    console.error("Failed to load Google Translate script.");
+                };
+
+                document.head.appendChild(script);
+            }
+
+            // 加載 Google Translate 腳本並初始化
+            loadGoogleTranslateScript();
         </script>
     }
     @if (ViewData["GTM"] != null && !string.IsNullOrEmpty(ViewData["GTM"].ToString() ?? ""))
@@ -198,12 +249,13 @@
                                 </div>
                             </div>
                             <div class="login_vcode input-group">
-                                <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                                <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
                                     <img id="LoginImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                                 </div>
                             </div>
                             <div class="d-flex justify-content-end">
+                                <button class="border-0 bg-transparent text-black-50" type="button" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal"> 隱私聲明 </button>
                                 <button class="btn_refresh border-0 bg-transparent text-black-50">刷新驗證碼</button>
                             </div>
                             <div class="form-check">
@@ -212,12 +264,52 @@
                             </div>
                         </form>
                         <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">登　入</button>
-                        <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 " data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">其他登入方式</button>
+                        @* <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 " data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">其他登入方式</button> *@
                     </div>
                     <div class="modal-footer d-flex justify-content-center border-0">
                         <div class="text-black-50">不是會員？</div>
                         <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">立即註冊</button>
                         <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">忘記密碼</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="PrivacyStatementModal" class="modal fade" aria-hidden="true" aria-labelledby="PrivacyStatementModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable justify-content-center">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center fs-4 fw-bold pb-3">隱私聲明</div>
+                        <div class="px-4">
+                            <div class="fs-5 fw-bold text-center">關於電子郵件資料的使用說明</div>
+                            <br />
+                            <p>尊敬的用戶，感謝您使用我們的服務。在使用第三方登入（如Line登入）時，我們會從您的帳號中取得您提供的電子郵件地址。以下是我們如何使用您的電子郵件資料的詳細說明：</p>
+                            <br />
+                            <div class="fs-6 fw-bold">1. 身分驗證</div>
+                            <p>我們會使用您的電子郵件來確認您的身分，確保您在本平台上的登錄狀態及安全性。當您使用電子郵件進行登入或註冊時，這些資料將會用於身份確認。</p>
+                            <br />
+                            <div class="fs-6 fw-bold">2. 忘記密碼通知信</div>
+                            <p>若您忘記密碼並請求重設，我們會將重設密碼的通知及相關說明發送至您註冊時所提供的電子郵件地址。這樣可以幫助您快速找回帳號的存取權限。</p>
+                            <br />
+                            <div class="fs-6 fw-bold">3. 購物通知信</div>
+                            <p>在您進行購物時，若有相關狀況（如訂單處理進度、商品發貨通知等），我們會使用您的電子郵件地址來向您發送通知。這樣可以確保您隨時掌握您的購物狀態。</p>
+                            <br />
+                            <div class="fs-6 fw-bold">4. 付款成功通知信</div>
+                            <p>在您完成付款後，會有一封付款成功的通知信發送至您的電子郵件，以便您確認交易是否成功，並持有交易紀錄。</p>
+                            <br />
+                            <div class="fs-6 fw-bold">5. 客服信箱</div>
+                            <p>若您與我們的客服團隊聯繫，我們會通過電子郵件回覆您的問題、提供協助，並處理任何可能需要的客戶服務。</p>
+                            <br />
+                            <br />
+                            <div class="fs-6 fw-bold">隱私與保護</div>
+                            <p>我們將會妥善保護您的電子郵件資料，不會將其透露給第三方，除非法律要求或您同意其他用途。您的電子郵件資料僅會用於上述所列的用途，我們將遵循隱私政策來確保您的資料安全。</p>
+                            <br />
+                            <p>如果您有任何疑慮或問題，請隨時與我們聯繫。</p>
+                            <br />
+                            <br />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -280,7 +372,7 @@
                             </div>
                             <div id="RegisterCheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
                             <div class="register_vcode input-group">
-                                <input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                                <input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
                                     <img id="RegisterImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                                 </div>
@@ -292,10 +384,26 @@
                             </div>
                             <div class="form-check">
                                 <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
-                                <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><a class="text-black text-decoration-underline" href="/@ViewData["OrgName"]/Terms" title="連結至：會員條款(另開新視窗)" target="_blank">會員條款</a></span></label>
+                                @* <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><a class="text-black text-decoration-underline" href="/@ViewData["OrgName"]/Terms" title="連結至：會員條款(另開新視窗)" target="_blank">會員條款</a></span></label> *@
+                                <label class="form-check-label" for="CheckAccept">我已詳細閱讀並同意<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> 會員條款 </button></span></label>
                             </div>
                         </div>
                         <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">註　冊</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="TermsModal" class="modal fade" aria-hidden="true" aria-labelledby="TermsModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable justify-content-center">
+                <div class="modal-content">
+                    <div class="modal-header border-0">
+                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center fs-4 fw-bold pb-3">會員條款</div>
+                        <div class="content px-4">
+                            @ViewData["membershipTerms"]
+                        </div>
                     </div>
                 </div>
             </div>
@@ -342,7 +450,7 @@
                             </div>
                             <div id="ResetCheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
                             <div class="reset_vcode input-group">
-                                <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                                <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
                                     <img id="ResetImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                                 </div>
@@ -374,7 +482,7 @@
                                 <input id="InputForgetMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Forget Mail" placeholder="信箱" required name="Email">
                             </div>
                             <div class="forget_vcode input-group">
-                                <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                                <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
                                 <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
                                     <img id="ForgetImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                                 </div>
@@ -406,17 +514,18 @@
     <div id="SwiperModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen">
             <div class="modal-content bg-black h-100">
-                <div class="modal-header">
-                    <button type="button" data-bs-dismiss="modal" aria-label="Close" class="btn-close rounded-circle bg-light"></button>
+                <div b-6jkwzezpeq="" class="justify-content-center modal-header position-relative py-2">
+                    <div class="imgalt fs-4 text-white"></div>
+                    <button b-6jkwzezpeq="" type="button" data-bs-dismiss="modal" aria-label="Close" class="bg-light btn-close end-0 mx-2 position-absolute rounded-circle"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="pictureSwiper" class="swiper">
-                        <div class="swiper-button-prev"></div>
+                    <div id="pictureSwiper" class="swiper pb-2">
+                        <div class="swiper-button-prev rounded-circle"></div>
                         <div class="swiper-wrapper"></div>
                         <div class="swiper-pagination"></div>
-                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-next rounded-circle"></div>
                     </div>
-                    <div id="pictureSwiperThumbs" thumbsSlider="" class="swiper">
+                    <div id="pictureSwiperThumbs" thumbsSlider="" class="swiper pt-2">
                         <div class="swiper-wrapper"></div>
                     </div>
                 </div>

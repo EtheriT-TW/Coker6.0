@@ -17,7 +17,6 @@ using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Search;
 using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Application.Company;
-using System.Security.AccessControl;
 using EtheriT.Coker.Application.Dto.AuditLog;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Dto.Newsletter;
@@ -31,6 +30,10 @@ using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Token;
 using EtheriT.Coker.Application.Shared.Dto.Order;
+using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
+using EtheriT.Coker.Application.Shared.Dto.Role;
+using EtheriT.Coker.Application.Shared.Dto.UserHabits;
+using EtheriT.Coker.Application.Shared.Dto.Recipients;
 
 namespace EtheriT.Coker.Application
 {
@@ -45,11 +48,15 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.StartTime, option => option.MapFrom(c => DateTime.Now))
                 .ForMember(e => e.EndTime, option => option.MapFrom(c => DateTime.Now.AddDays(30)))
                 .ReverseMap()
-                .ForMember(e => e.IsLogin, option => option.MapFrom(t => t.UserID!=null&& DateTime.Now > t.EndTime));
+                .ForMember(e => e.IsLogin, option => option.MapFrom(t => t.UserID != null && DateTime.Now > t.EndTime));
+            //Role
+            CreateMap<AddRoleDto, Role>().ReverseMap();
             //Users
             CreateMap<UserSimplifyDto, User>()
                 .ForMember(e => e.Name, option => option.MapFrom(c => c.UserName))
                 .ReverseMap();
+            CreateMap<MemberGetAllDataDto, User>().ReverseMap();
+            CreateMap<MemberUpdateDto, User>().ReverseMap();
             CreateMap<MemberGetAllDataDto, FrontUser>().ReverseMap();
             CreateMap<MemberUpdateDto, FrontUser>().ReverseMap();
             CreateMap<ManagerAllListDto, User>().ReverseMap();
@@ -61,6 +68,11 @@ namespace EtheriT.Coker.Application
             CreateMap<FrontUser, User>().ReverseMap();
             CreateMap<FrontAddUserDto, MappingFrontUserAndWebsite>().ReverseMap();
             CreateMap<FrontAddUserDto, SendOpeningDto>().ReverseMap();
+
+            //UserGroup
+            CreateMap<UserGroupAddUpDto, UserGrouping>().ReverseMap();
+            CreateMap<UserGroupAddUpInputDto, UserGrouping>().ReverseMap();
+            CreateMap<UserGroupListDto, UserGrouping>().ReverseMap();
 
             //Website
             CreateMap<Website, WebsiteEditDto>()
@@ -109,7 +121,7 @@ namespace EtheriT.Coker.Application
             //Html_Content
             CreateMap<HtmlContentDto, Html_Content>()
                 .ReverseMap()
-                .ForMember(e => e.TypeName, option => option.MapFrom(c => ((ObjectTypeEnum)c.Type).ToString()));
+                .ForMember(e => e.TypeName, option => option.MapFrom(c => c.ObjectClassify.Title));
             CreateMap<ObjectTypeItemDto, Html_Content>()
                .ForMember(e => e.Type, option => option.MapFrom(c => c.FK_TopNodeId))
                .ForMember(e => e.Disp_opt, option => option.MapFrom(c => c.Visible))
@@ -188,7 +200,44 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.Image1, option => option.MapFrom(c => c.Img))
                 .ReverseMap();
 
+            //FrontUser
+            CreateMap<OrderHeaderAddDto, FrontEditUserDto>()
+                .ForMember(e => e.Name, option => option.MapFrom(c => c.Orderer))
+                .ForMember(e => e.Sex, option => option.MapFrom(c => c.OrdererSex))
+                .ForMember(e => e.TelPhone, option => option.MapFrom(c => c.OrdererTelephone))
+                .ForMember(e => e.CellPhone, option => option.MapFrom(c => c.OrdererCellPhone))
+                .ForMember(e => e.Address, option => option.MapFrom(c => c.OrdererAddress))
+                .ReverseMap();
+
+            //Order
+            CreateMap<OrderHeaderDataDto, Order_Header>()
+                .ForMember(e => e.OrdererCellPhone, option => option.MapFrom(c => c.OrdererCellphone))
+                .ForMember(e => e.RecipientCellPhone, option => option.MapFrom(c => c.RecipientCellphone))
+                .ReverseMap();
             CreateMap<Order_Header, OrderHeaderAddDto>()
+                .ReverseMap();
+            CreateMap<Order_Header, OrderHeaderDisplayDto>()
+                .ForMember(e => e.RefundTransactionId, option => option.MapFrom(c => c.refundTransactionId))
+                .ReverseMap();
+            CreateMap<ShoppingCartDisplayDto, OrderDetailDisplayDto>()
+                 .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))
+                 .ForMember(e => e.ProdStockId, option => option.MapFrom(c => c.PSId))
+                .ReverseMap();
+            CreateMap<ShoppingCartGetAllDto, OrderDetailDisplayDto>()
+                 .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))
+                 .ForMember(e => e.ProdStockId, option => option.MapFrom(c => c.PSId))
+                 .ForMember(e => e.Describe, option => option.MapFrom(c => c.Description))
+                .ReverseMap();
+
+            //ShoppingCart
+            CreateMap<Core.Models.ShoppingCart, Core.Models.Prod_Stock>()
+                 .ForMember(e => e.Id, option => option.MapFrom(c => c.FK_PSid))
+                .ReverseMap();
+            CreateMap<Core.Models.ShoppingCart, ShoppingCartAddUpOldDto>()
+                .ReverseMap();
+            CreateMap<Core.Models.ShoppingCart, ShoppingCartDisplayDto>()
+                 .ForMember(e => e.SCId, option => option.MapFrom(c => c.Id))
+                 .ForMember(e => e.PSId, option => option.MapFrom(c => c.FK_PSid))
                 .ReverseMap();
 
             //Tags
@@ -250,8 +299,18 @@ namespace EtheriT.Coker.Application
             CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
 
             //Recipients
+            CreateMap<RecipientsDto, Recipient>().ReverseMap();
             CreateMap<RecipientsListDto, Recipient>().ReverseMap();
             CreateMap<MailUserDataDto, Recipient>().ReverseMap();
+            CreateMap<OrderHeaderAddDto, RecipientsDto>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => c.RecipientId))
+                .ForMember(e => e.Name, option => option.MapFrom(c => c.Recipient))
+                .ForMember(e => e.Email, option => option.MapFrom(c => c.RecipientEmail))
+                .ForMember(e => e.Address, option => option.MapFrom(c => c.RecipientAddress))
+                .ForMember(e => e.Cellphone, option => option.MapFrom(c => c.RecipientCellPhone))
+                .ForMember(e => e.Telephone, option => option.MapFrom(c => c.RecipientTelephone))
+                .ForMember(e => e.Sex, option => option.MapFrom(c => c.RecipientSex))
+                .ReverseMap();
 
             //Permissions
             CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();

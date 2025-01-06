@@ -21,14 +21,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.tagAppService = tagAppService;
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ResponseMessageDto> TagAddUp([FromForm] DevExpressDto dto)
         {
             return await tagAppService.TagAddUp(dto);
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ResponseMessageDto> TagGroupAddUp([FromForm] DevExpressDto dto)
         {

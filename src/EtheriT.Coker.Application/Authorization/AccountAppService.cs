@@ -138,7 +138,7 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Error = e.Message;
             }
             dto.Password = "******";
-            await loginUserData.SetLogs("Account", "Login", userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto)
@@ -151,6 +151,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 var tokenItem = await tokenAppService.CreateToken();
                 Guid Temp_UUID = await tokenAppService.GetUUID();
+                var oldtoken = await db.Tokens.Where(e => e.UUID == Temp_UUID).FirstOrDefaultAsync();
 
                 var frontuser = await (from user in db.FrontUsers
                                        join MapFrontUserAndWeb in db.MappingFrontUserAndWebsite on user.Id equals MapFrontUserAndWeb.FK_UserId
@@ -181,6 +182,7 @@ namespace EtheriT.Coker.Application.Authorization
                             {
                                 output = await NoPasswordLogin(frontuser, dto.WebsiteId, dto);
 
+                                if (oldtoken != null && frontuser.PrivacyAgreeTime == null) frontuser.PrivacyAgreeTime = oldtoken.PrivacyAgreeTime;
                                 frontuser.ErrorTimes = 0;
                                 frontuser.LockTime = null;
                                 if (frontuser.Status == (int)UserStatusEnum.停權) frontuser.Status = (int)UserStatusEnum.開通;
@@ -409,7 +411,7 @@ namespace EtheriT.Coker.Application.Authorization
                     output.Message = ex.Message;
                 }
             }
-            await loginUserData.SetLogs("Account", "UpdatePassword", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<ResponseUserEditDto> GetEditUser(DataDelectDto dto)
@@ -437,7 +439,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 output.Error = ex.Message;
             }
-            await loginUserData.SetLogs(controllerName, "GetEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
             return output;
         }
         public async Task<ResponseMessageDto> AddUser(AddUser dto)
@@ -467,7 +469,7 @@ namespace EtheriT.Coker.Application.Authorization
             }
             dto.Password = "*********";
             dto.PasswordConfirm = "*********";
-            await loginUserData.SetLogs(controllerName, "saveEditUser", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
         public async Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto)
@@ -492,6 +494,10 @@ namespace EtheriT.Coker.Application.Authorization
 
                 if (frontuser == null)
                 {
+
+                    var sameuuid = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync() != null;
+                    if (sameuuid) UUID = Guid.NewGuid();
+
                     frontuser = mapper.Map<FrontUser>(dto);
                     frontuser.Password = passwordHasher.HashPassword(dto.Password);
                     frontuser.UUID = UUID;
@@ -510,6 +516,7 @@ namespace EtheriT.Coker.Application.Authorization
                         newuser = user;
                     }
                     frontuser.FK_User = user.Id;
+                    frontuser.Level = dto.RoleId;
                     db.FrontUsers.Add(frontuser);
                     await loginUserData.SaveChanges(frontuser);
                     userid = frontuser.Id;
@@ -592,7 +599,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 dto.Password = "*********";
                 dto.PasswordConfirm = "*********";
-                await loginUserData.SetLogs(controllerName, "saveEditUser", userid, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(userid, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             catch (Exception ex)
             {
@@ -637,7 +644,7 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 var websiteid = configuration.GetValue<long>("WebConfig:SiteId");
                 Guid UUID = await tokenAppService.GetUUID();
-                var token = tokenAppService.CheckToken();
+                var token = await tokenAppService.CheckToken(null);
 
                 if (token != null && token.IsLogin)
                 {
@@ -755,8 +762,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                         $"<hr/>" +
                                                         $"<hr/>" +
                                                         $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                        $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                                        $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                                         $"<hr/>" +
                                                         $"<hr/>" +
                                                         $"<br/></div>";
@@ -787,15 +794,15 @@ namespace EtheriT.Coker.Application.Authorization
         }
         public async Task<ResponseMessageDto> SendForget(long userId)
         {
-			ResponseMessageDto response = new ResponseMessageDto();
-			try
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
 
-				var frontUser = await (from user in db.FrontUsers
-									   join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-									   where user.Id == userId && mapuserweb.FK_WebsiteId == websiteId
-									   select user).FirstOrDefaultAsync();
+                var frontUser = await (from user in db.FrontUsers
+                                       join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
+                                       where user.Id == userId && mapuserweb.FK_WebsiteId == websiteId
+                                       select user).FirstOrDefaultAsync();
                 if (frontUser != null)
                 {
 
@@ -808,17 +815,16 @@ namespace EtheriT.Coker.Application.Authorization
                     });
                 }
                 else throw new Exception();
-			}
+            }
             catch
             {
                 response.Error = "會員資料錯誤";
 
-			}
+            }
             return response;
 
-		}
-
-		public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
+        }
+        public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
         {
 
             ResponseMessageDto response = new ResponseMessageDto();
@@ -850,8 +856,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                     $"<hr/>" +
                                                     $"<hr/>" +
                                                     $"<div class='text-bold text-red'>提醒您：此封『密碼重設通知』為系統發出，請勿直接回覆。</div>" +
-                                                    $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                    $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                    $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                                    $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                                     $"<hr/>" +
                                                     $"<hr/>" +
                                                     $"<br/></div>";
@@ -1054,8 +1060,8 @@ namespace EtheriT.Coker.Application.Authorization
                                                             $"<hr/>" +
                                                             $"<hr/>" +
                                                             $"<div class='text-bold text-red'>提醒您：此封『會員通知』為系統發出，請勿直接回覆。</div>" +
-                                                            $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款</div>" +
-                                                            $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢</div>" +
+                                                            $"<div class='text-bold text-red'>客服人員均不會要求消費者更改帳號或要求以ATM重新轉帳匯款。</div>" +
+                                                            $"<div class='text-bold text-red'>若有上述情形，請立即撥打165防詐騙專線查詢。</div>" +
                                                             $"<hr/>" +
                                                             $"<hr/>" +
                                                             $"<br/></div>";
@@ -1211,7 +1217,7 @@ namespace EtheriT.Coker.Application.Authorization
                 output.EndDateTime = EndDateTime;
 
                 if (dto != null) dto.Password = "******";
-                await loginUserData.SetLogs("Account", "Login", frontuser.Id, WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(frontuser.Id, WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(output));
 
                 account_Log = new Account_Log()
                 {

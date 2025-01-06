@@ -10,6 +10,9 @@ using EtheriT.Coker.EntityFrameworkCore.Migrations.Seed;
 using EtheriT.Coker.Core.Models;
 using Directory = EtheriT.Coker.Core.Models.Directory;
 using System.Text.Json.Nodes;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
+using EtheriT.Coker.EntityFrameworkCore.Configurations;
 
 namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 {
@@ -77,6 +80,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<NotFoundImage> NotFoundImage { get; set; }
         public DbSet<Core.Models.JsonObject> JsonObjects { get; set; }
         public DbSet<Contact> Contacts { get; set; }
+        public DbSet<Theme> Themes { get; set; }
+        public DbSet<UserGrouping> UserGroupings { get; set; }
+        public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
+        public DbSet<UserActivityTags> UserActivityTags { get; set; }
+        public DbSet<UserGroupingDetail> UserGroupingDetails { get; set; }
+        
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -84,6 +93,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // 掃描所有繼承自 FullAuditedEntity 的類別
+            var entityType = typeof(FullAuditedEntity); // 基類型
+            var configurations = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .Where(t => t.IsClass && !t.IsAbstract && entityType.IsAssignableFrom(t)) // 篩選繼承類別
+                .Select(entity => typeof(FullAuditedEntityConfiguration<>).MakeGenericType(entity)) // 動態構造類型
+                .ToList();
+
+            // 動態套用配置
+            foreach (var configType in configurations)
+            {
+                var configurationInstance = Activator.CreateInstance(configType); // 建立配置類別的實例
+                modelBuilder.ApplyConfiguration((dynamic)configurationInstance); // 使用 ApplyConfiguration
+            }
+
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>(o =>
             {
@@ -93,9 +117,35 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
+            modelBuilder.Entity<UserActivityTags>(o =>
+            {
+                o.Property(e => e.CreateTime).HasDefaultValueSql("getdate()");
+                o.HasOne(e => e.Remote).WithMany(e => e.UserActivityTags).HasForeignKey(f => f.FK_RemoteId);
+            });
+            modelBuilder.Entity<UserTagStatistic>(o =>
+            {
+                o.Property(e => e.LastModificationTime).HasDefaultValueSql("getdate()");
+                o.Property(e => e.LastActivityTime).HasDefaultValueSql("getdate()");
+                o.HasOne(e => e.Tag).WithMany(e => e.UserTagStatistics).HasForeignKey(f => f.FK_TagId);
+            });
+            modelBuilder.Entity<UserGrouping>(o =>
+            {
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<UserGroupingDetail>(o =>
+            {
+                o.HasKey(ugd => new { ugd.UUID, ugd.FK_GropingId });
+                o.HasOne(e => e.userGrouping).WithMany(e => e.UserGroupingDetails).HasForeignKey(f => f.FK_GropingId);
+            });
             modelBuilder.Entity<Website>(o =>
             {
-                o.Property(w => w.Level).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.Property(w => w.Level).HasDefaultValue(WebsiteLevelEnum.形象).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasQueryFilter(e => !e.IsDeleted);
+            });
+            modelBuilder.Entity<Theme>(o =>
+            {
+                o.Property(w => w.Css).HasDefaultValue("").Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.HasOne(w => w.Website).WithMany(t => t.Themes).HasForeignKey(f => f.FK_WebsiteID);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<MappingUserAndWebsite>(o =>
@@ -176,6 +226,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<WebMenu>(o =>
             {
+                o.HasIndex(m => m.Title);
                 o.HasOne(u => u.Website).WithMany(u => u.WebMenus).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasOne(t => t.FK_TopNode).WithMany(u => u.FK_ChildNodes).HasForeignKey(f => f.FK_TopNodeId).IsRequired(false);
                 o.Property(m => m.VisibleHeader).HasDefaultValue(true);
@@ -238,9 +289,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Prod>(o =>
             {
                 o.HasOne(u => u.Website).WithMany(u => u.Prods).HasForeignKey(f => f.FK_WebsiteId);
+                o.HasIndex(u => u.Title);
                 o.Property(p => p.Visible).HasDefaultValue(true);
                 o.Property(p => p.RemovedFromShelves).HasDefaultValue(false);
-                o.Property(p => p.Status).HasDefaultValue(0);
+                o.Property(p => p.Status).HasDefaultValue(ProdStatusEnum.一般);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
 
@@ -306,7 +358,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Role>(o =>
             {
-                o.Property(w => w.Type).HasDefaultValue(1).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+                o.Property(w => w.Type).HasDefaultValue(RoleTypeEnum.前台).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
             modelBuilder.Entity<MappingUserAndRole>(o =>
@@ -316,8 +368,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Tag>(o =>
             {
+                o.HasIndex(t => new { t.Title,t.FK_WebsiteId }).HasFilter("[IsDeleted] = 0").IsUnique();
                 o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);
-                o.HasQueryFilter(e => !e.IsDeleted);
+                o.Property(t => t.IsTemporary).HasDefaultValue(false);
+                o.HasQueryFilter(e => !e.IsDeleted && !e.IsTemporary);
             });
             modelBuilder.Entity<Tag_Associate>(o =>
             {
@@ -361,6 +415,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Article>(o =>
             {
+                o.HasIndex(a => a.Title);
                 o.HasOne(f => f.Website).WithMany(u => u.Articles).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
@@ -428,6 +483,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
                 o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
+                o.HasIndex(f => f.FK_WebsiteId);
+                o.HasIndex(f => f.FK_UserId);
+                o.HasIndex(f => f.FK_WebmenuId);
+                o.HasIndex(f => f.FK_ArticleId);
+                o.HasIndex(f => f.FK_ProdId);
+                o.HasIndex(f => f.FK_TechCertId);
+                o.HasIndex(f => f.State);
+                o.HasIndex(f => f.ExecutionTime);
+                o.HasIndex(f => f.UUID);
+                o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
             });
             modelBuilder.Entity<NotFoundImage>(o =>
             {
@@ -449,6 +514,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasQueryFilter(e => !e.IsDeleted);
             });
+
             new SeedHelper(modelBuilder).SeedHost();
         }
     }

@@ -26,13 +26,16 @@
         "wwwroot/js/CokerCore/Member.js",
         "wwwroot/js/CokerCore/ObjectType.js",
         "wwwroot/js/CokerCore/Order.js",
+        "wwwroot/js/CokerCore/ThirdParty.js",
         "wwwroot/js/CokerCore/Others.js",
         "wwwroot/js/CokerCore/PowerManagement.js",
         "wwwroot/js/CokerCore/Product.js",
+        "wwwroot/js/CokerCore/Role.js",
         "wwwroot/js/CokerCore/Remote.js",
         "wwwroot/js/CokerCore/sweet.js",
         "wwwroot/js/CokerCore/TechnicalCertificate.js",
         "wwwroot/js/CokerCore/User.js",
+        "wwwroot/js/CokerCore/UserHabits.js",
         "wwwroot/js/CokerCore/WebMesnus.js",
         "wwwroot/js/CokerCore/WebSite.js"
       ]
@@ -243,6 +246,16 @@
       "outputFolder": "lib/grapesjs/plugin/grapesjs-table",
       "input": [
         "node_modules/grapesjs-table/dist/*"
+      ]
+    },
+    {
+      "outputFolder": "lib/ace-builds",
+      "input": [
+        "node_modules/ace-builds/src-min-noconflict/ace.js",
+        "node_modules/ace-builds/src-min-noconflict/theme-monokai.js",
+        "node_modules/ace-builds/src-min-noconflict/mode-css.js",
+        "node_modules/ace-builds/src-min-noconflict/worker-css.js",
+        "node_modules/ace-builds/src-min-noconflict/ext-language_tools.js"
       ]
     }
   ]

@@ -46,7 +46,7 @@
   --button-primary-hover-border-color:var(--button-primary-hover-bg-color);
 
   font:message-box;
-  font-size:13px;
+  font-size:0.8125rem;
   font-weight:400;
   line-height:150%;
   border-radius:4px;
@@ -183,7 +183,7 @@
 
 .dialog .mainContainer .radio > .radioLabel > span{
           flex:1 0 0;
-          font-size:11px;
+          font-size:0.6875rem;
           color:var(--text-secondary-color);
         }
 
@@ -637,7 +637,7 @@
 
 .annotationLayer .popupAnnotation{
     position:absolute;
-    font-size:calc(9px * var(--scale-factor));
+    font-size:calc(0.5625rem * var(--scale-factor));
     pointer-events:none;
     width:-moz-max-content;
     width:max-content;
@@ -663,7 +663,7 @@
   }
 
 .annotationLayer .popup *{
-    font-size:calc(9px * var(--scale-factor));
+    font-size:calc(0.5625rem * var(--scale-factor));
   }
 
 .annotationLayer .popup > .header{
@@ -687,10 +687,10 @@
     padding-top:calc(2px * var(--scale-factor));
   }
 
-.annotationLayer .richText > *{
-    white-space:pre-wrap;
-    font-size:calc(9px * var(--scale-factor));
-  }
+.annotationLayer .richText > * {
+    white-space: pre-wrap;
+    font-size: calc(0.5625rem * var(--scale-factor));
+}
 
 .annotationLayer .popupTriggerArea{
     cursor:pointer;
@@ -837,7 +837,7 @@
   color:black;
   font-weight:normal;
   font-kerning:none;
-  font-size:10px;
+  font-size:0.625rem;
   font-style:normal;
   letter-spacing:0;
   text-decoration:none;
@@ -1443,7 +1443,7 @@
   background:transparent;
   position:absolute;
   inset:0;
-  font-size:calc(100px * var(--scale-factor));
+  font-size:calc(6.25rem * var(--scale-factor));
   transform-origin:0 0;
   cursor:auto;
 }
@@ -1731,7 +1731,7 @@
         pointer-events:all;
         font:menu;
         font-weight:590;
-        font-size:12px;
+        font-size:0.75rem;
         color:var(--editor-toolbar-fg-color);
       }
 
@@ -1792,7 +1792,7 @@
             width:-moz-max-content;
             width:max-content;
             height:auto;
-            font-size:12px;
+            font-size:0.75rem;
 
             border:0.5px solid var(--alt-text-tooltip-border);
             background:var(--alt-text-tooltip-bg);
@@ -2224,7 +2224,7 @@
       }
 
 .dialog.altText #altTextContainer #overallDescription .title{
-        font-size:13px;
+        font-size:0.8125rem;
         font-style:normal;
         font-weight:590;
       }
@@ -3252,7 +3252,7 @@ body.wait::before{
   padding:0 4px;
   margin:4px 2px;
   font:message-box;
-  font-size:12px;
+  font-size:0.75rem;
   line-height:14px;
   text-align:left;
   cursor:default;
@@ -3344,7 +3344,7 @@ body.wait::before{
   padding-inline-end:10px;
   flex:none;
   font:menu;
-  font-size:13px;
+  font-size:0.8125rem;
   font-style:normal;
   font-weight:400;
   line-height:150%;
@@ -3564,7 +3564,7 @@ body.wait::before{
   border:none;
   border-radius:2px;
   color:var(--main-color);
-  font-size:12px;
+  font-size:0.75rem;
   line-height:14px;
   -webkit-user-select:none;
      -moz-user-select:none;
@@ -3625,7 +3625,7 @@ body.wait::before{
   width:inherit;
   min-width:inherit;
   height:28px;
-  font-size:12px;
+  font-size:0.75rem;
   color:var(--main-color);
   margin:0;
   padding-block:1px 2px;
@@ -3943,7 +3943,7 @@ a:is(.toolbarButton, .secondaryToolbarButton)[href="#"]{
   border:1px solid var(--field-border-color);
   box-shadow:none;
   color:var(--field-color);
-  font-size:12px;
+  font-size:0.75rem;
   line-height:16px;
   outline:none;
 }
@@ -4010,7 +4010,7 @@ a:is(.toolbarButton, .secondaryToolbarButton)[href="#"]{
   margin:2px;
   border-radius:2px;
   color:var(--main-color);
-  font-size:12px;
+  font-size:0.75rem;
   line-height:14px;
   text-align:left;
   -webkit-user-select:none;
@@ -4104,7 +4104,7 @@ a:focus > .thumbnail > .thumbnailImage,
   padding-inline-start:4px;
   border-radius:2px;
   color:var(--treeitem-color);
-  font-size:13px;
+  font-size:0.8125rem;
   line-height:15px;
   -webkit-user-select:none;
      -moz-user-select:none;
@@ -4183,7 +4183,7 @@ dialog{
   border-spacing:4px;
   color:var(--main-color);
   font:message-box;
-  font-size:12px;
+  font-size:0.75rem;
   line-height:14px;
   background-color:var(--doorhanger-bg-color);
   border:1px solid rgb(0 0 0 / 0.5);

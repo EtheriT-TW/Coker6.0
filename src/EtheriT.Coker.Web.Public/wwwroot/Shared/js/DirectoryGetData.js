@@ -25,7 +25,19 @@
             data: JSON.stringify(data),
             dataType: "json"
         });
-    }
+    },
+    SwitchPage: function (data) {
+        return $.ajax({
+            url: "/api/Directory/SwitchPage",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            headers: {
+                Authorization: 'Bearer ' + localStorage.getItem("token")
+            },
+            data: JSON.stringify(data),
+            dataType: "json"
+        });
+    },
 }
 
 var Advertise = {
@@ -48,12 +60,11 @@ var Advertise = {
 }
 
 function initElemntAndLoadDir($dir, page) {
-    //console.log("InitLoad")
     const $self = $dir || $(".catalog_frame").first();
     var temp_siblings = $self.find(".templatecontent").siblings();
     if (temp_siblings.length > 0) {
         for (i = 0; i < temp_siblings.length; i++) {
-            temp_siblings[i].remove();
+            if (!$(temp_siblings[i]).hasClass("templatecontent-tag")) temp_siblings[i].remove();
         }
     }
     const dirid = typeof ($self.data("dirid")) != "undefined" ? typeof ($self.data("dirid")) == "string" ? $self.data("dirid").split(",") : [$self.data("dirid")] : 0;
@@ -69,29 +80,30 @@ function initElemntAndLoadDir($dir, page) {
     if (typeof ($self.data("page")) == "undefined" || $self.data("page") != hashPage) {
         if (isNaN(hashPage) || hashPage == "") page = "1";
         else page = hashPage;
-        const option = {
-            Ids: dirid,
-            SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
-            Page: page,
-            ShowNum: shownum,
-            MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
-            Filters: $self.data("filtered"),
-            directoryType: $self.data("directoryTypeChecked"),
-            target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target"),
-            FindNearest: FindNearest,
-            Longitude: Longitude,
-            Latitude: Latitude,
+        if (!(dirid.length == 1 && dirid[0] == "")) {
+            const option = {
+                Ids: dirid,
+                SiteId: typeof (SiteId) == "undefined" ? 0 : SiteId,
+                Page: page,
+                ShowNum: shownum,
+                MaxLen: typeof (maxlen) == "undefined" ? 0 : maxlen,
+                Filters: $self.data("filtered"),
+                directoryType: $self.data("directoryTypeChecked"),
+                target: typeof ($self.data("target")) == "undefined" ? null : $self.data("target"),
+                FindNearest: FindNearest,
+                Longitude: Longitude,
+                Latitude: Latitude,
+            }
+            $self.find(".catalog>.template").remove();
+            DirectoryDataGet($self, option);
+
+            $self.off("filter").on("filter", function () {
+                $self.removeData("page");
+                initElemntAndLoadDir($dir, page);
+            });
+            $self.data("page", page)
         }
-        $self.find(".catalog>.template").remove();
-        DirectoryDataGet($self, option);
-
-        $self.off("filter").on("filter", function () {
-            $self.removeData("page");
-            initElemntAndLoadDir($dir, page);
-        });
-        $self.data("page", page)
     }
-
 }
 function DirectoryGetDataInit() {
     const dirLength = $(".catalog_frame").length;
@@ -294,14 +306,17 @@ function DirectoryDataGet($item, option) {
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");
 
         if ($item.hasClass("swiper") || $item.find(".swiper").length > 0 || $item.hasClass("swiper-wrapper")) {
-            let c;
+            let c, b;
             if ($item.hasClass("swiper")) c = $item;
             else if ($item.find(".swiper").length > 0) c = $item.find(".swiper");
             else c = $item.parents(".swiper");
-            if (typeof ($(c).data("isInit")) != "undefined" && $(c).data("isInit"))
-                c[0].swiper.destroy(true, true);
-            c.parents(`[class*="_swiper"]`).data("isInit", false);
-            SwiperInit({ autoplay: true });
+            b = $(c).parents(`[class*="_swiper"]`);
+            if ($(b).length > 0) {
+                if (typeof ($(b).data("isInit")) != "undefined" && $(b).data("isInit"))
+                    c[0].swiper.destroy(true, true);
+                b.data("isInit", false);
+                SwiperInit({ autoplay: true });
+            }
         }
     })
 }
@@ -381,6 +396,16 @@ function DirectoryDataInsert($item, result) {
         content.find(".title").text(data.title);
         content.find(".subtitle").text(data.subtitle);
         content.find(".description").html(data.description);
+        //符合無障礙規範，若a裡有圖片或文字則alt為空
+        if (content.is('a')) {
+            if (content.find("img").length && content.find("h3,h4,h5,h6,span,p").length) {
+                content.find("img").imgCheck().attr("alt", " ");
+            }
+        } else {
+            if (content.find("a img").length && content.find('a').find("h3,h4,h5,h6,span,p").length) {
+                content.find("img").imgCheck().attr("alt", " ");
+            }
+        }
         if (content.find(".location").length > 0 && (data.location == null || data.location == "")) content.find(".location").parents(".py-2").remove();
         else content.find(".location").text(data.location);
         if (content.find(".address").length > 0 && (data.address == null || data.address == "")) content.find(".address").parents(".py-2").remove();
@@ -429,86 +454,111 @@ function DirectoryDataInsert($item, result) {
             }
             content.find(".normal-price").text(convert_price(data.price));
             content.find(".price-grid").text(convert_price(data.price));
-            if (data.itemNo != null && data.itemNo != "") content.find(".itemNo").text(data.itemNo);
-            else content.find(".itemNo").remove();
-
-            $tags = content.find(".tags");
-            $tags.empty();
-            data.tags.slice(0, 2).forEach((tag) => {
-                let badge = $(temp_tag).clone();
-                badge.text(tag.tag_Name.slice(0, 4));
-                $tags.append(badge);
-            });
-            data.tags.slice(2).forEach((tag) => {
-                let badge = $(temp_tag).clone();
-                badge.text(tag.tag_Name.slice(0, 4));
-                badge.addClass("more-tag d-none");
-                $tags.append(badge);
-            });
-            if (data.tags.length > 2) {
-                let badge = $(temp_tag).clone();
-                badge.text("...");
-                badge.addClass("less-tag");
-                $tags.append(badge);
-            }
-            $tags.children().each(function () {
-                $(this).on("click", function () {
-                    location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
-                    return false;
-                })
-            });
         } else {
-            content.find(".itemNo,.price").remove();
+            content.find(".price").addClass("notshow");
+            content.find(".price").text("");
         }
+
+        if (data.itemNo != null && data.itemNo != "") content.find(".itemNo").text(data.itemNo);
+        else content.find(".itemNo").remove();
+
+        $tags = content.find(".tags");
+        $tags.empty();
+        if (data.tags == null) data.tags = [];
+        data.tags.slice(0, 2).forEach((tag) => {
+            let badge = $(temp_tag).clone();
+            badge.text(tag.tag_Name.slice(0, 4));
+            $tags.append(badge);
+        });
+        data.tags.slice(2).forEach((tag) => {
+            let badge = $(temp_tag).clone();
+            badge.text(tag.tag_Name.slice(0, 4));
+            badge.addClass("more-tag d-none");
+            $tags.append(badge);
+        });
+        if (data.tags.length > 2) {
+            let badge = $(temp_tag).clone();
+            badge.text("...");
+            badge.addClass("less-tag");
+            $tags.append(badge);
+        }
+        $tags.children().each(function () {
+            $(this).on("click", function () {
+                location.href = `/${OrgName}/Search/Get/3/${$(this).text()}`;
+                return false;
+            })
+        });
         // Clear content of shareBlock and re-init
         // because content.find("a").attr(linkData); will replace the badly initialized share buttons
         content.find(".shareBlock").data("init", false);
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
+
+        if (IsLogin && data.link.indexOf("/product/") > -1) {
+            var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
+            content.find(".shareBlock").after(html);
+            if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
+            else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
+            FavButtonInit(content.find(".btn_fav"))
+        }
+
         $item.find(".catalog").append(content);
     });
     HoverEffectInit();
     ShareBlockInit();
 }
 function DirectoryAdDataInsert($item, result) {
-    var isFront = typeof ($item.attr("draggable")) == "undefined";
-    $item.find(".File_Frame").each(function (index) {
-        var $frame = $(this);
-        if (result.length > index) {
-            var thisresult = result[index];
-            var result_File = thisresult.fileLink[0];
-            var filetype = result_File.fileType;
-            var html;
-            switch (parseInt(filetype)) {
-                case 1:
-                    var $img_frame = $frame.find(".img_frame");
-                    $img_frame.find("img").attr("src", result_File.link);
-                    $img_frame.find("img").attr("alt", thisresult.title);
-                    $img_frame.find("a").attr("href", thisresult.link);
-                    $img_frame.find("a").attr("title", "連結至" + thisresult.title + (thisresult.target ? "(開新視窗)" : ""));
-                    $img_frame.find("a").attr("target", (thisresult.target ? "_blank" : "_self"));
-                    if ($frame.find(".title").length > 0) {
-                        $frame.find(".title").text(thisresult.title);
-                        $frame.find(".title").removeClass("d-none");
-                    }
-                    $img_frame.removeClass("d-none");
-                    $img_frame.parent().children().not(".img_frame").not(".title").remove();
-                    break;
-                case 2:
-                    var $video_frame = $frame.find(".video_frame");
-                    $video_frame.find("video").attr("src", result_File.link);
-                    $video_frame.find("video").attr("type", result_File.video_Type);
-                    $video_frame.removeClass("d-none");
-                    $video_frame.parent().children().not(".video_frame").remove();
-                    break;
-                case 3:
-                    var $YT_frame = $frame.find(".YT_frame");
-                    $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + result_File.name + "/maxresdefault.jpg");
-                    $YT_frame.find("img").attr("alt", thisresult.title);
-                    $YT_frame.removeClass("d-none");
-                    $YT_frame.parent().find("div").not(".YT_frame").remove();
-                    if ($("body").find("#YTPreviewModal").length == 0) {
-                        var html = `<div class="modal fade" id="YTPreviewModal" tabindex="-1" aria-labelledby="YTPreviewModal" aria-hidden="true">
+    if ($item.find(".swiper").length > 0) {
+        var $swiperwrapper = $item.find(".swiper-wrapper");
+        for (var i = 0; i < result.length; i++) {
+            var temp = $($swiperwrapper.find(".templatecontent").html()).clone();
+            temp = InsertAdDatat(temp, result[i]);
+            $swiperwrapper.append(temp);
+        }
+    } else {
+        $item.find(".File_Frame").each(function (index) {
+            var $frame = $(this);
+            if (result.length > index) {
+                InsertAdDatat($frame, result[index]);
+            }
+        });
+    }
+}
+function InsertAdDatat($frame, result) {
+    var isFront = typeof (OrgName) != "undefined";
+    var result_File = result.fileLink[0];
+    var filetype = result_File.fileType;
+    var html;
+    switch (parseInt(filetype)) {
+        case 1:
+            var $img_frame = $frame.find(".img_frame");
+            $img_frame.find("img").attr("src", result_File.link);
+            $img_frame.find("img").attr("alt", result.title);
+            $img_frame.find("a").attr("href", result.link);
+            $img_frame.find("a").attr("title", "連結至" + result.title + (result.target ? "(開新視窗)" : ""));
+            $img_frame.find("a").attr("target", (result.target ? "_blank" : "_self"));
+            if ($frame.find(".title").length > 0) {
+                $frame.find(".title").text(result.title);
+                $frame.find(".title").removeClass("d-none");
+            }
+            $img_frame.removeClass("d-none");
+            $img_frame.parent().children().not(".img_frame").not(".title").remove();
+            break;
+        case 2:
+            var $video_frame = $frame.find(".video_frame");
+            $video_frame.find("video").attr("src", result_File.link);
+            $video_frame.find("video").attr("type", result_File.video_Type);
+            $video_frame.removeClass("d-none");
+            $video_frame.parent().children().not(".video_frame").remove();
+            break;
+        case 3:
+            var $YT_frame = $frame.find(".YT_frame");
+            $YT_frame.find("img").attr("src", "https://img.youtube.com/vi/" + result_File.name + "/maxresdefault.jpg");
+            $YT_frame.find("img").attr("alt", result.title);
+            $YT_frame.removeClass("d-none");
+            $YT_frame.parent().find("div").not(".YT_frame").remove();
+            if ($("body").find("#YTPreviewModal").length == 0) {
+                var html = `<div class="modal fade" id="YTPreviewModal" tabindex="-1" aria-labelledby="YTPreviewModal" aria-hidden="true">
                                                   <div class="modal-dialog modal-xl">
                                                     <div class="modal-content position-relative bg-black">
                                                         <div class="modal-header">
@@ -518,68 +568,108 @@ function DirectoryAdDataInsert($item, result) {
                                                     </div>
                                                   </div>
                                                 </div>`
-                        $("body").prepend(html);
-                        $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
+                $("body").prepend(html);
+                $("#YTPreviewModal").find(".modal-content").css("height", "90vh");
 
-                        document.getElementById('YTPreviewModal').addEventListener('hidden.bs.modal', function (event) {
-                            $("#YTPreviewModal").find(".modal-body").empty();
-                        })
-                    }
-                    $YT_frame.on("click", function () {
-                        var temp_ytlink = "https://www.youtube-nocookie.com/embed/" + result_File.name;
-                        $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
-                    })
-                    $YT_frame.parent().children().not(".YT_frame").remove();
-                    break;
-            }
-            if (thisresult.describe != null) {
-                var temp = (thisresult.describe + "").split("\n");
-                var describe;
-                temp.forEach(function (v, i) {
-                    if (i == 0) {
-                        describe = v;
-                    } else {
-                        describe += `<br/>${v}`;
-                    }
-                });
-                $frame.find(".describe").append(describe);
-            }
-            var tags = "";
-            for (var i = 0; i < thisresult.tagDatas.length; i++) {
-                var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${thisresult.tagDatas[i].searchId}/${thisresult.tagDatas[i].title}`;
-                tags += `<a href="${taglink}" title="連結至：${thisresult.tagDatas[i].title}" class="pe-2">#${thisresult.tagDatas[i].title}</a>`;
-            }
-            $frame.find(".tag").append(tags);
-
-            if (isFront) {
-                Advertise.ActivityExposure(thisresult.id).done(function (result) {
-                    //console.log(result)
+                document.getElementById('YTPreviewModal').addEventListener('hidden.bs.modal', function (event) {
+                    $("#YTPreviewModal").find(".modal-body").empty();
                 })
             }
-            $frame.find(".video_frame").find("video").on("play", function () {
-                var $this = $(this);
-                if (!$this.hasClass("playing")) {
-                    $(this).addClass("playing")
-                    Advertise.ActivityClick(thisresult.id).done(function (result) {
-                        //console.log(result)
-                    })
-                }
+            $YT_frame.on("click", function () {
+                var temp_ytlink = "https://www.youtube-nocookie.com/embed/" + result_File.name;
+                $("#YTPreviewModal").find(".modal-body").append(`<iframe src="${temp_ytlink}" class="w-100 h-100" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`)
             })
+            $YT_frame.parent().children().not(".YT_frame").remove();
+            break;
+    }
+    if (result.describe != null && $frame.find(".describe").length > 0) {
+        var temp = (result.describe + "").split("\n");
+        var describe;
+        temp.forEach(function (v, i) {
+            if (i == 0) {
+                describe = v;
+            } else {
+                describe += `<br/>${v}`;
+            }
+        });
+        $frame.find(".describe").append(describe);
+    }
+    if ($frame.find(".tag").length > 0) {
+        var tags = "";
+        for (var i = 0; i < result.tagDatas.length; i++) {
+            var taglink = typeof (OrgName) == "undefined" ? "" : `/${OrgName}/Search/Get/${result.tagDatas[i].searchId}/${result.tagDatas[i].title}`;
+            tags += `<a href="${taglink}" title="連結至：${result.tagDatas[i].title}" class="pe-2">#${result.tagDatas[i].title}</a>`;
+        }
+        $frame.find(".tag").append(tags);
+    }
 
-            $frame.find(".video_frame").find("video").on("ended", function () {
-                var $this = $(this);
-                if ($this.hasClass("playing")) {
-                    $(this).removeClass("playing")
-                }
+    if (isFront) {
+        Advertise.ActivityExposure(result.id).done(function (result) {
+            //console.log(result)
+        })
+    }
+
+    $frame.find(".video_frame").find("video").on("play", function () {
+        var $this = $(this);
+        if (!$this.hasClass("playing")) {
+            $(this).addClass("playing")
+            Advertise.ActivityClick(result.id).done(function (result) {
+                //console.log(result)
             })
+        }
+    })
 
-            $frame.on("click", function () {
-                if ($frame.find(".video_frame").length == 0) {
-                    Advertise.ActivityClick(thisresult.id).done(function (result) {
-                        //console.log(result)
-                    })
+    $frame.find(".video_frame").find("video").on("ended", function () {
+        var $this = $(this);
+        if ($this.hasClass("playing")) {
+            $(this).removeClass("playing")
+        }
+    })
+
+    $frame.on("click", function () {
+        if ($frame.find(".video_frame").length == 0) {
+            Advertise.ActivityClick(result.id).done(function (result) {
+                //console.log(result)
+            })
+        }
+    });
+
+    return $frame;
+}
+function FavButtonInit($btn_favorites) {
+    Coker.Favorites.Check($btn_favorites.data("pid")).done(function (check) {
+        if (check.success) {
+            $btn_favorites.data("fid", check.message);
+            $btn_favorites.addClass("check")
+            $btn_favorites.attr("title", "移除收藏")
+        }
+    });
+    $btn_favorites.on("click", function () {
+        $self = $(this);
+        if (!$self.hasClass("check")) {
+            Coker.Favorites.Add($btn_favorites.data("pid")).done(function (result) {
+                if (result.success) {
+                    $btn_favorites.data("fid", result.message);
+                    $self.addClass("check")
+                    $btn_favorites.attr("title", "移除收藏");
+                    Coker.sweet.success("成功將商品加入收藏", null, true);
+                } else {
+                    console.log(result.message)
                 }
             });
+        } else {
+            if (typeof ($btn_favorites.data("fid")) != "undefined" && typeof ($btn_favorites.data("fid")) != "") {
+                Coker.Favorites.Delete($btn_favorites.data("fid")).done(function (result) {
+                    if (result.success) {
+                        $btn_favorites.data("fid", "");
+                        $self.removeClass("check")
+                        $btn_favorites.attr("title", "加入收藏");
+                        Coker.sweet.success("已將商品從收藏中移除", null, true);
+                    } else {
+                        console.log(result.message)
+                    }
+                });
+            }
         }
     })
 }

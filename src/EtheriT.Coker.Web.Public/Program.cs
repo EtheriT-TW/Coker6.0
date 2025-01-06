@@ -44,7 +44,6 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.CookiePolicy;
-using SimpleCaptcha;
 using System.Net;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using EtheriT.Coker.Application.Advertise;
@@ -61,6 +60,8 @@ using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Favorites;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ThirdParty;
+using EtheriT.Coker.Application.Shared.Recipients;
+using EtheriT.Coker.Application.Recipients;
 using Serilog;
 using Serilog.Filters;
 
@@ -69,6 +70,9 @@ var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<IConfiguration>();
 
 
+
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
 
 // 配置 JWT Bearer 認證
 builder.Services.AddAuthentication(options =>
@@ -88,7 +92,6 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = true, // 是否驗證接收者
             ValidateLifetime = true, // 是否驗證 Token 的有效期
             ValidateIssuerSigningKey = true, // 是否驗證簽名密鑰
-
             ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"), // JWT 發行者
             ValidAudience = builder.Configuration.GetValue<string>("JwtSettings:Audience"), // JWT 接收者
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey"))), // 密鑰
@@ -102,10 +105,10 @@ builder.Services.AddAuthentication(options =>
             // filter by auth type
             string authorization = context.Request.Headers[HeaderNames.Authorization];
             if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
-                return "Bearer";
+                return JwtBearerDefaults.AuthenticationScheme;
 
             // otherwise always check for cookie auth
-            return "Cookies";
+            return CookieAuthenticationDefaults.AuthenticationScheme;
         };
     });
 
@@ -173,43 +176,46 @@ builder.Services.AddMvc(options =>
     options.OutputFormatters.Add(new XmlSerializerOutputFormatter());
 });
 
-builder.Services.AddTransient<IAccountAppService, AccountAppService>();
-builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
-builder.Services.AddTransient<MailAppService, MailAppService>();
-builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
-builder.Services.AddTransient<IOrderAppService, OrderAppService>();
-builder.Services.AddTransient<ITokenAppService, TokenAppService>();
-builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
-builder.Services.AddTransient<IProductAppService, ProductAppService>();
-builder.Services.AddTransient<IFavoritesAppService, FavoritesAppService>();
-builder.Services.AddTransient<IFreightAppService, FreightAppService>();
-builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
-builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
-builder.Services.AddTransient<LoginUserData>();
-builder.Services.AddTransient<StringHandler>();
-builder.Services.AddTransient<MailAppService>();
-builder.Services.AddTransient<ITagAppService, TagAppService>();
-builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
-builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
-builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
-builder.Services.AddTransient<IAdvertiseAppService, AdvertiseAppService>();
-builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
-builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
-builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
-builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
-builder.Services.AddTransient<ImportAppService, ImportAppService>();
-builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
-builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
-builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
-builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
-builder.Services.AddTransient<IContactAppService, ContactAppService>();
-builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
-builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
-builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
-builder.Services.AddTransient<ISitemap, Sitemap>();
-builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
+builder.Services.AddScoped<IAccountAppService, AccountAppService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<MailAppService, MailAppService>();
+builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
+builder.Services.AddScoped<IMarqueeAppService, MarqueeAppService>();
+builder.Services.AddScoped<IOrderAppService, OrderAppService>();
+builder.Services.AddScoped<IRecipientsAppService, RecipientsAppService>();
+builder.Services.AddScoped<ITokenAppService, TokenAppService>();
+builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
+builder.Services.AddScoped<IProductAppService, ProductAppService>();
+builder.Services.AddScoped<IFavoritesAppService, FavoritesAppService>();
+builder.Services.AddScoped<IFreightAppService, FreightAppService>();
+builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
+builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
+builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
+builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
+builder.Services.AddScoped<LoginUserData>();
+builder.Services.AddScoped<StringHandler>();
+builder.Services.AddScoped<MailAppService>();
+builder.Services.AddScoped<ITagAppService, TagAppService>();
+builder.Services.AddScoped<IWebMenuApplication, WebMenuApplication>();
+builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();
+builder.Services.AddScoped<IFileUploadAppService, FileUploadAppService>();
+builder.Services.AddScoped<IAdvertiseAppService, AdvertiseAppService>();
+builder.Services.AddScoped<IArticleAppService, ArticleAppService>();
+builder.Services.AddScoped<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
+builder.Services.AddScoped<ISpecificationAppService, SpecificationAppService>();
+builder.Services.AddScoped<IDirectoryAppService, DirectoryAppService>();
+builder.Services.AddScoped<ImportAppService, ImportAppService>();
+builder.Services.AddScoped<ISpecificationAppService, SpecificationAppService>();
+builder.Services.AddScoped<IStoreSetAppService, StoreSetAppService>();
+builder.Services.AddScoped<ICustSearchAppService, CustSearchAppService>();
+builder.Services.AddScoped<ICaptchaAppService, CaptchaAppService>();
+builder.Services.AddScoped<IContactAppService, ContactAppService>();
+builder.Services.AddScoped<IRemoteAppService, RemoteAppService>();
+builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
+builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
+builder.Services.AddScoped<ISitemap, Sitemap>();
+builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 if (!builder.Environment.IsDevelopment())
@@ -224,6 +230,16 @@ if (builder.Environment.EnvironmentName == "EPZA")
 {
     builder.WebHost.UseStaticWebAssets();
 }
+
+//註冊HttpClient
+builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
+{
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:Line:PaymentUrl"));
+});
+builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
+{
+    client.BaseAddress = new Uri(configuration.GetValue<string>("ThirdParty:PCHomePay:PaymentUrl"));
+});
 
 
 // 配置 Serilog
@@ -294,9 +310,20 @@ app.UseCookiePolicy(
     {
         Secure = CookieSecurePolicy.Always,
         HttpOnly = HttpOnlyPolicy.Always,
-        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
+        MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.None
     }
 );
+//app.UseMiddleware<CookieHandlingMiddleware>();
+
+//禁用X-HTTP-Method-Override
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.ContainsKey("X-HTTP-Method-Override"))
+    {
+        context.Request.Headers.Remove("X-HTTP-Method-Override");
+    }
+    await next();
+});
 
 // 定義共用的 OnPrepareResponse 委派
 static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
@@ -316,12 +343,20 @@ app.UseStaticFiles(new StaticFileOptions()
     OnPrepareResponse = ConfigureStaticFileHeaders
 });
 //upload資料夾下的靜態文件
+//其他靜態文件
+var fileProvider = new FileExtensionContentTypeProvider();
+fileProvider.Mappings[".properties"] = "application/octet-stream";
+fileProvider.Mappings[".bcmap"] = "image/svg+xml";
+fileProvider.Mappings[".ftl"] = "application/l10n";
+fileProvider.Mappings[".dwg"] = "image/vnd.dwg";
+
 //app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
 app.UseStaticFiles(new StaticFileOptions()
 {
     FileProvider = new PhysicalFileProvider(builder.Configuration.GetValue<string>("VirtualDirectory:upload")),
     RequestPath = "/upload",
-    OnPrepareResponse = ConfigureStaticFileHeaders
+    OnPrepareResponse = ConfigureStaticFileHeaders,
+    ContentTypeProvider = fileProvider
 });
 //子站靜態文件
 List<string> childOrgNames = new List<string>();
@@ -339,24 +374,20 @@ if (childOrgNames != null)
         {
             FileProvider = new PhysicalFileProvider(childFilePath[i]),
             RequestPath = $"/upload/{childOrgNames[i]}",
-            OnPrepareResponse = ConfigureStaticFileHeaders
+            OnPrepareResponse = ConfigureStaticFileHeaders,
+            ContentTypeProvider = fileProvider
         });
     }
 }
 
-//其他靜態文件
-app.UseStaticFiles(new StaticFileOptions()
+app.UseStaticFiles(new StaticFileOptions
 {
-    ContentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
-    {
-        {".properties","application/octet-stream"},
-        {".bcmap","image/svg+xml"},
-        {".ftl","application/l10n"}
-    }),
+    ContentTypeProvider = fileProvider,
     OnPrepareResponse = ConfigureStaticFileHeaders
 });
+
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
-app.UseHttpsRedirection();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -364,33 +395,11 @@ if (!app.Environment.IsDevelopment())
     app.UseStatusCodePagesWithReExecute("/Error/{0}");
     app.UseMiddleware<CustomBadRequestMiddleware>();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
+app.UseHsts();
+app.UseHttpsRedirection();
+app.UseMiddleware<ContentSecurityPolicyMiddleware>();
 
-app.Use(async (context, next) =>
-{
-    Console.WriteLine("Request path: " + context.Request.Path);
-    var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-    // 將 nonce 存入 HttpContext.Items
-    context.Items["CSPNonce"] = nonce;
-    // 添加 CSP(內容限制) header
-    context.Response.Headers["Content-Security-Policy"] =
-        $"default-src *;" +
-        $"script-src 'self' 'nonce-{nonce}' *.google.com *.googletagmanager.com *.googleadservices.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com 'unsafe-eval'; " +
-        $"style-src 'self' 'nonce-{nonce}' *.googleapis.com *.google.com cdnjs.cloudflare.com cdn.ckeditor.com; " +
-        $"font-src 'self' data: fonts.gstatic.com cdnjs.cloudflare.com; " +
-        $"img-src 'self' *.ezsale.tw *.facebook.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.youtube.com i.ytimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com data: blob:; " +
-        $"frame-ancestors 'self' *.ezsale.tw ";
-    //cache 限制設定
-    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
-    //Pragma 為http 1.0以下使用，以上已被 Cache-Control取代
-    context.Response.Headers["Pragma"] = "no-cache";
-    context.Response.Headers["Expires"] = "0";
-    //防止瀏覽器進行 MIME 嗅探
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-
-    await next();
-});
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

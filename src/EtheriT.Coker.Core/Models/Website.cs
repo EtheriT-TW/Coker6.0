@@ -1,25 +1,34 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
+using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
 {
     public class Website : FullAuditedEntity
     {
-        public string? DefaultUrl { get; set; }
-        public string Title { get; set; }
-        public string OrgName { get; set; }
+		[StringLength(255)]
+		public string? DefaultUrl { get; set; }
+		[StringLength(250)]
+		public string Title { get; set; }
+		[StringLength(100)]
+		public string OrgName { get; set; }
         public string? Description { get; set; }
         public string? Contact { get; set; }
         public string? Icon { get; set; }
         public string? Logo { get; set; }
-        public string Locale { get; set; }
-        public string Type { get; set; }
+		[StringLength(10)]
+		public string Locale { get; set; }
+		[StringLength(10)]
+		public string Type { get; set; }
         public int? LayoutType { get; set; }
         public string? Keywords { get; set; }
         public virtual DateTime? StartDate { get; set; }
         public virtual DateTime? EndDate { get; set; }
         public string? Statement { get; set; }
-        public string? Contract { get; set; }
-        public int Level{ get; set; }
+		[StringLength(200)]
+		public string? Contract { get; set; }
+		public string? Css { get; set; }
+		public WebsiteLevelEnum Level { get; set; }
         public List<MappingUserAndWebsite> Users { get; set; }
         public List<MappingFrontUserAndWebsite> FrontUsers { get; set; }
         public List<Marquee> Marquees { get; set; }
@@ -46,5 +55,6 @@ namespace EtheriT.Coker.Core.Models
         public List<SearchLog> SearchLogs { get; set; }
         public List<ThirdPartyKeypairValue> thirdPartyKeypairValues { get; set; }
         public List<PaymentTypesValue> paymentTypesValues { get; set; }
+        public List<Theme> Themes { get; set; }
     }
 }

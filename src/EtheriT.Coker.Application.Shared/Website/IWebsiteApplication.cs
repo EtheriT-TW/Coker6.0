@@ -18,5 +18,7 @@ namespace EtheriT.Coker.Application
         public Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto);
         public Task<WebsiteEditOutputDto> GetWebsiteData();
         public Task<ResponseMessageDto> Save(WebsiteEditDto dto);
+        public Task<ResponseMessageDto> LoadFrameCss();
+        public Task<ResponseMessageDto> SettingCss(FrameCssDto dto);
     }
 }

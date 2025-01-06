@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.Common
@@ -15,34 +19,69 @@ namespace EtheriT.Coker.Application.Common
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly StringHandler stringHandler;
+        private readonly IStoreSetAppService storeSetAppService;
+        private readonly SMTPDto sMTPDto;
         public MailAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
-            StringHandler stringHandler
+            StringHandler stringHandler,
+            IStoreSetAppService storeSetAppService
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.stringHandler = stringHandler;
-        }
-        public async Task<SenderDto> getDefaultDto() {
-            SenderDto dto = new SenderDto();
-
-            return dto;
+            this.storeSetAppService = storeSetAppService;
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto)
         {
             var webSiteName = string.IsNullOrEmpty(dto.Sender.Name) ? await loginUserData.GetWebsiteName() : dto.Sender.Name;
-
+            dto.SMTP = await SetSMTP();
             return await sendMail(dto, webSiteName);
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, long siteId)
         {
             var webSiteName = await loginUserData.GetWebsiteOrgName(siteId);
-
+            dto.SMTP = await SetSMTP(siteId);
             return await sendMail(dto, webSiteName);
+        }
+
+        private async Task<SMTPDto> SetSMTP(long siteId=0)
+        {
+            var smtp = new SMTPDto();
+            if(siteId == 0 ) siteId = await loginUserData.GetWebsiteId();
+            var data = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 3, SiteId = siteId });
+            if (data != null && data.Success && data.storeSetDetails!= null && data.storeSetDetails.Any()) {
+                var SMTPPath = data.storeSetDetails.Find(e => e.key == "SMTPPath");
+                if(SMTPPath != null && SMTPPath.value!=null && SMTPPath.value.Any() && !string.IsNullOrEmpty(SMTPPath.value[0]))
+                    smtp.Url = SMTPPath.value[0];
+
+                var SMTPPort = data.storeSetDetails.Find(e => e.key == "SMTPPort");
+                if (SMTPPort != null && SMTPPort.value != null && SMTPPort.value.Any() && !string.IsNullOrEmpty(SMTPPort.value[0]))
+                    smtp.Port = int.Parse(SMTPPort.value[0]);
+
+                var SMTPAccount = data.storeSetDetails.Find(e => e.key == "SMTPAccount");
+                if (SMTPAccount != null && SMTPAccount.value != null && SMTPAccount.value.Any() && !string.IsNullOrEmpty(SMTPAccount.value[0]))
+                    smtp.UserName = SMTPAccount.value[0];
+
+                var SMTPPassword = data.storeSetDetails.Find(e => e.key == "SMTPPassword");
+                if (SMTPPassword != null && SMTPPassword.value != null && SMTPPassword.value.Any() && !string.IsNullOrEmpty(SMTPPassword.value[0]))
+                    smtp.Password = SMTPPassword.value[0];
+                switch (smtp.Port) {
+                    case 587:
+                        smtp.UseSSL = (int)SecureSocketOptions.StartTls;
+                        break;
+                    case 465:
+                        smtp.UseSSL = (int)SecureSocketOptions.SslOnConnect;
+                        break;
+                    case 25:
+                        smtp.UseSSL = (int)SecureSocketOptions.None;
+                        break;
+                }
+            }
+            return smtp;
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, string? webSiteName)
         {
@@ -52,6 +91,8 @@ namespace EtheriT.Coker.Application.Common
             // 建立郵件
             var message = new MimeMessage();
             // 添加寄件者
+            if (!string.IsNullOrEmpty(dto.SMTP.Password) && !string.IsNullOrEmpty(dto.SMTP.UserName)) 
+                dto.Sender.Email = dto.SMTP.UserName;
             message.From.Add(new MailboxAddress(webSiteName, dto.Sender.Email));
 
             // 添加收件者
@@ -67,7 +108,7 @@ namespace EtheriT.Coker.Application.Common
             // 密件副本
             foreach (var item in dto.Bcc)
             {
-                message.Bcc.Add(new MailboxAddress(item.Name, item.Email));
+                message.Bcc.Add(new MailboxAddress($"{webSiteName}-{item.Name}", item.Email));
             }
 
             // 設定郵件標題
@@ -118,8 +159,44 @@ namespace EtheriT.Coker.Application.Common
                 using (var client = new SmtpClient())
                 {
                     //client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
+                    client.ServerCertificateValidationCallback = (sender, certificate, chain, errors) =>
+                    {
+                        var cert = certificate as X509Certificate2;
+                        // 如果憑證沒有錯誤，就認為它是有效的
+                        if (errors == System.Net.Security.SslPolicyErrors.None)
+                        {
+                            return true; // 憑證驗證通過
+                        }
+
+                        if (cert != null && IsCertificateTrusted(cert))
+                        {
+                            return true; // 如果是受信任的憑證，則驗證通過
+                        }
+
+                        // 如果有錯誤，可以檢查錯誤的具體類型，根據需要選擇忽略某些錯誤
+                        if ((errors & System.Net.Security.SslPolicyErrors.RemoteCertificateChainErrors) != 0)
+                        {
+                            // 檢查憑證鏈錯誤，並根據具體情況決定是否接受
+                            if (chain != null && chain.ChainStatus != null && chain.ChainStatus.Length > 0)
+                            {
+                                foreach (var status in chain.ChainStatus)
+                                {
+                                    // 如果發現的錯誤是撤銷檢查失敗（CRL），您可以選擇忽略它
+                                    if (status.Status == X509ChainStatusFlags.RevocationStatusUnknown)
+                                    {
+                                        // 根據您的需求，可以選擇忽略這個錯誤或進行更詳細的檢查
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+
+                        // 如果沒有通過，返回 false，表明憑證驗證失敗
+                        return false;
+                    };
+                    if (dto.SMTP.UseSSL != 0) client.SslProtocols = SslProtocols.Tls12;
                     // 連接 Mail Server (郵件伺服器網址, 連接埠, 是否使用 SSL)
-                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, dto.SMTP.UseSSL? SecureSocketOptions.SslOnConnect : SecureSocketOptions.None);
+                    client.Connect(dto.SMTP.Url, dto.SMTP.Port, (SecureSocketOptions)dto.SMTP.UseSSL);
 
                     // 如果需要的話，驗證一下
                     if (dto.SMTP.UserName != null)
@@ -179,7 +256,7 @@ namespace EtheriT.Coker.Application.Common
                 }
                 response.Error = ex.Message;
             }
-            catch (AuthenticationException ex)
+            catch (MailKit.Security.AuthenticationException ex)
             {
                 /***
                  * 用戶名或密碼錯誤。
@@ -196,6 +273,16 @@ namespace EtheriT.Coker.Application.Common
                 response.Error = ex.Message;
             }
             return response;
+        }
+        private bool IsCertificateTrusted(X509Certificate2 certificate)
+        {
+            // 檢查是否在受信任的憑證存儲中
+            using (var store = new X509Store(StoreLocation.CurrentUser))
+            {
+                store.Open(OpenFlags.ReadOnly);
+                var trustedCertificates = store.Certificates;
+                return trustedCertificates.Cast<X509Certificate2>().Any(cert => cert.Thumbprint == certificate.Thumbprint);
+            }
         }
     }
 }

@@ -298,10 +298,13 @@ var grapesInit = function (options) {
                             case "four_swiper":
                             case "five_swiper":
                             case "six_swiper":
+                            case "three_two_grid_swiper":
+                            case "vertical_swiper_thumbs":
                                 setConfig(0, s);
                                 checkClass[0].parameter.autoplay = false;
                                 break;
                             case "masonry":
+                            case "YTmodal_frame":
                                 setConfig(1, s);
                                 break;
                             case "frame":

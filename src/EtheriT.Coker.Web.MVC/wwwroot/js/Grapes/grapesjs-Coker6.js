@@ -120,6 +120,22 @@
 
     });
 
+    editor.DomComponents.addType('image', {
+        isComponent: el => el.tagName == 'IMG',
+        model: {
+            defaults: {
+                traits: [
+                    { name: 'alt', type: 'text', label: '圖片名稱(Alt)', placeholder: '請輸入圖片名稱' }
+                ]
+            },
+            init() {
+                this.on('change:alt', function (component) {
+                    //console.log('Alt 設定為: ', component.get('alt'));
+                });
+            }
+        }
+    });
+
     /*連結 */
     editor.DomComponents.addType('連結', {
         isComponent: el => el.tagName == 'A',
@@ -152,11 +168,117 @@
             }, init() {
                 this.on('change:attributes:data-text', function (component) {
                     if (typeof (component.getEl()) != "undefined") {
-                        component.find(".name")[0].components(component.getAttributes()["data-text"]);
+                        if (component.find(".name").length > 0)
+                            component.find(".name")[0].components(component.getAttributes()["data-text"]);
+                        else
+                            component.components(component.getAttributes()["data-text"]);
                     }
                 });
             }
         },
+    });
+    //Youtube Modal
+    editor.DomComponents.addType('Youtube放大檢視', {
+        isComponent: el => el.classList?.contains('YTmodal_frame'),
+        model: {
+            defaults: {
+                removable: true,
+                editable: false,
+                traits: [
+                    { name: 'yttitle', type: 'text', label: '標題', placeholder: '請輸入Youtube標題' },
+                    { name: 'link', type: 'text', label: '網址', placeholder: '請輸入Youtube網址' }
+                ]
+            }, init() {
+
+                this.on('change:attributes:link', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        var oldlink = component.getAttributes()["link"];
+                        var link = oldlink;
+                        var $self = $(component.getEl());
+
+                        if (link) {
+                            // 處理不同格式的 YouTube 網址
+                            if (link.startsWith('https://www.youtube.com/watch?')) {
+                                link = link.substring("https://www.youtube.com/watch?".length);
+                            } else if (link.startsWith('https://youtu.be/')) {
+                                link = link.substring("https://youtu.be/".length);
+                            } else if (link.startsWith("https://www.youtube.com/shorts/")) {
+                                link = link.substring("https://www.youtube.com/shorts/".length);
+                            } else if (link.startsWith("https://youtube.com/shorts/")) {
+                                link = link.substring("https://youtube.com/shorts/".length);
+                            } else if (link.startsWith('https://www.youtube.com/live/')) {
+                                link = link.substring("https://www.youtube.com/live/".length);
+                            }
+
+                            if (link.includes("?si=")) {
+                                var siIndex = link.indexOf("?si=");
+                                var beforeSi = link.substring(0, siIndex);
+                                var ampersandIndex = link.indexOf("&", siIndex);
+                                link = ampersandIndex >= 0 ? beforeSi + link.substring(ampersandIndex) : beforeSi;
+                            }
+
+                            var vid = "";
+                            if (link.includes("v=")) {
+                                var vIndex = link.indexOf("v=") + 2;
+                                var ampersandIndex = link.indexOf("&", vIndex);
+                                vid = ampersandIndex >= 0 ? link.substring(vIndex, ampersandIndex) : link.substring(vIndex);
+                            } else {
+                                var tagindex = link.indexOf("&");
+                                vid = tagindex >= 0 ? link.substring(0, tagindex) : link.substring(vIndex);
+                            }
+
+                            var startTime = 0;
+                            if (link.includes("t=")) {
+                                var tIndex = link.indexOf("t=") + 2;
+                                var tEnd = link.indexOf("&", tIndex);
+                                var timeStr = tEnd >= 0 ? link.substring(tIndex, tEnd) : link.substring(tIndex);
+
+                                if (timeStr.endsWith("s")) {
+                                    startTime = parseInt(timeStr.slice(0, -1), 10);
+                                } else if (timeStr.endsWith("m")) {
+                                    startTime = parseInt(timeStr.slice(0, -1), 10) * 60;
+                                } else if (!isNaN(timeStr)) {
+                                    startTime = parseInt(timeStr, 10);
+                                }
+                            }
+                            link = startTime > 0
+                                ? `https://www.youtube.com/embed/${vid}?start=${startTime}`
+                                : `https://www.youtube.com/embed/${vid}`;
+
+                            if (!oldlink.startsWith("https://www.youtube.com/embed/")) {
+                                component.setAttributes({ 'link': link });
+                            }
+
+                            var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
+                            $self.find("img").attr("src", img_link);
+                        }
+                    }
+                });
+                this.on('change:attributes:yttitle', function (component) {
+                    if (typeof (component.getEl()) != "undefined") {
+                        var title = component.getAttributes()["yttitle"];
+                        if (typeof (title) != "undefined") {
+                            var $self = $(component.getEl());
+                            $self.find("img").attr("alt", `${title}的圖片`);
+                        }
+                    }
+                });
+            }
+        },
+        view: {
+            onRender() {
+                const el = this.el;
+                var $parent = $(el);
+                var link = $parent.attr("link");
+                if (typeof (link) != "undefined") {
+                    // 因為有舊的內容沒有處理好所以這邊保留原始寫法
+                    var vid = typeof ($parent.attr("vid")) != "undefined" ? $parent.attr("vid") : link.substring(link.indexOf("v=") + 2)
+                    var img_link = `http://img.youtube.com/vi/${vid}/hqdefault.jpg`
+                    $parent.find("img").attr("src", img_link)
+                    $parent.attr("data-isinit", true);
+                }
+            }
+        }
     });
     editor.DomComponents.addType('電子書', {
         isComponent: el => el.classList?.contains('FlipBookItem'),
@@ -238,7 +360,7 @@
     });
     //輪播
     editor.DomComponents.addType('輪播', {
-        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper'),
+        isComponent: el => el.classList?.contains('one_swiper') || el.classList?.contains('one_swiper_thumbs') || el.classList?.contains('two_swiper') || el.classList?.contains('three_swiper') || el.classList?.contains('four_swiper') || el.classList?.contains('six_swiper') || el.classList?.contains('three_two_grid_swiper') || el.classList?.contains('vertical_swiper_thumbs'),
         model: {
             defaults: {
                 traits: [
@@ -263,12 +385,17 @@
                                                         <input type="radio" name="label" checked="checked">
                                                         <label class="d-flex mb-3 border p-2 border-dark rounded position-relative isScroll">
                                                             <img class="me-2 update-img isPointer" src="" alt="" />
+                                                            <span class="material-symbols-outlined mx-3 d-none yt-video">slow_motion_video</span>
                                                             <div class="align-self-center">
                                                                 <div class="img_alt d-none"></div>
                                                                 <p class="setting d-none h3">正在編輯</>
                                                                 <div class="a_href d-none"></div>
                                                                 <div class="a_title d-none"></div>
                                                                 <div class="a_target d-none"></div>
+                                                                <div class="yt_src d-none"></div>
+                                                                <div class="video_title d-none"></div>
+                                                                <div class="start_time d-none"></div>
+                                                                <div class="keep_time d-none"></div>
                                                                 <div class="synopsis_title d-none"></div>
                                                                 <div class="synopsis_caption d-none"></div>
                                                                 <div class="eyes">
@@ -290,6 +417,7 @@
                                                 </template>
                                                 </div>
                                                 <button id="add" type="button" class="btn-add-column">新增一欄</button>
+                                                <button id="addYT" type="button" class="btn-add-YT">新增影片</button>
                                                 <div class="w-50 ps-3 set-caption">
                                                   <h5>相關設定</h5>
                                                   <form id="EditContentForm">
@@ -306,6 +434,18 @@
                                                       <input class="form-check-input ms-4" type="checkbox" value="" id="CheckOpenWindow">
                                                       <label class="form-check-label ms-3 ps-4" for="CheckOpenWindow">另開新視窗</label>
                                                       <input type="text" class="form-control" id="slideHref" placeholder="輸入連結" />
+                                                    </div>
+                                                    <div id="YT-link" class="mb-4 d-none">
+                                                      <label for="ytSrc" class="form-label">Youtube影片</label>
+                                                      <input type="text" class="form-control" id="ytSrc" placeholder="影片網址" />
+                                                    </div>
+                                                    <div id="start-time" class="mb-4 d-none">
+                                                      <label for="startTime" class="form-label">開始時間(秒)</label>
+                                                      <input type="text" class="form-control" id="startTime" placeholder="輸入開始時間(秒)" />
+                                                    </div>
+                                                    <div id="keep-time" class="mb-4">
+                                                      <label for="keepTime" class="form-label">持續時間(秒)</label>
+                                                      <input type="text" class="form-control" id="keepTime" placeholder="輸入持續時間(秒)" />
                                                     </div>
                                                     <div id="img-hidden" class="ms-3">
                                                         <input class="form-check-input" type="checkbox" value="" id="CheckHidden">
@@ -327,16 +467,22 @@
                             var datas = [];
                             $selected.find(".swiper .swiper-slide").each(function () {
                                 var $self = $(this);
+                                console.log($self.find('*').attr('data-start_time'));
                                 if (!$self.parent().hasClass("template_slide")) {
                                     var obj = {
                                         "href": $self.find("a").attr("href"),
                                         "title": $self.find("a").attr("title"),
                                         "src": $self.find("img").attr("src"),
                                         "alt": $self.find("img").attr("alt"),
+                                        "img_update": $self.find("img").length > 0 ? true : false,
                                         "a_tag": $self.find("a").length > 0 ? true : false,
                                         "target": $self.find("a").attr("target"),
+                                        "yt_src": $self.find("iframe").attr("src"),
+                                        "video_title": $self.find("iframe").length ? $self.find("iframe").attr("title") : $self.find("video").attr("title"),
+                                        "start_time": $self.find('*').attr('data-start_time'),
+                                        "keep_time" : $self.find("img").length ? $self.find("img").data('keep_time') : $self.find("iframe").data('keep_time'),
                                         "synopsis_title": $self.find('.synopsis_title').text(), //文章標題
-                                        "synopsis_caption": $self.find('.synopsis_caption').text(), //文章內容
+                                        "synopsis_caption": $self.find('.synopsis_caption').text().trim(), //文章內容
                                         "visible": $self.hasClass("backstageType")
                                     };
                                     datas.push(obj);
@@ -353,6 +499,9 @@
                                 const content = $('#slideAlt').val();
                                 const link = $('#slideHref').val();
                                 const target = $("#CheckOpenWindow").prop("checked") ? "_blank" : "_self";
+                                const yt_src = $('#ytSrc').val() ? $('#ytSrc').val().replace("watch?v=", "embed/") : "";
+                                const start_time = $('#startTime').val() ? $('#startTime').val() : "";
+                                const keep_time =  $('#keepTime').val() ? $('#keepTime').val() : 5;
                                 const visible = $("#CheckHidden").prop("checked") ? true : false;
                                 $li.data({
                                     alt: title,
@@ -361,6 +510,10 @@
                                     href: link,
                                     title: title,
                                     target: target,
+                                    yt_src: yt_src,
+                                    video_title: title,
+                                    start_time: start_time,
+                                    keep_time: keep_time,
                                     visible: visible
                                 });
                                 if (visible) {
@@ -378,6 +531,10 @@
                                 $li.find('.a_href').html(link);//更新連結
                                 $li.find('.a_title').html(title);//更新連結名稱
                                 $li.find('.a_target').html(target);//是否另開連結
+                                $li.find('.yt_src').html(yt_src);//更新YT連結
+                                $li.find('.video_title').html(title);//更新影片標題
+                                $li.find('.start_time').html(start_time);
+                                $li.find('.keep_time').html(keep_time);
                                 $li.find('.a_visible').html(visible);//是否隱藏
                             });
                             const newLi = function (index, data) {
@@ -386,10 +543,15 @@
                                     alt: "",
                                     href: $selected.find("a").attr("href") === "#SwiperModal" ? "#SwiperModal" : "",
                                     title: "",
+                                    yt_src: "",
+                                    video_title: "",
+                                    start_time: 0,
+                                    keep_time: 5,
                                     synopsis_title: "",
                                     synopsis_caption: "",
-                                    visible:false,
-                                    a_tag: true
+                                    visible: false,
+                                    a_tag: true,
+                                    img_update: true
                                 }, data);
                                 var content = $($("#TemplateSwiperList").html());
                                 content.data(o);
@@ -398,6 +560,9 @@
                                 content.find("img").attr({ "src": o.src, "alt": o.alt });
                                 content.find(".img_alt").text(o.alt);
                                 content.find(".a_href").text(o.href);
+                                content.find(".yt_src").text(o.yt_src);
+                                content.find(".start_time").text(o.start_time);
+                                content.find(".keep_time").text(o.keep_time);
                                 content.find(".synopsis_caption").text(o.synopsis_caption);
                                 if (data.visible) {
                                     content.find(".eyes > span:first-child").addClass("d-none");
@@ -406,6 +571,13 @@
                                     content.find(".eyes > span:first-child").removeClass("d-none");
                                     content.find(".eyes > span:last-child").addClass("d-none");
                                 }
+                                if (!data.a_tag && !data.img_update) {
+                                    content.find('.update-img').remove();
+                                    content.find('.yt-video').removeClass("d-none");
+                                }
+                                /*if (!data.img_update) {
+                                    content.find(".update-img").removeClass("update-img");
+                                }*/
                                 content.data("order", index);
                                 content.find("label").on("click", function () {
                                     $("#EditContentForm input:focus").trigger("change");
@@ -415,9 +587,20 @@
                                     const $setTitle = $caption.find('#slideTitle');
                                     const $setContent = $caption.find('#slideAlt');
                                     const $setLink = $caption.find('#slideHref');
-                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link")];
-                                    $caption.find('*:not(.a_target)').removeClass('d-none');
-                                    if ($li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
+                                    const $setYtSrc = $caption.find('#ytSrc');
+                                    const $setStartTime = $caption.find('#startTime');
+                                    const $setKeepTime = $caption.find('#keepTime');
+                                    const $formSetting = [$("#set-title"), $("#set-content"), $("#set-link"), $("#YT-link"), $("#start-time")];
+                                    $caption.find('*:not(.a_target, #YT-link)').removeClass('d-none');
+                                    console.log($li.data("a_tag"));
+                                    if (!$li.data("a_tag") && !$li.data("img_update")) {
+                                        $formSetting[3].removeClass("d-none");
+                                        $formSetting[4].removeClass("d-none");
+                                    } else {
+                                        $formSetting[3].addClass("d-none");
+                                        $formSetting[4].addClass("d-none");
+                                    }
+                                    if ($li.data("yt_src") || $li.data("href") === "#SwiperModal" || !$li.data("a_tag")) {
                                         $formSetting[2].addClass('d-none');
                                     }
                                     if (!$li.data("synopsis_caption")) {
@@ -436,6 +619,9 @@
                                     //$setTitle.val($li.data().synopsis_title); //文章標題
                                     $setContent.val($li.data().synopsis_caption); //內文
                                     $setLink.val($li.data().href); //連結
+                                    $setYtSrc.val($li.data().yt_src);//youtube
+                                    $setStartTime.val($li.data().start_time);
+                                    $setKeepTime.val($li.data().keep_time);
                                 });
 
                                 content.find(".update-img").on("click", function () {
@@ -444,15 +630,16 @@
 
                                     AssetManager.onSelect((result) => {
                                         // 使用選擇的圖片更新 img 的 src 屬性
-                                        if (result && result.id) {const imgName = result.attributes.name.split(".");
+                                        if (result && result.id) {
+                                            const imgName = result.attributes.name.split(".");
                                             let newName = "";
                                             for (let i = 0; i < imgName.length; i++) {
                                                 if (i == imgName.length - 1) {
                                                     break;
                                                 }
-                                                newName+= imgName[i];
+                                                newName += imgName[i];
                                             }
-                                            $("#slideTitle").val(newName).trigger("change");//消除副檔名
+                                            $(this).closest("li").find('.img_alt').text() ? $("#slideTitle").val : $("#slideTitle").val(newName).trigger("change");//消除副檔名
                                             $imgElement.attr("src", result.id); // 假設 result.id 是圖片的 URL
                                         }
                                         AssetManager.close();
@@ -475,33 +662,62 @@
                             $("#SwiperList li:first").find("label").trigger("click");
 
                             $("#SwiperModal .btn-add-column").off("click").on("click", function () {
-                                newLi($("#SwiperList>li").length, {});
+                                newLi($("#SwiperList>li").length, { a_tag: true, img_update: true });
+                                $('#scroll').scrollTop($('#scroll')[0].scrollHeight);
+                            });
+
+                            $("#SwiperModal .btn-add-YT").off("click").on("click", function () {
+                                newLi($("#SwiperList>li").length, { a_tag: false, img_update: false });
+                                $('#scroll').scrollTop($('#scroll')[0].scrollHeight);
                             });
 
                             $("#SwiperModal .sava").off("click").on("click", function () {
-                                const $s = $selected.clone();
-                                const $slides = $s.find(".swiper .swiper-wrapper>.swiper-slide").clone();
-                                const $b = $s.find(".swiper .swiper-wrapper");
+                                const s = selectedComponent.toHTML();
+                                const $slides = $(s).find('.swiper .swiper-wrapper .swiper-slide').clone();
+                                const $b = $(s).find('.swiper .swiper-wrapper');
+                                const setIframe = function (newYT, startTime, newTitle) {
+                                    return $("<iframe>").attr({
+                                        src: newYT,
+                                        title: newTitle,
+                                        width: "100%",
+                                        height: "500",
+                                        frameborder: "0",
+                                        allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                                        allowfullscreen: true,
+                                        "data-start_time": startTime
+                                    });
+                                }
                                 $b.empty();
                                 $("#SwiperList li").each(function (index, element) {
                                     const newImgSrc = $(element).find("img").attr("src");
-                                    const newTitle = $(element).data("alt");
+                                    const newTitle = $(element).data("alt") ? $(element).data("alt") : $(element).data("video_title");
                                     const newLink = $(element).data("href");
                                     const newTarget = $(element).data("target");
+                                    const newYT = $(element).data("yt_src");
                                     const isVisible = $(element).data("visible");
                                     const newCaption = $(element).data("synopsis_caption");
+                                    const startTime = $(element).data("start_time");
+                                    const keepTime = $(element).data("keep_time");
                                     // 更新slides中的圖片
                                     const order = $(element).data("order");
                                     let $new_slide = $slides[order];
                                     const existingTitle = $($new_slide).find('h2').text().trim();
                                     if ($new_slide) {
-                                        $($new_slide).find('img').attr('src', newImgSrc);
-                                        $($new_slide).find('img').attr('alt', newTitle);
-                                        if (newLink) {
-                                            $($new_slide).find('a').attr('href', newLink);
+                                        if (newYT != "" && newYT != undefined) {
+                                            if (!$($new_slide).find('.synopsis_title').length) {
+                                                $($new_slide).empty();
+                                            }
+                                            const $iframe = setIframe(newYT, startTime, newTitle);
+                                            $($new_slide).append($iframe);
+                                        } else {
+                                            $($new_slide).find('img').attr('src', newImgSrc);
+                                            $($new_slide).find('img').attr('alt', newTitle);
+                                            if (newLink) {
+                                                $($new_slide).find('a').attr('href', newLink);
+                                            }
+                                            $($new_slide).find('a').attr('title', newTitle);
+                                            $($new_slide).find('a').attr('target', newTarget);
                                         }
-                                        $($new_slide).find('a').attr('title', newTitle);
-                                        $($new_slide).find('a').attr('target', newTarget);
                                         $($new_slide).find('.synopsis_title').text(newTitle);
                                         $($new_slide).find('.synopsis_caption').text(newCaption);
                                         if (isVisible) {
@@ -510,26 +726,40 @@
                                             $($new_slide).removeClass('backstageType');
                                         }
                                         $b.append($new_slide);
-                                        
+
                                     } else {
                                         var $selected = editor.getSelected();
                                         var swiper = $selected.find(".swiper")[0].getEl().swiper;
                                         const have_template = $selected.find(".template_slide>.swiper-slide")[0];
                                         if (have_template) {
                                             $new_slide = $($selected.find(".template_slide>.swiper-slide")[0].toHTML());
-                                            $new_slide.find('a').attr('target', newTarget);
-                                            $new_slide.find('.synopsis_title').text(newTitle);
-                                            $new_slide.find('.synopsis_caption').text(newCaption);
+                                            if (newYT != "" && newYT != undefined) {
+                                                $new_slide.find("a, img").remove();
+                                                const $iframe = setIframe(newYT, startTime, newTitle);
+                                                $($new_slide).append($iframe);
+                                            } else {
+                                                $new_slide.find('img').attr('src', newImgSrc);
+                                                $new_slide.find('img').attr('alt', newTitle);
+                                                $new_slide.find('a').attr('target', newTarget);
+                                                $new_slide.find('.synopsis_title').text(newTitle);
+                                                $new_slide.find('.synopsis_caption').text(newCaption);
+                                            }
                                         } else {
                                             $new_slide = $("<div>").append($($selected.find(".swiper-slide")[0].toHTML())).html();
                                             $new_slide = $($new_slide);
-                                            $new_slide.find('img').attr('src', newImgSrc);
-                                            $new_slide.find('img').attr('alt', newTitle);
-                                            if (newLink) { 
-                                                 $new_slide.find('a').attr('href', newLink);
+                                            if (newYT != "" && newYT != undefined) {
+                                                $new_slide.find("a, img").remove();
+                                                const $iframe = setIframe(newYT, startTime, newTitle);
+                                                $($new_slide).append($iframe);
+                                            } else {
+                                                $new_slide.find('img').attr('src', newImgSrc);
+                                                $new_slide.find('img').attr('alt', newTitle);
+                                                if (newLink) {
+                                                    $new_slide.find('a').attr('href', newLink);
+                                                }
+                                                $new_slide.find('a').attr('title', newTitle);
+                                                $new_slide.find('a').attr('target', newTarget);
                                             }
-                                            $new_slide.find('a').attr('title', newTitle);
-                                            $new_slide.find('a').attr('target', newTarget);
                                             $new_slide.find('.synopsis_title').text(newTitle);
                                             $new_slide.find('.synopsis_caption').text(newCaption);
                                         }
@@ -541,13 +771,16 @@
                                         $b.append($new_slide);
                                     }
                                 });
-                                $s.find(".six_thumbs .swiper-wrapper").empty();
-                                selectedComponent.components([]);
-                                $s.children().each(function () {
-                                    selectedComponent.append($(this).prop('outerHTML'));
+                                const wrapper = selectedComponent.find(".swiper:not(.six_thumbs) .swiper-wrapper")[0];
+                                $(s).find(".six_thumbs .swiper-wrapper").empty();
+                                wrapper.components([]);
+                                $b.children().each(function () {
+                                    wrapper.append($(this).prop('outerHTML'));
                                 });
                                 //editor.getSelected().addComponents($s.html());
-                                $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`).data("isInit", false);
+                                const $swiper = $(".gjs-frame")[0].contentWindow.$(`#${$selected.attr("id")}`);
+                                $swiper.data("isInit", false);
+                                typeof ($swiper.find(".swiper")[0].swiper) !== "undefined" && $swiper.find(".swiper")[0].swiper.destroy(true, true);
                                 $(".gjs-frame")[0].contentWindow.SwiperInit({ autoplay: false });
                                 SwiperModal.hide();
                             });
@@ -729,7 +962,8 @@
                                     $("#PopupDirectory .cancel").on("click", function () {
                                         PopupDirectory.hide();
                                     });
-                                    $("#PopupDirectory .Sure").on("click", function () {
+                                    $("#PopupDirectory .Sure").on("click", function (component) {
+                                        var oldlist = editor.getSelected().getAttributes()["data-dirid"];
                                         editor.getSelected().set("attributes", {
                                             "data-dirid": data.map(function (item) {
                                                 return item['Id'];
@@ -739,7 +973,10 @@
                                             })
                                         });
                                         PopupDirectory.hide();
-                                        $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                                        var newlist = editor.getSelected().getAttributes()["data-dirid"].toString();
+                                        if (oldlist != newlist) {
+                                            $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
+                                        }
                                     });
                                 }, 200);
                             }
@@ -772,6 +1009,18 @@
                             "maxlen": attr["data-maxlen"]
                         });
                         fWindow.DirectoryGetDataInit();
+                    }, 200);
+                });
+                self.on(`change:attributes:data-dirid`, component => {
+                    setTimeout(() => {
+                        const fWindow = $(".gjs-frame")[0].contentWindow;
+                        let attr = component.getAttributes();
+                        if (typeof (attr["data-dirid"]) != "undefined") {
+                            fWindow.$(`#${component.getId()}`).data({
+                                "dirid": attr["data-dirid"].toString(),
+                            });
+                            fWindow.DirectoryGetDataInit();
+                        }
                     }, 200);
                 });
             }
@@ -904,7 +1153,7 @@
             const html = co.Data.HtmlDecode(this.html);
             const elementHtmlCss = `${html}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
-            let iconText = this.icon.replace("material-symbols-outlined", "").trim();
+            let iconText = (this.icon || "").replace("material-symbols-outlined", "").trim();
             let media = "";
             if (/^fa/.test(this.icon)) {
                 media = `<i class="${this.icon} fa-5x"></i>`;
@@ -956,7 +1205,7 @@
         const blockId = name_blockId.blockId;
         const name = name_blockId.name;
         const relatedRules = [];
-        let elementHTML = $(selected.getEl().outerHTML).removeClass("gjs-selected")[0].outerHTML;
+        let elementHTML = $(selected.toHTML()).removeClass("gjs-selected")[0].outerHTML;
         let first_partHtml = elementHTML.substring(0, elementHTML.indexOf(' '));
         let second_partHtml = elementHTML.substring(elementHTML.indexOf(' ') + 1);
         first_partHtml += ` custom_block_template=true block_id="${blockId}" `;
@@ -1210,7 +1459,7 @@
             }
             setTimeout(timmer, 100);
         } else if (classList.indexOf("swiper-slide") > -1) {
-            var swiper = editor.getSelected().parent().parent().getEl().swiper;
+            var swiper = editor.getSelected().parent().getEl().swiper;
             if (typeof (swiper) != "undefined") {
                 var cont = iframe.document.getElementsByClassName("swiper-slide").length;
                 const timmer = function () {
@@ -1219,7 +1468,7 @@
                 }
                 setTimeout(timmer, 100);
             }
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) {
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) {
             var cont = iframe.document.getElementsByClassName("swiper").length;
             const timmer = function () {
                 if (iframe.document.getElementsByClassName("swiper").length != cont) iframe.SwiperInit({ autoplay: false });
@@ -1266,7 +1515,7 @@
         else if (classList.indexOf("swiper-slide") > -1) {
             var swiper = obj.target.parent().parent().getEl().swiper;
             swiper.update();
-        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1) iframe.SwiperInit({ autoplay: false });
+        } else if (classList.indexOf("one_swiper") > -1 || classList.indexOf("one_swiper_thumbs") > -1 || classList.indexOf("two_swiper") > -1 || classList.indexOf("four_swiper") > -1 || classList.indexOf("six_swiper") > -1 || classList.indexOf("three_two_grid_swiper") > -1 || classList.indexOf("vertical_swiper_thumbs") > -1) iframe.SwiperInit({ autoplay: false });
     });
 
     /*editor.on('selector:add', selector => {

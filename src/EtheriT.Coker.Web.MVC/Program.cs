@@ -61,10 +61,20 @@ using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Web.MVC.Middleware;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.ShoppingCart;
+using EtheriT.Coker.Application.Shared.UserHabits;
+using EtheriT.Coker.Application.UserHabits;
+using Hangfire;
+using Hangfire.SqlServer;
+using EtheriT.Coker.Application.Filters;
+using Hangfire.Dashboard;
+using EtheriT.Coker.Application.BackgroundJob;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -139,50 +149,69 @@ builder.Services.AddAntiforgery(options =>
     // input name的名稱
     options.FormFieldName = "AntiforgeryField";
     // 指定header 的名稱
-    options.HeaderName = "x-xsrf-token-coker";
+    options.HeaderName = "x-xsrf-token";
+    options.Cookie.Name = "cokerAntiforgeryCookie"; // 指定固定的 Cookie 名稱
+    options.Cookie.MaxAge = TimeSpan.FromMinutes(30); // 設置 Cookie 的有效期
+    options.Cookie.HttpOnly = true;
 });
 
+// 添加 Hangfire 服務，並配置使用 SQL Server 存儲
+builder.Services.AddHangfire(config =>
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_110)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(configuration.GetConnectionString("Default"))
+);
+// 註冊 Hangfire 跟蹤服務
+builder.Services.AddHangfireServer();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<BackgroundJobService>();
 
 builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddTransient<IAccountAppService, AccountAppService>();
-builder.Services.AddTransient<ITokenAppService, TokenAppService>();
-builder.Services.AddTransient<IPasswordHasher, PasswordHasher>();
-builder.Services.AddTransient<IWebsiteApplication, WebsiteApplication>();
-builder.Services.AddTransient<IMarqueeAppService, MarqueeAppService>();
-builder.Services.AddTransient<IOrderAppService, OrderAppService>();
-builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
-builder.Services.AddTransient<IMemberAppService, MemberAppService>();
-builder.Services.AddTransient<IFreightAppService, FreightAppService>();
-builder.Services.AddTransient<IProductAppService, ProductAppService>();
-builder.Services.AddTransient<IHtmlContentAppService, HtmlContentAppService>();
-builder.Services.AddTransient<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
-builder.Services.AddTransient<IWebMenuApplication, WebMenuApplication>();
-builder.Services.AddTransient<LoginUserData>();
-builder.Services.AddTransient<ImportAppService>();
-builder.Services.AddTransient<StringHandler>();
-builder.Services.AddTransient<NavigationProvider>();
-builder.Services.AddTransient<MailAppService>();
-builder.Services.AddTransient<ISpecificationAppService, SpecificationAppService>();
-builder.Services.AddTransient<ITagAppService, TagAppService>();
-builder.Services.AddTransient<IFileUploadAppService, FileUploadAppService>();
-builder.Services.AddTransient<IObjectTypeAppService, ObjectTypeAppService>();
-builder.Services.AddTransient<IArticleAppService, ArticleAppService>();
-builder.Services.AddTransient<IAdvertiseAppService, AdvertiseAppService>();
-builder.Services.AddTransient<IDirectoryAppService, DirectoryAppService>();
-builder.Services.AddTransient<IStoreSetAppService, StoreSetAppService>();
-builder.Services.AddTransient<ICustSearchAppService, CustSearchAppService>();
-builder.Services.AddTransient<ICompanyAppService, CompanyAppService>();
-builder.Services.AddTransient<IAuditLogAppService, AuditLogAppService>();
-builder.Services.AddTransient<INewsletterAppService, NewsletterAppService>();
-builder.Services.AddTransient<IPermissionsAppService, PermissionsAppService>();
-builder.Services.AddTransient<IRemoteAppService, RemoteAppService>();
-builder.Services.AddTransient<IJsonObjectAppService, JsonObjectAppService>();
-builder.Services.AddTransient<ICaptchaAppService, CaptchaAppService>();
-builder.Services.AddTransient<IContactAppService, ContactAppService>();
-builder.Services.AddTransient<IThirdPartyAppService, ThirdPartyAppService>();
-builder.Services.AddTransient<IShoppingCartAppService, ShoppingCartAppService>();
-builder.Services.AddTransient<IHtmlProcessor, HtmlProcessor>();
+builder.Services.AddScoped<IAccountAppService, AccountAppService>();
+builder.Services.AddScoped<ITokenAppService, TokenAppService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();
+builder.Services.AddScoped<IMarqueeAppService, MarqueeAppService>();
+builder.Services.AddScoped<IOrderAppService, OrderAppService>();
+builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
+builder.Services.AddScoped<IMemberAppService, MemberAppService>();
+builder.Services.AddScoped<IFreightAppService, FreightAppService>();
+builder.Services.AddScoped<IProductAppService, ProductAppService>();
+builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
+builder.Services.AddScoped<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
+builder.Services.AddScoped<IWebMenuApplication, WebMenuApplication>();
+builder.Services.AddScoped<LoginUserData>();
+builder.Services.AddScoped<ImportAppService>();
+builder.Services.AddScoped<StringHandler>();
+builder.Services.AddScoped<NavigationProvider>();
+builder.Services.AddScoped<MailAppService>();
+builder.Services.AddScoped<ISpecificationAppService, SpecificationAppService>();
+builder.Services.AddScoped<ITagAppService, TagAppService>();
+builder.Services.AddScoped<IFileUploadAppService, FileUploadAppService>();
+builder.Services.AddScoped<IObjectTypeAppService, ObjectTypeAppService>();
+builder.Services.AddScoped<IArticleAppService, ArticleAppService>();
+builder.Services.AddScoped<IAdvertiseAppService, AdvertiseAppService>();
+builder.Services.AddScoped<IDirectoryAppService, DirectoryAppService>();
+builder.Services.AddScoped<IStoreSetAppService, StoreSetAppService>();
+builder.Services.AddScoped<ICustSearchAppService, CustSearchAppService>();
+builder.Services.AddScoped<ICompanyAppService, CompanyAppService>();
+builder.Services.AddScoped<IAuditLogAppService, AuditLogAppService>();
+builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
+builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
+builder.Services.AddScoped<IRemoteAppService, RemoteAppService>();
+builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
+builder.Services.AddScoped<ICaptchaAppService, CaptchaAppService>();
+builder.Services.AddScoped<IContactAppService, ContactAppService>();
+builder.Services.AddScoped<IThirdPartyAppService, ThirdPartyAppService>();
+builder.Services.AddScoped<ILinePayAppService, LinePayAppService>();
+builder.Services.AddScoped<IPChomePayAppService, PChomePayAppService>();
+builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
+builder.Services.AddScoped<IHtmlProcessor, HtmlProcessor>();
+builder.Services.AddScoped<IUserHabitsAppService, UserHabitsAppService>();
+builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAuthorizationFilter>();
+builder.Services.AddScoped<UserHabitsWorking>();
 
 //多語系
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -248,6 +277,18 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
     });
 }
 
+//註冊HttpClient
+builder.Services.AddHttpClient("ThirdPartyClient_Line", client =>
+{
+    client.BaseAddress = new Uri("https://sandbox-api-pay.line.me");
+    //client.BaseAddress = new Uri("https://api-pay.line.me");
+});
+builder.Services.AddHttpClient("ThirdPartyClient_PCHome", client =>
+{
+    client.BaseAddress = new Uri("https://sandbox-api.pchomepay.com.tw");
+    //client.BaseAddress = new Uri("https://api.pchomepay.com.tw");
+});
+
 var app = builder.Build();
 
 // 添加 AntiforgeryDebugMiddleware
@@ -279,6 +320,10 @@ app.UseCookiePolicy(
         MinimumSameSitePolicy = Microsoft.AspNetCore.Http.SameSiteMode.Strict
     }
 );
+
+var backgroundJobService = app.Services.GetRequiredService<BackgroundJobService>();
+backgroundJobService.InitializeJobs();
+
 /*
 app.Use((context, next) =>
 {
@@ -307,6 +352,14 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 設定 Hangfire 儀表板（可以設置需要權限控制的路徑）
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { app.Services.GetRequiredService<IDashboardAuthorizationFilter>() },  // 使用 DI 解析授權過濾器
+    IgnoreAntiforgeryToken = true,
+    StatsPollingInterval = 60*1000
+});
 
 app.MapControllerRoute(
     name: "default",

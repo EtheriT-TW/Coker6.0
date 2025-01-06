@@ -14,5 +14,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Token
         public Guid? RefreshToken { get; set; }
         public bool IsLogin {  get; set; }
         public string? name { get; set; }
+        public bool AgreePrivacy { get; set; }
     }
 }

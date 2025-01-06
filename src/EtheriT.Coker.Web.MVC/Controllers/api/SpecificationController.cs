@@ -21,14 +21,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             this.specificationAppService = specificationAppService;
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ResponseMessageDto> TypeAddUp([FromForm] DevExpressDto dto)
         {
             return await specificationAppService.TypeAddUp(dto);
         }
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken] //驗證異常暫時關閉
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<ResponseMessageDto> SpecAddUp_List([FromForm] DevExpressDto dto)
         {

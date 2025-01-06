@@ -1,7 +1,7 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Member
 @{
-	ViewData["Title"] = "MemberList";
+    ViewData["Title"] = "MemberList";
 }
 
 <link rel="stylesheet" href="~/css/MemberManagement/MemberData.min.css" asp-append-version="true" />
@@ -15,7 +15,7 @@
 					keyboard_backspace
 				</span>
 			</button>
-			<div class="title fw-bold fs-4">會員管理</div>
+			<div class="title fw-bold fs-4">會員清單</div>
 		</div>
 		<div class="tool">
 			<button class="btn_forgetPassword btn-primary border-0 px-4 py-1 text-white fw-bold fs-5 d-none">發送忘記密碼驗證信</button>
@@ -23,316 +23,254 @@
 		</div>
 	</div>
 
-	<div id="MemberList" class="card border-0">
-		<div class="card-body position-relative pb-5">
-			@(
-						Html.DevExtreme().DataGrid<MemberGetAllListDto>()
-						.DataSource(d => d.RemoteController().Key("Id")
-						.LoadUrl("/api/Member/GetAllFrontList").LoadMethod("Get")
-						)
-						.RemoteOperations(true)
-						.ColumnHidingEnabled(true)
-						.ShowBorders(true)
-						.FilterRow(filterRow => filterRow
-						.Visible(true)
-						.ApplyFilter(GridApplyFilterMode.Auto)
-						)
-						.SearchPanel(searchPanel => searchPanel
-						.Visible(true)
-						.Width(480)
-						.Placeholder("請輸入要搜尋的資料")
-						)
-						.ShowRowLines(true)
-						.Columns(c =>
-						{
-							c.AddFor(e => e.Name).Caption("會員名稱");
-							c.AddFor(e => e.CellPhone).Caption("手機");
-							c.AddFor(e => e.TelPhone).Caption("電話");
-							c.AddFor(e => e.Address).Caption("地址");
-							c.AddFor(e => e.Email).Caption("Email");
-							c.AddFor(e => e.Total).Caption("訂購總金額");
-							c.AddFor(e => e.Level).Caption("會員等級");
-							c.AddFor(e => e.CreationTime).Caption("註冊日期");
-							c.Add()
-							.Type(GridCommandColumnType.Buttons)
-							.Buttons(b =>
-							{
-								b.Add().Name("edit").OnClick("editButtonClicked");
-							});
-						})
-						.ColumnAutoWidth(true)
-						.Paging(paging => paging.PageSize(30))
-						.Pager(pager =>
-						{
-							pager.Visible(true);
-							pager.ShowPageSizeSelector(true);
-							pager.AllowedPageSizes(new[] { 10, 20, 30 });
-							pager.ShowInfo(true);
-						})
-						.Editing(editing =>
-						{
-							editing.AllowUpdating(true);
-							editing.UseIcons(true);
-						})
-						.OnContentReady("contentReady")
-						)
-		</div>
-	</div>
+    <div id="MemberList" class="card border-0">
+        <div class="card-body position-relative pb-5">
+            @(
+                Html.DevExtreme().DataGrid<MemberGetAllListDto>()
+                .DataSource(d => d.RemoteController().Key("Id")
+                .LoadUrl("/api/Member/GetAllFrontList").LoadMethod("Get")
+                )
+                .RemoteOperations(true)
+                .ColumnHidingEnabled(true)
+                .ShowBorders(true)
+                .FilterRow(filterRow => filterRow
+                .Visible(true)
+                .ApplyFilter(GridApplyFilterMode.Auto)
+                )
+                .SearchPanel(searchPanel => searchPanel
+                .Visible(true)
+                .Width(480)
+                .Placeholder("請輸入要搜尋的資料")
+                )
+                .ShowRowLines(true)
+                .Columns(c =>
+                {
+                    c.AddFor(e => e.Name).Caption("會員名稱");
+                    c.AddFor(e => e.CellPhone).Caption("手機");
+                    c.AddFor(e => e.TelPhone).Caption("電話");
+                    c.AddFor(e => e.Address).Caption("地址");
+                    c.AddFor(e => e.Email).Caption("Email");
+                    c.AddFor(e => e.Total).Caption("訂購總金額");
+                    c.AddFor(e => e.Level).Caption("會員等級").Lookup(lookup =>
+                        lookup.DataSource("getMemberLevel")
+                            .ValueExpr("id")
+                            .DisplayExpr("name")
+                    );
+                    c.AddFor(e => e.CreationTime).Caption("註冊日期");
+                    c.Add()
+                    .Type(GridCommandColumnType.Buttons)
+                    .Buttons(b =>
+                    {
+                        b.Add().Name("edit").OnClick("editButtonClicked");
+                    });
+                })
+                .ColumnAutoWidth(true)
+                .Paging(paging => paging.PageSize(30))
+                .Pager(pager =>
+                {
+                    pager.Visible(true);
+                    pager.ShowPageSizeSelector(true);
+                    pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                    pager.ShowInfo(true);
+                })
+                .Editing(editing =>
+                {
+                    editing.AllowUpdating(true);
+                    editing.UseIcons(true);
+                })
+                .OnContentReady("contentReady")
+                )
+        </div>
+    </div>
 
-	<div id="MemberContent" class="d-none">
-		<!-- Main Block -->
-		<div class="row gx-0">
-			<div id="MainBlock" class="col-9 overflow-auto">
+    <div id="MemberContent" class="d-none">
+        <!-- Main Block -->
+        <div class="row gx-0">
+            <div id="MainBlock" class="col-9 overflow-auto">
 
-				<!-- Member Data -->
-				<div class="card border-0 ">
-					<div id="MemberData" class="card-body">
-						<div class="d-flex align-items-center justify-content-between pb-2">
-							<div class="fs-5 fw-bold">客戶基本資料</div>
-							<div class="member_number"></div>
-						</div>
+                <!-- Member Data -->
+                <div class="card border-0 ">
+                    <div id="MemberData" class="card-body">
+                        <div class="d-flex align-items-center justify-content-between pb-2">
+                            <div class="fs-5 fw-bold">客戶基本資料</div>
+                            <div class="member_number"></div>
+                        </div>
 
-						<form id="MemberForm" class="row needs-validation" novalidate>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InputName" class="name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
-								<label class="required px-4" for="InputName">姓名</label>
-							</div>
-							<div class="gender align-self-center col-auto d-flex mb-3">
-								<div class="form-check pe-3">
-									<input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" value="1" required>
-									<label class="form-check-label" for="RadioSir">男</label>
-								</div>
-								<div class="form-check pe-3">
-									<input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender" value="2" required>
-									<label class="form-check-label" for="RadioMiss">女</label>
-								</div>
-								<div class="form-check">
-									<input id="RadioElse" class="form-check-input" type="radio" name="RadioGender" value="3" required>
-									<label class="form-check-label" for="RadioElse">其他</label>
-								</div>
-							</div>
-							<div class="state align-self-center col d-flex mb-3 ps-5 row">
-								<label class="form-label col-auto mb-0 ps-0 align-self-center" for="MemberStatus">會員狀態</label>
-								<select id="MemberStatus" class="form-select col" aria-label="Default select example" name="MemberStatus">
-									<option value="1">開通</option>
-									<option value="2">停權</option>
-									<option value="3">未開通</option>
-								</select>
-							</div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InputMailBasic" class="mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
-								<label class="required px-4" for="InputMailBasic">E-mail</label>
-							</div>
-							<div class="col-6 d-none d-sm-flex"></div>
-							<div class="form-floating mb-3 col-12 col-sm-6">
-								<input id="InputCellPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
-								<label class="required px-4" for="InputCellPhone">手機號碼</label>
-							</div>
-							<div class="row">
-								<div class="form-floating mb-3 col-4 col-sm-2">
-									<input id="InputTelPhoneArea" class="areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
-									<label class="px-4" for="InputTelPhoneArea">區碼</label>
-								</div>
-								<div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
-									<input id="InputTelPhone" class="cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
-									<label for="InputTelPhone">聯絡電話</label>
-								</div>
-								<div class="form-floating mb-3 col-6 col-sm-3">
-									<input id="InputTelPhoneExt" class="extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
-									<label class="px-4" for="InputTelPhoneExt">分機</label>
-								</div>
-							</div>
+                        <form id="MemberForm" class="row needs-validation" novalidate>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="InputName" class="name form-control" type="text" placeholder="name" value="姓名" minlength="2" required>
+                                <label class="required px-4" for="InputName">姓名</label>
+                            </div>
+                            <div class="gender align-self-center col-auto d-flex mb-3">
+                                <div class="form-check pe-3">
+                                    <input id="RadioSir" class="form-check-input" type="radio" name="RadioGender" value="1" required>
+                                    <label class="form-check-label" for="RadioSir">男</label>
+                                </div>
+                                <div class="form-check pe-3">
+                                    <input id="RadioMiss" class="form-check-input" type="radio" name="RadioGender" value="2" required>
+                                    <label class="form-check-label" for="RadioMiss">女</label>
+                                </div>
+                                <div class="form-check">
+                                    <input id="RadioElse" class="form-check-input" type="radio" name="RadioGender" value="3" required>
+                                    <label class="form-check-label" for="RadioElse">其他</label>
+                                </div>
+                            </div>
+                            <div class="state align-self-center col d-flex mb-3 ps-5 row">
+                                <label class="form-label col-auto mb-0 ps-0 align-self-center" for="MemberStatus">會員狀態</label>
+                                <select id="MemberStatus" class="form-select col" aria-label="Default select example" name="MemberStatus">
+                                    <option value="0">未開通</option>
+                                    <option value="1">開通</option>
+                                    <option value="2">停權</option>
+                                </select>
+                            </div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="InputMailBasic" class="mail form-control" type="email" placeholder="name@example.com" value="name@example.com" required>
+                                <label class="required px-4" for="InputMailBasic">E-mail</label>
+                            </div>
+                            <div class="col-6 d-none d-sm-flex"></div>
+                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                <input id="InputCellPhone" class="phone form-control" type="tel" placeholder="0987654321" value="0987654321" pattern="[0][9]\d{8}" maxlength="10" required>
+                                <label class="required px-4" for="InputCellPhone">手機號碼</label>
+                            </div>
+                            <div class="row">
+                                <div class="form-floating mb-3 col-4 col-sm-2">
+                                    <input id="InputTelPhoneArea" class="areacode form-control" type="tel" placeholder="07" value="07" pattern="[0]\d{1,3}" maxlength="4">
+                                    <label class="px-4" for="InputTelPhoneArea">區碼</label>
+                                </div>
+                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+                                    <input id="InputTelPhone" class="cellphone form-control" type="tel" placeholder="1234567" value="1234567" pattern="\d{7}" maxlength="7">
+                                    <label for="InputTelPhone">聯絡電話</label>
+                                </div>
+                                <div class="form-floating mb-3 col-6 col-sm-3">
+                                    <input id="InputTelPhoneExt" class="extension form-control" type="tel" placeholder="111111" value="111111" pattern="\d*">
+                                    <label class="px-4" for="InputTelPhoneExt">分機</label>
+                                </div>
+                            </div>
 
-							<div id="TWzipcode" class="row">
-								<div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
-								<div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
-								<div class="form-floating mb-3 col-12 col-sm-6">
-									<input id="InputAddress" class="address form-control" type="text" placeholder="復興四路" value="復興四路" required>
-									<label class="px-4 required" for="InputAddress">地址</label>
-								</div>
-							</div>
-						</form>
-					</div>
-				</div>
+                            <div id="TWzipcode" class="row">
+                                <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                                <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                                <div class="form-floating mb-3 col-12 col-sm-6">
+                                    <input id="InputAddress" class="address form-control" type="text" placeholder="復興四路" value="復興四路" required>
+                                    <label class="px-4 required" for="InputAddress">地址</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="card border-0">
+                    <div id="UserTagStatistics" class="card-body">
+                        <div class="d-flex align-items-center pb-2">
+                            <div class="fs-5 fw-bold">該用戶在意的標籤(僅抓前五個)</div>
+                        </div>
+                        <div class="tags d-flex">
+                            <ul class="frame mx-4 mt-3"></ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Community Login Binding -->
+                <div class="card border-0 d-none">
+                    <div id="CommunityLoginBinding" class="card-body">
+                        <div class="d-flex align-items-center pb-2">
+                            <div class="fs-5 fw-bold">社群登入綁定</div>
+                        </div>
+                        <div class="account d-flex">
+                            <div class="frame mx-4 mt-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="/upload/icon_google.png" />
+                                    <div class="ps-3">
+                                        <div class="fw-bold">Google 帳戶</div>
+                                        <div>Google 帳戶名稱</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-center my-3">
+                                    <button class="bg-transparent border border-danger px-2 rounded-pill text-danger">停用</button>
+                                </div>
+                            </div>
+                            <div class="frame mx-4 mt-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="/upload/icon_facebook.png" />
+                                    <div class="ps-3">
+                                        <div class="fw-bold">臉書 帳戶</div>
+                                        <div>臉書 帳戶名稱</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-center my-3">
+                                    <button class="bg-transparent border border-danger px-2 rounded-pill text-danger">停用</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-				<!-- Community Login Binding -->
-				<div class="card border-0 d-none">
-					<div id="CommunityLoginBinding" class="card-body">
-						<div class="d-flex align-items-center pb-2">
-							<div class="fs-5 fw-bold">社群登入綁定</div>
-						</div>
-						<div class="account d-flex">
-							<div class="frame mx-4 mt-3">
-								<div class="d-flex align-items-center">
-									<img src="/upload/icon_google.png" />
-									<div class="ps-3">
-										<div class="fw-bold">Google 帳戶</div>
-										<div>Google 帳戶名稱</div>
-									</div>
-								</div>
-								<div class="d-flex justify-content-center my-3">
-									<button class="bg-transparent border border-danger px-2 rounded-pill text-danger">停用</button>
-								</div>
-							</div>
-							<div class="frame mx-4 mt-3">
-								<div class="d-flex align-items-center">
-									<img src="/upload/icon_facebook.png" />
-									<div class="ps-3">
-										<div class="fw-bold">臉書 帳戶</div>
-										<div>臉書 帳戶名稱</div>
-									</div>
-								</div>
-								<div class="d-flex justify-content-center my-3">
-									<button class="bg-transparent border border-danger px-2 rounded-pill text-danger">停用</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+            <!-- Side Block -->
+            <div id="SideBlock" class="" data-bs-scroll="true" tabindex="-1" aria-labelledby="Side Block Offcanvas">
+                <div class="offcanvas-header d-none">
+                </div>
 
-			<!-- Side Block -->
-			<div id="SideBlock" class="" data-bs-scroll="true" tabindex="-1" aria-labelledby="Side Block Offcanvas">
-				<div class="offcanvas-header d-none">
-				</div>
+                <div class="offcanvas-body pt-0 px-0">
+                    <div class="card border-0 mb-3">
+                        <div class="card-body member_status_level">
+                            <div class="row align-items-center px-3">
+                                <label class="form-label col-auto mb-0 ps-0" for="MemberLevel">會員身分等級</label>
+                                <select id="MemberLevel" class="form-select col" aria-label="Default select example" name="MemberLevel">
+                                    <option selected value="">請選擇會員等級</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-				<div class="offcanvas-body pt-0 px-0">
-					<div class="card border-0 mb-3">
-						<div class="card-body member_status_level">
-							<div class="row align-items-center px-3">
-								<label class="form-label col-auto mb-0 ps-0" for="MemberLevel">會員身分等級</label>
-								<select id="MemberLevel" class="form-select col" aria-label="Default select example" name="MemberLevel">
-									<option selected value="">無設定</option>
-									<option value="1">One</option>
-									<option value="2">Two</option>
-									<option value="3">Three</option>
-								</select>
-							</div>
-						</div>
-					</div>
+                    <div class="card border-0 mb-3">
+                        <div class="card-body latest_order">
+                            <div class="title d-flex align-items-center justify-content-between pb-2 no_clear">
+                                <div class="fs-5 fw-bold">最新訂單</div>
+                            </div>
 
-					<div class="card border-0 mb-3">
-						<div class="card-body latest_order">
-							<div class="d-flex align-items-center justify-content-between pb-2">
-								<div class="fs-5 fw-bold">最新訂單</div>
-							</div>
+                            <template id="TemplateMemberOrder" class="no_clear">
+                                <div class="order_data position-relative">
+                                    <div class="d-flex mb-1">
+                                        <div class="title text-end me-2">訂單編號</div>
+                                        <div data-key="id" class="number"></div>
+                                    </div>
+                                    <div class="d-flex mb-1">
+                                        <div class="title text-end me-2">訂購時間</div>
+                                        <div data-key="orderDate" class="time"></div>
+                                    </div>
+                                    <div class="d-flex mb-1">
+                                        <div class="title text-end me-2">付款方式</div>
+                                        <div data-key="payment" class="payment"></div>
+                                    </div>
+                                    <div class="d-flex mb-1">
+                                        <div class="title text-end me-2">訂單金額</div>
+                                        <div data-key="orderTotal" class="price"></div>
+                                    </div>
+                                    <div class="d-flex mb-1">
+                                        <div class="title text-end me-2">處理狀態</div>
+                                        <div data-key="status" class="status"></div>
+                                    </div>
+                                    <a data-key="link" class="details_link position-absolute text-decoration-none end-0" href="" title="連結至：訂單明細"><div class="border fw-bold p-2 rounded text-black">查看訂購明細</div></a>
+                                    <hr />
+                                </div>
+                            </template>
 
-							<div class="order_data position-relative">
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂單編號</div>
-									<div class="number">000000320</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂購時間</div>
-									<div class="time">2022/11/10 08:00</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">付款方式</div>
-									<div class="payment">信用卡</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂單金額</div>
-									<div class="price">30,000</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">處理狀態</div>
-									<div class="status">出貨中</div>
-								</div>
-								<a class="details_link position-absolute text-decoration-none end-0" href=""><div class="border fw-bold p-2 rounded text-black">查看訂購明細</div></a>
-								<hr />
-							</div>
+                            <a class="text-decoration-none d-flex justify-content-center d-none no_clear" href="/OrderManagement" title="連結至：歷史訂單">
+                                <div class="border fs-6 fw-bold p-2 rounded text-black">歷史訂單</div>
+                            </a>
 
-							<div class="order_data position-relative">
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂單編號</div>
-									<div class="number">000000320</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂購時間</div>
-									<div class="time">2022/11/10 08:00</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">付款方式</div>
-									<div class="payment">信用卡</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂單金額</div>
-									<div class="price">30,000</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">處理狀態</div>
-									<div class="status">完成交易</div>
-								</div>
-								<a class="details_link position-absolute text-decoration-none end-0" href=""><div class="border fw-bold p-2 rounded text-black">查看訂購明細</div></a>
-								<hr />
-							</div>
+                            <div class="nodata text-center my-4 fw-bold d-none no_clear">無訂單資料</div>
 
-							<div class="order_data position-relative">
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂單編號</div>
-									<div class="number">000000320</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂購時間</div>
-									<div class="time">2022/11/10 08:00</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">付款方式</div>
-									<div class="payment">信用卡</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">訂單金額</div>
-									<div class="price">30,000</div>
-								</div>
-								<div class="d-flex mb-1">
-									<div class="title text-end me-2">處理狀態</div>
-									<div class="status">出貨中</div>
-								</div>
-								<a class="details_link position-absolute text-decoration-none end-0" href=""><div class="border fw-bold p-2 rounded text-black">查看訂購明細</div></a>
-								<hr />
-							</div>
+                            <div class="text-center remind my-1 no_clear">※僅提供最新三筆歷史資料</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-							<template id="TemplateLatestOrder">
-								<div class="order_data position-relative">
-									<div class="d-flex mb-1">
-										<div class="title text-end me-2">訂單編號</div>
-										<div class="number"></div>
-									</div>
-									<div class="d-flex mb-1">
-										<div class="title text-end me-2">訂購時間</div>
-										<div class="time"></div>
-									</div>
-									<div class="d-flex mb-1">
-										<div class="title text-end me-2">付款方式</div>
-										<div class="payment"></div>
-									</div>
-									<div class="d-flex mb-1">
-										<div class="title text-end me-2">訂單金額</div>
-										<div class="price"></div>
-									</div>
-									<div class="d-flex mb-1">
-										<div class="title text-end me-2">處理狀態</div>
-										<div class="status"></div>
-									</div>
-									<a class="details_link position-absolute text-decoration-none end-0" href=""><div class="border fw-bold p-2 rounded text-black">查看訂購明細</div></a>
-									<hr />
-								</div>
-							</template>
-							<a class="text-decoration-none d-flex justify-content-center" href="">
-								<div class="border fs-6 fw-bold p-2 rounded text-black">歷史訂單</div>
-							</a>
-
-							<div class="text-center remind my-1">※僅提供六個月內歷史資料</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#SideBlock" aria-controls="offcanvasWithBothOptions">
-			<div class="above position-absolute end-0"></div>
-			<div>右側收合</div>
-			<div class="under position-absolute end-0"></div>
-		</button>
-	</div>
+        <button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#SideBlock" aria-controls="offcanvasWithBothOptions">
+            <div class="above position-absolute end-0"></div>
+            <div>右側收合</div>
+            <div class="under position-absolute end-0"></div>
+        </button>
+    </div>
 </div>

@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Core.Models
     public class SearchLog
     {
         public long Id { get; set; }
+        public Guid UUID { get; set; }
         public long FK_WebsiteId { get; set; }
         [MaxLength(100)]
         public string Key { get; set; } = string.Empty;

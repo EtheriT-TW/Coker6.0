@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Marquee;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -19,10 +20,11 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetAll(long webid, string placement)
+        public async Task<List<MarqueeDisplayDto>> GetAll(long webid, string placement)
         {
-            return await marqueeAppService.GetAll(webid, placement);
-        }
+			var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(webid, "Top")).Value));
+            return marquee??new List<MarqueeDisplayDto>();
 
+        }
     }
 }

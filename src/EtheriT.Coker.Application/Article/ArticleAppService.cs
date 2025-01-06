@@ -105,7 +105,7 @@ namespace EtheriT.Coker.Application.Article
                             Id = data.Id,
                             FK_AId = (long)asoid,
                             FK_TId = data.FK_TId,
-                            Type = (int)TagAssociateTypeEnum.文章,
+                            Type = TagAssociateTypeEnum.文章,
                             IsDeleted = data.IsDeleted
                         });
                     }
@@ -153,7 +153,7 @@ namespace EtheriT.Coker.Application.Article
                                                Css = e.Css,
                                                Tags = String.Join("、", (
                                                            from ta in db.Tag_Associates
-                                                           where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
+                                                           where ta.FK_AId == e.Id && ta.Type == TagAssociateTypeEnum.文章 && !ta.IsDeleted
                                                            join t in db.Tags on ta.FK_TId equals t.Id
                                                            where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
                                                            select t.Title
@@ -205,7 +205,7 @@ namespace EtheriT.Coker.Application.Article
                                           DataJson = e.DataJson,
                                           Tags = String.Join("、", (
                                                       from ta in db.Tag_Associates
-                                                      where ta.FK_AId == e.Id && ta.Type == (int)TagAssociateTypeEnum.文章 && !ta.IsDeleted
+                                                      where ta.FK_AId == e.Id && ta.Type == TagAssociateTypeEnum.文章 && !ta.IsDeleted
                                                       join t in db.Tags on ta.FK_TId equals t.Id
                                                       where !t.IsDeleted && t.FK_WebsiteId == WebsiteID
                                                       select t.Title
@@ -271,13 +271,13 @@ namespace EtheriT.Coker.Application.Article
                                             permanent = e.permanent,
                                             DataJson = string.IsNullOrEmpty(e.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(e.DataJson)
                                         }).FirstOrDefaultAsync();
-
+                    
                     if (output != null)
                     {
                         var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
                         {
                             Fk_Aid = output.Id,
-                            Type = (int)TagAssociateTypeEnum.文章,
+                            Type = TagAssociateTypeEnum.文章,
                         }
                         );
 
@@ -438,7 +438,7 @@ namespace EtheriT.Coker.Application.Article
 
                 if (result != null)
                 {
-                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == (int)TagAssociateTypeEnum.文章 && !e.IsDeleted).ToListAsync();
+                    var tagids = await db.Tag_Associates.Where(e => e.FK_AId == Id && e.Type == TagAssociateTypeEnum.文章 && !e.IsDeleted).ToListAsync();
 
                     if (tagids != null)
                     {
@@ -473,7 +473,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "Delete", JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(new { Id }), JsonConvert.SerializeObject(output));
             }
             return output;
         }
@@ -550,7 +550,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "ImportConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }
@@ -577,7 +577,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(ServiceName, "SaveConten", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
         }

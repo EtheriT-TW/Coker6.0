@@ -64,6 +64,10 @@
                             Coker.sweet.success(local.SentSuccessfully, null, true);
                             $forms.removeClass('was-validated');
                             $forms.get(0).reset();
+                            window.location.hash = 'submitted';
+                            setTimeout(() => {
+                                history.replaceState(null, null, ' '); // 清除 hash，不影響瀏覽器歷史記錄
+                            }, 1000);
                         } else Coker.sweet.error(local.FailedToSend, result.error, null, true);
                         NewCaptcha($imgCaptcha, $captcha_input, "ContactUs");
                     });

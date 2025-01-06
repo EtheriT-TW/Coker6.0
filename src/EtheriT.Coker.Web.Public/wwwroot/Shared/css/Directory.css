@@ -1,4 +1,7 @@
 ﻿
+.price.notshow::before {
+    content: '';
+}
 
 .text-border {
     border-left: #888888 solid .5rem;
@@ -295,6 +298,31 @@
             border-radius: 20%;
         }
 
+/* Button Favorites*/
+.btn_fav {
+    position: absolute;
+    top: 1.75rem;
+    right: 0.5rem;
+    border: 0;
+    background-color: transparent;
+}
+
+    .btn_fav.type5 {
+        top: 0rem;
+        right: calc(1rem - 1.5px);
+    }
+
+    .btn_fav::after {
+        color: #b30b00;
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 400;
+        content: "\f004 ";
+        font-size: 1.25rem;
+    }
+
+    .btn_fav.check::after {
+        font-weight: 900;
+    }
 
 .empty:before {
     content: "查無資料";
@@ -487,6 +515,7 @@
         background: #fff;
         z-index: 3;
         height: 310px;
+        width: 100%;
     }
 
         .e-info .about .describe:hover {
@@ -1586,13 +1615,13 @@
 
 @media only screen and (max-width: 576px) {
     .type_change_frame > .catalog .title {
-        font-size: 0.8rem !important;
-        line-height: 1rem;
-        max-height: 2rem;
+        font-size: 1.2rem !important;
+        line-height: 1.5rem;
+        max-height: 4rem;
     }
 
     .type_change_frame > .catalog .description {
-        font-size: 0.8rem !important;
+        font-size: 0.9rem !important;
         line-height: 1rem;
         max-height: 2.5rem;
         -webkit-line-clamp: 2;

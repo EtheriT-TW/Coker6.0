@@ -7,10 +7,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Content Remove="appsettings.Defood.json" />
 		<Content Remove="appsettings.EPZA.json" />
-		<Content Remove="appsettings.Haoguang.json" />
-		<Content Remove="appsettings.Haoguangen.json" />
 		<Content Remove="appsettings.kao-feng.json" />
+		<Content Remove="appsettings.kinglake.json" />
+		<Content Remove="appsettings.longtop.json" />
+		<Content Remove="appsettings.Museum.json" />
+		<Content Remove="appsettings.unitedtw.json" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -67,12 +70,16 @@
 		<None Include="appsettings.EPZA.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
-		<None Include="appsettings.Haoguang.json" />
-		<None Include="appsettings.Haoguangen.json">
+		<None Include="appsettings.Museum.json" />
+		<None Include="appsettings.Defood.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 		<None Include="appsettings.kao-feng.json">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Include="appsettings.kinglake.json" />
+		<None Include="appsettings.longtop.json">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 		<None Include="wwwroot\css\Page\Member.css" />
 		<None Include="wwwroot\lib\pdf-viewer\external\pdfjs-4.5.136-dist\LICENSE" />

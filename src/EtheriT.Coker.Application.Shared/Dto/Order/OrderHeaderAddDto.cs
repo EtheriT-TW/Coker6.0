@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
     public class OrderHeaderAddDto
@@ -14,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? OrdererTelephone { get; set; }
         public string OrdererCellPhone { get; set; }
         public string OrdererAddress { get; set; }
+        public long? RecipientId { get; set; }
         public string Recipient { get; set; }
         public int RecipientSex { get; set; }
         public string RecipientEmail { get; set; }
@@ -34,5 +30,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public long? CouponId { get; set; }
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
+        public List<OrderDetailAddDto> OrderDetails { get; set; }
     }
 }

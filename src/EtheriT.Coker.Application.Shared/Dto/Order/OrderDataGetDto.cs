@@ -7,6 +7,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
     public class OrderDataGetDto
     {
         public OrderHeaderGetOneDto OrderHeader {  get; set; }
-        public List<ShoppingCartGetDrop> OrderDetails {  get; set; }
+        public List<ShoppingCartDisplayDto> OrderDetails {  get; set; }
     }
 }

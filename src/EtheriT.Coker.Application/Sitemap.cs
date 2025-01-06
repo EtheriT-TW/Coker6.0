@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.Webs;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Public.Sitemap;
@@ -20,45 +21,55 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly long siteId;
         private readonly string siteUrl;
-        private readonly string orgName;
+        private readonly List<string> childOrgNames;
+        private readonly List<WebSiteOrgNameDto> webSites;
         public Sitemap(CokerDbContext db, LoginUserData loginUserData) {
             this.db = db;
             this.loginUserData = loginUserData;
             this.siteId = loginUserData.GetFrontWebsiteId();
             this.siteUrl = loginUserData.GetFrontWebsiteUrl().Result;
-            this.orgName = loginUserData.GetWebsiteOrgName(siteId).Result;
+            this.childOrgNames = loginUserData.GetFrontChildOrgName();
+            this.webSites = db.Websites.Where(e => e.Id == siteId || childOrgNames.Contains(e.OrgName))
+                .Select(e => new WebSiteOrgNameDto { Id = e.Id, OrgName = e.OrgName, Level = e.Level }).ToList();
         }
         public async Task<Urlset> GetUrlsetAsync() {
             SiteMapDto Sitemap = new SiteMapDto();
-            var header = await db.JsonObjects.Where(e => e.Type == (int)JsonObjectEnum.主選單).Where(e => e.FK_WebsiteId == siteId).FirstOrDefaultAsync();
-            if (header != null && !string.IsNullOrEmpty(header.Json))
-            {
-                var list = JsonConvert.DeserializeObject<List<MenuItemDto>>(header.Json);
-                if(list!=null && list.Any()) Sitemap.Maps = list;
+            foreach (var site in webSites) {
+                var header = await db.JsonObjects.Where(e => e.Type == (int)JsonObjectEnum.主選單).Where(e => e.FK_WebsiteId == site.Id).FirstOrDefaultAsync();
+                if (header != null && !string.IsNullOrEmpty(header.Json))
+                {
+                    var list = JsonConvert.DeserializeObject<List<MenuItemDto>>(header.Json);
+                    if (list != null && list.Any()) Sitemap.Maps.AddRange(list);
+                }
             }
             return await GetUrlsetAsync(Sitemap);
         }
         private async Task<Urlset> GetUrlsetAsync(SiteMapDto Maps) {
             Urlset urlset = new Urlset();
-            urlset.Urls.Add(new UrlDto { 
-                loc = siteUrl,
-                priority = "1.00",
+            foreach (var site in webSites)
+            {
+                urlset.Urls.Add(new UrlDto
+                {
+                    loc = siteId == site.Id ? siteUrl : $"{siteUrl}/{site.OrgName}",
+                    priority = "1.00",
 
-            });
+                });
+            }
             setWebMenuUrl(Maps.Maps, urlset.Urls, 0.9);
             await setArticleUrl(urlset.Urls);
             await setProductUrl(urlset.Urls);
-            await setTechCertUrl(urlset.Urls);
             return urlset;
         }
         private void setWebMenuUrl(List<MenuItemDto> Maps, List<UrlDto> Urls, double priority = 1.0) {
             if (Maps == null || !Maps.Any()) return;
+            string orgName;
             Maps.ForEach(map =>
             {
                 if (!string.IsNullOrEmpty(map.RouterName))
                 {
                     if (map.hasContan && map.RouterName != "home")
                     {
+                        orgName = webSites.Find(e => e.Id == map.FK_WebsiteId)?.OrgName??"";
                         Urls.Add(new UrlDto
                         {
                             loc = $"{siteUrl}/{orgName}/{map.RouterName}".Replace("//", "/").Replace(":/", "://"),
@@ -73,42 +84,34 @@ namespace EtheriT.Coker.Application
             return;
         }
         private async Task setArticleUrl(List<UrlDto> Urls) {
-            var Arti = await db.Article.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted && e.Visible && !e.RemovedFromShelves).ToListAsync();
-            Arti.ForEach(a => {
-                Urls.Add(new UrlDto
-                {
-                    loc = $"{siteUrl}/{orgName}/Search/Article/{a.Id}".Replace("//", "/").Replace(":/", "://"),
-                    priority = "1.0",
-                    lastmod = (a.LastModificationTime ?? a.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    changefreq = "never"
+            foreach (var site in webSites) {
+                var Arti = await db.Article.Where(e => e.FK_WebsiteId == site.Id && !e.IsDeleted && e.Visible && !e.RemovedFromShelves).ToListAsync();
+                Arti.ForEach(a => {
+                    Urls.Add(new UrlDto
+                    {
+                        loc = $"{siteUrl}/{site.OrgName}/Search/Article/{a.Id}".Replace("//", "/").Replace(":/", "://"),
+                        priority = "1.0",
+                        lastmod = (a.LastModificationTime ?? a.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                        changefreq = "never"
+                    });
                 });
-            });
+            }
         }
         private async Task setProductUrl(List<UrlDto> Urls)
         {
-            var prods = await db.Prods.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted && e.Visible && !e.RemovedFromShelves).ToListAsync();
-            prods.ForEach(p => {
-                Urls.Add(new UrlDto
-                {
-                    loc = $"{siteUrl}/{orgName}/Search/Product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
-                    priority = "1.0",
-                    lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    changefreq = "monthly"
+            foreach (var site in webSites) {
+                if (site.Level == WebsiteLevelEnum.形象) continue;
+                var prods = await db.Prods.Where(e => e.FK_WebsiteId == site.Id && !e.IsDeleted && e.Visible && !e.RemovedFromShelves).ToListAsync();
+                prods.ForEach(p => {
+                    Urls.Add(new UrlDto
+                    {
+                        loc = $"{siteUrl}/{site.OrgName}/Search/Product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
+                        priority = "1.0",
+                        lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                        changefreq = "monthly"
+                    });
                 });
-            });
-        }
-        private async Task setTechCertUrl(List<UrlDto> Urls)
-        {
-            var Techs = await db.TechnicalCertificates.Where(e => e.FK_WebsiteId == siteId && !e.IsDeleted).ToListAsync();
-            Techs.ForEach(t => {
-                Urls.Add(new UrlDto
-                {
-                    loc = $"{siteUrl}/{orgName}/Search/Product/{t.Id}".Replace("//", "/").Replace(":/", "://"),
-                    priority = "0.5",
-                    lastmod = (t.LastModificationTime ?? t.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                    changefreq = "monthly"
-                });
-            });
+            }
         }
     }
 }

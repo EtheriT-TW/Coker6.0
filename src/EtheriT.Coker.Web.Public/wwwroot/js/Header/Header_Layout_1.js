@@ -1,37 +1,91 @@
 ﻿function HeaderInit() {
-    if ($('body.home').length) {
-        setTimeout(function () {
-            if ((window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
+    if ($("#btnMenu.change-color").length) {
+        $('#btnMenu').on('click', function () {
+            $(this).find('#menuIcon').toggleClass('text-white');
+        });
+    }
+    if ($('.navbar').hasClass('position-fixed') && !$(".full-banner").length > 0) {
+        var mega_menu_height = $("nav").css("height");
+        $("#ContainerBody").css("padding-top", mega_menu_height);
+        $(window).resize(function () {
+            var mega_menu_height = $("nav").css("height");
+            $("#ContainerBody").css("padding-top", mega_menu_height);
+            MenuLiSize();
+        });
+        var navbarHeight = $('.navbar').outerHeight();
+        if (!$('#swiper-light').length) {
+            $('#ContainerBody').css('padding-top', navbarHeight);
+        } else if ($('#header-title').length) {
+            $('#header-title').css('padding-top', navbarHeight);
+            $('#header-title-phone').css('padding-top', navbarHeight);
+        }
+        /*setTimeout(function () {
+            if ($('.full-banner').length>0 && (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop) == 0) {
                 // 頁面加載完畢後滾動到目標元素
                 $('html,body').animate({
-                    scrollTop: $('.one_swiper').offset().top  // 滾動到目標元素的頂部
+                    scrollTop: $('.full-banner').offset().top - 78  // 滾動到目標元素的頂部
                 }, 'smooth');  // 'smooth' 也可以替換成毫秒值，例如 1000 毫秒
             }
-        }, 500);
+        }, 500);*/
     }
 
-    var mega_menu_height = $("#Mega_Menu").css("height");
-    $("body").css("padding-top", mega_menu_height);
+    const showNav = document.querySelectorAll('.full-banner');
+    if (showNav.length) {
+        function hoverOff() {
+            $('nav').off('mouseleave');
+            $('nav').off('mouseover');
+        }
+        function hoverOn() {
+            $('nav').on('mouseover', () => {
+                $('nav').removeClass('hide-menu');
+            });
+            $('nav').on('mouseleave', () => {
+                $('nav').addClass('hide-menu');
+            });
+        }
+        if ($('nav').hasClass('position-fixed')) {
+            $('nav').addClass('hide-menu');
+            hoverOn();
+        }
+        window.addEventListener('scroll', () => {
+            let scrollPosition = window.scrollY;
+            showNav.forEach(showNav => {
+                // 使用 getBoundingClientRect 獲取區塊的位置
+                const sectionTop = showNav.getBoundingClientRect().top + window.scrollY;
+                const sectionHeight = showNav.offsetHeight;
 
-    $(window).resize(function () {
-        var mega_menu_height = $("nav").css("height");
-        $("body").css("padding-top", mega_menu_height);
-        MenuLiSize();
-    });
-
-    if ($("#Cart_Dropdown_Parent").length > 0) {
-        CartDropInit();
+                // 檢查當前滾動位置是否在這個區塊範圍內
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    $('nav').removeClass('show-menu').addClass('hide-menu');
+                    hoverOn();
+                } else {
+                    $('nav').addClass('show-menu').removeClass('hide-menu');
+                    hoverOff();
+                }
+            });
+        })
     }
+
     MenuLiSize();
 
-    const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
-    if (Cart_Dropdown != null) {
-        Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
-            $("#btn_car_dropdown > i").addClass("open");
-        })
-        Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
-            $("#btn_car_dropdown > i").removeClass("open");
-        })
+    moveHiUserToMenu();
+
+    if ($(window).width() > 767) {
+        const Cart_Dropdown = document.getElementById('Cart_Dropdown_Parent')
+        if (Cart_Dropdown != null) {
+            Cart_Dropdown.addEventListener('shown.bs.dropdown', event => {
+                $("#btn_car_dropdown > i").addClass("open");
+            })
+            Cart_Dropdown.addEventListener('hidden.bs.dropdown', event => {
+                $("#btn_car_dropdown > i").removeClass("open");
+            })
+        }
+    } else {
+        $("#btn_car_dropdown").attr("data-bs-toggle", "");
+        $("#btn_car_dropdown").on("click", function (even) {
+            var newUrl = window.location.origin + `/${OrgName}/ShoppingCar`;
+            window.location.href = newUrl;
+        });
     }
 
     var $myOffcanvas = $("#Mega_Menu>.offcanvas");
@@ -76,7 +130,41 @@
         }
     });*/
 }
+function moveHiUserToMenu() {
+    const hiUser = document.getElementById('HiUser');
+    const login = document.querySelector('.login');
+    const hamburgerMenu = document.querySelector('.offcanvas-header');
+    const iconBlock = document.querySelector('.icon-block');
+    if (window.innerWidth <= 576) { // 如果屏幕宽度 <= 576px
+        if (hiUser) {
+            if (!hamburgerMenu.contains(hiUser)) { // 避免重复移动
+                hamburgerMenu.appendChild(hiUser); // 移动 HiUser 到汉堡菜单
+            }
+        } else if (login) {
+            if (!hamburgerMenu.contains(login)) { // 避免重复移动
+                hamburgerMenu.appendChild(login); // 移动 login 到汉堡菜单
 
+                // 添加 "會員登入" 文本
+                if (!login.querySelector('p')) { // 避免重复添加文本
+                    const loginText = document.createElement('p');
+                    loginText.textContent = '會員登入';
+                    login.appendChild(loginText);
+                }
+            }
+        }
+    } else {
+        // 否则, 移回原来的位置
+        if ($('#HiUser').length > 0) {
+            if (!iconBlock.contains(hiUser)) { // 避免重复移动
+                iconBlock.appendChild(hiUser); // 移动 HiUser 回原来的位置
+            }
+        } else if (login) {
+            if (!iconBlock.contains(login)) { // 避免重复移动
+                iconBlock.appendChild(login); // 移动 login 回原来的位置
+            }
+        }
+    }
+}
 function MenuLiSize() {
     if ($(window).width() > 768) {
         $(".subtitle").removeClass("w-100")
@@ -105,7 +193,6 @@ function MenuLiSize() {
             $item.parents(".collapse").addClass("show");
     });
 }
-
 function CartDropInit() {
     Product.GetAll.Cart().done(function (result) {
         if (result.length > 0) {
@@ -115,35 +202,18 @@ function CartDropInit() {
         }
     })
 }
-
 function CartDropAdd(result) {
-    var item = $($("#Template_Car_Dropdown").html()).clone();
-    var item_link = item.find(".pro_link"),
-        item_image = item.find(".pro_image"),
-        item_name = item.find(".pro_name"),
-        item_spec = item.find(".pro_spec"),
-        item_unit = item.find(".pro_unit"),
-        item_quantity = item.find(".pro_quantity"),
-        item_btn_delete = item.find(".btn_cart_delete");
-
-    item.data("scid", result.scId);
-    item_link.attr("href", `/${OrgName}/home/product/${result.pId}`);
-    item_image.attr("src", result.imagePath);
-    item_name.text(result.title);
-    item_spec.append(result.s1Title == "" ? "" : `<span class="border px-1 me-1">${result.s1Title}</span>`)
-    item_spec.append(result.s2Title == "" ? "" : `<span class="border px-1">${result.s2Title}</span>`)
-    item_unit.text((result.price + "").toLocaleString('en-US'));
-    item_quantity.text(result.quantity);
-    item_btn_delete.on("click", function () {
+    var $template = $($("#Template_Car_Dropdown").html()).clone();
+    $template = HeaderDataInsert($template, result)
+    $template.data("scid", result.scId);
+    $template.find(".btn_cart_delete").on("click", function () {
         var $self = $(this).parents("li").first();
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
             CartDropDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
         });
     });
 
-    var item_list_ul = $("#Car_Dropdown > ul");
-
-    item_list_ul.append(item);
+    $("#Car_Dropdown > ul").append($template);
 
     var car_num = $("#Car_Badge").text() == "" ? 1 : parseInt($("#Car_Badge").text()) + 1;
     $("#Car_Badge").text(car_num.toString());
@@ -153,7 +223,6 @@ function CartDropAdd(result) {
         $("#Car_Dropdown > .btn_car_buy").removeAttr("disabled");
     }
 }
-
 function CartDropUpdate(result) {
     var $car_drop_li = $("#Car_Dropdown > ul > li");
     $car_drop_li.each(function () {
@@ -163,7 +232,6 @@ function CartDropUpdate(result) {
         }
     });
 }
-
 function CartDropReset(scid, quantity) {
     $("#Car_Dropdown > ul > li").each(function () {
         if ($(this).data("scid") == scid) {
@@ -176,7 +244,6 @@ function CartDropReset(scid, quantity) {
         }
     });
 }
-
 function CartDropDelete(self, id, success, error) {
     self.remove();
     Product.Delete.Cart(id).done(function () {
@@ -191,10 +258,51 @@ function CartDropDelete(self, id, success, error) {
         Coker.sweet.error("錯誤", error, null, true);
     })
 }
-
 function CartClear() {
     $("#Car_Dropdown > ul > li").remove();
     $("#Car_Badge").text("");
     $("#Car_Dropdown_Null").removeClass("d-none");
     $("#Car_Dropdown > .btn_car_buy").attr("disabled", "");
+}
+function HeaderDataInsert($frame, data) {
+    $frame.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "link":
+                    $self.attr({
+                        href: `/${OrgName}/home/product/${data['pId']}`,
+                        title: `連結至：${data['title']}`
+                    });
+                    break;
+                case "spec":
+                    $self.append(data['s1Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s1Title']}</span>`)
+                    $self.append(data['s2Title'] == "" ? "" : `<span class="border px-1 me-1">${data['s2Title']}</span>`)
+                    break;
+                case "imagePath":
+                    data[key] = data[key].replaceAll(`/${OrgName}/`, '/');
+                    $self.attr({
+                        src: data[key],
+                        alt: `${data['title']}的圖片`
+                    });
+                    break;
+                case "oldQuantity":
+                    // Layout 已拿掉
+                    if (data[key] != data['quantity']) $self.removeClass("d-none");
+                    $self.text(data[key]);
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+            var type = $self.data("type");
+            switch (type) {
+                case "price":
+                    $self.text(parseInt($self.text()).toLocaleString())
+                    break;
+            };
+        }
+    });
+    return $frame;
 }

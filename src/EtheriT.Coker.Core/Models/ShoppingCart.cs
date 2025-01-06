@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Core.Models
         public long FK_PSid { get; set; }
         public long? FK_S1id { get; set; }
         public long? FK_S2id { get; set; }
+        public int OldQuantity { get; set; }
         public int Quantity { get; set; }
         public int Price { get; set; }
         public int? Discont { get; set; }

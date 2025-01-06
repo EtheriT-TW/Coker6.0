@@ -1,7 +1,10 @@
-﻿@using EtheriT.Coker.Application.Shared.Dto.Freight
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Freight
+@using EtheriT.Coker.Application.Shared.Dto.Recipients
 @using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 @using EtheriT.Coker.Web.Public.Models
 @using EtheriT.Coker.Application.Shared.i18n;
+@using System.Web
 @model PageViewModel
 @{
     ViewData["SideName"] = Model.PageData.SiteName;
@@ -20,6 +23,9 @@
 <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
+<div id="PostCSS" class="d-none">
+    @HttpUtility.HtmlEncode(Model.PageData.Css)
+</div>
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -28,7 +34,62 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <table class="table">
+                @* @(Html.DevExtreme().DataGrid<RecipientsDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
+                    .OnBeforeSend("onBeforeSend")
+                    )
+                    .ID("RecipientsList")
+                    .Selection(s =>
+                    s.Mode(SelectionMode.Single).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(false)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .Editing(editing =>
+                    {
+                        editing.Mode(GridEditMode.Row);
+                        editing.AllowDeleting(true);
+                        editing.UseIcons(true);
+                    })
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
+                        c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
+                        c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
+                        c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
+                        c.AddFor(e => e.Telephone).Caption("行動電話").AllowEditing(false);
+                        c.AddFor(e => e.Cellphone).Caption("聯絡電話").AllowEditing(false);
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
+                        {
+                            b.Add().Name("delete").OnClick("RecipientsList_DeleteButtonClicked");
+                        });
+                    })
+                    .Toolbar(toolbar =>
+                    {
+                        toolbar.Items(i =>
+                        {
+                            i.Add()
+                        .Name(DataGridToolbarItem.SearchPanel)
+                        .ShowText(ToolbarItemShowTextMode.Always)
+                        .Location(ToolbarItemLocation.After);
+                        });
+                    })
+                    .OnSelectionChanged("RecipientsList_SelectChange")
+                    .OnContentReady("RecipientsList_ContentReady")
+                    .Paging(paging => paging.PageSize(10))
+                    ) *@
+                    <table class="table">
                     <thead>
                         <tr>
                             <th scope="col" class="fw-normal">選擇</th>
@@ -106,7 +167,7 @@
             </div>
         }
     }
-    
+
     <div class="swiper shadow-lg mt-5">
         <div class="swiper-wrapper">
             <div id="Step1" class="card text-center swiper-slide">
@@ -126,32 +187,40 @@
                         <template id="Template_Cart_Details">
                             <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative" data-scid="">
                                 <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a class="pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品">
-                                        <img class="pro_image img-fluid" alt="商品" src="">
+                                    <a data-key="link" class="align-content-center pro_link col-lg-2 col-12 me-3" href="" title="連結至：商品" target="_blank">
+                                        <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
                                     </a>
-                                    <a class="pro_link col text-start overflow-hidden" href="">
+                                    <a data-key="link" class="pro_link col text-start overflow-hidden" href="" target="_blank">
                                         <div class="content d-lg-block d-none">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
                                             </div>
                                         </div>
                                     </a>
                                 </div>
-
+                                <div class="nostock text-start col-sm-6 col d-none">
+                                    <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
+                                    <div class="pro_detail d-lg-none d-flex flex-wrap">
+                                        <div data-key="spec" class="pro_specification pe-3"></div>
+                                    </div>
+                                    <div class="h5 fw-bold red_text">商品規格已下架或庫存為0</div>
+                                </div>
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a class="pro_link" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank">
                                         <div class="d-lg-none d-block text-start">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
+                                                @* <div class="pro_instructions single_line"></div> *@
                                             </div>
                                         </div>
                                     </a>
 
-                                    <div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center"></div>
+                                    <div class=" col-12 col-lg-4 my-3 my-lg-0 fw-bold align-self-center text-start text-lg-center">
+                                        <div data-key="oldPrice" data-type="price" class="pro_old_unit price fw-light text-decoration-line-through d-none"></div>
+                                        <div data-key="price" data-type="price" class="pro_unit price"></div>
+                                    </div>
 
                                     <div class="counter_input col-12 col-lg-4 d-flex justify-content-start justify-content-lg-center">
                                         <button class="btn_count_minus bg-white border-end-0">
@@ -159,7 +228,7 @@
                                             <span class="d-none">減少</span>
                                         </button>
                                         <label class="d-none" for="quantityInput1">數量</label>
-                                        <input id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
+                                        <input data-key="quantity" id="quantityInput1" class="pro_quantity text-center py-1" type="number" name="counter" value="">
 
                                         <button class="btn_count_plus bg-white border-start-0">
                                             <i class="fa-solid fa-plus"></i>
@@ -167,7 +236,7 @@
                                         </button>
                                     </div>
 
-                                    <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
+                                    <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none" data-subtotal=""></div>
                                 </div>
 
                                 <div class="btn_side_icon position-absolute d-flex flex-column top-50 translate-middle-y end-0 p-2">
@@ -198,15 +267,15 @@
                     <div class="priceline pe-sm-5 col-12 col-md-6 offset-md-6">
                         <div class="border-bottom py-2 d-flex justify-content-end text-end">
                             <div>商品金額</div>
-                            <div class="subtotal price"></div>
+                            <div data-key="subtotal" data-type="price" class="subtotal price"></div>
                         </div>
                         <div class="py-2 d-flex justify-content-end text-end">
                             <div>小計</div>
-                            <div class="subtotal price"></div>
+                            <div data-key="total" data-type="price" class="subtotal price fs-5 fw-bold red_text"></div>
                         </div>
                     </div>
                     <div class="swiper_button my-5 d-flex justify-content-center">
-                        <a href="#" title="繼續購物：返回上一頁" class="btn_backshop btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
+                        <a href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄" class="btn_backshop btn_gray_dark border-0 mx-2 p-0 py-2 rounded-3 text-center text-white">返回購物</a>
                         <button class="btn_swiper_next_buystep border-0 p-0 py-2 rounded-3 text-center text-white mx-2">
                             下一步
                         </button>
@@ -215,7 +284,7 @@
 
                 <div id="Purchase_Null" class="align-items-center flex-column justify-content-center">
                     <div class="mt-5">您的購物車是空的</div>
-                    <a class="btn_backshop btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="#">點此返回選購</a>
+                    <a class="btn_backshop btn_gray_dark border-0 p-0 py-2 rounded-3 text-center text-white my-5" href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄">點此返回選購</a>
                 </div>
             </div>
 
@@ -250,7 +319,7 @@
                             }
                             else
                             {
-                                <div>店家尚未設定運費方式</div>
+                                <div class="noshipping">店家尚未設定運費方式</div>
                             }
                         </div>
                     </form>
@@ -281,7 +350,7 @@
                         }
                         else
                         {
-                            <div>店家尚未設定付款方式</div>
+                            <div class="nopayment">店家尚未設定付款方式</div>
                         }
                     </form>
 
@@ -296,7 +365,7 @@
                         </div>
                         <div class="py-2 border-top d-flex justify-content-end text-end">
                             <div>小計</div>
-                            <div class="total_amount price"></div>
+                            <div class="total_amount price  fs-5 fw-bold red_text"></div>
                         </div>
                     </div>
 
@@ -315,7 +384,7 @@
             <div id="Step3" class="card text-center swiper-slide">
                 <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
                     <div class="fs-5 my-2">購物明細</div>
-                    <a class="btn_backshop px-4 py-2 text-decoration-underline" title="返回上一頁" href="#">我要再選購</a>
+                    <a class="btn_backshop px-4 py-2 text-decoration-underline" title="繼續購物：回商品目錄" href="@ViewData["prodCatalog"]">我要再選購</a>
                 </div>
 
                 <div class="card-body px-0">
@@ -332,24 +401,25 @@
                                 <i class="fa-regular fa-pen-to-square"></i>
                                 <span class="d-none">編輯</span>
                             </button>
+                            <button class="btn_inituser border-0 ms-auto opacity-75 text-decoration-underline">恢復預設資料</button>
                         </div>
 
                         <div class="default_data">
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="orderer" class="col text-start"></div>
+                                <div data-key="orderer" class="col ps-0 text-start"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="ordererEmail" class="col text-start"></div>
+                                <div data-key="ordererEmail" class="col ps-0 text-start"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="ordererCellphone" class="col text-start"></div>
+                                <div data-key="ordererCellPhone" class="col ps-0 text-start"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div data-key="ordererAddress" class="col text-start"></div>
+                                <div data-key="ordererAddress" class="col ps-0 text-start"></div>
                             </div>
                         </div>
 
@@ -375,24 +445,24 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6">
+                            <div class="form-floating mb-3 col-12 col-sm-6 e-mail">
                                 <input id="OrdererInputMail" class="orderer_mail form-control" name="ordererEmail" type="email" placeholder="name@example.com" value="" required>
                                 <label class="required" for="OrdererInputMail">E-mail</label>
                             </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6">
-                                <input id="OrdererInputCellPhone" class="orderer_phone form-control" name="ordererCellphone" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
+                            <div class="form-floating mb-3 col-12 col-sm-6 cell-phone">
+                                <input id="OrdererInputCellPhone" class="orderer_phone form-control" name="ordererCellPhone" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
                                 <label class="required" for="OrdererInputCellPhone">手機號碼</label>
                             </div>
                             <div class="row">
-                                <div class="form-floating mb-3 col-4 col-sm-2">
+                                <div class="form-floating mb-3 col-4 col-sm-2 tel-area">
                                     <input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" name="zone" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
                                     <label class="px-4" for="OrdererInputTelPhoneArea">電話區碼</label>
                                 </div>
-                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0 tel-phone">
                                     <input id="OrdererInputTelPhone" class="orderer_cellphone form-control" name="ordererTelephone" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{7}" maxlength="7">
                                     <label for="OrdererInputTelPhone">聯絡電話</label>
                                 </div>
-                                <div class="form-floating mb-3 col-6 col-sm-3">
+                                <div class="form-floating mb-3 col-6 col-sm-3 phone-ext">
                                     <input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" name="ext" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
                                     <label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
                                 </div>
@@ -405,6 +475,13 @@
                                     <label class="px-4 required" for="OrdererInputAddress">地址</label>
                                 </div>
                             </div>
+                            @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && ViewBag.isLogin)
+                            {
+                                <div class="form-check memberUpdate">
+                                    <input id="MemberUpdate" class="form-check-input" type="checkbox">
+                                    <label class="form-check-label" for="MemberUpdate">同時更新會員資料<span class="ps-2 text-danger">*Email為登入帳號，不會回存</span></label>
+                                </div>
+                            }
                         </form>
                     </div>
 
@@ -416,6 +493,10 @@
                                     <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
                                     <label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
                                 </li>
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
+                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
+                                </li>
                                 @if (ViewBag.LoginEnable)
                                 {
                                     @if (ViewBag.isLogin)
@@ -426,29 +507,25 @@
                                         </li>
                                     }
                                 }
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
-                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
-                                </li>
                             </ul>
                         </div>
 
                         <div class="default_data d-none">
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="recipient" class="col text-start"></div>
+                                <div data-key="recipient" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="recipientEmail" class="col text-start"></div>
+                                <div data-key="recipientEmail" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="recipientCellphone" class="col text-start"></div>
+                                <div data-key="recipientCellPhone" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div data-key="recipientAddress" class="col text-start"></div>
+                                <div data-key="recipientAddress" class="col text-start ps-0"></div>
                             </div>
                         </div>
 
@@ -532,11 +609,11 @@
 
                         <div class="default_data d-none">
                             <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
+                                <div class="col-auto col-sm-2 text-end ps-4 ps-0">姓　　名：</div>
                                 <div class="name col text-start"></div>
                             </div>
                             <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
+                                <div class="col-auto col-sm-2 text-end ps-4 ps-0">地　　址：</div>
                                 <div class="address col text-start"></div>
                             </div>
                         </div>
@@ -583,7 +660,7 @@
                             </button>
                         </div>
 
-                        <a class="btn_backshop btn_gray_underline btn_gray_dark col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="#">我要再選購</a>
+                        <a class="btn_backshop btn_gray_underline btn_gray_dark col-auto order-2 border-0 text-center text-decoration-underline bg-transparent p-2" href="@ViewData["prodCatalog"]" title="繼續購物：回商品目錄">我要再選購</a>
                     </div>
                 </div>
             </div>
@@ -596,61 +673,66 @@
 
                 <div class="card-body px-0">
                     <div class="pruchase_content">
-                        <div class="status_alert fs-3 fw-bold mt-4 text-center">訂單未完成！</div>
+                        <div class="status_alert fs-3 fw-bold mt-4 text-center"></div>
+                        <div data-key="" class="order_time pe-5 text-end">訂單成立時間：</div>
+                        @if (!ViewBag.isLogin)
+                        {
+                            <div class="buyagain_text fs-5 text-center d-none">請主動聯繫客服人員，或<span class="px-1 text-decoration-underline">點擊此處</span>重新下訂。</div>
+                        }
 
-                        <ul class="purchase_list px-5"></ul>
+                        <ul id="Purchase" class="purchase_list px-5 mb-0"></ul>
 
                         <ul id="CollapsePurchase" class="purchase_list pb-4 px-5 collapse"></ul>
 
                         <template id="Template_Purchase_Details">
-                            <li class="purchase_item row border-bottom border-top py-2 align-items-lg-center position-relative">
+                            <li class="purchase_item row border-bottom py-2 align-items-lg-center position-relative">
                                 <div class="image col-lg-6 col-sm-2 col-4 row gx-0">
-                                    <a class="pro_link col-lg-2 col-12" href="" title="連結至：商品">
-                                        <img class="pro_image img-fluid" alt="商品" src="">
+                                    <a data-key="link" class="pro_link col-lg-2 col-12" href="" title="連結至：商品" target="_blank">
+                                        <img data-key="imagePath" class="pro_image img-fluid" alt="商品" src="">
                                     </a>
-                                    <a class="pro_link col text-start overflow-hidden" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link col text-start overflow-hidden" href="" title="連結至：商品" target="_blank">
                                         <div class="content d-lg-block d-none">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
+                                                @* <div data-key="describe" class="pro_instructions single_line"></div> *@
                                             </div>
                                         </div>
                                     </a>
                                 </div>
 
                                 <div class="content col-sm-6 col row gx-0 overflow-hidden">
-                                    <a class="pro_link" href="" title="連結至：商品">
+                                    <a data-key="link" class="pro_link" href="" title="連結至：商品" target="_blank">
                                         <div class="d-lg-none d-block text-start">
-                                            <div class="pro_name single_line fw-bold"></div>
+                                            <div data-key="title" class="pro_name single_line fw-bold"></div>
                                             <div class="pro_detail d-flex flex-wrap">
-                                                <div class="pro_specification pe-3"></div>
-                                                <div class="pro_instructions single_line"></div>
+                                                <div data-key="spec" class="pro_specification pe-3"></div>
+                                                <div data-key="describe" class="pro_instructions single_line"></div>
                                             </div>
                                         </div>
                                     </a>
 
-                                    <div class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
+                                    <div data-key="price" class="pro_unit price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center"></div>
 
-                                    <div class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
+                                    <div data-key="quantity" class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
 
-                                    <div class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
+                                    <div data-key="subtotal" class="pro_subtotal col-4 price fw-bold fs-5 d-lg-block d-none text-center" data-subtotal=""></div>
                                 </div>
                             </li>
                         </template>
 
-                        <div class="endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
+                        <div class="mt-3 endline px-3 pe-sm-5 col-12 col-md-6 offset-md-6">
                             <div class="py-2 d-flex justify-content-end text-end">
                                 <div>總金額</div>
-                                <div class="subtotal col-4 price"></div>
+                                <div data-key="subtotal" class="subtotal col-4 price">0</div>
                             </div>
                             <div class="py-2 d-flex justify-content-end text-end">
                                 <div>運費</div>
-                                <div class="shipping_fee col-4 price">0</div>
+                                <div data-key="freight" class="shipping_fee col-4 price">0</div>
                             </div>
                             <div class="py-2 border-top d-flex justify-content-end text-end align-items-baseline">
                                 <div>本次消費總金額</div>
-                                <div class="total_amount col-4 price fs-5 fw-bold">26,200</div>
+                                <div data-key="total" class="total_amount col-4 price fs-5 fw-bold">0</div>
                             </div>
                         </div>
 
@@ -668,15 +750,15 @@
                         <div class="content">
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="orderer" data-type="name" class="col text-start"></div>
+                                <div data-key="orderer" data-type="name" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="ordererEmail" data-type="email" class="col text-start"></div>
+                                <div data-key="ordererEmail" data-type="email" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="ordererCellphone" data-type="phone" class="col text-start"></div>
+                                <div data-key="ordererCellPhone" data-type="phone" class="col text-start ps-0"></div>
                             </div>
                         </div>
                     </div>
@@ -687,19 +769,19 @@
                         <div class="content">
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="recipient" data-type="name" class="col text-start"></div>
+                                <div data-key="recipient" data-type="name" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="recipientEmail" data-type="email" class="col text-start"></div>
+                                <div data-key="recipientEmail" data-type="email" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="recipientCellphone" data-type="phone" class="col text-start"></div>
+                                <div data-key="recipientCellPhone" data-type="phone" class="col text-start ps-0"></div>
                             </div>
                             <div class="row">
                                 <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div data-key="recipientAddress" data-type="address" class="col text-start"></div>
+                                <div data-key="recipientAddress" data-type="address" class="col text-start ps-0"></div>
                             </div>
                         </div>
                     </div>
@@ -711,51 +793,51 @@
                             <div class="orderer d-none">
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                    <div data-key="orderer" data-type="name" class="col text-start"></div>
+                                    <div data-key="orderer" data-type="name" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                    <div data-key="ordererEmail" data-type="email" class="col text-start"></div>
+                                    <div data-key="ordererEmail" data-type="email" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                    <div data-key="ordererCellphone" data-type="phone" class="col text-start"></div>
+                                    <div data-key="ordererCellPhone" data-type="phone" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                    <div data-key="ordererAddress" data-type="address" class="col text-start"></div>
+                                    <div data-key="ordererAddress" data-type="address" class="col text-start ps-0"></div>
                                 </div>
                             </div>
                             <div class="recipient d-none">
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                    <div data-key="recipient" data-type="name" class="col text-start"></div>
+                                    <div data-key="recipient" data-type="name" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                    <div data-key="recipientEmail" data-type="email" class="col text-start"></div>
+                                    <div data-key="recipientEmail" data-type="email" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                    <div data-key="recipientCellphone" data-type="phone" class="col text-start"></div>
+                                    <div data-key="recipientCellPhone" data-type="phone" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                    <div data-key="recipientAddress" data-type="address" class="col text-start"></div>
+                                    <div data-key="recipientAddress" data-type="address" class="col text-start ps-0"></div>
                                 </div>
                             </div>
                             <div class="company d-none">
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">發票抬頭：</div>
-                                    <div data-key="invoiceTitle" data-type="name" class="col text-start"></div>
+                                    <div data-key="invoiceTitle" data-type="name" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">統　　編：</div>
-                                    <div data-key="uniformId" data-type="uniformId" class="col text-start"></div>
+                                    <div data-key="uniformId" data-type="uniformId" class="col text-start ps-0"></div>
                                 </div>
                                 <div class="row">
                                     <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                    <div data-key="invoiceAddress" data-type="address" class="col text-start"></div>
+                                    <div data-key="invoiceAddress" data-type="address" class="col text-start ps-0"></div>
                                 </div>
                             </div>
                         </div>
@@ -765,7 +847,7 @@
                         <div class="storememo d-none">@ViewData["storeMemo"]</div>
                         <div class="title px-3 py-2 my-3 d-flex align-items-center">
                             <div class="fs-5">付款方式</div>
-                            <div class="payment_method px-3">尚未選擇付款方式</div>
+                            <div data-key="payment" class="payment_method px-3 fs-5">尚未選擇付款方式</div>
                         </div>
 
                         <div class="pay_info px-4 d-none">
@@ -773,11 +855,11 @@
                             <div class="border-bottom border-top text-start py-3 my-3">
                                 <div class="mb-2 row align-items-center">
                                     <div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
-                                    <div class="col">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
+                                    <div class="col ps-0">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
                                 </div>
                                 <div class="mb-2 row align-items-center">
                                     <div class="col-auto col-sm-2 text-end">繳費期限：</div>
-                                    <div class="paid_date col"></div>
+                                    <div class="paid_date col ps-0"></div>
                                 </div>
                             </div>
                         </div>

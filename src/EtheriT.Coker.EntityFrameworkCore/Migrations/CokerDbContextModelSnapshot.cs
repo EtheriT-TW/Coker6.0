@@ -73,7 +73,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -102,7 +104,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -156,7 +160,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -174,7 +180,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -201,7 +209,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -231,7 +241,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -295,6 +307,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
+
+                    b.HasIndex("Title");
 
                     b.ToTable("Article");
                 });
@@ -385,7 +399,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -402,7 +418,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(150)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -433,7 +451,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -457,7 +477,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -498,7 +520,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -513,7 +537,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -561,7 +587,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -583,7 +611,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -620,7 +650,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -635,7 +667,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -661,7 +695,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -679,7 +715,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -723,7 +761,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -741,7 +781,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -771,7 +813,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -796,7 +840,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -843,7 +889,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -871,7 +919,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -879,8 +929,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("Level")
-                        .HasColumnType("int");
+                    b.Property<long?>("Level")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("LockTime")
                         .HasColumnType("datetime2");
@@ -902,6 +952,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PrivacyAgreeTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("Sex")
                         .HasColumnType("int");
@@ -930,7 +983,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -965,7 +1020,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1040,7 +1097,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Json")
                         .IsRequired()
@@ -1071,7 +1130,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1098,7 +1159,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1139,7 +1202,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1155,7 +1220,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1186,7 +1253,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1206,7 +1275,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1232,7 +1303,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1250,7 +1323,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1276,7 +1351,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1294,7 +1371,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1320,7 +1399,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1332,7 +1413,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1360,7 +1443,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1372,7 +1457,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1419,7 +1506,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1431,7 +1520,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1483,7 +1574,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1498,7 +1591,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1523,7 +1618,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1541,7 +1638,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1627,7 +1726,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1639,7 +1740,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1761,7 +1864,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1779,7 +1884,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1807,11 +1914,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Bonus")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<long?>("CouponId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1851,7 +1963,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -1859,55 +1973,76 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("Memo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Orderer")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("OrdererAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("OrdererCellPhone")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("OrdererEmail")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<int>("OrdererSex")
                         .HasColumnType("int");
 
                     b.Property<string>("OrdererTelephone")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("Payment")
                         .HasColumnType("int");
 
                     b.Property<string>("Recipient")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("RecipientAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("RecipientCellPhone")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("RecipientEmail")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<int>("RecipientSex")
                         .HasColumnType("int");
 
                     b.Property<string>("RecipientTelephone")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Remark")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("RepayDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RepayTimes")
+                        .HasColumnType("int");
 
                     b.Property<int?>("Service_Charge")
                         .HasColumnType("int");
@@ -1921,7 +2056,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("Subtotal")
                         .HasColumnType("int");
 
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UniformId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("refundTransactionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("refundTransactionId")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -1942,7 +2086,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -1957,7 +2103,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2005,7 +2153,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 3,
                             Title = "信用卡付款",
                             Used = false
                         },
@@ -2017,8 +2165,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
-                            Title = "ATM付款",
+                            SerNo = 8,
+                            Title = "ATM(虛擬帳戶)",
                             Used = false
                         },
                         new
@@ -2029,7 +2177,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 7,
                             Title = "PI錢包付款",
                             Used = false
                         },
@@ -2040,7 +2188,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
-                            IsDeleted = false,
+                            IsDeleted = true,
                             SerNo = 500,
                             Title = "支付連餘額付款",
                             Used = false
@@ -2053,7 +2201,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 9,
                             Title = "支付連銀行支付付款",
                             Used = false
                         },
@@ -2065,7 +2213,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 10,
                             Title = "7-11貨到付款",
                             Used = false
                         },
@@ -2077,7 +2225,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 11,
                             Title = "全家貨到付款",
                             Used = false
                         },
@@ -2088,7 +2236,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
-                            IsDeleted = false,
+                            IsDeleted = true,
                             SerNo = 500,
                             Title = "OK貨到付款",
                             Used = false
@@ -2101,7 +2249,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 12,
                             Title = "萊爾富貨到付款",
                             Used = false
                         },
@@ -2113,7 +2261,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 4,
                             Title = "線上刷卡3期分期付款",
                             Used = false
                         },
@@ -2125,7 +2273,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 5,
                             Title = "線上刷卡6期分期付款",
                             Used = false
                         },
@@ -2137,7 +2285,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 2L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 6,
                             Title = "線上刷卡12期分期付款",
                             Used = false
                         },
@@ -2149,8 +2297,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 1L,
                             FK_ThirdPartyId = 3L,
                             IsDeleted = false,
-                            SerNo = 500,
+                            SerNo = 2,
                             Title = "LINEPay",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 15L,
+                            Code = "PCHomeIBRCD",
+                            CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_ThirdPartyId = 2L,
+                            IsDeleted = false,
+                            SerNo = 13,
+                            Title = "超商條碼付款",
                             Used = false
                         });
                 });
@@ -2164,7 +2324,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2182,7 +2344,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2304,7 +2468,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2341,7 +2507,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(3000)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("ItemNo")
                         .HasMaxLength(100)
@@ -2391,6 +2559,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
+
+                    b.HasIndex("Title");
 
                     b.ToTable("Prods");
 
@@ -2473,7 +2643,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2494,7 +2666,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2534,7 +2708,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("float");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2552,7 +2728,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2581,7 +2759,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2596,7 +2776,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2707,7 +2889,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2722,7 +2906,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2782,7 +2968,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2803,7 +2991,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -2964,7 +3154,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -2985,7 +3177,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3010,8 +3204,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Cellphone")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3031,7 +3237,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3043,6 +3251,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("Sex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Telephone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("UUID")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -3088,7 +3307,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime>("LastStatComputedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LeaveTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("TimeOnPage")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UUID")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ExecutionTime");
 
                     b.HasIndex("FK_ArticleId");
 
@@ -3099,6 +3337,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_UserId");
 
                     b.HasIndex("FK_WebmenuId");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.HasIndex("State");
+
+                    b.HasIndex("UUID");
 
                     b.ToTable("Remotes");
                 });
@@ -3112,7 +3356,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3127,7 +3373,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsSuperUser")
                         .HasColumnType("bit");
@@ -3191,6 +3439,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<Guid>("UUID")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
@@ -3210,7 +3461,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3243,7 +3496,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsOrder")
                         .HasColumnType("bit");
@@ -3253,6 +3508,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("OldQuantity")
+                        .HasColumnType("int");
 
                     b.Property<int>("Price")
                         .HasColumnType("int");
@@ -3285,7 +3543,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3300,7 +3560,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3331,7 +3593,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("pattern")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("type")
+                    b.Property<int>("type")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -3430,6 +3692,96 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "了解更多",
                             pattern = "",
                             type = 1
+                        },
+                        new
+                        {
+                            Id = 7L,
+                            CreationTime = new DateTime(2024, 11, 12, 11, 59, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "prodCatalog",
+                            maxlength = 255,
+                            memo = "輸入商品目錄連結，以利前台新增返回目錄按鈕。",
+                            name = "商品目錄",
+                            pattern = "",
+                            type = 1
+                        },
+                        new
+                        {
+                            Id = 8L,
+                            CreationTime = new DateTime(2024, 11, 12, 11, 59, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "membershipTerms",
+                            maxlength = 5000,
+                            memo = "請輸入會員條款內文",
+                            name = "會員條款",
+                            pattern = "",
+                            type = 2
+                        },
+                        new
+                        {
+                            Id = 9L,
+                            CreationTime = new DateTime(2024, 12, 5, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 3L,
+                            IsDeleted = false,
+                            jobID = "S001",
+                            key = "SMTPPath",
+                            maxlength = 255,
+                            memo = "請輸入SMTP Server",
+                            name = "SMTP Server",
+                            pattern = "",
+                            type = 1
+                        },
+                        new
+                        {
+                            Id = 10L,
+                            CreationTime = new DateTime(2024, 12, 5, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 3L,
+                            IsDeleted = false,
+                            jobID = "S001",
+                            key = "SMTPPort",
+                            maxlength = 5,
+                            memo = "請輸入Port",
+                            name = "Port",
+                            pattern = "",
+                            type = 8
+                        },
+                        new
+                        {
+                            Id = 11L,
+                            CreationTime = new DateTime(2024, 12, 5, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 3L,
+                            IsDeleted = false,
+                            jobID = "S001",
+                            key = "SMTPAccount",
+                            maxlength = 255,
+                            memo = "請輸入 帳號",
+                            name = "帳號",
+                            pattern = "",
+                            type = 9
+                        },
+                        new
+                        {
+                            Id = 12L,
+                            CreationTime = new DateTime(2024, 12, 5, 6, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 3L,
+                            IsDeleted = false,
+                            jobID = "S001",
+                            key = "SMTPPassword",
+                            maxlength = 50,
+                            memo = "請輸入 密碼",
+                            name = "密碼",
+                            pattern = "",
+                            type = 10
                         });
                 });
 
@@ -3442,7 +3794,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3460,7 +3814,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3492,7 +3848,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3512,7 +3870,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(150)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3549,6 +3909,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Image = "",
                             IsDeleted = false,
                             Title = "商店設定"
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            CreationTime = new DateTime(2024, 12, 5, 18, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            Description = "",
+                            Image = "",
+                            IsDeleted = false,
+                            Title = "信件伺服器設定"
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            CreationTime = new DateTime(2024, 12, 5, 18, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            Description = "",
+                            Image = "",
+                            IsDeleted = false,
+                            Title = "框架設定"
                         });
                 });
 
@@ -3561,7 +3941,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3576,7 +3958,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Key")
                         .IsRequired()
@@ -3692,7 +4076,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3707,7 +4093,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsTemporary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3724,6 +4117,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
+                    b.HasIndex("Title", "FK_WebsiteId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
                     b.ToTable("Tags");
                 });
 
@@ -3736,7 +4133,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3754,7 +4153,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3781,7 +4182,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3799,7 +4202,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3825,7 +4230,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3843,7 +4250,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3869,7 +4278,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3906,7 +4317,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -3934,6 +4347,67 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("TechnicalCertificates");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Theme", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Css")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Enable")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("FK_WebsiteID")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("FoodType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HeadType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("LayoutType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteID");
+
+                    b.ToTable("Themes");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdParty", b =>
                 {
                     b.Property<long>("Id")
@@ -3947,7 +4421,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -3959,7 +4435,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -4037,7 +4515,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -4053,7 +4533,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -4163,7 +4645,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -4181,7 +4665,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -4213,6 +4699,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("PrivacyAgreeTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
@@ -4234,6 +4723,137 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("Tokens");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserActivityTags", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreateTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getdate()");
+
+                    b.Property<long>("FK_RemoteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_TId")
+                        .HasColumnType("bigint");
+
+                    b.Property<float>("Weight")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_RemoteId");
+
+                    b.ToTable("UserActivityTags");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGrouping", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Enable")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserGroupings");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGroupingDetail", b =>
+                {
+                    b.Property<Guid>("UUID")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("FK_GropingId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("UUID", "FK_GropingId");
+
+                    b.HasIndex("FK_GropingId");
+
+                    b.ToTable("UserGroupingDetails");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserTagStatistic", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<long>("FK_TagId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("LastActivityTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getdate()");
+
+                    b.Property<DateTime>("LastModificationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getdate()");
+
+                    b.Property<int>("TotalTimes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UUID")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double>("Weight")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_TagId");
+
+                    b.ToTable("UserTagStatistics");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
                 {
                     b.Property<long>("Id")
@@ -4243,7 +4863,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -4276,7 +4898,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("LanBar")
                         .HasColumnType("bit");
@@ -4367,6 +4991,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("FK_WebsiteId");
 
+                    b.HasIndex("Title");
+
                     b.ToTable("WebMenus");
                 });
 
@@ -4382,16 +5008,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Contract")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("DefaultUrl")
+                    b.Property<string>("Css")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
@@ -4409,7 +5042,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Keywords")
                         .HasColumnType("nvarchar(max)");
@@ -4430,14 +5065,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Locale")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Logo")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OrgName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
@@ -4447,11 +5084,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.HasKey("Id");
 
@@ -4505,7 +5144,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
@@ -4524,7 +5165,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -5235,6 +5878,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Theme", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany("Themes")
+                        .HasForeignKey("FK_WebsiteID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Website");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ThirdPartyKeypair", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.ThirdParty", "ThirdParty")
@@ -5263,6 +5917,39 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("ThirdPartyKeypair");
 
                     b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserActivityTags", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Remote", "Remote")
+                        .WithMany("UserActivityTags")
+                        .HasForeignKey("FK_RemoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Remote");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGroupingDetail", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.UserGrouping", "userGrouping")
+                        .WithMany("UserGroupingDetails")
+                        .HasForeignKey("FK_GropingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("userGrouping");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserTagStatistic", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Tag", "Tag")
+                        .WithMany("UserTagStatistics")
+                        .HasForeignKey("FK_TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -5373,6 +6060,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("ShoppingCarts");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Remote", b =>
+                {
+                    b.Navigation("UserActivityTags");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>
                 {
                     b.Navigation("PermissionDetails");
@@ -5406,6 +6098,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Tag_Associates");
 
                     b.Navigation("Tag_TagGroups");
+
+                    b.Navigation("UserTagStatistics");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Tag_Group", b =>
@@ -5435,6 +6129,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Token", b =>
                 {
                     b.Navigation("Prod_Logs");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.UserGrouping", b =>
+                {
+                    b.Navigation("UserGroupingDetails");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebMenu", b =>
@@ -5489,6 +6188,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Tags");
 
                     b.Navigation("TechnicalCertificates");
+
+                    b.Navigation("Themes");
 
                     b.Navigation("Users");
 

@@ -5,6 +5,7 @@ var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal
 var $price_modal, priceModal
 var total_files = [];
 let importProdPopup = null;
+
 function ImportProd() {
     var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
     co.Product.AddUp.Import(formData).done(function (response) {
@@ -148,7 +149,7 @@ function PageReady() {
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回商品列表", "資料將不被保存", "確定", "取消", function () {
-            window.location.hash = "";
+            BackToList(true);
         });
     })
     $(".btn_add").on("click", function () {
@@ -216,10 +217,47 @@ function PageReady() {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                AddUp("已成功發布", "發布發生未知錯誤", "Canvas");
+                Array.from(forms).forEach(form => {
+                    if (form.checkValidity()) {
+                        if (ISpecRepect()) {
+                            if ($removedFromShelves.is(":checked")) {
+                                $removedFromShelves.prop("checked", false);
+                                AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
+                            } else {
+                                AddUp("已成功儲存", "儲存發生未知錯誤", "Canvas");
+                            }
+                        } else {
+                            var price_null = false;
+                            var $null_input;
+                            $(".input_price").each(function () {
+                                if ($(this).val() == "") {
+                                    price_null = true;
+                                    $null_input = $(this);
+                                    return false;
+                                }
+                            })
+                            if (price_null) {
+                                if ($removedFromShelves.is(":checked")) {
+                                    $removedFromShelves.prop("checked", false);
+                                    AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
+                                } else {
+                                    AddUp("已成功儲存", "儲存發生未知錯誤", "Canvas");
+                                }
+                            } else {
+                                AddUp("已成功發布", "發布發生未知錯誤", "Canvas");
+                            }
+                        }
+                    } else {
+                        if ($removedFromShelves.is(":checked")) {
+                            $removedFromShelves.prop("checked", false);
+                            AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
+                        } else {
+                            AddUp("已成功儲存", "儲存發生未知錯誤", "Canvas");
+                        }
+                    }
+                });
             } else if (result.isDenied) {
-                var hash = window.location.hash.replace("#", "") + "-1";
-                window.location.hash = hash;
+                window.location.hash = `${keyId}-1`;
             }
         })
     })
@@ -341,8 +379,11 @@ function HashDataEdit() {
                 if (hash.includes('-1')) {
                     MoveToCanvas();
                 } else {
-                    SpecAdd(null);
-                    MoveToContent();
+                    co.Spec.GetPickSpecList().done(function (pick_result) {
+                        spec_pick_list = pick_result;
+                        SpecAdd(null);
+                        MoveToContent();
+                    });
                 }
             } else {
                 if (hash.includes('-1')) {
@@ -357,14 +398,14 @@ function HashDataEdit() {
                                 MoveToContent();
                             });
                         } else {
-                            window.location.hash = ""
+                            BackToList(false);
                         }
                     })
                 }
             }
         }
     } else {
-        BackToList();
+        BackToList(false);
     }
 }
 
@@ -546,7 +587,6 @@ function SpecPriceSave() {
 }
 
 function SpecAdd(result) {
-
     spec_num += 1;
     var item = $($("#TemplateSpecification").html()).clone();
     var item_topline = item.find(".topline"),
@@ -626,9 +666,11 @@ function SpecAdd(result) {
     }
     if (result != null) {
         item.data("psid", result.id);
+        item.data("oldstock", result.stock);
     } else {
         temp_psid += 1;
         item.data("temppsid", temp_psid);
+        item.data("oldstock", null);
     }
 
     var index = modal_price_list.findIndex(mitem => mitem["FK_PSId"] == item.data("psid") || (mitem["TempPSid"] != null && mitem["TempPSid"] == item.data("temppsid")))
@@ -641,7 +683,7 @@ function SpecAdd(result) {
     }
     item_subItemNo.val(result != null ? result.subItemNo : "")
     item_min.val(result != null ? result.min_Qty : "");
-    item_stock.val(result != null ? result.stock : "");
+    item_stock.val(result != null ? result.stock + result.orderStock : "");
     item_alert.val("");
     item_alert.val(result != null ? result.alert_Qty : "");
     item_collapse.attr("id", "CollapseDetail" + spec_num);
@@ -892,10 +934,12 @@ function UploadListAdd(result, $target) {
         } else if (typeof ($self.data("tempid")) != "undefined") {
             var tempid = $self.data("tempid");
             var index = total_files.findIndex(item => item["TempId"] == tempid);
-            total_files.splice(index, 1);
-            total_files.forEach(file => {
-                file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
-            })
+            if (index >= 0) {
+                total_files.splice(index, 1);
+                total_files.forEach(file => {
+                    file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
+                })
+            }
         }
         UploadPreviewFrameClear($target);
         $self.remove();
@@ -962,6 +1006,7 @@ function AddUp(success_text, error_text, target) {
         obj["Alert_Qty"] = $self.find(".input_alert_number").val();
         obj["Min_Qty"] = $self.find(".input_min_number").val();
         obj["Ser_No"] = temp_serno;
+        obj['OldStock'] = $self.data("oldstock");
         temp_serno++;
 
         var price_list = [];
@@ -1003,10 +1048,8 @@ function AddUp(success_text, error_text, target) {
         if (result.success) {
             Coker.sweet.success(success_text, null, true);
             if (total_files.length > 0) {
-
                 $("#ProductForm > .data_upload > ul > li").each(function () {
                     var $self = $(this);
-
                     if (!$self.hasClass("btn_upload_add")) {
                         var data = [];
                         total_files.forEach(file => {
@@ -1014,88 +1057,110 @@ function AddUp(success_text, error_text, target) {
                                 data.push(file);
                             }
                         })
-
-                        switch (data[0]["Type"]) {
-                            case 1:
-                                if (typeof (data[0]["File"]) == "string") {
-                                    co.File.fileSortChange({
-                                        Id: data[0]["Id"],
-                                        Sid: pid,
-                                        SerNo: $self.find(".ser_no").val(),
-                                    });
-                                } else {
-                                    var formData = new FormData();
-                                    formData.append("type", 1);
-                                    formData.append("sid", pid);
-                                    formData.append("serno", $self.find(".ser_no").val());
-                                    data.forEach(item => {
-                                        for (var i = 0; i < item["File"].length; i++) {
-                                            formData.append("files", item["File"][i]);
-                                        }
-                                        co.File.Upload(formData);
-                                        formData.delete('files');
-                                    })
-                                }
-                                break;
-                            /* ********** *****************
-                          360 上傳資料庫，須重打
-                           ***************************/
-                            case 2:
-                                var formData = new FormData();
-                                formData.append("type", 1);
-                                formData.append("sid", pid);
-                                formData.append("serno", $self.find(".ser_no").val());
-                                for (var i = 0; i < data.length; i += 3) {
-                                    for (var j = i; j < i + 3; j++) {
-                                        formData.append('files', data[j]);
+                        if (data.length > 0) {
+                            switch (data[0]["Type"]) {
+                                case 1:
+                                    if (typeof (data[0]["File"]) == "string") {
+                                        co.File.fileSortChange({
+                                            Id: data[0]["Id"],
+                                            Sid: pid,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        });
+                                    } else {
+                                        var formData = new FormData();
+                                        formData.append("type", 1);
+                                        formData.append("sid", pid);
+                                        formData.append("serno", $self.find(".ser_no").val());
+                                        data.forEach(item => {
+                                            for (var i = 0; i < item["File"].length; i++) {
+                                                formData.append("files", item["File"][i]);
+                                            }
+                                            co.File.Upload(formData).done(function (result) {
+                                                if (result.success) {
+                                                    for (let n = 0; n < data.length; n++) {
+                                                        data[n].Id = result.files[n].id;
+                                                        data[n].File = result.files[n].path;
+                                                    }
+                                                }
+                                            });
+                                            formData.delete('files');
+                                        })
                                     }
-                                    formData.delete('files');
-                                }
-                                break;
-                            /* ********** *****************
-                               影片上傳資料庫，不確定錯誤是否在這
-                                ***************************/
-                            case 3:
-                                if (typeof (data[0]["File"]) == "string") {
-                                    co.File.fileSortChange({
-                                        Id: data[0]["Id"],
-                                        sid: pid,
-                                        SerNo: $self.find(".ser_no").val(),
-                                    });
-                                } else {
+                                    break;
+                                /* ********** *****************
+                              360 上傳資料庫，須重打
+                               ***************************/
+                                case 2:
                                     var formData = new FormData();
-                                    formData.append("files", data[0]["File"]);
                                     formData.append("type", 1);
                                     formData.append("sid", pid);
                                     formData.append("serno", $self.find(".ser_no").val());
-                                    co.File.Upload(formData);
-                                }
-                                break;
-                            case 4:
-                                var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
-                                co.File.UploadYTLink({
-                                    Id: Id,
-                                    File: data[0]["File"] + "",
-                                    SId: pid,
-                                    Type: 1,
-                                    SerNo: $self.find(".ser_no").val(),
-                                });
-                                break;
-                            case 5:
-                                if (typeof (data[0]["File"]) == "string") {
-                                    co.File.fileSortChange({
-                                        Id: data[0]["Id"],
-                                        sid: pid,
+                                    for (var i = 0; i < data.length; i += 3) {
+                                        for (var j = i; j < i + 3; j++) {
+                                            formData.append('files', data[j]);
+                                        }
+                                        formData.delete('files');
+                                    }
+                                    break;
+                                /* ********** *****************
+                                   影片上傳資料庫，不確定錯誤是否在這
+                                    ***************************/
+                                case 3:
+                                    if (typeof (data[0]["File"]) == "string") {
+                                        co.File.fileSortChange({
+                                            Id: data[0]["Id"],
+                                            sid: pid,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        });
+                                    } else {
+                                        var formData = new FormData();
+                                        formData.append("files", data[0]["File"]);
+                                        formData.append("type", 1);
+                                        formData.append("sid", pid);
+                                        formData.append("serno", $self.find(".ser_no").val());
+                                        co.File.Upload(formData).done(function (result) {
+                                            if (result.success) {
+                                                data[0].Id = result.files[0].id;
+                                                data[0].File = result.files[0].path;
+                                            }
+                                        });
+                                    }
+                                    break;
+                                case 4:
+                                    var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
+                                    co.File.UploadYTLink({
+                                        Id: Id,
+                                        File: data[0]["File"] + "",
+                                        SId: pid,
+                                        Type: 1,
                                         SerNo: $self.find(".ser_no").val(),
+                                    }).done(function (result) {
+                                        if (result.success) {
+                                            data[0].Id = result.files[0].id;
+                                        }
                                     });
-                                } else {
-                                    var formData = new FormData();
-                                    formData.append("files", data[0]["File"]);
-                                    formData.append("type", 8);
-                                    formData.append("sid", pid);
-                                    formData.append("serno", $self.find(".ser_no").val());
-                                    co.File.Upload(formData);
-                                }
+                                    break;
+                                case 5:
+                                    if (typeof (data[0]["File"]) == "string") {
+                                        co.File.fileSortChange({
+                                            Id: data[0]["Id"],
+                                            sid: pid,
+                                            SerNo: $self.find(".ser_no").val(),
+                                        });
+                                    } else {
+                                        var formData = new FormData();
+                                        formData.append("files", data[0]["File"]);
+                                        formData.append("type", 8);
+                                        formData.append("sid", pid);
+                                        formData.append("serno", $self.find(".ser_no").val());
+                                        co.File.Upload(formData).done(function (result) {
+                                            if (result.success) {
+                                                data[0].Id = result.files[0].id;
+                                                data[0].File = result.files[0].path;
+                                            }
+                                        });
+                                    }
+                            }
                         }
                     }
                 })
@@ -1126,32 +1191,31 @@ function AddUp(success_text, error_text, target) {
                     }
                 });
 
-                if (target == "List") {
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                } else if (target == "Canvas") {
-                    setTimeout(function () {
-                        var hash = window.location.hash.replace("#", "") + "-1";
-                        window.location.hash = hash;
-                    }, 1000);
+                switch (target) {
+                    case "List":
+                        setTimeout(function () {
+                            BackToList(true);
+                        }, 1000);
+                        break;
+                    case "Canvas":
+                        setTimeout(function () {
+                            window.location.hash = `${pid}-1`;
+                        }, 1000);
+                        break;
                 }
-
             } else {
-
-                if (target == "List") {
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                } else if (target == "Canvas") {
-                    setTimeout(function () {
-                        var hash = window.location.hash.replace("#", "") + "-1";
-                        window.location.hash = hash;
-                    }, 1000);
+                switch (target) {
+                    case "List":
+                        setTimeout(function () {
+                            BackToList(true);
+                        }, 1000);
+                        break;
+                    case "Canvas":
+                        setTimeout(function () {
+                            window.location.hash = `${pid}-1`;
+                        }, 1000);
+                        break;
                 }
-
             }
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
@@ -1165,6 +1229,16 @@ function AddUp(success_text, error_text, target) {
             co.Product.Delete.Stock(item);
         })
     }
+}
+
+function setTotalFile(obj) {
+    total_files.forEach((index, item) => {
+        obj.data.forEach((index2, item2) => {
+            if (typeof (item.TempId) != "") {
+
+            }
+        });
+    });
 }
 
 function MoveToContent() {
@@ -1185,10 +1259,13 @@ function MoveToCanvas() {
     $("#ProductCanvas").removeClass("d-none");
 }
 
-function BackToList() {
+function BackToList(refresh) {
     $("#TopLine > a").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");
-    window.location.hash = ""
+    if (refresh) {
+        window.location.hash = "";
+        product_list.component.refresh();
+    }
 }

@@ -1,5 +1,5 @@
 ﻿
-var resetEmailModal, ResetEmailModal, $InputResetEmailVCode, $ResetEmailImgCaptcha, ResetEmailForms
+var resetEmailModal, ResetEmailModal, $InputResetEmailVCode, $ResetEmailImgCaptcha, ResetEmailForms, reOrderAlertModal, ReOrderAlertModal
 var old_email
 var TabNow = "info", date_now = "";
 
@@ -16,12 +16,46 @@ function PageReady() {
                 data: { page: page },
             });
         },
-        CanceOrder: function (ohid) {
+        Reorder: function (ohid) {
             return $.ajax({
-                url: "/api/Order/CanceOrder/",
+                url: "/api/Order/Reorder/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
                 data: { ohid: ohid },
+            });
+        },
+        CheckOrder: function (ohid) {
+            return $.ajax({
+                url: "/api/Order/CheckOrder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid },
+            });
+        },
+        OrderRepay: function (data) {
+            return $.ajax({
+                url: "/api/Order/OrderRepay",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        CancelOrder: function (ohid, payment) {
+            return $.ajax({
+                url: "/api/Order/CancelOrder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                data: { ohid: ohid, payment: payment },
             });
         }
     }
@@ -51,6 +85,7 @@ function Member(data) {
     date_now = `${now.getFullYear()}-${month}-${day}`
 
     resetEmailModal = $("#ResetEmailModal").length > 0 ? new bootstrap.Modal($("#ResetEmailModal")) : null;
+    reOrderAlertModal = $("#ReOrderAlertModal").length > 0 ? new bootstrap.Modal($("#ReOrderAlertModal")) : null;
     $InputResetEmailVCode = $("#InputNewMailVCode");
     $ResetEmailImgCaptcha = $('#NewMailImgCaptcha');
     ResetEmailForms = $('#ResetEmailForm');
@@ -135,6 +170,14 @@ function Member(data) {
             FormClear(ResetEmailForms, $InputResetEmailVCode)
         })
     }
+
+    ReOrderAlertModal = document.getElementById('ReOrderAlertModal')
+    if (ReOrderAlertModal != null) {
+        ReOrderAlertModal.addEventListener('hidden.bs.modal', function (event) {
+            $(".btn_repay").removeClass("d-none")
+            $("#ReOrderAlertModal .orderlist ul li").remove();
+        })
+    }
     $("#ResetEmailForm input").on("keypress", function (event) {
         if (event.which == 13) {
             event.preventDefault();
@@ -195,6 +238,10 @@ function Member(data) {
                 break;
         }
     });
+    $("#ReOrderAlertModal .btn_cancelrepay").on("click", function () {
+        reOrderAlertModal.hide();
+    })
+
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
     } else {
@@ -221,21 +268,25 @@ function WebPageChange() {
             if ($this.hasClass("active")) $this.removeClass("active");
         });
         if (window.location.hash.startsWith("#order")) {
-            $("#TabContent > div#profile-tab-pane").addClass("active show");
-            $("#ToolList > li button#profile-tab").addClass("active");
-            if (window.location.hash.indexOf("-") > 0) {
-                var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if ($.isNumeric(pagenumber)) SetHistoryOrderPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
-                else window.location.hash = "#order-1";
+            if ($("#TabContent > div#profile-tab-pane").length > 0) {
+                $("#TabContent > div#profile-tab-pane").addClass("active show");
+                $("#ToolList > li button#profile-tab").addClass("active");
+                if (window.location.hash.indexOf("-") > 0) {
+                    var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                    if (!isNaN(Number(pagenumber))) SetHistoryOrderPage(pagenumber);
+                    else window.location.hash = "#order-1";
+                } else {
+                    window.location.hash = "#order-1";
+                }
             } else {
-                window.location.hash = "#order-1";
+                window.location.hash = "";
             }
         } else if (window.location.hash.startsWith("#browsing")) {
             $("#TabContent > div#history-tab-pane").addClass("active show");
             $("#ToolList > li button#history-tab").addClass("active");
             if (window.location.hash.indexOf("-") > 0) {
                 var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if ($.isNumeric(pagenumber)) SetBrowsingHistoryPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                if (!isNaN(Number(pagenumber))) SetBrowsingHistoryPage(pagenumber);
                 else window.location.hash = "#browsing-1";
             } else {
                 window.location.hash = "#browsing-1";
@@ -245,7 +296,7 @@ function WebPageChange() {
             $("#ToolList > li button#favorite-tab").addClass("active");
             if (window.location.hash.indexOf("-") > 0) {
                 var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
-                if ($.isNumeric(pagenumber)) SetFavoritesPage(window.location.hash.substring(window.location.hash.indexOf("-") + 1));
+                if (!isNaN(Number(pagenumber))) SetFavoritesPage(pagenumber);
                 else window.location.hash = "#favorites-1";
             } else {
                 window.location.hash = "#favorites-1";
@@ -297,7 +348,7 @@ function SetHistoryOrderPage(number) {
                 ContentPageChage($("#profile-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#profile-tab-pane .btn_switchViewType").hasClass("d-none")) $("#profile-tab-pane .btn_switchViewType").removeClass("d-none")
-            HistoryDataInsert(result.orderData)
+            HistoryTemplateDataInsert(result.orderData)
         } else if (number != 1) {
             window.location.hash = "#order-1";
         } else {
@@ -305,56 +356,126 @@ function SetHistoryOrderPage(number) {
         }
     })
 }
-function HistoryDataInsert(Datas) {
+function HistoryTemplateDataInsert(Datas) {
     $("#profile-tab-pane .content").empty();
     $.each(Datas, function (index, data) {
         var order_header = data.orderHeader;
         var order_details = data.orderDetails;
         var frame = $($("#Template_Order_List").html()).clone();
         frame.find(".number").text(("000000000" + order_header.id).substr(order_header.id.length));
-        frame.find(".date").text(((order_header.creationTime).substr(0, 10).replaceAll("-", "/")));
+        frame.find(".date").text(((order_header.creationTime).substr(0, 16).replaceAll("-", "/")));
         frame.find(".amount").text((order_header.total).toLocaleString());
-        if ((order_header.creationTime.split(' ')[0] == date_now) && order_header.state == 1) {
-            frame.find(".state").prepend(`${order_header.stateStr}<button data-ohid="${order_header.id}" class="btn_canceOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
-            frame.find(".state .btn_canceOrder").on("click", function () {
+        frame.find(".payment").text(order_header.payment);
+
+        if (order_header.creationTime.split(' ')[0] == date_now && [1, 2, 6].includes(order_header.state)) {
+            frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_cancelOrder bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">取消訂單</button>`)
+            frame.find(".state button").data("ohid", order_header.id)
+            frame.find(".state .btn_cancelOrder").on("click", function () {
                 var $this = $(this);
-                Coker.sweet.confirm("確定取消訂單？", "", "是", "否", function () {
+                var confirm_text = [2, 6].includes(order_header.state) ? order_header.thirdParties != 1 ? "並退回款項?" : "？(退款事宜請聯繫客服處理)" : "?";
+                Coker.sweet.confirm("取消訂單", `確定要取消這筆訂單${confirm_text}`, "確定", "取消", function () {
                     Coker.sweet.loading();
-                    Coker.Member.CanceOrder($this.data("ohid")).done(function (result) {
+                    Coker.Member.CancelOrder($this.data("ohid"), order_header.thirdParties).done(function (result) {
                         if (result.success) {
                             $this.parent(".state").addClass("text-danger fw-bold");
                             $this.parent(".state").text("已取消");
-                            Coker.sweet.success("已取消訂單", null, false);
+                            Coker.sweet.success(result.message, null, false);
                         } else {
-                            console.log(result.message);
+                            Coker.sweet.error("取消訂單發生錯誤", result.message);
                         }
                     })
+                })
+            });
+        } else if (order_header.thirdParties != 1 && order_header.state == 5) {
+            frame.find(".state").prepend(`${order_header.stateStr}<button class="btn_payAgain bg-transparent border-0 text-decoration-underline text-primary" title="取消此筆訂單">重新付款</button>`)
+            frame.find(".state .btn_payAgain").on("click", function () {
+                var $this = $(this);
+                Coker.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
+                    Coker.sweet.loading();
+                    Coker.Member.CheckOrder(order_header.id).done(function (result) {
+                        if (result.success) {
+                            if (result.message == "NoChange") {
+                                OrderRepay(result)
+                            } else {
+                                Swal.close();
+                                reOrderAlertModal.show()
+                                var $frame = $("#ReOrderAlertModal .orderlist");
+                                var old_subtotal = parseInt(result.orderHeader.oldSubtotal);
+                                var freight = parseInt(result.orderHeader.freight.replaceAll(",", ""));
+                                var new_subtotal = parseInt(result.orderHeader.subtotal.replaceAll(",", ""));
+
+                                $frame.find(".oh_subtotal_old").text(old_subtotal.toLocaleString());
+                                $frame.find(".oh_subtotal_new").text(new_subtotal.toLocaleString());
+                                $frame.find(".oh_freight").text(freight.toLocaleString());
+                                $frame.find(".oh_total").text((new_subtotal + freight).toLocaleString());
+
+                                MemberTemplateDataInsert($("#ReOrderAlertModal .orderlist ul"), $("#RePayOrderListTemplate"), result.orderDetails)
+
+                                if (new_subtotal == 0) {
+                                    freight = 0;
+                                    $(".btn_repay").addClass("d-none")
+                                } else {
+                                    $(".btn_repay").data("ohid", order_header.id)
+                                    $(".btn_repay").data("thirdParties", order_header.thirdParties)
+                                    $(".btn_repay").data("new_price", (new_subtotal + freight))
+                                }
+                                $("#ReOrderAlertModal .btn_repay").off("click")
+                                $("#ReOrderAlertModal .btn_repay").on("click", function () {
+                                    Coker.sweet.loading();
+                                    reOrderAlertModal.hide();
+                                    OrderRepay(result)
+                                })
+                            }
+                        } else {
+                            Coker.sweet.error("重新付款發生錯誤", result.message);
+                        }
+                    });
                 })
             });
         }
         else {
             frame.find(".state").text(order_header.stateStr);
-            if (order_header.state == 4 || order_header.state == 5) {
-                frame.find(".state").addClass("text-danger fw-bold");
-            }
+        }
+        if (order_header.state == 4 || order_header.state == 5) {
+            frame.find(".state").addClass("text-danger fw-bold");
         }
 
         frame.find(".collapse").addClass(`collapse_${order_header.id}`);
         frame.find(".btn_collapse").attr("data-bs-target", `.collapse_${order_header.id}`);
 
         frame.find(".btn_collapse").on("click", function () {
-            if ($(this).hasClass("collapsed")) $(this).text("點擊查看訂單詳細");
-            else $(this).text("點擊關閉訂單詳細");
+            if ($(this).hasClass("collapsed")) $(this).text("查看訂單明細");
+            else $(this).text("關閉訂單明細");
         })
 
+        frame.find(".btn_buyAgain").data("ohid", order_header.id);
+        frame.find(".btn_buyAgain").on("click", function () {
+            var $this = $(this);
+            Coker.sweet.confirm("確定要再次購買？", "", "確定", "取消", function () {
+                Coker.sweet.loading();
+                Coker.Member.Reorder($this.data("ohid")).done(function (result) {
+                    if (result.success) {
+                        var ohidstr = `000000000${result.message}`.substring(result.message.length);
+                        window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
+                    } else {
+                        if (result.message == "該商品規格庫存量已在瀏覽期間被更動，按下確定後將重整頁面。") {
+                            Coker.sweet.error("錯誤", "商品庫存不足")
+                        }
+                    }
+                });
+            })
+        })
         $.each(order_details, function (index, detail) {
             if (detail != null) {
                 var list_frame = $($("#Template_Order_Details_List").html()).clone();
                 list_frame.find("a").attr("href", `/${OrgName}/Member/product/${detail.pId}`);
                 list_frame.find("a").attr("title", `連結至：${detail.title}`);
+                detail.imagePath = detail.imagePath.replaceAll(`/${OrgName}/`, `/`)
                 list_frame.find("img").attr("src", detail.imagePath);
                 list_frame.find("img").attr("alt", `${detail.title}的主要圖片`);
                 list_frame.find(".title").text(detail.title);
+                if (detail.s1Title != "") list_frame.find(".spec").append(`<span class="border px-1 me-1">${detail.s1Title}</span>`)
+                if (detail.s2Title != "") list_frame.find(".spec").append(`<span class="border px-1 me-1">${detail.s2Title}</span>`)
                 list_frame.find(".price").text((detail.price).toLocaleString());
                 list_frame.find(".quantity").text(detail.quantity);
                 list_frame.find(".subtotal").text(((parseInt(detail.price)) * (parseInt(detail.quantity))).toLocaleString());
@@ -369,17 +490,48 @@ function HistoryDataInsert(Datas) {
         $("#profile-tab-pane .content").append(frame);
     })
 }
+function OrderRepay(datas) {
+    var data = {}, details = [];
+    $.each(datas.orderDetails, function (index, detail) {
+        var temp_detail = {};
+        temp_detail['scid'] = detail.scId;
+        temp_detail['psid'] = detail.prodStockId;
+        temp_detail['Quantity'] = parseInt(detail.quantity);
+        temp_detail['Price'] = detail.price;
+        details.push(temp_detail);
+    });
+    data['ohid'] = datas.orderHeader.id;
+    data['Subtotal'] = parseInt(datas.orderHeader.subtotal.replaceAll(",", ""));
+    data['Details'] = details;
+    Coker.Member.OrderRepay(data).done(function (result) {
+        if (result.success) {
+            Coker.ThirdParty.Request(datas.orderHeader.id, datas.orderHeader.thirdParties).done(function (result) {
+                if (result.success) {
+                    localStorage.setItem("lastSaveTime", new Date().toISOString())
+                    window.location.replace(result.message);
+                } else {
+                    Coker.sweet.error("重新付款發生錯誤", result.message, null, false);
+                }
+            });
+        } else {
+            Coker.sweet.error("訂單更動發生錯誤", result.message);
+        }
+    });
+}
 function SetFavoritesPage(number) {
     Coker.Favorites.GetDisplay(number).done(function (result) {
         if (result.data.length > 0) {
             if (result.page_Total > 1) {
+                if ($(".page_btn".length > 0)) $(".page_btn").removeClass("d-none");
                 if (!$("#favorite-tab-pane .page_btn").data("init")) {
                     PageButtonInit($("#favorite-tab-pane .page_btn"), result.page_Total, "favorites");
                 }
                 ContentPageChage($("#favorite-tab-pane .page_btn"), number, result.page_Total);
+            } else {
+                if ($(".page_btn".length > 0)) $(".page_btn").addClass("d-none");
             }
             if ($("#favorite-tab-pane .btn_switchViewType").hasClass("d-none")) $("#favorite-tab-pane .btn_switchViewType").removeClass("d-none")
-            DataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
+            MemberTemplateDataInsert($("#favorite-tab-pane .content"), $("#FavoriteTemplate"), result.data)
         } else if (number != 1) {
             window.location.hash = "#favorites-1";
         } else {
@@ -389,7 +541,7 @@ function SetFavoritesPage(number) {
 }
 function SetBrowsingHistoryPage(number) {
     Product.GetAll.History(number).done(function (result) {
-        if (result.data.length > 0) {
+        if (result.success && result.data.length > 0) {
             if (result.page_Total > 1) {
                 if (!$("#history-tab-pane .page_btn").data("init")) {
                     PageButtonInit($("#history-tab-pane .page_btn"), result.page_Total, "browsing");
@@ -397,7 +549,7 @@ function SetBrowsingHistoryPage(number) {
                 ContentPageChage($("#history-tab-pane .page_btn"), number, result.page_Total);
             }
             if ($("#history-tab-pane .btn_switchViewType").hasClass("d-none")) $("#history-tab-pane .btn_switchViewType").removeClass("d-none")
-            DataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data)
+            MemberTemplateDataInsert($("#history-tab-pane .content"), $("#BrowsingTemplate"), result.data)
         } else if (number != 1) {
             window.location.hash = "#browsing-1";
         } else {
@@ -426,6 +578,7 @@ function PageButtonInit($self, page_total, thishash) {
     }
     $self.data("init", true)
     $self.find(".btn_prev button").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
         var $btn = $(this);
         var page_now = window.location.hash.indexOf('-') < 0 ? 1 : parseInt(window.location.hash.substring(window.location.hash.indexOf('-') + 1));
         if (page_now > 1) page_now -= 1;
@@ -433,6 +586,7 @@ function PageButtonInit($self, page_total, thishash) {
         window.location.hash = `#${thishash}-${page_now}`;
     })
     $self.find(".btn_next button").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
         var $btn = $(this);
         var page_now = window.location.hash.indexOf('-') < 0 ? 1 : parseInt(window.location.hash.substring(window.location.hash.indexOf('-') + 1));
         if (page_now < page_total) page_now += 1;
@@ -440,6 +594,7 @@ function PageButtonInit($self, page_total, thishash) {
         window.location.hash = `#${thishash}-${page_now}`;
     })
     $self.find(".btn_page button").on("click", function () {
+        $('html, body').animate({ scrollTop: 0 }, 0);
         var $btn = $(this);
         ContentPageChage($btn.parent("li").parent("ul"), $btn.data("page"), page_total);
         window.location.hash = `#${thishash}-${$btn.data("page")}`;
@@ -504,39 +659,92 @@ function ContentPageChage($self, page, page_total) {
         });
     }
 }
-function DataInsert($content, $frame, datas) {
+function MemberTemplateDataInsert($content, $frame, datas) {
     $content.empty();
     $.each(datas, function (index, data) {
         var frame = $($frame.html()).clone();
-        frame.data("Pid", data.pId);
-        frame.find("*").each(function () {
-            var $self = $(this);
-            if (typeof ($self.data("key")) != "undefined") {
-                var key = $self.data("key");
-                switch (key) {
-                    case "link":
-                        $self.attr("href", `/${OrgName}/Member${data['link']}`);
-                        $self.attr("title", `連結至：${data['title']}`);
-                        break;
-                    case "image":
-                        $self.attr("src", data['image']);
-                        $self.attr("alt", `${data['title']}的主要照片`);
-                        break;
-                    case "price":
-                        var prices = data['price'];
-                        if (prices.length > 1) $self.text(`$${prices[0].toLocaleString()}~$${[prices[prices.length - 1].toLocaleString()]}`)
-                        else $self.text(`$${prices[0].toLocaleString()}`)
-                        break;
-                    default:
-                        $self.text(data[key]);
-                        break;
-                }
-            }
-        });
-        FavoritesButtonInit(frame);
-        ShareButtonInit(frame.find(".shareBlock"));
+        frame = MemberDataInsert(frame, data);
+        if (frame.find(".btn_favorite").length > 0) FavoritesButtonInit(frame);
+        if (frame.find(".shareBlock").length > 0) ShareButtonInit(frame.find(".shareBlock"));
         $content.append(frame);
     })
+}
+function MemberDataInsert(frame, data) {
+    frame.data("Pid", data.pId);
+    if (frame.find(".btn_favorite").length > 0 && typeof (data.fId) != undefined) frame.find(".btn_favorite").data("Fid", data.fId);
+    frame.find("*").each(function () {
+        var $self = $(this);
+        if (typeof ($self.data("key")) != "undefined") {
+            var key = $self.data("key");
+            switch (key) {
+                case "link":
+                    $self.attr("href", `/${OrgName}/Member${data[key]}`);
+                    $self.attr("title", `連結至：${data['title']}`);
+                    break;
+                case "image":
+                case "imagePath":
+                    data[key] = data[key].replaceAll(`/${OrgName}/`, `/`);
+                    $self.attr("src", data[key]);
+                    $self.attr("alt", `${data['title']}的主要照片`);
+                    break;
+                case "price":
+                    switch (typeof (data[key])) {
+                        case "object":
+                            var prices = data[key];
+                            if (prices == null) {
+                                $self.text("");
+                            } else {
+                                if (prices.length > 1 && prices[0] != prices[prices.length - 1]) $self.html(`$${prices[0].toLocaleString()}<wbr>~<wbr>$${[prices[prices.length - 1].toLocaleString()]}`)
+                                else $self.text(`$${prices[0].toLocaleString()}`)
+                            }
+                            break;
+                        default:
+                            $self.text(data[key].toLocaleString());
+                            break;
+                    }
+                    break;
+                case "describe":
+                    if (data[key] == "商品已下架") {
+                        $self.removeClass("d-none");
+                        $self.siblings().addClass("d-none");
+                    }
+                    $self.text(data[key]);
+                    break;
+                case "s1Title":
+                case "s2Title":
+                    if (data[key] != "") $self.removeClass("d-none")
+                    $self.text(data[key]);
+                    break;
+                case "oldPrice":
+                    if (data[key] != 0 && data[key] != data['price']) {
+                        $self.removeClass("d-none")
+                        $self.text(data[key].toLocaleString());
+                        $self.siblings().addClass("red_text");
+                    }
+                    break;
+                case "oldQuantity":
+                    if (data[key] != 0 && data[key] != data['quantity']) {
+                        $self.removeClass("d-none")
+                        $self.text(data[key]);
+                        $self.siblings().addClass("red_text");
+                    }
+                    break;
+                case "subtotal_old":
+                    var price = data['oldPrice'] != 0 ? data['oldPrice'] : data['price'];
+                    var quantity = data['oldQuantity'] != 0 ? data['oldQuantity'] : data['quantity'];
+                    $self.text((price * quantity).toLocaleString());
+                    break;
+                case "subtotal_new":
+                    var sbutotal = data['price'] * data['quantity'];
+                    $self.text(sbutotal.toLocaleString());
+                    break;
+                default:
+                    $self.text(data[key]);
+                    break;
+            }
+        }
+    });
+    return frame;
 }
 function ShareButtonInit($ShareBlock) {
     $ShareBlock.hover(function () {
@@ -552,14 +760,16 @@ function ShareButtonInit($ShareBlock) {
 }
 function FavoritesButtonInit(frame) {
     var $btn_favorites = frame.find(".btn_favorite");
-    Coker.Favorites.Check(frame.data("Pid")).done(function (check) {
-        if (check.success) {
-            $btn_favorites.data("Fid", check.message);
-            $btn_favorites.find("i").addClass("fa-solid")
-            $btn_favorites.find("i").removeClass("fa-regular")
-            $btn_favorites.attr("title", "移除收藏")
-        }
-    });
+    if (typeof ($btn_favorites.data("Fid")) == "undefined") {
+        Coker.Favorites.Check(frame.data("Pid")).done(function (check) {
+            if (check.success) {
+                $btn_favorites.data("Fid", check.message);
+                $btn_favorites.find("i").addClass("fa-solid")
+                $btn_favorites.find("i").removeClass("fa-regular")
+                $btn_favorites.attr("title", "移除收藏")
+            }
+        });
+    }
     $btn_favorites.on("click", function () {
         $self = $(this).find("i");
         if ($self.hasClass("fa-regular")) {
@@ -582,12 +792,14 @@ function FavoritesButtonInit(frame) {
                         $self.addClass("fa-regular")
                         $self.removeClass("fa-solid")
                         $btn_favorites.attr("title", "加入收藏");
-                        Coker.sweet.success("已將商品從收藏中移除", null, true);
+                        Coker.sweet.success("已將商品從收藏中移除", function () {
+                            var pagenumber = window.location.hash.substring(window.location.hash.indexOf("-") + 1);
+                            if (!isNaN(Number(pagenumber))) SetFavoritesPage(pagenumber);
+                        }, false);
                     } else {
                         console.log(result.message)
                     }
                 });
-                console.log("非收藏商品")
             }
         }
     })

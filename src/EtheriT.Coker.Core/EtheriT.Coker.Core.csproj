@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

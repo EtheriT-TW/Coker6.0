@@ -9,6 +9,25 @@
                 data: { id: id }
             });
         },
+        GetFront: function (id) {
+            return $.ajax({
+                url: "/api/Member/GetFrontAllData/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { id: id }
+            });
+        },
+        FrontUpdate: function (data) {
+            return $.ajax({
+                url: "/api/Member/FrontUpdate",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         Update: function (data) {
             return $.ajax({
                 url: "/api/Member/Update",
@@ -35,6 +54,23 @@
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header
+            });
+        },
+        GetAllRole: function () {
+            return $.ajax({
+                url: "/api/Member/GetAllRole/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header
+            });
+        },
+        GetHistoryOrder: function (UUID) {
+            return $.ajax({
+                url: "/api/Order/GetMemberOrder/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { UUID: UUID }
             });
         },
         isValidPassword: function (password) {

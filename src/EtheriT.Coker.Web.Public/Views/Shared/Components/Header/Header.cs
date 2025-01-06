@@ -48,6 +48,9 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 case 1:
                 case 5:
                 case 7:
+                case 8:
+                case 9:
+                case 10:
                     webmenus_data = webmenus_data.ToList();
                     headerViewModel = new HeaderViewModel
                     {
@@ -55,9 +58,23 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         LogoImageUrl = "/upload/logo.png",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
-
                     };
-					if (marquee.Count > 0)
+                    switch (defaultData.Id) {
+                        case 6:
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage= "/upload/headertitile.jpg",PhoneImage= "/upload/headertitile_phone.jpg" });
+                            break;
+                        case 7:
+                            headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/headertitile.jpg", PhoneImage = "/upload/headertitile_phone.jpg" });
+                            break;
+                        case 10:
+							for(int i = 1;i <= 4;i++)
+                            {
+								headerViewModel.Bannners.Add(new BannerImages { DisktopImage = "/upload/banner/banner"+i+".jpg"});
+							}
+							break;
+                    }
+
+                    if (marquee.Count > 0)
                     {
                         marquee.ForEach(data =>
                         {
@@ -182,6 +199,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                     {
                         Title = website_data[0].Title,
                         LogoImageUrl = $"/upload/{website_data[0].OrgName}/logo.png",
+                        HomeLink = $"/{website_data[0].OrgName}/home",
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                     };
                     webmenus_data.ForEach(data_f =>
@@ -302,7 +320,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                 default:
                     break;
             }
-            if (defaultData.Layout_Type == 1)
+            if (defaultData.Layout_Type == 1 && siteId == 2)
             {
                 headerViewModel.LogoImageUrl = "/upload/logo.svg";
             }

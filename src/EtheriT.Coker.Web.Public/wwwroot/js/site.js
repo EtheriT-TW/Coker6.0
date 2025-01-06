@@ -1,15 +1,22 @@
-﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal;
+﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, IsLogin;
 
 function ready() {
     const $conten = $("#main");
     const $parentConten = $("#ParentNode");
-    const $PostCSS = $("#PostCSS");
     loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;
     otherLoginModal = $("#OtherLoginModal").length > 0 ? new bootstrap.Modal($("#OtherLoginModal")) : null;
     registerModal = $("#RegisterModal").length > 0 ? new bootstrap.Modal($("#RegisterModal")) : null;
     forgetModal = $("#ForgetModal").length > 0 ? new bootstrap.Modal($("#ForgetModal")) : null;
     resetModal = $("#ResetModal").length > 0 ? new bootstrap.Modal($("#ResetModal")) : null;
     jqueryExtend();
+
+    $('.navbar-nav > .nav-item').each(function () {
+        $this = $(this);
+        if ($this.find('.subtitle').length == 0) {
+            $this.find('.menu-item').addClass('no-arrow');
+        }
+    });
+
     $("link").each(function () {
         var $self = $(this);
         if ($self.data("orgname") != undefined) {
@@ -58,25 +65,18 @@ function ready() {
         else if (location.pathname.toLowerCase().indexOf("/product/") >= 0) $conten.find("#ProductDescription > Content").html(ele.textContent || ele.innerText);
         else $conten.html(ele.textContent || ele.innerText);
         $conten.find("[draggable]").removeAttr("draggable");
+        if ($conten.find("#CustMain").length > 0) $("#jumpToCenter").attr("href", "#CustMain");
         $conten.removeClass("d-none");
-    }
-    if ($PostCSS.length > 0) {
-        const $mainCss = $("#frameCss")
-        let s = Coker.stringManager.ReplaceAndSinge($PostCSS.text());
-        let ele = document.createElement('span');
-        ele.innerHTML = s;
-        $mainCss.text(ele.textContent || ele.innerText);
-        $PostCSS.remove();
     }
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
+    if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0 || $(".advertise_directory").length > 0) DirectoryGetDataInit();
     //swiper內的元素有一個以上就開啟自動輪播(autoplay:true)
-    if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category").length > 0) SwiperInit({ autoplay: true });
-    if ($(".marqueeSwiper").length > 0) MarqueeSwiper();
-    if ($(".masonry").length > 0) FrameInit();
+    if ($(".one_swiper,.one_swiper_thumbs,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper,.picture-category,.three_two_grid_swiper,.vertical_swiper_thumbs").length > 0) SwiperInit({ autoplay: true });
+    if ($(".marqueeSwiper").length > 0) MarqueeSwiper(SiteId);
+    if ($(".masonry").length > 0 || $(".YTmodal_frame").length > 0) FrameInit();
     if ($(".type_change_frame").length > 0) ViewTypeChangeInit();
     if ($(".hover_mask").length > 0) HoverEffectInit();
-    if ($(".catalog_frame").length > 0 || $(".menu_directory").length > 0 || $(".advertise_directory").length > 0) DirectoryGetDataInit();
     if ($(".sitemap_hierarchical_frame").length > 0) SitemapInit();
     if ($(".link_with_icon").length > 0) LinkWithIconInit();
     if ($(".anchor_directory").length > 0 || $(".anchor_title").length > 0) AnchorPointInit();
@@ -128,7 +128,14 @@ function ready() {
     });
     $(".accesskey[href]").on("click", function (e) {
         const $self = $(this);
-        $($self.attr("href")).goTo();
+        const $target = $($self.attr("href"));
+        if ($target.length > 0) {
+            $target.goTo();
+            $target.attr('tabindex', '-1').trigger("focus");
+            $target.on('blur', function () {
+                $target.removeAttr('tabindex'); // 移除 tabindex
+            });
+        }
         return false;
     });
     $("#videoModal").on("hidden.bs.modal", function () {
@@ -172,6 +179,15 @@ function ready() {
                 },
                 type: "GET"
             });
+        },
+        AgreePrivacy: function () {
+            return $.ajax({
+                url: "/api/Token/AgreePrivacy/",
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                type: "GET"
+            });
         }
     };
     typeof (PageReady) === "function" && PageReady();
@@ -179,28 +195,71 @@ function ready() {
     typeof (FooterInit) === "function" && FooterInit();
     SideFloatingInit();
     CreateToken();
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') $("#Cookie").toggleClass("show");
+    let idleTimeout;
+    sessionStorage.setItem('pageLoadTime', Date.now());
+    //監測使用者是否離開畫面
+    const sentTrackTime = function () {
+        if (!sessionStorage.isNullOrEmpty("PageKey")) {
+            // 將停留時間發送到伺服器
+            let timeSpent = Date.now() - parseInt(sessionStorage.getItem('pageLoadTime'));
+            const body = { PageKey: sessionStorage.getItem("PageKey"), TimeSpan: timeSpent };
+            const headers = { type: 'application/json' };
+            const blob = new Blob([JSON.stringify(body)], headers);
+            navigator.sendBeacon("/api/UserStatistic/trackTime", blob);
+            sessionStorage.setItem('pageLoadTime', Date.now());
+        }
+    }
+    function resetIdleTimer() {
+        clearTimeout(idleTimeout);
+        idleTimeout = setTimeout(function () {
+            // 可以選擇將閒置時間重置為零或停止計時
+            sessionStorage.setItem('pageLoadTime', Date.now());
+        }, 300000); // 設定為 5 分鐘
+    }
+
+    window.addEventListener("beforeunload", function () {
+        if (!document.hidden) {
+            sentTrackTime();
+        }
+    });
+    // 監聽用戶的各種互動，例如滑鼠移動、鍵盤按壓等
+    document.addEventListener('mousemove', resetIdleTimer);
+    document.addEventListener('keydown', resetIdleTimer);
+    document.addEventListener('scroll', resetIdleTimer);
+
+
+    // 當用戶切換標籤或最小化時，使用 visibilitychange 事件來處理
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+            sentTrackTime();
+        } else {
+            // 重新加載頁面時，重設加載時間
+            sessionStorage.setItem('pageLoadTime', Date.now());
+        }
+    });
+
 
     const enterAdModalEl = $('#EnterAdModal')
     var enteradid = enterAdModalEl.data("enteradid")
-    var temp_idlist = typeof ($.cookie('EnterAd_Show')) == "undefined" ? [] : $.cookie('EnterAd_Show').split(",");
-    if ($('#EnterAdModal').length > 0 && (typeof ($.cookie('EnterAd_Show')) == "undefined" || $.inArray(enteradid.toString(), temp_idlist) < 0)) {
-        var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
-        enterAdModal.show();
-        enterAdModalEl.on('hidden.bs.modal', event => {
-            temp_idlist.push(enteradid);
-            $.cookie('EnterAd_Show', temp_idlist, { path: '/' });
-        })
+
+    if ($('#EnterAdModal').length > 0) {
         var adid = $("#EnterAdModal .modal-content").data("aid");
-        if (adid != "undefined") {
-            Advertise.ActivityExposure(adid).done(function (result) {
-                //console.log(result)
+        if ((localStorage.getItem("EnterAd_Show") == null || localStorage.getItem(`AgreePrivacy`) == null) || localStorage.getItem("EnterAd_Show") != adid) {
+            var enterAdModal = new bootstrap.Modal($("#EnterAdModal"))
+            enterAdModal.show();
+            enterAdModalEl.on('hidden.bs.modal', event => {
+                localStorage.setItem("EnterAd_Show", adid);
             })
-            $("#EnterAdModal img").on("click", function () {
-                Advertise.ActivityClick(adid).done(function (result) {
+            if (adid != "undefined") {
+                Advertise.ActivityExposure(adid).done(function (result) {
                     //console.log(result)
                 })
-            });
+                $("#EnterAdModal img").on("click", function () {
+                    Advertise.ActivityClick(adid).done(function (result) {
+                        //console.log(result)
+                    })
+                });
+            }
         }
     }
 
@@ -376,7 +435,7 @@ function ready() {
         })
     })
 
-    $(".btn_cookie_accept").on("click", cookie_accept);
+    $(".btn_cookie_accept").on("click", function () { cookie_accept(true) });
     $(".btn_cookie_reject").on("click", cookie_reject);
 
     $("#Collapse_Button").on("click", function () {
@@ -401,9 +460,11 @@ function ready() {
                     Coker.sweet.loading();
                     co.User.AccountOpening(insertdata["openid"]).done(result => {
                         if (result.success) {
-                            Coker.sweet.success("帳號成功開通，按下確定後即為您跳轉頁面！", function () {
-                                window.location.href = $(location).attr('origin');
-                            }, false);
+                            Coker.sweet.custom("success", "", "會員帳號成功開通", "填寫會員資料", function () {
+                                window.location.href = `/${OrgName}/Member`;
+                            }, "下次再說", function () {
+                                location.reload();
+                            })
                         } else {
                             if (result.message == "ReSendOrNot") {
                                 var data = {};
@@ -462,6 +523,19 @@ function ready() {
                 break;
         }
     });
+
+    var string = $("#TermsModal .modal-body .content").text().toString();
+    //console.log(string)
+    string = $.trim(string);
+    //console.log(string)
+    $("#TermsModal .modal-body .content").html(string)
+
+    if ($(".instagram-media").length > 0) {
+        var ig_script = document.createElement('script');
+        ig_script.src = "//www.instagram.com/embed.js";
+        ig_script.async = true;
+        document.head.appendChild(ig_script);
+    }
 }
 
 function SiteElementInit() {
@@ -494,13 +568,24 @@ function scrollFunction() {
         $("#btn_gotop").css('display', 'none');
     }
 }
-function cookie_accept() {
-    $.cookie('cookie', 'accept', { expires: 7, path: '/' });
-    $("#Cookie").toggleClass("show");
+function cookie_accept(isnew) {
+    if (isnew) {
+        Coker.Token.AgreePrivacy().done(function (result) {
+            if (result.success) {
+                localStorage.setItem(`AgreePrivacy`, true);
+                localStorage.setItem("AgreeTime", result.message);
+                $("#Cookie").removeClass("show");
+            } else {
+                console.log("AgreePrivacy Fail", result)
+            }
+        });
+    } else {
+        localStorage.setItem(`AgreePrivacy`, true);
+        $("#Cookie").removeClass("show");
+    }
 }
 function cookie_reject() {
-    $.cookie('cookie', 'reject');
-    $("#Cookie").toggleClass("show");
+    $("#Cookie").removeClass("show")
 }
 function CreateToken() {
     Coker.Token.GetToken().done(function (result) {
@@ -511,10 +596,50 @@ function CreateToken() {
 function CheckToken() {
     Coker.Token.CheckToken().done(function (result) {
         if (result.success) {
+            console.log("userData:", result);
             if (result.isLogin && result.name != "") {
+                IsLogin = true;
                 $("#HiUser > .name").text(`${result.name} 您好!`);
             }
-            //console.log("userData:", result);
+            if ($("#Cart_Dropdown_Parent").length > 0) {
+                CartDropInit();
+            }
+            if (window.location.pathname == `/${OrgName}/ShoppingCar`) {
+                var search = window.location.search;
+                if (search == "") CardDataGet();
+                else if ($.isNumeric(search.substring(1))) {
+                    if (!localStorage.getItem("lastSaveToken") == result.token && localStorage.getItem("lastSaveTime") != null) {
+                        var tokenSaveTime = new Date(localStorage.getItem('lastSaveTime'));
+                        var fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+                        if (tokenSaveTime > fifteenMinutesAgo) {
+                            Coker.Token.CheckToken(localStorage.getItem("lastSaveToken")).done(function (result) {
+                                if (result.success) {
+                                    localStorage.setItem("token", result.token);
+                                    localStorage.setItem("lastSaveTime", null)
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            if (result.agreePrivacy) cookie_accept(false);
+            else {
+                if (localStorage.getItem('AgreeTime') != null) {
+                    var agreeSaveTime = new Date(localStorage.getItem('AgreeTime'));
+                    var oneYearAgo = new Date();
+                    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                    if (agreeSaveTime > oneYearAgo) {
+                        cookie_accept(false);
+                    } else {
+                        localStorage.removeItem("AgreePrivacy")
+                        localStorage.removeItem("AgreeTime")
+                        $("#Cookie").addClass("show")
+                    }
+                } else {
+                    $("#Cookie").addClass("show")
+                }
+            }
         }
     })
 }
@@ -620,7 +745,7 @@ function RegisterAction() {
     data.RoleId = 2;
     co.User.AddUser(data).done((result) => {
         if (result.success) {
-            Coker.sweet.success("註冊成功，系統將立即發送『加入會員通知』信函至您所登錄之E-Mail中，您必須完成帳號開通程序後，才能登入網站與使用會員功能，此信函中包含您所設定之登入帳號(即E-mail)、密碼。請靜候開通帳號通知信。", null, false);
+            Coker.sweet.success("<div>註冊成功</div><div>您將收到開通帳號的通知信</div><div>請至信箱確認以完成帳號開通</div>", null, false);
             registerModal.hide();
         } else {
             console.log(result)
@@ -880,6 +1005,19 @@ var Coker = {
             });
         },
     },
+    ThirdParty: {
+        Request: function (ohid, paytype) {
+            return $.ajax({
+                url: "/api/ThirdParty/PayRequest",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: { ohid: ohid, paytype: paytype },
+            });
+        }
+    },
     Favorites: {
         Add: function (Pid) {
             return $.ajax({
@@ -889,11 +1027,12 @@ var Coker = {
                 data: { Pid: Pid },
             });
         },
-        GetDisplay: function () {
+        GetDisplay: function (page) {
             return $.ajax({
                 url: "/api/Favorites/GetDisplay/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
+                data: { page: page },
             });
         },
         Delete: function (Fid) {
@@ -914,19 +1053,23 @@ var Coker = {
         },
     },
     Form: {
-        getJson: function (id, isArrayType) {
-            let form = document.getElementById(id);
-            let formFields = new FormData(form);
-            let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
-            let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
-                const val = formFields.getAll(key)
-                return [key, (isArray || val.length > 1) ? val : val.pop()]
-            }));
-            return formDataObject;
+        set: function (id, method) {
+            const form = document.getElementById(id);
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                let check = form.checkValidity();
+                if (check) {
+                    method();
+                }
+                form.classList.add('was-validated');
+            }, false);
         },
         insertData: function (obj, $self) {
             if (typeof ($self) == "undefined" || $self == null) $self = $("form").first();
-            else if (typeof ($self) == "string") $self = $($self);
+            else if (typeof ($self) == "string") {
+                $self = /^#/.test($self) ? $($self) : $(`#${$self}`);
+            }
             const formTypeSet = (type, $e, value) => {
                 switch (type) {
                     case "zipcode":
@@ -1015,6 +1158,94 @@ var Coker = {
                 }// else console.log(key);
             }
         },
+        getJson: function (id, isArrayType) {
+            let form = document.getElementById(id);
+            let formFields = new FormData(form);
+            let isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+            let formDataObject = Object.fromEntries(Array.from(formFields.keys(), key => {
+                const val = formFields.getAll(key)
+                return [key, (isArray || val.length > 1) ? val : val.pop()]
+            }));
+            let exItems = $(`#${id}`).find(`div[name]`);
+            exItems.each(function () {
+                const $e = $(this);
+                switch ($e.data("form-type")) {
+                    case "zipcode":
+                        formDataObject[$e.attr("name")] = co.Zipcode.getData($e);
+                        break;
+                    case "tags":
+                        console.log($e.find(".InputTag"));
+                        formDataObject[$e.attr("name")] = $e.find(".InputTag").data("tagList");
+                        break;
+                }
+            });
+            if (formDataObject.startEndDate) {
+                const d = formDataObject.startEndDate.split("~");
+                formDataObject.StartTime = d[0].trim();
+                if (d.length > 1) formDataObject.EndTime = d[1].trim();
+            }
+            return formDataObject;
+        },
+        getJsonByFieldset: function (id, isArrayType) {
+            const fieldset = document.getElementById(id);
+            const isArray = typeof (isArrayType) == "undefined" ? false : isArrayType;
+            const elements = fieldset.querySelectorAll('input, select, textarea');
+            const fieldsetData = {};
+            elements.forEach(element => {
+                switch (element.type) {
+                    case "checkbox":
+                        if (!fieldsetData[element.name]) {
+                            fieldsetData[element.name] = [];
+                        }
+                        if (element.checked) {
+                            fieldsetData[element.name].push(element.value);
+                        }
+                        break;
+                    case "select-multiple":
+                        fieldsetData[element.name] = Array.from(element.selectedOptions).map(option => option.value);
+                        break;
+                    default:
+                        fieldsetData[element.name] = element.value;
+                        break;
+                }
+            });
+            return fieldsetData;
+        },
+        init: function (id, fun) {
+            const form = document.getElementById(id);
+            form.addEventListener('submit', event => {
+                $(form).find(".customValidity").get(0).setCustomValidity("");
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    event.preventDefault();
+                    fun && fun(id);
+                }
+                form.classList.add('was-validated');
+            }, false)
+        }, clear: function (id) {
+            const form = document.getElementById(id);
+            const $items = $(`[data-form-type]`);
+            _c.Form.insertData(_c.Form.getJson(id), `#${id}`);
+            $items.each(function (i, e) {
+                const $e = $(e);
+                switch ($e.data("form-type")) {
+                    case "images":
+                        if (!!!$e.data("init")) {
+                            $e.ImageUploadModalClear();
+                            $e.data("init", true)
+                        } else $e.ImageUploadModalClear();
+                        break;
+                    case "date":
+                        $e.data('daterangepicker').setStartDate(_c.Date.GetDateTimeStr(Date.now()));
+                        $e.data('daterangepicker').setEndDate(null);
+                        break;
+                }
+            });
+            form.reset();
+            if ($(form).find("[name='id']").length > 0) $(form).find("[name='id']").val(0);
+        }
     },
     sweet: {
         loading: function () {
@@ -1028,6 +1259,26 @@ var Coker = {
                 willClose: () => {
                 }
             }).then((result) => {
+            });
+        },
+        custom: function (icon, title, text, confirmtext, confirmaction, canceltext, canceltextaction) {
+            if (confirmtext == null && canceltext == null) { closetime = Coker.timeout.time }
+            Swal.fire({
+                icon: icon,
+                title: title,
+                text: text,
+                showConfirmButton: confirmtext == null ? false : true,
+                showCancelButton: canceltext == null ? false : true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: confirmtext,
+                cancelButtonText: canceltext,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    typeof (confirmaction) === "function" && confirmaction();
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    typeof (canceltextaction) === "function" && canceltextaction();
+                }
             });
         },
         success: function (text, action, autoclose) {
@@ -1144,7 +1395,9 @@ var Coker = {
             });
             $e.find(".btn_sear").on("click", function () {
                 if ($t.val() == "") {
-                    co.sweet.error("錯誤", "請輸入搜尋文字", null, false);
+                    co.sweet.error("錯誤", "請輸入搜尋文字", function () {
+                        setTimeout(function () { $t2.trigger("focus"); }, 300);
+                    }, false);
                 } else {
                     window.location.href = `/${OrgName}/Search/Get/${$e.data("sid")}/${$t.val()}`;
                 }

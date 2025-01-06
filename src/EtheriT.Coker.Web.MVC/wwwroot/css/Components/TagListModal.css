@@ -19,3 +19,7 @@
 .dx-datagrid-search-panel {
     width: fit-content !important;
 }
+
+#TagList {
+    width: 100%;
+}

@@ -10,6 +10,52 @@ function SwiperInit(obj) {
         keyboard: {
             enabled: true,
         },
+        lazy: {
+            loadPrevNext: true,
+        },
+        on: {
+            init: function () {
+                const swiper = this;
+                const setShow = function (event) {
+                    event.preventDefault();
+                    $(event.currentTarget).parents(".swiper").find(".outside-item").removeClass("show");
+                    $(event.currentTarget).parents(".swiper-slide").find(".outside-item").addClass("show");
+                }
+                const hideShow = function (event) {
+                    $(".swiper-slide .outside-item").removeClass("show");
+                }
+                $(this.el).find(".hover-outside").off("click").on("click", setShow);
+                $(this.el).find(".hover-outside").off("mouseover").on("mouseover", setShow);
+                $(this.el).find(".hover-outside").off("keydown").on("keydown", function (event) {
+                    if (event.key === 'Enter' || event.key === ' ') { // 檢查 Enter 或空白鍵
+                        setShow(event);
+                    }
+                });
+                $(this.el).find(".outside-item").off("mouseover").on("mouseover", setShow);
+                $(this.el).find(".hover-outside").off("mouseout").on("mouseout", hideShow);
+                $(this.el).find(".outside-item").off("mouseout").on("mouseout", hideShow);
+                $("body").off("click.disableoutsideItem").off("click.disableoutsideItem").on("click.disableoutsideItem", hideShow)
+                this.isLoopActive = this.params.loop;
+            },
+            slideChange: function () {
+                const swiper = this;
+                if (swiper.params.loop) {
+                    const $swiper = $(swiper.el);
+                    const $sliders = $swiper.find(".swiper-slide");
+                    const totalLength = swiper.slides.length;
+                    const activeIndex = swiper.activeIndex;
+                    const $focusedSlide = $swiper.find(":focus").parents(".swiper-slide");
+                    const focusIndex = $sliders.index($focusedSlide);
+                    if (typeof (focusIndex) != "undefined" && swiper.isLoopActive) {
+                        swiper.isLoopActive = false;
+                        swiper.loopDestroy();
+                    } else if (typeof (focusIndex) == "undefined" && !swiper.isLoopActive) {
+                        swiper.isLoopActive = true;
+                        swiper.loopCreate();
+                    }
+                }
+            }
+        }
     };
     $.fn.extend({
         swiperBindEven: function (swiper, canNext) {
@@ -18,22 +64,21 @@ function SwiperInit(obj) {
                 const totalSlides = swiper.slides.length;
                 const slidesPerView = swiper.params.slidesPerView;
                 // 檢查導航元素
-                const nextEl = swiper.navigation.nextEl ? swiper.navigation.nextEl[0] : null;
-                const prevEl = swiper.navigation.prevEl ? swiper.navigation.prevEl[0] : null;
+                const nextEl = swiper.navigation.nextEl ? swiper.navigation.nextEl : null;
+                const prevEl = swiper.navigation.prevEl ? swiper.navigation.prevEl : null;
                 const paginationEl = swiper.pagination.el;
-
                 if (totalSlides <= slidesPerView) {
                     // 停止自動輪播
                     swiper.autoplay.stop();
                     // 隱藏左右箭頭
-                    if (nextEl) swiper.navigation.nextEl.style.display = 'none';
-                    if (prevEl) swiper.navigation.prevEl.style.display = 'none';
-                    if (paginationEl) paginationEl.style.display = 'none';
+                    if (!!nextEl && !Array.isArray(nextEl)) nextEl.classList.add("d-none");
+                    if (!!prevEl && !Array.isArray(prevEl)) prevEl.classList.add("d-none");
+                    if (!!paginationEl) paginationEl.classList.add("d-none");
                 } else {
                     // 確保箭頭可見
-                    if (nextEl) swiper.navigation.nextEl.style.display = '';
-                    if (prevEl) swiper.navigation.prevEl.style.display = '';
-                    if (paginationEl) paginationEl.style.display = '';
+                    if (!!nextEl && !Array.isArray(nextEl)) nextEl.classList.remove("d-none");
+                    if (!!prevEl && !Array.isArray(prevEl)) prevEl.classList.remove("d-none");
+                    if (!!paginationEl) paginationEl.classList.remove("d-none");
                 }
             }
             const stop = function () {
@@ -49,6 +94,7 @@ function SwiperInit(obj) {
                 var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
                 var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
                 var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+
                 if ($(activeSlide).find("video").length > 0) {
                     return;
                 }
@@ -56,21 +102,22 @@ function SwiperInit(obj) {
             }
             thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
-            $(this).find("a").on("focus", stop);
+            $(this).find(".swiper-slide a,.swiper-slide").off("focus").on("focus", function () {
+                const $item = $(this).hasClass("swiper-slide") ? $(this) : $(this).parents(".swiper-slide");
+                const activeIndex = $item.attr("aria-label").split(" / ")[0];
+                swiper.slideTo(activeIndex - 1, 300);
+                stop();
+            });
             $(this).off("mouseout").on("mouseout", start);
             $(this).find("a").on("blob", start);
             $(this).find("button").prop("disabled", false);
-
-            setTimeout(function () {
-                swiper.slideTo(0);
-            }, 100);
-            if (swiper.slides.length > 1) swiper.slideTo(1);
             $(window).off('resize.swiper').on('resize.swiper', checkSlides);
             $(window).trigger("resize.swiper");
+            swiper.update();
         }
     });
 
-    $(".one_swiper").prop("draggable", true).each(function () {
+    $(".one_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             $self.find('video').each(function () {
@@ -78,15 +125,17 @@ function SwiperInit(obj) {
                 if ($video.attr('controls')) {
                     $video.removeAttr('controls');
                     $video.prop('muted', true);
+                    $video.prop('playsinline', true);
                 }
             });
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             if ($(Id).find(".swiper-slide").length == 1 && $template.length > 0) return false;
             const canNext = $template.length === 0 ? $(Id).find(".swiper-slide").length > 1 : $(Id).find(".swiper-slide").length > 2;
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");
-            
+
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
@@ -101,7 +150,6 @@ function SwiperInit(obj) {
                         const slide = this;
                         const totalSlides = this.slides.length;
                         const previousSlideIndex = this.previousIndex;
-                        //const previousSlideIndex = (this.realIndex - 1 + totalSlides) % totalSlides;
                         const $previousSlide = $(this.slides[previousSlideIndex]);
                         const videoAction = $(this.slides[this.activeIndex]).find('video');
                         const videoElement = videoAction.get(0);
@@ -132,7 +180,7 @@ function SwiperInit(obj) {
                                     video.pause();
                                     video.currentTime = 0;
                                     video.play();
-                                } 
+                                }
                                 if (html !== undefined && html !== null) {
                                     reset($(this), html);
                                 }
@@ -140,7 +188,10 @@ function SwiperInit(obj) {
                         });
                     }
                 },
-
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
                 effect: effect,
                 speed: speed
             }, autoplay ? {
@@ -149,24 +200,19 @@ function SwiperInit(obj) {
                     disableOnInteraction: false,
                 },
                 loop: true
-            } : {},
-                canNext ? {
-                    navigation: {
-                        nextEl: "#" + $self.attr("id") + " .swiper_button_next",
-                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
-                    }
-                } : {});
+            } : {});
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
             $self.swiperBindEven(swiper);
         }
     });
     //單欄輪播+兩欄縮圖
-    $(".one_swiper_thumbs").prop("draggable", true).each(function () {
+    $(".one_swiper_thumbs").each(function () {
         var $self = $(this);
         const index = $self.index(this);
         $self.find(".six_thumbs > .swiper-wrapper").empty();
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " .swiper";
             const canNext = $(Id).find(".swiper-slide").length >= 2;
             var effect = $self.data("effect");
@@ -190,7 +236,10 @@ function SwiperInit(obj) {
                 }, thumbs: {
                     swiper: swiperThumbs,
                 },
-
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
                 effect: effect,
                 speed: speed
             }, autoplay ? {
@@ -199,14 +248,7 @@ function SwiperInit(obj) {
                     disableOnInteraction: false,
                 },
                 loop: true
-            } : {},
-                canNext ? {
-                    navigation: {
-                        nextEl: "#" + $self.attr("id") + " .swiper_button_next",
-                        prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
-                    },
-                    
-                } : {});
+            } : {});
             if (!canNext) {
                 $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
             }
@@ -240,9 +282,10 @@ function SwiperInit(obj) {
             }
         }
     });
-    $(".two_swiper").prop("draggable", true).each(function () {
+    $(".two_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper"
             const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
             const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
@@ -279,7 +322,9 @@ function SwiperInit(obj) {
                 loop: true
             } : {});
             if (!canNext && length > 0) {
-                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").addClass("d-none");
+            } else {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").removeClass("d-none");
             }
             var swiper = new Swiper(Id, selfConfig);
             $self.data("isInit", true)
@@ -287,9 +332,10 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".three_swiper").prop("draggable", true).each(function () {
+    $(".three_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -323,9 +369,10 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".four_swiper").prop("draggable", true).each(function () {
+    $(".four_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -359,10 +406,10 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-
-    $(".five_swiper").prop("draggable", true).each(function () {
+    $(".five_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -373,7 +420,6 @@ function SwiperInit(obj) {
                     el: '.swiper-scrollbar',
                     draggable: true,
                 },
-
                 navigation: {
                     nextEl: "#" + $self.attr("id") + " .swiper_button_next",
                     prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
@@ -407,9 +453,10 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-    $(".six_swiper").prop("draggable", true).each(function () {
+    $(".six_swiper").each(function () {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " > .swiper";
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -453,69 +500,220 @@ function SwiperInit(obj) {
             $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
         }
     });
-
     if ($(".picture-category").length > 0 && $("#SwiperModal").length > 0) {
-        const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
-            spaceBetween: 10,
-            breakpoints: {
-                375: {
-                    slidesPerView: 2,
-                },
-                576: {
-                    slidesPerView: 3,
-                },
-                769: {
-                    slidesPerView: 4,
-                },
-                1024: {
-                    slidesPerView: 6, //modal顯示縮圖的數量
+        if (!!!$(this).data("isinit")) {
+            const $header_text = $("#SwiperModal .modal-header .imgalt");
+            $header_text.text("");
+            const pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", {
+                spaceBetween: 10,
+                breakpoints: {
+                    375: {
+                        slidesPerView: 2,
+                    },
+                    576: {
+                        slidesPerView: 3,
+                    },
+                    769: {
+                        slidesPerView: 4,
+                    },
+                    1024: {
+                        slidesPerView: 6, //modal顯示縮圖的數量
 
-                }
-            },
-            loop: false, //改為false阻止點選最後一張圖連跳太多張
-            freeMode: true,
-            watchSlidesProgress: true,
-            
-        });
-        const pictureSwiper = new Swiper("#pictureSwiper", {
-            centeredSlides: true,
-            spaceBetween: 10,
-            navigation: {
-                nextEl: "#pictureSwiper .swiper-button-next",
-                prevEl: "#pictureSwiper .swiper-button-prev",
-            },
-            pagination: {
-                el: "#pictureSwiper .swiper-pagination",
-            },
-            thumbs: {
-                swiper: pictureSwiperThumbs,
-            }
-        });
-        $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
-            const $self = $(this).parents(".picture-category");
-            const index = $(".picture-category a").index(this);// > $(".picture-category a").length - 2 ? $(".picture-category a").length - $(".picture-category a").index(this) - 1 : $(".picture-category a").index(this) - 1;
-            const $images = [];
-            $self.find(".templatecontent img").each(function () {
-                $images.push($(this).attr("src"));
+                    }
+                },
+                freeMode: true,
+                watchSlidesProgress: true,
             });
-            pictureSwiper.removeAllSlides();
-            pictureSwiperThumbs.removeAllSlides();
-            if ($images.length == 1) {
-                const newSlide = `<div class="swiper-slide"><img src="${$images[0]}" alt=" " /></div>`;
 
-                pictureSwiper.appendSlide(newSlide);
-            } else {
-                for (let i = 0; i < $images.length; i++) {
-                    const newSlide = `<div class="swiper-slide"><img src="${$images[i]}" alt=" " /></div>`;
-
-                    pictureSwiper.appendSlide(newSlide);
-                    pictureSwiperThumbs.appendSlide(newSlide);
+            const pictureSwiper = new Swiper("#pictureSwiper", {
+                centeredSlides: true,
+                spaceBetween: 10,
+                loop: true,
+                loopAdditionalSlides: 0,
+                navigation: {
+                    nextEl: "#pictureSwiper .swiper-button-next",
+                    prevEl: "#pictureSwiper .swiper-button-prev",
+                },
+                pagination: {
+                    el: "#pictureSwiper .swiper-pagination",
+                },
+                thumbs: {
+                    swiper: pictureSwiperThumbs,
+                },
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
                 }
-            }
-            pictureSwiper.slideTo(index, 0);
-            pictureSwiperThumbs.slideTo(index, 0);
-            $('#SwiperModal').modal('show');
-            return false;
-        });
+            });
+
+            pictureSwiper.on('slideChange', function () {
+                var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                $header_text.text(activeSlide.find("img").attr("alt"));
+            });
+
+            $('#SwiperModal').on('hidden.bs.modal', function () {
+                pictureSwiper.removeAllSlides();
+                pictureSwiperThumbs.removeAllSlides();
+            });
+
+            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
+                var $self = $(this).parents(".picture-category");
+                var index = $self.find("a").index(this);
+                var $images = [];
+                $self.find(".templatecontent img").each(function () {
+                    var obj = {};
+                    obj['src'] = $(this).attr("src");
+                    obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
+                    $images.push(obj);
+                });
+                $header_text.text($images[index]['alt']);
+                if ($images.length == 1) {
+                    var newSlide = `<div class="swiper-slide"><img src="${$images[0]['src']}" alt="${$images[0]['alt']}" /></div>`;
+                    pictureSwiper.appendSlide(newSlide);
+                } else {
+                    for (let i = 0; i < $images.length; i++) {
+                        var newSlide = `<div class="swiper-slide"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        pictureSwiper.appendSlide(newSlide);
+                        var newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img src="${$images[i]['src']}" alt="${$images[i]['alt']}" /></div>`;
+                        pictureSwiperThumbs.appendSlide(newSlideThumbs);
+                    }
+                }
+                // slide只有2會出現順序顛倒
+                if ($images.length == 2) index = (index === 0) ? 1 : 0;
+                pictureSwiper.slideTo(index, 0);
+                pictureSwiperThumbs.slideTo(index, 0);
+                $('#SwiperModal').modal('show');
+                return false;
+            });
+            $(this).data("isinit", true);
+        }
     }
+    $(".three_two_grid_swiper").each(function () {
+        var $self = $(this);
+        if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
+            var Id = "#" + $self.attr("id") + " > .swiper"
+            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
+            const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
+            const canNext = length > 6;
+            var autoplay = obj.autoplay ? canNext : false;
+            const selfConfig = Object.assign({}, config, {
+                breakpoints: {
+                    375: {
+                        slidesPerView: 1,
+                        grid: { rows: 1, fill: "row" },
+                    },
+                    576: {
+                        slidesPerView: 2,
+                        grid: { rows: 1, fill: "row" },
+                    },
+                    992: {
+                        slidesPerView: 3,
+                        grid: { rows: 2, fill: "column" },
+                    },
+                },
+                pagination: {
+                    el: "#" + $self.attr("id") + " .swiper-pagination",
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                },
+            }, obj.autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                loop: true
+            } : {});
+            if (!canNext && length > 0) {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").addClass("d-none");
+            } else {
+                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").removeClass("d-none");
+            }
+            var swiper = new Swiper(Id, selfConfig);
+            $self.data("isInit", true)
+            autoplay && $self.swiperBindEven(swiper);
+            $self.prepend($("#" + $self.attr("id") + " .swiper_button_prev"));
+        }
+    });
+
+    $(".vertical_swiper_thumbs").each(function () {
+        var $self = $(this);
+        if (!!!$self.data("isInit")) {
+            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
+            var Id = "#" + $self.attr("id") + " .swiper"
+            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
+            const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
+            const canNext = length > 3;
+            var autoplay = obj.autoplay ? canNext : false;
+            var swiperThumbs = new Swiper(`#${$self.attr("id")} .swiper_thumbs`, {
+                slidesPerView: 1,
+                direction: "horizontal",
+                loop: true,
+                breakpoints: {
+                    768: {
+                        direction: "vertical",
+                        watchSlidesProgress: true,
+                        loop: canNext,
+                    },
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper_thumbs .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper_thumbs .swiper_button_prev",
+                },
+            });
+            const selfConfig = Object.assign({}, config, {
+                loop: true,
+                slidesPerView: 1,
+                direction: "horizontal",
+                spaceBetween: 0,
+                breakpoints: {
+                    768: {
+                        direction: "vertical",
+                        loop: canNext,
+                        slidesPerView: 3,
+                    },
+                },
+                centeredSlides: true,
+                effect: "coverflow",
+                coverflowEffect: {
+                    rotate: 0,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 1,
+                    slideShadows: true,
+                },
+                thumbs: {
+                    swiper: swiperThumbs,
+                },
+                navigation: {
+                    nextEl: "#" + $self.attr("id") + " .swiper .swiper_button_next",
+                    prevEl: "#" + $self.attr("id") + " .swiper .swiper_button_prev",
+                },
+            }, obj.autoplay ? {
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                }
+            } : {});
+            var swiper = new Swiper(Id, selfConfig);
+            swiper.on('slideChange', function () {
+                var slides = $(swiper.slides);
+                slides.each(function (index, slide) {
+                    if (index < swiper.activeIndex - 1 || index > swiper.activeIndex + 1) {
+                        $(slide).addClass('hidden-slide');
+                    } else {
+                        $(slide).removeClass('hidden-slide');
+                    }
+                });
+            });
+            $self.data("isInit", true)
+            autoplay && $self.swiperBindEven(swiper);
+            swiper.slideTo(0);
+            swiper.loopCreate();
+            swiper.update();
+        }
+    });
 }

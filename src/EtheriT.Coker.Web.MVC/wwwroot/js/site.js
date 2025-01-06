@@ -49,6 +49,15 @@ var PreLoader;
         c.preventDefault();
         a(this).ekkoLightbox()
     });
+    //控制頁左scroll的位子
+    if ($(".sidebar .active").length > 0) {
+        var $parentLi = $(".sidebar .active").parents("li");
+        if ($parentLi.length > 0) {
+            $(".sidebar .navigation").scrollTop(
+                $parentLi.position().top
+            );
+        }
+    }
     a("body").delegate(".append-preloader", "click", function () {
         a(PreLoader).show();
         a("body").append(PreLoader);

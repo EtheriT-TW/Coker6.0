@@ -64,7 +64,7 @@ namespace EtheriT.Coker.Application.StoreSet
                                             maxlength = s.maxlength,
                                             memo = s.memo,
                                             pattern = s.pattern,
-                                            type = (SeoSetDataTypeEnum)s.type!,
+                                            type = s.type!,
                                             storeSetItemOutputDtos = (
                                                 from item in db.StoreSetItems.Where(e => !e.IsDeleted && e.FK_StoreSetId == s.Id)
                                                 select new StoreSetItemOutputDto { 

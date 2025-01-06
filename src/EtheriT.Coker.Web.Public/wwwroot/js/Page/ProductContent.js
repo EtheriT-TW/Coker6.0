@@ -2,11 +2,18 @@
 var Pid, s1, s2
 var s1_list = [], s2_list = [], spectype_list, spec_list, price_list = [], img_origin_list
 var preview_swiper, product_swiper, $pro_itemNo, $counter_input;
+var CanShop;
 const showRange = false;
 
 function PageReady() {
 
     ElementInit();
+
+    if ($('#SwitchPage').length > 0 && $('#SwitchPage').css('display') !== 'none') SwitchPage();
+
+    if ($(".btn_addToCar").length > 0) CanShop = true;
+    else CanShop = false;
+
     window.CI360.init();
     if (ProdId != null && !isNaN(ProdId)) Pid = ProdId;
     else Pid = location.pathname.substring(location.pathname.lastIndexOf("/") + 1);
@@ -112,7 +119,6 @@ function PageReady() {
         })
     }
 }
-
 function ElementInit() {
     $input_quantity = $('.input_pro_quantity');
     $counter_input = $(".counter_input");
@@ -127,10 +133,11 @@ function ElementInit() {
 
     $options = $prod_content.find(".options");
 }
-
 function PageDefaultSet(result) {
-
-    if (result.stocks.length == 1 && result.stocks[0].stock == 0) $(".btn_addToCar").addClass("close")
+    if (result.status == 2 || (result.stocks.length == 1 && result.stocks[0].stock <= 0)) {
+        $(".btn_addToCar").addClass("close")
+        $("#Product .content .options").addClass("d-none")
+    }
 
     $pro_name.text(result.title);
     $pro_itemNo.text(result.itemNo);
@@ -183,7 +190,6 @@ function PageDefaultSet(result) {
     }
     if (result.techCertDatas.length == 0) $("#btn_tab > .technical,.pro_tc").remove();
 
-    var roleid = 1;
     if (result.stocks.length > 1) {
         var obj = {};
 
@@ -196,24 +202,33 @@ function PageDefaultSet(result) {
 
         var maxprice = 0, minprice = 0;
 
+        var hasstock = false;
         result.stocks.forEach(data => {
             obj = {
                 s1id: data.fK_S1id,
                 s2id: data.fK_S2id,
                 stock: data.stock,
                 minQty: data.min_Qty,
-                price: data.prices.find(e => e.fK_RId == roleid).price
+                price: data.prices[0].price
             };
             price_list.push(obj);
             maxprice = obj["price"] > maxprice ? obj["price"] : maxprice;
             minprice = obj["price"] < minprice || minprice == 0 ? obj["price"] : minprice;
             obj = {}
+            var nostock = "";
+            if (data.stock <= 0 && CanShop) {
+                nostock = 'disabled="disabled"'
+            } else {
+                hasstock = true;
+            }
 
             if (data.fK_S1id > 0) {
                 if (s1_list.indexOf(data.fK_S1id) < 0) {
-                    item1_control.append('<input id="s1_' + data.fK_S1id + '" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="' + data.fK_S1id + '">');
+                    item1_control.append(`<input id="s1_${data.fK_S1id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${data.fK_S1id}" ${nostock}>`);
                     item1_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_' + data.fK_S1id + '">' + data.s1_Title + '</label>');
                     s1_list.push(data.fK_S1id);
+                } else {
+                    if (data.stock > 0) item1_control.find(`#s1_${data.fK_S1id}`).prop("disabled", false);
                 }
             } else {
                 if (!s1 >= 0) {
@@ -223,7 +238,7 @@ function PageDefaultSet(result) {
 
             if (data.fK_S2id > 0) {
                 if (s2_list.indexOf(data.fK_S2id) < 0) {
-                    item2_control.append('<input id="s2_' + data.fK_S2id + '" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="' + data.fK_S2id + '">');
+                    item2_control.append(`<input id="s2_${data.fK_S2id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${data.fK_S2id}" ${nostock}>`);
                     item2_control.append('<label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_' + data.fK_S2id + '">' + data.s2_Title + '</label>');
                     s2_list.push(data.fK_S2id);
                 }
@@ -233,6 +248,11 @@ function PageDefaultSet(result) {
                 }
             }
         });
+        if (!hasstock) {
+            $("#Product .content .options").addClass("d-none")
+            $(".btn_addToCar").addClass("close")
+        }
+        else $counter_input.removeClass("isEmpty");
 
         $options.prepend(item2);
         $options.prepend(item1);
@@ -254,8 +274,7 @@ function PageDefaultSet(result) {
     } else {
         s1 = result.stocks[0].fK_S1id;
         s2 = result.stocks[0].fK_S2id;
-
-        var price = result.stocks[0].prices.find(e => e.fK_RId == roleid).price;
+        var price = result.stocks[0].prices[0].price;
         $pro_discount.text(price.toLocaleString('en-US'));
     }
     if (result.stocks.length > 0) {
@@ -292,6 +311,7 @@ function PageDefaultSet(result) {
                         "data-youtube-link": img_med.name,
                         src: `https://img.youtube.com/vi/${img_med.name}/0.jpg`
                     })
+                    slide_image.siblings(".schematic_image").replaceWith('<div class="schematic_youtube position-absolute"><i class="fa-brands fa-youtube"></i></div>');
                     break;
                 default:
                     slide_image.attr("src", img_med.link[0]);
@@ -321,6 +341,7 @@ function PageDefaultSet(result) {
     }
     if (result.img_Small.length > 1) {
         preview_swiper = new Swiper(".PreviewSwiper", {
+            a11y: true,
             slidesPerView: 4,
             loop: false,
             spaceBetween: 10,
@@ -343,6 +364,7 @@ function PageDefaultSet(result) {
         });
 
         product_swiper = new Swiper(".ProductSwiper", {
+            a11y: true,
             spaceBetween: 15,
             loop: true,
             navigation: {
@@ -388,7 +410,14 @@ function PageDefaultSet(result) {
     $("#btn_tab>li>button").first().trigger("click");
     LinkWithIconInit();
 }
+function SpecRadioSet(stocks, $parent) {
+    var item1 = $($("#Template_Spec_Radio").html()).clone(),
+        item2 = $($("#Template_Spec_Radio").html()).clone();
 
+    var item1_control = item1.find(".spec_control"),
+        item2_control = item2.find(".spec_control");
+
+}
 function SpecRadio() {
     $self = $(this);
     $self_p = $self.parents(".radio").first();
@@ -408,14 +437,14 @@ function SpecRadio() {
             var radioclosenum = $self_s.find("input").length;
             $self_s.find("input").each(function () {
                 $radio = $(this)
-                if (temp_list.indexOf(parseInt($radio.val())) > -1 && price_list.find(e => e.s1id == s1 && e.s2id == $radio.val()).stock > 0) {
+                if (temp_list.indexOf(parseInt($radio.val())) > -1 && (price_list.find(e => e.s1id == s1 && e.s2id == $radio.val()).stock > 0 || !CanShop)) {
                     $radio.removeAttr("disabled");
                     radioclosenum -= 1;
                 }
             })
             if (radioclosenum == $self_s.find("input").length) {
-                if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
-                if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
+                $(".btn_addToCar").addClass("close")
+                $counter_input.addClass("isEmpty");
             }
             if ($self_s.find("input[value='" + parseInt(s2) + "']").attr("disabled") == "disabled") {
                 s2 = null;
@@ -443,7 +472,7 @@ function SpecRadio() {
             $self_s.find("input").each(function () {
                 $radio = $(this)
                 var this_price_list = price_list.find(e => e.s1id == $radio.val() && e.s2id == s2);
-                if (typeof (this_price_list) != "undefined" && this_price_list.stock == 0) {
+                if (typeof (this_price_list) != "undefined" && this_price_list.stock <= 0 && CanShop) {
                     $radio.attr("disabled", "disabled");
                     radioclosenum += 1;
                 } else $radio.removeAttr("disabled");
@@ -464,41 +493,34 @@ function SpecRadio() {
                     max: item.stock - (item.stock % item.minQty),
                     step: item.minQty
                 });
-                if (item.stock == 0) $counter_input.addClass("isEmpty");
+                if (item.stock <= 0) $counter_input.addClass("isEmpty");
                 else $counter_input.removeClass("isEmpty");
                 $input_quantity.trigger("change");
             }
         })
     }
 
+    if (s2 == null) s2 = 0
     var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
-    //console.log(this_price_list)
-    if (this_price_list.stock == 0) {
+    if (this_price_list.stock <= 0) {
         if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
     }
     else {
-        if ($(".btn_addToCar").hasClass("close")) $(".btn_addToCar").removeClass("close")
+        $(".btn_addToCar").removeClass("close")
         $input_quantity.attr("max", this_price_list.stock)
     }
 
 }
-
 function AddToCart() {
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
+    if (localStorage.getItem('AgreePrivacy') == null) {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
         if (s1 != null && s2 != null && $input_quantity.val() != 0) {
             Product.AddUp.Cart({
-                FK_Tid: $.cookie("Token"),
                 FK_Pid: parseInt(Pid),
                 FK_S1id: s1,
                 FK_S2id: s2,
                 Quantity: $input_quantity.val(),
-                Discont: 0,
-                Bonus: 0,
-                PriceType: 0,
-                IsAdditional: false,
-                Ser_No: 500,
             }).done(function (result) {
                 if (result.success) {
                     Coker.sweet.success("商品已成功加入購物車", null, true);
@@ -515,13 +537,13 @@ function AddToCart() {
                         var this_price_list = price_list.find(e => e.s1id == s1 && e.s2id == s2);
                         this_price_list.stock -= $input_quantity.val();
                         $input_quantity.attr("max", this_price_list.stock)
-                        if (this_price_list.stock == 0) {
+                        if (this_price_list.stock <= 0) {
                             if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
                             if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
                         }
                     } else {
                         var stock = $input_quantity.attr("max") - $input_quantity.val();
-                        if (stock == 0) {
+                        if (stock <= 0) {
                             if (!$(".btn_addToCar").hasClass("close")) $(".btn_addToCar").addClass("close")
                             if (!$counter_input.hasClass("isEmpty")) $counter_input.addClass("isEmpty");
                         } else {
@@ -530,7 +552,13 @@ function AddToCart() {
                     }
                     $input_quantity.val(1);
                 } else {
-                    Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+                    if (result.error == "商品庫存不足") {
+                        Coker.sweet.error(result.error, result.message, function () {
+                            location.reload(true);
+                        }, false);
+                    } else {
+                        Coker.sweet.error("商品加入購物車發生錯誤", result.message, null, true);
+                    }
                 }
             }).fail(function () {
                 Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
@@ -540,30 +568,30 @@ function AddToCart() {
         }
     }
 }
-
 function ShowBigPro() {
     var pro_self = $(this);
     var pro_viewModalSpace = $("#ProDisplayModal > .modal-dialog > .modal-content > .modal-body");
     pro_viewModalSpace.children(".pro_img").addClass("d-none");
     pro_viewModalSpace.children(".pro_youtube").addClass("d-none");
     pro_viewModalSpace.children(".pro_360view").addClass("d-none");
-    console.log(pro_self.data("display-protype"));
     switch (pro_self.data("display-protype")) {
         case "image":
+            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_img").removeClass("d-none");
             addImage(pro_self);
             break;
         case "youtube":
+            if (!$(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").addClass("ytshow")
             pro_viewModalSpace.children(".pro_youtube").removeClass("d-none");
             addYoutube(pro_self);
             break;
         case "360view":
+            if ($(".modal-dialog").hasClass("ytshow")) $(".modal-dialog").removeClass("ytshow")
             pro_viewModalSpace.children(".pro_360view").removeClass("d-none");
             add360View(pro_self);
             break;
     }
 }
-
 function addImage(pro_self) {
     var img_data = img_origin_list.find(item => item.id == pro_self.data("id"));
 
@@ -580,12 +608,10 @@ function addImage(pro_self) {
         window.CI360.add("Pro_Image");
     });
 }
-
 function addYoutube(pro_self) {
     var pro_YoutubeLink = pro_self.data("youtube-link");
     $("#Pro_Youtube").attr("src", "https://www.youtube-nocookie.com/embed/" + pro_YoutubeLink);
 }
-
 function add360View(pro_self) {
     var pro360View_Self = $("#Pro_360View");
     pro360View_Self.attr("data-filename-x", pro_self.data("filename-x"));
@@ -597,3 +623,35 @@ function add360View(pro_self) {
         window.CI360.add("Pro_360View");
     });
 }
+
+function SwitchPage() {
+    var currentUrl = window.location.pathname + window.location.search;
+    var catalog = currentUrl.substring(0, currentUrl.indexOf('/product'));
+    var productid = (currentUrl.split('/product/')[1]).split('?')[0].split('/')[0];
+    var urlParams = new URLSearchParams(window.location.search);
+    var dirid = urlParams.get('dirid');
+    var diridList = dirid == null ? null : dirid.split(',').map(Number);
+
+    $("#SwitchPage .btn_list").attr("href", catalog)
+
+    Directory.SwitchPage({ id: productid, dirids: diridList, routername: catalog.substring(catalog.lastIndexOf("/") + 1), type: 1 }).done(function (result) {
+        if (result.length > 0) {
+            if (result[0].key != null) {
+                $("#SwitchPage .btn_prev").removeClass("disabled")
+                var link = `${catalog}/product/${result[0].key}`;
+                $("#SwitchPage .btn_prev").attr({
+                    href: link,
+                    title: result[0].value
+                })
+            }
+            if (result[1].key != null) {
+                $("#SwitchPage .btn_next").removeClass("disabled")
+                var link = `${catalog}/product/${result[1].key}`;
+                $("#SwitchPage .btn_next").attr({
+                    href: link,
+                    title: result[1].value
+                })
+            }
+        }
+    });
+} 

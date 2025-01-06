@@ -1,4 +1,5 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate;
@@ -19,7 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public virtual DateTime? EndTime { get; set; }
         public bool Permanent { get; set; }
         public string? ItemNo {  get; set; }
-        public int Status { get; set; }
+        public ProdStatusEnum Status { get; set; }
         public List<TagGetSelectedDto> TagDatas { get; set; }
         public List<TechCertGetSelectedDto> TechCertDatas { get; set; }
         public List<ProductStockDto> Stocks { get; set; }

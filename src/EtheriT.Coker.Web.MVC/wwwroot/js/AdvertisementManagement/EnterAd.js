@@ -53,11 +53,11 @@ function PageReady() {
     $permanent.on("click", function () {
         if ($permanent.is(":checked")) {
             $date.val('');
-            $date.attr("disabled", "disabled");
+            $date.prop("disabled", true);
             startDate = null;
             endDate = null;
         } else {
-            $date.removeAttr("disabled");
+            $date.prop("disabled", false);
         }
     })
 
@@ -142,11 +142,12 @@ function FormDataClear() {
     ImageUploadModalClear($("#ImageUpload"));
     co.Form.clear("AdForm");
     $("#AdForm > input[name='id'").val("");
-    $Visible.prop("checked", true);
-    $Visible.val(true);
+    $Visible.prop("checked", false);
+    $Visible.val(false);
     $check_sort.prop("checked", false);
     $input_sort.prop("disabled", true);
-    $input_sort.val("")
+    $input_sort.val("");
+    $date.prop("disabled", true);
 }
 
 function deleteButtonClicked(e) {

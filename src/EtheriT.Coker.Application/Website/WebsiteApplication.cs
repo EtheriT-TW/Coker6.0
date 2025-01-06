@@ -16,6 +16,9 @@ using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Linq;
+using EtheriT.Coker.Application.Authorization;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Application
 {
@@ -71,7 +74,8 @@ namespace EtheriT.Coker.Application
 					Level = (WebsiteLevelEnum)site.Level,
                     locale = site.Locale,
                     Root = site.DefaultUrl,
-                    Description = site.Description
+                    Description = site.Description,
+                    Css = site.Css
 				};
                 if(!string.IsNullOrEmpty(defaultData.Root))
                     defaultData.Root = Regex.Replace(defaultData.Root,"/$","");
@@ -132,7 +136,21 @@ namespace EtheriT.Coker.Application
         {
             ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
             string name = user.Identity?.Name;
-            var date = from w in db.Websites
+            bool isysUser = await loginUserData.isSystemUser();
+            IQueryable<WebsDto> date;
+            if (isysUser)
+            {
+                date = from w in db.Websites
+                       select new WebsDto
+                       {
+                           Id = w.Id,
+                           Name = w.Title,
+                           Description = w.Description ?? "",
+                           Images = w.Icon ?? ""
+                       };
+            }
+            else {
+                date = from w in db.Websites
                        join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
                        join u in db.Users on bind.UserId equals u.Id
                        where u.Account == name
@@ -143,6 +161,7 @@ namespace EtheriT.Coker.Application
                            Description = w.Description ?? "",
                            Images = w.Icon ?? ""
                        };
+            }
             if (date.Any())
             {
                 long siteId = await loginUserData.GetWebsiteId();
@@ -230,7 +249,7 @@ namespace EtheriT.Coker.Application
                 responseMessageDto.Success = false;
                 responseMessageDto.Error = e.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "Exchange", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(responseMessageDto));
             return responseMessageDto;
         }
         public async Task<GetFrontContenOutputDto> GetPrivacyConten(GetFrontContenInputDto dto) {
@@ -292,7 +311,41 @@ namespace EtheriT.Coker.Application
             {
                 response.Error = e.Message;
             }
-            await loginUserData.SetLogs(ApplicationName, "Save", JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            return response;
+        }
+        public async Task<ResponseMessageDto> LoadFrameCss() {
+            var response = new ResponseMessageDto() { Success = false };
+            var websiteid = await loginUserData.GetWebsiteId();
+            try {
+                if (websiteid == 0) throw new Exception("未再登入狀態");
+                var data = await db.Websites.Where(e => e.Id == websiteid).FirstOrDefaultAsync();
+                if (data == null) throw new Exception("網站不存在");
+                response.Message = data.Css;
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> SettingCss(FrameCssDto dto) {
+            var response = new ResponseMessageDto() { Success = false };
+            var websiteid = await loginUserData.GetWebsiteId();
+            try
+            {
+                if (websiteid == 0) throw new Exception("未再登入狀態");
+                var data = await db.Websites.Where(e => e.Id == websiteid).FirstOrDefaultAsync();
+                if (data == null) throw new Exception("網站不存在");
+                data.Css = dto.Css;
+                response.Success = true;
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            catch (Exception e)
+            {
+                response.Error = e.Message;
+            }
             return response;
         }
     }

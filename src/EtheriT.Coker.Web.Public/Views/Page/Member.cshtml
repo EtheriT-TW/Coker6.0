@@ -11,6 +11,9 @@
     const local = @Html.Raw(L.getAllJsonString());
 </script>
 @Html.AntiForgeryToken()
+<div id="PostCSS" class="d-none">
+    @HttpUtility.HtmlEncode(Model.PageData.Css)
+</div>
 <div class="top_title_1 p-3">
     <nav class="bread d-none d-md-block container">
         <ol class="list-unstyled d-flex my-0">
@@ -29,6 +32,63 @@
     </nav>
 </div>
 <Content id="main">
+    <div id="ReOrderAlertModal" class="modal fade" aria-hidden="true" aria-labelledby="ReOrderAlertModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered justify-content-center">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center fs-4 fw-bold">訂單變動</div>
+                    <div class="orderlist mb-3">
+                        <ul class="list-unstyled"></ul>
+                        <template id="RePayOrderListTemplate">
+                            <li class="border-2 border-bottom pb-2">
+                                <figure class="align-items-center d-flex mb-0">
+                                    <img data-key="imagePath" src="" alt="" class="">
+                                    <figcaption class="ps-3">
+                                        <div data-key="title" class="fs-5 fw-bold"></div>
+                                        <div class="spec"><span data-key="s1Title" class="border me-2 px-1 d-none"></span><span data-key="s2Title" class="border px-1 d-none"></span></div>
+                                    </figcaption>
+                                </figure>
+                                <div class="align-items-center">
+                                    <div data-key="describe" class="describe text-center fw-bold fs-5 red_text  d-none"></div>
+                                    <div class="title row text-center">
+                                        <div class="col-4">單價</div>
+                                        <div class="col-4">數量</div><div class="col-4">小計</div>
+                                    </div>
+                                    <div class="content row text-center align-items-center">
+                                        <div class="col-4">
+                                            <div data-key="oldPrice" class="text-decoration-line-through fw-light price d-none"></div>
+                                            <div data-key="price" class="price"></div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div data-key="oldQuantity" class="text-decoration-line-through fw-light quantity d-none"></div>
+                                            <div data-key="quantity" class="quantity"></div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div data-key="subtotal_old" class="subtotal_old text-decoration-line-through fw-light price"></div>
+                                            <div data-key="subtotal_new" class="subtotal_new price red_text"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </template>
+                        <div class="align-items-end row">
+                            <div class="col-8 text-end">商品金額：</div><div class="col-4 ps-0 text-start">
+                                <div class="oh_subtotal_old fw-light price text-decoration-line-through"></div>
+                                <div class="oh_subtotal_new price"></div>
+                            </div>
+                        </div>
+                        <div class="my-2 row"><div class="col-8 text-end">運費：</div><div class="oh_freight col-4 ps-0 text-start price"></div></div>
+                        <div class="row"><div class="col-8 text-end fw-bold">總金額：</div><div class="oh_total col-4 fw-bold price ps-0 red_text text-start"></div></div>
+                    </div>
+                    <button class="btn_repay btn btn-primary rounded border-0 text-white px-3 w-100 fs-5 mb-3">進入付款程序</button>
+                    <button class="btn_cancelrepay  btn btn-danger rounded border-0 text-white px-3 w-100 fs-5 mb-3">取　　消</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="ResetEmailModal" class="modal fade" aria-hidden="true" aria-labelledby="ResetEmailModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered justify-content-center">
             <div class="modal-content">
@@ -55,7 +115,7 @@
                             <input class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input New Mail" placeholder="新的電子信箱" required name="email">
                         </div>
                         <div class="newmail_vcode input-group">
-                            <input id="InputNewMailVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input New Email Verification Code" placeholder="輸入驗證碼" maxlength="4" required>
+                            <input id="InputNewMailVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input New Email Verification Code" placeholder="輸入驗證碼" maxlength="4" autocomplete="off" required>
                             <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
                                 <img id="NewMailImgCaptcha" alt="驗證碼" class="img-fluid" src="" />
                             </div>
@@ -79,13 +139,16 @@
                     </span>個人資料
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">
-                    <span class="material-symbols-outlined mx-2">
-                        other_admission
-                    </span>歷史訂單
-                </button>
-            </li>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">
+                        <span class="material-symbols-outlined mx-2">
+                            other_admission
+                        </span>歷史訂單
+                    </button>
+                </li>
+            }
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="favorite-tab" data-bs-toggle="tab" data-bs-target="#favorite-tab-pane" type="button" role="tab" aria-controls="favorite-tab-pane" aria-selected="false">
                     <span class="material-symbols-outlined mx-2">
@@ -174,86 +237,99 @@
                     </div>
                 </div>
             </div>
-            <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
-                <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
+            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+            {
+                <div id="profile-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="profile-tab" tabindex="1">
+                    <div class="nodata h5 text-center fw-bold d-none">查無歷史訂單</div>
 
-                <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
-                    <li class="page-item btn_prev">
-                        <button class="page-link text-black" title="切換至上一頁">
-                            <i class="fa-solid fa-angle-left"></i>
-                        </button>
-                    </li>
-                    <li class="page-item btn_next">
-                        <button class="page-link text-black" title="切換至下一頁">
-                            <i class="fa-solid fa-angle-right"></i>
-                        </button>
-                    </li>
-                </ul>
-                
-                <div class="content"></div>
+                    <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
+                        <li class="page-item btn_prev">
+                            <button class="page-link text-black" title="切換至上一頁">
+                                <i class="fa-solid fa-angle-left"></i>
+                            </button>
+                        </li>
+                        <li class="page-item btn_next">
+                            <button class="page-link text-black" title="切換至下一頁">
+                                <i class="fa-solid fa-angle-right"></i>
+                            </button>
+                        </li>
+                    </ul>
 
-                <template id="Template_Order_List">
-                    <div class="border border-5 rounded p-3 mb-3">
-                        <div class="row mb-1">
-                            <div class="col-3 text-center">訂單編號</div>
-                            <div class="col-3 text-center">訂單日期</div>
-                            <div class="col-3 text-center">訂購總額</div>
-                            <div class="col-3 text-center">訂單狀態</div>
-                        </div>
-                        <div class="row my-1">
-                            <div class="number col-3 text-center"></div>
-                            <div class="date col-3 text-center"></div>
-                            <div class="amount col-3 text-center"></div>
-                            <div class="state col-3 text-center"></div>
-                        </div>
-                        <div class="collapse">
-                            <div class="card card-body">
-                                <ul class="list-group list-group-flush mb-3">
-                                    <li class="list-group-item">
-                                        <div class="row d-lg-flex">
-                                            <div class="col-2 text-center">商品圖片</div>
-                                            <div class="col-4 text-start">商品名稱</div>
-                                            <div class="col-2 text-end">單價</div>
-                                            <div class="col-2 text-end">數量</div>
-                                            <div class="col-2 text-end">小計</div>
-                                        </div>
-                                    </li>
-                                </ul>
-                                <div class="row d-lg-flex px-3">
-                                    <div class="col-10 text-end align-content-center">商品金額：</div>
-                                    <div class="header_subtotal price col-2 text-end align-content-center"></div>
-                                </div>
-                                <div class="row d-lg-flex px-3">
-                                    <div class="col-10 text-end align-content-center">運費：</div>
-                                    <div class="header_freight price col-2 text-end align-content-center"></div>
-                                </div>
-                                <div class="row d-lg-flex px-3">
-                                    <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
-                                    <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
+                    <div class="content"></div>
+
+                    <template id="Template_Order_List">
+                        <div class="border border-5 rounded p-3 mb-3">
+                            <div class="row mb-1">
+                                <div class="col-3 text-center">訂單編號</div>
+                                <div class="col-2 text-center">訂單日期</div>
+                                <div class="col-2 text-center">訂購總額</div>
+                                <div class="col-2 text-center">付款方式</div>
+                                <div class="col-3 text-center">訂單狀態</div>
+                            </div>
+                            <div class="row my-1">
+                                <div class="number col-3 text-center"></div>
+                                <div class="date col-2 text-center"></div>
+                                <div class="amount col-2 text-center"></div>
+                                <div class="payment col-2 text-center"></div>
+                                <div class="state col-3 text-center"></div>
+                            </div>
+                            <button class="btn_buyAgain btn bg_gray border-0 rounded w-100 my-3" type="button">
+                                再買一次
+                            </button>
+                            <div class="collapse">
+                                <div class="card card-body">
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item">
+                                            <div class="row d-lg-flex">
+                                                <div class="col-2 text-center">商品圖片</div>
+                                                <div class="col-4 text-start">商品名稱</div>
+                                                <div class="col-2 text-end">單價</div>
+                                                <div class="col-2 text-end">數量</div>
+                                                <div class="col-2 text-end">小計</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                    <div class="row d-lg-flex px-3">
+                                        <div class="col-10 text-end align-content-center">商品金額：</div>
+                                        <div class="header_subtotal price col-2 text-end align-content-center"></div>
+                                    </div>
+                                    <div class="row d-lg-flex px-3">
+                                        <div class="col-10 text-end align-content-center">運費：</div>
+                                        <div class="header_freight price col-2 text-end align-content-center"></div>
+                                    </div>
+                                    <div class="row d-lg-flex px-3">
+                                        <div class="col-10 text-end align-content-center fw-bold">總金額：</div>
+                                        <div class="header_total price col-2 text-end align-content-center fw-bold"></div>
+                                    </div>
                                 </div>
                             </div>
+                            <button class="btn_collapse btn bg_gray border-0 rounded text-black w-100" type="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">
+                                查看訂單明細
+                            </button>
                         </div>
-                        <button class="btn_collapse btn bg_gray border-0 rounded text-black w-100" type="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="collapseExample">
-                            點擊查看訂單詳細
-                        </button>
-                    </div>
-                </template>
+                    </template>
 
-                <template id="Template_Order_Details_List">
-                    <li class="list-group-item">
-                        <a href="" title="" target="_self">
-                            <div class="row d-lg-flex">
-                                <div class="col-2 text-center"><img src="" alt="" /></div>
-                                <div class="title col-4 text-start align-content-center"></div>
-                                <div class="price col-2 text-end align-content-center"></div>
-                                <div class="quantity col-2 text-end align-content-center"></div>
-                                <div class="subtotal price col-2 text-end align-content-center"></div>
-                            </div>
-                        </a>
-                    </li>
-                </template>
+                    <template id="Template_Order_Details_List">
+                        <li class="list-group-item">
+                            <a href="" title="" target="_self">
+                                <div class="row d-lg-flex">
+                                    <div class="col-2 text-center"><img src="" alt="" /></div>
+                                    <div class=" col-4 text-start align-content-center">
+                                        <div class="title fw-bold"></div>
+                                        <div class="spec d-flex"></div>
+                                    </div>
+                                    <span class="isHide">單價:</span><div class="price col-2 text-end align-content-center"></div>
+                                    <p class="isWrap"></p>
+                                    <span class="isHide">數量:</span><div class="quantity col-2 text-end align-content-center"></div>
+                                    <p class="smailWrap"></p>
+                                    <span class="isHide hideTotal">小計:</span><div class="subtotal price col-2 text-end align-content-center"></div>
+                                </div>
+                            </a>
+                        </li>
+                    </template>
 
-            </div>
+                </div>
+            }
             <div id="favorite-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="favorite-tab" tabindex="2">
                 <div class="nodata h5 text-center fw-bold  d-none">查無收藏紀錄</div>
 
@@ -268,7 +344,7 @@
 
                 <template id="FavoriteTemplate">
                     <div class="type_change_frame row position-relative mb-3">
-                        <a data-key="link" class="border border-5 rounded">
+                        <a data-key="link" class="rounded">
                             <figure>
                                 <img data-key="image" src="" alt="" />
                                 <figcaption class="w-100">
@@ -288,8 +364,8 @@
                             </button>
                         </div>
                         <div class="favbtn position-absolute end-0 w-auto p-1 mt-2 me-3 rounded-circle">
-                            <button class="btn_favorite bg-transparent border-0" title="加入收藏">
-                                <i class="font-rad fa-regular fa-heart"></i>
+                            <button class="btn_favorite bg-transparent border-0" title="移除收藏">
+                                <i class="font-rad fa-solid fa-heart"></i>
                             </button>
                         </div>
                     </div>
@@ -314,6 +390,7 @@
             <div id="history-tab-pane" class="tab-pane fade p-5" role="tabpanel" aria-labelledby="history-tab" tabindex="3">
                 <div class="nodata h5 text-center fw-bold d-none">查無瀏覽紀錄</div>
 
+                <div class="ps-sm-5 ps-3">※僅提供六個月紀錄資料</div>
                 <div class="btn_switchViewType d-flex justify-content-end m-3 mt-0 d-none">
                     <button class="align-items-center bg-transparent border-0 d-flex mx-1 focus" data-type="grid">
                         <span class="material-symbols-outlined fs-5 me-1">grid_on</span>圖片
@@ -325,7 +402,7 @@
 
                 <template id="BrowsingTemplate">
                     <div class="type_change_frame row position-relative mb-3">
-                        <a data-key="link" class="border border-5 rounded">
+                        <a data-key="link" class="rounded">
                             <figure>
                                 <img data-key="image" src="" alt="" />
                                 <figcaption class="w-100">

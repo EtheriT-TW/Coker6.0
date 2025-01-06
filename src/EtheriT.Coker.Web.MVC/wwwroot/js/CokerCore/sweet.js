@@ -3,6 +3,18 @@
         config: {
             timeout: 1500
         },
+        loading: function () {
+            Swal.fire({
+                title: "資料處理中，請稍後。",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                willClose: () => {
+                }
+            }).then((result) => {
+            });
+        },
         success: function (text, action, autoclose) {
             var closetime = false;
             if (autoclose) { closetime = Coker.sweet.config.timeout }

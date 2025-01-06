@@ -14,7 +14,7 @@
 
 <div id="ProDisplayModal" class="modal fade" tabindex="-1" aria-labelledby="Product Display Modal" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content position-relative p-4">
+        <div class="modal-content position-relative">
             <button class="btn_close_prodisplaymodal btn-close rounded-circle position-absolute end-0 top-0 p-2 m-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
             <div class="modal-body p-2 mx-auto w-100 h-100 d-flex">
                 <div id="Pro_Image" class="pro_img d-none"
@@ -206,6 +206,7 @@
         <img class="img-fluid" src="~/upload/product/pro_pic_04.jpg" alt="" />
     </div>
 </template>
+
 <Content id="main" class="d-none">
     <div id="Product" class="container row m-auto my-3">
         <div class="image col-md-6 col-sm-12">
@@ -228,8 +229,8 @@
         </div>
 
         <div class="content col-md-6 col-sm-12">
-            <div class="pro_itemNo title fs-6"></div>
-            <div class="pro_title title fs-5"></div>
+            <div class="pro_itemNo title fs-6 py-1"></div>
+            <div class="pro_title title fs-2"></div>
 
             <div class="describe d-flex align-items-center justify-content-between position-relative">
                 <ul class="introduce my-2"></ul>
@@ -309,10 +310,10 @@
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button">
-                    <div class="icon_plus">我要購買</div>
+                    <div class="icon_plus"></div>
                 </div>
             }
-            <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button">
+            <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank">
                 <div class="text-white">了解更多</div>
             </a>
         </div>
@@ -338,7 +339,6 @@
     <div id="TabContent" class="tab-content container">
         <div id="ProductDescription" class="container tab-pane fade show active my-4" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
             <Content class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
-            <div id="PostCSS" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Css)</div>
         </div>
 
         <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade mb-5" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
@@ -350,6 +350,11 @@
         </div>
     </div>
 </Content>
+<div id="SwitchPage" class="container my-5 justify-content-center">
+    <a href="" title="" target="_self" class="btn_prev disabled">上一則</a>
+    <a href="" title="回列表頁" target="_self" class="btn_list mx-4 mx-sm-5">回列表頁</a>
+    <a href="" title="" target="_self" class="btn_next disabled">下一則</a>
+</div>
 @if (Model.ParentData != null)
 {
     <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>

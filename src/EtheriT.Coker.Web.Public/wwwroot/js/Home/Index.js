@@ -18,6 +18,7 @@
     });
 
     var banner_swiper = new Swiper("#BannerSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,
@@ -36,6 +37,7 @@
     });
 
     var new_swiper = new Swiper("#NewsSwiper > .swiper", {
+        a11y: true,
         slidesPerView: 1,
         spaceBetween: 15,
         loop: true,

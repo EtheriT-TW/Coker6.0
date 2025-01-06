@@ -83,3 +83,9 @@ if (!String.prototype.format) {
         });
     };
 }
+if (!Storage.prototype.isNullOrEmpty) {
+    Storage.prototype.isNullOrEmpty = function (key) {
+        const value = this.getItem(key);
+        return value === null || value === "";
+    };
+}

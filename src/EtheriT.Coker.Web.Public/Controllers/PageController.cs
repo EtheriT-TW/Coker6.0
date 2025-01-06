@@ -116,8 +116,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 website = key;
                 key = "home";
             }
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            var defaultData = await websiteApplication.GetDefaultData(siteId, website);
+            var rootSiteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var defaultData = await websiteApplication.GetDefaultData(rootSiteId, website);
+            var siteId = defaultData.Id;
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
@@ -130,6 +131,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
             var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
+            var prodCatalog = StoreSet.storeSetDetails?.Find(e => e.key == "prodCatalog");
+            var membershipTerms = StoreSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
 
             RemoteInputDto remoteInputDto = new RemoteInputDto { FK_WebsiteId = siteId };
             if (defaultData.Id != siteId) foreach (var enterAd in enterAds) for (var i = 0; i < enterAd.FileLink.Count; i++) if (enterAd.FileLink[i].Link != null) enterAd.FileLink[i].Link = enterAd.FileLink[i].Link.Replace("upload", $"upload/{defaultData.OrgName}");
@@ -153,9 +156,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     GTM = (GTM != null && GTM.value != null) ? String.Join(",", GTM.value!) : "",
                     storeBuyState = (storeBuyState != null && storeBuyState.value != null) ? String.Join(",", storeBuyState.value!) : "",
                     storeMemo = (GA4 != null && storeMemo != null && storeMemo.value != null) ? String.Join(",", storeMemo.value!) : "",
-                    linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : ""
+                    linkMore = (linkMore != null && linkMore.value != null) ? String.Join(",", linkMore.value!) : "",
+                    prodCatalog = (prodCatalog != null && prodCatalog.value != null) ? String.Join(",", prodCatalog.value!) : "",
+                    membershipTerms = (membershipTerms != null && membershipTerms.value != null) ? String.Join(",", membershipTerms.value!) : "",
                 }
             };
+            ViewData["membershipTerms"] = model.storeSet.membershipTerms;
             string view;
             if (new List<string> { "article" }.Contains(key.ToLower()) && int.TryParse(option, out id))
             {
@@ -182,7 +188,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData = PageData;
                         model.PageData.PageView = "Article";
                         model.PageData.LayoutType = defaultData.Layout_Type;
-                        model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.Article;
+                        model.PageData.holdPage = HoldPageNameEnum.Article;
                         if (key == "article")
                         {
                             model.PageData.VisibleHeader = true;
@@ -265,7 +271,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.ParentData = TechCertPageData;
                         model.PageData.PageView = "Techcert";
                         model.PageData.LayoutType = defaultData.Layout_Type;
-                        model.PageData.holdPage = Application.Shared.Dto.enumType.HoldPageNameEnum.TechCert;
+                        model.PageData.holdPage = HoldPageNameEnum.TechCert;
                         if (key.ToLower() == "techvert")
                         {
                             model.PageData.VisibleHeader = true;
@@ -302,8 +308,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     default:
                         if (key.ToLower() == "search")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.PageData.PageView = "Search";
+                            model.PageData.CurrentUrl = "/Search";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
@@ -321,20 +328,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         else if (key.ToLower() == "shoppingcar")
                         {
+                            ViewData["prodCatalog"] = model.storeSet.prodCatalog;
                             ViewData["storeMemo"] = model.storeSet.storeMemo;
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "ShoppingCar";
                         }
                         else if (key.ToLower() == "member")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData.CurrentUrl = "/Member";
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = "Member";
                         }
                         else if (key.ToLower() == "demosearch")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             model.PageData.Title = L.get("SiteSearch");
                             model.SearchPalameter = new FrontSearchPalameterDro
@@ -350,7 +359,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         }
                         else if (key == "ProductDemo" || key == "Favorites" || key == "Catalog" || key == "ExhibitionCenter" || key == "Terms" || key == "ColumnarSearch")
                         {
-                            model.PageData = await websiteApplication.GetPrivacyConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
+                            model.PageData = await webMenuApplication.GetFrontConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             remoteInputDto.FK_WebmenuId = model.PageData.Id;
                             view = key;
                         }
@@ -387,7 +396,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 if (view.IndexOf("Error/") < 0)
                 {
-                    if (siteId != defaultData.Id && model.PageData != null)
+                    if (rootSiteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
@@ -395,7 +404,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"data-pdf-url=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"data-pdf-url=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
-                    if (siteId != defaultData.Id && model.ParentData != null)
+                    if (rootSiteId != defaultData.Id && model.ParentData != null)
                     {
                         model.ParentData.Html = stringHandler.HtmlEncode(model.ParentData.Html);
                         model.ParentData.Html = model.ParentData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");
@@ -427,12 +436,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ViewBag.LoginEnable = false;
             }
 
-            await RemoteAppService.insertRemote(remoteInputDto);
-            ViewData["SideName"] = model.PageData!.SiteName;
+            var remote = await RemoteAppService.insertRemote(remoteInputDto);
+            if(remote!=null && remote.Success) ViewBag.PageKey = remote.Message;
+
+			ViewBag.Css = HttpUtility.HtmlEncode((model.PageData!.Css)??"");
+            if (model.ParentData != null)
+				ViewBag.Css += HttpUtility.HtmlEncode(model.ParentData.Css);
+
+			if (!string.IsNullOrEmpty(defaultData.Css))
+				ViewBag.Css += HttpUtility.HtmlEncode(defaultData.Css);
+
+
+			ViewData["SideName"] = model.PageData!.SiteName;
             ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
             ViewData["Layout"] = model.layout;
-            ViewData["PageTagNameName"] = $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
+            ViewData["PageTagNameName"] = key == "home" ? model.PageData.SiteName : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
             ViewData["Description"] = model.PageData.Description;
             ViewData["GA4"] = model.storeSet.GA4;
             ViewData["GTM"] = model.storeSet.GTM;

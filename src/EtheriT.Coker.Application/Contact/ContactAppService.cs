@@ -81,7 +81,7 @@ namespace EtheriT.Coker.Application.Contact
 						Body = html,
 						Css = ".table{width:800px;} .table td{border-bottom: #ececec solid 1px; padding: 6px 3px;} .table td:last-child{padding-left: 9px;} .title{background-color: #ececec; width:22%; text-align: center; font-weight: bold;}"
                     };
-					senderDto.Sender.Name = site.Contact?? site.Title??"";
+					senderDto.Sender.Name = string.IsNullOrEmpty(site.Contact) ? site.Title ?? "" : site.Contact;
 					await mailAppService.sendMail(senderDto);
 					Core.Models.Contact contact = new Core.Models.Contact
 					{

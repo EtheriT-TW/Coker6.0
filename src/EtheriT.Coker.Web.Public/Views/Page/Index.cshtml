@@ -5,6 +5,7 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script src="~/js/Page/Index.min.js" asp-append-version="true"></script>
 @{
     switch (Model.locale)
     {
@@ -70,7 +71,7 @@
                 }
                 @if (Model.PageData.VisibleTitle)
                 {
-                    <div class="title fs-1 fw-bold text-white container">@(Model.MenuBread.Count() > 0 ? Model.MenuBread.Last().Title : @Model.PageData.Title)</div>
+                    <h2 class="title fs-1 fw-bold text-white container">@(Model.MenuBread.Count() > 0 ? Model.MenuBread.Last().Title : @Model.PageData.Title)</h2>
                 }
             </div>
             @if (Model.ParentData.VisibleTitle && Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)
@@ -158,6 +159,15 @@
 }
 
 <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+@if (Model.PageData != null && Model.option!="search" && Model.PageData.holdPage == HoldPageNameEnum.Article)
+{
+    <div id="SwitchPage" class="container my-5 justify-content-center">
+        <a href="" title="" target="_self" class="btn_prev disabled">上一則</a>
+        <a href="" title="回列表頁" target="_self" class="btn_list mx-4 mx-sm-5">回列表頁</a>
+        <a href="" title="" target="_self" class="btn_next disabled">下一則</a>
+    </div>
+}
+
 @{
     if (Model.PageData.LastModificationTime != null)
     {
@@ -168,17 +178,8 @@
         <div class="container popular font_small text-end py-2">人氣值：@Model.PageData.Popular.Value</div>
     }
 }
-<div id="PostCSS" class="d-none">
-    @HttpUtility.HtmlEncode(Model.PageData.Css)
-    @if (Model.ParentData != null)
-        @HttpUtility.HtmlEncode(Model.ParentData.Css)
 
-
-
-
-    </div>
-
-    @if (Model.ParentData != null)
+@if (Model.ParentData != null)
 {
     <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>
 }

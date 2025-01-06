@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Authorizaion.Dto;
+using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Webs.Dto;
@@ -10,12 +11,14 @@ using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -54,7 +57,7 @@ namespace EtheriT.Coker.Application
                 if (httpContextAccessor.HttpContext == null) throw new Exception();
                 ClaimsPrincipal user = httpContextAccessor.HttpContext?.User;
                 string name = user.Identity?.Name;
-                id = (await db.Users.Where(e => e.Account == name).FirstOrDefaultAsync()).Id;
+                id = (await db.Users.Where(e => e.Account == name).FirstOrDefaultAsync())?.Id ?? 0;
             }
             catch(Exception ex)
             {
@@ -150,8 +153,13 @@ namespace EtheriT.Coker.Application
             }
             else
             {
+                var isSysUser = await isSystemUser();
                 var userDetail = await db.Users.Where(u => u.Id == token.UserID).FirstOrDefaultAsync();
                 if (userDetail == null) return 0;
+                else if (isSysUser) {
+                    var website = await db.Websites.Where(e => e.Id == token.websiteId).FirstOrDefaultAsync();
+                    return website == null ? 0 : website.Id;
+                }
                 var check = db.MappingUserAndWebsites.Where(m => m.UserId == userDetail.Id).Where(m => m.WebsiteId == token.websiteId);
                 int c = check.Count();
                 if (check.Any()) return token.websiteId;
@@ -173,6 +181,12 @@ namespace EtheriT.Coker.Application
         }
         public long GetFrontWebsiteId() {
             return configuration.GetValue<long>("WebConfig:SiteId");
+        }
+        public List<string> GetFrontChildOrgName()
+        {
+            var list = configuration.GetSection("WebConfig:childSiteOrgName").Get<List<string>>();
+            if (list == null) list = new List<string>();
+            return list;
         }
         public async Task<string> GetWebsiteName() {
             Guid s = GetSecret();
@@ -287,6 +301,8 @@ namespace EtheriT.Coker.Application
         public async Task<bool> CheckedWebSiteId(long id) {
             bool check = false;
             long userId = await GetUserId();
+            check = await isSystemUser();
+            if(check) return true;
             if (userId != 0) {
                 var userDetail = db.Users.Where(u => u.Id == userId).Where(u => !u.IsDeleted);
                 if (userDetail.Any())
@@ -296,6 +312,12 @@ namespace EtheriT.Coker.Application
                 }
             }
             return check;
+        }
+        public async Task<bool> isSystemUser()
+        {
+            var userId = await GetUserId();
+            var data = db.MappingUserAndRoles.Include(e => e.Role).Where(e => e.UserId == userId && e.Role!.Type == RoleTypeEnum.系統維護);
+            return data.Any();
         }
         public async Task<bool> CheckedWebSiteId(long userId,long websiteId) {
             bool check = false;
@@ -338,26 +360,38 @@ namespace EtheriT.Coker.Application
                 entity.LastModificationTime = DateTime.Now;
             }
         }
-        public async Task SetLogs(string Controller, string Action, string Paramater, string response) {
+        public async Task SetLogs(string Paramater, string response) {
             var user = await GetUser();
+            var routeData = httpContextAccessor.HttpContext.GetRouteData();
+			var Action = routeData.Values["action"]?.ToString();
+			var Controller = routeData.Values["controller"]?.ToString();
+            var WebsiteID = await GetWebsiteId();
 
-			db.AuditLogs.Add(new Core.Models.AuditLog { 
-                ClientIpAddress = GetClientIP(),
-                BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
-                ExecutionTime = DateTime.Now,
-                MethodName= Action,
-                Parameters = Paramater,
-                ServiceName = Controller,
-                ReturnValue= response,
-                UserId = user.Id,
-                ClientName = user.UserName,
-                FK_WebsiteId = await GetWebsiteId()
-            });
-            db.SaveChanges();
+            if (!WebsiteID.IsNullOrEmpty())
+            {
+                db.AuditLogs.Add(new Core.Models.AuditLog
+                {
+                    ClientIpAddress = GetClientIP(),
+                    BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
+                    ExecutionTime = DateTime.Now,
+                    MethodName = Action,
+                    Parameters = Paramater,
+                    ServiceName = Controller,
+                    ReturnValue = response,
+                    UserId = user.Id,
+                    ClientName = user.UserName,
+                    FK_WebsiteId = await GetWebsiteId()
+                });
+                db.SaveChanges();
+            }
+            else throw new Exception("記錄錯誤");
         }
-        public async Task SetLogs(string Controller, string Action,long? UsetId,long? WebsiteId, string Paramater, string response)
+        public async Task SetLogs(long? UsetId,long? WebsiteId, string Paramater, string response)
         {
 			var user = await GetUser(UsetId??0);
+			var routeData = httpContextAccessor.HttpContext.GetRouteData();
+			var Action = routeData.Values["action"]?.ToString();
+			var Controller = routeData.Values["controller"]?.ToString();
 			db.AuditLogs.Add(new Core.Models.AuditLog
             {
                 ClientIpAddress = GetClientIP(),

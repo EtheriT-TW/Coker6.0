@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Remote;
+using EtheriT.Coker.Application.Shared.Dto.UserHabits;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -17,5 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Remote
 		public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
 		public Task<JsonResult> GetPageList(DataSourceLoadOptions loadOptions);
 		public Task<ResponseMessageDto> GetRemoteCount(GetRemoteCountInputDto dto);
-	}
+		public Task UpdateRemoteTime(SetTrackTimeDto dto);
+
+    }
 }

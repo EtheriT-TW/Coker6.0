@@ -31,6 +31,10 @@
                                 @switch (item.type)
                                 {
                                     case SeoSetDataTypeEnum.text:
+                                    case SeoSetDataTypeEnum.number:
+                                    case SeoSetDataTypeEnum.email:
+                                    case SeoSetDataTypeEnum.date:
+                                    case SeoSetDataTypeEnum.password:
                                         <div class="d-flex align-items-center">
                                             <label class="form-label m-0" for="@(item.key)">@item.name</label>
                                             <input id="@(item.key)" name="@(item.key)" class="form-control text-center rounded mx-3" type="@(item.type)" @(string.IsNullOrEmpty(item.pattern) ? " " : $"pattern={item.pattern})")maxlength="@(item.maxlength)">

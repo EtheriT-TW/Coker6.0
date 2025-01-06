@@ -19,7 +19,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string SearchProdPlaceholder { get; } = "請輸入商品名稱/型號";
         public static string SearchAllPlaceholder { get; } = "尋找全站資訊";
         public static string FindEmpty { get; } = "查無資料";
-        public static string shareTo { get; } = "分享至";
+        public static string shareTo { get; } = "分享至：{0} (另開新視窗)";
         public static string LinkTo { get; } = "連結至：{0}";
         public static string LinkToAndBlank { get; } = "連結至：{0}(另開新視窗)";
         public static string cookieDeclare{ get; } = "本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見 隱私權政策。";
@@ -44,6 +44,6 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string SiteSearch { get; } = "站內搜尋";
         public static string UnnamedFile { get; } = "未命名檔案";
         public static string ProdEmpty { get; } = "商品已售完";
-
+        public static string ServiceCenter { get; } = "客服中心";
     }
 }

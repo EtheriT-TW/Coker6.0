@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Entity;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
@@ -21,7 +22,7 @@ namespace EtheriT.Coker.Core.Models
         public bool permanent { get; set; }
         public bool Visible { get; set; }
         public bool RemovedFromShelves { get; set; }
-        public int Status { get; set; }
+        public ProdStatusEnum Status { get; set; }
         public int? Clicks { get; set; }
         public string? SaveHtml { get; set; }
         [MaxLength]

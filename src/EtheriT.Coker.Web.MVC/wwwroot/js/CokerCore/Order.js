@@ -1,6 +1,15 @@
 ﻿Coker.extend({
     Order: {
-        GetHeader: function (id) {
+        GetDisplay: function (ohids) {
+            return $.ajax({
+                url: "/api/Order/GetOrderDisplay/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: { ohids: ohids },
+            });
+        },
+        GetHeaderOld: function (id) {
             return $.ajax({
                 url: "/api/Order/GetHeaderOne/",
                 type: "GET",
@@ -24,6 +33,24 @@
                 contentType: 'application/json; charset=utf-8',
                 headers: _c.Data.Header,
                 data: { Id: id },
+            });
+        },
+        UpdateStatus: function (data) {
+            return $.ajax({
+                url: "/api/Order/UpdateStatus",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
+        GetOrderStatusLookup: function () {
+            return $.ajax({
+                url: "/api/Order/getOrderStatusLookup/",
+                type: "GET",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
             });
         }
     }

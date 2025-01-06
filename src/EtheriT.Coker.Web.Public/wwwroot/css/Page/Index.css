@@ -10,14 +10,40 @@
     .top_title_3 li {
         color: orange;
     }
-    .top_title_3 li a {
-        color: orange;
+
+        .top_title_3 li a {
+            color: orange;
+        }
+
+        .top_title_3 li:not(:first-child)::before {
+            content: '>';
+            padding-right: 0.25rem;
+            color: orange;
+        }
+
+#SwitchPage {
+    display: none;
+}
+    #SwitchPage a {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
     }
 
-    .top_title_3 li:not(:first-child)::before {
-        content: '>';
-        padding-right: 0.25rem;
-        color: orange;
+        #SwitchPage a.disabled {
+            pointer-events: none;
+            opacity: 50%;
+        }
+
+    #SwitchPage .btn_prev::before {
+        content: "\f104";
+    }
+
+    #SwitchPage .btn_list::before {
+        content: "\f03a";
+    }
+
+    #SwitchPage .btn_next::after {
+        content: "\f105";
     }
 
 /* Enter Ad Modal */
@@ -25,8 +51,13 @@
     min-width: fit-content;
 }
 
+#EnterAdModal ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
 @media only screen and (max-width: 768px) {
-        .top_title_3 > .title {
-            text-align: center;
-        }
+    .top_title_3 > .title {
+        text-align: center;
+    }
 }

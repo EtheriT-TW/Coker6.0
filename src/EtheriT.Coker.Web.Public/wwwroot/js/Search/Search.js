@@ -1,7 +1,7 @@
 ﻿function PageReady() {
     const $tabs = $(".search-category>.container>button");
     const $search = $(".search-category .catalog_frame");
-    let timer = null; 
+    let timer = null;
     $tabs.on("click", function () {
         //$tabs.removeClass("active");
         //$(this).addClass("active");
@@ -95,21 +95,21 @@
                 if (filters.length != 0) {
                     const group = filters[0].group.filter(e => e.id == element.id);
                     if (group.length != 0 && group[0].tags.length == element.tags.length)
-                        $input.prop("checked",true).trigger("change");
+                        $input.prop("checked", true).trigger("change");
                 }
             }
             $item.find(".typeName").text(element.name);
-            if ($tagTarget.children("li").length>0) $traget.append($item);
+            if ($tagTarget.children("li").length > 0) $traget.append($item);
         });
         if ($(".search-category .active").data("id") != "3" || $(".searchText").text().trim() == "") $("#filterBlock").addClass("d-none");
         else $("#filterBlock").removeClass("d-none");
         clearTimeout(timer);
     })
     $(".searchbtn").on("click", function () {
-        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid") }/${$search.data("search-text")}`;
+        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${$search.data("search-text")}`;
     });
 }
-function filteredPush(data,item) {
+function filteredPush(data, item) {
     filteredInsertOrDeleted(data, item, true);
 }
 function filteredPop(data, item) {
@@ -129,7 +129,7 @@ function filteredInsertOrDeleted(data, item, isAdd) {
     if (filterGroups.length == 0) {
         type.group.push({
             id: item.gid,
-            tags: [item.id]   
+            tags: [item.id]
         });
     }
     else {

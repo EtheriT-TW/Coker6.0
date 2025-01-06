@@ -30,9 +30,12 @@
             var text = $self.text().indexOf('\n') > -1 ? $self.text().replace(/\n/g,"") : $self.text();
             $directory.children("ul").append(`<li class="fs-5"><a class="text-black text-decoration-none" href="#${$self.attr("id")}"><div class="p-2 px-4">${text}</div></a></li>`);
         });
-        $directory.children('a[href^="#"]').on("click",function (event) {
+        $directory.find('a[href^="#"]').on("click", function (event) {
             var id = $(this).attr("href");
             var target = $(id).offset().top - 50;
+            if ($('nav').hasClass('position-fixed')) {
+                target -= $('nav').outerHeight()-10;
+            }
             $('html, body').animate({ scrollTop: target }, 0);
             event.preventDefault();
         });
@@ -43,7 +46,8 @@
             const $self = $(e);
             if ($self.find("select").length == 0 || $self.find("select").children().length == 1) {
                 const $list = $self.find("a");
-                const $select = $("<select>");
+                const $select = $("<select id='jampSelect'>");
+                const $label = $("<label for='jampSelect' class='d-none'>").text("前往：");
                 $self.find("select").remove();
                 if ($self.find('a[href^="#"]').length > 0) {
                     $select.append($("<option>").val("").text("請選擇將前往的標籤"))
@@ -60,8 +64,16 @@
                     const $o = $select.children(":selected");
                     if (/^#/.test($o.val())) $o.data("trigger").trigger("click");
                     else location.href = $o.val();
+
+                    const anchor = $o.val().split('#')[1];
+                    const $targetElement = $('#' + anchor);
+                    if ($('nav').hasClass('position-fixed')) {
+                        $('html, body').animate({
+                            scrollTop: $targetElement.offset().top - $('nav').outerHeight() - 10
+                        });
+                    }
                 });
-                $self.append($select);
+                $self.append($label).append($select);
             }
             if ($(window).width() > 576) {
                 $self.children().first().removeClass("d-none");

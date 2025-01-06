@@ -48,6 +48,7 @@
 
 #Floating_Bottom {
     z-index: 2;
+    will-change: transform;
 }
 
 /* Button Chat */

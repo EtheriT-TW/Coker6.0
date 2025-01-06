@@ -1,4 +1,6 @@
 ﻿
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+
 namespace EtheriT.Coker.Application.Shared.Dto.Order
 {
     public class OrderHeaderGetOneDto
@@ -16,8 +18,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? UniformId { get; set; }
         public string InvoiceAddress { get; set; }
         public string Payment { get; set; }
+        public long ThirdParties { get; set; }
         public string Shipping { get; set; }
-        public int State { get; set; }
+        public OrderStatusEnum State { get; set; }
+        public DateTime? CompletedDate { get; set; }
         public string StateStr { get; set; }
         public string Remark { get; set; }
         public int Subtotal { get; set; }
@@ -28,5 +32,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int Freight { get; set; }
         public int? Service_Charge { get; set; }
         public string CreationTime { get; set; }
+        public string Memo { get; set; }
+        public string TransactionId { get; set; }
+        public string RefundTransactionId { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using EtheriT.Coker.Core.Models;
+﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using static System.Formats.Asn1.AsnWriter;
@@ -429,6 +430,24 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 23, 14, 26, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSetGroup
+                {
+                    Id = 3,
+                    Title = "信件伺服器設定",
+                    Image = "",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 5, 18, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSetGroup
+                {
+                    Id = 4,
+                    Title = "框架設定",
+                    Image = "",
+                    Description = "",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 5, 18, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
 
@@ -440,7 +459,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "Google Analytics(4)",
                     memo = "請輸入GOOGLE提供之驗證碼：G-xxxxxxxxxx",
                     FK_StoreSetGroupId = 1,
-                    type = 1,
+                    type = SeoSetDataTypeEnum.text,
                     maxlength = 12,
                     pattern = "^G-\\w+",
                     IsDeleted = false,
@@ -454,7 +473,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "Google自動翻譯",
                     memo = "請選擇需要翻譯的語系",
                     FK_StoreSetGroupId = 1,
-                    type = 4,
+                    type = SeoSetDataTypeEnum.checkBox,
                     maxlength = 50,
                     pattern = "(?=[a-z]{2}-?[A-Z]{0,2},?)+",
                     IsDeleted = false,
@@ -468,7 +487,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "商品販售設定",
                     memo = "請選擇購物形式",
                     FK_StoreSetGroupId = 2,
-                    type = 5,
+                    type = SeoSetDataTypeEnum.select,
                     maxlength = 50,
                     pattern = "",
                     IsDeleted = false,
@@ -482,7 +501,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "結帳備註",
                     memo = "可以輸入一段話，在結帳的時候對客戶做一些小提醒。",
                     FK_StoreSetGroupId = 2,
-                    type = 2,
+                    type = SeoSetDataTypeEnum.textarea,
                     maxlength = 300,
                     pattern = "",
                     IsDeleted = false,
@@ -496,7 +515,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "Google Tag Manager",
                     memo = "請輸入GOOGLE提供之驗證碼：GTM-xxxxxxx",
                     FK_StoreSetGroupId = 1,
-                    type = 1,
+                    type = SeoSetDataTypeEnum.text,
                     maxlength = 12,
                     pattern = "^GTM-\\w+",
                     IsDeleted = false,
@@ -510,13 +529,97 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     name = "了解更多",
                     memo = "輸入一段連結，在商品頁中可以顯示了解更多按鈕。",
                     FK_StoreSetGroupId = 2,
-                    type = 1,
+                    type = SeoSetDataTypeEnum.text,
                     maxlength = 255,
                     pattern = "",
                     IsDeleted = false,
                     jobID = "E001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 23, 14, 38, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 7,
+                    key = "prodCatalog",
+                    name = "商品目錄",
+                    memo = "輸入商品目錄連結，以利前台新增返回目錄按鈕。",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.text,
+                    maxlength = 255,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 12, 11, 59, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 8,
+                    key = "membershipTerms",
+                    name = "會員條款",
+                    memo = "請輸入會員條款內文",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.textarea,
+                    maxlength = 5000,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 12, 11, 59, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 9,
+                    key = "SMTPPath",
+                    name = "SMTP Server",
+                    memo = "請輸入SMTP Server",
+                    FK_StoreSetGroupId = 3,
+                    type = SeoSetDataTypeEnum.text,
+                    maxlength = 255,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 10,
+                    key = "SMTPPort",
+                    name = "Port",
+                    memo = "請輸入Port",
+                    FK_StoreSetGroupId = 3,
+                    type = SeoSetDataTypeEnum.number,
+                    maxlength = 5,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 11,
+                    key = "SMTPAccount",
+                    name = "帳號",
+                    memo = "請輸入 帳號",
+                    FK_StoreSetGroupId = 3,
+                    type = SeoSetDataTypeEnum.email,
+                    maxlength = 255,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 12,
+                    key = "SMTPPassword",
+                    name = "密碼",
+                    memo = "請輸入 密碼",
+                    FK_StoreSetGroupId = 3,
+                    type = SeoSetDataTypeEnum.password,
+                    maxlength = 50,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "S001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 12, 05, 06, 00, 00, 00, DateTimeKind.Local)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -718,8 +821,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 1,
                     Used = false,
                     Title = "ATM",
-					Code = "atm",
-					SerNo = 1,
+                    Code = "atm",
+                    SerNo = 1,
                     FK_ThirdPartyId = 1,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -729,7 +832,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "信用卡付款",
                     Code = "PchomePayCARD",
-                    SerNo = 500,
+                    SerNo = 3,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -737,9 +840,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 3,
                     Used = false,
-                    Title = "ATM付款",
+                    Title = "ATM(虛擬帳戶)",
                     Code = "PchomePayATM",
-                    SerNo = 500,
+                    SerNo = 8,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -749,7 +852,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "PI錢包付款",
                     Code = "PchomePayPI",
-                    SerNo = 500,
+                    SerNo = 7,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -762,6 +865,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 500,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    IsDeleted = true,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -769,7 +873,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "支付連銀行支付付款",
                     Code = "PchomePayEACH",
-                    SerNo = 500,
+                    SerNo = 9,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -779,7 +883,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "7-11貨到付款",
                     Code = "PCHomeIPL7",
-                    SerNo = 500,
+                    SerNo = 10,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -789,7 +893,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "全家貨到付款",
                     Code = "PCHomeIPLFM",
-                    SerNo = 500,
+                    SerNo = 11,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -802,6 +906,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     SerNo = 500,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
+                    IsDeleted = true,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }, new PaymentType
                 {
@@ -809,7 +914,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "萊爾富貨到付款",
                     Code = "PCHomeIPLHL",
-                    SerNo = 500,
+                    SerNo = 12,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -819,7 +924,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "線上刷卡3期分期付款",
                     Code = "PchomePayInstallment3",
-                    SerNo = 500,
+                    SerNo = 4,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -829,7 +934,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "線上刷卡6期分期付款",
                     Code = "PchomePayInstallment6",
-                    SerNo = 500,
+                    SerNo = 5,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -839,7 +944,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "線上刷卡12期分期付款",
                     Code = "PchomePayInstallment12",
-                    SerNo = 500,
+                    SerNo = 6,
                     FK_ThirdPartyId = 2,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
@@ -849,10 +954,20 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Used = false,
                     Title = "LINEPay",
                     Code = "LinePay",
-                    SerNo = 500,
+                    SerNo = 2,
                     FK_ThirdPartyId = 3,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 25, 19, 25, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new PaymentType
+                {
+                    Id = 15,
+                    Used = false,
+                    Title = "超商條碼付款",
+                    Code = "PCHomeIBRCD",
+                    SerNo = 13,
+                    FK_ThirdPartyId = 2,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2024, 11, 21, 14, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                 }
             );
         }

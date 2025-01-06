@@ -18,6 +18,10 @@ using Org.BouncyCastle.Asn1.Ocsp;
 using EtheriT.Coker.Web.Core.Models;
 using System.Security.Claims;
 using System.Text;
+using Org.BouncyCastle.Asn1.Ess;
+using EtheriT.Coker.Application.Shared.ThirdParty;
+using EtheriT.Coker.Application.Common;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Application.Token
 {
@@ -59,7 +63,7 @@ namespace EtheriT.Coker.Application.Token
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
                 if (!string.IsNullOrEmpty(tokenStr))
                 {
-                    output = CheckToken();
+                    output = await CheckToken(null);
                     if (output.Success) return output;
                 }
                 httpContextAccessor.HttpContext?.Response.Cookies.Delete("Token");
@@ -73,7 +77,7 @@ namespace EtheriT.Coker.Application.Token
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
-                            var frontUser = await db.FrontUsers.Where(e => e.UUID == RefreshToken.UUID).FirstOrDefaultAsync();  
+                            var frontUser = await db.FrontUsers.Where(e => e.UUID == RefreshToken.UUID).FirstOrDefaultAsync();
                             if (frontUser != null)
                             {
                                 var useraccount = frontUser.Account == null ? frontUser.Email : frontUser.Account;
@@ -83,7 +87,8 @@ namespace EtheriT.Coker.Application.Token
                             else tokenItem = await NewToken(null, RefreshToken?.UUID);
                         }
                         else tokenItem = await NewToken(null, oidRefreshToken?.UUID);
-                    }else tokenItem = await NewToken();
+                    }
+                    else tokenItem = await NewToken();
                 }
                 else tokenItem = await NewToken();
                 output.IsLogin = tokenItem.IsLogin;
@@ -102,7 +107,7 @@ namespace EtheriT.Coker.Application.Token
         public async Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null)
         {
             if (string.IsNullOrEmpty(Accont)) Accont = Guid.NewGuid().ToString();
-            if (UUID == null) UUID = generateUUID();
+            if (UUID.IsNullOrEmpty()) UUID = generateUUID();
             DateTime date = DateTime.Now;
             DateTime EndDateTime = date.AddDays(30);
             var item = new TokenKeyItem { UUID = UUID.Value };
@@ -122,13 +127,14 @@ namespace EtheriT.Coker.Application.Token
             item.AccessToken = await CreateToken(Accont.ToString(), Token.id);
             return item;
         }
-        public TokenResponseDto CheckToken()
+        public async Task<TokenResponseDto> CheckToken(string? token)
         {
             TokenResponseDto output = new TokenResponseDto();
             try
             {
-                string? token = httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
                 if (string.IsNullOrEmpty(token)) httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out token);
+                if (string.IsNullOrEmpty(token)) token = httpContextAccessor.HttpContext?.Items["Token"]?.ToString();
                 if (!string.IsNullOrEmpty(token))
                 {
                     var handler = new JwtSecurityTokenHandler();
@@ -143,13 +149,39 @@ namespace EtheriT.Coker.Application.Token
                     var jwtToken = validatedToken as JwtSecurityToken;
                     output.Success = true;
                     output.Token = token;
-                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value, out var Sid))
-                    {
-                        output.RefreshToken = Sid;
-                    }
+
+                    if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value, out var Sid)) output.RefreshToken = Sid;
+
                     if (Guid.TryParse(jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value, out var Sub)) output.IsLogin = false;
                     else output.IsLogin = true;
+
                     output.name = jwtToken?.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+
+                    var db_token = await db.Tokens.Where(e => e.id == Sid).FirstOrDefaultAsync();
+                    if (db_token != null)
+                    {
+                        if (output.IsLogin)
+                        {
+                            var frontUser = await db.FrontUsers.Where(e => e.UUID == db_token.UUID).FirstOrDefaultAsync();
+                            if (frontUser != null && frontUser.Status == (int)UserStatusEnum.開通)
+                            {
+                                if (frontUser.PrivacyAgreeTime != null)
+                                {
+                                    var agreetime = frontUser.PrivacyAgreeTime.Value;
+                                    if (agreetime.AddYears(1) > DateTime.Now) output.AgreePrivacy = true;
+                                }
+                            }
+                            else output.IsLogin = false;
+                        }
+                        else
+                        {
+                            if (db_token.PrivacyAgreeTime != null)
+                            {
+                                var agreetime = db_token.PrivacyAgreeTime.Value;
+                                if (agreetime.AddYears(1) > DateTime.Now) output.AgreePrivacy = true;
+                            }
+                        }
+                    }
                 }
                 else throw new Exception();
             }
@@ -161,11 +193,45 @@ namespace EtheriT.Coker.Application.Token
 
             return output;
         }
+        public async Task<ResponseMessageDto> AgreePrivacy()
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+
+            try
+            {
+                var tokencheck = await CheckToken(null);
+                if (tokencheck != null)
+                {
+                    var token = await db.Tokens.Where(e => e.id == tokencheck.RefreshToken).FirstOrDefaultAsync();
+                    if (token != null)
+                    {
+                        token.PrivacyAgreeTime = DateTime.Now;
+                        if (tokencheck.IsLogin)
+                        {
+                            var frontuser = await db.FrontUsers.Where(e => e.UUID == token.UUID).FirstOrDefaultAsync();
+                            if (frontuser != null)
+                            {
+                                frontuser.PrivacyAgreeTime = token.PrivacyAgreeTime;
+                                await loginUserData.SaveChanges(frontuser);
+                            }
+                        }
+                        db.SaveChanges();
+                        response.Success = true;
+                        response.Message = token.PrivacyAgreeTime?.ToString("yyyy-MM-ddTHH:mm:ss") ?? null;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                response.Message = e.Message;
+            }
+            return response;
+        }
         public async Task<Guid> GetUUID()
         {
             Guid tokenId = new Guid();
             Guid UUID = new Guid();
-            var token = CheckToken();
+            var token = await CheckToken(null);
             if (token != null && token.Success)
             {
                 if (token.RefreshToken != null)
@@ -176,13 +242,18 @@ namespace EtheriT.Coker.Application.Token
             }
             return UUID;
         }
-        public async Task<List<Guid>> GetAllUUID(Guid UUID) {
-			var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
-			uuids.Add(UUID);
+        public Guid GetUUID(Guid oldUUID)
+        {
+            var data = db.MappingOldNewUUID.Where(e => e.UserUUID == oldUUID || e.TempUUID == oldUUID).Select(e => e.UserUUID).FirstOrDefault();
+            return data == Guid.Empty ? oldUUID : data;
+        }
+        public async Task<List<Guid>> GetAllUUID(Guid UUID)
+        {
+            var uuids = await db.MappingOldNewUUID.Where(e => e.UserUUID == UUID && e.TempUUID != Guid.Empty).Select(e => e.TempUUID).ToListAsync();
+            uuids.Add(UUID);
             return uuids;
-		}
-
-		public async Task<TokenResponseDto> RefreshToken(Guid? id)
+        }
+        public async Task<TokenResponseDto> RefreshToken(Guid? id)
         {
             TokenResponseDto output = new TokenResponseDto();
             try
@@ -240,7 +311,8 @@ namespace EtheriT.Coker.Application.Token
         public async Task<string> CreateToken(string account, Guid secret, int expireMinutes = 30)
         {
             List<KeyValuePair<string, string>> custClaims = new List<KeyValuePair<string, string>>();
-            if (account.IndexOf("@") < 0) {
+            if (account.IndexOf("@") < 0)
+            {
 
                 var user = db.Users.Where(e => e.Account == account).FirstOrDefault();
                 if (user != null)
@@ -270,6 +342,7 @@ namespace EtheriT.Coker.Application.Token
             {
                 Expires = DateTimeOffset.UtcNow.AddMonths(3) // 設定過期時間
             });
+            httpContextAccessor.HttpContext?.Items.Add("Token", token);
             return token;
         }
         public async Task<bool> DelToken()

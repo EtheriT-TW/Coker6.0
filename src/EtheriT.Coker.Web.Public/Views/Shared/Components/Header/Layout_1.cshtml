@@ -7,7 +7,7 @@
 <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
-<nav class="navbar navbar-expand-lg flex-column p-0 shadow">
+<nav class="navbar navbar-expand-lg flex-column p-0 shadow position-fixed vw-100">
     <!-- Mega Menu -->
     <div id="Mega_Menu" class="bg-white navbar navbar-expand-lg w-100">
         <!-- Logo -->
@@ -25,7 +25,7 @@
                 else
                 {
                     <img src="@Model.LogoImageUrl" alt="@Model.Title" />
-                    <h1 class="d-none">@Model.Title</h1>
+                    <h1 class="sr-only">@Model.Title</h1>
                 }
             </a>
         </div>
@@ -139,7 +139,23 @@
                         else
                         {
                             <a class="mt-0 mt-lg-4 nav-link pb-0 pb-lg-4 text-nowrap text-black" href="@menu.Link" target="@(menu.Target == true?"_blank":"_self")" title="@(menu.Target == true?$"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}")">
-                                @menu.Title
+                                @if (string.IsNullOrEmpty(menu.imageUrl))
+                                {
+                                    @menu.Title
+                                }
+                                else
+                                {
+                                    if (string.IsNullOrEmpty(menu.hoverImageUrl))
+                                    {
+                                        <img src="@menu.imageUrl" alt="@menu.Title" />
+                                        <span class="justify-content-center">@menu.Title</span>
+                                    }
+                                    else
+                                    {
+                                        <img src="@menu.imageUrl" data-mouseover="@menu.hoverImageUrl" data-mouseout="@menu.imageUrl" alt="@menu.Title" />
+                                        <span>@menu.Title</span>
+                                    }
+                                }
                             </a>
                         }
                     </li>
@@ -173,7 +189,7 @@
         </div>
 
         <!-- Tool Bar -->
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center icon-block">
             <!-- Search Block -->
             <a href="@Model.SearchPath" title="前往搜尋頁" class="d-flex bg-transparent border-0 align-items-center bg-transparent border-0 p-0 p-lg-1">
                 <span class="material-symbols-outlined bg-secondary bg-opacity-25 text-muted rounded-circle p-1 fs-5 notranslate">search</span>
@@ -193,14 +209,15 @@
                             <template id="Template_Car_Dropdown">
                                 <li class="border-bottom me-4" data-scid="">
                                     <figure class="position-relative mb-0">
-                                        <a class="pro_link d-flex" href="" title="連結至：商品">
-                                            <img class="pro_image me-2" src="" alt="商品" />
+                                        <a data-key="link" class="pro_link d-flex" href="" title="" target="_blank">
+                                            <img data-key="imagePath" class="pro_image me-2" src="" alt="" />
                                             <figcaption class="overflow-hidden">
-                                                <div class="pro_name h-auto"></div>
-                                                <div class="pro_spec h-auto my-1"></div>
+                                                <div data-key="title" class="pro_name h-auto"></div>
+                                                <div data-key="spec" class="pro_spec h-auto my-1"></div>
                                                 <div class="number d-flex">
-                                                    <div class="pro_unit price fw-bold"></div>
-                                                    <div class="pro_quantity fw-bold"></div>
+                                                    <div data-key="price" data-type="price" class="pro_unit price fw-bold"></div>
+                                                    @*<div data-key="oldQuantity" class="pro_oldquantity fw-bold text-decoration-line-through d-none"></div>*@
+                                                    <div data-key="quantity" class="pro_quantity fw-bold"></div>
                                                 </div>
                                             </figcaption>
                                         </a>
@@ -222,7 +239,7 @@
             {
                 @if (ViewBag.isLogin)
                 {
-                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="登入會員">
+                    <a id="HiUser" class="d-flex px-1 align-items-center" href="/@ViewData["OrgName"]/Member" title="前往會員中心">
                         <span class="material-symbols-outlined">
                             person
                         </span>
@@ -231,7 +248,7 @@
                 }
                 else
                 {
-                    <button type="button" class="btn bg-transparent text-black border-0 d-flex" data-bs-toggle="modal" data-bs-target="#LoginModal">
+                    <button type="button" class="btn bg-transparent text-black border-0 d-flex login" data-bs-toggle="modal" data-bs-target="#LoginModal">
                         <span class="material-symbols-outlined">person</span>
                     </button>
                 }

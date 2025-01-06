@@ -8,10 +8,29 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }
 
+.pro_name {
+    font-size: 1.2rem;
+}
+
 input[type="number"] {
     -moz-appearance: textfield;
 }
 
+#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_minus {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > btn_count_plus {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#Step1 > .card-body > .purchase_list > .purchase_item > .content > .counter_input > #quantityInput1 {
+    border-radius: 0;
+}
 /* Required Sign */
 .required_front::before {
     color: var(--red-text);
@@ -27,6 +46,10 @@ input[type="number"] {
     color: var(--red-text);
     content: '\5fc5\586b';
     font-size: 0.5rem;
+}
+
+.red_text {
+    color: var(--red-number);
 }
 
 /* Generic Button Style */
@@ -236,6 +259,7 @@ input[type="number"] {
     color: var(--gray-text);
     border: 1px solid var(--gray-middle);
 }
+
 #TextareaRemark {
     height: 150px
 }
@@ -256,6 +280,11 @@ input[type="number"] {
         }
 
 /* Step4 */
+/* 修改塞入資料的格式後要移除 */
+/*#Step4 > .card-body .price::before {
+    content: '';
+}*/
+
 #Step4 > .card-header > .order_number {
     color: var(--red-number);
 }
@@ -263,7 +292,12 @@ input[type="number"] {
     #Step4 > .card-header > .order_number::before {
         content: '\8a02\55ae\7de8\865f';
         color: var(--black-text);
+        padding-right: 1rem;
     }
+
+#Step4 > .card-body > .pruchase_content > .buyagain_text span {
+    cursor: pointer;
+}
 
 #Step4 > .card-body > .pruchase_content > .purchase_list > .purchase_item > .image > a {
     color: var(--black-text);
@@ -343,7 +377,7 @@ body > .popover.bs-popover-auto.fade {
 #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button {
     z-index: 1;
     bottom: 5rem;
-    margin:auto;
+    margin: auto;
 }
 
     #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
@@ -366,6 +400,10 @@ body > .popover.bs-popover-auto.fade {
     content: '\00d7';
 }
 
+#Form_Orderer .memberUpdate {
+    width: fit-content;
+}
+
 /*RWD*/
 @media (max-width: 1366px) {
 }
@@ -381,6 +419,29 @@ body > .popover.bs-popover-auto.fade {
 }
 
 @media only screen and (max-width: 768px) {
+    #Step4 .col-sm-2 {
+        width: unset;
+    }
+
+    #Step4 .pruchase_content {
+        padding: .5rem;
+    }
+
+    div.e-mail, div.cell-phone {
+        width: 100%;
+    }
+
+    div.tel-phone {
+        flex: auto;
+    }
+
+    div.tel-area {
+        width: 30%;
+    }
+
+    #OrdererForm > .default_data > div > div:nth-child(1) {
+        width: auto;
+    }
 }
 
 @media only screen and (max-width: 576px) {
@@ -402,5 +463,36 @@ body > .popover.bs-popover-auto.fade {
 
     #Step3 > .card-body > .record > button {
         width: 5rem;
+    }
+
+    #Form_Orderer > div:nth-child(5) > div:nth-child(3) {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    #Step1 > .card-body > .purchase_list > .purchase_item {
+        padding-right: 1rem;
+    }
+
+    #BuyStepSwiper > .swiper > .swiper-wrapper > .card > .card-body > .swiper_button > [class*=btn_swiper_] {
+        width: 6rem;
+    }
+
+    .btn_gray_dark {
+        width: 7.5rem;
+    }
+
+    ul.purchase_list {
+        padding-right: 0rem !important;
+        padding-left: 0rem !important;
+    }
+
+    input#OrdererInputTelPhoneArea {
+        padding-top: 0rem;
+    }
+
+    .form-floating > label {
+        font-size: 14px;
     }
 }

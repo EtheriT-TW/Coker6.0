@@ -1,253 +1,286 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Order
 @{
-	ViewData["Title"] = "OrderList";
+    ViewData["Title"] = "OrderList";
 }
 
 <link rel="stylesheet" href="~/css/OrderManagement/OrderList.min.css" asp-append-version="true" />
 <script src="~/js/OrderManagement/OrderList.min.js" asp-append-version="true"></script>
 
 <div class="py-2 px-4 position-relative">
-	<div id="TopLine" class="d-flex justify-content-between mb-4">
-		<div class="title fw-bold fs-4">訂單列表</div>
-		<div class="tool">
-			<button class="btn_reSend btn-primary border-0 px-4 py-1 text-white fw-bold fs-5">重送訂單通知信</button>
-			<button class="btn_print btn-primary border-0 px-4 py-1 text-white fw-bold fs-5">列印訂單</button>
-		</div>
-	</div>
+    <div id="TopLine" class="d-flex justify-content-between mb-4">
+        <div class="title fw-bold fs-4">訂單列表</div>
+        <div class="tool">
+            <button class="btn_print btn-dark border-0 px-4 py-1 text-white fw-bold fs-5 d-none">列印訂單</button>
+            <button class="btn_reSend btn-success border-0 px-4 py-1 text-white fw-bold fs-5">重送訂單通知信</button>
+            <button class="btn_save btn-primary border-0 px-4 py-1 text-white fw-bold fs-5">儲存</button>
+        </div>
+    </div>
 
-	<div id="OrderList" class="card border-0">
-		<div class="card-body position-relative pb-5">
-			@(
-				Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
-				.DataSource(d => d.RemoteController().Key("Id")
-				.LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
-				)
-				.RemoteOperations(true)
-				.ColumnHidingEnabled(true)
-				.ShowBorders(true)
-				.FilterRow(filterRow => filterRow
-				.Visible(true)
-				.ApplyFilter(GridApplyFilterMode.Auto)
-				)
-				.SearchPanel(searchPanel => searchPanel
-				.Visible(true)
-				.Width(480)
-				.Placeholder("請輸入要搜尋的資料")
-				)
-				.ShowRowLines(true)
-				.Columns(c =>
-				{
-					c.AddFor(e => e.Id).Caption("訂單編號");
-					c.AddFor(e => e.CreationTime).Caption("訂單日期");
-					c.AddFor(e => e.Orderer).Caption("寄件人");
-					c.AddFor(e => e.RecipientAddress).Caption("收件者地址");
-					c.AddFor(e => e.Shipping).Caption("運費方式");
-					c.AddFor(e => e.Payment).Caption("付款方式");
-					c.AddFor(e => e.State).Caption("訂單狀態");
-					c.AddFor(e => e.Total).Caption("訂單金額");
-					c.Add()
-					.Type(GridCommandColumnType.Buttons)
-					.Buttons(b =>
-					{
-						b.Add().Name("edit").OnClick("editButtonClicked");
-					});
-				})
-				.ColumnAutoWidth(true)
-				.Paging(paging => paging.PageSize(30))
-				.Pager(pager =>
-				{
-					pager.Visible(true);
-					pager.ShowPageSizeSelector(true);
-					pager.AllowedPageSizes(new[] { 10, 20, 30 });
-					pager.ShowInfo(true);
-				})
-				.Editing(editing =>
-				{
-					editing.AllowUpdating(true);
-					editing.UseIcons(true);
-				})
-				.OnContentReady("contentReady")
-				)
-		</div>
-	</div>
+    <div id="OrderList" class="card border-0">
+        <div class="card-body position-relative pb-5">
+            @(
+                    Html.DevExtreme().DataGrid<OrderHeaderGetAllListDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Order/GetAllList").LoadMethod("Get")
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Width(480)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("訂單編號");
+                        c.AddFor(e => e.CreationTime).Caption("訂單日期");
+                        c.AddFor(e => e.Orderer).Caption("寄件人");
+                        c.AddFor(e => e.RecipientAddress).Caption("收件者地址");
+                        c.AddFor(e => e.Shipping).Caption("運費方式");
+                        c.AddFor(e => e.Payment).Caption("付款方式");
+                        c.AddFor(e => e.State).Caption("訂單狀態");
+                        c.AddFor(e => e.Total).Caption("訂單金額").CellTemplate(
+                @<text>
+                $<%- value ? value.toLocaleString() : '0' %>
+            </text>
+                );
+                        c.Add()
+                    .Type(GridCommandColumnType.Buttons)
+                    .Buttons(b =>
+                    {
+                        b.Add().Name("edit").OnClick("editButtonClicked");
+                    });
+                    })
+                .ColumnAutoWidth(true)
+                .Paging(paging => paging.PageSize(30))
+                .Pager(pager =>
+                {
+                    pager.Visible(true);
+                    pager.ShowPageSizeSelector(true);
+                    pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                    pager.ShowInfo(true);
+                })
+                .Editing(editing =>
+                {
+                    editing.AllowUpdating(true);
+                    editing.UseIcons(true);
+                })
+                .OnContentReady("contentReady")
+                )
+        </div>
+    </div>
 
-	<div id="OrderContent" class="d-none">
-		<div class="row m-0">
-			<div id="OrderDetails" class="card border-0 col-9 overflow-auto">
-				<div class="card-header fw-bold fs-5 row gx-0 text-end align-items-center">
-					<div class="col-auto fw-bold fs-5 d-flex align-items-center">
-						<button class="btn_back d-flex bg-transparent border-0 align-items-center">
-							<span class="material-symbols-outlined">
-								keyboard_backspace
-							</span>
-						</button>
-						<div class="lh-lg">訂單明細</div>
-					</div>
-					<div class="col">訂單編號</div>
-					<div class="col-auto order_number"></div>
-				</div>
+    <div id="OrderContent" class="d-none">
+        <div class="row m-0">
+            <div id="OrderDetails" class="card border-0 col-9 overflow-auto">
+                <div class="card-header fw-bold fs-5 row gx-0 text-end align-items-center">
+                    <div class="col-auto fw-bold fs-5 d-flex align-items-center">
+                        <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                            <span class="material-symbols-outlined">
+                                keyboard_backspace
+                            </span>
+                        </button>
+                        <div class="lh-lg">訂單明細</div>
+                    </div>
+                    <div class="col">訂單編號</div>
+                    <div data-key="id" class="col-auto order_number"></div>
+                </div>
 
-				<div class="card-body">
-					<div class="row text-end gray_text">
-						<div class="col">訂單成立時間</div>
-						<div class="order_date col-auto"></div>
-					</div>
+                <div class="card-body">
+                    <div class="row text-end gray_text">
+                        <div class="col">訂單成立時間</div>
+                        <div data-key="creationTime" class="col-auto"></div>
+                    </div>
 
-					<ul class="purchase_list px-2 px-sm-5"></ul>
+                    <ul class="purchase_list px-2 px-sm-5"></ul>
 
-					<template id="Templat_Purchase_List">
-						<li class="purchase_item border-bottom align-items-lg-center row py-2">
-							<div class="col-4 col-sm-2"><img class="pro_image img-fluid" src=""></div>
+                    <template id="Template_Purchase_List">
+                        <li class="purchase_item border-bottom align-items-lg-center row py-2">
+                            <div class="col-4 col-sm-2"><img data-key="imagePath" class="pro_image img-fluid" src=""></div>
 
-							<div class="pro_text col-8 col-sm-6">
-								<div class="pro_name fw-bold"></div>
-								<div class="pro_detail gray_text d-flex flex-wrap">
-									<div class="pro_specification pe-3"></div>
-									<div class="pro_instructions"></div>
-								</div>
-							</div>
+                            <div class="col-8 col-sm-6">
+                                <div data-key="title" class="pro_name fw-bold"></div>
+                                <div class="gray_text d-flex flex-wrap">
+                                    <div data-key="spec" class="pro_specification border me-3 pro_specification px-1"></div>
+                                    <div data-key="describe"></div>
+                                </div>
+                            </div>
 
-							<div class="pro_unit col-auto gray_text text-end"></div>
+                            <div data-key="price" class="pro_unit col-auto gray_text text-end"></div>
 
-							<div class="pro_quantity col-auto gray_text text-start"></div>
+                            <div data-key="quantity" class="pro_quantity col-auto gray_text text-start"></div>
 
-							<div class="pro_subtotal col price color_red_number text-end"></div>
-						</li>
-					</template>
+                            <div data-key="subtotal" class="pro_subtotal col price color_red_number text-end"></div>
+                        </li>
+                    </template>
 
-					<div class="purchase_amount px-2 px-sm-5">
-						<div class="border-bottom py-2 text-end">
-							<div class="d-flex">
-								<div class="col fw-bold">總金額：</div>
-								<div class="order_subtotal price color_red_number col-4 col-sm-2">26,200</div>
-							</div>
-							<div class="d-flex">
-								<div class="col fw-bold">運費：</div>
-								<div class="order_freight price color_red_number col-4 col-sm-2">0</div>
-							</div>
-						</div>
-						<div class="row align-items-center text-end fw-bold">
-							<div class="col p-0">本次消費總金額：</div>
-							<div class="order_total price color_red_number col-auto py-3 fs-5 text-end">26,200</div>
-						</div>
-					</div>
-				</div>
-			</div>
+                    <div class="purchase_amount px-2 px-sm-5">
+                        <div class="border-bottom py-2 text-end">
+                            <div class="d-flex">
+                                <div class="col fw-bold">總金額：</div>
+                                <div data-key="subtotal" class="order_subtotal price color_red_number col-4 col-sm-2"></div>
+                            </div>
+                            <div class="d-flex">
+                                <div class="col fw-bold">運費：</div>
+                                <div data-key="freight" class="order_freight price color_red_number col-4 col-sm-2"></div>
+                            </div>
+                        </div>
+                        <div class="row align-items-center text-end fw-bold">
+                            <div class="col p-0">本次消費總金額：</div>
+                            <div data-key="total" class="order_total price color_red_number col-auto py-3 fs-5 text-end"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-			<div id="OrderData" class="pe-0" data-bs-scroll="true" tabindex="-1" aria-labelledby="Management Data Offcanvas">
-				<div class="offcanvas-header d-none">
-				</div>
+            <div id="OrderData" class="pe-0" data-bs-scroll="true" tabindex="-1" aria-labelledby="Management Data Offcanvas">
+                <div class="offcanvas-header d-none">
+                </div>
 
-				<div class="offcanvas-body p-0">
-					<div id="OrderData" class="card border-0 mb-3">
-						<div class="card-body">
-							<div class="fs-5 fw-bold pb-2">訂單資料</div>
+                <div class="offcanvas-body p-0">
+                    <div id="OrderData" class="card border-0 mb-3">
+                        <div class="card-body">
+                            <div class="fs-5 fw-bold pb-2">訂單資料</div>
 
-							<div class="row">
-								<div class="col-auto pe-0">
-									<div class="gray_text">受訂單號：</div>
-									<div class="gray_text">物流方式：</div>
-									<div class="gray_text">付款方式：</div>
-								</div>
-								<div class="col ps-0">
-									<div class="order_number"></div>
-									<div class="order_shipping"></div>
-									<div class="order_payment"></div>
-								</div>
-							</div>
+                            <div class="row">
+                                <div class="col-auto pe-0">
+                                    <div class="gray_text">受訂單號：</div>
+                                    <div class="gray_text">物流方式：</div>
+                                    <div class="gray_text">付款方式：</div>
+                                </div>
+                                <div class="col ps-0">
+                                    <div data-key="id" class="order_number"></div>
+                                    <div data-key="shipping" class="order_shipping"></div>
+                                    <div data-key="payment" class="order_payment"></div>
+                                </div>
+                            </div>
 
-							<div class="d-flex flex-wrap justify-content-between pb-3 pt-5">
-								<div class="d-flex align-items-center">
-									<div class="fw-bold fs-5">狀態：</div>
-									<select class="status_select m-2" aria-label="Select status">
-										<option value="1">待確認</option>
-										<option value="2">已付款</option>
-										<option value="3">已出貨</option>
-										<option value="4">已取消</option>
-										<option value="5">付款失敗</option>
-									</select>
-								</div>
-								<button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0">發送出貨通知</button>
-							</div>
+                            <div class="d-flex flex-wrap justify-content-between pt-5">
+                                <div class="d-flex align-items-center">
+                                    <div class="fw-bold fs-5">狀態：</div>
+                                    <select @* data-key="state" *@ class="status_select m-2" aria-label="Select status"></select>
+                                </div>
+                                <button class="btn_refund border-0 btn-danger px-4 rounded text-white d-none">退　款</button>
+                                <div class="confirm flex-column d-none">
+                                    <button class="btn_confirm border-0 btn-success mb-1 px-4 py-1 rounded text-white">完成付款</button>
+                                    <button class="btn_void border-0 btn-danger mt-1 px-4 py-1 rounded text-white">取消交易</button>
+                                </div>
+                                <button class="btn_send_notification btn-success border-0 text-white px-1 my-2 m-xl-0 d-none">發送出貨通知</button>
+                            </div>
+                            <button class="btn_recheck bg-transparent border-0 text-black-50 px-0 text-decoration-underline d-none" title="點擊重新確認付款狀態">重新確認付款狀態</button>
+                            <button class="btn_failReason bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start d-none" title="點擊查看失敗原因">查看失敗原因</button>
+                            <button class="btn_checkrefund bg-transparent border-0 opacity-50 px-0 text-decoration-underline text-start d-none" title="點擊查看退款狀態">查看退款狀態</button>
 
-							<p class="gray_text">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>
-						</div>
-					</div>
+                            <p class="gray_text mt-3">※訂單狀態改為『已取消』和『付款失敗』後，將不能再對訂單狀態進行修改</p>
+                        </div>
+                    </div>
 
-					<div id="RecipientData" class="card border-0 mb-3">
-						<div class="card-body">
-							<div class="fs-5 fw-bold pb-2">收件人資料</div>
-							<div class="row fw-bold">
-								<div class="col-auto pe-0">姓　　名：</div>
-								<div class="col recipient_name"></div>
-							</div>
+                    <div id="OrdererData" class="card border-0 mb-3">
+                        <div class="card-body">
+                            <div class="pb-2 d-flex justify-content-between">
+                                <div class="fs-5 fw-bold">訂購人資料</div>
+                                <a href="" title="" class="btn_orderer_data bg-transparent border-0" target="_blank">000000000</a>
+                            </div>
 
-							<div class="row fw-bold">
-								<div class="col-auto pe-0">手機號碼：</div>
-								<div class="col recipient_cellphone">
-								</div>
-							</div>
+                            <div class="row gray_text">
+                                <div class="col-auto pe-0">姓　　名：</div>
+                                <div class="col d-flex">
+                                    <div class="orderer_name">訂購人</div>
+                                </div>
+                            </div>
 
-							<div class="row fw-bold">
-								<div class="col-auto pe-0">連絡電話：</div>
-								<div class="col recipient_telphone"></div>
-							</div>
+                            <div class="row gray_text">
+                                <div class="col-auto pe-0">手機號碼：</div>
+                                <div class="col orderer_cellphone"></div>
+                            </div>
 
-							<div class="row fw-bold">
-								<div class="col-auto pe-0">地　　址：</div>
-								<div class="col recipient_address"></div>
-							</div>
-						</div>
-					</div>
+                            <div class="row gray_text">
+                                <div class="col-auto pe-0">連絡電話：</div>
+                                <div class="col orderer_telphone"></div>
+                            </div>
+                        </div>
+                    </div>
 
-					<div id="OrdererData" class="card border-0 mb-3">
-						<div class="card-body">
-							<div class="fs-5 fw-bold pb-2">訂購人資料</div>
+                    <div id="RecipientData" class="card border-0 mb-3">
+                        <div class="card-body">
+                            <div class="fs-5 fw-bold pb-2">收件人資料</div>
+                            <div class="row">
+                                <div class="col-auto pe-0">姓　　名：</div>
+                                <div class="col recipient_name"></div>
+                            </div>
 
-							<div class="row gray_text">
-								<div class="col-auto pe-0">姓　　名：</div>
-								<div class="col d-flex">
-									<div class="orderer_name">訂購人</div>
-									<button class="btn_orderer_data bg-transparent border-0">
-										<i class="fa-regular fa-address-card gray_text"></i>
-									</button>
-								</div>
-							</div>
+                            <div class="row">
+                                <div class="col-auto pe-0">手機號碼：</div>
+                                <div class="col recipient_cellphone">
+                                </div>
+                            </div>
 
-							<div class="row gray_text">
-								<div class="col-auto pe-0">手機號碼：</div>
-								<div class="col orderer_cellphone"></div>
-							</div>
+                            <div class="row">
+                                <div class="col-auto pe-0">連絡電話：</div>
+                                <div class="col recipient_telphone"></div>
+                            </div>
 
-							<div class="row gray_text">
-								<div class="col-auto pe-0">連絡電話：</div>
-								<div class="col orderer_telphone"></div>
-							</div>
-						</div>
-					</div>
+                            <div class="row">
+                                <div class="col-auto pe-0">地　　址：</div>
+                                <div class="col recipient_address"></div>
+                            </div>
+                        </div>
+                    </div>
 
-					<div id="OrderNotes" class="card border-0 mb-3">
-						<div class="card-body">
-							<div class="fs-5 fw-bold pb-2">訂單備註</div>
-							<div class="order_notes gray_text"></div>
-						</div>
-					</div>
+                    <div id="InvoiceData" class="card border-0 mb-3">
+                        <div class="card-body">
+                            <div class="fs-5 fw-bold pb-2">發票寄送資料</div>
 
-					<div id="CustomerServiceMemo" class="card border-0">
-						<div class="card-body d-flex flex-column">
-							<div class="fs-5 fw-bold pb-2">客服專用-Memo區</div>
-							<textarea class="memo_block form-control flex-grow-1" rows="3"></textarea>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+                            <div class="row d-none" data-recipient="same">
+                                <div class="col-auto pe-0"></div>
+                                <div data-key="invoiceRecipient" class="col"></div>
+                            </div>
 
-		<button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#OrderData" aria-controls="offcanvasWithBothOptions">
-			<div class="above position-absolute end-0"></div>
-			<div>右側收合</div>
-			<div class="under position-absolute end-0"></div>
-		</button>
-	</div>
+                            <div class="row d-none" data-recipient="company">
+                                <div class="col-auto pe-0">抬　　頭：</div>
+                                <div data-key="invoiceTitle" class="col"></div>
+                            </div>
+
+                            <div class="row d-none" data-recipient="company">
+                                <div class="col-auto pe-0">統一編號：</div>
+                                <div data-key="uniformId" class="col"></div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-auto pe-0">地　　址：</div>
+                                <div data-key="invoiceAddress" class="col"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="OrderNotes" class="card border-0 mb-3">
+                        <div class="card-body">
+                            <div class="fs-5 fw-bold pb-2">訂單備註</div>
+                            <div class="order_notes gray_text"></div>
+                        </div>
+                    </div>
+
+                    <div id="CustomerServiceMemo" class="card border-0">
+                        <div class="card-body d-flex flex-column">
+                            <div class="fs-5 fw-bold pb-2">客服專用-Memo區</div>
+                            <textarea class="memo_block form-control flex-grow-1" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#OrderData" aria-controls="offcanvasWithBothOptions">
+            <div class="above position-absolute end-0"></div>
+            <div>右側收合</div>
+            <div class="under position-absolute end-0"></div>
+        </button>
+    </div>
 </div>

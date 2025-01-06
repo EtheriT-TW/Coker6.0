@@ -211,22 +211,15 @@ function ModalSpecRadio() {
 }
 
 function AddToCart() {
-
-    if ($.cookie('cookie') == null || $.cookie('cookie') == 'reject') {
+    if (!localStorage.getItem("AgreePrivacy")) {
         Coker.sweet.error("錯誤", "若要進行商品選購，請先同意隱私權政策", null, false);
     } else {
         if (modal_s1 != null && modal_s2 != null) {
             Product.AddUp.Cart({
-                FK_Tid: $.cookie("Token"),
                 FK_Pid: $modal.data("pid"),
                 FK_S1id: modal_s1,
                 FK_S2id: modal_s2,
                 Quantity: $input_quantity.val(),
-                Discont: 0,
-                Bonus: 0,
-                PriceType: 0,
-                IsAdditional: false,
-                Ser_No: 500,
             }).done(function (result) {
                 if (result.success) {
                     Coker.sweet.success("商品已成功加入購物車", null, true);
@@ -240,7 +233,13 @@ function AddToCart() {
                         }
                     });
                 } else {
-                    Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+                    if (result.error = "庫存不足") {
+                        Coker.sweet.error(result.error, result.message, function () {
+                            location.reload(true);
+                        }, false);
+                    } else {
+                        Coker.sweet.error("商品加入購物車發生錯誤", result.message, null, true);
+                    }
                 }
             }).fail(function () {
                 Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);

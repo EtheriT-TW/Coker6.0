@@ -11,7 +11,7 @@
         Header: {
             Authorization: 'Bearer ' + $.cookie("token"),
             Secret: $.cookie("secret"),
-            "x-xsrf-token-coker": $('input[name="AntiforgeryField"]').val()
+            "x-xsrf-token": $('input[name="AntiforgeryField"]').val()
         },
         Time: {
             DataRetentionTime: 30 * MinutesSecond,

@@ -16,7 +16,7 @@
                     }
                     <a class="d-flex navbar-brand" href="@Model.HomeLink" target="@home_target" title="@home_title">
                         <img class="logo w-100" src="@Model.LogoImageUrl" alt=" ">
-                        <h1 class="d-none">@Model.Title</h1>
+                        <h1 class="sr-only">@Model.Title</h1>
                     </a>
                     <button class="btn_expand collapsed end-0 navbar-toggler position-absolute pt-1" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="material-symbols-outlined">expand_more</span>
@@ -26,7 +26,7 @@
                     <a accesskey="U" href="javascript:void(0)" class="hide accesskey" title="上方區域">:::</a>
                     <ul class="navbar-nav mb-2 mb-lg-0 d-flex flex-wrap">
                         @foreach (var menu in Model.menuItemModels ?? new List<MenuItemModel>())
-                        {
+                        { 
                             var target = menu.Target == true ? "_blank" : "_self";
                             var title = menu.Target == true ? $"連結至：{menu.Title}(另開視窗)" : $"連結至：{menu.Title}";
                             @if (menu.menuItemModels != null)

@@ -33,6 +33,7 @@ using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.UserHabits;
+using EtheriT.Coker.Application.Shared.Dto.Recipients;
 
 namespace EtheriT.Coker.Application
 {
@@ -47,7 +48,7 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.StartTime, option => option.MapFrom(c => DateTime.Now))
                 .ForMember(e => e.EndTime, option => option.MapFrom(c => DateTime.Now.AddDays(30)))
                 .ReverseMap()
-                .ForMember(e => e.IsLogin, option => option.MapFrom(t => t.UserID!=null&& DateTime.Now > t.EndTime));
+                .ForMember(e => e.IsLogin, option => option.MapFrom(t => t.UserID != null && DateTime.Now > t.EndTime));
             //Role
             CreateMap<AddRoleDto, Role>().ReverseMap();
             //Users
@@ -298,8 +299,18 @@ namespace EtheriT.Coker.Application
             CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
 
             //Recipients
+            CreateMap<RecipientsDto, Recipient>().ReverseMap();
             CreateMap<RecipientsListDto, Recipient>().ReverseMap();
             CreateMap<MailUserDataDto, Recipient>().ReverseMap();
+            CreateMap<OrderHeaderAddDto, RecipientsDto>()
+                .ForMember(e => e.Id, option => option.MapFrom(c => c.RecipientId))
+                .ForMember(e => e.Name, option => option.MapFrom(c => c.Recipient))
+                .ForMember(e => e.Email, option => option.MapFrom(c => c.RecipientEmail))
+                .ForMember(e => e.Address, option => option.MapFrom(c => c.RecipientAddress))
+                .ForMember(e => e.Cellphone, option => option.MapFrom(c => c.RecipientCellPhone))
+                .ForMember(e => e.Telephone, option => option.MapFrom(c => c.RecipientTelephone))
+                .ForMember(e => e.Sex, option => option.MapFrom(c => c.RecipientSex))
+                .ReverseMap();
 
             //Permissions
             CreateMap<SavePermissionsItem, Core.Models.Permissions>().ReverseMap();

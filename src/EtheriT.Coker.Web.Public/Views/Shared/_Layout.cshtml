@@ -549,6 +549,11 @@
         @await Component.InvokeAsync(nameof(SideFloating))
     </div>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/js/devextreme/dx.all.min.js" asp-append-version="true" nonce="@ViewBag.Nonce"></script>
+	<script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js" nonce="@ViewBag.Nonce"></script> 
+    <script src="~/js/devextreme/aspnet/dx.aspnet.data.js" nonce="@ViewBag.Nonce"></script>
+    <script src="~/js/devextreme/localization/dx.messages.zh-tw.js"></script>
+	<script> DevExpress.localization.locale('zh-tw'); </script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/swiper/swiper-bundle.min.js"></script>
     <script src="~/Shared/c-share.min.js"></script>

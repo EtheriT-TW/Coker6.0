@@ -51,9 +51,12 @@ var PreLoader;
     });
     //控制頁左scroll的位子
     if ($(".sidebar .active").length > 0) {
-        $(".sidebar .navigation").scrollTop(
-            $(".sidebar .active").parents("li").position().top
-        );
+        var $parentLi = $(".sidebar .active").parents("li");
+        if ($parentLi.length > 0) {
+            $(".sidebar .navigation").scrollTop(
+                $parentLi.position().top
+            );
+        }
     }
     a("body").delegate(".append-preloader", "click", function () {
         a(PreLoader).show();

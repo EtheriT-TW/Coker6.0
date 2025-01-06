@@ -273,6 +273,14 @@ function HeaderDataInsert(data) {
     DataInsert(data, $("#OrderDetails .card-body > .purchase_amount"));
     DataInsert(data, $("#OrderData"));
 
+    if (data.ordererId != null) {
+        $("#OrdererData .btn_orderer_data").css('display', 'flex');
+        $("#OrdererData .btn_orderer_data").attr({
+            href: `/MemberManagement/MemberList#${data.ordererId}`,
+            title: `連結至：訂購人(${data.orderer})`
+        })
+        $("#OrdererData .btn_orderer_data").text((`000000000${data.ordererId}`).substring(data.ordererId.toString().length));
+    }
 }
 function HeaderDataSet(result) {
     thirdparty = result.thirdParties;

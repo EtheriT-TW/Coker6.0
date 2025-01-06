@@ -350,6 +350,11 @@
         </div>
     </div>
 </Content>
+<div id="SwitchPage" class="container my-5 justify-content-center">
+    <a href="" title="" target="_self" class="btn_prev disabled">上一則</a>
+    <a href="" title="回列表頁" target="_self" class="btn_list mx-4 mx-sm-5">回列表頁</a>
+    <a href="" title="" target="_self" class="btn_next disabled">下一則</a>
+</div>
 @if (Model.ParentData != null)
 {
     <Content id="ParentNode" class="d-none">@HttpUtility.HtmlEncode(Model.ParentData.Html)</Content>

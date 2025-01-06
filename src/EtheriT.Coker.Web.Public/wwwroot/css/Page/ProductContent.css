@@ -432,6 +432,33 @@ input:disabled + .btn_radio {
         padding: 1rem;
     }
 
+/* SwitchPage */
+#SwitchPage {
+    display: none;
+}
+
+    #SwitchPage a {
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+    }
+
+        #SwitchPage a.disabled {
+            pointer-events: none;
+            opacity: 50%;
+        }
+
+    #SwitchPage .btn_prev::before {
+        content: "\f104";
+    }
+
+    #SwitchPage .btn_list::before {
+        content: "\f03a";
+    }
+
+    #SwitchPage .btn_next::after {
+        content: "\f105";
+    }
+
 @media only screen and (max-width: 1400px) {
     .ProductSwiper > .swiper-wrapper > .swiper-slide {
         height: 510px;

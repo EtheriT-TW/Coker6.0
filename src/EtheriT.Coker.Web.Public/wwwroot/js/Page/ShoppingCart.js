@@ -19,6 +19,8 @@ var hasProds = false;
 
 var islogin = false;
 
+var RecipientsList_dxData;
+
 function PageReady() {
     Coker.Order = {
         AddHeader: function (data) {
@@ -213,6 +215,18 @@ function PageReady() {
                 break;
         }
     });
+
+    $('#CollapsePurchase')
+        .on('shown.bs.collapse', function () {
+            buy_step_swiper.update();
+            $("body").css("height", "auto");
+            $(window).trigger("resize");
+        })
+        .on('hidden.bs.collapse', function () {
+            buy_step_swiper.update();
+            $("body").css("height", "auto");
+            $(window).trigger("resize");
+        });
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -1492,3 +1506,22 @@ function TWZipCodeInit() {
     $district_first_option.text("請選擇鄉鎮");
     $district_first_option.attr('disabled', 'disabled');
 }
+//function RecipientsList_ContentReady(e) {
+//    RecipientsList_dxData = $("#RecipientsList").dxDataGrid("instance");
+//    console.log("RecipientsList_dxData", RecipientsList_dxData)
+//}
+
+//function RecipientsList_SelectChange(selectedItems) {
+//    var data = selectedItems.selectedRowsData;
+
+//    console.log("Select", data)
+//}
+
+//function RecipientsList_DeleteButtonClicked(e) {
+//    console.log(e.row.key)
+//    co.sweet.confirm("刪除收件人", "確定刪除？資料刪除後不可復原", "確　定", "取　消", function () {
+//        //co.Tag.TagDelete(e.row.key).done(function () {
+//        //    RecipientsList_dxData.refresh();
+//        //})
+//    })
+//}

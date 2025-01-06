@@ -1,4 +1,6 @@
-﻿@using EtheriT.Coker.Application.Shared.Dto.Freight
+﻿@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Freight
+@using EtheriT.Coker.Application.Shared.Dto.Recipients
 @using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 @using EtheriT.Coker.Web.Public.Models
 @using EtheriT.Coker.Application.Shared.i18n;
@@ -32,7 +34,62 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <table class="table">
+                @* @(Html.DevExtreme().DataGrid<RecipientsDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                    .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
+                    .OnBeforeSend("onBeforeSend")
+                    )
+                    .ID("RecipientsList")
+                    .Selection(s =>
+                    s.Mode(SelectionMode.Single).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
+                    )
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(false)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                    .Visible(true)
+                    .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                    .Visible(true)
+                    .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .Editing(editing =>
+                    {
+                        editing.Mode(GridEditMode.Row);
+                        editing.AllowDeleting(true);
+                        editing.UseIcons(true);
+                    })
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
+                        c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
+                        c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
+                        c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
+                        c.AddFor(e => e.Telephone).Caption("行動電話").AllowEditing(false);
+                        c.AddFor(e => e.Cellphone).Caption("聯絡電話").AllowEditing(false);
+                        c.Add()
+                        .Type(GridCommandColumnType.Buttons)
+                        .Buttons(b =>
+                        {
+                            b.Add().Name("delete").OnClick("RecipientsList_DeleteButtonClicked");
+                        });
+                    })
+                    .Toolbar(toolbar =>
+                    {
+                        toolbar.Items(i =>
+                        {
+                            i.Add()
+                        .Name(DataGridToolbarItem.SearchPanel)
+                        .ShowText(ToolbarItemShowTextMode.Always)
+                        .Location(ToolbarItemLocation.After);
+                        });
+                    })
+                    .OnSelectionChanged("RecipientsList_SelectChange")
+                    .OnContentReady("RecipientsList_ContentReady")
+                    .Paging(paging => paging.PageSize(10))
+                    ) *@
+                    <table class="table">
                     <thead>
                         <tr>
                             <th scope="col" class="fw-normal">選擇</th>
@@ -436,6 +493,10 @@
                                     <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
                                     <label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
                                 </li>
+                                <li class="form-check mb-0 ms-3">
+                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
+                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
+                                </li>
                                 @if (ViewBag.LoginEnable)
                                 {
                                     @if (ViewBag.isLogin)
@@ -446,10 +507,6 @@
                                         </li>
                                     }
                                 }
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
-                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
-                                </li>
                             </ul>
                         </div>
 

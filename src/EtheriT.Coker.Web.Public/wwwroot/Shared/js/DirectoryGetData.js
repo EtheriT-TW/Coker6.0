@@ -25,7 +25,19 @@
             data: JSON.stringify(data),
             dataType: "json"
         });
-    }
+    },
+    SwitchPage: function (data) {
+        return $.ajax({
+            url: "/api/Directory/SwitchPage",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            headers: {
+                Authorization: 'Bearer ' + localStorage.getItem("token")
+            },
+            data: JSON.stringify(data),
+            dataType: "json"
+        });
+    },
 }
 
 var Advertise = {
@@ -294,7 +306,7 @@ function DirectoryDataGet($item, option) {
         $item.data({ filter: result.filter, directoryType: result.directoryType }).trigger("load");
 
         if ($item.hasClass("swiper") || $item.find(".swiper").length > 0 || $item.hasClass("swiper-wrapper")) {
-            let c,b;
+            let c, b;
             if ($item.hasClass("swiper")) c = $item;
             else if ($item.find(".swiper").length > 0) c = $item.find(".swiper");
             else c = $item.parents(".swiper");
@@ -389,7 +401,7 @@ function DirectoryDataInsert($item, result) {
             if (content.find("img").length && content.find("h3,h4,h5,h6,span,p").length) {
                 content.find("img").imgCheck().attr("alt", " ");
             }
-        } else { 
+        } else {
             if (content.find("a img").length && content.find('a').find("h3,h4,h5,h6,span,p").length) {
                 content.find("img").imgCheck().attr("alt", " ");
             }
@@ -481,6 +493,15 @@ function DirectoryDataInsert($item, result) {
         content.find(".shareBlock").data("init", false);
         content.find(".shareBlock > a").remove();
         content.find(".shareBlock").data("href", path);
+
+        if (IsLogin && data.link.indexOf("/product/") > -1) {
+            var html = `<button data-pid="${data.id}" class="btn_fav"></button>`
+            content.find(".shareBlock").after(html);
+            if (content.find(".shareBlock").hasClass("d-none")) content.find(".btn_fav").addClass("d-none")
+            else if (content.find(".shareBlock").hasClass("type5")) content.find(".btn_fav").addClass("type5")
+            FavButtonInit(content.find(".btn_fav"))
+        }
+
         $item.find(".catalog").append(content);
     });
     HoverEffectInit();
@@ -503,7 +524,6 @@ function DirectoryAdDataInsert($item, result) {
         });
     }
 }
-
 function InsertAdDatat($frame, result) {
     var isFront = typeof (OrgName) != "undefined";
     var result_File = result.fileLink[0];
@@ -615,4 +635,41 @@ function InsertAdDatat($frame, result) {
     });
 
     return $frame;
+}
+function FavButtonInit($btn_favorites) {
+    Coker.Favorites.Check($btn_favorites.data("pid")).done(function (check) {
+        if (check.success) {
+            $btn_favorites.data("fid", check.message);
+            $btn_favorites.addClass("check")
+            $btn_favorites.attr("title", "移除收藏")
+        }
+    });
+    $btn_favorites.on("click", function () {
+        $self = $(this);
+        if (!$self.hasClass("check")) {
+            Coker.Favorites.Add($btn_favorites.data("pid")).done(function (result) {
+                if (result.success) {
+                    $btn_favorites.data("fid", result.message);
+                    $self.addClass("check")
+                    $btn_favorites.attr("title", "移除收藏");
+                    Coker.sweet.success("成功將商品加入收藏", null, true);
+                } else {
+                    console.log(result.message)
+                }
+            });
+        } else {
+            if (typeof ($btn_favorites.data("fid")) != "undefined" && typeof ($btn_favorites.data("fid")) != "") {
+                Coker.Favorites.Delete($btn_favorites.data("fid")).done(function (result) {
+                    if (result.success) {
+                        $btn_favorites.data("fid", "");
+                        $self.removeClass("check")
+                        $btn_favorites.attr("title", "加入收藏");
+                        Coker.sweet.success("已將商品從收藏中移除", null, true);
+                    } else {
+                        console.log(result.message)
+                    }
+                });
+            }
+        }
+    })
 }

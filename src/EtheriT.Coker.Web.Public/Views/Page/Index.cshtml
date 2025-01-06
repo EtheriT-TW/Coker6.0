@@ -5,6 +5,7 @@
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
 <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
+<script src="~/js/Page/Index.min.js" asp-append-version="true"></script>
 @{
     switch (Model.locale)
     {
@@ -158,6 +159,15 @@
 }
 
 <Content id="main" class="d-none">@HttpUtility.HtmlEncode(Model.PageData.Html)</Content>
+@if (Model.PageData != null && Model.option!="search" && Model.PageData.holdPage == HoldPageNameEnum.Article)
+{
+    <div id="SwitchPage" class="container my-5 justify-content-center">
+        <a href="" title="" target="_self" class="btn_prev disabled">上一則</a>
+        <a href="" title="回列表頁" target="_self" class="btn_list mx-4 mx-sm-5">回列表頁</a>
+        <a href="" title="" target="_self" class="btn_next disabled">下一則</a>
+    </div>
+}
+
 @{
     if (Model.PageData.LastModificationTime != null)
     {

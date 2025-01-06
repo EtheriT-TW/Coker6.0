@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? OrdererTelephone { get; set; }
         public string OrdererCellPhone { get; set; }
         public string OrdererAddress { get; set; }
+        public long? RecipientId { get; set; }
         public string Recipient { get; set; }
         public int RecipientSex { get; set; }
         public string RecipientEmail { get; set; }

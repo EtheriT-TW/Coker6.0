@@ -50,6 +50,7 @@
         position: sticky;
         top: 5rem;
     }
+
 /* ManagementData */
 #ManagementData {
     max-width: 90vw;
@@ -62,6 +63,23 @@
 .status_select {
     height: fit-content;
 }
+
+#OrdererData .btn_orderer_data {
+    display: none;
+    color: black;
+    align-items: center;
+}
+
+    #OrdererData .btn_orderer_data::before {
+        content: "\f2bb";
+        font-weight: 400;
+        font-family: 'Font Awesome 6 Free';
+        padding-right: 5px;
+    }
+
+    #OrdererData .btn_orderer_data:hover {
+        text-decoration: none;
+    }
 
 /* Btn Side Collapse */
 #Btn_Side_Collapse {

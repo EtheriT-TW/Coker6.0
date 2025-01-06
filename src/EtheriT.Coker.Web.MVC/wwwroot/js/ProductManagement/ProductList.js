@@ -5,6 +5,7 @@ var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal
 var $price_modal, priceModal
 var total_files = [];
 let importProdPopup = null;
+
 function ImportProd() {
     var formData = new FormData($(`[name="fileUploadForm"]`)[0]);
     co.Product.AddUp.Import(formData).done(function (response) {
@@ -148,7 +149,7 @@ function PageReady() {
 
     $(".btn_back").on("click", function () {
         Coker.sweet.confirm("返回商品列表", "資料將不被保存", "確定", "取消", function () {
-            window.location.hash = "";
+            BackToList(true);
         });
     })
     $(".btn_add").on("click", function () {
@@ -216,10 +217,47 @@ function PageReady() {
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                AddUp("已成功發布", "發布發生未知錯誤", "Canvas");
+                Array.from(forms).forEach(form => {
+                    if (form.checkValidity()) {
+                        if (ISpecRepect()) {
+                            if ($removedFromShelves.is(":checked")) {
+                                $removedFromShelves.prop("checked", false);
+                                AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
+                            } else {
+                                AddUp("已成功儲存", "儲存發生未知錯誤", "Canvas");
+                            }
+                        } else {
+                            var price_null = false;
+                            var $null_input;
+                            $(".input_price").each(function () {
+                                if ($(this).val() == "") {
+                                    price_null = true;
+                                    $null_input = $(this);
+                                    return false;
+                                }
+                            })
+                            if (price_null) {
+                                if ($removedFromShelves.is(":checked")) {
+                                    $removedFromShelves.prop("checked", false);
+                                    AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
+                                } else {
+                                    AddUp("已成功儲存", "儲存發生未知錯誤", "Canvas");
+                                }
+                            } else {
+                                AddUp("已成功發布", "發布發生未知錯誤", "Canvas");
+                            }
+                        }
+                    } else {
+                        if ($removedFromShelves.is(":checked")) {
+                            $removedFromShelves.prop("checked", false);
+                            AddUp("已成功儲存，資料尚有缺漏或格式錯誤，未上架", "儲存發生未知錯誤", "Canvas");
+                        } else {
+                            AddUp("已成功儲存", "儲存發生未知錯誤", "Canvas");
+                        }
+                    }
+                });
             } else if (result.isDenied) {
-                var hash = window.location.hash.replace("#", "") + "-1";
-                window.location.hash = hash;
+                window.location.hash = `${keyId}-1`;
             }
         })
     })
@@ -360,14 +398,14 @@ function HashDataEdit() {
                                 MoveToContent();
                             });
                         } else {
-                            window.location.hash = ""
+                            BackToList(false);
                         }
                     })
                 }
             }
         }
     } else {
-        BackToList();
+        BackToList(false);
     }
 }
 
@@ -1153,32 +1191,31 @@ function AddUp(success_text, error_text, target) {
                     }
                 });
 
-                if (target == "List") {
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                } else if (target == "Canvas") {
-                    setTimeout(function () {
-                        var hash = window.location.hash.replace("#", "") + "-1";
-                        window.location.hash = hash;
-                    }, 1000);
+                switch (target) {
+                    case "List":
+                        setTimeout(function () {
+                            BackToList(true);
+                        }, 1000);
+                        break;
+                    case "Canvas":
+                        setTimeout(function () {
+                            window.location.hash = `${pid}-1`;
+                        }, 1000);
+                        break;
                 }
-
             } else {
-
-                if (target == "List") {
-                    setTimeout(function () {
-                        BackToList();
-                        product_list.component.refresh();
-                    }, 1000);
-                } else if (target == "Canvas") {
-                    setTimeout(function () {
-                        var hash = window.location.hash.replace("#", "") + "-1";
-                        window.location.hash = hash;
-                    }, 1000);
+                switch (target) {
+                    case "List":
+                        setTimeout(function () {
+                            BackToList(true);
+                        }, 1000);
+                        break;
+                    case "Canvas":
+                        setTimeout(function () {
+                            window.location.hash = `${pid}-1`;
+                        }, 1000);
+                        break;
                 }
-
             }
         } else {
             Coker.sweet.error("錯誤", error_text, null, true);
@@ -1222,10 +1259,13 @@ function MoveToCanvas() {
     $("#ProductCanvas").removeClass("d-none");
 }
 
-function BackToList() {
+function BackToList(refresh) {
     $("#TopLine > a").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");
-    window.location.hash = ""
+    if (refresh) {
+        window.location.hash = "";
+        product_list.component.refresh();
+    }
 }

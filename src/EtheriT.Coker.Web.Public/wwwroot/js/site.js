@@ -1,4 +1,4 @@
-﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal;
+﻿var OrgName = "Page", LayoutType = 0, SiteId = 0, IsFaPage = true, loginModal, otherLoginModal, registerModal, forgetModal, resetModal, IsLogin;
 
 function ready() {
     const $conten = $("#main");
@@ -598,6 +598,7 @@ function CheckToken() {
         if (result.success) {
             console.log("userData:", result);
             if (result.isLogin && result.name != "") {
+                IsLogin = true;
                 $("#HiUser > .name").text(`${result.name} 您好!`);
             }
             if ($("#Cart_Dropdown_Parent").length > 0) {
@@ -1026,11 +1027,12 @@ var Coker = {
                 data: { Pid: Pid },
             });
         },
-        GetDisplay: function () {
+        GetDisplay: function (page) {
             return $.ajax({
                 url: "/api/Favorites/GetDisplay/",
                 type: "GET",
                 contentType: 'application/json; charset=utf-8',
+                data: { page: page },
             });
         },
         Delete: function (Fid) {

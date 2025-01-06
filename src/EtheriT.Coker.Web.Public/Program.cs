@@ -60,6 +60,8 @@ using EtheriT.Coker.Application.Shared.Favorites;
 using EtheriT.Coker.Application.Favorites;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.ThirdParty;
+using EtheriT.Coker.Application.Shared.Recipients;
+using EtheriT.Coker.Application.Recipients;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -177,6 +179,7 @@ builder.Services.AddScoped<MailAppService, MailAppService>();
 builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddScoped<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddScoped<IOrderAppService, OrderAppService>();
+builder.Services.AddScoped<IRecipientsAppService, RecipientsAppService>();
 builder.Services.AddScoped<ITokenAppService, TokenAppService>();
 builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IProductAppService, ProductAppService>();

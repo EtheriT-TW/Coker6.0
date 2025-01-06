@@ -34,5 +34,10 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await directoryAppService.GetReleAd(dto);
         }
 
+        [HttpPost]
+        public async Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto)
+        {
+            return await directoryAppService.SwitchPage(dto);
+        }
     }
 }

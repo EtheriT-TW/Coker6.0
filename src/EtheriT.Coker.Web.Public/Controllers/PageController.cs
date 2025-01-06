@@ -116,9 +116,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 website = key;
                 key = "home";
             }
-            var siteId = Configuration.GetValue<long>("WebConfig:SiteId");
-            var defaultData = await websiteApplication.GetDefaultData(siteId, website);
-                siteId = defaultData.Id;
+            var rootSiteId = Configuration.GetValue<long>("WebConfig:SiteId");
+            var defaultData = await websiteApplication.GetDefaultData(rootSiteId, website);
+            var siteId = defaultData.Id;
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
@@ -396,7 +396,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 }
                 if (view.IndexOf("Error/") < 0)
                 {
-                    if (siteId != defaultData.Id && model.PageData != null)
+                    if (rootSiteId != defaultData.Id && model.PageData != null)
                     {
                         model.PageData.Html = stringHandler.HtmlEncode(model.PageData.Html);
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"src=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"src=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
@@ -404,7 +404,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         model.PageData.Html = Regex.Replace(model.PageData.Html, $"data-pdf-url=&quot;/upload/(?!{defaultData.ParntOrgNames})", $"data-pdf-url=&quot;/upload/{defaultData.OrgName}/", RegexOptions.IgnoreCase);
                         model.PageData.Css = (model.PageData.Css ?? "").Replace("background-image:url('/upload/", $"background-image:url('/upload/{defaultData.OrgName}/");
                     }
-                    if (siteId != defaultData.Id && model.ParentData != null)
+                    if (rootSiteId != defaultData.Id && model.ParentData != null)
                     {
                         model.ParentData.Html = stringHandler.HtmlEncode(model.ParentData.Html);
                         model.ParentData.Html = model.ParentData.Html.Replace("src=&quot;/upload/", $"src=&quot;/upload/{defaultData.OrgName}/");

@@ -483,7 +483,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Article).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ArticleId);
                 o.HasOne(f => f.Prod).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_ProdId);
                 o.HasOne(f => f.TechnicalCertificate).WithMany(w => w.Remotes).HasForeignKey(e => e.FK_TechCertId);
+                o.HasIndex(f => f.FK_WebsiteId);
+                o.HasIndex(f => f.FK_UserId);
+                o.HasIndex(f => f.FK_WebmenuId);
+                o.HasIndex(f => f.FK_ArticleId);
+                o.HasIndex(f => f.FK_ProdId);
+                o.HasIndex(f => f.FK_TechCertId);
                 o.HasIndex(f => f.State);
+                o.HasIndex(f => f.ExecutionTime);
+                o.HasIndex(f => f.UUID);
                 o.Property(f => f.State).HasDefaultValue(RemoteStateEnum.未處理);
             });
             modelBuilder.Entity<NotFoundImage>(o =>

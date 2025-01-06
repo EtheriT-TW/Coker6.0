@@ -76,10 +76,11 @@ footer {
     .paging_frame > div {
         justify-content: space-between;
     }
-    .paging_frame > p {
+    .paging_frame > p, .paging_frame > p > a {
         padding: 0 5px;
         font-weight: bold;
         font-size: 1.1rem;
+        color: white;
     }
 .abreast > ul {
     display: flex;

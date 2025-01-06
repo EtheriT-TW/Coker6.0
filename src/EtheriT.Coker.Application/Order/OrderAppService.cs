@@ -28,6 +28,8 @@ using Microsoft.Extensions.Logging;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using EtheriT.Coker.Application.StoreSet;
+using Microsoft.CodeAnalysis.CSharp;
+using EtheriT.Coker.Application.Shared.Dto.Files;
 
 namespace EtheriT.Coker.Application.Order
 {
@@ -67,15 +69,21 @@ namespace EtheriT.Coker.Application.Order
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
+            long WebsiteID = await loginUserData.GetWebsiteId();
+            string error = string.Empty;
             try
             {
-                long WebsiteID = await loginUserData.GetWebsiteId();
+                var frontuser = await (from fu in db.FrontUsers
+                                       join mapfrontweb in db.MappingFrontUserAndWebsite on fu.Id equals mapfrontweb.FK_UserId
+                                       where mapfrontweb.FK_WebsiteId == WebsiteID
+                                       select fu).ToListAsync();
 
                 var dataQuery = from oh in db.Order_Headers
                                 where !oh.IsDeleted && oh.FK_WebsiteId == WebsiteID
                                 join ls in db.LogisticsSettings on oh.Shipping equals ls.Id
                                 select new OrderHeaderGetAllListDto
                                 {
+                                    UUID = oh.FK_UUID,
                                     Id = ("000000000" + oh.Id.ToString()).Substring(oh.Id.ToString().Length, 9),
                                     Orderer = oh.Orderer.Substring(0, 1) + "○" + oh.Orderer.Substring(oh.Orderer.Length - 1, 1),
                                     RecipientAddress = oh.RecipientAddress.Substring(0, oh.RecipientAddress.LastIndexOf(" ")) + "***",
@@ -85,16 +93,28 @@ namespace EtheriT.Coker.Application.Order
                                     Total = oh.Subtotal + oh.Freight,
                                     CreationTime = oh.CreationTime,
                                 };
-
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
+
+                if (output != null)
+                {
+                    foreach (var data in output.data)
+                    {
+                        Guid? uuid = data.GetType().GetProperty("UUID")?.GetValue(data, null) as Guid?;
+                        if (uuid.HasValue)
+                        {
+                            var memberid = frontuser.FirstOrDefault(e => e.UUID == uuid)?.Id ?? 0;
+                            var memberid_str = ($"000000000{memberid}").Substring(memberid.ToString().Length);
+                            data.GetType().GetProperty("MemberId")?.SetValue(data, memberid_str);
+                        }
+                    }
+                }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             catch (Exception e)
             {
-
+                error = e.Message;
             }
-
-            return new JsonResult(new List<OrderHeaderGetAllListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
+            return new JsonResult(new { error }, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<ResponseMessageDto> CheckStock(List<OrderDetailAddDto> dto)
         {

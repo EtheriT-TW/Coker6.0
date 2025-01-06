@@ -178,6 +178,8 @@ function editButtonClicked(e) {
 function FormDataSet(result) {
     //FormDataClear();
     $member_number.text(result.id)
+    $(".link_history").attr("href", `/OrderManagement?mid=${result.id}`)
+
     $name.val(result.name);
     $sex.each(function () {
         if ($(this).val() == result.sex) {
